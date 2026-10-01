@@ -1,0 +1,45 @@
+/* 简化版 NodeSeek 页面骨架样式，仅用于冒烟测试与截图，不代表站点真实 CSS。 */
+:root{--bg-color:#fff;--bg-color-grey:#f4f4f4;--text-color:#333;--text-color-secondary:#888;--primary-color:#1f8a70;--link-color:#1f8a70;--border-color:#e5e5e5;--border-radius:4px}
+body{margin:0;background-color:#fdf9f4;background-image:linear-gradient(#efe6dc 1px,transparent 1px),linear-gradient(90deg,#efe6dc 1px,transparent 1px);background-size:28px 28px;color:var(--text-color);font:14px/1.6 sans-serif}
+body.dark-layout{--bg-color:#262626;--bg-color-grey:#2f2f2f;--text-color:#dedede;--text-color-secondary:#999;--border-color:#454545;background:#1b1b1b}
+a{color:var(--link-color);text-decoration:none}
+#nsk-head{background:var(--bg-color);border-bottom:1px solid var(--border-color)}
+#nsk-head .nsk-container{display:flex;align-items:center;justify-content:center;gap:20px;height:56px}
+#nsk-head .nsk-container a{color:var(--text-color);font-size:16px}
+.nsk-container{max-width:1100px;margin:0 auto;padding:0 12px}
+.site-logo{font-weight:700;font-size:18px;color:var(--text-color)}
+#nsk-body{display:flex;gap:16px;padding:16px 12px}
+#nsk-left-panel-container{width:120px;flex:none}
+#nsk-left-panel-container .nsk-panel{border-radius:12px;padding:8px 0}
+.category-list{list-style:none;margin:0;padding:0}
+.category-list li a{display:flex;align-items:center;gap:6px;padding:7px 18px;color:#999;font-size:15px}
+.category-list li a svg{width:16px;height:16px}
+#nsk-left{flex:1;min-width:0;background:var(--bg-color);border-radius:12px;padding:16px 20px}
+.list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.post-category{border:1px solid var(--border-color);padding:0 6px;color:var(--text-color-secondary);font-size:13px;margin-left:auto;align-self:center}
+#nsk-right-panel-container{width:280px;flex:none}
+.nsk-panel{background:var(--bg-color);border:1px solid var(--border-color);margin-bottom:12px;padding:12px}
+ul.post-list{list-style:none;margin:0;padding:0;background:var(--bg-color)}
+.post-list-item{display:flex;gap:10px;padding:10px;border-bottom:1px dashed var(--border-color)}
+.post-list-content{flex:1;min-width:0}
+.info-item{white-space:nowrap}
+.post-list-item img.avatar-normal{width:40px;height:40px}
+.post-info{display:flex;gap:10px;font-size:12px;color:var(--text-color-secondary)}
+.nsk-post-wrapper{background:var(--bg-color);padding:12px}
+.nsk-content-meta-info{display:flex;align-items:center;gap:6px;font-size:12px}
+.nsk-content-meta-info img.avatar-normal{width:36px;height:36px}
+ul.comments{list-style:none;margin:12px 0 0;padding:0}
+ul.comments>li.content-item{padding:10px 0;border-bottom:1px solid var(--border-color)}
+.comment-menu{display:flex;gap:8px;justify-content:flex-end}
+.menu-item{padding:2px 6px;color:var(--text-color-secondary);cursor:pointer}
+.md-editor{border:1px solid var(--border-color);margin-top:12px;background:var(--bg-color)}
+.mde-toolbar{display:flex;gap:4px;padding:6px}
+.toolbar-item{padding:2px 6px}
+.md-editor textarea{width:100%;min-height:90px;border:0;box-sizing:border-box;padding:8px;background:transparent;color:inherit}
+.btn{border:1px solid var(--border-color);background:var(--bg-color-grey);padding:4px 14px;color:var(--text-color)}
+.btn.submit{background:var(--primary-color);color:#fff;border-color:transparent}
+.nsk-pager{display:flex;gap:6px;margin:12px 0}
+.nsk-pager a,.nsk-pager span{padding:2px 10px;border:1px solid var(--border-color)}
+.notification-list{list-style:none;margin:0;padding:0;background:var(--bg-color)}
+.notification-list>li{padding:10px;border-bottom:1px solid var(--border-color)}
+@media (max-width:800px){#nsk-left-panel-container,#nsk-right-panel-container{display:none}}
