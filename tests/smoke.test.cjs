@@ -256,7 +256,9 @@ test("风格：只保留简洁风格，之前选了液态玻璃的设置也按�
 test("字号默认大一号，用户卡片的私信 / @我 数字徽章与文字垂直居中对齐", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("html[data-nsmax-size=large]");
-	await settle(page, 600);
+	// 未读数由接口异步返回后才渲染徽章（CI 上较慢），等到至少一个可见徽章旁边有文字标签再测量。
+	await page.waitForFunction(() => Array.from(document.querySelectorAll(".user-stat .notify-count")).some((badge) => badge.getClientRects().length && Array.from(badge.parentElement.children).some((child) => child !== badge && child.tagName === "SPAN" && child.textContent.trim())), null, { timeout: 8e3 });
+	await settle(page, 300);
 	const state = await page.evaluate(() => {
 		const center = (element) => {
 			const box = element.getBoundingClientRect();
