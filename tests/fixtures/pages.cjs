@@ -60,6 +60,12 @@ const notificationPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-l
 <li class="notification-item"><a href="/notification#/message?mode=talk&to=42">来自 spammer 的私信</a></li>
 </ul></div>${sidebar}`, options);
 
+// 消息中心页：原生通知页的「@我 / 回复主题 / 私信」标签，NodeSeek++ 紧凑消息中心据此找到容器并接管（私信与通知都在里面）。
+const messageCenterPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-left"><div class="nsk-panel notification-panel">
+<div class="tabs"><a href="/notification#/atMe">@我</a><a href="/notification#/reply">回复主题</a><a href="/notification#/message?mode=list">私信</a></div>
+<div class="notification-content"><img src="${AVATAR}" alt=""><span>正在加载…</span></div>
+</div></div>${sidebar}`, { ...options, leftNav: false });
+
 // 设置页：真实结构未知，这里用常见的表单写法（hash 路由子导航、文本框、下拉框、复选框、提交按钮、表格）。
 const settingPage = (options) => shell("设置 - NodeSeek", `<div id="nsk-left"><div class="nsk-panel setting-panel">
 <nav class="setting-nav"><a href="#/profile" class="router-link-active">个人资料</a><a href="#/security">账号安全</a><a href="#/block">屏蔽列表</a></nav>
@@ -76,5 +82,6 @@ module.exports = {
 	listPage,
 	postPage,
 	notificationPage,
+	messageCenterPage,
 	settingPage
 };
