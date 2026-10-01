@@ -740,7 +740,7 @@ test("设置面板：可打开、搜索，不再包含 AI 写作助手与快捷�
 	assert.equal(look.switchWidth, "36px");
 	assert.equal(look.appearance, "none");
 	assert.ok(look.dialogWidth >= 900, `设置面板宽度 ${look.dialogWidth}`);
-	assert.equal(look.card, "14px");
+	assert.equal(look.card, "12px");
 	await settle(page, 200);
 	await shot(page, "settings");
 	assert.deepEqual(errors, []);
@@ -768,7 +768,7 @@ test("工具弹窗：回帖足迹统一成卡片式模态框，关闭按钮为�
 				emptyIcon: getComputedStyle(empty, "::before").content
 			};
 		});
-		assert.equal(state.radius, "14px");
+		assert.equal(state.radius, "12px");
 		assert.equal(state.background, dark ? "rgb(38, 39, 45)" : "rgb(255, 255, 255)");
 		assert.equal(state.closeFont, "0px");
 		assert.match(state.closeIcon, /svg/);
@@ -828,10 +828,54 @@ test("评论区：圆角方形头像，正文与名字左对齐，顶部有「�
 		};
 	});
 	assert.equal(state.avatar, 32);
-	assert.equal(state.radius, "24%");
+	assert.equal(state.radius, "20%");
 	assert.ok(Math.abs(state.indent) <= 2, `正文应与名字对齐，偏差 ${state.indent}px`);
 	assert.equal(state.heading, '"全部回复"');
 	await shot(page, "comments");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子行小头像常规字重、热榜单行带回复数、主楼正文与作者名对齐", async () => {
+	let { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector(".nsmax-hot-list li a .nsmax-hot-count", { timeout: 5e3 });
+	await settle(page, 300);
+	const list = await page.evaluate(() => {
+		const css = (element) => getComputedStyle(element);
+		const search = document.querySelector("[data-nsmax-header-search]");
+		const avatar = document.querySelector(".post-list-item img.avatar-normal");
+		return {
+			searchBackground: css(search).backgroundColor,
+			searchBorder: css(search).borderTopColor,
+			cta: css(document.querySelector("[data-nsmax-cta]")).borderTopLeftRadius,
+			avatar: avatar.getBoundingClientRect().width,
+			titleWeight: css(document.querySelector(".post-list-item .post-title a")).fontWeight,
+			hotWrap: css(document.querySelector(".nsmax-hot-text")).whiteSpace,
+			hotCount: document.querySelector(".nsmax-hot-count").textContent,
+			activeTab: css(document.querySelector(".nsmax-hot-tabs button[aria-selected=true]")).backgroundColor
+		};
+	});
+	assert.equal(list.searchBackground, "rgb(250, 251, 252)");
+	assert.equal(list.searchBorder, "rgb(224, 226, 232)");
+	assert.equal(list.cta, "999px");
+	assert.equal(list.avatar, 24);
+	assert.equal(list.titleWeight, "400");
+	assert.equal(list.hotWrap, "nowrap");
+	assert.match(list.hotCount, /^\d+$/);
+	assert.equal(list.activeTab, "rgb(28, 28, 30)");
+	await shot(page, "list-sbsb");
+	assert.deepEqual(errors, []);
+	await context.close();
+	({ context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() }));
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await settle(page, 400);
+	const post = await page.evaluate(() => {
+		const name = document.querySelector('.nsk-post .author-info a[href*="/space/"]');
+		const content = document.querySelector(".nsk-post > .post-content");
+		return { indent: Math.round(content.getBoundingClientRect().left - name.getBoundingClientRect().left), title: getComputedStyle(document.querySelector(".post-title h1")).fontSize };
+	});
+	assert.ok(Math.abs(post.indent) <= 2, `主楼正文应与作者名对齐，偏差 ${post.indent}px`);
+	assert.equal(post.title, "21px");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -847,7 +891,7 @@ test("加载：NodeSeek++ 夜间模式在页面解析阶段就生效，不再先
 	await context.close();
 });
 
-test("设置页：输入框浅灰底、提交按钮用强调色、复选框跟随强调色，子导航当前项加粗", async () => {
+test("设置页：输入框浅底细边框、提交按钮用强调色、复选框跟随强调色，子导航当前项加粗", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/setting#/profile", { html: settingPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 500);
@@ -865,7 +909,7 @@ test("设置页：输入框浅灰底、提交按钮用强调色、复选框跟�
 		};
 	});
 	assert.equal(state.page, "setting");
-	assert.equal(state.input, "rgb(242, 244, 247)");
+	assert.equal(state.input, "rgb(250, 251, 252)");
 	assert.equal(state.inputRadius, "8px");
 	assert.equal(state.submit, "rgb(28, 28, 30)");
 	assert.equal(state.cancel, "rgb(255, 255, 255)");

@@ -113,6 +113,9 @@ html:root:root {
 	--nsmax-highlight:transparent;
 	--nsmax-sheen:transparent;
 	--nsmax-divider:#eef0f3;
+	--nsmax-panel-alt:#fafbfc;
+	--nsmax-stroke-strong:#c7cad5;
+	--nsmax-faint:#8e91a0;
 	--nsmax-text:#1c1c1e;
 	--nsmax-text-2:#555a6a;
 	--nsmax-muted:#6b6f7e;
@@ -133,6 +136,9 @@ html:root:root:has(>body.dark-layout) {
 	--nsmax-highlight:transparent;
 	--nsmax-sheen:transparent;
 	--nsmax-divider:#2b2c32;
+	--nsmax-panel-alt:#24252b;
+	--nsmax-stroke-strong:#3d3e45;
+	--nsmax-faint:#6f727c;
 	--nsmax-text:#e8e9ed;
 	--nsmax-text-2:#b6b8c1;
 	--nsmax-muted:#8e919b;
@@ -153,6 +159,9 @@ html:root:root body.dark-layout {
 	--nsmax-highlight:transparent;
 	--nsmax-sheen:transparent;
 	--nsmax-divider:#2b2c32;
+	--nsmax-panel-alt:#24252b;
+	--nsmax-stroke-strong:#3d3e45;
+	--nsmax-faint:#6f727c;
 	--nsmax-text:#e8e9ed;
 	--nsmax-text-2:#b6b8c1;
 	--nsmax-muted:#8e919b;
@@ -327,31 +336,44 @@ html:root:root body {
 html:root .post-list-item .post-category {
 	border-radius:999px;
 	border:1px solid var(--nsmax-stroke);
-	background-color:color-mix(in srgb,var(--nsmax-fill) 45%,var(--nsmax-card));
+	background-color:transparent;
 	color:var(--nsmax-text-2);
-	font-size:12px;
-	line-height:1.75;
-	padding:1px 9px;
+	font-size:12.5px;
+	line-height:1.7;
+	padding:1px 10px;
 }
 html:root .post-list-item .post-category:hover {
 	color:var(--nsmax-text);
-	border-color:var(--nsmax-accent-line);
+	border-color:var(--nsmax-stroke-strong);
 }
 html:root .post-list-item .post-title a {
 	color:var(--nsmax-text);
-	font-weight:500;
+	font-weight:400;
 	letter-spacing:0;
 }
 html:root .post-list-item .post-title a:hover {
-	color:var(--nsmax-accent);
+	color:var(--nsmax-text);
+}
+/* 帖子行（参考 sb.sb）：24px 圆角方形头像与标题第一行对齐 */
+html[data-nsmax-theme]:not([data-nsmax-list=site]) ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item) img:is(.avatar-normal,.avatar,[class*=avatar]) {
+	width:24px!important;
+	height:24px!important;
+	min-width:0!important;
+}
+html:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item)>:has(>img:is(.avatar-normal,.avatar,[class*=avatar])) {
+	align-self:flex-start;
+	flex:none;
+	width:auto!important;
+	margin-top:3px;
 }
 html:root .post-list-item :is(.post-info,.info-item),
 html:root .nsk-content-meta-info {
 	color:var(--nsmax-muted);
 }
 html:root :is(.post-list-item,.content-item,.nsk-content-meta-info,.author-info) img:is(.avatar-normal,.avatar,[class*=avatar]) {
-	border-radius:24%;
+	border-radius:20%;
 	box-shadow:0 0 0 1px var(--nsmax-divider);
+	background-color:var(--nsmax-panel-alt);
 	object-fit:cover;
 }
 html:root .comment-menu .menu-item {
@@ -388,7 +410,7 @@ html:root .nsk-pager a:hover {
 	color:var(--nsmax-text);
 }
 html:root .btn {
-	border-radius:var(--nsmax-control-radius);
+	border-radius:999px;
 }
 html:root button.submit.btn {
 	background:var(--nsmax-accent);
@@ -487,9 +509,9 @@ html:root .md-editor .exp-container {
 	border-color:var(--nsmax-divider)!important;
 }
 html:root .md-editor :is(button.submit.btn,.btn.submit) {
-	min-height:32px;
-	padding:0 18px!important;
-	border-radius:8px!important;
+	min-height:34px;
+	padding:0 20px!important;
+	border-radius:999px!important;
 	font-size:13px!important;
 	font-weight:600!important;
 	box-shadow:none!important;
@@ -576,10 +598,10 @@ html:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-
 }
 html:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2),
 html:root:root h1.post-title {
-	font-size:clamp(19px,1.05rem + .4vw,22px);
-	line-height:1.4;
-	font-weight:650;
-	letter-spacing:-.012em;
+	font-size:21px;
+	line-height:1.45;
+	font-weight:600;
+	letter-spacing:-.01em;
 	color:var(--nsmax-text);
 }
 html:root:root .nsk-content-meta-info {
@@ -658,11 +680,10 @@ html:root:root ul.comments:has(>li.content-item) {
 html:root:root ul.comments:has(>li.content-item)::before {
 	content:"全部回复";
 	display:block;
-	padding:14px 4px 2px;
-	color:var(--nsmax-muted);
-	font-size:12.5px;
+	padding:13px 4px 3px;
+	color:var(--nsmax-text);
+	font-size:14px;
 	font-weight:600;
-	letter-spacing:.02em;
 }
 html:root:root:root ul.comments>li.content-item {
 	padding:14px 4px 12px;
@@ -744,9 +765,61 @@ html:root:root ul.comments .comment-menu .menu-item:hover {
 html:root:root ul.comments .signature {
 	margin-top:10px;
 }
+html:root:root .nsk-post>.nsk-content-meta-info {
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	gap:4px 8px;
+	min-height:32px;
+}
 html:root:root .nsk-post>.nsk-content-meta-info img:is(.avatar-normal,.avatar,[class*=avatar]) {
-	width:36px!important;
-	height:36px!important;
+	display:block;
+	width:32px!important;
+	height:32px!important;
+	margin-right:4px;
+}
+html:root:root .nsk-post>:not(.nsk-content-meta-info) {
+	margin-left:44px;
+}
+html:root:root .nsk-post>.post-content {
+	margin-top:6px;
+}
+html:root:root .nsk-post>.comment-menu {
+	display:flex;
+	flex-wrap:wrap;
+	gap:10px;
+	margin-top:16px;
+}
+html:root:root .nsk-post>.comment-menu .menu-item {
+	display:inline-flex;
+	flex-direction:column;
+	align-items:center;
+	justify-content:center;
+	gap:5px;
+	box-sizing:border-box;
+	min-width:72px;
+	min-height:52px;
+	margin:0;
+	padding:8px 6px;
+	border:1px solid var(--nsmax-stroke);
+	border-radius:8px;
+	background:var(--nsmax-card)!important;
+	color:var(--nsmax-faint);
+	font-size:12.5px;
+	line-height:1;
+}
+html:root:root .nsk-post>.comment-menu .menu-item:hover {
+	border-color:var(--nsmax-stroke-strong);
+	color:var(--nsmax-text);
+}
+html:root:root .nsk-post>.comment-menu .menu-item svg {
+	width:16px;
+	height:16px;
+}
+@media (width<=600px) {
+	html:root:root .nsk-post>:not(.nsk-content-meta-info) {
+		margin-left:0;
+	}
 }
 @media (width<=600px) {
 	html:root:root ul.comments {
@@ -778,7 +851,7 @@ html:root:root .md-editor .CodeMirror {
 }
 html:root .user-card img:is(.avatar-normal,.avatar,[class*=avatar]),
 html:root .user-card img:first-of-type {
-	border-radius:14px;
+	border-radius:20%;
 	box-shadow:0 0 0 1px var(--nsmax-divider);
 }
 html:root .user-stat {
@@ -968,7 +1041,7 @@ html[data-nsmax-theme] :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) {
 	background-color:var(--nsmax-popup);
 	color:var(--nsmax-text);
 	border:1px solid var(--nsmax-stroke);
-	border-radius:14px;
+	border-radius:12px;
 	box-shadow:var(--nsmax-shadow-pop);
 	font-size:13.5px;
 	line-height:1.55;
@@ -1018,9 +1091,9 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(button,form>
 	gap:6px;
 	min-height:32px;
 	margin:0;
-	padding:0 12px;
+	padding:0 14px;
 	border:1px solid var(--nsmax-stroke);
-	border-radius:8px;
+	border-radius:999px;
 	background:transparent;
 	color:var(--nsmax-text);
 	font-size:12.5px;
@@ -1035,7 +1108,7 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(button,form>
 }
 html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(button,form>a):hover:not(:disabled) {
 	background:var(--nsmax-dlg-fill);
-	border-color:color-mix(in srgb,var(--nsmax-text) 16%,transparent);
+	border-color:var(--nsmax-stroke-strong);
 	color:var(--nsmax-text);
 }
 html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) button:disabled {
@@ -1072,6 +1145,7 @@ html[data-nsmax-theme] :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is
 	height:32px;
 	padding:0;
 	border-color:transparent;
+	border-radius:50%;
 	color:var(--nsmax-muted);
 	font-size:0;
 }
@@ -1099,9 +1173,9 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([t
 	box-sizing:border-box;
 	min-height:34px;
 	padding:7px 11px;
-	border:1px solid transparent;
+	border:1px solid var(--nsmax-stroke);
 	border-radius:8px;
-	background:var(--nsmax-dlg-fill);
+	background:var(--nsmax-panel-alt);
 	color:var(--nsmax-text);
 	font-size:13px;
 	line-height:1.5;
@@ -1109,9 +1183,12 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([t
 	box-shadow:none;
 	transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease;
 }
+html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([type=checkbox],[type=radio]),textarea,select):hover {
+	border-color:var(--nsmax-stroke-strong);
+}
 html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([type=checkbox],[type=radio]),textarea,select):focus {
 	background:var(--nsmax-popup);
-	border-color:color-mix(in srgb,var(--nsmax-text) 26%,transparent);
+	border-color:var(--nsmax-stroke-strong);
 	box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent);
 }
 html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input,textarea)::placeholder {
@@ -1200,14 +1277,14 @@ html:root .nspp-history .nspp-history-toolbar:has(>button[data-tab]) {
 	gap:2px;
 	margin:0 18px 6px;
 	padding:3px;
-	border-radius:9px;
+	border-radius:999px;
 	background:var(--nsmax-dlg-fill);
 }
 html:root .nspp-history button[data-tab] {
 	min-height:26px;
 	padding:0 12px;
 	border-color:transparent;
-	border-radius:6px;
+	border-radius:999px;
 	color:var(--nsmax-muted);
 }
 html:root .nspp-history button[data-tab][aria-pressed=true] {
@@ -1475,7 +1552,7 @@ html:root .nspp-regex-help:hover {
 /* 热榜抽屉：去掉红橙金排名色，前三名用强调色加粗 */
 html[data-nsmax-theme] .nspp-monitor.nspp-hot-rankings {
 	padding:0;
-	border-radius:14px 0 0 14px;
+	border-radius:12px 0 0 12px;
 	border-right-width:0;
 }
 html:root .nspp-hot-rankings>.nspp-hot-header {
@@ -1490,9 +1567,9 @@ html:root .nspp-hot-rankings nav {
 }
 html:root .nspp-hot-rankings nav button {
 	min-height:28px;
-	padding:0 10px;
+	padding:0 11px;
 	border-color:transparent;
-	border-radius:7px;
+	border-radius:999px;
 	color:var(--nsmax-muted);
 	font-size:12.5px;
 }
@@ -1558,22 +1635,22 @@ html:root .nspp-hot-rankings .nspp-hot-skeleton :is(span) {
 }
 @media (width<=600px) {
 	html:root .nspp-monitor:not(.nspp-hot-rankings) {
-		border-radius:14px 14px 0 0;
+		border-radius:12px 12px 0 0;
 	}
 }
 @media (width<=700px),(hover:none) {
 	html:root .nspp-monitor.nspp-hot-rankings {
-		border-radius:14px 14px 0 0;
+		border-radius:12px 12px 0 0;
 		border-right-width:1px;
 		border-bottom-width:0;
 	}
 	html:root .nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings) {
-		border-radius:14px 14px 0 0;
+		border-radius:12px 12px 0 0;
 	}
 }
 @media (width<=480px) {
 	html:root .nspp-confirm-dialog {
-		border-radius:14px 14px 0 0;
+		border-radius:12px 12px 0 0;
 	}
 }
 html:root .nspp-post-preview {
