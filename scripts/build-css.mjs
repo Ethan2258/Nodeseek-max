@@ -35,7 +35,8 @@ const attributes = new Map([
 	["data-nsmax-radius", options.radius],
 	["data-nsmax-density", options.density],
 	["data-nsmax-font", options.font],
-	["data-nsmax-style", options.style],
+	["data-nsmax-size", options.fontSize],
+	["data-nsmax-style", "flat"],
 	["data-nsmax-accent", options.accent === "mono" ? "mono" : options.accent === "site" ? "site" : "color"]
 ]);
 for (const [option, attribute] of [["grid", "data-nsmax-grid"], ["glassHeader", "data-nsmax-glass"], ["typography", "data-nsmax-type"], ["motion", "data-nsmax-motion"], ["scrollbar", "data-nsmax-scrollbar"]]) if (options[option]) attributes.set(attribute, "");

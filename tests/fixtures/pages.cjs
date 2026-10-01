@@ -12,8 +12,8 @@ const headerCategories = categories.slice(0, 7).map(([slug, name]) => `<a href="
 // 默认导航条目是链接；navMode: "div" 时条目是不带链接的 div（站点真实结构未知，两种都要能识别）。
 const leftNavHtml = (mode) => `<div id="nsk-left-panel-container"><div class="nsk-panel"><div class="category-list">${categories.map(([slug, name]) => mode === "div" ? `<div class="nav-item" data-to="/categories/${slug}">${ICON}<span>${name}</span></div>` : `<div class="nav-item"><a href="/categories/${slug}">${ICON}<span>${name}</span></a></div>`).join("")}</div></div></div>`;
 
-function shell(title, main, { dark = false, navMode = "link" } = {}) {
-	const leftNav = leftNavHtml(navMode);
+function shell(title, main, { dark = false, navMode = "link", leftNav: withLeftNav = true } = {}) {
+	const leftNav = withLeftNav ? leftNavHtml(navMode) : "";
 	return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}</style>
 <script>window.__config__ = { user: { member_id: 1, member_name: "tester" } };</script></head>
 <body class="${dark ? "dark-layout" : ""}">

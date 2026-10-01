@@ -135,7 +135,7 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 	await context.close();
 });
 
-test("帖子页：玻璃卡片、正文排版、阅读进度条与侧栏热榜", async () => {
+test("帖子页：卡片、正文排版、阅读进度条与侧栏热榜", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
 	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
 	const info = await page.evaluate(() => ({
@@ -143,7 +143,7 @@ test("帖子页：玻璃卡片、正文排版、阅读进度条与侧栏热榜",
 		progress: !!document.getElementById("nsmax-progress"),
 		commentDivider: getComputedStyle(document.querySelector("ul.comments > li.content-item")).borderBottomStyle,
 		lineHeight: getComputedStyle(document.querySelector(".nsk-post .post-content")).lineHeight,
-		floorPill: getComputedStyle(document.querySelector("a.floor-link")).borderTopLeftRadius,
+		floorPill: getComputedStyle(document.querySelector("a.floor-link")).backgroundColor,
 		cleanLink: document.querySelector(".post-content a").getAttribute("href"),
 		hotInSidebar: !!document.querySelector("#nsk-right-panel-container .nsmax-hot-panel"),
 		titleOpacity: (() => {
@@ -157,7 +157,7 @@ test("帖子页：玻璃卡片、正文排版、阅读进度条与侧栏热榜",
 	assert.equal(info.progress, true);
 	assert.equal(info.commentDivider, "solid");
 	assert.notEqual(info.lineHeight, "normal");
-	assert.equal(info.floorPill, "999px");
+	assert.equal(info.floorPill, "rgba(0, 0, 0, 0)");
 	assert.equal(info.cleanLink, "https://example.com/docs");
 	assert.equal(info.hotInSidebar, true);
 	await settle(page, 700);
@@ -234,14 +234,65 @@ test("字体：真实字体校验通过后缓存，下次直接从本地注册�
 	await context.close();
 });
 
-test("风格：液态玻璃风格切换为半透明卡片", async () => {
+test("风格：只保留简洁风格，之前选了液态玻璃的设置也按简洁风格显示", async () => {
 	const seed = { "nspp:settings:www.nodeseek.com": { "modern-theme": { enabled: true, style: "glass", layout: "cards" } } };
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed });
 	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
-	const card = await page.evaluate(() => getComputedStyle(document.querySelector(".post-list-item")).backgroundColor);
-	assert.equal(card, "rgba(255, 255, 255, 0.66)");
-	await settle(page, 700);
-	await shot(page, "list-glass");
+	const state = await page.evaluate(() => {
+		const card = getComputedStyle(document.querySelector(".post-list-item"));
+		return { style: document.documentElement.dataset.nsmaxStyle, background: card.backgroundColor, blur: card.backdropFilter };
+	});
+	assert.equal(state.style, "flat");
+	assert.equal(state.background, "rgb(255, 255, 255)");
+	assert.ok(!state.blur || state.blur === "none");
+	await page.click("[data-nspp-settings-launcher]");
+	await page.waitForFunction(() => document.getElementById("nspp-settings")?.shadowRoot?.querySelector("dialog")?.open);
+	const text = await page.evaluate(() => document.getElementById("nspp-settings").shadowRoot.querySelector(".content").textContent);
+	assert.ok(!text.includes("液态玻璃") && !text.includes("Sub-Store"));
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("字号默认大一号，用户卡片的私信 / @我 数字徽章与文字垂直居中对齐", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("html[data-nsmax-size=large]");
+	await settle(page, 600);
+	const state = await page.evaluate(() => {
+		const center = (element) => {
+			const box = element.getBoundingClientRect();
+			return box.top + box.height / 2;
+		};
+		const offsets = Array.from(document.querySelectorAll(".user-stat .notify-count")).filter((badge) => badge.getClientRects().length).map((badge) => {
+			const label = Array.from(badge.parentElement.children).find((child) => child !== badge && child.tagName === "SPAN" && child.textContent.trim());
+			return label ? Math.abs(center(label) - center(badge)) : -1;
+		});
+		return {
+			title: getComputedStyle(document.querySelector(".post-list-item .post-title a")).fontSize,
+			stat: getComputedStyle(document.querySelector(".user-stat")).fontSize,
+			offsets
+		};
+	});
+	assert.equal(state.title, "16px");
+	assert.equal(state.stat, "15px");
+	assert.ok(state.offsets.length > 0 && state.offsets.every((offset) => offset >= 0 && offset <= 1.5), `徽章与文字中心偏差：${state.offsets.join(", ")}`);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("帖子页：定位到的楼层只有左侧细线与短暂淡出的底色，楼层号不是灰色胶囊", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1#2", { html: postPage() });
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await settle(page, 2800);
+	const state = await page.evaluate(() => {
+		const item = document.getElementById("2");
+		const style = getComputedStyle(item);
+		const floor = getComputedStyle(document.querySelector("a.floor-link"));
+		return { target: item.matches(":target"), shadow: style.boxShadow, background: style.backgroundColor, floorBackground: floor.backgroundColor };
+	});
+	assert.equal(state.target, true);
+	assert.match(state.shadow, /inset/);
+	assert.equal(state.background, "rgba(0, 0, 0, 0)");
+	assert.equal(state.floorBackground, "rgba(0, 0, 0, 0)");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -363,6 +414,60 @@ test("精简顶栏：只保留标志、标题与深浅色切换，窄屏恢复�
 	await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-sidenav"), null, { timeout: 3e3 });
 	assert.equal(await visible("#nsk-head .search-box"), 1);
 	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动，宽屏同样精简顶栏", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification", { html: notificationPage({ leftNav: false }) });
+	await page.waitForSelector("[data-nsmax-header-toggle]", { timeout: 5e3 });
+	// 记录根元素属性与顶栏隐藏标记的变化次数：稳定后不应再来回切换。
+	await page.evaluate(() => {
+		window.__flips = 0;
+		new MutationObserver((records) => {
+			window.__flips += records.length;
+		}).observe(document.documentElement, { attributes: true, attributeFilter: ["data-nsmax-sidenav", "data-nsmax-sidenav-page"] });
+	});
+	await settle(page, 1500);
+	const state = await page.evaluate(() => ({
+		flips: window.__flips,
+		sidenav: document.documentElement.hasAttribute("data-nsmax-sidenav"),
+		shortcutInHeader: !!document.querySelector("#nsk-head .nsmax-shortcuts"),
+		shown: Array.from(document.querySelectorAll("#nsk-head .nsk-container a, #nsk-head .nsk-container sup, #nsk-head .search-box, #nsk-head .tool-btn")).filter((element) => element.getClientRects().length > 0).map((element) => element.className || element.tagName.toLowerCase())
+	}));
+	assert.equal(state.flips, 0);
+	assert.equal(state.sidenav, false);
+	assert.equal(state.shortcutInHeader, false);
+	assert.deepEqual(state.shown, ["site-logo", "beta", "tool-btn"]);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("请求限流：429 等待后自动重试成功，接口自身的 403 不触发全站冷却", async () => {
+	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/notification", {
+		html: notificationPage(),
+		api: {
+			"/api/block-list/list": [{ status: 429, headers: { "Retry-After": "1" }, body: { success: false } }],
+			"/api/notification/unread-count": [{ status: 403, body: { success: false, message: "forbidden" } }]
+		}
+	});
+	// 黑名单在 429 后自动重试拿到名单，原生通知页里黑名单用户的通知被隐藏。
+	await page.waitForFunction(() => {
+		const items = Array.from(document.querySelectorAll(".notification-item"));
+		return items.length && items.filter((item) => getComputedStyle(item).display === "none").length >= 2;
+	}, null, { timeout: 12e3 });
+	assert.equal(calls["/api/block-list/list"], 2);
+	const cooldown = await page.evaluate(() => JSON.parse(localStorage.getItem("__gm__:nspp:request-cooldown:www.nodeseek.com") || "0"));
+	assert.ok(cooldown - Date.now() < 6e3, "429 后的冷却应按 Retry-After 计算且不超过数秒");
+	await page.close();
+	// 只有 403 的页面：不写入冷却。
+	await page.context().clearCookies();
+	const fresh = await open(browser, "https://www.nodeseek.com/", { html: listPage(), api: { "/api/notification/unread-count": [{ status: 403, body: { success: false } }, { status: 403, body: { success: false } }] } });
+	await settle(fresh.page, 1500);
+	const after = await fresh.page.evaluate(() => JSON.parse(localStorage.getItem("__gm__:nspp:request-cooldown:www.nodeseek.com") || "0"));
+	assert.ok(after <= Date.now(), "接口 403 不应触发冷却");
+	assert.deepEqual(errors, []);
+	assert.deepEqual(fresh.errors, []);
+	await fresh.context.close();
 	await context.close();
 });
 
