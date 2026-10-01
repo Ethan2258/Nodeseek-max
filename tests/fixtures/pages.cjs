@@ -9,9 +9,11 @@ const AVATAR = "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://ww
 const categories = [["daily", "日常"], ["tech", "技术"], ["info", "情报"], ["review", "测评"], ["trade", "交易"], ["carpool", "拼车"], ["promotion", "推广"], ["life", "生活"], ["dev", "Dev"], ["photo-share", "贴图"], ["expose", "曝光"], ["inside", "内版"], ["sandbox", "沙盒"]];
 const ICON = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='8'/></svg>";
 const headerCategories = categories.slice(0, 7).map(([slug, name]) => `<a href="/categories/${slug}">${name}</a>`).join("") + `<a href="https://www.deepflood.com/">DeepFlood</a>`;
-const leftNav = `<div id="nsk-left-panel-container"><div class="nsk-panel"><div class="category-list">${categories.map(([slug, name]) => `<div class="nav-item"><a href="/categories/${slug}">${ICON}<span>${name}</span></a></div>`).join("")}</div></div></div>`;
+// 默认导航条目是链接；navMode: "div" 时条目是不带链接的 div（站点真实结构未知，两种都要能识别）。
+const leftNavHtml = (mode) => `<div id="nsk-left-panel-container"><div class="nsk-panel"><div class="category-list">${categories.map(([slug, name]) => mode === "div" ? `<div class="nav-item" data-to="/categories/${slug}">${ICON}<span>${name}</span></div>` : `<div class="nav-item"><a href="/categories/${slug}">${ICON}<span>${name}</span></a></div>`).join("")}</div></div></div>`;
 
-function shell(title, main, { dark = false } = {}) {
+function shell(title, main, { dark = false, navMode = "link" } = {}) {
+	const leftNav = leftNavHtml(navMode);
 	return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}</style>
 <script>window.__config__ = { user: { member_id: 1, member_name: "tester" } };</script></head>
 <body class="${dark ? "dark-layout" : ""}">
@@ -24,6 +26,7 @@ const sidebar = `<div id="nsk-right-panel-container">
 <div class="nsk-panel user-card"><div class="user-head"><a href="/space/1"><img class="avatar-normal" src="${AVATAR}" alt="tester"></a><div><a class="user-name" href="/space/1">tester</a><div class="user-actions"><a href="/board" title="签到">${ICON}</a><a href="/setting" title="设置">${ICON}</a><a href="/logout" title="退出">${ICON}</a></div></div></div>
 <div class="user-stat"><div class="stat-block"><div>${ICON}<span>等级 Lv 6</span></div><div>${ICON}<span>鸡腿 4132</span></div><a href="/notification#/message?mode=list">${ICON}<span>私信 </span><span class="notify-count">1</span></a></div><div class="stat-block"><div>${ICON}<span>主题帖 221</span></div><div>${ICON}<span>评论数 3945</span></div><a href="/notification#/atMe">${ICON}<span>@我 </span><span class="notify-count">5</span></a></div></div></div>
 <a class="btn-post" href="/new-discussion">+ 发帖</a>
+<div class="nsk-panel nsk-new-member-board"><div class="board-title">🎉 欢迎新用户 🎉</div><div class="member-row">${["泡泡mercy", "vader", "weseeker"].map((name, index) => `<div class="member"><a href="/space/${200 + index}"><img src="${AVATAR}" alt=""></a><span>${name}</span></div>`).join("")}</div><div class="member-row">${["cwavguy", "NewYork", "Luna10"].map((name, index) => `<div class="member"><a href="/space/${210 + index}"><img src="${AVATAR}" alt=""></a><span>${name}</span></div>`).join("")}</div></div>
 <div class="nsk-panel quick-access"><strong>快捷入口</strong><div><a href="/notification">通知</a> · <a href="/new-discussion">发帖</a></div></div>
 </div>`;
 

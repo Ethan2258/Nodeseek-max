@@ -54,6 +54,10 @@ const gmShim = (seed, fontFiles) => `(() => {
 				details.onload?.({ status: 200, response: bytes.buffer });
 			}
 			else if (details.url.includes("raw.githubusercontent.com")) details.onload?.({ status: 200, responseText: "// ==UserScript==\\n// @version      1.0.0\\n// ==/UserScript==\\n" });
+			else if (details.url.startsWith("https://image.110726.com/")) {
+				window.__uploads = (window.__uploads || []).concat({ url: details.url, headers: details.headers, anonymous: details.anonymous });
+				details.onload?.({ status: 201, response: { duplicate: false, image: { name: "shot.png", originalUrl: "/api/i/abc123.png" } } });
+			}
 			else details.onerror?.({});
 		}, 30);
 		return { abort() {} };
@@ -80,10 +84,11 @@ async function launch() {
 }
 
 // 打开一个页面：所有请求都在本地处理，外部网络一律拒绝。
-async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {} } = {}) {
+async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "" } = {}) {
 	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1 });
 	const errors = [];
-	await context.addInitScript({ content: `${gmShim(seed, fontFiles)}\n;(function () {\n${SCRIPT}\n})();` });
+	if (script) await context.addInitScript({ content: `${gmShim(seed, fontFiles)}\n;(function () {\n${SCRIPT}\n})();` });
+	if (css) await context.addInitScript({ content: `document.addEventListener("DOMContentLoaded", () => { const style = document.createElement("style"); style.textContent = ${JSON.stringify(css)}; document.head.append(style); });` });
 	await context.route("**/*", async (route) => {
 		const request = route.request();
 		const target = new URL(request.url());

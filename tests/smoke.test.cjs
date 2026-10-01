@@ -280,6 +280,76 @@ test("侧栏导航：侧栏可见时隐藏顶栏重复版块，窄屏侧栏隐�
 	await context.close();
 });
 
+test("侧栏导航：导航条目不是链接时也能按文字识别（隐藏、顶栏去重、快捷入口）", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ navMode: "div" }) });
+	await page.waitForSelector(".nsmax-shortcuts", { timeout: 5e3 });
+	const state = await page.evaluate(() => ({
+		visible: Array.from(document.querySelectorAll(".category-list > .nav-item")).filter((item) => getComputedStyle(item).display !== "none").map((item) => item.textContent.trim()),
+		header: Array.from(document.querySelectorAll("#nsk-head a")).filter((a) => getComputedStyle(a).display !== "none").map((a) => a.textContent.trim()),
+		shortcut: document.querySelector(".nsmax-shortcuts a")?.textContent.trim()
+	}));
+	assert.deepEqual(state.visible, ["日常", "技术", "情报", "测评", "交易", "拼车", "推广", "曝光", "内版"]);
+	assert.deepEqual(state.header, ["NodeSeek", "DeepFlood"]);
+	assert.equal(state.shortcut, "NQ");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("新用户面板：头像排成规整的 4 列网格，用户卡片图标保持原生间距", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("[data-nsmax-members]", { timeout: 5e3 });
+	const grid = await page.evaluate(() => {
+		const members = Array.from(document.querySelectorAll("[data-nsmax-member]"));
+		const tops = members.map((member) => Math.round(member.getBoundingClientRect().top));
+		return {
+			display: getComputedStyle(document.querySelector("[data-nsmax-members]")).display,
+			count: members.length,
+			firstRow: tops.filter((top) => top === tops[0]).length,
+			iconPadding: getComputedStyle(document.querySelector(".user-actions a")).paddingLeft
+		};
+	});
+	assert.deepEqual(grid, { display: "grid", count: 6, firstRow: 4, iconPadding: "0px" });
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("图片上传：默认上传到欧记图床并插入图片链接", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	await page.waitForSelector(".nspp-upload-status input[type=file]", { state: "attached", timeout: 5e3 });
+	await page.setInputFiles(".nspp-upload-status input[type=file]", { name: "shot.png", mimeType: "image/png", buffer: Buffer.from("89504e470d0a1a0a", "hex") });
+	await page.waitForFunction(() => document.querySelector(".md-editor textarea").value.includes("image.110726.com"), null, { timeout: 5e3 });
+	const result = await page.evaluate(() => ({
+		text: document.querySelector(".md-editor textarea").value,
+		upload: window.__uploads?.[0]
+	}));
+	assert.equal(result.text, "![image](<https://image.110726.com/api/i/abc123.png>)");
+	assert.equal(result.upload.url, "https://image.110726.com/api/public/uploads?publicVisible=false");
+	assert.equal(result.upload.headers.Origin, "https://image.110726.com");
+	assert.equal(result.upload.anonymous, true);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("独立主题 CSS：不安装脚本、只加载 theme/nodeseek-max.css 也能生效", async () => {
+	const css = fs.readFileSync(path.join(ROOT, "theme", "nodeseek-max.css"), "utf8");
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), script: false, css });
+	await settle(page, 300);
+	const state = await page.evaluate(() => ({
+		canvas: getComputedStyle(document.body).backgroundColor,
+		grid: getComputedStyle(document.body).backgroundImage,
+		row: getComputedStyle(document.querySelector(".post-list-item")).borderBottomStyle,
+		stat: getComputedStyle(document.querySelector(".user-stat")).backgroundColor,
+		font: getComputedStyle(document.body).fontFamily
+	}));
+	assert.equal(state.canvas, "rgb(250, 250, 250)");
+	assert.equal(state.grid, "none");
+	assert.equal(state.row, "solid");
+	assert.equal(state.stat, "rgba(0, 0, 0, 0.05)");
+	assert.match(state.font, /^"Inter Variable"/);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
 test("黑名单：原生通知页隐藏黑名单用户的 @ 与私信通知", async () => {
 	const seed = { "nspp:settings:www.nodeseek.com": { "private-messages": { enabled: false } } };
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification", { html: notificationPage(), seed });
@@ -318,6 +388,20 @@ test("设置面板：可打开、搜索，不再包含 AI 写作助手与快捷�
 	});
 	await page.waitForFunction(() => !document.getElementById("nspp-settings").shadowRoot.querySelector(".content").textContent.includes("现代化主题"), null, { timeout: 2e3 });
 	assert.ok((await text()).includes("NodeSeek 热榜"));
+	const look = await page.evaluate(() => {
+		const shadow = document.getElementById("nspp-settings").shadowRoot;
+		const toggle = shadow.querySelector("article input[type=checkbox]");
+		return {
+			switchWidth: getComputedStyle(toggle).width,
+			appearance: getComputedStyle(toggle).appearance,
+			dialogWidth: Math.round(shadow.querySelector("dialog").getBoundingClientRect().width),
+			card: getComputedStyle(shadow.querySelector("article")).borderTopLeftRadius
+		};
+	});
+	assert.equal(look.switchWidth, "36px");
+	assert.equal(look.appearance, "none");
+	assert.ok(look.dialogWidth >= 900, `设置面板宽度 ${look.dialogWidth}`);
+	assert.equal(look.card, "14px");
 	await settle(page, 200);
 	await shot(page, "settings");
 	assert.deepEqual(errors, []);
