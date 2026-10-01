@@ -86,6 +86,29 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 	assert.equal(hot.sticky, "sticky");
 	assert.equal(hot.tools, true);
 	assert.equal(hot.settingsGlass, true);
+	await page.waitForSelector("[data-nsmax-cta]", { timeout: 5e3 });
+	const card = await page.evaluate(() => ({
+		stat: getComputedStyle(document.querySelector(".user-stat")).backgroundColor,
+		cta: getComputedStyle(document.querySelector("[data-nsmax-cta]")).backgroundColor,
+		badge: getComputedStyle(document.querySelector(".notify-count")).backgroundColor,
+		quickReply: Array.from(document.querySelectorAll("button, a")).some((element) => element.textContent.trim() === "快速回复"),
+		ai: !!document.querySelector("[data-nspp-ai-launcher]"),
+		readTitle: (() => {
+			const title = document.querySelector(".post-list-item .post-title a");
+			title.classList.add("nspp-read");
+			return getComputedStyle(title).opacity;
+		})(),
+		headerBlur: getComputedStyle(document.querySelector("[data-nsmax-header]"), "::before").backdropFilter,
+		toolsBlur: getComputedStyle(document.getElementById("nspp-tools")).backdropFilter
+	}));
+	assert.equal(card.stat, "rgba(0, 0, 0, 0.05)");
+	assert.equal(card.cta, "rgb(24, 24, 27)");
+	assert.equal(card.badge, "rgb(24, 24, 27)");
+	assert.equal(card.quickReply, false);
+	assert.equal(card.ai, false);
+	assert.equal(card.readTitle, "0.6");
+	assert.equal(card.headerBlur, "none");
+	assert.equal(card.toolsBlur, "none");
 	// 悬浮工具栏停靠到内容区外侧，不再压住右侧栏。
 	const overlap = await page.evaluate(() => {
 		const tools = document.getElementById("nspp-tools").getBoundingClientRect();
@@ -122,8 +145,14 @@ test("帖子页：玻璃卡片、正文排版、阅读进度条与侧栏热榜",
 		lineHeight: getComputedStyle(document.querySelector(".nsk-post .post-content")).lineHeight,
 		floorPill: getComputedStyle(document.querySelector("a.floor-link")).borderTopLeftRadius,
 		cleanLink: document.querySelector(".post-content a").getAttribute("href"),
-		hotInSidebar: !!document.querySelector("#nsk-right-panel-container .nsmax-hot-panel")
+		hotInSidebar: !!document.querySelector("#nsk-right-panel-container .nsmax-hot-panel"),
+		titleOpacity: (() => {
+			const title = document.querySelector(".nsk-post-wrapper .post-title a");
+			title.classList.add("nspp-read");
+			return getComputedStyle(title).opacity;
+		})()
 	}));
+	assert.equal(info.titleOpacity, "1");
 	assert.equal(info.page, "post");
 	assert.equal(info.progress, true);
 	assert.equal(info.commentDivider, "solid");
@@ -221,9 +250,9 @@ test("侧栏导航：默认隐藏生活/Dev/贴图/沙盒，并加入 NQ（NodeQ
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
 	const nav = await page.evaluate(() => ({
-		visible: Array.from(document.querySelectorAll(".category-list > li")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.textContent.trim()),
+		visible: Array.from(document.querySelectorAll(".category-list > .nav-item")).filter((item) => getComputedStyle(item).display !== "none").map((item) => item.textContent.trim()),
 		shortcuts: Array.from(document.querySelectorAll(".nsmax-shortcuts a")).map((a) => [a.textContent.trim(), a.href, a.target, a.querySelector("svg").getBoundingClientRect().width > 0, a.querySelector("span").scrollWidth <= a.querySelector("span").clientWidth]),
-		inPanel: !!document.querySelector("#nsk-left-panel-container .nsk-panel > .nsmax-shortcuts"),
+		inPanel: !!document.querySelector("#nsk-left-panel-container .category-list > .nsmax-shortcuts"),
 		header: Array.from(document.querySelectorAll("#nsk-head a")).length
 	}));
 	assert.deepEqual(nav.visible, ["日常", "技术", "情报", "测评", "交易", "拼车", "推广", "曝光", "内版"]);
@@ -273,6 +302,28 @@ test("黑名单：紧凑消息中心开启时通知页加载无报错（模拟�
 	await context.close();
 });
 
+test("设置面板：可打开、搜索，不再包含 AI 写作助手与快捷回复", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("[data-nspp-settings-launcher]", { timeout: 5e3 });
+	await page.click("[data-nspp-settings-launcher]");
+	const text = () => page.evaluate(() => document.getElementById("nspp-settings").shadowRoot.querySelector(".content").textContent);
+	await page.waitForFunction(() => document.getElementById("nspp-settings")?.shadowRoot?.querySelector("dialog")?.open);
+	const all = await text();
+	assert.ok(all.includes("现代化主题") && all.includes("侧栏版块导航"));
+	assert.ok(!all.includes("AI 写作助手") && !all.includes("快捷回复"));
+	await page.evaluate(() => {
+		const search = document.getElementById("nspp-settings").shadowRoot.querySelector("input[type=search]");
+		search.value = "热榜";
+		search.dispatchEvent(new Event("input"));
+	});
+	await page.waitForFunction(() => !document.getElementById("nspp-settings").shadowRoot.querySelector(".content").textContent.includes("现代化主题"), null, { timeout: 2e3 });
+	assert.ok((await text()).includes("NodeSeek 热榜"));
+	await settle(page, 200);
+	await shot(page, "settings");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
 test("用户脚本元数据与版本一致", () => {
 	const source = fs.readFileSync(path.join(ROOT, "nodeseek-max.user.js"), "utf8");
 	const meta = fs.readFileSync(path.join(ROOT, "nodeseek-max.meta.js"), "utf8");
@@ -280,5 +331,7 @@ test("用户脚本元数据与版本一致", () => {
 	assert.ok(header);
 	assert.equal(meta.trim(), header.trim());
 	const version = header.match(/^\/\/ @version\s+(\S+)$/m)?.[1];
+	assert.match(header, /^\/\/ @icon\s+data:image\/svg\+xml;base64,/m);
+	assert.ok(header.indexOf("@match        https://www.nodeseek.com/*") < header.indexOf("@include"), "NodeSeek 应排在匹配列表最前");
 	assert.equal(source.match(/var NSMAX_VERSION = "([^"]+)";/)?.[1], version);
 });

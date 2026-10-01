@@ -9,7 +9,7 @@ const AVATAR = "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://ww
 const categories = [["daily", "日常"], ["tech", "技术"], ["info", "情报"], ["review", "测评"], ["trade", "交易"], ["carpool", "拼车"], ["promotion", "推广"], ["life", "生活"], ["dev", "Dev"], ["photo-share", "贴图"], ["expose", "曝光"], ["inside", "内版"], ["sandbox", "沙盒"]];
 const ICON = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='8'/></svg>";
 const headerCategories = categories.slice(0, 7).map(([slug, name]) => `<a href="/categories/${slug}">${name}</a>`).join("") + `<a href="https://www.deepflood.com/">DeepFlood</a>`;
-const leftNav = `<div id="nsk-left-panel-container"><div class="nsk-panel"><ul class="category-list">${categories.map(([slug, name]) => `<li><a href="/categories/${slug}">${ICON}<span>${name}</span></a></li>`).join("")}</ul></div></div>`;
+const leftNav = `<div id="nsk-left-panel-container"><div class="nsk-panel"><div class="category-list">${categories.map(([slug, name]) => `<div class="nav-item"><a href="/categories/${slug}">${ICON}<span>${name}</span></a></div>`).join("")}</div></div></div>`;
 
 function shell(title, main, { dark = false } = {}) {
 	return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}</style>
@@ -21,13 +21,15 @@ function shell(title, main, { dark = false } = {}) {
 }
 
 const sidebar = `<div id="nsk-right-panel-container">
-<div class="nsk-panel user-card"><div class="user-stat"><a href="/space/1">tester</a> · Lv 3</div></div>
+<div class="nsk-panel user-card"><div class="user-head"><a href="/space/1"><img class="avatar-normal" src="${AVATAR}" alt="tester"></a><div><a class="user-name" href="/space/1">tester</a><div class="user-actions"><a href="/board" title="签到">${ICON}</a><a href="/setting" title="设置">${ICON}</a><a href="/logout" title="退出">${ICON}</a></div></div></div>
+<div class="user-stat"><div class="stat-block"><div>${ICON}<span>等级 Lv 6</span></div><div>${ICON}<span>鸡腿 4132</span></div><a href="/notification#/message?mode=list">${ICON}<span>私信 </span><span class="notify-count">1</span></a></div><div class="stat-block"><div>${ICON}<span>主题帖 221</span></div><div>${ICON}<span>评论数 3945</span></div><a href="/notification#/atMe">${ICON}<span>@我 </span><span class="notify-count">5</span></a></div></div></div>
+<a class="btn-post" href="/new-discussion">+ 发帖</a>
 <div class="nsk-panel quick-access"><strong>快捷入口</strong><div><a href="/notification">通知</a> · <a href="/new-discussion">发帖</a></div></div>
 </div>`;
 
 const titles = ["出一台香港 CN2 GIA 小鸡，年付 99", "求推荐稳定的美西 VPS", "分享一个 Docker 一键部署脚本", "今天的 NodeSeek 签到抽奖结果", "Cloudflare Tunnel 踩坑记录", "【收】日本原生 IP 机器"];
 const listItems = titles.map((title, index) => `<li class="post-list-item"><a href="/space/${10 + index}"><img class="avatar-normal" src="${AVATAR}" alt="user${index}"></a>
-<div class="post-list-content"><div class="post-title"><a href="/post-${1000 + index}-1">${title}</a></div>
+<div class="post-list-content"><div class="post-title"><a href="/post-${1000 + index}-1"${index === 1 ? ' class="nspp-read"' : ""}>${title}</a></div>
 <div class="post-info"><a class="info-item info-author" href="/space/${10 + index}">user${index}</a><span class="info-item info-views">${120 + index * 7} 浏览</span><span class="info-item info-comments-count">${index * 3} 回复</span><span class="info-item info-last-comment-time">${index + 1} 分钟前</span></div></div><a class="post-category" href="/categories/${categories[index % 5][0]}">${categories[index % 5][1]}</a></li>`).join("");
 
 const listPage = (options) => shell("NodeSeek", `<div id="nsk-left"><div class="list-head"><span>新评论 | 新帖子</span></div><ul class="post-list">${listItems}</ul><div class="nsk-pager"><span class="pager-cur">1</span><a class="pager-pos" href="/page-2">2</a><a class="pager-next" href="/page-2">下一页</a></div></div>${sidebar}`, options);
@@ -40,7 +42,7 @@ const content = `<h2>配置说明</h2><p>这是一段正文，包含 <a href="/j
 const comment = (floor, uid, name, text) => `<li class="content-item" id="${floor}"><div class="nsk-content-meta-info"><a href="/space/${uid}"><img class="avatar-normal" src="${AVATAR}" alt="${name}"></a><div class="author-info"><a href="/space/${uid}">${name}</a> <span class="role-tag">Lv ${floor % 5 + 1}</span></div><span style="margin-left:auto"><a class="floor-link" href="#${floor}">#${floor}</a></span></div>
 <article class="post-content"><p>${text}</p></article><div class="comment-menu"><div class="menu-item" title="引用">引用</div><div class="menu-item" title="回复">回复</div></div></li>`;
 
-const postPage = (options) => shell("出一台香港 CN2 GIA 小鸡 - NodeSeek", `<div id="nsk-left"><div class="nsk-post-wrapper"><div class="post-title"><h1>出一台香港 CN2 GIA 小鸡，年付 99</h1></div>
+const postPage = (options) => shell("出一台香港 CN2 GIA 小鸡 - NodeSeek", `<div id="nsk-left"><div class="nsk-post-wrapper"><div class="post-title"><h1><a class="nspp-read" href="/post-1000-1">出一台香港 CN2 GIA 小鸡，年付 99</a></h1></div>
 <div class="nsk-post"><div class="nsk-content-meta-info"><a href="/space/10"><img class="avatar-normal" src="${AVATAR}" alt="seller"></a><div class="author-info"><a href="/space/10">seller</a></div><span style="margin-left:auto"><a class="floor-link" href="#0">#0</a></span></div>
 <article class="post-content">${content}</article><div class="signature">签名：机器不跑路</div></div>
 <ul class="comments">${comment(1, 11, "buyer", "收了，私信你")}${comment(2, 12, "passerby", "价格不错，帮顶")}${comment(3, 13, "curious", "线路怎么样？晚高峰丢包吗？")}</ul>
