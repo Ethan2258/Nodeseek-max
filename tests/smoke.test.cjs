@@ -281,6 +281,59 @@ test("字号默认大一号，用户卡片的私信 / @我 数字徽章与文字
 	await context.close();
 });
 
+test("用户资料卡：黑白灰配色、数字用主题等宽字体，NodeSeek++ 写死的系统字体换成主题字体", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await settle(page, 400);
+	await page.hover(".post-list-item .info-author");
+	await page.waitForSelector(".nspp-user-hover:not([hidden]) dd", { timeout: 8e3 });
+	await settle(page, 300);
+	const state = await page.evaluate(() => {
+		const card = document.querySelector(".nspp-user-hover:not([hidden])");
+		const style = (element) => element && getComputedStyle(element);
+		const actions = Array.from(card.querySelectorAll(".nspp-user-hover-actions > :is(a,button)")).map((element) => style(element).backgroundColor);
+		const badge = document.querySelector(".nspp-user-badges, .post-list-item .role-tag, .nspp-block-toggle");
+		return {
+			background: style(card).backgroundColor,
+			text: style(card).color,
+			dd: style(card.querySelector("dd:not([class])")).fontFamily,
+			score: card.querySelector(".nspp-user-hover-score strong") ? style(card.querySelector(".nspp-user-hover-score strong")).color : null,
+			actions,
+			badgeFont: badge ? style(badge).fontFamily : null
+		};
+	});
+	assert.equal(state.background, "rgb(255, 255, 255)");
+	assert.equal(state.text, "rgb(24, 24, 27)");
+	assert.match(state.dd, /JetBrains Mono/);
+	if (state.score) assert.equal(state.score, "rgb(24, 24, 27)");
+	// 操作按钮只用灰色或黑色，不再是绿 / 蓝 / 紫 / 红
+	for (const color of state.actions) assert.ok(!/rgb\((33, 128, 68|9, 105, 218|130, 80, 223|207, 52, 52)\)/.test(color), `按钮颜色 ${color}`);
+	if (state.badgeFont) assert.match(state.badgeFont, /^"?Inter/);
+	await shot(page, "user-hover");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("悬停：用户卡片统计项、帖子行、热榜条目、NQ 入口不出现胶囊底色，只改变文字", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector(".nsmax-hot-list li a", { timeout: 5e3 });
+	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
+	await settle(page, 400);
+	const transparent = "rgba(0, 0, 0, 0)";
+	for (const selector of ["[data-nsmax-stat] a:not([hidden])", "ul.post-list > li.post-list-item", ".nsmax-hot-list > li > a", ".nsmax-shortcut", ".nsk-pager a"]) {
+		const target = page.locator(selector).first();
+		await target.hover();
+		await settle(page, 260);
+		const background = await target.evaluate((element) => getComputedStyle(element).backgroundColor);
+		assert.equal(background, transparent, `${selector} 悬停时出现底色 ${background}`);
+	}
+	await page.locator("ul.post-list > li.post-list-item").first().hover();
+	await settle(page, 260);
+	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("ul.post-list > li.post-list-item .post-title a")).textDecorationLine), "underline");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
 test("翻页：页码不加边框圆圈，当前页只用加粗深色文字区分", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
@@ -409,7 +462,7 @@ test("新用户面板：头像排成规整的 4 列网格，用户卡片图标�
 	await context.close();
 });
 
-test("精简顶栏：只保留标志、标题与深浅色切换，窄屏恢复搜索框", async () => {
+test("精简顶栏：只保留标志、标题、搜索框与深浅色切换，隐藏版块与 DeepFlood", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("[data-nsmax-header-toggle]", { timeout: 5e3 });
 	await settle(page, 200);
@@ -426,7 +479,7 @@ test("精简顶栏：只保留标志、标题与深浅色切换，窄屏恢复�
 			apart: toggle.left - logo.right > 400
 		};
 	});
-	assert.deepEqual(layout.shown, ["site-logo", "beta", "tool-btn"]);
+	assert.deepEqual(layout.shown, ["site-logo", "beta", "search-box", "input", "tool-btn"]);
 	assert.equal(layout.toggleAttr, true);
 	assert.equal(layout.sameRow, true);
 	assert.equal(layout.apart, true);
@@ -437,7 +490,7 @@ test("精简顶栏：只保留标志、标题与深浅色切换，窄屏恢复�
 	await context.close();
 });
 
-test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动，宽屏同样精简顶栏", async () => {
+test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动，宽屏同样精简顶栏并保留搜索框", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification", { html: notificationPage({ leftNav: false }) });
 	await page.waitForSelector("[data-nsmax-header-toggle]", { timeout: 5e3 });
 	// 记录根元素属性与顶栏隐藏标记的变化次数：稳定后不应再来回切换。
@@ -457,7 +510,7 @@ test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动�
 	assert.equal(state.flips, 0);
 	assert.equal(state.sidenav, false);
 	assert.equal(state.shortcutInHeader, false);
-	assert.deepEqual(state.shown, ["site-logo", "beta", "tool-btn"]);
+	assert.deepEqual(state.shown, ["site-logo", "beta", "search-box", "tool-btn"]);
 	assert.deepEqual(errors, []);
 	await context.close();
 });

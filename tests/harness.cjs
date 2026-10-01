@@ -73,6 +73,7 @@ const apiResponses = {
 		{ id: 2, post_id: 2002, commenter_id: 7, commenter_name: "friend", post_title: "正常讨论", content: "<p>@tester 你怎么看</p>", viewed: 1, created_at: new Date().toISOString() }
 	] },
 	"/api/notification/reply-to-me/list": { success: true, replyList: [] },
+	"/api/account/getInfo/": { success: true, detail: { member_id: 10, member_name: "user0", rank: 3, coin: 1107, stardust: 19, nPost: 46, nComment: 867, follows: 0, fans: 0, created_at: new Date(Date.now() - 65 * 864e5).toISOString() } },
 	"/api/notification/message/list": { success: true, msgArray: [
 		{ id: 11, sender_id: 42, receiver_id: 1, sender_name: "spammer", receiver_name: "tester", content: "加我微信", viewed: 0, created_at: new Date().toISOString() },
 		{ id: 12, sender_id: 7, receiver_id: 1, sender_name: "friend", receiver_name: "tester", content: "周末一起测速", viewed: 1, created_at: new Date().toISOString() }
