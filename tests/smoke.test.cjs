@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { launch, open, ROOT } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, messageCenterPage, settingPage } = require("./fixtures/pages.cjs");
 
 const SHOTS = process.env.NSMAX_SCREENSHOTS;
 let browser;
@@ -101,7 +101,7 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 		headerBlur: getComputedStyle(document.querySelector("[data-nsmax-header]"), "::before").backdropFilter,
 		toolsBlur: getComputedStyle(document.getElementById("nspp-tools")).backdropFilter
 	}));
-	assert.equal(card.stat, "rgb(242, 244, 247)");
+	assert.equal(card.stat, "rgb(250, 251, 252)");
 	assert.equal(card.cta, "rgb(28, 28, 30)");
 	assert.equal(card.badge, "rgb(28, 28, 30)");
 	assert.equal(card.quickReply, false);
@@ -515,8 +515,14 @@ test("侧栏导航：导航条目不是链接时也能按文字识别（隐藏�
 	await context.close();
 });
 
-test("新用户面板：头像排成规整的 4 列网格，用户卡片图标保持原生间距", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+test("新用户面板：默认整块隐藏；关闭隐藏后头像排成规整的 4 列网格，用户卡片图标保持原生间距", async () => {
+	let { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("[data-nsmax-hidden-panel]", { state: "attached", timeout: 5e3 });
+	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nsk-new-member-board")).display), "none");
+	assert.deepEqual(errors, []);
+	await context.close();
+	const seed = { "nspp:settings:www.nodeseek.com": { "modern-theme": { hideNewMembers: false } } };
+	({ context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed }));
 	await page.waitForSelector("[data-nsmax-members]", { timeout: 5e3 });
 	const grid = await page.evaluate(() => {
 		const members = Array.from(document.querySelectorAll("[data-nsmax-member]"));
@@ -683,7 +689,7 @@ test("独立主题 CSS：不安装脚本、只加载 theme/nodeseek-max.css 也�
 	assert.equal(state.canvas, "rgb(247, 248, 250)");
 	assert.equal(state.grid, "none");
 	assert.equal(state.row, "solid");
-	assert.equal(state.stat, "rgb(242, 244, 247)");
+	assert.equal(state.stat, "rgb(250, 251, 252)");
 	assert.match(state.font, /^"Inter Variable"/);
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -836,7 +842,7 @@ test("评论区：圆角方形头像，正文与名字左对齐，顶部有「�
 	await context.close();
 });
 
-test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子行小头像常规字重、热榜单行带回复数、主楼正文与作者名对齐", async () => {
+test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子行小头像、标题中等字重、热榜单行带回复数、主楼正文与作者名对齐", async () => {
 	let { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector(".nsmax-hot-list li a .nsmax-hot-count", { timeout: 5e3 });
 	await settle(page, 300);
@@ -859,7 +865,7 @@ test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子�
 	assert.equal(list.searchBorder, "rgb(224, 226, 232)");
 	assert.equal(list.cta, "999px");
 	assert.equal(list.avatar, 24);
-	assert.equal(list.titleWeight, "400");
+	assert.equal(list.titleWeight, "500");
 	assert.equal(list.hotWrap, "nowrap");
 	assert.match(list.hotCount, /^\d+$/);
 	assert.equal(list.activeTab, "rgb(28, 28, 30)");
@@ -955,6 +961,119 @@ test("侧栏热榜：上次的榜单存在本地，刷新后直接显示，未�
 	assert.equal(state.first, "缓存热帖 1");
 	await settle(page, 300);
 	assert.equal(await page.evaluate(() => window.__gmRequests.filter((url) => url.includes("api.bimg.eu.org/hot")).length), 0);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("加载：页面加载完才插入的热榜面板按上次实测高度预留位置，插入时下面的卡片不移动；其余榜单空闲时预取", async () => {
+	// 页面末尾的内联脚本记下模块启动前「快捷入口」卡片的位置（热榜插在它前面）；第一次打开记录面板高度，刷新后应原地填入
+	const probe = `<script>window.__cardTop = document.querySelector(".quick-access").getBoundingClientRect().top;</script>`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage().replace("</body>", `${probe}</body>`) });
+	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
+	await settle(page, 400);
+	const first = await page.evaluate(() => ({ before: window.__cardTop, after: document.querySelector(".quick-access").getBoundingClientRect().top }));
+	assert.ok(first.after - first.before > 100, "第一次打开没有记录，面板插入会把下面的卡片往下推");
+	// 其余两个榜单在空闲时预取并存到本地
+	await page.waitForFunction(() => ["daily", "weekly"].every((kind) => window.__gmRequests.some((url) => url.includes(`/${kind}.json`))), null, { timeout: 8e3 });
+	await settle(page, 200);
+	await page.reload();
+	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
+	await settle(page, 1800);
+	const second = await page.evaluate(() => ({
+		before: window.__cardTop,
+		after: document.querySelector(".quick-access").getBoundingClientRect().top,
+		// 预取的榜单已缓存且未过期：刷新后不再请求
+		requests: window.__gmRequests.filter((url) => /\/(daily|weekly)\.json/.test(url)).length
+	}));
+	assert.ok(Math.abs(second.after - second.before) <= 1, `快捷入口卡片移动了 ${Math.round(second.after - second.before)}px`);
+	assert.equal(second.requests, 0);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("消息中心：私信与通知统一主题配色——一张卡片、对方气泡白底细边框、自己的气泡用强调色、发送按钮为胶囊、无绿色", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
+	await page.waitForSelector(".nspp-messages-message.is-mine .nspp-messages-bubble", { timeout: 8e3 });
+	await settle(page, 300);
+	const state = await page.evaluate(() => {
+		const css = (selector) => getComputedStyle(document.querySelector(selector));
+		return {
+			frame: css(".nspp-messages").borderTopLeftRadius,
+			container: css(".nspp-messages-container").borderTopWidth,
+			mine: css(".nspp-messages-message.is-mine .nspp-messages-bubble").backgroundColor,
+			theirs: css(".nspp-messages-message:not(.is-mine):not(.is-system) .nspp-messages-bubble").backgroundColor,
+			theirsBorder: css(".nspp-messages-message:not(.is-mine):not(.is-system) .nspp-messages-bubble").borderTopColor,
+			send: css(".nspp-messages-send").borderTopLeftRadius,
+			sendBackground: css(".nspp-messages-send").backgroundColor,
+			profile: css(".nspp-chat-profile").backgroundImage
+		};
+	});
+	assert.equal(state.frame, "12px");
+	assert.equal(state.container, "0px");
+	assert.equal(state.mine, "rgb(28, 28, 30)");
+	assert.equal(state.theirs, "rgb(255, 255, 255)");
+	assert.equal(state.theirsBorder, "rgb(224, 226, 232)");
+	assert.equal(state.send, "999px");
+	assert.equal(state.sendBackground, "rgb(28, 28, 30)");
+	assert.equal(state.profile, "none");
+	await shot(page, "messages");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("iOS Safari（Userscripts 等只有异步 GM.* 的环境）：主题与侧栏热榜正常，设置存到站点 localStorage 并在刷新后保留", async () => {
+	// 真实站点手机布局的顶栏不显示版块链接；模拟页的顶栏不是响应式的，这里补上同样的手机样式
+	const css = "@media (max-width:800px){#nsk-head .nsk-container>a:not(.site-logo){display:none}.search-box input{width:120px}#nsk-body{padding:12px 8px}}";
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), css, gm: "async", viewport: { width: 390, height: 844 } });
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await page.waitForSelector("#nspp-tools button", { timeout: 5e3 });
+	const state = await page.evaluate(() => ({
+		sync: typeof window.GM_getValue,
+		canvas: getComputedStyle(document.body).backgroundColor,
+		overflow: document.documentElement.scrollWidth - window.innerWidth
+	}));
+	assert.equal(state.sync, "undefined");
+	assert.equal(state.canvas, "rgb(247, 248, 250)");
+	assert.ok(state.overflow <= 0, `手机宽度下页面横向溢出 ${state.overflow}px`);
+	// 通过 GM.xmlHttpRequest 取到热榜（右侧栏在手机布局被站点隐藏，这里看请求记录）
+	await page.waitForFunction(() => window.__gmRequests.some((url) => url.includes("api.bimg.eu.org")), null, { timeout: 5e3 });
+	// 写入设置后刷新仍然生效
+	await page.evaluate(() => localStorage.setItem("nsmax:store:nspp:settings:www.nodeseek.com", JSON.stringify({ "modern-theme": { enabled: false } })));
+	await page.reload();
+	await page.waitForSelector("#nspp-tools", { state: "attached", timeout: 5e3 });
+	assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-theme")), false);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("评论框：「发布评论」按钮不伸出编辑器（站点给提交行设 100% 宽、给按钮设浮动与负外边距也一样），引用行在编辑器里是灰色而非绿色", async () => {
+	const css = ".md-editor .submit-row{width:100%}.md-editor button.submit{float:right;margin-right:-14px;position:relative;left:6px}";
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), css });
+	await page.waitForSelector("[data-nsmax-submit-row]", { timeout: 5e3 });
+	await page.evaluate(() => document.querySelector(".md-editor textarea").insertAdjacentHTML("beforebegin", "<div class=\"CodeMirror\"><pre class=\"CodeMirror-line\"><span class=\"cm-quote cm-quote-1\">&gt; 引用别人的楼层内容</span> <span class=\"cm-link\">@buyer</span></pre></div>"));
+	await settle(page, 300);
+	const state = await page.evaluate(() => {
+		const editor = document.querySelector(".md-editor").getBoundingClientRect();
+		const button = document.querySelector(".md-editor button.submit").getBoundingClientRect();
+		const muted = getComputedStyle(document.body).getPropertyValue("--nsmax-muted").trim();
+		const probe = document.createElement("span");
+		probe.style.color = muted;
+		document.body.append(probe);
+		const mutedRgb = getComputedStyle(probe).color;
+		probe.remove();
+		return {
+			overflowRight: Math.round(button.right - editor.right),
+			insideBottom: button.bottom <= editor.bottom,
+			quote: getComputedStyle(document.querySelector(".cm-quote")).color,
+			link: getComputedStyle(document.querySelector(".cm-link")).color,
+			mutedRgb
+		};
+	});
+	assert.ok(state.overflowRight <= -6, `按钮超出编辑器右边缘 ${state.overflowRight}px`);
+	assert.equal(state.insideBottom, true);
+	assert.equal(state.quote, state.mutedRgb);
+	assert.notEqual(state.link, "rgb(0, 0, 204)");
+	await shot(page, "editor");
 	assert.deepEqual(errors, []);
 	await context.close();
 });

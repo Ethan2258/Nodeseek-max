@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.4.1
+// @version      1.5.0
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -94,6 +94,7 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
+// @grant        GM.xmlHttpRequest
 // @grant        unsafeWindow
 // @run-at       document-start
 // @noframes
@@ -465,7 +466,7 @@ var nsmaxRedirecting = false;
 	// 并像论坛模块一样展开多层嵌套 /jump 与相对地址，避免被当作主机名解析。
 	var forumJump = () => {
 		try {
-			const settings = typeof GM_getValue === "function" ? GM_getValue(`nspp:settings:${location.hostname}`, {}) : {};
+			const settings = typeof GM_getValue === "function" ? GM_getValue(`nspp:settings:${location.hostname}`, {}) : JSON.parse(localStorage.getItem(`nsmax:store:nspp:settings:${location.hostname}`) || "{}");
 			const reading = settings?.["reading-content"];
 			if (reading?.enabled === false || reading?.cleanLinks === false) return;
 			let url = new URL(location.href);
@@ -883,7 +884,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.4.1";
+	var NSMAX_VERSION = "1.5.0";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -931,24 +932,87 @@ var nsmaxRedirecting = false;
 	var _GM_notification = (() => typeof GM_notification != "undefined" ? GM_notification : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
-	var _GM_xmlhttpRequest = (() => typeof GM_xmlhttpRequest != "undefined" ? GM_xmlhttpRequest : void 0)();
+	// iOS Safari 的 Userscripts 等扩展只提供 Promise 风格的 GM.xmlHttpRequest（同样接受 onload 等回调），这里包成同一个接口。
+	var _GM_xmlhttpRequest = (() => {
+		if (typeof GM_xmlhttpRequest != "undefined") return GM_xmlhttpRequest;
+		if (typeof GM != "undefined" && typeof GM?.xmlHttpRequest === "function") return (details) => {
+			let request;
+			try {
+				request = GM.xmlHttpRequest(details);
+				request?.catch?.(() => {});
+			} catch (error) {
+				setTimeout(() => details.onerror?.(error));
+			}
+			return { abort() {
+				try {
+					request?.abort?.();
+				} catch {}
+			} };
+		};
+	})();
 	var _unsafeWindow = (() => typeof unsafeWindow != "undefined" ? unsafeWindow : void 0)();
 	var _monkeyWindow = (() => window)();
 	var memory = new Map();
 	var getter = () => typeof _GM_getValue === "function" ? _GM_getValue : _monkeyWindow.GM_getValue;
 	var setter = () => typeof _GM_setValue === "function" ? _GM_setValue : _monkeyWindow.GM_setValue;
 	var unsafeWindow$1 = _unsafeWindow || _monkeyWindow.unsafeWindow || window;
+	// 存储优先用油猴的同步 GM_getValue / GM_setValue。iOS Safari 的 Userscripts 等扩展只有异步的 GM.getValue，
+	// 这时改用站点自己的 localStorage（同步读写、按站点隔离），键名加前缀，不和站点的数据混在一起。
+	var NSMAX_STORE_PREFIX = "nsmax:store:";
+	var localStore = (() => {
+		try {
+			const store = window.localStorage;
+			store.setItem(`${NSMAX_STORE_PREFIX}probe`, "1");
+			store.removeItem(`${NSMAX_STORE_PREFIX}probe`);
+			return store;
+		} catch {
+			return null;
+		}
+	})();
 	function hasStorage() {
-		return typeof getter() === "function" && typeof setter() === "function";
+		return typeof getter() === "function" && typeof setter() === "function" || !!localStore;
 	}
 	function GM_getValue$1(key, fallback) {
 		const get = getter();
-		return typeof get === "function" ? get(key, fallback) : memory.has(key) ? structuredClone(memory.get(key)) : fallback;
+		if (typeof get === "function") return get(key, fallback);
+		if (localStore) try {
+			const raw = localStore.getItem(NSMAX_STORE_PREFIX + key);
+			return raw === null ? fallback : JSON.parse(raw);
+		} catch {
+			return fallback;
+		}
+		return memory.has(key) ? structuredClone(memory.get(key)) : fallback;
 	}
 	function GM_setValue$1(key, value) {
 		const set = setter();
 		if (typeof set === "function") set(key, value);
+		else if (localStore) try {
+			localStore.setItem(NSMAX_STORE_PREFIX + key, JSON.stringify(value));
+		} catch {
+			memory.set(key, structuredClone(value));
+		}
 		else memory.set(key, structuredClone(value));
+	}
+	// 页面配置（登录用户、帖子数据）：油猴提供 unsafeWindow 时直接读；脚本跑在隔离环境（iOS Userscripts 默认如此）
+	// 读不到页面变量时，插入一段页面脚本把 window.__config__ 序列化到根元素属性上再取回。页面解析完后只尝试一次并缓存。
+	var nsmaxBridgedConfig;
+	function nsmaxConfig() {
+		const direct = unsafeWindow$1.__config__;
+		if (direct || unsafeWindow$1 !== window) return direct;
+		if (nsmaxBridgedConfig !== void 0) return nsmaxBridgedConfig || void 0;
+		if (document.readyState === "loading") return void 0;
+		nsmaxBridgedConfig = null;
+		try {
+			const root = document.documentElement;
+			const script = document.createElement("script");
+			script.textContent = "document.documentElement.setAttribute(\"data-nsmax-config\", JSON.stringify(window.__config__ || null))";
+			(document.head || root).append(script);
+			script.remove();
+			const raw = root.getAttribute("data-nsmax-config");
+			root.removeAttribute("data-nsmax-config");
+			if (raw) nsmaxBridgedConfig = JSON.parse(raw);
+		} catch {}
+		return nsmaxBridgedConfig || void 0;
 	}
 	function GM_registerMenuCommand$1(label, callback) {
 		const register = typeof _GM_registerMenuCommand === "function" ? _GM_registerMenuCommand : _monkeyWindow.GM_registerMenuCommand;
@@ -1826,7 +1890,16 @@ var nsmaxRedirecting = false;
 						const value = draft[feature.id][key];
 						const field = element$1("label");
 						field.className = "field";
-						field.append(element$1("span", metadata?.label || key));
+						// 标签里括号中的补充说明单独成一行小号灰字（NodeSeek Max）：主标签更醒目，长说明不挤在一行里。
+						const labelText = metadata?.label || key;
+						const hintMatch = labelText.match(/^(.+?)\s*[（(]([^）)]*)[）)]\s*$/);
+						const labelNode = element$1("span", hintMatch ? hintMatch[1] : labelText);
+						if (hintMatch) {
+							const hint = element$1("small", hintMatch[2]);
+							hint.className = "field-hint";
+							labelNode.append(hint);
+						}
+						field.append(labelNode);
 						let control;
 						if (metadata?.type === "select") {
 							control = element$1("select");
@@ -4161,7 +4234,7 @@ var nsmaxRedirecting = false;
 					return entries;
 				};
 				const record = (name) => {
-					const pd = unsafeWindow$1.__config__?.postData;
+					const pd = nsmaxConfig()?.postData;
 					const path = pd?.postId ? key(`/post-${pd.postId}-1`) : key(location.href);
 					if (!path) return;
 					ctx.set(name, [{
@@ -4687,7 +4760,7 @@ var nsmaxRedirecting = false;
 	var checked = 0;
 	var loading;
 	var pending = new Set();
-	var ownId = () => unsafeWindow$1.__config__?.user?.member_id;
+	var ownId = () => nsmaxConfig()?.user?.member_id;
 	var render = () => controls.forEach(({ id, button }) => {
 		button.disabled = !!loading || pending.has(id);
 		button.textContent = followed.has(id) ? "取消关注" : "关注";
@@ -10148,7 +10221,7 @@ var nsmaxRedirecting = false;
 		}
 	};
 	function currentUser() {
-		return unsafeWindow$1.__config__?.user;
+		return nsmaxConfig()?.user;
 	}
 	function button$2(label, fn, ctx) {
 		const el = document.createElement("button");
@@ -11231,7 +11304,7 @@ var nsmaxRedirecting = false;
 		return target.href;
 	}
 	function pageConfig() {
-		return unsafeWindow$1.__config__;
+		return nsmaxConfig();
 	}
 	var extraFeatures = [{
 		id: "footprints",
@@ -11552,7 +11625,7 @@ var nsmaxRedirecting = false;
 			defaults: { enabled: true },
 			mount(ctx) {
 				const initialize = () => {
-					const uid = unsafeWindow$1.__config__?.user?.member_id;
+					const uid = nsmaxConfig()?.user?.member_id;
 					if (!uid) return;
 					const cacheKey = `counts:${uid}`;
 					const originals = new Map();
@@ -11893,7 +11966,7 @@ var nsmaxRedirecting = false;
 			const hideNotices = ctx.get("hideNotifications") === true;
 			const onNotificationPage = () => location.pathname === "/notification";
 			const currentUser = () => {
-				const uid = unsafeWindow$1.__config__?.user?.member_id;
+				const uid = nsmaxConfig()?.user?.member_id;
 				return uid ? String(uid) : "";
 			};
 			const persist = () => {
@@ -11953,7 +12026,7 @@ var nsmaxRedirecting = false;
 				return fetching;
 			}
 			const stop = ctx.watch(() => {
-				const ownId = unsafeWindow$1.__config__?.user?.member_id;
+				const ownId = nsmaxConfig()?.user?.member_id;
 				if (!ownId) return;
 				for (const [anchor, item] of buttons) if (!anchor.isConnected) {
 					item.button.remove();
@@ -11995,7 +12068,7 @@ var nsmaxRedirecting = false;
 							const action = remove ? "解除屏蔽" : "屏蔽";
 							if (!await confirmDialog(`${action} ${name}？`, remove ? "解除后将恢复显示该用户的内容。" : "屏蔽后将按站点规则隐藏该用户的内容，可随时解除。", `确认${action}`, ctx.signal)) return;
 							if (Date.now() - checked > 3e4) await refresh();
-							if (blocked.has(id) !== remove || unsafeWindow$1.__config__?.user?.member_id !== ownId) {
+							if (blocked.has(id) !== remove || nsmaxConfig()?.user?.member_id !== ownId) {
 								ctx.notify("状态已变化，请重新操作");
 								return;
 							}
@@ -23514,7 +23587,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		let listPageSignature = "";
 		let threadKey = "", threadBusy = false;
 		let routeController = new AbortController(), threadController = new AbortController();
-		const owner = () => unsafeWindow$1.__config__?.user?.member_id;
+		const owner = () => nsmaxConfig()?.user?.member_id;
 		const panelValid = () => !ctx.signal.aborted && !root.hidden && owner() === account;
 		const valid = () => panelValid() && category === "message";
 		const signal = () => AbortSignal.any([ctx.signal, routeController.signal]);
@@ -24187,7 +24260,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			if (location.pathname !== "/notification") return;
 			let account, dispose;
 			const stop = ctx.watch(() => {
-				const uid = unsafeWindow$1.__config__?.user?.member_id;
+				const uid = nsmaxConfig()?.user?.member_id;
 				if (uid === account) return;
 				dispose?.();
 				dispose = void 0;
@@ -24555,12 +24628,27 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const anchor = document.querySelector(".nsk-panel.quick-access");
 			const sidebar = document.querySelector("#nsk-right-panel-container");
 			const firstPanel = Array.from(document.querySelectorAll(".nsk-panel:not(.nsmax-hot-panel)")).find((element) => !element.closest(".nsk-post, ul.comments, ul.post-list, .md-editor"));
+			// 同一帧里撤掉页面解析阶段预留的空位，面板正好填进去，周围内容不移动；
+			// 同时量出面板把后面的卡片推开了多少，下次按这个位移预留（第一次使用时没有记录，不预留）。
+			const next = anchor?.parentElement ? anchor : sidebar?.firstElementChild;
+			render();
+			releaseReserve("hot");
+			const before = next?.getBoundingClientRect().top;
 			if (anchor?.parentElement) anchor.before(panel);
 			else if (sidebar) sidebar.prepend(panel);
 			else if (firstPanel?.parentElement) firstPanel.after(panel);
 			else return;
-			render();
+			if (next && before !== void 0) {
+				const shift = Math.round(next.getBoundingClientRect().top - before);
+				if (shift > 0 && Math.abs((ctx.get("reserve-shift") || 0) - shift) > 1) ctx.set("reserve-shift", shift);
+			}
 			store.load(kind);
+			// 其余两个榜单在浏览器空闲时预取（有本地缓存且未过期的不会请求），切换标签时直接显示。
+			const idle = typeof requestIdleCallback === "function" ? (fn) => requestIdleCallback(fn, { timeout: 5e3 }) : (fn) => setTimeout(fn, 1500);
+			idle(() => {
+				if (ctx.signal.aborted) return;
+				for (const [other] of hotRankingTabs) if (other !== kind) store.load(other);
+			});
 		};
 		const stop = ctx.watch(place);
 		return () => {
@@ -24875,7 +24963,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 	}
 	// 用户卡、发帖按钮、新用户面板的标记：模块级单例，页面解析阶段右侧栏一解析完就先标记，主题模块启动后继续跟踪。
 	var nsmaxCardMarker = null;
-	function createCardMarker() {
+	function createCardMarker({ hideNewMembers = false } = {}) {
 		let attempts = 0;
 		const marked = [];
 		const markCard = () => {
@@ -24898,10 +24986,16 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 		// 「欢迎新用户」：找出每个新用户条目（含头像与名字的最小元素），把它们的公共容器排成规整网格。
 		let memberAttempts = 0;
 		const markMembers = () => {
-			if (document.querySelector("[data-nsmax-members]") || memberAttempts >= 20) return;
+			if (document.querySelector("[data-nsmax-members], [data-nsmax-hidden-panel]") || memberAttempts >= 20) return;
 			memberAttempts++;
 			const panel = Array.from(document.querySelectorAll(".nsk-panel, #nsk-right-panel-container > *")).find((element) => element.textContent.includes("新用户") && element.querySelector("img"));
 			if (!panel) return;
+			// 「欢迎新用户」面板默认整块隐藏（设置里可关闭）；只加属性、不删元素，站点脚本照常工作。
+			if (hideNewMembers) {
+				panel.setAttribute("data-nsmax-hidden-panel", "");
+				marked.push(panel);
+				return;
+			}
 			const items = [];
 			// 只取指向用户主页的头像，避免把标题里的表情图片当成新用户。
 			let images = Array.from(panel.querySelectorAll("a[href*=\"/space/\"] img, img[src*=\"/avatar/\"]"));
@@ -24932,7 +25026,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 				markMembers();
 			},
 			clear() {
-				for (const element of marked) for (const attribute of ["data-nsmax-stat", "data-nsmax-usercard", "data-nsmax-cta", "data-nsmax-members", "data-nsmax-members-row", "data-nsmax-member"]) element?.removeAttribute(attribute);
+				for (const element of marked) for (const attribute of ["data-nsmax-hidden-panel", "data-nsmax-stat", "data-nsmax-usercard", "data-nsmax-cta", "data-nsmax-members", "data-nsmax-members-row", "data-nsmax-member"]) element?.removeAttribute(attribute);
 				marked.length = 0;
 			}
 		};
@@ -25307,8 +25401,16 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 					shortcutGroup?.remove();
 					const sample = nav.items.find(({ item }) => !item.hasAttribute("data-nsmax-hidden"))?.link;
 					shortcutGroup = buildShortcuts(shortcuts, sample);
+					// 撤掉页面解析阶段预留的空位后再插入，并量出导航卡片因此变高了多少，下次按这个高度预留。
+					const host = /^(UL|OL)$/.test(nav.container.tagName) ? nav.container.parentElement : nav.container;
+					releaseReserve("nav");
+					const before = host?.getBoundingClientRect().height;
 					if (/^(UL|OL)$/.test(nav.container.tagName)) nav.container.after(shortcutGroup);
 					else nav.container.append(shortcutGroup);
+					if (host && before !== void 0) {
+						const grow = Math.round(host.getBoundingClientRect().height - before);
+						if (grow > 0 && Math.abs((ctx.get("reserve-shift") || 0) - grow) > 1) ctx.set("reserve-shift", grow);
+					}
 				}
 				syncVisibility();
 				return true;
@@ -25584,9 +25686,9 @@ ${NSMAX_ROOT}[data-nsmax-list=rows] ul.comments>li.content-item:is(:target,:has(
 @keyframes nsmax-target-fade{from{background-color:var(--nsmax-fill)}to{background-color:transparent}}
 ${NSMAX_ROOT} :is(ul.post-list>li.post-list-item,ul.comments>li,.nsk-panel)[hidden]{display:none!important}
 ${NSMAX_ROOT}:not([data-nsmax-grid]),${NSMAX_ROOT}:not([data-nsmax-grid]) body{background-image:none!important}
-${NSMAX_ROOT} .post-list-item .post-category{border-radius:999px;border:1px solid var(--nsmax-stroke);background-color:transparent;color:var(--nsmax-text-2);font-size:12.5px;line-height:1.7;padding:1px 10px}
+${NSMAX_ROOT} .post-list-item .post-category{border-radius:999px;border:1px solid var(--nsmax-stroke);background-color:var(--nsmax-panel-alt);color:var(--nsmax-text-2);font-size:12px;line-height:1.75;padding:1px 9px}
 ${NSMAX_ROOT} .post-list-item .post-category:hover{color:var(--nsmax-text);border-color:var(--nsmax-stroke-strong)}
-${NSMAX_ROOT} .post-list-item .post-title a{color:var(--nsmax-text);font-weight:400;letter-spacing:0}
+${NSMAX_ROOT} .post-list-item .post-title a{color:var(--nsmax-text);font-weight:500;letter-spacing:0}
 ${NSMAX_ROOT} .post-list-item .post-title a:hover{color:var(--nsmax-text)}
 /* 帖子行（参考 sb.sb）：24px 圆角方形头像与标题第一行对齐 */
 ${NSMAX_ROOT}:not([data-nsmax-list=site]) ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item) img:is(.avatar-normal,.avatar,[class*=avatar]){width:24px!important;height:24px!important;min-width:0!important}
@@ -25605,8 +25707,10 @@ ${NSMAX_ROOT} button.submit.btn{background:var(--nsmax-accent);color:var(--nsmax
 ${NSMAX_ROOT} button.submit.btn:hover{opacity:.92}
 ${NSMAX_ROOT}[data-nsmax-style=flat] button.submit.btn{box-shadow:0 1px 2px rgb(0 0 0/.08)}
 ${NSMAX_ROOT} :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *){border-radius:var(--nsmax-radius-sm)}
-${NSMAX_ROOT}[data-nsmax-style=flat] :is(input[type=text],input[type=search],select):not(.CodeMirror *,.md-editor *){background-color:var(--nsmax-fill);border-color:transparent}
-${NSMAX_ROOT} :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *):focus{border-color:var(--nsmax-accent);box-shadow:0 0 0 4px var(--nsmax-accent-soft);outline:none}
+/* 全站输入框（参考 sb.sb）：浅底 + 1px 细边框，悬停边框加深，聚焦时卡片底色加柔和光晕；编辑器与各组件自己的输入框另有规则 */
+${NSMAX_ROOT}[data-nsmax-style=flat] :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],select):not(.CodeMirror *,.md-editor *){background-color:var(--nsmax-panel-alt);border:1px solid var(--nsmax-stroke)}
+${NSMAX_ROOT}[data-nsmax-style=flat] :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],select):not(.CodeMirror *,.md-editor *):hover{border-color:var(--nsmax-stroke-strong)}
+${NSMAX_ROOT} :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *):focus{background-color:var(--nsmax-card);border-color:var(--nsmax-stroke-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent);outline:none}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply){overflow:hidden;background-color:var(--nsmax-card)!important;background-image:none!important;border:1px solid var(--nsmax-stroke)!important;border-radius:var(--nsmax-radius)!important;box-shadow:none!important;color:var(--nsmax-text)}
 ${NSMAX_ROOT} .md-editor .mde-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:1px;padding:4px 8px!important;background:transparent!important;border:0!important;border-bottom:1px solid var(--nsmax-divider)!important}
 ${NSMAX_ROOT} .md-editor :is(.CodeMirror,.CodeMirror-scroll,.CodeMirror-sizer,textarea){background:transparent!important;color:var(--nsmax-text)!important}
@@ -25678,6 +25782,50 @@ ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body a[href^="#/"]${nsmaxSettingSkip
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body a[href^="#/"]${nsmaxSettingSkip}:hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body a[href^="#/"]:is(.router-link-active,.router-link-exact-active,.active,[aria-current])${nsmaxSettingSkip}{background:var(--nsmax-fill);color:var(--nsmax-text);font-weight:600}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body img:is([class*=avatar],[src*="/avatar/"])${nsmaxSettingSkip}{border-radius:20%;box-shadow:0 0 0 1px var(--nsmax-divider)}
+/* 评论编辑器的提交行：站点若给这一行设了 width:100% 或给按钮设了浮动 / 外边距 / 定位，加上内边距后按钮会伸出编辑器边缘；
+   这里固定为 border-box、按钮回到正常流并靠右，任何宽度下都在卡片内 */
+${NSMAX_ROOT} .md-editor [data-nsmax-submit-row]{box-sizing:border-box!important;width:auto!important;max-width:100%!important;min-width:0;min-height:50px;padding:8px 10px!important;overflow:hidden}
+${NSMAX_ROOT} .md-editor [data-nsmax-submit-row]>:is(button,.btn){position:static!important;float:none!important;inset:auto!important;transform:none!important;margin:0!important;max-width:100%}
+${NSMAX_ROOT} .md-editor [data-nsmax-submit-row]>:is(button.submit,.btn.submit,button:last-child){margin-left:auto!important}
+${NSMAX_ROOT} .md-editor .nspp-upload-choose{width:32px;height:32px;min-height:32px;border-radius:8px;color:var(--nsmax-muted)}
+${NSMAX_ROOT} .md-editor .nspp-upload-choose:hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
+${NSMAX_ROOT} .md-editor .nspp-upload-status{color:var(--nsmax-muted);font-size:12px}
+${NSMAX_ROOT} .md-editor .nspp-upload-status input[type=password]{min-height:30px;padding:0 10px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-panel-alt);font-size:12px}
+${NSMAX_ROOT} .md-editor :is(.tab-select,.tab-select~*):has(>.tab) .tab,${NSMAX_ROOT} .md-editor .tab-select .tab{padding:2px 4px;border:0!important;background:transparent!important;color:var(--nsmax-muted);font-size:13px;cursor:pointer}
+${NSMAX_ROOT} .md-editor .tab-select .tab:is(.active,[class*=active],[aria-selected=true]){color:var(--nsmax-text);font-weight:600}
+${NSMAX_ROOT} .md-editor .tab-select{display:flex;align-items:center;gap:12px;padding:8px 14px!important}
+/* 编辑器里的 Markdown 高亮（引用、回复 @、链接、标题等）：CodeMirror 默认是绿色引用、蓝色链接与标题，统一成主题灰阶 */
+${NSMAX_ROOT} .md-editor .CodeMirror :is(.cm-quote,.cm-comment){color:var(--nsmax-muted)!important;font-style:normal}
+${NSMAX_ROOT} .md-editor .CodeMirror :is(.cm-header,.cm-strong){color:var(--nsmax-text)!important;font-weight:650}
+${NSMAX_ROOT} .md-editor .CodeMirror :is(.cm-link,.cm-url,.cm-string,.cm-variable-2,.cm-variable-3,.cm-keyword,.cm-atom,.cm-number,.cm-tag,.cm-attribute,.cm-builtin,.cm-def){color:var(--nsmax-text-2)!important}
+${NSMAX_ROOT} .md-editor .CodeMirror .cm-url{text-decoration:underline;text-decoration-color:var(--nsmax-stroke-strong);text-underline-offset:2px}
+${NSMAX_ROOT} .md-editor .CodeMirror :is(.cm-formatting,.cm-formatting-quote,.cm-formatting-list,.cm-formatting-header,.cm-hr,.cm-meta){color:var(--nsmax-faint)!important}
+${NSMAX_ROOT} .md-editor .CodeMirror .cm-em{color:inherit!important}
+${NSMAX_ROOT} .md-editor .CodeMirror .cm-comment{border-radius:4px;background:var(--nsmax-fill)}
+${NSMAX_ROOT} .md-editor .CodeMirror :is(.CodeMirror-selected,.CodeMirror-focused .CodeMirror-selected),${NSMAX_ROOT} .md-editor .CodeMirror-line::selection,${NSMAX_ROOT} .md-editor .CodeMirror-line>span::selection,${NSMAX_ROOT} .md-editor .CodeMirror-line>span>span::selection{background:color-mix(in srgb,var(--nsmax-text) 12%,transparent)!important}
+/* 编辑器「预览」：和帖子正文同一套排版 */
+${NSMAX_ROOT} .md-editor :is(.preview,.md-preview,.editor-preview,[class*=preview]):not(button,.tab){color:var(--nsmax-text);font-size:15px;line-height:1.75}
+${NSMAX_ROOT} .md-editor :is(.preview,.md-preview,.editor-preview,[class*=preview]):not(button,.tab) blockquote{margin:8px 0;padding:6px 14px;border-left:3px solid var(--nsmax-stroke-strong);border-radius:0 8px 8px 0;background:var(--nsmax-panel-alt);color:var(--nsmax-text-2)}
+/* 帖子列表里的内联回复 / 引用面板（NodeSeek++）：卡片 + 标题栏 + 输入框 + 胶囊发送按钮 */
+${NSMAX_ROOT} .nspp-interaction{margin:4px 14px 12px 48px;border:1px solid var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card);color:var(--nsmax-text);font-size:13px;box-shadow:var(--nsmax-shadow);overflow:hidden}
+${NSMAX_ROOT} .nspp-interaction header{gap:8px;padding:9px 8px 9px 14px;border-bottom:1px solid var(--nsmax-divider)}
+${NSMAX_ROOT} .nspp-interaction header a{color:var(--nsmax-text);font-weight:500;text-decoration:none}
+${NSMAX_ROOT} .nspp-interaction header button{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;color:var(--nsmax-muted);font-size:0}
+${NSMAX_ROOT} .nspp-interaction header button::before{content:"";width:14px;height:14px;background:currentColor;-webkit-mask:var(--nsmax-icon-close) center/contain no-repeat;mask:var(--nsmax-icon-close) center/contain no-repeat}
+${NSMAX_ROOT} .nspp-interaction header button:hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
+${NSMAX_ROOT} .nspp-interaction p{padding:8px 14px 0;color:var(--nsmax-muted);font-size:12px}
+${NSMAX_ROOT} .nspp-interaction form{padding:10px 14px 12px}
+${NSMAX_ROOT} .nspp-interaction textarea{min-height:88px;padding:9px 11px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-panel-alt);color:var(--nsmax-text);font-size:14px;line-height:1.6;outline:0;transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease}
+${NSMAX_ROOT} .nspp-interaction textarea:focus{border-color:var(--nsmax-stroke-strong);background:var(--nsmax-card);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent)}
+${NSMAX_ROOT} .nspp-reply-actions{margin-top:8px}
+${NSMAX_ROOT} .nspp-reply-actions span{color:var(--nsmax-muted);opacity:1;font-size:12px}
+${NSMAX_ROOT} .nspp-reply-actions button{min-height:32px;padding:0 16px;border-radius:999px;background:var(--nsmax-accent);color:var(--nsmax-on-accent);font-size:12.5px;font-weight:600}
+${NSMAX_ROOT} .nspp-reply-actions button:disabled{opacity:.35}
+@media (width<=600px){${NSMAX_ROOT} .nspp-interaction{margin:4px 0 12px}}
+/* 手机悬浮回复（NodeSeek++）：底部抽屉，顶部标题栏，与弹窗同一套圆角与按钮 */
+${NSMAX_ROOT} .md-editor.nspp-floating-reply{border:1px solid var(--nsmax-stroke)!important;border-bottom:0!important;border-radius:14px 14px 0 0!important;background:var(--nsmax-card)!important;color:var(--nsmax-text);box-shadow:0 -12px 40px -8px rgb(0 0 0/.18)!important}
+${NSMAX_ROOT} .nspp-floating-reply-header{padding:10px 12px 10px 16px;border-bottom:1px solid var(--nsmax-divider);color:var(--nsmax-text-2);font-size:13px}
+${NSMAX_ROOT} .nspp-floating-reply-header button{min-height:30px;padding:0 12px;border:1px solid var(--nsmax-stroke);border-radius:999px;background:transparent;color:var(--nsmax-text-2);font-size:12.5px}
 /* 评论区（参考 sb.sb 回复列表）：32px 圆角方形头像；名字、徽章、时间排一行，楼号靠右；正文、签名和操作栏与名字左对齐；
    操作栏平时淡一些，悬停这一楼时再清晰；顶部加「全部回复」小标题和主帖分开 */
 ${NSMAX_ROOT}[data-nsmax-page=post] ul.comments{--nsmax-reply-avatar:32px;--nsmax-reply-indent:44px}
@@ -25717,7 +25865,7 @@ ${NSMAX_ROOT}[data-nsmax-page=post] .md-editor .CodeMirror{background:transparen
 #nsmax-progress{position:fixed;inset:0 0 auto;z-index:2147483000;height:2px;pointer-events:none;background:var(--nsmax-accent);transform-origin:0 50%;transform:scaleX(var(--nsmax-progress,0));opacity:.9;transition:opacity .3s ease}
 #nsmax-progress[data-idle]{opacity:0}
 ${NSMAX_ROOT} .user-card img:is(.avatar-normal,.avatar,[class*=avatar]),${NSMAX_ROOT} [data-nsmax-usercard] img:first-of-type{border-radius:20%;box-shadow:0 0 0 1px var(--nsmax-divider)}
-${NSMAX_ROOT} [data-nsmax-stat]{background:var(--nsmax-fill)!important;border:0!important;border-radius:var(--nsmax-radius-sm)!important;box-shadow:none!important;padding:8px!important;color:var(--nsmax-text-2)}
+${NSMAX_ROOT} [data-nsmax-stat]{background:var(--nsmax-panel-alt)!important;border:1px solid var(--nsmax-divider)!important;border-radius:8px!important;box-shadow:none!important;padding:8px!important;color:var(--nsmax-text-2)}
 ${NSMAX_ROOT} [data-nsmax-stat] :is(.stat-block,.stat-block>*){background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 ${NSMAX_ROOT} [data-nsmax-stat] .stat-block>*{border-radius:8px;padding:3px 6px}
 ${NSMAX_ROOT} [data-nsmax-stat] a{color:var(--nsmax-text-2)!important;text-decoration:none!important;border-radius:8px;transition:background-color .2s ease,color .2s ease}
@@ -25762,12 +25910,13 @@ ${NSMAX_ROOT} .nsmax-hot-tabs button{flex:none;height:26px;padding:0 11px;border
 ${NSMAX_ROOT} .nsmax-hot-tabs button:hover{border-color:var(--nsmax-stroke-strong);color:var(--nsmax-text)}
 ${NSMAX_ROOT} .nsmax-hot-tabs button[aria-selected=true]{background:var(--nsmax-accent);border-color:var(--nsmax-accent);color:var(--nsmax-on-accent);font-weight:500}
 ${NSMAX_ROOT} .nsmax-hot-list{padding:0 6px 6px!important}
-${NSMAX_ROOT} .nsmax-hot-list>li>a{gap:8px;padding:6px 8px;line-height:1.55}
+${NSMAX_ROOT} .nsmax-hot-list>li>a{box-sizing:border-box;gap:8px;height:32px;padding:6px 8px;line-height:20px}
+${NSMAX_ROOT} .nsmax-hot-foot{box-sizing:border-box;height:40px;padding-top:0;padding-bottom:0}
 /* 单行省略的标题不能参与侧栏宽度计算（站点的右侧栏宽度按内容算，否则最长的标题会把整个侧栏撑宽、挤压帖子列表）：
    width:0 + flex:1 让标题只占剩余空间 */
 ${NSMAX_ROOT} .nsmax-hot-text{display:block;flex:1 1 0;width:0;min-width:0;font-size:13px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 ${NSMAX_ROOT} .nsmax-hot-rank{width:16px;font-size:12px;font-weight:500;color:var(--nsmax-muted)}
-${NSMAX_ROOT} .nsmax-hot-skeleton{box-sizing:border-box;min-height:32px;padding:6px 8px!important}
+${NSMAX_ROOT} .nsmax-hot-skeleton{box-sizing:border-box;height:32px;padding:6px 8px!important}
 /* NodeSeek++ 侧栏工具：图标统一线条、黑白灰，去掉热榜按钮的橙色渐变与监控运行时的绿色 */
 ${NSMAX_ROOT} #nspp-tools{background:var(--nsmax-surface);border-color:var(--nsmax-stroke);border-radius:14px;box-shadow:var(--nsmax-shadow-pop);gap:2px;padding:5px}
 ${NSMAX_ROOT} body.dark-layout :is(#nspp-tools,.nspp-post-preview){--bg-color:var(--nsmax-surface);--text-color:var(--nsmax-text);--border-color:var(--nsmax-divider);--link-color:var(--nsmax-accent)}
@@ -25780,6 +25929,23 @@ ${NSMAX_ROOT} #nspp-tools button[data-monitor-state=running] .nspp-ecg-shine{str
 ${NSMAX_ROOT} #nspp-tools [data-nspp-hot-launcher]>svg{display:none}
 ${NSMAX_ROOT} #nspp-tools [data-nspp-hot-launcher]::before{content:"";width:18px;height:18px;background:currentColor;-webkit-mask:var(--nsmax-icon-flame) center/contain no-repeat;mask:var(--nsmax-icon-flame) center/contain no-repeat}
 ${NSMAX_ROOT} .nspp-monitor-badge{background:var(--nsmax-accent);color:var(--nsmax-on-accent);border-color:var(--nsmax-surface)}
+/* 手机宽度：帖子行的元信息（作者、徽章、浏览、回复、时间）放不下时换行，不撑出横向滚动 */
+@media (width<=700px){${NSMAX_ROOT} .post-list-item :is(.post-info,.post-title){flex-wrap:wrap;row-gap:2px;min-width:0;max-width:100%}${NSMAX_ROOT} ul.post-list>li.post-list-item{min-width:0}}
+/* 右侧栏「欢迎新用户」面板：默认隐藏（主题设置里可关闭） */
+${NSMAX_ROOT} [data-nsmax-hidden-panel]{display:none!important}
+/* 侧栏卡片（参考 sb.sb）：卡片标题小号灰字；用户卡 40px 圆角方形头像、名字 15px 粗体 */
+${NSMAX_ROOT} :is(#nsk-right-panel-container,#nsk-left-panel-container) .nsk-panel>:is(.board-title,.panel-title,.title,h2,h3,h4,strong):first-child{color:var(--nsmax-muted);font-size:13px;font-weight:500;letter-spacing:0}
+${NSMAX_ROOT} [data-nsmax-usercard] img:first-of-type{width:40px!important;height:40px!important;border-radius:6px!important;object-fit:cover}
+${NSMAX_ROOT} [data-nsmax-usercard] a[href*="/space/"]:not(:has(img)){color:var(--nsmax-text);font-size:15px;font-weight:600;text-decoration:none}
+/* 帖子标题旁的小标记：「只读」不再是红底，「已回复 #N」足迹与它们一样是细边框灰色小胶囊 */
+${NSMAX_ROOT} .post-title :is(.nspp-readonly,[data-nspp-footprint]),${NSMAX_ROOT} body.dark-layout .post-title .nspp-readonly{display:inline-flex;align-items:center;height:20px;padding:0 8px!important;border:1px solid var(--nsmax-stroke)!important;border-radius:999px!important;background:var(--nsmax-panel-alt)!important;color:var(--nsmax-muted)!important;font-size:11px!important;font-weight:400!important;line-height:1!important;text-decoration:none!important;vertical-align:2px}
+${NSMAX_ROOT} .post-title [data-nspp-footprint]:hover{border-color:var(--nsmax-stroke-strong)!important;color:var(--nsmax-text)!important}
+${NSMAX_ROOT} .nspp-copy-button[data-copied=true]{color:var(--nsmax-text)}
+/* NodeSeek++ 页面里的操作按钮（加载下一页、加载失败重试、签到等）：与站点按钮一致的描边胶囊 */
+${NSMAX_ROOT} :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-icon){display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;border:1px solid var(--nsmax-stroke);border-radius:999px;background:var(--nsmax-card);color:var(--nsmax-text-2);font-size:12.5px;cursor:pointer;transition:border-color .15s ease,color .15s ease,background-color .15s ease}
+${NSMAX_ROOT} :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-icon):hover:not(:disabled){border-color:var(--nsmax-stroke-strong);color:var(--nsmax-text)}
+${NSMAX_ROOT} :is(ul.post-list,ul.comments)+.nspp-action{display:flex;width:100%;margin:10px 0 0}
+${NSMAX_ROOT} :is(.nspp-post-preview footer a,.nspp-preview-content a){color:var(--nsmax-text)}
 /* 用户徽章（等级、加入天数、信任分、身份）：NodeSeek++ 默认按档位上红橙蓝绿色，这里统一成灰阶；
    NodeSeek++ 里选了「自定义」配色时，它那套带 !important 的颜色照常生效 */
 ${NSMAX_ROOT} body :is(.nspp-level[data-level],.nspp-age[data-tone],.nspp-trust[data-tier],.nspp-level,.nspp-age,.nspp-trust){--nspp-badge-color:var(--nsmax-muted);--nspp-age-color:var(--nsmax-muted)}
@@ -25914,7 +26080,7 @@ ${NSMAX_ROOT} .nspp-hot-rankings .nspp-hot-skeleton :is(span){background-color:v
 @media (width<=600px){${NSMAX_ROOT} .nspp-monitor:not(.nspp-hot-rankings){border-radius:12px 12px 0 0}}
 @media (width<=700px),(hover:none){${NSMAX_ROOT} .nspp-monitor.nspp-hot-rankings{border-radius:12px 12px 0 0;border-right-width:1px;border-bottom-width:0}${NSMAX_ROOT} .nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings){border-radius:12px 12px 0 0}}
 @media (width<=480px){${NSMAX_ROOT} .nspp-confirm-dialog{border-radius:12px 12px 0 0}}
-${NSMAX_ROOT} .nspp-post-preview{background-color:var(--nsmax-popup);border-color:var(--nsmax-stroke);border-radius:14px;box-shadow:var(--nsmax-shadow-pop);-webkit-backdrop-filter:var(--nsmax-blur);backdrop-filter:var(--nsmax-blur)}
+${NSMAX_ROOT} .nspp-post-preview{background-color:var(--nsmax-popup);border-color:var(--nsmax-stroke);border-radius:12px;box-shadow:var(--nsmax-shadow-pop);-webkit-backdrop-filter:var(--nsmax-blur);backdrop-filter:var(--nsmax-blur)}
 /* 用户资料卡（NodeSeek++ 悬浮卡）：黑白灰，不再按信任等级换底色；数字用等宽数字字体 */
 ${NSMAX_ROOT} .nspp-user-hover,${NSMAX_ROOT} .nspp-user-hover[data-trust]{background:var(--nsmax-popup)!important;color:var(--nsmax-text)!important;border:1px solid var(--nsmax-stroke)!important;border-radius:14px!important;box-shadow:var(--nsmax-shadow-pop)!important;color-scheme:light dark;width:272px!important;padding:12px!important;line-height:1.5!important}
 ${NSMAX_ROOT} .nspp-user-hover :is(.nspp-user-hover-name,dd,dd a,.nspp-user-hover-score,.nspp-user-hover-score strong){color:var(--nsmax-text)!important;text-shadow:none!important;filter:none!important}
@@ -25937,6 +26103,95 @@ ${NSMAX_ROOT} .nspp-user-hover-actions>[data-action=follow]:hover{background:col
 ${NSMAX_ROOT} .nspp-user-hover-actions>.nspp-block-toggle:hover,${NSMAX_ROOT} .nspp-user-hover>.nspp-block-toggle:hover{color:#dc2626!important}
 ${NSMAX_ROOT} .nspp-user-hover :focus-visible{outline:2px solid var(--nsmax-text)!important;outline-offset:2px}
 /* 消息中心：分类图标只有线条（去掉头像框的底色与圆角），未读数与未读圆点改为黑白强调色 */
+/* 紧凑消息中心（私信与 @我 / 回复通知，NodeSeek++）：原本是微信风格（绿色气泡与发送按钮、红色角标、按信任分换渐变底色），
+   这里统一成主题配色——外框一张卡片、左侧会话栏浅底、当前会话浅灰、对方气泡白底细边框、自己的气泡用强调色、
+   发送按钮为胶囊、资料卡与系统通知中性灰，和 sb.sb 的卡片与回复列表一致 */
+${NSMAX_ROOT} .nspp-messages{--chat-bg:var(--nsmax-canvas);--chat-sidebar:var(--nsmax-panel-alt);--chat-surface:var(--nsmax-card);--chat-text:var(--nsmax-text);--chat-muted:var(--nsmax-muted);--chat-border:var(--nsmax-divider);border:1px solid var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card);font-size:14px}
+${NSMAX_ROOT} body.dark-layout .nspp-messages{--chat-bg:var(--nsmax-canvas);--chat-sidebar:var(--nsmax-panel-alt);--chat-surface:var(--nsmax-card);--chat-text:var(--nsmax-text);--chat-muted:var(--nsmax-muted);--chat-border:var(--nsmax-divider)}
+${NSMAX_ROOT} .nspp-messages :focus-visible{outline-color:color-mix(in srgb,var(--nsmax-text) 35%,transparent)}
+/* 消息中心接管的原生容器（通常是一张面板）：去掉它自己的边框、底色与内边距，只留消息中心这一张卡片，不再一层套一层 */
+${NSMAX_ROOT} :is(#nsk-body,#nsk-left-panel-container,#nsk-right-panel-container,body) .nspp-messages-container[data-nspp-message-view=new]{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+${NSMAX_ROOT} .nspp-messages-top{min-height:48px;padding:0 10px 0 16px}
+${NSMAX_ROOT} .nspp-messages-top .nspp-messages-heading strong{font-size:14px}
+${NSMAX_ROOT} .nspp-messages-top-actions{align-items:center;gap:2px}
+${NSMAX_ROOT} :is(.nspp-messages-top-actions>*,.nspp-messages-top .nspp-messages-profile){display:inline-flex;align-items:center;margin:0}
+${NSMAX_ROOT} .nspp-messages-top-actions button,${NSMAX_ROOT} .nspp-messages-top .nspp-messages-profile{min-height:28px;padding:0 10px!important;border-radius:999px!important;color:var(--nsmax-text-2)!important;font-size:12.5px!important}
+${NSMAX_ROOT} .nspp-messages-top-actions button:hover,${NSMAX_ROOT} .nspp-messages-top .nspp-messages-profile:hover{background:var(--nsmax-fill)!important;color:var(--nsmax-text)!important}
+@media (width>700px){${NSMAX_ROOT} .nspp-messages-workspace{grid-template-columns:268px minmax(0,1fr)}}
+${NSMAX_ROOT} .nspp-messages-search{gap:6px;padding:10px}
+${NSMAX_ROOT} .nspp-messages-search input{min-height:34px;padding:0 11px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-card);font-size:13px;transition:border-color .15s ease,box-shadow .15s ease}
+${NSMAX_ROOT} .nspp-messages-search input:hover{border-color:var(--nsmax-stroke-strong)}
+${NSMAX_ROOT} .nspp-messages-search input:focus{outline:0;border-color:var(--nsmax-stroke-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent)}
+${NSMAX_ROOT} .nspp-messages-search>button,${NSMAX_ROOT} .nspp-messages-refresh{width:34px;min-width:34px;height:34px;border-radius:999px!important;color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nspp-messages-search>button:hover,${NSMAX_ROOT} .nspp-messages-refresh:hover{background:var(--nsmax-fill)!important;color:var(--nsmax-text)}
+${NSMAX_ROOT} .nspp-messages .nspp-messages-peer{gap:10px;min-height:60px;margin:0 6px;width:calc(100% - 12px);padding:9px 10px;border-radius:8px;transition:background-color .15s ease}
+${NSMAX_ROOT} .nspp-messages-peer:hover{background:var(--nsmax-fill)}
+${NSMAX_ROOT} :is(.nspp-messages-peer[aria-pressed=true],.nspp-messages-fixed-contacts a[aria-current]){background:var(--nsmax-card);box-shadow:0 0 0 1px var(--nsmax-stroke),0 1px 2px rgb(0 0 0/.04)}
+${NSMAX_ROOT} .nspp-messages-avatar{border-radius:6px;background:var(--nsmax-fill);box-shadow:0 0 0 1px var(--nsmax-divider)}
+${NSMAX_ROOT} .nspp-messages-peer-title strong{font-size:13.5px;font-weight:500}
+${NSMAX_ROOT} .nspp-messages-peer-title time{font-size:11.5px;font-variant-numeric:tabular-nums}
+${NSMAX_ROOT} .nspp-messages-snippet{font-size:12.5px}
+${NSMAX_ROOT} .nspp-messages-count{min-width:18px;padding:0 5px;border-radius:999px;font-size:11px;line-height:18px}
+${NSMAX_ROOT} .nspp-messages-unread{top:7px;left:38px;border-color:var(--nsmax-panel-alt)}
+${NSMAX_ROOT} .nspp-messages-more,${NSMAX_ROOT} .nspp-messages-earlier{border-radius:999px!important;font-size:12.5px!important}
+${NSMAX_ROOT} .nspp-messages-more:hover,${NSMAX_ROOT} .nspp-messages-earlier:hover{color:var(--nsmax-text)!important}
+${NSMAX_ROOT} .nspp-messages-thread{padding:16px 20px;background:var(--nsmax-canvas)}
+@media (width<=700px){${NSMAX_ROOT} .nspp-messages-thread{padding:12px}${NSMAX_ROOT} .nspp-messages-top{padding:0 8px 0 12px}${NSMAX_ROOT} .nspp-chat-profile,${NSMAX_ROOT} .nspp-chat-profile[data-trust]{padding:12px}${NSMAX_ROOT} .nspp-messages .nspp-messages-peer{margin:0 4px;width:calc(100% - 8px)}}
+${NSMAX_ROOT} .nspp-messages-stamp{margin:4px 0 14px;font-size:11.5px;font-variant-numeric:tabular-nums}
+${NSMAX_ROOT} .nspp-messages-message{gap:10px;margin-bottom:14px}
+${NSMAX_ROOT} .nspp-messages-message>.nspp-messages-avatar{width:32px;height:32px}
+${NSMAX_ROOT} .nspp-messages-bubble{padding:8px 12px;border:1px solid var(--nsmax-stroke);border-radius:12px;border-top-left-radius:4px;background:var(--nsmax-card);color:var(--nsmax-text);font-size:14px;line-height:1.6;box-shadow:0 1px 2px rgb(0 0 0/.03)}
+${NSMAX_ROOT} .nspp-messages-bubble::before{display:none}
+${NSMAX_ROOT} .nspp-messages-message.is-mine .nspp-messages-bubble{border-color:transparent;border-radius:12px;border-top-right-radius:4px;background:var(--nsmax-accent);color:var(--nsmax-on-accent)}
+${NSMAX_ROOT} .nspp-messages-message.is-mine .nspp-messages-bubble a{color:inherit}
+${NSMAX_ROOT} :is(.nspp-messages-bubble,.nspp-notice-body,.nspp-message-upload-help) a{color:var(--nsmax-text);text-decoration-color:var(--nsmax-stroke-strong);text-underline-offset:3px}
+${NSMAX_ROOT} .nspp-messages-bubble img{border-radius:8px}
+${NSMAX_ROOT} .nspp-messages-message.is-system{padding:12px 14px;border-color:var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card)}
+${NSMAX_ROOT} .nspp-messages-message.is-system .nspp-messages-bubble{border:0;background:transparent;box-shadow:none;font-size:13.5px}
+${NSMAX_ROOT} .nspp-messages-message.is-system .nspp-messages-bubble a[href*="/space/"],${NSMAX_ROOT} body.dark-layout .nspp-messages-message.is-system .nspp-messages-bubble a[href*="/space/"]{color:var(--nsmax-text)}
+${NSMAX_ROOT} .nspp-messages-system-time{font-size:11.5px}
+${NSMAX_ROOT} .nspp-messages-composer{border-top-color:var(--nsmax-divider)}
+${NSMAX_ROOT} .nspp-message-editor-body textarea{caret-color:var(--nsmax-text);font-size:14px}
+${NSMAX_ROOT} .nspp-message-editor-toolbar button{border-radius:8px!important}
+${NSMAX_ROOT} .nspp-message-editor-toolbar button:hover:not(:disabled),${NSMAX_ROOT} .nspp-message-editor-toolbar button[aria-pressed=true]{background:var(--nsmax-fill)}
+${NSMAX_ROOT} .nspp-messages-compose-actions{gap:8px;padding:6px 10px 10px}
+${NSMAX_ROOT} .nspp-messages-compose-actions label{font-size:12.5px}
+${NSMAX_ROOT} .nspp-messages-compose-actions input[type=checkbox]{accent-color:var(--nsmax-accent)}
+${NSMAX_ROOT} .nspp-messages .nspp-messages-send{min-width:76px;min-height:34px;padding:0 20px;border-radius:999px!important;background:var(--nsmax-accent);color:var(--nsmax-on-accent);font-size:13px;font-weight:600}
+${NSMAX_ROOT} .nspp-messages .nspp-messages-send:hover:not(:disabled){opacity:.88}
+${NSMAX_ROOT} .nspp-messages .nspp-messages-send:disabled{opacity:.35}
+${NSMAX_ROOT} :is(.nspp-messages .nspp-messages-sync-retry,.nspp-notice-back,.nspp-messages-back,.nspp-message-return){border:1px solid var(--nsmax-stroke)!important;border-radius:999px!important;background:transparent!important;color:var(--nsmax-text-2)!important}
+${NSMAX_ROOT} .nspp-message-return{padding:4px 12px;font:inherit;font-size:12.5px}
+${NSMAX_ROOT} .nspp-messages-status,${NSMAX_ROOT} .nspp-messages-list-status{font-size:12.5px}
+${NSMAX_ROOT} .nspp-messages-empty{font-size:13.5px}
+/* 聊天对象资料卡：不再按信任分换成绿 / 黄 / 红渐变，统一中性底色；信任分用正文色 */
+${NSMAX_ROOT} .nspp-chat-profile,${NSMAX_ROOT} .nspp-chat-profile[data-trust],${NSMAX_ROOT} body.dark-layout .nspp-chat-profile[data-trust]{--chat-text:var(--nsmax-text);--chat-muted:var(--nsmax-muted);--chat-bg:var(--nsmax-panel-alt);background:var(--nsmax-card);color:var(--nsmax-text);border-bottom:1px solid var(--nsmax-divider);padding:14px 20px 12px}
+${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect]::before{display:none}
+${NSMAX_ROOT} .nspp-chat-profile>a .nspp-messages-avatar,${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect]>a .nspp-messages-avatar{border-radius:8px;outline:0}
+${NSMAX_ROOT} .nspp-chat-profile-heading>strong,${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-heading>strong{color:var(--nsmax-text);font-size:14.5px}
+${NSMAX_ROOT} .nspp-chat-profile-level,${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-level{padding:0 7px;border:1px solid var(--nsmax-stroke);border-radius:999px;background:transparent;color:var(--nsmax-text-2);font-size:11px;font-weight:500;line-height:16px}
+${NSMAX_ROOT} .nspp-chat-profile-meta{font-size:11.5px}
+${NSMAX_ROOT} .nspp-chat-profile-trust,${NSMAX_ROOT} .nspp-chat-profile-trust[data-tone],${NSMAX_ROOT} .nspp-chat-profile[data-trust] .nspp-chat-profile-trust,${NSMAX_ROOT} body.dark-layout .nspp-chat-profile[data-trust] .nspp-chat-profile-trust{color:var(--nsmax-text)}
+${NSMAX_ROOT} .nspp-chat-profile-trust>strong,${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-trust>strong{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:28px;text-shadow:none}
+${NSMAX_ROOT} .nspp-chat-profile-trust>span,${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-trust>span{color:var(--nsmax-muted);font-size:10.5px;letter-spacing:0}
+${NSMAX_ROOT} .nspp-chat-profile-data,${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-data{border:1px solid var(--nsmax-divider);border-radius:8px;background:var(--nsmax-panel-alt);padding:8px 10px}
+${NSMAX_ROOT} .nspp-chat-profile-stat>small{font-size:11px}
+${NSMAX_ROOT} .nspp-chat-profile-stat>strong,${NSMAX_ROOT} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-stat>strong{color:var(--nsmax-text);font-size:13px}
+${NSMAX_ROOT} .nspp-chat-profile-data button{color:var(--nsmax-text-2)}
+${NSMAX_ROOT} :is(.nspp-chat-profile-notice,.nspp-chat-profile[data-trust] .nspp-chat-profile-notice),${NSMAX_ROOT} body.dark-layout .nspp-chat-profile[data-trust] :is(.nspp-chat-profile-notice,.nspp-chat-profile-trust){color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nspp-chat-profile .role-tag[data-nspp-role]{background:var(--nsmax-fill)!important;color:var(--nsmax-text-2)!important}
+/* 通知（@我、回复主题）列表与详情 */
+${NSMAX_ROOT} .nspp-notice-workspace>.nspp-messages-sidebar{background:var(--nsmax-card)}
+${NSMAX_ROOT} .nspp-notice-workspace .nspp-messages-peer{align-items:flex-start;min-height:0;margin:0;width:100%;padding:13px 18px;border-radius:0;border-bottom:1px solid var(--nsmax-divider)}
+${NSMAX_ROOT} .nspp-notice-workspace .nspp-messages-peer:hover{background:var(--nsmax-panel-alt)}
+${NSMAX_ROOT} .nspp-notice-workspace .nspp-notice-subject{font-size:14px;font-weight:500}
+${NSMAX_ROOT} .nspp-notice-excerpt{font-size:13px}
+${NSMAX_ROOT} .nspp-notice-action{font-size:12px}
+${NSMAX_ROOT} .nspp-notice-summary{border-bottom-color:var(--nsmax-divider)}
+${NSMAX_ROOT} .nspp-notice-summary h3{font-size:16px;font-weight:600}
+${NSMAX_ROOT} .nspp-notice-body{font-size:14px}
+${NSMAX_ROOT} .nspp-notice-body blockquote{border-left-color:var(--nsmax-stroke-strong)}
+${NSMAX_ROOT} :is(.nspp-notice-body pre,.nspp-messages-bubble.is-markdown pre,.nspp-message-editor-preview pre){border:1px solid var(--nsmax-divider);border-radius:8px;background:var(--nsmax-panel-alt)}
 ${NSMAX_ROOT} img.nspp-messages-avatar[src^="data:image/svg+xml"]{background:transparent!important;border-radius:0!important;box-shadow:none!important;outline:0!important;object-fit:contain!important}
 ${NSMAX_ROOT} .nspp-messages-count{background:var(--nsmax-accent)!important;color:var(--nsmax-on-accent)!important;font-weight:600}
 ${NSMAX_ROOT} .nspp-messages-unread{background:var(--nsmax-accent)!important}
@@ -26034,9 +26289,17 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 :host([data-nsmax-glass]) .field{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;gap:6px 16px;margin:0;padding:10px 0;border-bottom:1px solid var(--line-soft)}
 :host([data-nsmax-glass]) .field:last-child{border-bottom:0;padding-bottom:0}
 :host([data-nsmax-glass]) .field:has(input[type=checkbox]){grid-template-columns:1fr auto}
-:host([data-nsmax-glass]) .field>span{padding:0;color:var(--text-2);font-size:13px;line-height:1.5}
+:host([data-nsmax-glass]) .field>span{padding:0;color:var(--text);font-size:13px;line-height:1.5}
+:host([data-nsmax-glass]) .field-hint{display:block;margin-top:2px;color:var(--muted);opacity:1;font-size:12px;line-height:1.5}
+:host([data-nsmax-glass]) .field:has(textarea){align-items:start}
+:host([data-nsmax-glass]) .field:has(textarea)>span{padding-top:6px}
+:host([data-nsmax-glass]) select{-webkit-appearance:none;appearance:none;padding-right:32px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6f7e' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:14px!important;cursor:pointer}
+:host([data-nsmax-glass]) input[type=color]{justify-self:start;width:56px!important;min-width:56px;height:32px!important;padding:3px!important;border-radius:8px;cursor:pointer}
+:host([data-nsmax-glass]) input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+:host([data-nsmax-glass]) input[type=color]::-webkit-color-swatch{border:0;border-radius:5px}
+:host([data-nsmax-glass]) input[type=color]::-moz-color-swatch{border:0;border-radius:5px}
 :host([data-nsmax-glass]) :is(input:not([type=checkbox]),select){height:34px;padding:0 10px;border-radius:8px;background:var(--field);border:1px solid var(--line);box-shadow:none;color:var(--text);font-size:13px}
-:host([data-nsmax-glass]) input[type=color]{padding:3px;height:34px}
+
 :host([data-nsmax-glass]) textarea{min-height:88px;padding:8px 10px;border-radius:8px;background:var(--field);border:1px solid var(--line);box-shadow:none;color:var(--text);font-size:13px;line-height:1.6}
 :host([data-nsmax-glass]) :is(input:not([type=checkbox]),textarea,select):hover{border-color:var(--line-strong)}
 :host([data-nsmax-glass]) :is(input:not([type=checkbox]),textarea,select):focus{outline:none;background:var(--surface);border-color:var(--line-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--text) 7%,transparent)}
@@ -26067,7 +26330,7 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 	var modernTheme = {
 		id: "modern-theme",
 		title: "现代化主题",
-		description: "sing-box 风格的简洁主题：黑白灰中性配色、实心卡片与细描边、大圆角、Inter + JetBrains Mono 字体、弹簧回弹动效。页面渲染前生效、不闪烁，自动适配深色模式。",
+		description: "参考 sb.sb 的简洁主题：黑白灰中性配色、细边框卡片、胶囊按钮、圆角方形头像、Inter + JetBrains Mono 字体；页面解析阶段就整理好，刷新与切换页面不闪、不跳，自动适配深色模式。",
 		group: "外观",
 		defaults: {
 			enabled: true,
@@ -26085,6 +26348,7 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 			motion: true,
 			scrollbar: true,
 			progress: true,
+			hideNewMembers: true,
 			autoDark: false
 		},
 		fields: {
@@ -26241,6 +26505,10 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 				label: "纤细滚动条",
 				type: "text"
 			},
+			hideNewMembers: {
+				label: "隐藏右侧栏「欢迎新用户」面板",
+				type: "text"
+			},
 			progress: {
 				label: "帖子页顶部阅读进度条",
 				type: "text"
@@ -26365,8 +26633,26 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 				});
 			}
 			{
-				const marker = nsmaxCardMarker || (nsmaxCardMarker = createCardMarker());
+				const marker = nsmaxCardMarker || (nsmaxCardMarker = createCardMarker({ hideNewMembers: ctx.get("hideNewMembers") }));
 				const stopCard = ctx.watch(marker.apply);
+				// 统计区的「回复 / @我 / 私信」一行出现（或 3 秒后）就撤掉预留高度，并记下最终高度供下次页面解析阶段预留。
+				let statSettled = false;
+				const settleStat = () => {
+					if (statSettled) return;
+					statSettled = true;
+					releaseReserve("stat");
+					const stat = document.querySelector("[data-nsmax-stat]");
+					const height = Math.round(stat?.getBoundingClientRect().height || 0);
+					if (height > 0 && Math.abs((ctx.get("stat-height") || 0) - height) > 1) ctx.set("stat-height", height);
+				};
+				const statTimer = setTimeout(settleStat, 3e3);
+				const stopStat = ctx.watch(() => {
+					if (document.querySelector("[data-nsmax-stat] .nspp-notification-row")) settleStat();
+				});
+				cleanups.push(() => {
+					clearTimeout(statTimer);
+					stopStat();
+				});
 				cleanups.push(() => {
 					stopCard();
 					marker.clear();
@@ -26425,6 +26711,7 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 		if (!options.enabled) return;
 		_css(modern_theme_default);
 		if (options.font === "inter") loadWebFonts();
+		if (options.motion) enablePageTransitions();
 		whenRoot((root) => {
 			applyThemeAttributes(root, options);
 			// 启动遮罩分三块（顶栏、左侧栏、右侧栏）：页面解析过程中每块一解析完就立即整理并显示，见 startEarlyPass。
@@ -26436,6 +26723,19 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 		});
 	})();
 	var NSMAX_BOOT_REGIONS = ["header", "left", "right"];
+	// 站内页面之间切换时用浏览器原生的跨文档视图过渡（Chrome 126+）：旧页面与新页面短暂交叉淡入，顶栏与左侧栏
+	// 保持不动，不再「整页一换」。新页面还有区域没整理好（启动遮罩未撤）时跳过过渡，避免淡入到半成品；
+	// 系统开启「减弱动态效果」时不播放；不支持的浏览器忽略这些规则，行为与原来一样。
+	function enablePageTransitions() {
+		_css(`@media (prefers-reduced-motion:no-preference){@view-transition{navigation:auto}}
+::view-transition-group(*){animation-duration:.18s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+html[data-nsmax-theme] [data-nsmax-header]{view-transition-name:nsmax-header}
+html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left-nav}`);
+		window.addEventListener("pagereveal", (event) => {
+			const root = document.documentElement;
+			if (event.viewTransition && NSMAX_BOOT_REGIONS.some((region) => root.hasAttribute(`data-nsmax-boot-${region}`))) event.viewTransition.skipTransition();
+		});
+	}
 	function revealRegion(region) {
 		document.documentElement?.removeAttribute(`data-nsmax-boot-${region}`);
 	}
@@ -26446,6 +26746,41 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 		root.setAttribute("data-nsmax-boot-fade", "");
 		for (const region of NSMAX_BOOT_REGIONS) revealRegion(region);
 		setTimeout(() => root.removeAttribute("data-nsmax-boot-fade"), 400);
+	}
+	// 页面加载完后才插入的块（侧栏热榜、NQ 快捷入口）：页面解析阶段按上次实测的高度先在原位置留出空白，
+	// 插入时同一帧撤掉，内容不会被顶开。没有记录（第一次使用）时不预留；2.5 秒后无论如何撤掉。
+	var nsmaxReserved = new Map();
+	// margin / padding：在原值上加上位移；min-height：shift 是要撑到的整体高度（含内边距与边框）。
+	function reserveSpace(name, element, property, shift) {
+		if (!element || !(shift > 0) || shift > 2e3) return;
+		const style = getComputedStyle(element);
+		let value;
+		if (property === "min-height") {
+			const extra = style.boxSizing === "border-box" ? 0 : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"].reduce((sum, key) => sum + (parseFloat(style.getPropertyValue(key)) || 0), 0);
+			value = shift - extra;
+		} else {
+			let base = parseFloat(style.getPropertyValue(property)) || 0;
+			// 上外边距会和前一个可见兄弟的下外边距合并：按合并后的间距再加上位移。
+			if (property === "margin-top") {
+				let previous = element.previousElementSibling;
+				while (previous && getComputedStyle(previous).display === "none") previous = previous.previousElementSibling;
+				if (previous) base = Math.max(base, parseFloat(getComputedStyle(previous).marginBottom) || 0);
+			}
+			value = base + shift;
+		}
+		element.style.setProperty(property, `${value}px`, "important");
+		nsmaxReserved.set(name, () => element.style.removeProperty(property));
+	}
+	function releaseReserve(name) {
+		nsmaxReserved.get(name)?.();
+		nsmaxReserved.delete(name);
+	}
+	function featureState(id) {
+		const state = GM_getValue$1(`nspp:state:${location.hostname}:${id}`, {});
+		return state && typeof state === "object" && !Array.isArray(state) ? state : {};
+	}
+	function featureEnabled(feature) {
+		return normalizeSettings([feature], { [feature.id]: GM_getValue$1(SETTINGS_KEY, {})?.[feature.id] })[feature.id];
 	}
 	function sidebarNavSettings() {
 		const options = normalizeSettings([sidebarNav], { [sidebarNav.id]: GM_getValue$1(SETTINGS_KEY, {})?.[sidebarNav.id] })[sidebarNav.id];
@@ -26500,12 +26835,32 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 				const found = markSidebarNav(nav, (element, attribute, value = "") => element.setAttribute(attribute, value));
 				if (!found) return;
 				root.setAttribute("data-nsmax-sidenav-page", "");
+				const navOptions = featureEnabled(sidebarNav);
+				if (navOptions.shortcuts.trim()) {
+					const container = found.best.container;
+					reserveSpace("nav", container, /^(UL|OL)$/.test(container.tagName) ? "margin-bottom" : "padding-bottom", featureState("sidebar-nav")["reserve-shift"]);
+				}
 				const box = found.best.container.getBoundingClientRect();
 				root.toggleAttribute("data-nsmax-sidenav", box.width > 0 && box.height > 0 && box.right > 0 && box.left < window.innerWidth);
 			});
-			region("right", () => document.getElementById("nsk-right-panel-container"), () => (nsmaxCardMarker || (nsmaxCardMarker = createCardMarker())).apply());
+			region("right", () => document.getElementById("nsk-right-panel-container"), (sidebar) => {
+				(nsmaxCardMarker || (nsmaxCardMarker = createCardMarker({ hideNewMembers: options.hideNewMembers }))).apply();
+				// 用户卡的统计区：NodeSeek++「通知分类」要等未读数接口返回后才插入「回复 / @我 / 私信」一行，统计区会变高、
+				// 把下面所有卡片往下推；这里按上次的最终高度先撑开，那一行插入后再撤掉（见主题模块）。
+				const stat = sidebar.querySelector("[data-nsmax-stat]");
+				const statHeight = featureState("modern-theme")["stat-height"];
+				if (stat && statHeight > stat.getBoundingClientRect().height + 1) reserveSpace("stat", stat, "min-height", statHeight);
+				// 热榜面板的位置与 mountHotSidebar 一致：首页在「快捷入口」面板前，其他页面在右侧栏最上方。
+				const hot = featureEnabled(hotRankings);
+				if (location.hostname !== "www.nodeseek.com" || !hot.enabled || !hot.sidebar) return;
+				const shift = featureState("hot-rankings")["reserve-shift"];
+				reserveSpace("hot", document.querySelector(".nsk-panel.quick-access") || sidebar.firstElementChild, "margin-top", shift);
+			});
 			if (!pending.size) observer.disconnect();
 		};
+		setTimeout(() => {
+			for (const name of [...nsmaxReserved.keys()]) releaseReserve(name);
+		}, 2500);
 		const observer = new MutationObserver(step);
 		observer.observe(document, {
 			childList: true,

@@ -23,7 +23,7 @@ const hotPosts = (kind) => ({
 });
 
 // 油猴 API 垫片：存储落到 localStorage，跨域请求只放行热榜与更新检查。
-const gmShim = (seed, fontFiles) => `(() => {
+const gmShim = (seed, fontFiles, gm) => `(() => {
 	const PREFIX = "__gm__:";
 	const seed = ${JSON.stringify(seed || {})};
 	for (const [key, value] of Object.entries(seed)) if (localStorage.getItem(PREFIX + key) === null) localStorage.setItem(PREFIX + key, JSON.stringify(value));
@@ -63,6 +63,19 @@ const gmShim = (seed, fontFiles) => `(() => {
 		return { abort() {} };
 	};
 	window.__hotPosts = ${hotPosts.toString()};
+	// 模拟 iOS Safari 的 Userscripts：只有 Promise 风格的 GM.*，没有同步的 GM_getValue / GM_setValue / GM_xmlhttpRequest / GM_addStyle
+	if (${JSON.stringify(gm)} === "async") {
+		const request = window.GM_xmlhttpRequest;
+		window.GM = {
+			getValue: async (key, fallback) => window.GM_getValue(key, fallback),
+			setValue: async (key, value) => window.GM_setValue(key, value),
+			xmlHttpRequest: (details) => {
+				request(details);
+				return Promise.resolve();
+			}
+		};
+		for (const name of ["GM_getValue", "GM_setValue", "GM_xmlhttpRequest", "GM_addStyle", "GM_registerMenuCommand", "GM_notification", "unsafeWindow"]) delete window[name];
+	}
 })();`;
 
 const apiResponses = {
@@ -74,6 +87,11 @@ const apiResponses = {
 	] },
 	"/api/notification/reply-to-me/list": { success: true, replyList: [] },
 	"/api/account/getInfo/": { success: true, detail: { member_id: 10, member_name: "user0", rank: 3, coin: 1107, stardust: 19, nPost: 46, nComment: 867, follows: 0, fans: 0, created_at: new Date(Date.now() - 65 * 864e5).toISOString() } },
+	"/api/notification/message/with/": { success: true, talkTo: { member_id: 7, member_name: "friend" }, msgArray: [
+		{ id: 21, sender_id: 7, receiver_id: 1, sender_name: "friend", receiver_name: "tester", content: "在吗？周末一起测速", viewed: 1, created_at: new Date(Date.now() - 36e5).toISOString() },
+		{ id: 22, sender_id: 1, receiver_id: 7, sender_name: "tester", receiver_name: "friend", content: "好啊，用 NodeQuality 跑一遍", viewed: 1, created_at: new Date(Date.now() - 35e5).toISOString() },
+		{ id: 23, sender_id: 7, receiver_id: 1, sender_name: "friend", receiver_name: "tester", content: "行，结果发我", viewed: 0, created_at: new Date(Date.now() - 6e5).toISOString() }
+	] },
 	"/api/notification/message/list": { success: true, msgArray: [
 		{ id: 11, sender_id: 42, receiver_id: 1, sender_name: "spammer", receiver_name: "tester", content: "加我微信", viewed: 0, created_at: new Date().toISOString() },
 		{ id: 12, sender_id: 7, receiver_id: 1, sender_name: "friend", receiver_name: "tester", content: "周末一起测速", viewed: 1, created_at: new Date().toISOString() }
@@ -86,11 +104,11 @@ async function launch() {
 
 // 打开一个页面：所有请求都在本地处理，外部网络一律拒绝。
 // api：按接口路径给出依次返回的响应 [{ status, headers, body }]，用完后回到默认模拟数据；calls 记录每个接口被请求的次数。
-async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "" } = {}) {
+async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "", gm = "sync" } = {}) {
 	const calls = {};
 	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1 });
 	const errors = [];
-	if (script) await context.addInitScript({ content: `${gmShim(seed, fontFiles)}\n;(function () {\n${SCRIPT}\n})();` });
+	if (script) await context.addInitScript({ content: `${gmShim(seed, fontFiles, gm)}\n;(function () {\n${SCRIPT}\n})();` });
 	if (init) await context.addInitScript({ content: init });
 	if (css) await context.addInitScript({ content: `document.addEventListener("DOMContentLoaded", () => { const style = document.createElement("style"); style.textContent = ${JSON.stringify(css)}; document.head.append(style); });` });
 	await context.route("**/*", async (route) => {
