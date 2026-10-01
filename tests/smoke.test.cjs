@@ -263,6 +263,27 @@ test("侧栏导航：默认隐藏生活/Dev/贴图/沙盒，并加入 NQ（NodeQ
 	await context.close();
 });
 
+test("侧栏导航：NQ 使用 NodeQuality 彩色标志，旧版默认入口自动换成新标志", async () => {
+	const seed = { "nspp:settings:www.nodeseek.com": { "sidebar-nav": { enabled: true, dedupe: "header", hidden: "生活\nDev\n贴图\n沙盒", shortcuts: "NQ|https://nodequality.com|gauge|NodeQuality 测机" } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed });
+	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
+	const icon = await page.evaluate(() => {
+		const svg = document.querySelector(".nsmax-shortcuts a svg");
+		return {
+			brand: svg.getAttribute("data-nsmax-brand"),
+			fills: Array.from(svg.querySelectorAll("path"), (path) => path.getAttribute("fill")),
+			stroke: svg.getAttribute("stroke"),
+			saved: JSON.parse(localStorage.getItem("__gm__:nspp:settings:www.nodeseek.com"))["sidebar-nav"].shortcuts
+		};
+	});
+	assert.equal(icon.brand, "nq");
+	assert.deepEqual(icon.fills, ["#37975b", "#30b966", "#bd1310", "#ee8a46", "#a0d567", "#2fbcf1"]);
+	assert.equal(icon.stroke, null);
+	assert.equal(icon.saved, "NQ|https://nodequality.com|nq|NodeQuality 测机");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
 test("侧栏导航：侧栏可见时隐藏顶栏重复版块，窄屏侧栏隐藏后顶栏自动恢复", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });

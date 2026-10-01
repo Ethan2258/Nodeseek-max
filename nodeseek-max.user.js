@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.2.0
+// @version      1.2.1
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.2.0";
+	var NSMAX_VERSION = "1.2.1";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -24703,6 +24703,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
 		tool: "M14.7 6.3a4 4 0 0 0 5 5L22 14l-8 8-2.3-2.3a4 4 0 0 0-5-5L4 12l8-8z"
 	};
+	// 彩色站点标志（填充，不跟随文字颜色）。nq：NodeQuality 的 N，两侧绿色竖笔，中间红、橙、黄绿、蓝四级阶梯斜笔。
+	var NSMAX_BRAND_ICONS = { nq: [
+		["#37975b", "M5.3 2h2.3v20H5.3z"],
+		["#30b966", "M16.4 2h2.3v20h-2.3z"],
+		["#bd1310", "M7.6 2h2.3v5H7.6z"],
+		["#ee8a46", "M9.75 7h2.3v5h-2.3z"],
+		["#a0d567", "M11.95 12h2.3v5h-2.3z"],
+		["#2fbcf1", "M14.1 17h2.3v5h-2.3z"]
+	] };
+	var NSMAX_NQ_SHORTCUT = "NQ|https://nodequality.com|nq|NodeQuality 测机";
 	var NSMAX_CATEGORY_NAMES = [
 		"日常",
 		"技术",
@@ -24729,7 +24739,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				result.push({
 					name,
 					href: url.href,
-					icon: Object.hasOwn(NSMAX_SHORTCUT_ICONS, icon) ? icon : "link",
+					icon: Object.hasOwn(NSMAX_SHORTCUT_ICONS, icon) || Object.hasOwn(NSMAX_BRAND_ICONS, icon) ? icon : "link",
 					note: note ? note.slice(0, 60) : name
 				});
 			} catch {}
@@ -24802,6 +24812,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		svg.setAttribute("viewBox", "0 0 24 24");
 		svg.setAttribute("width", "1em");
 		svg.setAttribute("height", "1em");
+		if (Object.hasOwn(NSMAX_BRAND_ICONS, name)) {
+			svg.setAttribute("aria-hidden", "true");
+			svg.setAttribute("data-nsmax-brand", name);
+			for (const [color, d] of NSMAX_BRAND_ICONS[name]) {
+				const path = document.createElementNS(svg.namespaceURI, "path");
+				path.setAttribute("fill", color);
+				path.setAttribute("d", d);
+				svg.append(path);
+			}
+			return svg;
+		}
 		svg.setAttribute("fill", "none");
 		svg.setAttribute("stroke", "currentColor");
 		svg.setAttribute("stroke-width", "1.8");
@@ -24853,7 +24874,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			enabled: true,
 			dedupe: "header",
 			hidden: "生活\nDev\n贴图\n沙盒",
-			shortcuts: "NQ|https://nodequality.com|gauge|NodeQuality 测机"
+			shortcuts: NSMAX_NQ_SHORTCUT
 		},
 		fields: {
 			dedupe: {
@@ -24879,11 +24900,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				type: "textarea"
 			},
 			shortcuts: {
-				label: "快捷入口（每行：名称|网址|图标|提示，图标可选 gauge、image、chart、tool、link）",
+				label: "快捷入口（每行：名称|网址|图标|提示，图标可选 nq、gauge、image、chart、tool、link）",
 				type: "textarea"
 			}
 		},
 		mount(ctx) {
+			// 之前保存的默认入口用的是通用仪表盘图标，换成 NodeQuality 自己的标志。
+			if (ctx.get("shortcuts") === "NQ|https://nodequality.com|gauge|NodeQuality 测机") ctx.set("shortcuts", NSMAX_NQ_SHORTCUT);
 			const hidden = new Set(filterLines(ctx.get("hidden")).map((name) => name.toLocaleLowerCase()));
 			const shortcuts = parseShortcuts(ctx.get("shortcuts"));
 			const dedupe = ctx.get("dedupe");
