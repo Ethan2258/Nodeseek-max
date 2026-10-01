@@ -1,0 +1,63 @@
+name: Release
+
+# main 上的 CI 通过后自动发布：脚本 @version 对应的标签（v版本号）还不存在时，
+# 创建标签与 GitHub Release，附上可安装的脚本与 meta 文件，发布说明取自 CHANGELOG.md。
+# 版本号没变的提交不会重复发布；也可以在 Actions 页面手动运行。
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check script and metadata
+        run: node --check nodeseek-max.user.js && node scripts/build-meta.mjs --check
+
+      - name: Read version
+        id: version
+        run: |
+          version=$(node scripts/release-notes.mjs --version)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "v$version 已发布，跳过"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish release
+        if: steps.version.outputs.exists == 'false'
+        run: |
+          version='${{ steps.version.outputs.version }}'
+          node scripts/release-notes.mjs > release-notes.md
+          cat release-notes.md
+          gh release create "v$version" nodeseek-max.user.js nodeseek-max.meta.js \
+            --target "$SHA" \
+            --title "NodeSeek Max v$version" \
+            --notes-file release-notes.md \
+            --latest

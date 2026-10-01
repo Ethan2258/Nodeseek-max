@@ -15,7 +15,7 @@ NodeSeek / DeepFlood 全能增强用户脚本：把 **NodeSeek++**、**redirect 
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)（或 Violentmonkey 等兼容的脚本管理器）。
-2. 打开 **[安装 NodeSeek Max](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)**，在脚本管理器里点「安装」。
+2. 打开 **[安装 NodeSeek Max](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)**，在脚本管理器里点「安装」。各版本的发布说明与安装文件也可以在 [Releases](https://github.com/Ethan2258/Nodeseek-max/releases) 找到。
 3. **停用或卸载原来的四个脚本**（NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件、NodeSeek 自动屏蔽黑名单用户通知），否则功能会重复执行。
 4. 刷新 [NodeSeek](https://www.nodeseek.com/)，点右下角工具栏最下方的设置图标，或在脚本管理器菜单里打开「NodeSeek Max 设置」。
 
@@ -100,7 +100,7 @@ npm run meta    # 修改脚本头部后重新生成 nodeseek-max.meta.js
 
 - `nodeseek-max.user.js`：可直接安装的完整脚本。
 - `nodeseek-max.meta.js`：只含头部，供脚本管理器检查更新。
-- 发布新版本时同时修改头部 `@version` 和脚本里的 `NSMAX_VERSION`，再运行 `npm run meta`。
+- 发布新版本：同时修改头部 `@version`、脚本里的 `NSMAX_VERSION` 和 `package.json` 的版本号，运行 `npm run meta`，并在 `CHANGELOG.md` 顶部写一节 `## 版本号`。合并到 main 且 CI 通过后，`Release` 工作流会自动创建 `v版本号` 标签与 GitHub Release（附 `nodeseek-max.user.js`、`nodeseek-max.meta.js`，说明取自 CHANGELOG 对应一节）；版本号没变的提交不会重复发布。也可以在 Actions 页面手动运行 Release。
 - 设置 `NSMAX_FONT_DIR` 指向 `@fontsource-variable` 的字体文件目录可运行字体缓存测试；设置 `NSMAX_SCREENSHOTS=目录` 会保存截图。
 
 ## 许可证与致谢
