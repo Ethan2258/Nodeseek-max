@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.2.2
+@version        1.2.3
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.2.2（UserCSS）
+ * NodeSeek Max 主题 v1.2.3（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -274,10 +274,11 @@
 	html:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item):last-child {
 		border-bottom-color:transparent;
 	}
-	html:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item):hover {
-		background-color:var(--nsmax-fill);
-		border-radius:var(--nsmax-radius-sm);
-		border-bottom-color:transparent;
+	html:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item):hover .post-title a {
+		text-decoration:underline;
+		text-decoration-thickness:1px;
+		text-underline-offset:3px;
+		text-decoration-color:var(--nsmax-accent-line);
 	}
 	html:root:root ul.comments>li.content-item {
 		padding:16px 6px;
@@ -332,7 +333,7 @@
 		border-radius:var(--nsmax-control-radius);
 	}
 	html:root .comment-menu .menu-item:hover {
-		background:var(--nsmax-fill);
+		background:transparent!important;
 		color:var(--nsmax-text);
 	}
 	html:root .nsk-pager :is(a,span) {
@@ -349,7 +350,7 @@
 		background-color:transparent!important;
 	}
 	html:root .nsk-pager a:hover {
-		background:var(--nsmax-fill);
+		background:transparent!important;
 		color:var(--nsmax-text);
 	}
 	html:root .btn {
@@ -495,7 +496,7 @@
 	}
 	html:root:root a.floor-link:hover {
 		color:var(--nsmax-text);
-		background:var(--nsmax-fill);
+		background:transparent;
 	}
 	html:root:root :is(li.content-item:target,li.content-item:has(:target)) a.floor-link {
 		color:var(--nsmax-text);
@@ -531,7 +532,8 @@
 		border-radius:calc(var(--nsmax-control-radius) - 2px);
 	}
 	html:root:root .md-editor .mde-toolbar .toolbar-item:hover {
-		background:var(--nsmax-fill);
+		background:transparent;
+		color:var(--nsmax-text);
 	}
 	html:root:root .md-editor .CodeMirror {
 		background:transparent;
@@ -565,28 +567,44 @@
 		transition:background-color .2s ease,color .2s ease;
 	}
 	html:root .user-stat a:hover {
-		background:var(--nsmax-surface)!important;
+		background:transparent!important;
 		color:var(--nsmax-text)!important;
 	}
 	html:root .user-stat svg {
 		color:var(--nsmax-muted);
 	}
 	html:root .notify-count {
-		display:inline-flex;
-		align-items:center;
-		justify-content:center;
-		box-sizing:border-box;
-		min-width:18px;
-		height:18px;
-		padding:0 5px;
-		border-radius:999px;
+		display:inline-flex!important;
+		align-items:center!important;
+		justify-content:center!important;
+		box-sizing:border-box!important;
+		min-width:18px!important;
+		height:18px!important;
+		margin:0!important;
+		padding:0 5px!important;
+		position:static!important;
+		inset:auto!important;
+		transform:none!important;
+		border:0!important;
+		border-radius:999px!important;
 		background:var(--nsmax-accent)!important;
 		color:var(--nsmax-on-accent)!important;
-		font-size:11px;
-		font-weight:600;
-		line-height:1;
-		vertical-align:middle;
+		font-family:var(--nsmax-font)!important;
+		font-size:11px!important;
+		font-weight:600!important;
+		line-height:1!important;
+		letter-spacing:0!important;
+		vertical-align:middle!important;
 		font-variant-numeric:tabular-nums;
+	}
+	@supports (text-box:trim-both cap alphabetic) {
+		html:root .notify-count {
+			display:inline-block!important;
+			height:18px!important;
+			padding:calc((18px - 1cap) / 2) 5px 0!important;
+			text-align:center!important;
+			text-box:trim-both cap alphabetic;
+		}
 	}
 	html:root .user-stat a:not([hidden]):has(>.notify-count,>.nspp-unread-count,>.nspp-read-count) {
 		display:inline-flex;
@@ -649,6 +667,133 @@
 		box-shadow:var(--nsmax-shadow-pop);
 		-webkit-backdrop-filter:var(--nsmax-blur);
 		backdrop-filter:var(--nsmax-blur);
+	}
+	/* 用户资料卡（NodeSeek++ 悬浮卡）：黑白灰，不再按信任等级换底色；数字用等宽数字字体 */
+	html[data-nsmax-theme] .nspp-user-hover,
+	html:root .nspp-user-hover[data-trust] {
+		background:var(--nsmax-popup)!important;
+		color:var(--nsmax-text)!important;
+		border:1px solid var(--nsmax-stroke)!important;
+		border-radius:14px!important;
+		box-shadow:var(--nsmax-shadow-pop)!important;
+		color-scheme:light dark;
+		width:272px!important;
+		padding:12px!important;
+		line-height:1.5!important;
+	}
+	html:root .nspp-user-hover :is(.nspp-user-hover-name,dd,dd a,.nspp-user-hover-score,.nspp-user-hover-score strong) {
+		color:var(--nsmax-text)!important;
+		text-shadow:none!important;
+		filter:none!important;
+	}
+	html:root .nspp-user-hover :is(dt,.nspp-user-hover-score small,.nspp-user-hover-rich small,.nspp-user-hover-rich>span,.nspp-copy-button,.nspp-user-hover-signature) {
+		color:var(--nsmax-muted)!important;
+		opacity:1!important;
+	}
+	html:root .nspp-user-hover dl {
+		border-color:var(--nsmax-divider)!important;
+		padding:8px 0!important;
+		gap:5px 14px!important;
+	}
+	html:root .nspp-user-hover dt {
+		font-size:12px!important;
+	}
+	html:root .nspp-user-hover dd {
+		font-family:var(--nsmax-mono)!important;
+		font-size:12.5px!important;
+		font-weight:500!important;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root .nspp-user-hover .nspp-user-hover-name {
+		font-size:14px!important;
+		font-weight:600!important;
+	}
+	html:root .nspp-user-hover .nspp-user-hover-score strong {
+		font-family:var(--nsmax-mono)!important;
+		font-size:24px!important;
+		font-weight:700!important;
+		letter-spacing:-.02em!important;
+		line-height:1!important;
+	}
+	html:root .nspp-user-hover .nspp-user-hover-score small {
+		font-size:10px!important;
+	}
+	html:root .nspp-user-hover :is(.nspp-level,.nspp-age,.role-tag),
+	html:root .nspp-user-hover .nspp-user-hover-rich .nspp-age {
+		background:var(--nsmax-fill)!important;
+		color:var(--nsmax-text-2)!important;
+		box-shadow:none!important;
+		--nspp-badge-color:var(--nsmax-text-2);
+		--nspp-age-color:var(--nsmax-text-2);
+	}
+	html:root .nspp-user-hover :is(.nspp-level,.nspp-age,.role-tag) * {
+		color:inherit!important;
+	}
+	html:root .nspp-user-hover :is(.nspp-user-hover-avatar,.nspp-user-hover-monogram) {
+		outline:0!important;
+		border-radius:10px!important;
+	}
+	html:root .nspp-user-hover .nspp-user-hover-monogram {
+		background:var(--nsmax-fill)!important;
+		color:var(--nsmax-text)!important;
+	}
+	html:root .nspp-user-hover-actions {
+		gap:6px!important;
+		margin-top:10px!important;
+	}
+	html:root .nspp-user-hover-actions>:is(a,button) {
+		min-height:30px;
+		background:var(--nsmax-fill)!important;
+		color:var(--nsmax-text)!important;
+		border:0!important;
+		border-radius:9px!important;
+		filter:none!important;
+		font-size:12px!important;
+		font-weight:500!important;
+	}
+	html:root .nspp-user-hover-actions>:is(a,button):hover {
+		background:color-mix(in srgb,var(--nsmax-text) 11%,transparent)!important;
+	}
+	html:root .nspp-user-hover-actions>[data-action=follow] {
+		background:var(--nsmax-accent)!important;
+		color:var(--nsmax-on-accent)!important;
+	}
+	html:root .nspp-user-hover-actions>[data-action=follow]:hover {
+		background:color-mix(in srgb,var(--nsmax-accent) 86%,var(--nsmax-card))!important;
+	}
+	html:root .nspp-user-hover-actions>.nspp-block-toggle:hover,
+	html:root .nspp-user-hover>.nspp-block-toggle:hover {
+		color:#dc2626!important;
+	}
+	html:root .nspp-user-hover :focus-visible {
+		outline:2px solid var(--nsmax-text)!important;
+		outline-offset:2px;
+	}
+	/* 消息中心：分类图标只有线条（去掉头像框的底色与圆角），未读数与未读圆点改为黑白强调色 */
+	html[data-nsmax-theme] img.nspp-messages-avatar[src^="data:image/svg+xml"] {
+		background:transparent!important;
+		border-radius:0!important;
+		box-shadow:none!important;
+		outline:0!important;
+		object-fit:contain!important;
+	}
+	html:root .nspp-messages-count {
+		background:var(--nsmax-accent)!important;
+		color:var(--nsmax-on-accent)!important;
+		font-weight:600;
+	}
+	html:root .nspp-messages-unread {
+		background:var(--nsmax-accent)!important;
+	}
+	/* NodeSeek++ 的弹窗、徽章、按钮里写死了系统字体：统一换成主题字体（代码仍用等宽字体） */
+	html[data-nsmax-theme]:is([data-nsmax-font=inter],[data-nsmax-font=system]) :is(.role-tag,[class^=nspp-],[class*=" nspp-"]):not(code,pre,kbd,samp,.hljs) {
+		font-family:var(--nsmax-font)!important;
+	}
+	html:root:root :is(.nspp-user-badges,.role-tag,.nspp-level,.nspp-age,.nspp-monitor-badge,.nspp-messages-count) {
+		font-variant-numeric:tabular-nums;
+	}
+	html:root:root :is(.nspp-messages-bubble,.nspp-message-editor-preview) code {
+		font-family:var(--nsmax-mono)!important;
 	}
 	html:root:root {
 		scrollbar-width:thin;
