@@ -25365,7 +25365,8 @@ ${NSMAX_ROOT} .post-list-item :is(.post-info,.info-item),${NSMAX_ROOT} .nsk-cont
 ${NSMAX_ROOT} :is(.post-list-item,.content-item,.nsk-content-meta-info,.author-info) img:is(.avatar-normal,.avatar,[class*=avatar]){border-radius:50%;box-shadow:0 0 0 1px var(--nsmax-divider)}
 ${NSMAX_ROOT} .comment-menu .menu-item{border-radius:var(--nsmax-control-radius)}
 ${NSMAX_ROOT} .comment-menu .menu-item:hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
-${NSMAX_ROOT} .nsk-pager :is(a,span){border-radius:var(--nsmax-control-radius)}
+${NSMAX_ROOT} .nsk-pager :is(a,span){border-color:transparent!important;border-radius:var(--nsmax-control-radius);box-shadow:none!important;outline:0;background-color:transparent;color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-current]){color:var(--nsmax-text)!important;font-weight:700;background-color:transparent!important}
 ${NSMAX_ROOT} .nsk-pager a:hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
 ${NSMAX_ROOT} .btn{border-radius:var(--nsmax-control-radius)}
 ${NSMAX_ROOT} button.submit.btn{background:var(--nsmax-accent);color:var(--nsmax-on-accent);border-color:transparent;box-shadow:0 6px 18px rgb(0 0 0/.14),inset 0 1px 0 rgb(255 255 255/.35)}

@@ -281,6 +281,24 @@ test("字号默认大一号，用户卡片的私信 / @我 数字徽章与文字
 	await context.close();
 });
 
+test("翻页：页码不加边框圆圈，当前页只用加粗深色文字区分", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await settle(page, 300);
+	const state = await page.evaluate(() => Array.from(document.querySelectorAll(".nsk-pager :is(a,span)")).map((element) => {
+		const style = getComputedStyle(element);
+		return { text: element.textContent.trim(), border: style.borderTopColor, background: style.backgroundColor, weight: style.fontWeight };
+	}));
+	assert.ok(state.length >= 2);
+	for (const item of state) {
+		assert.equal(item.border, "rgba(0, 0, 0, 0)", `页码 ${item.text} 仍有边框`);
+		assert.equal(item.background, "rgba(0, 0, 0, 0)", `页码 ${item.text} 有背景`);
+	}
+	assert.equal(state.find((item) => item.text === "1").weight, "700");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
 test("帖子页：定位到的楼层只有左侧细线与短暂淡出的底色，楼层号不是灰色胶囊", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1#2", { html: postPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");

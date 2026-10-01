@@ -336,7 +336,17 @@
 		color:var(--nsmax-text);
 	}
 	html:root .nsk-pager :is(a,span) {
+		border-color:transparent!important;
 		border-radius:var(--nsmax-control-radius);
+		box-shadow:none!important;
+		outline:0;
+		background-color:transparent;
+		color:var(--nsmax-muted);
+	}
+	html:root .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-current]) {
+		color:var(--nsmax-text)!important;
+		font-weight:700;
+		background-color:transparent!important;
 	}
 	html:root .nsk-pager a:hover {
 		background:var(--nsmax-fill);
