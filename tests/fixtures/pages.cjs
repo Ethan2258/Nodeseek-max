@@ -60,8 +60,21 @@ const notificationPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-l
 <li class="notification-item"><a href="/notification#/message?mode=talk&to=42">来自 spammer 的私信</a></li>
 </ul></div>${sidebar}`, options);
 
+// 设置页：真实结构未知，这里用常见的表单写法（hash 路由子导航、文本框、下拉框、复选框、提交按钮、表格）。
+const settingPage = (options) => shell("设置 - NodeSeek", `<div id="nsk-left"><div class="nsk-panel setting-panel">
+<nav class="setting-nav"><a href="#/profile" class="router-link-active">个人资料</a><a href="#/security">账号安全</a><a href="#/block">屏蔽列表</a></nav>
+<form class="setting-form"><h2>个人资料</h2>
+<label>签名<textarea name="signature" placeholder="一句话介绍自己"></textarea></label>
+<label>邮箱<input type="email" name="email" value="tester@example.com"></label>
+<label>主页可见范围<select name="visibility"><option>所有人</option><option>仅登录用户</option></select></label>
+<label class="check"><input type="checkbox" name="public" checked> 公开我的回复记录</label>
+<div class="actions"><button type="button" class="btn">取消</button><button type="submit" class="btn">保存</button></div></form>
+<table><thead><tr><th>用户</th><th>屏蔽时间</th></tr></thead><tbody><tr><td>spammer</td><td>2026-09-01</td></tr></tbody></table>
+</div></div>${sidebar}`, options);
+
 module.exports = {
 	listPage,
 	postPage,
-	notificationPage
+	notificationPage,
+	settingPage
 };
