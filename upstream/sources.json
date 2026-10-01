@@ -1,0 +1,42 @@
+[
+	{
+		"id": "nodeseek-plus",
+		"name": "NodeSeek++",
+		"version": "26.917.1446",
+		"license": "GPL-3.0-only",
+		"page": "https://greasyfork.org/scripts/595488",
+		"meta": "https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.meta.js",
+		"code": "https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.user.js",
+		"merged": "nodeseek-max.user.js Part 2（论坛增强）"
+	},
+	{
+		"id": "redirect",
+		"name": "redirect 外链跳转",
+		"version": "1.67.0",
+		"license": "MIT",
+		"page": "https://greasyfork.org/scripts/416338",
+		"meta": "https://update.greasyfork.org/scripts/416338/redirect%20%E5%A4%96%E9%93%BE%E8%B7%B3%E8%BD%AC.meta.js",
+		"code": "https://update.greasyfork.org/scripts/416338/redirect%20%E5%A4%96%E9%93%BE%E8%B7%B3%E8%BD%AC.user.js",
+		"merged": "nodeseek-max.user.js Part 1（外链跳转）"
+	},
+	{
+		"id": "hot-rankings",
+		"name": "NodeSeek 热榜插件",
+		"version": "1.1",
+		"license": "MIT",
+		"page": "https://greasyfork.org/scripts/560065",
+		"meta": "https://update.greasyfork.org/scripts/560065/NodeSeek%20%E7%83%AD%E6%A6%9C%E6%8F%92%E4%BB%B6.meta.js",
+		"code": "https://update.greasyfork.org/scripts/560065/NodeSeek%20%E7%83%AD%E6%A6%9C%E6%8F%92%E4%BB%B6.user.js",
+		"merged": "nodeseek-max.user.js Part 2 的侧栏热榜（mountHotSidebar）与工具栏热榜弹窗"
+	},
+	{
+		"id": "blocklist-notifications",
+		"name": "NodeSeek 自动屏蔽黑名单用户通知",
+		"version": "2.0",
+		"license": "未声明（本地脚本）",
+		"page": null,
+		"meta": null,
+		"code": null,
+		"merged": "nodeseek-max.user.js Part 2 的 official-blocklist（blockedMembers）"
+	}
+]

@@ -65,4 +65,14 @@ ul.comments>li.content-item{padding:10px 0;border-bottom:1px solid var(--border-
 .tab-select{display:flex;gap:16px;padding:6px 12px;border-bottom:1px solid var(--border-color)}
 .toolbar-item{display:inline-flex;align-items:center;padding:4px;cursor:pointer}
 .toolbar-item.right{margin-left:auto;font-size:12px}
-.emoji-bar{padding:4px 8px;font-size:12px;border-top:1px solid var(--border-color)}
+.expression{display:flex;gap:6px;padding:4px 8px;font-size:12px;border-top:1px solid var(--border-color);background:#eee}
+
+/* 模拟站点自身的主色变量、按钮与深色样式（按 NodeSeek 的变量名） */
+body{--main-color:#1a8f4a;--sub-color:#d7f0e1;--bg-main-color:#f0f0f0;--bg-sub-color:#fff}
+body.dark-layout{--bg-main-color:#000;--bg-sub-color:#111}
+body.bg1{background-color:var(--bg-main-color)}
+.btn.submit,.pure-button-primary{background:var(--main-color)!important;color:#fff}
+.dark-layout .btn.submit{background:#1a8f4a!important}
+body.dark-layout #nsk-right-panel-container .nsk-panel{border-radius:0!important}
+.search-box input{transition:width .3s}
+.search-box input:focus{width:280px}

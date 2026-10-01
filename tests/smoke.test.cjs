@@ -78,7 +78,7 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 	assert.equal(hot.beforeQuickAccess, true);
 	assert.equal(hot.rows, 10);
 	assert.equal(hot.toggle, "展开全部 15");
-	assert.equal(hot.canvas, "rgb(250, 250, 250)");
+	assert.equal(hot.canvas, "rgb(247, 248, 250)");
 	assert.equal(hot.layout, "rows");
 	assert.equal(hot.rowRadius, "0px");
 	assert.equal(hot.grid, "none");
@@ -101,9 +101,9 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 		headerBlur: getComputedStyle(document.querySelector("[data-nsmax-header]"), "::before").backdropFilter,
 		toolsBlur: getComputedStyle(document.getElementById("nspp-tools")).backdropFilter
 	}));
-	assert.equal(card.stat, "rgba(0, 0, 0, 0.05)");
-	assert.equal(card.cta, "rgb(24, 24, 27)");
-	assert.equal(card.badge, "rgb(24, 24, 27)");
+	assert.equal(card.stat, "rgb(242, 244, 247)");
+	assert.equal(card.cta, "rgb(28, 28, 30)");
+	assert.equal(card.badge, "rgb(28, 28, 30)");
 	assert.equal(card.quickReply, false);
 	assert.equal(card.ai, false);
 	assert.equal(card.readTitle, "0.6");
@@ -177,8 +177,8 @@ test("帖子页（深色）：主题跟随站点深色模式", async () => {
 		canvas: getComputedStyle(document.body).backgroundColor,
 		text: getComputedStyle(document.body).color
 	}));
-	assert.equal(colors.canvas, "rgb(9, 9, 11)");
-	assert.equal(colors.text, "rgb(250, 250, 250)");
+	assert.equal(colors.canvas, "rgb(24, 25, 29)");
+	assert.equal(colors.text, "rgb(232, 233, 237)");
 	await settle(page, 700);
 	await shot(page, "post-dark");
 	assert.deepEqual(errors, []);
@@ -281,7 +281,7 @@ test("字号默认大一号，用户卡片的私信 / @我 数字徽章与文字
 	await context.close();
 });
 
-test("用户资料卡：黑白灰配色、数字用主题等宽字体，NodeSeek++ 写死的系统字体换成主题字体", async () => {
+test("用户资料卡：黑白灰配色、数字用 Inter 等宽数字，NodeSeek++ 写死的系统字体换成主题字体", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 400);
@@ -303,9 +303,9 @@ test("用户资料卡：黑白灰配色、数字用主题等宽字体，NodeSeek
 		};
 	});
 	assert.equal(state.background, "rgb(255, 255, 255)");
-	assert.equal(state.text, "rgb(24, 24, 27)");
-	assert.match(state.dd, /JetBrains Mono/);
-	if (state.score) assert.equal(state.score, "rgb(24, 24, 27)");
+	assert.equal(state.text, "rgb(28, 28, 30)");
+	assert.match(state.dd, /^"Inter/);
+	if (state.score) assert.equal(state.score, "rgb(28, 28, 30)");
 	// 操作按钮只用灰色或黑色，不再是绿 / 蓝 / 紫 / 红
 	for (const color of state.actions) assert.ok(!/rgb\((33, 128, 68|9, 105, 218|130, 80, 223|207, 52, 52)\)/.test(color), `按钮颜色 ${color}`);
 	if (state.badgeFont) assert.match(state.badgeFont, /^"?Inter/);
@@ -334,6 +334,62 @@ test("悬停：用户卡片统计项、帖子行、热榜条目、NQ 入口不�
 	await context.close();
 });
 
+test("深色模式：柔和深灰而非纯黑，发布按钮不再是站点绿色，侧栏卡片保持圆角", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ dark: true }) });
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await page.waitForSelector(".nsmax-hot-panel", { timeout: 5e3 });
+	await settle(page, 500);
+	const state = await page.evaluate(() => {
+		const style = (selector) => getComputedStyle(document.querySelector(selector));
+		return {
+			body: style("body").backgroundColor,
+			bgMain: getComputedStyle(document.body).getPropertyValue("--bg-main-color").trim(),
+			submit: style("button.submit").backgroundColor,
+			panels: Array.from(document.querySelectorAll("#nsk-right-panel-container .nsk-panel")).map((panel) => getComputedStyle(panel).borderTopLeftRadius)
+		};
+	});
+	assert.equal(state.body, "rgb(24, 25, 29)");
+	assert.notEqual(state.bgMain, "#000");
+	assert.notEqual(state.submit, "rgb(26, 143, 74)");
+	assert.ok(state.panels.length >= 2 && state.panels.every((radius) => radius === "12px"), `侧栏卡片圆角：${state.panels.join(", ")}`);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("顶栏搜索框：固定宽度，聚焦与悬停时不再伸缩", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("[data-nsmax-header-search]", { timeout: 5e3 });
+	await settle(page, 300);
+	const width = () => page.evaluate(() => Math.round(document.querySelector("[data-nsmax-header-search]").getBoundingClientRect().width));
+	const before = await width();
+	await page.hover("#search-site2");
+	await page.focus("#search-site2");
+	await settle(page, 400);
+	assert.equal(before, 240);
+	assert.equal(await width(), 240);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("字体：输入框、按钮、NodeSeek++ 控件都用 Inter，代码用 JetBrains Mono；启动遮罩在整理完成后去掉", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-booting"), null, { timeout: 4e3 });
+	await settle(page, 300);
+	const fonts = await page.evaluate(() => ({
+		textarea: getComputedStyle(document.querySelector(".md-editor textarea")).fontFamily,
+		button: getComputedStyle(document.querySelector("button.submit")).fontFamily,
+		pager: getComputedStyle(document.querySelector(".floor-link")).fontFamily,
+		code: getComputedStyle(document.querySelector(".post-content pre code, .post-content code")).fontFamily,
+		header: getComputedStyle(document.querySelector("#nsk-head")).opacity
+	}));
+	for (const key of ["textarea", "button", "pager"]) assert.match(fonts[key], /^"?Inter/, `${key}: ${fonts[key]}`);
+	assert.match(fonts.code, /JetBrains Mono/);
+	assert.equal(fonts.header, "1");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
 test("翻页：页码不加边框圆圈，当前页只用加粗深色文字区分", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
@@ -347,7 +403,22 @@ test("翻页：页码不加边框圆圈，当前页只用加粗深色文字区�
 		assert.equal(item.border, "rgba(0, 0, 0, 0)", `页码 ${item.text} 仍有边框`);
 		assert.equal(item.background, "rgba(0, 0, 0, 0)", `页码 ${item.text} 有背景`);
 	}
-	assert.equal(state.find((item) => item.text === "1").weight, "700");
+	assert.equal(state.find((item) => item.text === "1").weight, "600");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("签名档：链接和彩色文字统一为主题的灰色，不保留站点或用户设置的颜色", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	await page.waitForSelector("html[data-nsmax-theme]");
+	await settle(page, 300);
+	const colors = await page.evaluate(() => ({
+		muted: getComputedStyle(document.querySelector(".signature")).color,
+		link: getComputedStyle(document.querySelector(".signature a")).color,
+		span: getComputedStyle(document.querySelector(".signature span")).color
+	}));
+	for (const color of Object.values(colors)) assert.ok(!/rgb\((46, 164, 79|63, 185, 80)\)/.test(color), `签名档仍是绿色：${color}`);
+	assert.equal(colors.muted, colors.span);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -609,10 +680,10 @@ test("独立主题 CSS：不安装脚本、只加载 theme/nodeseek-max.css 也�
 		stat: getComputedStyle(document.querySelector(".user-stat")).backgroundColor,
 		font: getComputedStyle(document.body).fontFamily
 	}));
-	assert.equal(state.canvas, "rgb(250, 250, 250)");
+	assert.equal(state.canvas, "rgb(247, 248, 250)");
 	assert.equal(state.grid, "none");
 	assert.equal(state.row, "solid");
-	assert.equal(state.stat, "rgba(0, 0, 0, 0.05)");
+	assert.equal(state.stat, "rgb(242, 244, 247)");
 	assert.match(state.font, /^"Inter Variable"/);
 	assert.deepEqual(errors, []);
 	await context.close();
