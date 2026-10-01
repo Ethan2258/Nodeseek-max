@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.3.0
+@version        1.4.0
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.3.0（UserCSS）
+ * NodeSeek Max 主题 v1.4.0（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -125,6 +125,9 @@
 		--nsmax-highlight:transparent;
 		--nsmax-sheen:transparent;
 		--nsmax-divider:#eef0f3;
+		--nsmax-panel-alt:#fafbfc;
+		--nsmax-stroke-strong:#c7cad5;
+		--nsmax-faint:#8e91a0;
 		--nsmax-text:#1c1c1e;
 		--nsmax-text-2:#555a6a;
 		--nsmax-muted:#6b6f7e;
@@ -145,6 +148,9 @@
 		--nsmax-highlight:transparent;
 		--nsmax-sheen:transparent;
 		--nsmax-divider:#2b2c32;
+		--nsmax-panel-alt:#24252b;
+		--nsmax-stroke-strong:#3d3e45;
+		--nsmax-faint:#6f727c;
 		--nsmax-text:#e8e9ed;
 		--nsmax-text-2:#b6b8c1;
 		--nsmax-muted:#8e919b;
@@ -165,6 +171,9 @@
 		--nsmax-highlight:transparent;
 		--nsmax-sheen:transparent;
 		--nsmax-divider:#2b2c32;
+		--nsmax-panel-alt:#24252b;
+		--nsmax-stroke-strong:#3d3e45;
+		--nsmax-faint:#6f727c;
 		--nsmax-text:#e8e9ed;
 		--nsmax-text-2:#b6b8c1;
 		--nsmax-muted:#8e919b;
@@ -339,31 +348,45 @@
 	html:root .post-list-item .post-category {
 		border-radius:999px;
 		border:1px solid var(--nsmax-stroke);
-		background-color:color-mix(in srgb,var(--nsmax-fill) 45%,var(--nsmax-card));
+		background-color:transparent;
 		color:var(--nsmax-text-2);
-		font-size:12px;
-		line-height:1.75;
-		padding:1px 9px;
+		font-size:12.5px;
+		line-height:1.7;
+		padding:1px 10px;
 	}
 	html:root .post-list-item .post-category:hover {
 		color:var(--nsmax-text);
-		border-color:var(--nsmax-accent-line);
+		border-color:var(--nsmax-stroke-strong);
 	}
 	html:root .post-list-item .post-title a {
 		color:var(--nsmax-text);
-		font-weight:500;
+		font-weight:400;
 		letter-spacing:0;
 	}
 	html:root .post-list-item .post-title a:hover {
-		color:var(--nsmax-accent);
+		color:var(--nsmax-text);
+	}
+	/* 帖子行（参考 sb.sb）：24px 圆角方形头像与标题第一行对齐 */
+	html[data-nsmax-theme]:not([data-nsmax-list=site]) ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item) img:is(.avatar-normal,.avatar,[class*=avatar]) {
+		width:24px!important;
+		height:24px!important;
+		min-width:0!important;
+	}
+	html:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item)>:has(>img:is(.avatar-normal,.avatar,[class*=avatar])) {
+		align-self:flex-start;
+		flex:none;
+		width:auto!important;
+		margin-top:3px;
 	}
 	html:root .post-list-item :is(.post-info,.info-item),
 	html:root .nsk-content-meta-info {
 		color:var(--nsmax-muted);
 	}
 	html:root :is(.post-list-item,.content-item,.nsk-content-meta-info,.author-info) img:is(.avatar-normal,.avatar,[class*=avatar]) {
-		border-radius:50%;
+		border-radius:20%;
 		box-shadow:0 0 0 1px var(--nsmax-divider);
+		background-color:var(--nsmax-panel-alt);
+		object-fit:cover;
 	}
 	html:root .comment-menu .menu-item {
 		border-radius:var(--nsmax-control-radius);
@@ -399,7 +422,7 @@
 		color:var(--nsmax-text);
 	}
 	html:root .btn {
-		border-radius:var(--nsmax-control-radius);
+		border-radius:999px;
 	}
 	html:root button.submit.btn {
 		background:var(--nsmax-accent);
@@ -498,9 +521,9 @@
 		border-color:var(--nsmax-divider)!important;
 	}
 	html:root .md-editor :is(button.submit.btn,.btn.submit) {
-		min-height:32px;
-		padding:0 18px!important;
-		border-radius:8px!important;
+		min-height:34px;
+		padding:0 20px!important;
+		border-radius:999px!important;
 		font-size:13px!important;
 		font-weight:600!important;
 		box-shadow:none!important;
@@ -587,9 +610,9 @@
 	}
 	html:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2),
 	html:root:root h1.post-title {
-		font-size:clamp(19px,1.1rem + .5vw,24px);
-		line-height:1.38;
-		font-weight:700;
+		font-size:21px;
+		line-height:1.45;
+		font-weight:600;
 		letter-spacing:-.01em;
 		color:var(--nsmax-text);
 	}
@@ -656,6 +679,168 @@
 	html:root:root .comment-menu .menu-item {
 		color:var(--nsmax-muted);
 	}
+	/* 评论区（参考 sb.sb 回复列表）：32px 圆角方形头像；名字、徽章、时间排一行，楼号靠右；正文、签名和操作栏与名字左对齐；
+	   操作栏平时淡一些，悬停这一楼时再清晰；顶部加「全部回复」小标题和主帖分开 */
+	html[data-nsmax-theme][data-nsmax-page=post] ul.comments {
+		--nsmax-reply-avatar:32px;
+		--nsmax-reply-indent:44px;
+	}
+	html:root:root ul.comments:has(>li.content-item) {
+		margin-top:18px;
+		border-top:1px solid var(--nsmax-divider);
+	}
+	html:root:root ul.comments:has(>li.content-item)::before {
+		content:"全部回复";
+		display:block;
+		padding:13px 4px 3px;
+		color:var(--nsmax-text);
+		font-size:14px;
+		font-weight:600;
+	}
+	html:root:root:root ul.comments>li.content-item {
+		padding:14px 4px 12px;
+	}
+	html:root:root ul.comments>li.content-item>.nsk-content-meta-info {
+		display:flex;
+		flex-wrap:wrap;
+		align-items:center;
+		gap:4px 8px;
+		min-height:var(--nsmax-reply-avatar);
+		margin:0;
+	}
+	html:root:root ul.comments>li.content-item>.nsk-content-meta-info img:is(.avatar-normal,.avatar,[class*=avatar]) {
+		display:block;
+		width:var(--nsmax-reply-avatar)!important;
+		height:var(--nsmax-reply-avatar)!important;
+		margin-right:4px;
+	}
+	html:root:root ul.comments>li.content-item>:not(.nsk-content-meta-info) {
+		margin-left:var(--nsmax-reply-indent);
+	}
+	html:root:root ul.comments>li.content-item>.post-content {
+		margin-top:2px;
+	}
+	html:root:root ul.comments>li.content-item>.post-content>:first-child {
+		margin-top:0;
+	}
+	html:root:root ul.comments>li.content-item>.post-content>:last-child {
+		margin-bottom:0;
+	}
+	html:root:root ul.comments :is(.author-info,.nsk-content-meta-info) a[href*="/space/"]:not(:has(img)) {
+		font-weight:500;
+	}
+	html:root:root .nsk-content-meta-info :is(time,.date-created,.date-updated) {
+		color:var(--nsmax-muted);
+		font-size:12.5px;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root:root :is(.nsk-content-meta-info,.author-info) .role-tag:not([data-nspp-role]) {
+		display:inline-flex;
+		align-items:center;
+		height:18px;
+		padding:0 7px!important;
+		border:1px solid var(--nsmax-stroke)!important;
+		border-radius:999px;
+		background:transparent!important;
+		color:var(--nsmax-text-2)!important;
+		font-size:11px!important;
+		font-weight:500;
+		line-height:1!important;
+		vertical-align:middle;
+	}
+	html:root:root ul.comments .comment-menu {
+		display:flex;
+		flex-wrap:wrap;
+		justify-content:flex-start;
+		gap:2px;
+		margin-top:4px;
+		margin-bottom:-4px;
+		translate:-8px 0;
+	}
+	html:root:root ul.comments .comment-menu .menu-item {
+		display:inline-flex;
+		align-items:center;
+		gap:4px;
+		min-height:26px;
+		margin:0;
+		padding:0 8px;
+		font-size:12.5px;
+		opacity:.7;
+	}
+	html:root:root ul.comments>li.content-item:is(:hover,:focus-within) .comment-menu .menu-item {
+		opacity:1;
+	}
+	html:root:root ul.comments .comment-menu .menu-item:hover {
+		color:var(--nsmax-text);
+		opacity:1;
+	}
+	html:root:root ul.comments .signature {
+		margin-top:10px;
+	}
+	html:root:root .nsk-post>.nsk-content-meta-info {
+		display:flex;
+		flex-wrap:wrap;
+		align-items:center;
+		gap:4px 8px;
+		min-height:32px;
+	}
+	html:root:root .nsk-post>.nsk-content-meta-info img:is(.avatar-normal,.avatar,[class*=avatar]) {
+		display:block;
+		width:32px!important;
+		height:32px!important;
+		margin-right:4px;
+	}
+	html:root:root .nsk-post>:not(.nsk-content-meta-info) {
+		margin-left:44px;
+	}
+	html:root:root .nsk-post>.post-content {
+		margin-top:6px;
+	}
+	html:root:root .nsk-post>.comment-menu {
+		display:flex;
+		flex-wrap:wrap;
+		gap:10px;
+		margin-top:16px;
+	}
+	html:root:root .nsk-post>.comment-menu .menu-item {
+		display:inline-flex;
+		flex-direction:column;
+		align-items:center;
+		justify-content:center;
+		gap:5px;
+		box-sizing:border-box;
+		min-width:72px;
+		min-height:52px;
+		margin:0;
+		padding:8px 6px;
+		border:1px solid var(--nsmax-stroke);
+		border-radius:8px;
+		background:var(--nsmax-card)!important;
+		color:var(--nsmax-faint);
+		font-size:12.5px;
+		line-height:1;
+	}
+	html:root:root .nsk-post>.comment-menu .menu-item:hover {
+		border-color:var(--nsmax-stroke-strong);
+		color:var(--nsmax-text);
+	}
+	html:root:root .nsk-post>.comment-menu .menu-item svg {
+		width:16px;
+		height:16px;
+	}
+	@media (width<=600px) {
+		html:root:root .nsk-post>:not(.nsk-content-meta-info) {
+			margin-left:0;
+		}
+	}
+	@media (width<=600px) {
+		html:root:root ul.comments {
+			--nsmax-reply-indent:0px;
+		}
+		html:root:root ul.comments .comment-menu {
+			translate:none;
+		}
+	}
 	html:root:root .md-editor:not(.nspp-floating-reply) {
 		background-color:var(--nsmax-card);
 		background-image:linear-gradient(165deg,var(--nsmax-sheen) 0%,transparent 46%);
@@ -678,7 +863,7 @@
 	}
 	html:root .user-card img:is(.avatar-normal,.avatar,[class*=avatar]),
 	html:root .user-card img:first-of-type {
-		border-radius:14px;
+		border-radius:20%;
 		box-shadow:0 0 0 1px var(--nsmax-divider);
 	}
 	html:root .user-stat {
@@ -774,11 +959,14 @@
 		color:var(--nsmax-text)!important;
 		opacity:.7;
 	}
-	html:root #nspp-tools {
+	/* NodeSeek++ 侧栏工具：图标统一线条、黑白灰，去掉热榜按钮的橙色渐变与监控运行时的绿色 */
+	html[data-nsmax-theme] #nspp-tools {
 		background:var(--nsmax-surface);
 		border-color:var(--nsmax-stroke);
-		border-radius:18px;
+		border-radius:14px;
 		box-shadow:var(--nsmax-shadow-pop);
+		gap:2px;
+		padding:5px;
 	}
 	html:root body.dark-layout :is(#nspp-tools,.nspp-post-preview) {
 		--bg-color:var(--nsmax-surface);
@@ -786,17 +974,696 @@
 		--border-color:var(--nsmax-divider);
 		--link-color:var(--nsmax-accent);
 	}
-	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) {
+	html:root #nspp-tools .nspp-tool-icon,
+	html:root #nspp-tools button.nspp-tool-icon:is([data-monitor-state],[data-unread=true]) {
+		width:32px;
+		height:32px;
+		min-height:32px;
+		border:0;
+		border-radius:9px;
+		background:transparent;
+		color:var(--nsmax-text-2);
+		box-shadow:none;
+		filter:none;
+	}
+	html:root #nspp-tools .nspp-tool-icon:hover,
+	html:root #nspp-tools button.nspp-tool-icon:is([data-monitor-state],[data-unread=true]):hover {
+		background:var(--nsmax-fill);
+		color:var(--nsmax-text);
+	}
+	html:root #nspp-tools .nspp-tool-icon svg {
+		width:18px;
+		height:18px;
+	}
+	html:root #nspp-tools [data-nspp-settings-launcher] {
+		background:transparent;
+		margin-top:2px;
+	}
+	html:root #nspp-tools button.nspp-tool-icon[data-monitor-state=running] {
+		color:var(--nsmax-text);
+	}
+	html:root #nspp-tools button[data-monitor-state=running] .nspp-ecg-shine {
+		stroke:var(--nsmax-muted);
+	}
+	html:root #nspp-tools [data-nspp-hot-launcher]>svg {
+		display:none;
+	}
+	html:root #nspp-tools [data-nspp-hot-launcher]::before {
+		content:"";
+		width:18px;
+		height:18px;
+		background:currentColor;
+		-webkit-mask:var(--nsmax-icon-flame) center/contain no-repeat;
+		mask:var(--nsmax-icon-flame) center/contain no-repeat;
+	}
+	html:root .nspp-monitor-badge {
+		background:var(--nsmax-accent);
+		color:var(--nsmax-on-accent);
+		border-color:var(--nsmax-surface);
+	}
+	/* 用户徽章（等级、加入天数、信任分、身份）：NodeSeek++ 默认按档位上红橙蓝绿色，这里统一成灰阶；
+	   NodeSeek++ 里选了「自定义」配色时，它那套带 !important 的颜色照常生效 */
+	html[data-nsmax-theme] body :is(.nspp-level[data-level],.nspp-age[data-tone],.nspp-trust[data-tier],.nspp-level,.nspp-age,.nspp-trust) {
+		--nspp-badge-color:var(--nsmax-muted);
+		--nspp-age-color:var(--nsmax-muted);
+	}
+	html:root body .nspp-user-badges :is(.nspp-level[data-level="6"],.nspp-trust[data-tier=perfect]) {
+		--nspp-badge-color:var(--nsmax-text);
+		background:var(--nsmax-fill);
+		box-shadow:none;
+	}
+	html:root body .role-tag[data-nspp-role] {
+		background:var(--nsmax-fill);
+		color:var(--nsmax-text-2);
+	}
+	html:root [data-nspp-monitor-match] {
+		background-color:color-mix(in srgb,var(--nsmax-accent) 5%,var(--nsmax-card))!important;
+		box-shadow:inset 2px 0 0 var(--nsmax-accent);
+	}
+	html:root body {
+		--nsmax-icon-close:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E");
+		--nsmax-icon-flame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2c1 6-5 6-2 11 2-1 3-3 3-5 4 3 6 6 4 10a7 7 0 0 1-13-4c0-4 5-6 8-12Z'/%3E%3C/svg%3E");
+		--nsmax-icon-empty:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E");
+	}
+	/* NodeSeek++ 工具弹窗（回帖足迹、阅读历史、帖子监控、热榜、转账、注册资料、确认框）：统一成卡片式模态框——
+	   标题栏 + 细分隔线、次要按钮描边、主要按钮用强调色、输入框浅灰底、列表行悬停浅灰、空状态居中带图标 */
+	html[data-nsmax-theme] :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) {
+		--nsmax-dlg-fill:color-mix(in srgb,var(--nsmax-text) 5%,transparent);
+		--nsmax-dlg-hover:color-mix(in srgb,var(--nsmax-text) 9%,transparent);
 		background-color:var(--nsmax-popup);
 		color:var(--nsmax-text);
 		border:1px solid var(--nsmax-stroke);
-		border-radius:20px;
+		border-radius:12px;
 		box-shadow:var(--nsmax-shadow-pop);
-		-webkit-backdrop-filter:var(--nsmax-blur);
-		backdrop-filter:var(--nsmax-blur);
+		font-size:13.5px;
+		line-height:1.55;
+		-webkit-backdrop-filter:none;
+		backdrop-filter:none;
 	}
 	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)::backdrop {
-		background:rgb(0 0 0/.28);
+		background:rgb(15 16 20/.3);
+	}
+	html:root body.dark-layout :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)::backdrop {
+		background:rgb(0 0 0/.5);
+	}
+	html:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog):not(.nspp-hot-rankings)[open] {
+		animation:nsmax-dialog-in .22s var(--nsmax-ease-out) both;
+	}
+	html:root:root .nspp-hot-rankings[open] {
+		animation:nsmax-drawer-in .26s var(--nsmax-ease-out) both;
+	}
+	@keyframes nsmax-dialog-in {from{opacity:0;transform:translateY(6px) scale(.985)}}
+	@keyframes nsmax-drawer-in {from{opacity:0;transform:translateX(16px)}}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header) {
+		display:flex;
+		align-items:center;
+		gap:6px;
+		margin:0;
+		padding:12px 12px 12px 18px;
+		border:0;
+		border-bottom:1px solid var(--nsmax-divider);
+		background:transparent;
+		box-shadow:none;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(h2,h3):not(section *) {
+		margin:0 auto 0 0;
+		padding:0;
+		border:0;
+		color:var(--nsmax-text);
+		font-size:15px;
+		font-weight:600;
+		line-height:1.4;
+		letter-spacing:-.01em;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(button,form>a) {
+		box-sizing:border-box;
+		display:inline-flex;
+		align-items:center;
+		justify-content:center;
+		gap:6px;
+		min-height:32px;
+		margin:0;
+		padding:0 14px;
+		border:1px solid var(--nsmax-stroke);
+		border-radius:999px;
+		background:transparent;
+		color:var(--nsmax-text);
+		font-size:12.5px;
+		font-weight:500;
+		line-height:1;
+		white-space:nowrap;
+		text-decoration:none;
+		cursor:pointer;
+		box-shadow:none;
+		filter:none;
+		transition:background-color .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(button,form>a):hover:not(:disabled) {
+		background:var(--nsmax-dlg-fill);
+		border-color:var(--nsmax-stroke-strong);
+		color:var(--nsmax-text);
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) button:disabled {
+		opacity:.5;
+		cursor:default;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) button svg {
+		flex:none;
+		width:14px;
+		height:14px;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) [hidden] {
+		display:none!important;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :focus-visible {
+		outline:2px solid color-mix(in srgb,var(--nsmax-text) 35%,transparent);
+		outline-offset:2px;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(.nspp-footprints-toolbar>button:first-child,.nspp-confirm-primary,.nspp-confirm-danger,.nspp-transfer-actions>button[type=submit],.nspp-monitor-editor>button[type=submit]) {
+		background:var(--nsmax-accent);
+		border-color:transparent;
+		color:var(--nsmax-on-accent);
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(.nspp-footprints-toolbar>button:first-child,.nspp-confirm-primary,.nspp-confirm-danger,.nspp-transfer-actions>button[type=submit],.nspp-monitor-editor>button[type=submit]):hover:not(:disabled) {
+		background:var(--nsmax-accent);
+		border-color:transparent;
+		color:var(--nsmax-on-accent);
+		opacity:.86;
+	}
+	/* 标题栏最右的关闭按钮：统一成同一个线条 × 图标 */
+	html[data-nsmax-theme] :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header)>button:last-child {
+		width:32px;
+		min-width:32px;
+		height:32px;
+		padding:0;
+		border-color:transparent;
+		border-radius:50%;
+		color:var(--nsmax-muted);
+		font-size:0;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header)>button:last-child>svg {
+		display:none;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header)>button:last-child::before {
+		content:"";
+		width:16px;
+		height:16px;
+		background:currentColor;
+		-webkit-mask:var(--nsmax-icon-close) center/contain no-repeat;
+		mask:var(--nsmax-icon-close) center/contain no-repeat;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header)>button:last-child:hover:not(:disabled) {
+		border-color:transparent;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>header>button:not(:last-child) {
+		min-height:30px;
+		padding:0 10px;
+		border-color:transparent;
+		color:var(--nsmax-text-2);
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([type=checkbox],[type=radio]),textarea,select) {
+		box-sizing:border-box;
+		min-height:34px;
+		padding:7px 11px;
+		border:1px solid var(--nsmax-stroke);
+		border-radius:8px;
+		background:var(--nsmax-panel-alt);
+		color:var(--nsmax-text);
+		font-size:13px;
+		line-height:1.5;
+		outline:0;
+		box-shadow:none;
+		transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([type=checkbox],[type=radio]),textarea,select):hover {
+		border-color:var(--nsmax-stroke-strong);
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([type=checkbox],[type=radio]),textarea,select):focus {
+		background:var(--nsmax-popup);
+		border-color:var(--nsmax-stroke-strong);
+		box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent);
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input,textarea)::placeholder {
+		color:var(--nsmax-muted);
+		opacity:1;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) [role=status] {
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:12px;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) a {
+		color:var(--nsmax-text);
+		text-decoration:none;
+	}
+	html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) a:hover {
+		color:var(--nsmax-text);
+		text-decoration:none;
+	}
+	/* 空状态 */
+	html[data-nsmax-theme] :is(.nspp-footprints-list>p,.nspp-history ol>li:only-child:not(:has(a,button))) {
+		display:flex;
+		flex-direction:column;
+		align-items:center;
+		justify-content:center;
+		gap:10px;
+		margin:0;
+		padding:36px 16px 40px;
+		background:transparent;
+		color:var(--nsmax-muted);
+		font-size:13px;
+		line-height:1.6;
+		text-align:center;
+	}
+	html:root :is(.nspp-footprints-list>p,.nspp-history ol>li:only-child:not(:has(a,button)))::before {
+		content:"";
+		width:30px;
+		height:30px;
+		background:currentColor;
+		opacity:.5;
+		-webkit-mask:var(--nsmax-icon-empty) center/contain no-repeat;
+		mask:var(--nsmax-icon-empty) center/contain no-repeat;
+	}
+	/* 回帖足迹 */
+	html[data-nsmax-theme] .nspp-history.nspp-footprints-dialog {
+		width:min(560px,100vw - 24px);
+		padding:0;
+	}
+	html:root .nspp-footprints-dialog>.nspp-footprints-toolbar {
+		gap:8px;
+		padding:12px 18px;
+	}
+	html:root .nspp-footprints-toolbar [role=status] {
+		margin-left:auto;
+	}
+	html:root .nspp-footprints-dialog>.nspp-footprints-list {
+		gap:1px;
+		max-height:min(60dvh,460px);
+		padding:0 10px 10px;
+		overscroll-behavior:contain;
+	}
+	html:root .nspp-footprints-dialog .nspp-footprints-list>a {
+		align-items:baseline;
+		gap:14px;
+		padding:9px 10px;
+		border-radius:8px;
+		font-size:13.5px;
+	}
+	html:root .nspp-footprints-dialog .nspp-footprints-list>a:hover {
+		background:var(--nsmax-dlg-fill);
+	}
+	html:root .nspp-footprints-list small {
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:12px;
+		font-variant-numeric:tabular-nums;
+	}
+	/* 阅读历史 */
+	html[data-nsmax-theme] .nspp-history .nspp-history-toolbar {
+		gap:8px;
+		padding:12px 18px 8px;
+	}
+	html:root .nspp-history .nspp-history-toolbar:has(>button[data-tab]) {
+		align-self:flex-start;
+		gap:2px;
+		margin:0 18px 6px;
+		padding:3px;
+		border-radius:999px;
+		background:var(--nsmax-dlg-fill);
+	}
+	html:root .nspp-history button[data-tab] {
+		min-height:26px;
+		padding:0 12px;
+		border-color:transparent;
+		border-radius:999px;
+		color:var(--nsmax-muted);
+	}
+	html:root .nspp-history button[data-tab][aria-pressed=true] {
+		background:var(--nsmax-popup);
+		border-color:transparent;
+		color:var(--nsmax-text);
+		font-weight:600;
+		box-shadow:0 0 0 1px var(--nsmax-stroke),0 1px 2px rgb(0 0 0/.06);
+	}
+	html:root .nspp-history ol {
+		margin:0;
+		padding:2px 10px 10px;
+	}
+	html:root .nspp-history li {
+		gap:10px;
+		min-height:36px;
+		padding:5px 8px;
+		border-radius:8px;
+	}
+	html:root .nspp-history li:hover {
+		background:var(--nsmax-dlg-fill);
+	}
+	html:root .nspp-history li a {
+		font-size:13.5px;
+	}
+	html:root .nspp-history time {
+		color:var(--nsmax-muted);
+		font-size:12px;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root .nspp-history li button {
+		min-height:26px;
+		padding:0 8px;
+		border-color:transparent;
+		color:var(--nsmax-muted);
+		font-size:12px;
+	}
+	html:root .nspp-history li:not(.nspp-history-day) button {
+		opacity:0;
+	}
+	html:root .nspp-history li:is(:hover,:focus-within) button {
+		opacity:1;
+	}
+	html:root .nspp-history li button:hover:not(:disabled) {
+		background:var(--nsmax-dlg-hover);
+		border-color:transparent;
+	}
+	html:root .nspp-history .nspp-history-day {
+		min-height:0;
+		margin-top:10px;
+		padding:4px 8px;
+		background:transparent;
+		color:var(--nsmax-muted);
+		font-size:12px;
+		font-weight:500;
+	}
+	html:root .nspp-history .nspp-history-day:first-child {
+		margin-top:0;
+	}
+	html:root .nspp-history-avatar {
+		width:20px;
+		height:20px;
+		margin-right:8px;
+		border-radius:6px;
+	}
+	@media (hover:none) {
+		html:root .nspp-history li:not(.nspp-history-day) button {
+			opacity:1;
+		}
+	}
+	/* 注册资料 / 信任分 / 星辰转账 */
+	html[data-nsmax-theme] .nspp-profile-summary {
+		gap:10px;
+		padding:16px 18px 14px;
+	}
+	html:root .nspp-profile-summary strong {
+		font-size:24px;
+		font-weight:700;
+		letter-spacing:-.02em;
+		line-height:1.2;
+	}
+	html:root .nspp-profile-dialog .nspp-age {
+		padding:2px 8px;
+		border-radius:999px;
+		background:var(--nsmax-dlg-fill);
+		color:var(--nsmax-text-2);
+		--nspp-age-color:var(--nsmax-text-2);
+		font-size:11.5px;
+		font-weight:500;
+	}
+	html:root .nspp-profile-dialog dl {
+		gap:8px 16px;
+		padding:12px 18px;
+		border-top:1px solid var(--nsmax-divider);
+	}
+	html:root .nspp-profile-dialog dt {
+		color:var(--nsmax-muted);
+		opacity:1;
+	}
+	html:root .nspp-profile-dialog dd {
+		font-weight:500;
+	}
+	html:root .nspp-profile-dialog>p {
+		padding:0 18px 16px;
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:12px;
+	}
+	html:root .nspp-history.nspp-trust-dialog {
+		gap:12px;
+		padding:18px 20px;
+	}
+	html:root .nspp-trust-dialog p {
+		margin:0;
+		color:var(--nsmax-text-2);
+		font-size:13.5px;
+		line-height:1.8;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root .nspp-history.nspp-user-transfer {
+		padding:18px 20px 16px;
+	}
+	html:root .nspp-user-transfer>p {
+		margin:4px 0 16px;
+		color:var(--nsmax-muted);
+		font-size:12.5px;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root .nspp-user-transfer label {
+		color:var(--nsmax-text-2);
+		font-size:12.5px;
+		font-weight:500;
+	}
+	html:root .nspp-transfer-actions {
+		margin-top:4px;
+	}
+	/* 确认框 */
+	html[data-nsmax-theme] .nspp-confirm-dialog {
+		width:min(380px,100vw - 32px);
+		padding:20px 20px 16px;
+	}
+	html:root .nspp-confirm-dialog p {
+		margin:8px 0 20px;
+		color:var(--nsmax-text-2);
+		opacity:1;
+		line-height:1.65;
+	}
+	html:root .nspp-confirm-dialog form>:is(button,a) {
+		min-height:34px;
+		padding:0 16px;
+	}
+	/* 帖子监控与配置 */
+	html[data-nsmax-theme] .nspp-monitor:not(.nspp-hot-rankings) {
+		padding:0;
+	}
+	html:root .nspp-monitor>p {
+		margin:0;
+		padding:10px 18px;
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:12.5px;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root .nspp-monitor-spinner {
+		border-color:color-mix(in srgb,var(--nsmax-text) 16%,transparent);
+		border-top-color:var(--nsmax-text);
+	}
+	html:root .nspp-monitor>.nspp-monitor-results {
+		padding:0 10px 10px;
+	}
+	html:root .nspp-monitor-results section+section {
+		margin-top:8px;
+		padding-top:4px;
+		border-top:1px solid var(--nsmax-divider);
+	}
+	html:root .nspp-monitor h4 {
+		margin:8px 8px 4px;
+		color:var(--nsmax-muted);
+		font-size:12px;
+		font-weight:600;
+	}
+	html:root .nspp-monitor h4 small {
+		padding:1px 6px;
+		border-radius:6px;
+		background:var(--nsmax-dlg-fill);
+		color:var(--nsmax-text-2);
+		font-size:11px;
+		font-variant-numeric:tabular-nums;
+	}
+	html:root .nspp-monitor li {
+		margin:0;
+		padding:7px 8px;
+		border-radius:8px;
+		font-size:13.5px;
+	}
+	html:root .nspp-monitor:not(.nspp-hot-rankings) li:hover {
+		background:var(--nsmax-dlg-fill);
+	}
+	html:root .nspp-monitor section>p {
+		margin:6px 8px;
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:12.5px;
+	}
+	html:root .nspp-monitor>.nspp-monitor-tracked {
+		padding:0 18px 10px;
+	}
+	html:root .nspp-monitor-tracked h4 {
+		margin:8px 0 4px;
+	}
+	html:root .nspp-monitor-tracked>div {
+		gap:8px;
+		padding:6px 0;
+		border-top:1px solid var(--nsmax-divider);
+	}
+	html:root .nspp-monitor>button {
+		align-self:flex-start;
+		margin:0 18px 12px;
+	}
+	html:root .nspp-monitor>footer {
+		gap:8px;
+		padding:12px 18px;
+		border-top:1px solid var(--nsmax-divider);
+		background:transparent;
+	}
+	html:root .nspp-monitor>footer span {
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:11.5px;
+	}
+	html:root .nspp-monitor-config .nspp-monitor-editor {
+		gap:10px;
+		padding:14px 18px 18px;
+	}
+	html:root .nspp-monitor-editor label {
+		color:var(--nsmax-text-2);
+		font-size:12.5px;
+		font-weight:500;
+	}
+	html:root .nspp-monitor-editor textarea {
+		margin-top:6px;
+	}
+	html:root .nspp-monitor-config input {
+		margin-top:6px;
+	}
+	html:root .nspp-monitor-editor>:is(small,span) {
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:12px;
+		line-height:1.65;
+	}
+	html:root .nspp-regex-help {
+		width:16px;
+		height:16px;
+		border:1px solid var(--nsmax-stroke);
+		color:var(--nsmax-muted);
+		opacity:1;
+		font-size:10px;
+		vertical-align:1px;
+	}
+	html:root .nspp-regex-help:hover {
+		color:var(--nsmax-text);
+		border-color:var(--nsmax-text-2);
+	}
+	/* 热榜抽屉：去掉红橙金排名色，前三名用强调色加粗 */
+	html[data-nsmax-theme] .nspp-monitor.nspp-hot-rankings {
+		padding:0;
+		border-radius:12px 0 0 12px;
+		border-right-width:0;
+	}
+	html:root .nspp-hot-rankings>.nspp-hot-header {
+		gap:10px;
+		padding:12px 10px 12px 18px;
+	}
+	html:root .nspp-hot-rankings>.nspp-hot-header>h2 {
+		margin:0;
+	}
+	html:root .nspp-hot-rankings nav {
+		gap:2px;
+	}
+	html:root .nspp-hot-rankings nav button {
+		min-height:28px;
+		padding:0 11px;
+		border-color:transparent;
+		border-radius:999px;
+		color:var(--nsmax-muted);
+		font-size:12.5px;
+	}
+	html:root .nspp-hot-rankings nav button[aria-pressed=true] {
+		background:var(--nsmax-dlg-fill);
+		color:var(--nsmax-text);
+		font-weight:600;
+	}
+	html:root .nspp-hot-rankings nav>:last-child {
+		margin-left:auto;
+	}
+	html:root .nspp-hot-rankings>[role=status] {
+		margin:0;
+		padding:8px 18px 4px;
+		font-size:12px;
+	}
+	html:root .nspp-hot-rankings>[role=status].nspp-sweep-shine {
+		background-color:transparent;
+	}
+	html:root .nspp-hot-rankings>ol {
+		padding:0 10px 12px;
+	}
+	html:root .nspp-hot-rankings li {
+		--nspp-rank-color:var(--nsmax-muted);
+		gap:10px;
+		min-height:38px;
+		padding:6px 8px;
+		border-bottom:0;
+		border-radius:8px;
+	}
+	html:root .nspp-hot-rankings li:hover {
+		background:var(--nsmax-dlg-fill);
+	}
+	html:root .nspp-hot-rankings li:is([data-rank="1"],[data-rank="2"],[data-rank="3"]) {
+		--nspp-rank-color:var(--nsmax-accent);
+	}
+	html:root .nspp-hot-rankings li a {
+		font-size:13.5px;
+		line-height:1.5;
+	}
+	html:root .nspp-hot-rankings li a:hover {
+		text-decoration:none;
+	}
+	html:root .nspp-hot-rankings .nspp-hot-rank {
+		width:20px;
+		color:var(--nspp-rank-color);
+		font-size:12.5px;
+		font-weight:500;
+	}
+	html:root .nspp-hot-rankings :is([data-rank="1"],[data-rank="2"],[data-rank="3"]) .nspp-hot-rank {
+		background:none;
+		font-weight:700;
+	}
+	html:root .nspp-hot-rankings .nspp-hot-heat {
+		color:var(--nsmax-muted);
+		font-size:11.5px;
+	}
+	html:root .nspp-hot-rankings :is([data-rank="1"],[data-rank="2"],[data-rank="3"]) .nspp-hot-heat {
+		color:var(--nsmax-text-2);
+	}
+	html:root .nspp-hot-rankings .nspp-hot-skeleton :is(span) {
+		background-color:var(--nsmax-dlg-fill);
+	}
+	@media (width<=600px) {
+		html:root .nspp-monitor:not(.nspp-hot-rankings) {
+			border-radius:12px 12px 0 0;
+		}
+	}
+	@media (width<=700px),(hover:none) {
+		html:root .nspp-monitor.nspp-hot-rankings {
+			border-radius:12px 12px 0 0;
+			border-right-width:1px;
+			border-bottom-width:0;
+		}
+		html:root .nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings) {
+			border-radius:12px 12px 0 0;
+		}
+	}
+	@media (width<=480px) {
+		html:root .nspp-confirm-dialog {
+			border-radius:12px 12px 0 0;
+		}
 	}
 	html:root .nspp-post-preview {
 		background-color:var(--nsmax-popup);

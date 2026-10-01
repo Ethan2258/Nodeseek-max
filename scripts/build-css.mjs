@@ -40,8 +40,10 @@ const attributes = new Map([
 	["data-nsmax-accent", options.accent === "mono" ? "mono" : options.accent === "site" ? "site" : "color"]
 ]);
 for (const [option, attribute] of [["grid", "data-nsmax-grid"], ["glassHeader", "data-nsmax-glass"], ["typography", "data-nsmax-type"], ["motion", "data-nsmax-motion"], ["scrollbar", "data-nsmax-scrollbar"]]) if (options[option]) attributes.set(attribute, "");
-// 页面类型由脚本按网址设置：独立 CSS 中这些规则只会命中对应页面才有的元素，直接视为满足。
+// 页面类型由脚本按网址设置：独立 CSS 中这些规则只会命中对应页面才有的元素，直接视为满足；
+// 设置页的规则用的是通用表单选择器，放进独立 CSS 会影响所有页面，直接丢弃。
 const runtimeAttributes = new Set(["data-nsmax-page"]);
+const scriptOnlyPages = new Set(["setting"]);
 // 只能由脚本标记的元素：能映射的换成站点选择器，其余规则丢弃。
 const markers = new Map([
 	["[data-nsmax-header]", "#nsk-head"],
@@ -89,7 +91,7 @@ function evaluate(simple) {
 	let match = simple.match(/^\[([\w-]+)(?:=([^\]]+))?\]$/);
 	if (match) {
 		const [, name, raw] = match;
-		if (runtimeAttributes.has(name)) return true;
+		if (runtimeAttributes.has(name)) return !scriptOnlyPages.has(raw?.replace(/^["']|["']$/g, ""));
 		if (!name.startsWith("data-nsmax-")) return null;
 		const value = raw?.replace(/^["']|["']$/g, "");
 		return raw === void 0 ? attributes.has(name) : attributes.get(name) === value;
