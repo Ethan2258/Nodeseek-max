@@ -84,7 +84,9 @@ async function launch() {
 }
 
 // 打开一个页面：所有请求都在本地处理，外部网络一律拒绝。
-async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "" } = {}) {
+// api：按接口路径给出依次返回的响应 [{ status, headers, body }]，用完后回到默认模拟数据；calls 记录每个接口被请求的次数。
+async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {} } = {}) {
+	const calls = {};
 	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1 });
 	const errors = [];
 	if (script) await context.addInitScript({ content: `${gmShim(seed, fontFiles)}\n;(function () {\n${SCRIPT}\n})();` });
@@ -95,6 +97,9 @@ async function open(browser, url, { html, seed, fontFiles, colorScheme = "light"
 		if (target.hostname === "www.nodeseek.com") {
 			const key = target.pathname.replace(/\/$/, "") || "/";
 			if (key.startsWith("/api/")) {
+				calls[key] = (calls[key] || 0) + 1;
+				const scripted = api[key]?.[calls[key] - 1];
+				if (scripted) return route.fulfill({ status: scripted.status, headers: { "content-type": "application/json", ...scripted.headers }, body: JSON.stringify(scripted.body ?? {}) });
 				const body = Object.entries(apiResponses).find(([prefix]) => key === prefix || key.startsWith(`${prefix}`))?.[1] ?? { success: true, data: [] };
 				return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
 			}
@@ -112,7 +117,7 @@ async function open(browser, url, { html, seed, fontFiles, colorScheme = "light"
 		if (message.type() === "error" && !/Failed to load resource|net::ERR_FAILED/.test(message.text())) errors.push(`console: ${message.text()}`);
 	});
 	await page.goto(url, { waitUntil: "domcontentloaded" });
-	return { context, page, errors };
+	return { context, page, errors, calls };
 }
 
 module.exports = {
