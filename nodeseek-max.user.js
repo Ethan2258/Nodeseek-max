@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.1.0
+// @version      1.2.0
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -87,6 +87,7 @@
 // @connect      api.bimg.eu.org
 // @connect      raw.githubusercontent.com
 // @connect      cdn.jsdelivr.net
+// @connect      image.110726.com
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_notification
@@ -882,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.1.0";
+	var NSMAX_VERSION = "1.2.0";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -9631,6 +9632,68 @@ var nsmaxRedirecting = false;
 	gsap.registerPlugin(CSSPlugin);
 	var gsapWithCSS = gsap.registerPlugin(CSSPlugin) || gsap;
 	gsapWithCSS.core.Tween;
+	// 欧记图床走油猴跨域请求：不带站点 Cookie，并以图床自己的 Origin 发送，以通过它的来源校验。
+	function uploadViaUserscript(request, signal) {
+		return new Promise((resolve, reject) => {
+			if (signal.aborted) {
+				reject(new Error("上传已取消"));
+				return;
+			}
+			if (typeof _GM_xmlhttpRequest !== "function") {
+				reject(new Error("请重新安装最新版脚本，授予图床连接权限"));
+				return;
+			}
+			const cleanup = () => signal.removeEventListener("abort", cancel);
+			const transfer = _GM_xmlhttpRequest({
+				method: "POST",
+				url: request.url,
+				data: request.body,
+				headers: request.headers,
+				anonymous: true,
+				responseType: "json",
+				timeout: 12e4,
+				onload: (response) => {
+					cleanup();
+					const payload = response.response && typeof response.response === "object" ? response.response : null;
+					if (response.status >= 200 && response.status < 300) {
+						resolve(payload);
+						return;
+					}
+					const code = payload?.code || payload?.error;
+					const message = typeof payload?.message === "string" ? payload.message : "";
+					if (code === "INVALID_ORIGIN") reject(new Error("图床拒绝了跨站上传（来源校验未通过），请在图床后台为脚本放行或换用其他上传方式"));
+					else if (response.status === 401 || code === "INVALID_API_TOKEN") reject(new Error("图床 API Token 无效或已过期，请在设置中更新"));
+					else if (code === "PUBLIC_UPLOAD_DISABLED" || code === "LOGIN_REQUIRED_FOR_PUBLIC_UPLOAD") reject(new Error(`${message || "图床未开放访客上传"}，请在设置中填写 API Token`));
+					else reject(new Error(message ? `图床上传失败：${message}` : `图床上传失败（HTTP ${response.status}）`));
+				},
+				onerror: () => {
+					cleanup();
+					reject(new Error("无法连接图床，请检查网络和脚本连接权限"));
+				},
+				ontimeout: () => {
+					cleanup();
+					reject(new Error("上传超时，请检查图床是否已收到图片后再重试"));
+				},
+				onabort: () => {
+					cleanup();
+					reject(new Error("上传已取消"));
+				}
+			});
+			function cancel() {
+				transfer.abort();
+			}
+			signal.addEventListener("abort", cancel, { once: true });
+		});
+	}
+	function sendUpload(ctx, provider, request) {
+		if (provider === "NodeImage") return uploadNodeImage(request.body, request.headers, ctx.signal);
+		if (provider === "OU") return uploadViaUserscript(request, ctx.signal);
+		return ctx.request(request.url, {
+			method: "POST",
+			headers: request.headers,
+			body: request.body
+		});
+	}
 	function uploadNodeImage(body, headers, signal) {
 		return new Promise((resolve, reject) => {
 			if (signal.aborted) {
@@ -9724,10 +9787,11 @@ var nsmaxRedirecting = false;
 			signal.addEventListener("abort", cancel, { once: true });
 		});
 	}
+	var OU_IMAGE_BASE = "https://image.110726.com";
 	function uploadRequest(provider, configuredBase, key, file) {
-		const base = new URL(provider === "NodeImage" ? "https://api.nodeimage.com" : configuredBase);
+		const base = new URL(provider === "NodeImage" ? "https://api.nodeimage.com" : configuredBase || (provider === "OU" ? OU_IMAGE_BASE : ""));
 		if (base.protocol !== "https:" || base.username || base.password || base.search || base.hash) throw new Error("Invalid service URL");
-		const root = base.href.replace(/\/$/, "");
+		const root = base.origin + base.pathname.replace(/\/$/, "");
 		const body = new FormData();
 		const headers = { Accept: "application/json" };
 		let path = "/upload";
@@ -9736,6 +9800,13 @@ var nsmaxRedirecting = false;
 			path = "/api/upload";
 			field = "image";
 			headers["X-API-Key"] = key;
+		} else if (provider === "OU") {
+			// 欧记图床：有 API Token 时上传到个人图库，否则走访客公共上传（默认不公开到公共图库）。
+			// 图床对浏览器发起的写请求校验 Origin，这里以图床自己的来源发送（经油猴跨域请求）。
+			path = key ? "/api/uploads" : "/api/public/uploads?publicVisible=false";
+			if (key) headers.Authorization = `Bearer ${key}`;
+			headers.Origin = root;
+			headers.Referer = `${root}/`;
 		} else if (provider === "LskyPro") {
 			path = "/api/v1/upload";
 			headers.Authorization = `Bearer ${key}`;
@@ -9773,6 +9844,10 @@ var nsmaxRedirecting = false;
 			else if (provider === "LskyPro" && typeof result.data === "object") direct = result.data?.links?.url;
 			else if (provider === "Chevereto") direct = result.image?.url;
 			else if (provider === "EasyImages") direct = result.url;
+			else if (provider === "OU") {
+				if (!result.image && typeof result.message === "string") throw new Error(result.message);
+				direct = result.image?.originalUrl;
+			}
 		}
 		if (typeof direct !== "string" || !direct) throw new Error("Missing image URL");
 		const url = new URL(direct, base + "/");
@@ -9783,17 +9858,19 @@ var nsmaxRedirecting = false;
 		id: "image-upload",
 		title: "图片上传",
 		group: "操作辅助",
-		description: "选择图片上传并插入链接，支持六类图床协议。默认使用 NodeImage 官方图床；其他服务须允许 CORS；密钥仅存当前页面内存。",
+		description: "选择、粘贴或拖拽图片上传并插入链接。默认使用欧记图床（image.110726.com）；也支持 NodeImage、Telegraph、LskyPro、Chevereto、EasyImages。",
 		defaults: {
 			enabled: true,
-			provider: "NodeImage",
-			base: ""
+			provider: "OU",
+			base: "",
+			token: ""
 		},
 		fields: {
 			provider: {
 				label: "图床协议",
 				type: "select",
 				options: [
+					"OU",
 					"NodeImage",
 					"Telegraph",
 					"Telegraph2",
@@ -9801,16 +9878,25 @@ var nsmaxRedirecting = false;
 					"Chevereto",
 					"EasyImages"
 				].map((value) => ({
-					label: value === "NodeImage" ? "NodeImage（论坛官方，默认）" : value,
+					label: value === "OU" ? "欧记图床 image.110726.com（默认）" : value === "NodeImage" ? "NodeImage（论坛官方）" : value,
 					value
 				}))
 			},
 			base: {
-				label: "其他图床地址（NodeImage 固定使用官方地址）",
+				label: "图床地址（欧记图床留空即 https://image.110726.com；NodeImage 固定官方地址）",
+				type: "text"
+			},
+			token: {
+				label: "欧记图床 API Token（可选，留空则使用访客公共上传）",
 				type: "text"
 			}
 		},
 		mount(ctx) {
+			// 一次性迁移：之前保存为 NodeImage 默认值的设置切换到欧记图床。
+			if (!ctx.get("migratedOU")) {
+				ctx.set("migratedOU", true);
+				if (ctx.get("provider") === "NodeImage") ctx.set("provider", "OU");
+			}
 			const bound = new WeakSet();
 			const bars = [];
 			let apiKey = "";
@@ -9855,7 +9941,8 @@ var nsmaxRedirecting = false;
 					official.hidden = ctx.get("provider") !== "NodeImage";
 					const key = document.createElement("input");
 					key.type = "password";
-					key.placeholder = "图床 API Key / Token（不保存）";
+					key.placeholder = ctx.get("provider") === "OU" ? "API Token（可选，不保存）" : "图床 API Key / Token（不保存）";
+					key.hidden = ctx.get("provider") === "OU" && !!ctx.get("token");
 					key.autocomplete = "off";
 					key.setAttribute("aria-label", "图床 API Key / Token");
 					key.addEventListener("input", () => {
@@ -9925,12 +10012,9 @@ var nsmaxRedirecting = false;
 								await ensureKey();
 								status.textContent = "上传中…";
 							}
-							const request = uploadRequest(ctx.get("provider"), ctx.get("base"), apiKey, file);
-							const result = ctx.get("provider") === "NodeImage" ? await uploadNodeImage(request.body, request.headers, ctx.signal) : await ctx.request(request.url, {
-								method: "POST",
-								headers: request.headers,
-								body: request.body
-							});
+							const provider = ctx.get("provider");
+							const request = uploadRequest(provider, ctx.get("base"), apiKey || (provider === "OU" ? ctx.get("token") : ""), file);
+							const result = await sendUpload(ctx, provider, request);
 							const url = uploadResult(ctx.get("provider"), request.base, result);
 							if (ctx.signal.aborted) return false;
 							const markdown = `![image](<${url.href.replace(/>/g, "%3E")}>)`;
@@ -9950,7 +10034,7 @@ var nsmaxRedirecting = false;
 								key.value = "";
 								official.hidden = false;
 							}
-							if (!ctx.signal.aborted) status.textContent = ctx.get("provider") === "NodeImage" && error instanceof Error ? error.message : "上传失败：请检查 HTTPS 图床地址、API Key、协议或 CORS 支持";
+							if (!ctx.signal.aborted) status.textContent = ["NodeImage", "OU"].includes(ctx.get("provider")) && error instanceof Error ? error.message : "上传失败：请检查 HTTPS 图床地址、API Key、协议或 CORS 支持";
 							return false;
 						} finally {
 							input.disabled = false;
@@ -22893,7 +22977,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		async function uploadFiles(files) {
 			const peer = options.peer();
 			if (!peer || disabled || uploads.has(peer) || !files.length) return;
-			const settings = uploadSettings(), provider = settings.provider || "NodeImage";
+			const settings = uploadSettings();
+			const provider = settings.provider || "OU";
 			if (settings.enabled === false) {
 				statuses.set(peer, "请先在设置中开启图片上传");
 				updateStatus();
@@ -22918,12 +23003,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						}));
 						apiKey = nodeImageKey;
 					}
-					const request = uploadRequest(provider, settings.base || "", apiKey, file);
-					const result = provider === "NodeImage" ? await uploadNodeImage(request.body, request.headers, ctx.signal) : await ctx.request(request.url, {
-						method: "POST",
-						headers: request.headers,
-						body: request.body
-					});
+					const request = uploadRequest(provider, settings.base || "", apiKey || (provider === "OU" && typeof settings.token === "string" ? settings.token : ""), file);
+					const result = await sendUpload(ctx, provider, request);
 					const url = uploadResult(provider, request.base, result);
 					if (ctx.signal.aborted) return;
 					options.insert(peer, `![image](<${url.href.replace(/>/g, "%3E")}>)\n`);
@@ -24658,32 +24739,63 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	}
 	var navLabel = (element) => (element.textContent || "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
 	var navHeaderSelector = "[data-nsmax-header], #nsk-head, header";
-	// 找出页面上所有「版块链接组」：同一父容器下、文字是版块名称（或链接指向版块）的链接。
-	function categoryGroups(names) {
-		const groups = new Map();
-		for (const link of document.querySelectorAll("a")) {
-			const label = navLabel(link);
-			if (!label || label.length > 16) continue;
-			if (!names.has(label) && !/\/categor/i.test(link.getAttribute("href") || "")) continue;
-			if (link.closest(".post-list-item, ul.comments, .nsk-post, .post-content, .md-editor, .user-card, .user-stat, [data-nsmax-shortcut], [class*=\"nspp-\"]")) continue;
-			// 条目可能套了几层只含这一个链接的包装元素，取最外层包装作为条目。
-			let item = link.closest("li") || link;
-			for (let depth = 0; depth < 3 && item.parentElement && item.parentElement !== document.body && item.parentElement.querySelectorAll("a").length === 1; depth++) item = item.parentElement;
-			const container = item.parentElement;
-			if (!container) continue;
-			if (!groups.has(container)) groups.set(container, []);
-			groups.get(container).push({
-				item,
-				link,
-				label
+	var navSkipSelector = ".post-list-item, ul.post-list, ul.comments, .nsk-post, .post-content, .md-editor, .user-card, .user-stat, #nspp-tools, #nspp-settings, .nsmax-hot-panel, .nsmax-shortcuts, .nspp-messages, .nspp-monitor, .nspp-user-hover, .nspp-post-preview, .hover-user-card";
+	// 在页面文字里找版块名称（不依赖标签、类名或链接格式），再找出把它们组织在一起的最小容器作为一组导航。
+	function scanCategoryTexts(names) {
+		const matches = [];
+		const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode(node) {
+			const text = node.data.trim();
+			return text && text.length <= 16 && names.has(text.toLocaleLowerCase()) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+		} });
+		while (walker.nextNode()) {
+			const element = walker.currentNode.parentElement;
+			if (!element || element.closest(navSkipSelector)) continue;
+			matches.push({
+				element,
+				label: walker.currentNode.data.trim().toLocaleLowerCase()
 			});
 		}
-		return Array.from(groups, ([container, items]) => ({
-			container,
-			items,
-			score: items.filter(({ label }) => names.has(label)).length,
-			header: !!container.closest(navHeaderSelector)
-		})).filter((group) => group.score >= 3);
+		const counts = new Map();
+		for (const match of matches) for (let node = match.element; node && node !== document.body; node = node.parentElement) {
+			if (!counts.has(node)) counts.set(node, new Set());
+			counts.get(node).add(match.label);
+		}
+		const candidates = Array.from(counts).filter(([, labels]) => labels.size >= 4).map(([element]) => element);
+		const containers = candidates.filter((element) => !candidates.some((other) => other !== element && element.contains(other)));
+		const groups = containers.map((container) => {
+			const items = [];
+			const seen = new Set();
+			for (const match of matches) {
+				if (!container.contains(match.element)) continue;
+				let item = match.element;
+				while (item.parentElement && item.parentElement !== container) item = item.parentElement;
+				if (seen.has(item)) continue;
+				seen.add(item);
+				items.push({
+					item,
+					link: item.matches("a") ? item : item.querySelector("a") || item,
+					label: match.label
+				});
+			}
+			return {
+				container,
+				items,
+				score: new Set(items.map(({ label }) => label)).size,
+				header: !!container.closest(navHeaderSelector)
+			};
+		});
+		return {
+			matches,
+			groups
+		};
+	}
+	function describeElement(element) {
+		const parts = [];
+		for (let node = element, depth = 0; node && node !== document.documentElement && depth < 5; node = node.parentElement, depth++) {
+			const classes = Array.from(node.classList).slice(0, 3).map((name) => `.${name}`).join("");
+			parts.unshift(`${node.tagName.toLowerCase()}${node.id ? `#${node.id}` : ""}${classes}`);
+		}
+		return parts.join(" > ");
 	}
 	function shortcutIcon(name) {
 		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -24812,12 +24924,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				passive: true,
 				signal: ctx.signal
 			});
+			let scans = 0;
 			const scan = () => {
-				const groups = categoryGroups(names);
-				const candidates = groups.filter((group) => !group.header);
-				if (!candidates.length) return false;
-				const best = candidates.reduce((a, b) => b.score > a.score || b.score === a.score && b.items.length > a.items.length ? b : a);
-				if (best.score < 4) return false;
+				scans++;
+				const { groups } = scanCategoryTexts(names);
+				if (!groups.length) return false;
+				const best = groups.reduce((a, b) => b.score > a.score || b.score === a.score && !b.header && a.header ? b : a);
+				if (best.score < 5) return false;
 				if (nav?.container !== best.container) {
 					if (nav) resizeObserver?.unobserve(nav.container);
 					resizeObserver?.observe(best.container);
@@ -24827,8 +24940,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				for (const { item, label } of nav.items) if (hidden.has(label)) mark(item, "data-nsmax-hidden");
 				if (dedupe !== "off") {
 					// 顶栏组：位于顶栏元素内；找不到顶栏元素时，取页面最上方的那组（只在识别时读一次布局）。
-					let headers = groups.filter((group) => group !== nav && group.header);
-					if (!headers.length) headers = groups.filter((group) => group !== nav && group.container.getBoundingClientRect().top + window.scrollY < 90);
+					const headers = groups.filter((group) => group !== nav && (group.header || group.container.getBoundingClientRect().top + window.scrollY < 120));
 					const headerLabels = new Set(headers.flatMap((group) => group.items.map(({ label }) => label)));
 					if (dedupe === "header") {
 						for (const group of headers) for (const { item, label } of group.items) if (navLabels.has(label)) mark(item, "data-nsmax-dup", "header");
@@ -24849,6 +24961,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				// 已识别且仍在页面上：什么都不做（不扫描、不读布局）。
 				if (nav && nav.container.isConnected && nav.items.every(({ item }) => item.isConnected) && (!shortcuts.length || shortcutGroup?.isConnected)) return;
 				// 页面频繁变化时最多每 500ms 重新识别一次；被节流时安排一次补扫，避免漏掉之后才渲染出来的导航。
+				// 页面上一直没有导航（例如手机布局）时最多尝试 40 次，不再持续扫描。
+				if (!nav && scans >= 40) return;
 				const wait = lastScan + 500 - Date.now();
 				if (wait > 0) {
 					if (!retry) retry = setTimeout(() => {
@@ -24861,6 +24975,34 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				scan();
 			};
 			const stop = ctx.watch(check);
+			GM_registerMenuCommand$1("NodeSeek Max：复制导航诊断信息", async () => {
+				const { matches, groups } = scanCategoryTexts(names);
+				const report = {
+					version: NSMAX_VERSION,
+					url: location.href,
+					viewport: `${window.innerWidth}x${window.innerHeight}`,
+					navFound: !!nav,
+					sidebarVisible: root.hasAttribute("data-nsmax-sidenav"),
+					hiddenItems: document.querySelectorAll("[data-nsmax-hidden]").length,
+					duplicateItems: document.querySelectorAll("[data-nsmax-dup]").length,
+					header: describeElement(document.querySelector("[data-nsmax-header]") || document.body),
+					groups: groups.map((group) => ({
+						container: describeElement(group.container),
+						header: group.header,
+						top: Math.round(group.container.getBoundingClientRect().top + window.scrollY),
+						labels: group.items.map(({ label }) => label),
+						sample: group.items[0]?.item.outerHTML.replace(/\s+/g, " ").slice(0, 600)
+					})),
+					matches: matches.slice(0, 30).map(({ element, label }) => `${label} @ ${describeElement(element)}`)
+				};
+				try {
+					await navigator.clipboard.writeText(JSON.stringify(report, null, 2));
+					ctx.notify("导航诊断信息已复制，粘贴发给开发者即可", "success");
+				} catch {
+					console.info("[NodeSeek Max] 导航诊断", report);
+					ctx.notify("复制失败，诊断信息已输出到浏览器控制台", "error");
+				}
+			});
 			return () => {
 				stop();
 				clearTimeout(retry);
@@ -25122,8 +25264,14 @@ ${NSMAX_ROOT} [data-nsmax-stat] a{color:var(--nsmax-text-2)!important;text-decor
 ${NSMAX_ROOT} [data-nsmax-stat] a:hover{background:var(--nsmax-surface)!important;color:var(--nsmax-text)!important}
 ${NSMAX_ROOT} [data-nsmax-stat] svg{color:var(--nsmax-muted)}
 ${NSMAX_ROOT} .notify-count{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:var(--nsmax-accent)!important;color:var(--nsmax-on-accent)!important;font-size:11px;font-weight:600;line-height:18px;text-align:center;font-variant-numeric:tabular-nums}
-${NSMAX_ROOT} [data-nsmax-usercard] a:has(>svg:only-child){display:inline-grid;place-items:center;padding:4px;border-radius:8px;color:var(--nsmax-muted)!important;transition:background-color .2s ease,color .2s ease}
-${NSMAX_ROOT} [data-nsmax-usercard] a:has(>svg:only-child):hover{background:var(--nsmax-fill);color:var(--nsmax-text)!important}
+${NSMAX_ROOT} [data-nsmax-usercard] a:has(>svg:only-child){color:var(--nsmax-text-2)!important;transition:color .2s ease,opacity .2s ease}
+${NSMAX_ROOT} [data-nsmax-usercard] a:has(>svg:only-child):hover{color:var(--nsmax-text)!important;opacity:.7}
+${NSMAX_ROOT} [data-nsmax-members]{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 6px;align-items:start}
+${NSMAX_ROOT} [data-nsmax-members-row]{display:contents!important}
+${NSMAX_ROOT} [data-nsmax-members]>:not([data-nsmax-member],[data-nsmax-members-row]){grid-column:1/-1}
+${NSMAX_ROOT} [data-nsmax-member]{display:flex!important;flex-direction:column;align-items:center;gap:4px;width:auto!important;min-width:0;margin:0!important;padding:0!important;float:none!important;text-align:center}
+${NSMAX_ROOT} [data-nsmax-member] img{width:44px!important;height:44px!important;border-radius:12px;object-fit:cover;box-shadow:0 0 0 1px var(--nsmax-divider)}
+${NSMAX_ROOT} [data-nsmax-member] :is(a,span,div,p):not(:has(img)){display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:1.4;color:var(--nsmax-text-2)}
 ${NSMAX_ROOT} [data-nsmax-cta]{background:var(--nsmax-accent)!important;background-image:none!important;color:var(--nsmax-on-accent)!important;border-color:transparent!important;border-radius:var(--nsmax-control-radius)!important;box-shadow:0 1px 2px rgb(0 0 0/.12)!important;font-weight:600;transition:opacity .2s ease,scale .38s var(--nsmax-spring)}
 ${NSMAX_ROOT} [data-nsmax-cta] *{color:inherit!important;fill:currentColor}
 ${NSMAX_ROOT} [data-nsmax-cta]:hover{opacity:.9}
@@ -25185,36 +25333,74 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 .nsmax-hot-toggle:hover{background:var(--nsmax-fill,rgb(0 0 0/.05));color:var(--nsmax-text,inherit)}
 @media (prefers-reduced-motion:reduce){.nsmax-hot-slider{transition:none}.nsmax-hot-refresh[data-busy] svg{animation:none}}
 `;
-	// NodeSeek++ 设置面板位于 Shadow DOM，单独注入玻璃风格覆盖；主题关闭时不生效。
+	// NodeSeek++ 设置面板位于 Shadow DOM，这里整体重排为 sing-box 风格：左侧分类栏、每个功能一张卡片、
+	// 黑白滑动开关、标签与控件左右对齐的选项行。桌面布局放在媒体查询里，手机端沿用原有的底部弹出布局。
 	var settings_glass_default = `
-:host([data-nsmax-glass]){--surface:#ffffff;--text:#1d1d1f;--muted:#6e6e73;--line:rgb(0 0 0/.08);--soft:rgb(0 0 0/.045);--accent:var(--nsmax-accent,#1d1d1f);--link:var(--nsmax-accent,#1d1d1f);font-family:var(--nsmax-font,${NSMAX_FONT})}
-:host([data-nsmax-glass][data-dark]){--surface:#161618;--text:#f5f5f7;--muted:#a1a1a6;--line:rgb(255 255 255/.12);--soft:rgb(255 255 255/.07)}
-:host([data-nsmax-glass][data-nsmax-style=flat]){--surface:#ffffff;--text:#18181b;--muted:#71717a;--line:rgb(0 0 0/.08);--soft:rgb(0 0 0/.045)}
-:host([data-nsmax-glass][data-nsmax-style=flat][data-dark]){--surface:#18181b;--text:#fafafa;--muted:#a1a1aa;--line:rgb(255 255 255/.09);--soft:rgb(255 255 255/.06)}
-:host([data-nsmax-glass]) dialog{font-family:var(--nsmax-font,${NSMAX_FONT});background:color-mix(in srgb,var(--surface) 86%,transparent);border:1px solid color-mix(in srgb,var(--surface) 60%,transparent);border-radius:22px;-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);box-shadow:0 18px 48px rgb(0 0 0/.16),inset 0 1px 0 rgb(255 255 255/.5)}
-:host([data-nsmax-glass][data-dark]) dialog{-webkit-backdrop-filter:blur(20px) saturate(110%);backdrop-filter:blur(20px) saturate(110%);box-shadow:0 18px 48px rgb(0 0 0/.6),inset 0 1px 0 rgb(255 255 255/.08)}
-:host([data-nsmax-glass]) dialog::backdrop{background:rgb(0 0 0/.28)}
-:host([data-nsmax-glass]) header,:host([data-nsmax-glass]) .search-bar,:host([data-nsmax-glass]) .settings-workspace .content{background:transparent}
-:host([data-nsmax-glass]) .categories,:host([data-nsmax-glass]) .settings-footer{background:var(--soft)}
-:host([data-nsmax-glass]) h3{background:var(--surface)}
-:host([data-nsmax-glass]) .categories a{border-radius:var(--nsmax-control-radius,999px)}
-:host([data-nsmax-glass][data-nsmax-style=flat]) dialog{background:var(--surface);border-color:var(--line);border-radius:18px;-webkit-backdrop-filter:none;backdrop-filter:none}
-:host([data-nsmax-glass]) .settings-workspace article{content-visibility:auto;contain-intrinsic-size:auto 56px}
-:host([data-nsmax-glass][data-nsmax-style=flat]) .categories a[aria-current]{background:var(--line);box-shadow:none;font-weight:600}
-:host([data-nsmax-glass]) .categories a[aria-current]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgb(0 0 0/.08),inset 0 1px 0 rgb(255 255 255/.6)}
-:host([data-nsmax-glass]) .feature-options{border-radius:14px}
-:host([data-nsmax-glass]) .settings-workspace article{border-radius:12px}
-:host([data-nsmax-glass]) button,:host([data-nsmax-glass]) .settings-footer button{border-radius:var(--nsmax-control-radius,999px);transition:background-color .2s ease,opacity .2s ease,scale .38s cubic-bezier(.34,1.4,.64,1)}
-:host([data-nsmax-glass]) button:active{scale:.95;transition-duration:.2s,.2s,.12s}
-:host([data-nsmax-glass]) .primary,:host([data-nsmax-glass]) .settings-footer .primary{background:var(--text);color:var(--surface);border-color:transparent;box-shadow:0 6px 18px rgb(0 0 0/.14),inset 0 1px 0 rgb(255 255 255/.3)}
-:host([data-nsmax-glass]) input:not([type=checkbox]),:host([data-nsmax-glass]) textarea,:host([data-nsmax-glass]) select{border-radius:10px;background:var(--soft);border-color:transparent;box-shadow:none}
-:host([data-nsmax-glass]) :is(input:not([type=checkbox]),textarea,select):focus{border-color:var(--text);box-shadow:0 0 0 3px var(--line);outline:none}
-:host([data-nsmax-glass]) .search-bar input{border-radius:var(--nsmax-control-radius,999px);padding:5px 12px}
-:host([data-nsmax-glass]) input[type=checkbox]{accent-color:var(--text)}
-:host([data-nsmax-glass]) .toast{color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 32px rgb(0 0 0/.16),inset 0 1px 0 rgb(255 255 255/.4)}
-:host([data-nsmax-glass]) .toast[data-type=success] .toast-icon{color:#34c759}
+:host([data-nsmax-glass]){--surface:#fff;--canvas:#fafafa;--text:#18181b;--text-2:#3f3f46;--muted:#71717a;--line:rgb(0 0 0/.08);--line-strong:rgb(0 0 0/.16);--soft:rgb(0 0 0/.045);--knob:#fff;--accent:var(--nsmax-accent,#18181b);--link:var(--nsmax-accent,#18181b);font-family:var(--nsmax-font,${NSMAX_FONT})}
+:host([data-nsmax-glass][data-dark]){--surface:#18181b;--canvas:#111113;--text:#fafafa;--text-2:#e4e4e7;--muted:#a1a1aa;--line:rgb(255 255 255/.09);--line-strong:rgb(255 255 255/.2);--soft:rgb(255 255 255/.06);--knob:#fafafa}
+:host([data-nsmax-glass][data-nsmax-style=glass]){--surface:#fff;--canvas:#f5f5f7;--text:#1d1d1f;--text-2:#3a3a3c;--muted:#6e6e73}
+:host([data-nsmax-glass][data-nsmax-style=glass][data-dark]){--surface:#161618;--canvas:#0b0b0c;--text:#f5f5f7;--text-2:#e5e5ea;--muted:#a1a1a6}
+:host([data-nsmax-glass]) dialog{font-family:var(--nsmax-font,${NSMAX_FONT});background:var(--canvas);color:var(--text);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 64px rgb(0 0 0/.18)}
+:host([data-nsmax-glass][data-nsmax-style=glass]) dialog{background:color-mix(in srgb,var(--canvas) 88%,transparent);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%)}
+:host([data-nsmax-glass]) dialog::backdrop{background:rgb(0 0 0/.32)}
+:host([data-nsmax-glass]) header{background:var(--surface);border-bottom:1px solid var(--line);padding:12px 16px;gap:12px}
+:host([data-nsmax-glass]) .heading{align-items:center;gap:8px}
+:host([data-nsmax-glass]) .heading h2{font-size:16px;font-weight:700;letter-spacing:-.01em}
+:host([data-nsmax-glass]) .heading small{font-family:var(--nsmax-mono,ui-monospace,monospace);font-size:11px;color:var(--muted);opacity:1}
+:host([data-nsmax-glass]) .heading .check-update{color:var(--muted);font-size:12px;padding:2px 8px;border-radius:8px}
+:host([data-nsmax-glass]) .heading .check-update:hover{background:var(--soft);color:var(--text)}
+:host([data-nsmax-glass]) .search-bar{background:transparent}
+:host([data-nsmax-glass]) .search-bar input{height:34px;border-radius:10px;padding:0 12px;background:var(--soft);border:1px solid transparent;font-size:13px}
+:host([data-nsmax-glass]) .categories{background:var(--canvas);border:0}
+:host([data-nsmax-glass]) .categories a{color:var(--text-2);font-size:13px;border-radius:8px}
+:host([data-nsmax-glass]) .categories a:hover{background:var(--soft);color:var(--text)}
+:host([data-nsmax-glass]) .categories a[aria-current]{background:var(--line);color:var(--text);font-weight:600;box-shadow:none}
+:host([data-nsmax-glass]) .categories a[aria-current]::before{display:none}
+:host([data-nsmax-glass]) .settings-workspace .content{background:var(--canvas)}
+:host([data-nsmax-glass]) h3{position:sticky;top:0;z-index:1;margin:0;padding:16px 2px 8px;background:var(--canvas);border:0;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.02em}
+:host([data-nsmax-glass]) .settings-workspace article{margin:0 0 10px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;content-visibility:auto;contain-intrinsic-size:auto 64px;transition:border-color .2s ease}
+:host([data-nsmax-glass]) .settings-workspace article+article{margin-top:0}
+:host([data-nsmax-glass]) .settings-workspace article:hover{background:var(--surface);border-color:var(--line-strong)}
+:host([data-nsmax-glass]) .feature-heading{gap:16px;min-height:22px}
+:host([data-nsmax-glass]) .feature-heading strong{font-size:14px;font-weight:600;color:var(--text)}
+:host([data-nsmax-glass]) article>p{margin:6px 0 0;padding:0;color:var(--muted);font-size:12.5px;line-height:1.6}
+:host([data-nsmax-glass]) input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;flex:none;width:36px;height:20px;margin:0;border-radius:999px;background:var(--line-strong);cursor:pointer;transition:background-color .2s ease}
+:host([data-nsmax-glass]) input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0/.25);transition:transform .25s cubic-bezier(.34,1.4,.64,1),background-color .2s ease}
+:host([data-nsmax-glass]) input[type=checkbox]:checked{background:var(--text)}
+:host([data-nsmax-glass]) input[type=checkbox]:checked::before{transform:translateX(16px);background:var(--surface)}
+:host([data-nsmax-glass]) input[type=checkbox]:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+:host([data-nsmax-glass]) .feature-options{margin:12px 0 0;padding:0;background:transparent;border:0;border-top:1px solid var(--line);border-radius:0}
+:host([data-nsmax-glass]) .field{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;gap:6px 16px;margin:0;padding:10px 0;border-bottom:1px solid var(--line)}
+:host([data-nsmax-glass]) .field:last-child{border-bottom:0;padding-bottom:0}
+:host([data-nsmax-glass]) .field:has(input[type=checkbox]){grid-template-columns:1fr auto}
+:host([data-nsmax-glass]) .field>span{padding:0;color:var(--text-2);font-size:13px;line-height:1.5}
+:host([data-nsmax-glass]) :is(input:not([type=checkbox]),select){height:34px;padding:0 10px;border-radius:9px;background:var(--soft);border:1px solid transparent;box-shadow:none;color:var(--text);font-size:13px}
+:host([data-nsmax-glass]) input[type=color]{padding:3px;height:34px}
+:host([data-nsmax-glass]) textarea{min-height:88px;padding:8px 10px;border-radius:9px;background:var(--soft);border:1px solid transparent;box-shadow:none;color:var(--text);font-size:13px;line-height:1.6}
+:host([data-nsmax-glass]) :is(input:not([type=checkbox]),textarea,select):focus{outline:none;background:var(--surface);border-color:var(--text);box-shadow:0 0 0 3px var(--line)}
+:host([data-nsmax-glass]) .settings-footer{background:var(--surface);border-top:1px solid var(--line);padding:12px 16px}
+:host([data-nsmax-glass]) .settings-footer .actions{gap:6px}
+:host([data-nsmax-glass]) button{border-radius:9px;transition:background-color .2s ease,color .2s ease,opacity .2s ease,scale .38s cubic-bezier(.34,1.4,.64,1)}
+:host([data-nsmax-glass]) .settings-footer button{min-height:34px;padding:0 12px;font-size:12.5px}
+:host([data-nsmax-glass]) .settings-footer button:not(.primary){color:var(--text-2);background:transparent;border-color:transparent}
+:host([data-nsmax-glass]) .settings-footer button:not(.primary):hover{background:var(--soft);color:var(--text)}
+:host([data-nsmax-glass]) .primary,:host([data-nsmax-glass]) .settings-footer .primary{min-width:108px;background:var(--text);color:var(--surface);border-color:transparent;font-weight:600;box-shadow:0 1px 2px rgb(0 0 0/.12)}
+:host([data-nsmax-glass]) .primary:hover{background:var(--text);opacity:.9}
+:host([data-nsmax-glass]) button:active{scale:.96;transition-duration:.2s,.2s,.2s,.12s}
+:host([data-nsmax-glass]) .about-content{padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+:host([data-nsmax-glass]) .about-links a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
+:host([data-nsmax-glass]) .toast{color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgb(0 0 0/.16)}
+:host([data-nsmax-glass]) .toast[data-type=success] .toast-icon{color:var(--text)}
 :host([data-nsmax-glass]) .toast[data-type=error] .toast-icon{color:#ff3b30}
-@media (prefers-reduced-motion:reduce){:host([data-nsmax-glass]) button{transition:none}:host([data-nsmax-glass]) button:active{scale:none}}
+@media (min-width:701px) and (hover:hover){
+:host([data-nsmax-glass]) dialog{width:min(920px,100vw - 48px);max-height:min(86dvh,780px)}
+:host([data-nsmax-glass]) .search-bar{flex:0 1 260px}
+:host([data-nsmax-glass]) .settings-workspace{grid-template-columns:184px minmax(0,1fr);height:min(70dvh,620px)}
+:host([data-nsmax-glass]) .categories{padding:12px 10px;border-right:1px solid var(--line)}
+:host([data-nsmax-glass]) .categories a{margin:0 0 2px;padding:8px 12px}
+:host([data-nsmax-glass]) .settings-workspace .content{padding:0 20px 16px}
+}
+@media (prefers-reduced-motion:reduce){:host([data-nsmax-glass]) *,:host([data-nsmax-glass]) *::before{transition:none!important}:host([data-nsmax-glass]) button:active{scale:none}}
 `;
 	var modernTheme = {
 		id: "modern-theme",
@@ -25476,10 +25662,44 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 						break;
 					}
 				};
-				const stopCard = ctx.watch(markCard);
+				// 「欢迎新用户」：找出每个新用户条目（含头像与名字的最小元素），把它们的公共容器排成规整网格。
+				let memberAttempts = 0;
+				const markMembers = () => {
+					if (document.querySelector("[data-nsmax-members]") || memberAttempts >= 20) return;
+					memberAttempts++;
+					const panel = Array.from(document.querySelectorAll(".nsk-panel, #nsk-right-panel-container > *")).find((element) => element.textContent.includes("新用户") && element.querySelector("img"));
+					if (!panel) return;
+					const items = [];
+					// 只取指向用户主页的头像，避免把标题里的表情图片当成新用户。
+					let images = Array.from(panel.querySelectorAll("a[href*=\"/space/\"] img, img[src*=\"/avatar/\"]"));
+					if (images.length < 2) images = Array.from(panel.querySelectorAll("img")).filter((image) => !image.closest("h1, h2, h3, h4, h5, h6") && image.getBoundingClientRect().width >= 24);
+					for (const image of images) {
+						let item = image;
+						while (item.parentElement && item.parentElement !== panel && !(item.textContent || "").trim()) item = item.parentElement;
+						if (item !== panel && !items.includes(item)) items.push(item);
+					}
+					if (items.length < 2) return;
+					let container = items[0].parentElement;
+					while (container && container !== panel && !items.every((item) => container.contains(item))) container = container.parentElement;
+					if (!container) return;
+					container.setAttribute("data-nsmax-members", "");
+					marked.push(container);
+					for (const item of items) {
+						item.setAttribute("data-nsmax-member", "");
+						marked.push(item);
+						for (let row = item.parentElement; row && row !== container; row = row.parentElement) {
+							row.setAttribute("data-nsmax-members-row", "");
+							marked.push(row);
+						}
+					}
+				};
+				const stopCard = ctx.watch(() => {
+					markCard();
+					markMembers();
+				});
 				cleanups.push(() => {
 					stopCard();
-					for (const element of marked) for (const attribute of ["data-nsmax-stat", "data-nsmax-usercard", "data-nsmax-cta"]) element?.removeAttribute(attribute);
+					for (const element of marked) for (const attribute of ["data-nsmax-stat", "data-nsmax-usercard", "data-nsmax-cta", "data-nsmax-members", "data-nsmax-members-row", "data-nsmax-member"]) element?.removeAttribute(attribute);
 				});
 			}
 			if (ctx.get("progress") && /^\/post-\d+/.test(location.pathname)) {

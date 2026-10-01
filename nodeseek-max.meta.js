@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.1.0
+// @version      1.2.0
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -87,6 +87,7 @@
 // @connect      api.bimg.eu.org
 // @connect      raw.githubusercontent.com
 // @connect      cdn.jsdelivr.net
+// @connect      image.110726.com
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_notification
