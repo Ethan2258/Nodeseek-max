@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.0.0
+// @version      1.1.0
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
 // @homepageURL  https://github.com/Ethan2258/Nodeseek-max
 // @supportURL   https://github.com/Ethan2258/Nodeseek-max/issues
+// @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMxODE4MWIiLz48cGF0aCBkPSJNMTQgMjBhMTcgMTcgMCAwIDAgMCAyNE0yMCAyNWExMCAxMCAwIDAgMCAwIDE0TTUwIDIwYTE3IDE3IDAgMCAxIDAgMjRNNDQgMjVhMTAgMTAgMCAwIDEgMCAxNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjMuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iOC41IiBmaWxsPSIjZmZmIi8+PGNpcmNsZSBjeD0iMjkiIGN5PSIzMSIgcj0iMS43IiBmaWxsPSIjMTgxODFiIi8+PGNpcmNsZSBjeD0iMzUiIGN5PSIzMSIgcj0iMS43IiBmaWxsPSIjMTgxODFiIi8+PC9zdmc+
 // @match        https://www.nodeseek.com/*
 // @match        https://www.deepflood.com/*
-// @include      /^https?:\/\/www\.google\..{2,7}url/
 // @match        *://www.jianshu.com/go-wild*
 // @match        *://link.zhihu.com/*
 // @match        *://t.cn/*
@@ -81,6 +81,7 @@
 // @match        *://ababtools.com/?plugin=redirect_page*
 // @match        *://help.aliyun.com/redirect*
 // @match        *://linux.do/*
+// @include      /^https?:\/\/www\.google\..{2,7}url/
 // @connect      api.nodeimage.com
 // @connect      rss.nodeseek.com
 // @connect      api.bimg.eu.org
