@@ -263,7 +263,7 @@ test("侧栏导航：默认隐藏生活/Dev/贴图/沙盒，并加入 NQ（NodeQ
 	await context.close();
 });
 
-test("侧栏导航：NQ 使用 NodeQuality 彩色标志，旧版默认入口自动换成新标志", async () => {
+test("侧栏导航：NQ 使用 NodeQuality 彩色标志，旧版默认设置自动换成新图标并隐藏 DeepFlood 入口", async () => {
 	const seed = { "nspp:settings:www.nodeseek.com": { "sidebar-nav": { enabled: true, dedupe: "header", hidden: "生活\nDev\n贴图\n沙盒", shortcuts: "NQ|https://nodequality.com|gauge|NodeQuality 测机" } } };
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
@@ -273,13 +273,17 @@ test("侧栏导航：NQ 使用 NodeQuality 彩色标志，旧版默认入口自�
 			brand: svg.getAttribute("data-nsmax-brand"),
 			fills: Array.from(svg.querySelectorAll("path"), (path) => path.getAttribute("fill")),
 			stroke: svg.getAttribute("stroke"),
-			saved: JSON.parse(localStorage.getItem("__gm__:nspp:settings:www.nodeseek.com"))["sidebar-nav"].shortcuts
+			saved: JSON.parse(localStorage.getItem("__gm__:nspp:settings:www.nodeseek.com"))["sidebar-nav"].shortcuts,
+			hidden: JSON.parse(localStorage.getItem("__gm__:nspp:settings:www.nodeseek.com"))["sidebar-nav"].hidden,
+			deepflood: getComputedStyle(document.querySelector("#nsk-head a[href*='deepflood.com']")).display
 		};
 	});
 	assert.equal(icon.brand, "nq");
 	assert.deepEqual(icon.fills, ["#37975b", "#30b966", "#bd1310", "#ee8a46", "#a0d567", "#2fbcf1"]);
 	assert.equal(icon.stroke, null);
 	assert.equal(icon.saved, "NQ|https://nodequality.com|nq|NodeQuality 测机");
+	assert.equal(icon.hidden, "生活\nDev\n贴图\n沙盒\nDeepFlood");
+	assert.equal(icon.deepflood, "none");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -288,15 +292,15 @@ test("侧栏导航：侧栏可见时隐藏顶栏重复版块，窄屏侧栏隐�
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
 	const headerVisible = () => page.evaluate(() => Array.from(document.querySelectorAll("#nsk-head a")).filter((a) => getComputedStyle(a).display !== "none").map((a) => a.textContent.trim()));
-	assert.deepEqual(await headerVisible(), ["NodeSeek", "DeepFlood"]);
+	assert.deepEqual(await headerVisible(), ["NodeSeek"]);
 	await settle(page, 300);
 	await shot(page, "list-nav");
 	await page.setViewportSize({ width: 700, height: 900 });
 	await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-sidenav"), null, { timeout: 3e3 });
-	assert.deepEqual(await headerVisible(), ["NodeSeek", "日常", "技术", "情报", "测评", "交易", "拼车", "推广", "DeepFlood"]);
+	assert.deepEqual(await headerVisible(), ["NodeSeek", "日常", "技术", "情报", "测评", "交易", "拼车", "推广"]);
 	await page.setViewportSize({ width: 1280, height: 900 });
 	await page.waitForFunction(() => document.documentElement.hasAttribute("data-nsmax-sidenav"), null, { timeout: 3e3 });
-	assert.deepEqual(await headerVisible(), ["NodeSeek", "DeepFlood"]);
+	assert.deepEqual(await headerVisible(), ["NodeSeek"]);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -310,7 +314,7 @@ test("侧栏导航：导航条目不是链接时也能按文字识别（隐藏�
 		shortcut: document.querySelector(".nsmax-shortcuts a")?.textContent.trim()
 	}));
 	assert.deepEqual(state.visible, ["日常", "技术", "情报", "测评", "交易", "拼车", "推广", "曝光", "内版"]);
-	assert.deepEqual(state.header, ["NodeSeek", "DeepFlood"]);
+	assert.deepEqual(state.header, ["NodeSeek"]);
 	assert.equal(state.shortcut, "NQ");
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -330,6 +334,71 @@ test("新用户面板：头像排成规整的 4 列网格，用户卡片图标�
 		};
 	});
 	assert.deepEqual(grid, { display: "grid", count: 6, firstRow: 4, iconPadding: "0px" });
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("精简顶栏：只保留标志、标题与深浅色切换，窄屏恢复搜索框", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("[data-nsmax-header-toggle]", { timeout: 5e3 });
+	await settle(page, 200);
+	const visible = (selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).filter((element) => element.getClientRects().length > 0).length, selector);
+	const layout = await page.evaluate(() => {
+		const shown = (element) => element.getClientRects().length > 0;
+		const head = document.querySelector("#nsk-head .nsk-container");
+		const logo = document.querySelector(".site-logo").getBoundingClientRect();
+		const toggle = document.querySelector(".tool-btn").getBoundingClientRect();
+		return {
+			shown: Array.from(head.querySelectorAll("a, sup, input, .search-box, .tool-btn")).filter(shown).map((element) => element.className || element.tagName.toLowerCase()),
+			toggleAttr: document.querySelector(".tool-btn").hasAttribute("data-nsmax-header-toggle"),
+			sameRow: Math.abs(logo.top + logo.height / 2 - (toggle.top + toggle.height / 2)) < 6,
+			apart: toggle.left - logo.right > 400
+		};
+	});
+	assert.deepEqual(layout.shown, ["site-logo", "beta", "tool-btn"]);
+	assert.equal(layout.toggleAttr, true);
+	assert.equal(layout.sameRow, true);
+	assert.equal(layout.apart, true);
+	await page.setViewportSize({ width: 700, height: 900 });
+	await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-sidenav"), null, { timeout: 3e3 });
+	assert.equal(await visible("#nsk-head .search-box"), 1);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("评论框：图床按钮与发布评论在同一行，工具栏换成统一线条图标", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	await page.waitForSelector("[data-nsmax-submit-row] .nspp-upload-choose", { timeout: 5e3 });
+	await page.waitForSelector(".mde-toolbar [data-nsmax-tool]", { timeout: 5e3 });
+	await settle(page, 200);
+	const state = await page.evaluate(() => {
+		const choose = document.querySelector(".nspp-upload-choose").getBoundingClientRect();
+		const submit = document.querySelector("button.submit").getBoundingClientRect();
+		const items = Array.from(document.querySelectorAll(".mde-toolbar .toolbar-item"));
+		return {
+			sameRow: Math.abs(choose.top + choose.height / 2 - (submit.top + submit.height / 2)) < 4,
+			leftOfSubmit: choose.right < submit.left,
+			editorBottomGap: Math.round(document.querySelector(".md-editor").getBoundingClientRect().bottom - submit.bottom),
+			names: items.map((item) => item.querySelector("[data-nsmax-icon]")?.getAttribute("data-nsmax-icon") || item.getAttribute("data-nsmax-icon") || null),
+			nativeHidden: items.filter((item) => item.hasAttribute("data-nsmax-tool")).every((item) => getComputedStyle(item.querySelector("svg:not(.nsmax-tool-icon)")).display === "none"),
+			iconSize: Math.round(items[0].querySelector(".nsmax-tool-icon").getBoundingClientRect().width),
+			itemSize: Math.round(items[0].getBoundingClientRect().width),
+			right: items.at(-1).hasAttribute("data-nsmax-tool")
+		};
+	});
+	assert.equal(state.sameRow, true);
+	assert.equal(state.leftOfSubmit, true);
+	assert.ok(state.editorBottomGap < 24, `编辑器底部空白 ${state.editorBottomGap}px`);
+	assert.deepEqual(state.names, ["bold", "italic", "strike", "heading", "unordered", "ordered", "quote", "link", "image", "code", "table", "rule", "undo", "redo", "clear", null]);
+	assert.equal(state.nativeHidden, true);
+	assert.equal(state.iconSize, 17);
+	assert.equal(state.itemSize, 30);
+	assert.equal(state.right, false);
+	// 原生「图片」按钮仍然打开图床上传
+	const chooser = page.waitForEvent("filechooser", { timeout: 3e3 });
+	await page.click(".mde-toolbar .i-icon-pic");
+	await chooser;
+	await shot(page, "post-editor");
 	assert.deepEqual(errors, []);
 	await context.close();
 });

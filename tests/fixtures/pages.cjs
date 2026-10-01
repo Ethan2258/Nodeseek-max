@@ -17,7 +17,7 @@ function shell(title, main, { dark = false, navMode = "link" } = {}) {
 	return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}</style>
 <script>window.__config__ = { user: { member_id: 1, member_name: "tester" } };</script></head>
 <body class="${dark ? "dark-layout" : ""}">
-<div id="nsk-head"><div class="nsk-container"><a class="site-logo" href="/">NodeSeek</a>${headerCategories}</div></div>
+<div id="nsk-head"><div class="nsk-container"><a class="site-logo" href="/"><img src="${AVATAR}" width="24" height="24" alt="">NodeSeek</a><sup class="beta">beta</sup>${headerCategories}<div class="header-right"><div class="search-box"><input type="text" placeholder="搜索 ( / 或 ctrl + / )"><svg class="search-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor"/></svg></div><span class="tool-btn"><svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg></span></div></div></div>
 <div id="nsk-body" class="nsk-container">${leftNav}${main}</div>
 </body></html>`;
 }
@@ -45,11 +45,13 @@ const content = `<h2>配置说明</h2><p>这是一段正文，包含 <a href="/j
 const comment = (floor, uid, name, text) => `<li class="content-item" id="${floor}"><div class="nsk-content-meta-info"><a href="/space/${uid}"><img class="avatar-normal" src="${AVATAR}" alt="${name}"></a><div class="author-info"><a href="/space/${uid}">${name}</a> <span class="role-tag">Lv ${floor % 5 + 1}</span></div><span style="margin-left:auto"><a class="floor-link" href="#${floor}">#${floor}</a></span></div>
 <article class="post-content"><p>${text}</p></article><div class="comment-menu"><div class="menu-item" title="引用">引用</div><div class="menu-item" title="回复">回复</div></div></li>`;
 
+const EDITOR_TOOLS = [["text-bold", "加粗"], ["text-italic", "斜体"], ["strikethrough", "删除线"], ["h", "标题"], ["list-two", "无序列表"], ["ordered-list", "有序列表"], ["quote", "引用"], ["link-one", "链接"], ["pic", "图片"], ["code", "代码"], ["table-file", "表格"], ["minus", "分割线"], ["undo", "撤销"], ["redo", "重做"], ["clear-format", "清空"]];
+const editor = `<div class="md-editor"><div class="tab-select"><span class="tab active">内容</span><span class="tab">预览</span></div><div class="mde-toolbar">${EDITOR_TOOLS.map(([name, title]) => `<span class="toolbar-item i-icon i-icon-${name}" title="${title}"><svg viewBox="0 0 48 48" width="16" height="16"><rect x="10" y="10" width="28" height="28" fill="currentColor"/></svg></span>`).join("")}<span class="toolbar-item right">支持markdown语法</span></div><textarea placeholder="说点什么…"></textarea><div class="emoji-bar">AC娘 洋葱头 小黄鸡</div><div class="submit-row" style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div></div>`;
 const postPage = (options) => shell("出一台香港 CN2 GIA 小鸡 - NodeSeek", `<div id="nsk-left"><div class="nsk-post-wrapper"><div class="post-title"><h1><a class="nspp-read" href="/post-1000-1">出一台香港 CN2 GIA 小鸡，年付 99</a></h1></div>
 <div class="nsk-post"><div class="nsk-content-meta-info"><a href="/space/10"><img class="avatar-normal" src="${AVATAR}" alt="seller"></a><div class="author-info"><a href="/space/10">seller</a></div><span style="margin-left:auto"><a class="floor-link" href="#0">#0</a></span></div>
 <article class="post-content">${content}</article><div class="signature">签名：机器不跑路</div></div>
 <ul class="comments">${comment(1, 11, "buyer", "收了，私信你")}${comment(2, 12, "passerby", "价格不错，帮顶")}${comment(3, 13, "curious", "线路怎么样？晚高峰丢包吗？")}</ul>
-<div class="md-editor"><div class="mde-toolbar"><span class="toolbar-item">B</span><span class="toolbar-item">I</span><span class="toolbar-item">链接</span><span class="toolbar-item right">预览</span></div><textarea placeholder="说点什么…"></textarea><div style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div></div>
+${editor}
 </div></div>${sidebar}`, options);
 
 const notificationPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-left"><ul class="notification-list">
