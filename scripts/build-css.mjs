@@ -50,7 +50,7 @@ const markers = new Map([
 	["[data-nsmax-stat]", ".user-stat"],
 	["[data-nsmax-usercard]", ".user-card"]
 ]);
-const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|sticky|scrolled|sticky-header|sidenav|hidden|dup|booting)\b|#nsmax-progress|\.nsmax-/;
+const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|sticky|scrolled|sticky-header|sidenav|hidden|dup|booting|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
 
 // ---- 极简 CSS 解析：规则块与 @media 等嵌套块 -----------------------------------------
 function parseBlocks(css) {

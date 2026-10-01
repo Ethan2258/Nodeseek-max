@@ -24490,7 +24490,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					retry.addEventListener("click", () => store.load(kind, true), { signal: ctx.signal });
 					row.append(retry);
 					list.append(row);
-				} else for (let i = 0; i < Math.min(count, 8); i++) {
+				} else for (let i = 0; i < count; i++) {
 					const row = document.createElement("li");
 					row.className = "nsmax-hot-skeleton";
 					row.setAttribute("aria-hidden", "true");
@@ -24602,6 +24602,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					listener();
 				} catch {}
 			});
+			// 上次的榜单存在本地（一天内有效）：刷新页面时侧栏面板和弹窗立刻显示上次的结果，不再先出骨架屏、等网络；
+			// 过期的照常在后台刷新，刷新期间继续显示旧结果。
+			for (const kind of Object.keys(rankings)) {
+				const saved = ctx.get(`snapshot:${kind}`);
+				if (saved && Array.isArray(saved.posts) && Number.isFinite(saved.fetched) && Date.now() - saved.fetched < 864e5 && saved.posts.every((post) => Number.isSafeInteger(post?.id) && typeof post.title === "string")) cache.set(kind, saved);
+			}
 			const store = {
 				cache,
 				pending,
@@ -24616,7 +24622,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					}
 					errors.delete(kind);
 					const task = requestRanking(kind, ctx.signal).then((data) => {
-						if (!ctx.signal.aborted) cache.set(kind, data);
+						if (ctx.signal.aborted) return;
+						cache.set(kind, data);
+						ctx.set(`snapshot:${kind}`, data);
 					}).catch(() => {
 						if (!ctx.signal.aborted) errors.add(kind);
 					}).finally(() => {
@@ -24770,6 +24778,165 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		["#2fbcf1", "M14.1 17h2.3v5h-2.3z"]
 	] };
 	// 页面最上方的站点顶栏（向上合并与它等高的包裹元素）；找不到返回 undefined。
+	// 精简顶栏的样式：页面解析阶段（早期整理）和主题模块都会调用，_css 自动去重。
+	function injectMinimalHeaderStyles() {
+		// 生效范围：有左侧版块栏的页面在版块栏可见时；没有版块栏的页面（如通知页）在宽屏时。手机布局保持原样。
+		// 顶栏上下各留 6px（content-box：站点给顶栏设了固定高度时，内容高度不被压缩，整体加高）。
+		const minimalRules = (scope) => `${scope} [data-nsmax-header-hide]{display:none!important}
+${scope} [data-nsmax-header]{box-sizing:content-box!important;padding-top:6px!important;padding-bottom:6px!important}
+${scope} [data-nsmax-header-row]{display:flex!important;align-items:center!important;gap:6px}
+${scope} [data-nsmax-header-end]{margin-left:auto!important}
+${scope} [data-nsmax-header-toggle]{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:32px;min-width:32px;height:32px;min-height:32px;border:1px solid var(--nsmax-stroke,#e0e2e8);border-radius:999px;cursor:pointer;color:var(--nsmax-text-2,inherit);transition:background-color .2s ease,color .2s ease,border-color .2s ease}
+${scope} [data-nsmax-header-toggle]:hover{background:var(--nsmax-fill,rgb(0 0 0/.06));border-color:var(--nsmax-stroke-strong,#c7cad5);color:var(--nsmax-text,inherit)}`;
+		_css(`${minimalRules("html[data-nsmax-sidenav]")}
+@media (min-width:1000px){${minimalRules("html:not([data-nsmax-sidenav-page])")}}
+/* 顶栏搜索框（参考 sb.sb）：固定宽度、不做宽度动画（站点原本悬停 / 聚焦时会伸缩），各页面长度一致；
+   浅底 + 1px 细边框，图标在右侧；悬停边框加深，聚焦时换成卡片底色加光晕。与弹窗、设置页的输入框同一套样式 */
+[data-nsmax-header-search]:not(input){display:flex!important;align-items:center;gap:6px;flex:none!important;box-sizing:border-box!important;width:240px!important;max-width:30vw;height:36px!important;margin:0!important;padding:0 6px 0 12px!important;border:1px solid var(--nsmax-stroke,#e0e2e8)!important;border-radius:8px!important;background:var(--nsmax-panel-alt,#fafbfc)!important;box-shadow:none!important;transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease!important}
+[data-nsmax-header-search]:not(input):hover{border-color:var(--nsmax-stroke-strong,#c7cad5)!important}
+[data-nsmax-header-search]:not(input):focus-within{background:var(--nsmax-card,#fff)!important;border-color:var(--nsmax-stroke-strong,#c7cad5)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text,#1c1c1e) 7%,transparent)!important}
+[data-nsmax-header-search]:not(input)>:not(input){order:2}
+[data-nsmax-header-search]:not(input) input{flex:1 1 auto!important;width:auto!important;min-width:0!important;max-width:none!important;height:100%!important;margin:0!important;padding:0!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;color:var(--nsmax-text,inherit)!important;font-size:13px!important;transition:none!important}
+input[data-nsmax-header-search]{box-sizing:border-box!important;width:240px!important;max-width:30vw;height:36px!important;padding:0 12px!important;border:1px solid var(--nsmax-stroke,#e0e2e8)!important;border-radius:8px!important;background:var(--nsmax-panel-alt,#fafbfc)!important;color:var(--nsmax-text,inherit)!important;font-size:13px!important;outline:0!important;box-shadow:none!important;transition:border-color .15s ease!important}
+input[data-nsmax-header-search]:hover{border-color:var(--nsmax-stroke-strong,#c7cad5)!important}
+input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!important;border-color:var(--nsmax-stroke-strong,#c7cad5)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text,#1c1c1e) 7%,transparent)!important}
+[data-nsmax-header-search] input::placeholder,input[data-nsmax-header-search]::placeholder{color:var(--nsmax-muted,#888)!important}
+[data-nsmax-header-search]:not(input) :is(svg,button,i,a){flex:none;color:var(--nsmax-muted,#888)!important;background:transparent!important;border:0!important;box-shadow:none!important}
+[data-nsmax-header-search]:not(input) svg{width:15px!important;height:15px!important}
+[data-nsmax-header-search]:not(input):focus-within :is(svg,button,i,a){color:var(--nsmax-text-2,#555)!important}
+[data-nsmax-header-search]:not(input) *{transition-property:color,background-color,border-color!important;animation:none!important}`);
+	}
+	// 精简顶栏规划器：模块级单例。页面解析阶段顶栏一解析完就先规划一次，主题模块启动后沿用同一份标记继续跟踪顶栏变化。
+	var nsmaxHeaderPlanner = null;
+	function createHeaderPlanner() {
+		const headerAttributes = ["data-nsmax-header-hide", "data-nsmax-header-row", "data-nsmax-header-end", "data-nsmax-header-toggle", "data-nsmax-header-search"];
+		const marked = new Set();
+		const mark = (element, attribute) => {
+			element.setAttribute(attribute, "");
+			marked.add(element);
+		};
+		// 顶栏结构变化（元素数量改变）时重新规划：只在启动后 3 秒内（站点还在渲染顶栏），之后只有顶栏或保留的元素被替换时才重来，
+		// 避免搜索建议等临时元素引起反复重排（顶栏「跳动」、搜索框长短不一）。结构不变时不读布局、不遍历。
+		let tries = 0;
+		let header = null;
+		let signature = -1;
+		let planned = null;
+		let settledAt = performance.now() + 3e3;
+		const apply = () => {
+			if (planned && planned.every((element) => element.isConnected) && performance.now() > settledAt) return;
+			if (!header?.isConnected) {
+				if (tries >= 30) return;
+				header = document.querySelector("[data-nsmax-header]") || pickSiteHeader() || null;
+				signature = -1;
+				if (!header) {
+					tries++;
+					return;
+				}
+			}
+			const count = header.getElementsByTagName("*").length;
+			if (count === signature || tries >= 30) return;
+			tries++;
+			signature = count;
+			const plan = planMinimalHeader(header);
+			if (!plan) return;
+			for (const element of marked) for (const attribute of headerAttributes) element.removeAttribute(attribute);
+			marked.clear();
+			for (const element of plan.hide) mark(element, "data-nsmax-header-hide");
+			for (const element of plan.searches) mark(element, "data-nsmax-header-search");
+			planned = plan.keep;
+			if (plan.toggle) {
+				mark(plan.toggle, "data-nsmax-header-toggle");
+				// 标志与切换按钮在同一行容器里时：标志靠左、切换按钮靠右；容器就是整个顶栏时不改它的布局。
+				let row = plan.toggle.parentElement;
+				while (row && row !== header && !plan.keep.every((kept) => row.contains(kept))) row = row.parentElement;
+				if (row && row !== header) {
+					mark(row, "data-nsmax-header-row");
+					let end = plan.toggle;
+					while (end.parentElement && end.parentElement !== row) end = end.parentElement;
+					mark(end, "data-nsmax-header-end");
+				}
+			}
+		};
+		return {
+			apply,
+			// 主题模块启动时再给 3 秒：站点在页面加载后才渲染的顶栏元素（如深浅色切换）也能被识别。
+			settleLater() {
+				settledAt = performance.now() + 3e3;
+			},
+			clear() {
+				for (const element of marked) for (const attribute of headerAttributes) element.removeAttribute(attribute);
+				marked.clear();
+				planned = null;
+				header = null;
+				signature = -1;
+				tries = 0;
+			}
+		};
+	}
+	// 用户卡、发帖按钮、新用户面板的标记：模块级单例，页面解析阶段右侧栏一解析完就先标记，主题模块启动后继续跟踪。
+	var nsmaxCardMarker = null;
+	function createCardMarker() {
+		let attempts = 0;
+		const marked = [];
+		const markCard = () => {
+			const stat = document.querySelector(".user-card .user-stat, .user-stat");
+			if (stat && !stat.hasAttribute("data-nsmax-stat")) {
+				stat.setAttribute("data-nsmax-stat", "");
+				const card = stat.closest(".user-card, .nsk-panel") || stat.parentElement;
+				card?.setAttribute("data-nsmax-usercard", "");
+				marked.push(stat, card);
+			}
+			if (document.querySelector("[data-nsmax-cta]") || attempts >= 20) return;
+			attempts++;
+			for (const element of document.querySelectorAll("#nsk-right-panel-container a, #nsk-right-panel-container button, .user-card ~ a, .user-card ~ button, aside a, aside button")) {
+				if (!/^[+＋]?\s*发帖$/.test((element.textContent || "").trim())) continue;
+				element.setAttribute("data-nsmax-cta", "");
+				marked.push(element);
+				break;
+			}
+		};
+		// 「欢迎新用户」：找出每个新用户条目（含头像与名字的最小元素），把它们的公共容器排成规整网格。
+		let memberAttempts = 0;
+		const markMembers = () => {
+			if (document.querySelector("[data-nsmax-members]") || memberAttempts >= 20) return;
+			memberAttempts++;
+			const panel = Array.from(document.querySelectorAll(".nsk-panel, #nsk-right-panel-container > *")).find((element) => element.textContent.includes("新用户") && element.querySelector("img"));
+			if (!panel) return;
+			const items = [];
+			// 只取指向用户主页的头像，避免把标题里的表情图片当成新用户。
+			let images = Array.from(panel.querySelectorAll("a[href*=\"/space/\"] img, img[src*=\"/avatar/\"]"));
+			if (images.length < 2) images = Array.from(panel.querySelectorAll("img")).filter((image) => !image.closest("h1, h2, h3, h4, h5, h6") && image.getBoundingClientRect().width >= 24);
+			for (const image of images) {
+				let item = image;
+				while (item.parentElement && item.parentElement !== panel && !(item.textContent || "").trim()) item = item.parentElement;
+				if (item !== panel && !items.includes(item)) items.push(item);
+			}
+			if (items.length < 2) return;
+			let container = items[0].parentElement;
+			while (container && container !== panel && !items.every((item) => container.contains(item))) container = container.parentElement;
+			if (!container) return;
+			container.setAttribute("data-nsmax-members", "");
+			marked.push(container);
+			for (const item of items) {
+				item.setAttribute("data-nsmax-member", "");
+				marked.push(item);
+				for (let row = item.parentElement; row && row !== container; row = row.parentElement) {
+					row.setAttribute("data-nsmax-members-row", "");
+					marked.push(row);
+				}
+			}
+		};
+		return {
+			apply() {
+				markCard();
+				markMembers();
+			},
+			clear() {
+				for (const element of marked) for (const attribute of ["data-nsmax-stat", "data-nsmax-usercard", "data-nsmax-cta", "data-nsmax-members", "data-nsmax-members-row", "data-nsmax-member"]) element?.removeAttribute(attribute);
+				marked.length = 0;
+			}
+		};
+	}
 	function pickSiteHeader() {
 		const width = document.documentElement.clientWidth;
 		const candidates = [...document.querySelectorAll("#nsk-head, body > header, header.nsk-header, .nsk-header, body > div > header")];
@@ -25008,6 +25175,44 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 		return group;
 	}
+	// 侧栏导航的样式：页面解析阶段（早期整理）和侧栏导航模块都会调用，_css 自动去重。
+	function injectSidebarNavStyles() {
+		_css(`[data-nsmax-hidden],[data-nsmax-dup=sidebar],html[data-nsmax-sidenav] [data-nsmax-dup=header]{display:none!important}
+.nsmax-shortcuts{display:grid;gap:2px;margin-top:4px}
+.nsmax-shortcuts::before{content:"";display:block;height:1px;margin:0 12px 4px;background:var(--nsmax-divider,var(--border-color,rgb(0 0 0/.08)))}
+.nsmax-shortcut{display:flex;align-items:center;gap:var(--nsmax-nav-gap,6px);min-width:0;padding:var(--nsmax-nav-pad,6px 12px);border-radius:var(--nsmax-control-radius,8px);font-size:var(--nsmax-nav-font,14px);line-height:var(--nsmax-nav-line,1.5);color:var(--nsmax-nav-color,var(--nsmax-muted,var(--text-color-secondary,#888)))!important;text-decoration:none!important;white-space:nowrap;transition:background-color .2s ease,color .2s ease}
+.nsmax-shortcut:hover{background:transparent;color:var(--nsmax-text,var(--text-color,#333))!important}
+.nsmax-shortcut svg{flex:none;width:var(--nsmax-nav-icon,16px);height:var(--nsmax-nav-icon,16px)}
+.nsmax-shortcut span{min-width:0;overflow:hidden;text-overflow:ellipsis}`);
+	}
+	// 侧栏版块导航的识别与标记（要隐藏的版块、顶栏与侧栏重复的版块）：只加属性、不改结构，
+	// 页面解析阶段左侧栏一解析完就先标记一次（不等整页加载），侧栏导航模块启动后沿用同一套逻辑。返回识别到的侧栏导航分组。
+	function markSidebarNav({ names, hidden, dedupe }, mark) {
+		const { groups } = scanCategoryTexts(names);
+		// 侧栏导航只从顶栏以外的分组里选：没有左侧版块栏的页面（如通知页）不能把顶栏当成侧栏，
+		// 否则快捷入口会插进顶栏，侧栏可见性判断也会跟着顶栏变化来回切换（顶栏跳动）。
+		const siteHeader = document.querySelector("[data-nsmax-header]") || pickSiteHeader();
+		const isHeader = (group) => group.header || !!siteHeader?.contains(group.container);
+		const best = groups.filter((group) => !isHeader(group) && group.score >= 5).reduce((a, b) => !a || b.score > a.score ? b : a, null);
+		// 顶栏组：位于顶栏元素内；找不到顶栏元素时，取页面最上方的那组（只在识别时读一次布局）。
+		const headers = groups.filter((group) => group !== best && (isHeader(group) || group.container.getBoundingClientRect().top + window.scrollY < 120));
+		for (const group of best ? [best, ...headers] : headers) for (const { item, label } of group.items) if (hidden.has(label)) mark(item, "data-nsmax-hidden");
+		// DeepFlood 入口：也按链接地址识别（文字可能是图标或别的写法），帖子正文里的链接不受影响。
+		if (hidden.has("deepflood")) for (const link of document.querySelectorAll("a[href*='deepflood.com']")) {
+			if (link.hostname === location.hostname || !/(^|\.)deepflood\.com$/.test(link.hostname) || link.closest(navSkipSelector)) continue;
+			const parent = link.parentElement;
+			mark(parent && parent !== document.body && parent.childElementCount === 1 && parent.textContent.trim() === link.textContent.trim() ? parent : link, "data-nsmax-hidden");
+		}
+		if (!best) return null;
+		const navLabels = new Set(best.items.map(({ label }) => label));
+		if (dedupe !== "off") {
+			const headerLabels = new Set(headers.flatMap((group) => group.items.map(({ label }) => label)));
+			if (dedupe === "header") {
+				for (const group of headers) for (const { item, label } of group.items) if (navLabels.has(label)) mark(item, "data-nsmax-dup", "header");
+			} else for (const { item, label } of best.items) if (headerLabels.has(label)) mark(item, "data-nsmax-dup", "sidebar");
+		}
+		return { best, headers };
+	}
 	var sidebarNav = {
 		id: "sidebar-nav",
 		title: "侧栏版块导航",
@@ -25058,13 +25263,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			if (!hidden.size && !shortcuts.length && dedupe === "off") return;
 			const names = new Set([...NSMAX_CATEGORY_NAMES, ...hidden]);
 			const root = document.documentElement;
-			_css(`[data-nsmax-hidden],[data-nsmax-dup=sidebar],html[data-nsmax-sidenav] [data-nsmax-dup=header]{display:none!important}
-.nsmax-shortcuts{display:grid;gap:2px;margin-top:4px}
-.nsmax-shortcuts::before{content:"";display:block;height:1px;margin:0 12px 4px;background:var(--nsmax-divider,var(--border-color,rgb(0 0 0/.08)))}
-.nsmax-shortcut{display:flex;align-items:center;gap:var(--nsmax-nav-gap,6px);min-width:0;padding:var(--nsmax-nav-pad,6px 12px);border-radius:var(--nsmax-control-radius,8px);font-size:var(--nsmax-nav-font,14px);line-height:var(--nsmax-nav-line,1.5);color:var(--nsmax-nav-color,var(--nsmax-muted,var(--text-color-secondary,#888)))!important;text-decoration:none!important;white-space:nowrap;transition:background-color .2s ease,color .2s ease}
-.nsmax-shortcut:hover{background:transparent;color:var(--nsmax-text,var(--text-color,#333))!important}
-.nsmax-shortcut svg{flex:none;width:var(--nsmax-nav-icon,16px);height:var(--nsmax-nav-icon,16px)}
-.nsmax-shortcut span{min-width:0;overflow:hidden;text-overflow:ellipsis}`);
+			injectSidebarNavStyles();
 			const marked = new Set();
 			const mark = (element, attribute, value = "") => {
 				element.setAttribute(attribute, value);
@@ -25095,35 +25294,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			let scans = 0;
 			const scan = () => {
 				scans++;
-				const { groups } = scanCategoryTexts(names);
-				// 侧栏导航只从顶栏以外的分组里选：没有左侧版块栏的页面（如通知页）不能把顶栏当成侧栏，
-				// 否则快捷入口会插进顶栏，侧栏可见性判断也会跟着顶栏变化来回切换（顶栏跳动）。
-				const siteHeader = document.querySelector("[data-nsmax-header]") || pickSiteHeader();
-				const isHeader = (group) => group.header || !!siteHeader?.contains(group.container);
-				const best = groups.filter((group) => !isHeader(group) && group.score >= 5).reduce((a, b) => !a || b.score > a.score ? b : a, null);
-				// 顶栏组：位于顶栏元素内；找不到顶栏元素时，取页面最上方的那组（只在识别时读一次布局）。
-				const headers = groups.filter((group) => group !== best && (isHeader(group) || group.container.getBoundingClientRect().top + window.scrollY < 120));
-				for (const group of best ? [best, ...headers] : headers) for (const { item, label } of group.items) if (hidden.has(label)) mark(item, "data-nsmax-hidden");
-				// DeepFlood 入口：也按链接地址识别（文字可能是图标或别的写法），帖子正文里的链接不受影响。
-				if (hidden.has("deepflood")) for (const link of document.querySelectorAll("a[href*='deepflood.com']")) {
-					if (link.hostname === location.hostname || !/(^|\.)deepflood\.com$/.test(link.hostname) || link.closest(navSkipSelector)) continue;
-					const parent = link.parentElement;
-					mark(parent && parent !== document.body && parent.childElementCount === 1 && parent.textContent.trim() === link.textContent.trim() ? parent : link, "data-nsmax-hidden");
-				}
-				if (!best) return false;
+				const found = markSidebarNav({ names, hidden, dedupe }, mark);
+				if (!found) return false;
+				const { best } = found;
 				if (nav?.container !== best.container) {
 					if (nav) resizeObserver?.unobserve(nav.container);
 					resizeObserver?.observe(best.container);
 				}
 				nav = best;
 				root.setAttribute("data-nsmax-sidenav-page", "");
-				const navLabels = new Set(nav.items.map(({ label }) => label));
-				if (dedupe !== "off") {
-					const headerLabels = new Set(headers.flatMap((group) => group.items.map(({ label }) => label)));
-					if (dedupe === "header") {
-						for (const group of headers) for (const { item, label } of group.items) if (navLabels.has(label)) mark(item, "data-nsmax-dup", "header");
-					} else for (const { item, label } of nav.items) if (headerLabels.has(label)) mark(item, "data-nsmax-dup", "sidebar");
-				}
 				if (shortcuts.length) {
 					shortcutGroup?.remove();
 					const sample = nav.items.find(({ item }) => !item.hasAttribute("data-nsmax-hidden"))?.link;
@@ -25377,8 +25556,10 @@ ${NSMAX_ROOT}[data-nsmax-glass] [data-nsmax-header][data-nsmax-sticky]{position:
 ${NSMAX_ROOT}[data-nsmax-glass] [data-nsmax-header][data-nsmax-scrolled]{box-shadow:0 8px 24px rgb(0 0 0/.06)}
 ${NSMAX_ROOT}[data-nsmax-glass][data-nsmax-sticky-header]{scroll-padding-top:calc(var(--nsmax-header-h,56px) + 12px)}
 
-${NSMAX_ROOT}[data-nsmax-booting] :is(header,#nsk-head,[data-nsmax-header],#nsk-left-panel-container,#nsk-right-panel-container){opacity:0}
-${NSMAX_ROOT} :is(header,#nsk-head,#nsk-left-panel-container,#nsk-right-panel-container){transition:opacity .2s ease}
+${NSMAX_ROOT}[data-nsmax-boot-header] :is(header:not(dialog *),#nsk-head,[data-nsmax-header]){opacity:0}
+${NSMAX_ROOT}[data-nsmax-boot-left] #nsk-left-panel-container{opacity:0}
+${NSMAX_ROOT}[data-nsmax-boot-right] #nsk-right-panel-container{opacity:0}
+${NSMAX_ROOT}[data-nsmax-boot-fade] :is(header:not(dialog *),#nsk-head,[data-nsmax-header],#nsk-left-panel-container,#nsk-right-panel-container){transition:opacity .2s ease}
 ${NSMAX_ROOT}[data-nsmax-motion] :is(.nsmax-hot-panel,.nsmax-shortcuts){animation:nsmax-appear .24s ease both}
 @keyframes nsmax-appear{from{opacity:0}to{opacity:1}}
 ${NSMAX_ROOT} :is(#search-site2,header input[name=q]){transition:none!important}
@@ -25582,8 +25763,11 @@ ${NSMAX_ROOT} .nsmax-hot-tabs button:hover{border-color:var(--nsmax-stroke-stron
 ${NSMAX_ROOT} .nsmax-hot-tabs button[aria-selected=true]{background:var(--nsmax-accent);border-color:var(--nsmax-accent);color:var(--nsmax-on-accent);font-weight:500}
 ${NSMAX_ROOT} .nsmax-hot-list{padding:0 6px 6px!important}
 ${NSMAX_ROOT} .nsmax-hot-list>li>a{gap:8px;padding:6px 8px;line-height:1.55}
-${NSMAX_ROOT} .nsmax-hot-text{display:block;font-size:13px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+/* 单行省略的标题不能参与侧栏宽度计算（站点的右侧栏宽度按内容算，否则最长的标题会把整个侧栏撑宽、挤压帖子列表）：
+   width:0 + flex:1 让标题只占剩余空间 */
+${NSMAX_ROOT} .nsmax-hot-text{display:block;flex:1 1 0;width:0;min-width:0;font-size:13px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 ${NSMAX_ROOT} .nsmax-hot-rank{width:16px;font-size:12px;font-weight:500;color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nsmax-hot-skeleton{box-sizing:border-box;min-height:32px;padding:6px 8px!important}
 /* NodeSeek++ 侧栏工具：图标统一线条、黑白灰，去掉热榜按钮的橙色渐变与监控运行时的绿色 */
 ${NSMAX_ROOT} #nspp-tools{background:var(--nsmax-surface);border-color:var(--nsmax-stroke);border-radius:14px;box-shadow:var(--nsmax-shadow-pop);gap:2px;padding:5px}
 ${NSMAX_ROOT} body.dark-layout :is(#nspp-tools,.nspp-post-preview){--bg-color:var(--nsmax-surface);--text-color:var(--nsmax-text);--border-color:var(--nsmax-divider);--link-color:var(--nsmax-accent)}
@@ -26170,143 +26354,23 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 				});
 			}
 			if (ctx.get("minimalHeader")) {
-				// 生效范围：有左侧版块栏的页面在版块栏可见时；没有版块栏的页面（如通知页）在宽屏时。手机布局保持原样。
-				// 顶栏上下各留 6px（content-box：站点给顶栏设了固定高度时，内容高度不被压缩，整体加高）。
-				const minimalRules = (scope) => `${scope} [data-nsmax-header-hide]{display:none!important}
-${scope} [data-nsmax-header]{box-sizing:content-box!important;padding-top:6px!important;padding-bottom:6px!important}
-${scope} [data-nsmax-header-row]{display:flex!important;align-items:center!important;gap:6px}
-${scope} [data-nsmax-header-end]{margin-left:auto!important}
-${scope} [data-nsmax-header-toggle]{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:32px;min-width:32px;height:32px;min-height:32px;border:1px solid var(--nsmax-stroke,#e0e2e8);border-radius:999px;cursor:pointer;color:var(--nsmax-text-2,inherit);transition:background-color .2s ease,color .2s ease,border-color .2s ease}
-${scope} [data-nsmax-header-toggle]:hover{background:var(--nsmax-fill,rgb(0 0 0/.06));border-color:var(--nsmax-stroke-strong,#c7cad5);color:var(--nsmax-text,inherit)}`;
-				_css(`${minimalRules("html[data-nsmax-sidenav]")}
-@media (min-width:1000px){${minimalRules("html:not([data-nsmax-sidenav-page])")}}
-/* 顶栏搜索框（参考 sb.sb）：固定宽度、不做宽度动画（站点原本悬停 / 聚焦时会伸缩），各页面长度一致；
-   浅底 + 1px 细边框，图标在右侧；悬停边框加深，聚焦时换成卡片底色加光晕。与弹窗、设置页的输入框同一套样式 */
-[data-nsmax-header-search]:not(input){display:flex!important;align-items:center;gap:6px;flex:none!important;box-sizing:border-box!important;width:240px!important;max-width:30vw;height:36px!important;margin:0!important;padding:0 6px 0 12px!important;border:1px solid var(--nsmax-stroke,#e0e2e8)!important;border-radius:8px!important;background:var(--nsmax-panel-alt,#fafbfc)!important;box-shadow:none!important;transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease!important}
-[data-nsmax-header-search]:not(input):hover{border-color:var(--nsmax-stroke-strong,#c7cad5)!important}
-[data-nsmax-header-search]:not(input):focus-within{background:var(--nsmax-card,#fff)!important;border-color:var(--nsmax-stroke-strong,#c7cad5)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text,#1c1c1e) 7%,transparent)!important}
-[data-nsmax-header-search]:not(input)>:not(input){order:2}
-[data-nsmax-header-search]:not(input) input{flex:1 1 auto!important;width:auto!important;min-width:0!important;max-width:none!important;height:100%!important;margin:0!important;padding:0!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;color:var(--nsmax-text,inherit)!important;font-size:13px!important;transition:none!important}
-input[data-nsmax-header-search]{box-sizing:border-box!important;width:240px!important;max-width:30vw;height:36px!important;padding:0 12px!important;border:1px solid var(--nsmax-stroke,#e0e2e8)!important;border-radius:8px!important;background:var(--nsmax-panel-alt,#fafbfc)!important;color:var(--nsmax-text,inherit)!important;font-size:13px!important;outline:0!important;box-shadow:none!important;transition:border-color .15s ease!important}
-input[data-nsmax-header-search]:hover{border-color:var(--nsmax-stroke-strong,#c7cad5)!important}
-input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!important;border-color:var(--nsmax-stroke-strong,#c7cad5)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text,#1c1c1e) 7%,transparent)!important}
-[data-nsmax-header-search] input::placeholder,input[data-nsmax-header-search]::placeholder{color:var(--nsmax-muted,#888)!important}
-[data-nsmax-header-search]:not(input) :is(svg,button,i,a){flex:none;color:var(--nsmax-muted,#888)!important;background:transparent!important;border:0!important;box-shadow:none!important}
-[data-nsmax-header-search]:not(input) svg{width:15px!important;height:15px!important}
-[data-nsmax-header-search]:not(input):focus-within :is(svg,button,i,a){color:var(--nsmax-text-2,#555)!important}
-[data-nsmax-header-search]:not(input) *{transition-property:color,background-color,border-color!important;animation:none!important}`);
-				const headerAttributes = ["data-nsmax-header-hide", "data-nsmax-header-row", "data-nsmax-header-end", "data-nsmax-header-toggle", "data-nsmax-header-search"];
-				const marked = new Set();
-				const mark = (element, attribute) => {
-					element.setAttribute(attribute, "");
-					marked.add(element);
-				};
-				// 顶栏结构变化（元素数量改变）时重新规划：只在启动后 3 秒内（站点还在渲染顶栏），之后只有顶栏或保留的元素被替换时才重来，
-				// 避免搜索建议等临时元素引起反复重排（顶栏「跳动」、搜索框长短不一）。结构不变时不读布局、不遍历。
-				let tries = 0;
-				let header = null;
-				let signature = -1;
-				let planned = null;
-				const settledAt = performance.now() + 3e3;
-				const apply = () => {
-					if (planned && planned.every((element) => element.isConnected) && performance.now() > settledAt) return;
-					if (!header?.isConnected) {
-						if (tries >= 30) return;
-						header = document.querySelector("[data-nsmax-header]") || pickSiteHeader() || null;
-						signature = -1;
-						if (!header) {
-							tries++;
-							return;
-						}
-					}
-					const count = header.getElementsByTagName("*").length;
-					if (count === signature || tries >= 30) return;
-					tries++;
-					signature = count;
-					const plan = planMinimalHeader(header);
-					if (!plan) return;
-					for (const element of marked) for (const attribute of headerAttributes) element.removeAttribute(attribute);
-					marked.clear();
-					for (const element of plan.hide) mark(element, "data-nsmax-header-hide");
-					for (const element of plan.searches) mark(element, "data-nsmax-header-search");
-					planned = plan.keep;
-					if (plan.toggle) {
-						mark(plan.toggle, "data-nsmax-header-toggle");
-						// 标志与切换按钮在同一行容器里时：标志靠左、切换按钮靠右；容器就是整个顶栏时不改它的布局。
-						let row = plan.toggle.parentElement;
-						while (row && row !== header && !plan.keep.every((kept) => row.contains(kept))) row = row.parentElement;
-						if (row && row !== header) {
-							mark(row, "data-nsmax-header-row");
-							let end = plan.toggle;
-							while (end.parentElement && end.parentElement !== row) end = end.parentElement;
-							mark(end, "data-nsmax-header-end");
-						}
-					}
-				};
-				const stop = ctx.watch(apply);
+				injectMinimalHeaderStyles();
+				const planner = nsmaxHeaderPlanner || (nsmaxHeaderPlanner = createHeaderPlanner());
+				planner.settleLater();
+				const stop = ctx.watch(planner.apply);
 				cleanups.push(() => {
 					stop();
-					for (const element of marked) for (const attribute of headerAttributes) element.removeAttribute(attribute);
+					planner.clear();
+					nsmaxHeaderPlanner = null;
 				});
 			}
 			{
-				let attempts = 0;
-				const marked = [];
-				const markCard = () => {
-					const stat = document.querySelector(".user-card .user-stat, .user-stat");
-					if (stat && !stat.hasAttribute("data-nsmax-stat")) {
-						stat.setAttribute("data-nsmax-stat", "");
-						const card = stat.closest(".user-card, .nsk-panel") || stat.parentElement;
-						card?.setAttribute("data-nsmax-usercard", "");
-						marked.push(stat, card);
-					}
-					if (document.querySelector("[data-nsmax-cta]") || attempts >= 20) return;
-					attempts++;
-					for (const element of document.querySelectorAll("#nsk-right-panel-container a, #nsk-right-panel-container button, .user-card ~ a, .user-card ~ button, aside a, aside button")) {
-						if (!/^[+＋]?\s*发帖$/.test((element.textContent || "").trim())) continue;
-						element.setAttribute("data-nsmax-cta", "");
-						marked.push(element);
-						break;
-					}
-				};
-				// 「欢迎新用户」：找出每个新用户条目（含头像与名字的最小元素），把它们的公共容器排成规整网格。
-				let memberAttempts = 0;
-				const markMembers = () => {
-					if (document.querySelector("[data-nsmax-members]") || memberAttempts >= 20) return;
-					memberAttempts++;
-					const panel = Array.from(document.querySelectorAll(".nsk-panel, #nsk-right-panel-container > *")).find((element) => element.textContent.includes("新用户") && element.querySelector("img"));
-					if (!panel) return;
-					const items = [];
-					// 只取指向用户主页的头像，避免把标题里的表情图片当成新用户。
-					let images = Array.from(panel.querySelectorAll("a[href*=\"/space/\"] img, img[src*=\"/avatar/\"]"));
-					if (images.length < 2) images = Array.from(panel.querySelectorAll("img")).filter((image) => !image.closest("h1, h2, h3, h4, h5, h6") && image.getBoundingClientRect().width >= 24);
-					for (const image of images) {
-						let item = image;
-						while (item.parentElement && item.parentElement !== panel && !(item.textContent || "").trim()) item = item.parentElement;
-						if (item !== panel && !items.includes(item)) items.push(item);
-					}
-					if (items.length < 2) return;
-					let container = items[0].parentElement;
-					while (container && container !== panel && !items.every((item) => container.contains(item))) container = container.parentElement;
-					if (!container) return;
-					container.setAttribute("data-nsmax-members", "");
-					marked.push(container);
-					for (const item of items) {
-						item.setAttribute("data-nsmax-member", "");
-						marked.push(item);
-						for (let row = item.parentElement; row && row !== container; row = row.parentElement) {
-							row.setAttribute("data-nsmax-members-row", "");
-							marked.push(row);
-						}
-					}
-				};
-				const stopCard = ctx.watch(() => {
-					markCard();
-					markMembers();
-				});
+				const marker = nsmaxCardMarker || (nsmaxCardMarker = createCardMarker());
+				const stopCard = ctx.watch(marker.apply);
 				cleanups.push(() => {
 					stopCard();
-					for (const element of marked) for (const attribute of ["data-nsmax-stat", "data-nsmax-usercard", "data-nsmax-cta", "data-nsmax-members", "data-nsmax-members-row", "data-nsmax-member"]) element?.removeAttribute(attribute);
+					marker.clear();
+					nsmaxCardMarker = null;
 				});
 			}
 			if (ctx.get("progress") && /^\/post-\d+/.test(location.pathname)) {
@@ -26363,12 +26427,95 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 		if (options.font === "inter") loadWebFonts();
 		whenRoot((root) => {
 			applyThemeAttributes(root, options);
-			// 启动遮罩：顶栏与左右侧栏先透明，等脚本第一轮整理（隐藏版块、精简顶栏、插入热榜等）完成后再淡入，
-			// 不再先闪出原样再跳动。脚本出错时 2.5 秒后也会自动显示。
-			root.setAttribute("data-nsmax-booting", "");
-			setTimeout(() => root.removeAttribute("data-nsmax-booting"), 2500);
+			// 启动遮罩分三块（顶栏、左侧栏、右侧栏）：页面解析过程中每块一解析完就立即整理并显示，见 startEarlyPass。
+			// 脚本出错时 2.5 秒后也会全部显示。
+			for (const region of NSMAX_BOOT_REGIONS) root.setAttribute(`data-nsmax-boot-${region}`, "");
+			setTimeout(revealAll, 2500);
+			if (options.minimalHeader) injectMinimalHeaderStyles();
+			startEarlyPass(options);
 		});
 	})();
+	var NSMAX_BOOT_REGIONS = ["header", "left", "right"];
+	function revealRegion(region) {
+		document.documentElement?.removeAttribute(`data-nsmax-boot-${region}`);
+	}
+	// 兜底显示（页面加载完或 2.5 秒后还没整理的区域）才淡入；页面解析阶段整理好的区域还没画出来过，直接显示。
+	function revealAll() {
+		const root = document.documentElement;
+		if (!root || !NSMAX_BOOT_REGIONS.some((region) => root.hasAttribute(`data-nsmax-boot-${region}`))) return;
+		root.setAttribute("data-nsmax-boot-fade", "");
+		for (const region of NSMAX_BOOT_REGIONS) revealRegion(region);
+		setTimeout(() => root.removeAttribute("data-nsmax-boot-fade"), 400);
+	}
+	function sidebarNavSettings() {
+		const options = normalizeSettings([sidebarNav], { [sidebarNav.id]: GM_getValue$1(SETTINGS_KEY, {})?.[sidebarNav.id] })[sidebarNav.id];
+		if (!options.enabled) return null;
+		const hidden = new Set(filterLines(options.hidden === "生活\nDev\n贴图\n沙盒" ? NSMAX_HIDDEN_DEFAULT : options.hidden).map((name) => name.toLocaleLowerCase()));
+		return {
+			hidden,
+			names: new Set([...NSMAX_CATEGORY_NAMES, ...hidden]),
+			dedupe: options.dedupe
+		};
+	}
+	// 页面解析阶段的整理：不等整页加载完（DOMContentLoaded），顶栏、左侧栏、右侧栏各自一解析完，就立即做只加属性、
+	// 不改结构的那部分整理（精简顶栏、吸顶标记、隐藏版块与重复项、用户卡与发帖按钮），然后显示这一块——
+	// 首屏直接是整理好的样子，不再先空着再淡入。会插入新元素的部分（热榜面板、NQ 快捷入口）仍在页面加载完后由各模块完成，
+	// 避免和站点自己的脚本抢着改同一块 DOM；各模块启动后沿用同一份标记继续跟踪页面变化。
+	function startEarlyPass(options) {
+		const root = document.documentElement;
+		const pending = new Set(NSMAX_BOOT_REGIONS);
+		// 元素后面已经出现兄弟节点（或页面已解析完），说明解析器已经越过它的结束标签。
+		const parsed = (element) => {
+			if (document.readyState !== "loading") return true;
+			for (let node = element; node && node !== document.body; node = node.parentElement) if (node.nextSibling) return true;
+			return false;
+		};
+		const region = (name, find, work) => {
+			if (!pending.has(name)) return;
+			const element = find();
+			if (!element || !parsed(element)) return;
+			pending.delete(name);
+			try {
+				work(element);
+			} catch {}
+			revealRegion(name);
+		};
+		const step = () => {
+			if (!document.body) return;
+			region("header", () => document.querySelector("#nsk-head, body > header, header.nsk-header, .nsk-header, body > div > header"), (candidate) => {
+				const header = pickSiteHeader() || candidate;
+				if (options.glassHeader) {
+					header.setAttribute("data-nsmax-header", "");
+					if (getComputedStyle(header).position === "static") {
+						header.setAttribute("data-nsmax-sticky", "");
+						root.setAttribute("data-nsmax-sticky-header", "");
+					}
+				}
+				if (options.minimalHeader) (nsmaxHeaderPlanner || (nsmaxHeaderPlanner = createHeaderPlanner())).apply();
+			});
+			region("left", () => document.getElementById("nsk-left-panel-container"), () => {
+				const nav = sidebarNavSettings();
+				if (!nav) return;
+				injectSidebarNavStyles();
+				const found = markSidebarNav(nav, (element, attribute, value = "") => element.setAttribute(attribute, value));
+				if (!found) return;
+				root.setAttribute("data-nsmax-sidenav-page", "");
+				const box = found.best.container.getBoundingClientRect();
+				root.toggleAttribute("data-nsmax-sidenav", box.width > 0 && box.height > 0 && box.right > 0 && box.left < window.innerWidth);
+			});
+			region("right", () => document.getElementById("nsk-right-panel-container"), () => (nsmaxCardMarker || (nsmaxCardMarker = createCardMarker())).apply());
+			if (!pending.size) observer.disconnect();
+		};
+		const observer = new MutationObserver(step);
+		observer.observe(document, {
+			childList: true,
+			subtree: true
+		});
+		document.addEventListener("DOMContentLoaded", () => {
+			observer.disconnect();
+			step();
+		}, { once: true });
+	}
 	// NodeSeek++「夜间模式」原本要等页面加载完、模块启动时才给 body 加 dark-layout，刷新时会先亮一下再变暗；
 	// 这里在 body 一出现时就加上。nsmaxEarlyDark 记录是不是这里加的，关闭该选项时模块据此还原。
 	var nsmaxEarlyDark = false;
@@ -26461,7 +26608,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 		const undock = dockToolbar(tools);
 		GM_registerMenuCommand$1("NodeSeek Max 设置", ui.open);
 		const stop = startFeatures(features, loadSettings(features), ui.notify);
-		requestAnimationFrame(() => document.documentElement.removeAttribute("data-nsmax-booting"));
+		requestAnimationFrame(revealAll);
 		window.addEventListener("pagehide", (event) => {
 			if (!event.persisted) {
 				stop();

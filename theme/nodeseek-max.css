@@ -262,9 +262,6 @@ html:root:root #nsk-head::before {
 	backdrop-filter:var(--nsmax-blur);
 	box-shadow:inset 0 1px 0 var(--nsmax-highlight);
 }
-html:root :is(header,#nsk-head,#nsk-left-panel-container,#nsk-right-panel-container) {
-	transition:opacity .2s ease;
-}
 @keyframes nsmax-appear {from{opacity:0}to{opacity:1}}
 html:root :is(#search-site2,header input[name=q]) {
 	transition:none!important;

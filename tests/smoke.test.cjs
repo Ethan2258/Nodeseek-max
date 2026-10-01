@@ -374,7 +374,7 @@ test("顶栏搜索框：固定宽度，聚焦与悬停时不再伸缩", async ()
 test("字体：输入框、按钮、NodeSeek++ 控件都用 Inter，代码用 JetBrains Mono；启动遮罩在整理完成后去掉", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
-	await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-booting"), null, { timeout: 4e3 });
+	await page.waitForFunction(() => !Array.from(document.documentElement.attributes).some((attribute) => attribute.name.startsWith("data-nsmax-boot")), null, { timeout: 4e3 });
 	await settle(page, 300);
 	const fonts = await page.evaluate(() => ({
 		textarea: getComputedStyle(document.querySelector(".md-editor textarea")).fontFamily,
@@ -876,6 +876,85 @@ test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子�
 	});
 	assert.ok(Math.abs(post.indent) <= 2, `主楼正文应与作者名对齐，偏差 ${post.indent}px`);
 	assert.equal(post.title, "21px");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("侧栏热榜：长标题单行省略，不会把按内容定宽的右侧栏撑宽、挤压帖子列表", async () => {
+	// 真实站点的右侧栏宽度按内容计算（模拟页默认固定 280px），这里改成按内容定宽，并换成很长的热帖标题
+	const css = "#nsk-right-panel-container{width:auto!important;flex:0 1 auto!important;max-width:none!important}";
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), css, viewport: { width: 1440, height: 900 } });
+	await page.waitForSelector(".nsmax-hot-list li a", { timeout: 5e3 });
+	await page.evaluate(() => document.querySelectorAll(".nsmax-hot-text").forEach((text) => { text.textContent = "国庆快乐！除了吃喝玩乐，BWH 也给大家准备了一台 ECOMMERCE VPS，NodeSeek 管理组祝大家假期愉快、好运连连！"; }));
+	await settle(page, 200);
+	const size = await page.evaluate(() => ({
+		right: document.getElementById("nsk-right-panel-container").getBoundingClientRect().width,
+		main: document.getElementById("nsk-left").getBoundingClientRect().width,
+		ellipsis: getComputedStyle(document.querySelector(".nsmax-hot-text")).textOverflow
+	}));
+	assert.ok(size.right < 360, `右侧栏被撑到 ${Math.round(size.right)}px`);
+	assert.ok(size.main > 600, `帖子列表只剩 ${Math.round(size.main)}px`);
+	assert.equal(size.ellipsis, "ellipsis");
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("加载：顶栏、左侧栏、右侧栏在页面解析阶段就整理好并显示，不等页面加载完再淡入", async () => {
+	// 页面末尾的内联脚本运行时页面已解析完，但 DOMContentLoaded 还没触发、各模块也还没启动（#nspp-tools 尚不存在）
+	const probe = `<script>window.__early = (() => {
+		const root = document.documentElement;
+		return {
+			modules: !!document.getElementById("nspp-tools"),
+			boot: Array.from(root.attributes).filter((attribute) => attribute.name.startsWith("data-nsmax-boot")).map((attribute) => attribute.name),
+			headerHidden: document.querySelectorAll("[data-nsmax-header-hide]").length,
+			headerSearch: !!document.querySelector("[data-nsmax-header-search]"),
+			header: !!document.querySelector("[data-nsmax-header]"),
+			navHidden: Array.from(document.querySelectorAll("#nsk-left-panel-container [data-nsmax-hidden]")).map((element) => element.textContent.trim()),
+			sidenav: root.hasAttribute("data-nsmax-sidenav"),
+			card: !!document.querySelector("[data-nsmax-usercard]"),
+			cta: !!document.querySelector("[data-nsmax-cta]"),
+			leftOpacity: getComputedStyle(document.getElementById("nsk-left-panel-container")).opacity
+		};
+	})();</script>`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage().replace("</body>", `${probe}</body>`) });
+	await page.waitForSelector("#nspp-tools button", { timeout: 5e3 });
+	const early = await page.evaluate(() => window.__early);
+	assert.equal(early.modules, false, "探测脚本应在模块启动前运行");
+	assert.deepEqual(early.boot, []);
+	assert.ok(early.headerHidden > 0, "顶栏应已精简");
+	assert.equal(early.headerSearch, true);
+	assert.equal(early.header, true);
+	assert.ok(early.navHidden.includes("生活"), `左侧栏隐藏项：${early.navHidden.join("、")}`);
+	assert.equal(early.sidenav, true);
+	assert.equal(early.card, true);
+	assert.equal(early.cta, true);
+	assert.equal(early.leftOpacity, "1");
+	// 模块启动后沿用同一份标记：NQ 入口、热榜面板照常插入，隐藏项不变
+	await page.waitForSelector(".nsmax-shortcuts a, .nsmax-hot-panel", { timeout: 5e3 });
+	const later = await page.evaluate(() => ({
+		shortcuts: document.querySelectorAll(".nsmax-shortcuts a").length,
+		hidden: document.querySelectorAll("#nsk-left-panel-container [data-nsmax-hidden]").length
+	}));
+	assert.ok(later.shortcuts > 0);
+	assert.equal(later.hidden, early.navHidden.length);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("侧栏热榜：上次的榜单存在本地，刷新后直接显示，未过期时不再联网", async () => {
+	const posts = Array.from({ length: 12 }, (_, index) => ({ id: 9000 + index, title: `缓存热帖 ${index + 1}`, author: "cache", views: 10, comments: 30 - index, score: 100 - index }));
+	const seed = { "nspp:state:www.nodeseek.com:hot-rankings": { "snapshot:hot": { posts, updated: Date.now() - 6e4, fetched: Date.now() } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed });
+	await page.waitForSelector(".nsmax-hot-panel", { timeout: 5e3 });
+	const state = await page.evaluate(() => ({
+		skeleton: document.querySelectorAll(".nsmax-hot-skeleton").length,
+		first: document.querySelector(".nsmax-hot-list .nsmax-hot-text")?.textContent,
+		requests: window.__gmRequests.filter((url) => url.includes("api.bimg.eu.org/hot")).length
+	}));
+	assert.equal(state.skeleton, 0);
+	assert.equal(state.first, "缓存热帖 1");
+	await settle(page, 300);
+	assert.equal(await page.evaluate(() => window.__gmRequests.filter((url) => url.includes("api.bimg.eu.org/hot")).length), 0);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
