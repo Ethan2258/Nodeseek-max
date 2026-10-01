@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.2.3
+@version        1.3.0
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.2.3（UserCSS）
+ * NodeSeek Max 主题 v1.3.0（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -34,8 +34,8 @@
 		unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-200F,U+2028-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 	}
 	html:root {
-		--nsmax-radius:16px;
-		--nsmax-radius-sm:10px;
+		--nsmax-radius:12px;
+		--nsmax-radius-sm:8px;
 		--nsmax-control-radius:999px;
 		--nsmax-seg-radius:999px;
 		--nsmax-gap:10px;
@@ -66,8 +66,8 @@
 		color-scheme:light;
 	}
 	html:root:root {
-		--nsmax-control-radius:10px;
-		--nsmax-seg-radius:10px;
+		--nsmax-control-radius:8px;
+		--nsmax-seg-radius:8px;
 	}
 	html:root:has(>body.dark-layout) {
 		--nsmax-canvas:#000;
@@ -114,67 +114,67 @@
 		color-scheme:dark;
 	}
 	html:root:root {
-		--nsmax-canvas:#fafafa;
+		--nsmax-canvas:#f7f8fa;
 		--nsmax-card:#fff;
 		--nsmax-surface:#fff;
-		--nsmax-fill:rgb(0 0 0/.05);
-		--nsmax-glass:rgb(250 250 250/.96);
+		--nsmax-fill:#f2f4f7;
+		--nsmax-glass:rgb(255 255 255/.96);
 		--nsmax-popup:#fff;
 		--nsmax-blur:none;
-		--nsmax-stroke:rgb(0 0 0/.085);
+		--nsmax-stroke:#e0e2e8;
 		--nsmax-highlight:transparent;
 		--nsmax-sheen:transparent;
-		--nsmax-divider:rgb(0 0 0/.07);
-		--nsmax-text:#18181b;
-		--nsmax-text-2:#3f3f46;
-		--nsmax-muted:#71717a;
-		--nsmax-thumb:rgb(113 113 122/.4);
-		--nsmax-shadow:0 1px 2px rgb(0 0 0/.03);
+		--nsmax-divider:#eef0f3;
+		--nsmax-text:#1c1c1e;
+		--nsmax-text-2:#555a6a;
+		--nsmax-muted:#6b6f7e;
+		--nsmax-thumb:rgb(107 111 126/.4);
+		--nsmax-shadow:0 1px 2px rgb(0 0 0/.04);
 		--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.04),0 6px 18px rgb(0 0 0/.05);
-		--nsmax-shadow-pop:0 16px 40px rgb(0 0 0/.12);
+		--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.14);
 	}
 	html:root:root:has(>body.dark-layout) {
-		--nsmax-canvas:#09090b;
-		--nsmax-card:#131316;
-		--nsmax-surface:#131316;
-		--nsmax-fill:rgb(255 255 255/.06);
-		--nsmax-glass:rgb(9 9 11/.96);
-		--nsmax-popup:#18181b;
+		--nsmax-canvas:#18191d;
+		--nsmax-card:#202126;
+		--nsmax-surface:#202126;
+		--nsmax-fill:#2a2b31;
+		--nsmax-glass:rgb(32 33 38/.96);
+		--nsmax-popup:#26272d;
 		--nsmax-blur:none;
-		--nsmax-stroke:rgb(255 255 255/.09);
+		--nsmax-stroke:#313238;
 		--nsmax-highlight:transparent;
 		--nsmax-sheen:transparent;
-		--nsmax-divider:rgb(255 255 255/.08);
-		--nsmax-text:#fafafa;
-		--nsmax-text-2:#e4e4e7;
-		--nsmax-muted:#a1a1aa;
-		--nsmax-thumb:rgb(161 161 170/.35);
-		--nsmax-shadow:none;
-		--nsmax-shadow-hover:0 0 0 1px rgb(255 255 255/.05),0 8px 24px rgb(0 0 0/.5);
-		--nsmax-shadow-pop:0 16px 40px rgb(0 0 0/.6);
+		--nsmax-divider:#2b2c32;
+		--nsmax-text:#e8e9ed;
+		--nsmax-text-2:#b6b8c1;
+		--nsmax-muted:#8e919b;
+		--nsmax-thumb:rgb(142 145 155/.4);
+		--nsmax-shadow:0 1px 2px rgb(0 0 0/.24);
+		--nsmax-shadow-hover:0 0 0 1px rgb(255 255 255/.04),0 8px 24px rgb(0 0 0/.36);
+		--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.5);
 	}
 	html:root:root body.dark-layout {
-		--nsmax-canvas:#09090b;
-		--nsmax-card:#131316;
-		--nsmax-surface:#131316;
-		--nsmax-fill:rgb(255 255 255/.06);
-		--nsmax-glass:rgb(9 9 11/.96);
-		--nsmax-popup:#18181b;
+		--nsmax-canvas:#18191d;
+		--nsmax-card:#202126;
+		--nsmax-surface:#202126;
+		--nsmax-fill:#2a2b31;
+		--nsmax-glass:rgb(32 33 38/.96);
+		--nsmax-popup:#26272d;
 		--nsmax-blur:none;
-		--nsmax-stroke:rgb(255 255 255/.09);
+		--nsmax-stroke:#313238;
 		--nsmax-highlight:transparent;
 		--nsmax-sheen:transparent;
-		--nsmax-divider:rgb(255 255 255/.08);
-		--nsmax-text:#fafafa;
-		--nsmax-text-2:#e4e4e7;
-		--nsmax-muted:#a1a1aa;
-		--nsmax-thumb:rgb(161 161 170/.35);
-		--nsmax-shadow:none;
-		--nsmax-shadow-hover:0 0 0 1px rgb(255 255 255/.05),0 8px 24px rgb(0 0 0/.5);
-		--nsmax-shadow-pop:0 16px 40px rgb(0 0 0/.6);
+		--nsmax-divider:#2b2c32;
+		--nsmax-text:#e8e9ed;
+		--nsmax-text-2:#b6b8c1;
+		--nsmax-muted:#8e919b;
+		--nsmax-thumb:rgb(142 145 155/.4);
+		--nsmax-shadow:0 1px 2px rgb(0 0 0/.24);
+		--nsmax-shadow-hover:0 0 0 1px rgb(255 255 255/.04),0 8px 24px rgb(0 0 0/.36);
+		--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.5);
 	}
 	html:root body {
-		--nsmax-accent:var(--primary-color,#1d1d1f);
+		--nsmax-accent:var(--main-color,var(--primary-color,#1d1d1f));
 		--nsmax-on-accent:#fff;
 	}
 	html:root:root body {
@@ -183,7 +183,7 @@
 	}
 	html:root:root body.dark-layout {
 		--nsmax-accent:var(--nsmax-text);
-		--nsmax-on-accent:#000;
+		--nsmax-on-accent:var(--nsmax-canvas);
 	}
 	html:root body {
 		--nsmax-accent-soft:color-mix(in srgb,var(--nsmax-accent) 12%,transparent);
@@ -197,14 +197,27 @@
 		--text-color:var(--nsmax-text);
 		--text-color-secondary:var(--nsmax-muted);
 		--border-radius:var(--nsmax-radius-sm);
+		--bg-main-color:var(--nsmax-canvas)!important;
+		--bg-sub-color:var(--nsmax-card)!important;
+		--glass-color:var(--nsmax-glass)!important;
 		background-color:var(--nsmax-canvas)!important;
+		background-image:none!important;
 		color:var(--nsmax-text);
 	}
 	html:root:root body {
 		--link-color:var(--nsmax-accent)!important;
 	}
-	html:root:root body:not(.dark-layout) {
+	html:root:root body {
 		--primary-color:var(--nsmax-accent)!important;
+		--main-color:var(--nsmax-accent)!important;
+		--sub-color:color-mix(in srgb,var(--nsmax-accent) 10%,var(--nsmax-card))!important;
+		--link-hover-color:var(--nsmax-text-2)!important;
+	}
+	html:root:root :is(.btn-primary,.pure-button-primary,.pure-button.pure-button-primary,button.submit.btn,.btn.submit) {
+		background-color:var(--nsmax-accent)!important;
+		background-image:none!important;
+		border-color:transparent!important;
+		color:var(--nsmax-on-accent)!important;
 	}
 	html:root ::selection {
 		background:color-mix(in srgb,var(--nsmax-accent) 22%,transparent);
@@ -227,11 +240,19 @@
 	html:root:root :is(code,kbd,samp,pre) {
 		font-family:var(--nsmax-mono);
 	}
+	/* 全站统一字体：除代码与图标外的所有元素（含站点、NodeSeek++ 与第三方写死字体的地方、输入框、编辑器）都用 Inter，代码用 JetBrains Mono */
+	html[data-nsmax-theme]:is([data-nsmax-font=inter],[data-nsmax-font=system]) body :not(code,pre,kbd,samp,svg,i,.hljs,[class*=iconfont]) {
+		font-family:var(--nsmax-font)!important;
+	}
+	html:root:root body :is(code,pre,kbd,samp,.hljs),
+	html:root:root body :is(code,pre,kbd,samp,.hljs) * {
+		font-family:var(--nsmax-mono)!important;
+	}
 	html:root:root #nsk-head {
 		background:transparent!important;
 		border-bottom:1px solid var(--nsmax-divider);
 		isolation:isolate;
-		transition:box-shadow .3s var(--nsmax-ease-out);
+		transition:box-shadow .3s var(--nsmax-ease-out),opacity .2s ease;
 	}
 	html:root:root #nsk-head::before {
 		content:"";
@@ -243,6 +264,18 @@
 		-webkit-backdrop-filter:var(--nsmax-blur);
 		backdrop-filter:var(--nsmax-blur);
 		box-shadow:inset 0 1px 0 var(--nsmax-highlight);
+	}
+	html:root :is(header,#nsk-head,#nsk-left-panel-container,#nsk-right-panel-container) {
+		transition:opacity .2s ease;
+	}
+	@keyframes nsmax-appear {from{opacity:0}to{opacity:1}}
+	html:root :is(#search-site2,header input[name=q]) {
+		transition:none!important;
+	}
+	html:root .md-editor>:first-child:not(.mde-toolbar,.CodeMirror,textarea) {
+		background:transparent!important;
+		border:0!important;
+		border-bottom:1px solid var(--nsmax-divider)!important;
 	}
 	html:root:root ul.post-list:not(.topic-carousel-panel)>li:not(.post-list-item):has(>button:only-child) {
 		list-style:none;
@@ -263,7 +296,7 @@
 	}
 	html:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item) {
 		margin:0;
-		padding:12px;
+		padding:11px 14px;
 		border:0;
 		border-bottom:1px solid var(--nsmax-divider);
 		border-radius:0;
@@ -304,10 +337,13 @@
 		background-image:none!important;
 	}
 	html:root .post-list-item .post-category {
-		border-radius:var(--nsmax-control-radius);
-		border:1px solid var(--nsmax-divider);
-		background-color:var(--nsmax-surface);
-		color:var(--nsmax-muted);
+		border-radius:999px;
+		border:1px solid var(--nsmax-stroke);
+		background-color:color-mix(in srgb,var(--nsmax-fill) 45%,var(--nsmax-card));
+		color:var(--nsmax-text-2);
+		font-size:12px;
+		line-height:1.75;
+		padding:1px 9px;
 	}
 	html:root .post-list-item .post-category:hover {
 		color:var(--nsmax-text);
@@ -315,8 +351,8 @@
 	}
 	html:root .post-list-item .post-title a {
 		color:var(--nsmax-text);
-		font-weight:600;
-		letter-spacing:.005em;
+		font-weight:500;
+		letter-spacing:0;
 	}
 	html:root .post-list-item .post-title a:hover {
 		color:var(--nsmax-accent);
@@ -344,10 +380,19 @@
 		background-color:transparent;
 		color:var(--nsmax-muted);
 	}
+	html:root .nsk-pager :is(a,span) {
+		font-size:13.5px;
+		font-weight:500;
+		line-height:1.6;
+	}
 	html:root .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-current]) {
 		color:var(--nsmax-text)!important;
-		font-weight:700;
+		font-weight:600;
 		background-color:transparent!important;
+	}
+	html:root .nsk-pager :is(.pager-prev,.pager-next) {
+		color:var(--nsmax-muted);
+		font-size:11px;
 	}
 	html:root .nsk-pager a:hover {
 		background:transparent!important;
@@ -381,8 +426,84 @@
 		outline:none;
 	}
 	html:root .md-editor:not(.nspp-floating-reply) {
-		border-radius:var(--nsmax-radius);
-		border-color:var(--nsmax-divider);
+		overflow:hidden;
+		background-color:var(--nsmax-card)!important;
+		background-image:none!important;
+		border:1px solid var(--nsmax-stroke)!important;
+		border-radius:var(--nsmax-radius)!important;
+		box-shadow:none!important;
+		color:var(--nsmax-text);
+	}
+	html:root .md-editor .mde-toolbar {
+		display:flex;
+		flex-wrap:wrap;
+		align-items:center;
+		gap:1px;
+		padding:4px 8px!important;
+		background:transparent!important;
+		border:0!important;
+		border-bottom:1px solid var(--nsmax-divider)!important;
+	}
+	html:root .md-editor :is(.CodeMirror,.CodeMirror-scroll,.CodeMirror-sizer,textarea) {
+		background:transparent!important;
+		color:var(--nsmax-text)!important;
+	}
+	html:root .md-editor .CodeMirror-gutters {
+		background:transparent!important;
+		border-right:1px solid var(--nsmax-divider)!important;
+	}
+	html:root .md-editor .CodeMirror-linenumber {
+		color:var(--nsmax-muted)!important;
+		opacity:.7;
+	}
+	html:root .md-editor .CodeMirror-cursor {
+		border-left-color:var(--nsmax-text)!important;
+	}
+	html:root .md-editor :is(.CodeMirror-placeholder,textarea::placeholder) {
+		color:var(--nsmax-muted)!important;
+		opacity:.8;
+	}
+	html:root .md-editor .expression {
+		display:flex;
+		flex-wrap:wrap;
+		align-items:center;
+		gap:2px;
+		margin:0!important;
+		padding:5px 8px!important;
+		background:transparent!important;
+		border:0!important;
+		border-top:1px solid var(--nsmax-divider)!important;
+		color:var(--nsmax-muted);
+	}
+	html:root .md-editor .expression>* {
+		padding:2px 8px;
+		border:0!important;
+		border-radius:6px;
+		background:transparent!important;
+		color:var(--nsmax-muted)!important;
+		font-size:12.5px;
+		line-height:1.6;
+		cursor:pointer;
+		transform:none!important;
+	}
+	html:root .md-editor .expression>:hover {
+		color:var(--nsmax-text)!important;
+	}
+	html:root .md-editor .expression>:is(.current-group,.active) {
+		color:var(--nsmax-text)!important;
+		font-weight:600;
+	}
+	html:root .md-editor .exp-container {
+		background:transparent!important;
+		border-color:var(--nsmax-divider)!important;
+	}
+	html:root .md-editor :is(button.submit.btn,.btn.submit) {
+		min-height:32px;
+		padding:0 18px!important;
+		border-radius:8px!important;
+		font-size:13px!important;
+		font-weight:600!important;
+		box-shadow:none!important;
 	}
 	html:root .md-editor:not(.nspp-floating-reply):focus-within {
 		border-color:var(--nsmax-accent-line);
@@ -511,6 +632,23 @@
 		border-top:1px dashed var(--nsmax-divider);
 		color:var(--nsmax-muted);
 		font-size:.92em;
+	}
+	html:root .signature,
+	html:root .signature :not(img,svg,svg *) {
+		color:var(--nsmax-muted)!important;
+		background-color:transparent!important;
+	}
+	html:root .signature a {
+		color:var(--nsmax-text-2)!important;
+		font-weight:500;
+		text-decoration:none!important;
+	}
+	html:root .signature a:hover {
+		color:var(--nsmax-text)!important;
+		text-decoration:underline!important;
+		text-decoration-thickness:1px!important;
+		text-underline-offset:3px;
+		text-decoration-color:var(--nsmax-accent-line)!important;
 	}
 	html:root:root .comment-menu {
 		gap:2px;
@@ -699,7 +837,6 @@
 		font-size:12px!important;
 	}
 	html:root .nspp-user-hover dd {
-		font-family:var(--nsmax-mono)!important;
 		font-size:12.5px!important;
 		font-weight:500!important;
 		font-variant-numeric:tabular-nums;
@@ -709,7 +846,7 @@
 		font-weight:600!important;
 	}
 	html:root .nspp-user-hover .nspp-user-hover-score strong {
-		font-family:var(--nsmax-mono)!important;
+		font-variant-numeric:tabular-nums;
 		font-size:24px!important;
 		font-weight:700!important;
 		letter-spacing:-.02em!important;

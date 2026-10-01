@@ -17,7 +17,7 @@ NodeSeek / DeepFlood 增强脚本：合并 NodeSeek++、redirect 外链跳转、
 
 ## 功能
 
-- **主题**：黑白灰配色、实心卡片、大圆角、Inter + JetBrains Mono 字体、可调字号，自动适配深色模式，渲染前生效不闪烁。
+- **主题**：参考 sb.sb 的简洁风格，黑白灰配色、细边框卡片、全站 Inter + JetBrains Mono 字体、可调字号，深色模式为柔和深灰，渲染前生效、加载时淡入不闪烁。
 - **精简顶栏**：桌面端只保留站点标志、标题、搜索框和深浅色切换。
 - **版块导航**：去掉顶栏与侧栏重复的版块；默认隐藏 生活、Dev、贴图、沙盒、DeepFlood；侧栏加入 NQ（NodeQuality）入口。
 - **评论框**：统一线条图标，图床按钮与「发布评论」同一行；默认上传到欧记图床 image.110726.com（可填 API Token，也支持 NodeImage 等）。
@@ -25,6 +25,8 @@ NodeSeek / DeepFlood 增强脚本：合并 NodeSeek++、redirect 外链跳转、
 - **黑名单**：隐藏黑名单用户的 @、回复和私信通知。
 - **外链直达**：60 多个站点的外链中转页与 NodeSeek `/jump` 直接跳转。
 - **NodeSeek++ 原有功能**：自动翻页、阅读历史、用户等级、内容过滤、RSS 监控、紧凑消息中心等（已移除快速回复与 AI 写作）。
+
+上游 NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件发布新版本时，`Upstream` 工作流会开 issue，合并后随新版本发布（见 [upstream/](upstream/)）。
 
 导航或顶栏识别不对时，在脚本管理器菜单点「NodeSeek Max：复制导航诊断信息」，把内容发到 [Issues](https://github.com/Ethan2258/Nodeseek-max/issues)。
 
@@ -36,6 +38,7 @@ npm run check   # 语法、meta 与主题 CSS 同步检查
 npm test        # 冒烟测试（模拟页面）
 npm run meta    # 重新生成 nodeseek-max.meta.js
 npm run css     # 重新生成 theme/ 下的独立 CSS
+npm run upstream  # 检查上游脚本是否有新版本
 ```
 
 发版：改 `@version`、`NSMAX_VERSION`、`package.json` 版本号并在 `CHANGELOG.md` 写对应一节；合并到 main 且 CI 通过后自动发布 Release。

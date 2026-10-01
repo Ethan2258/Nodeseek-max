@@ -1,0 +1,52 @@
+name: Upstream
+
+# 每天检查合并进来的上游脚本（NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件）是否在 Greasy Fork 发布了新版本。
+# 有新版本时开一个 issue（同一组版本只开一次），说明哪些上游需要合并；合并步骤见 upstream/README.md。
+on:
+  schedule:
+    - cron: "37 1 * * *"   # 每天北京时间 09:37
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check upstream versions
+        id: check
+        run: |
+          node scripts/upstream.mjs --markdown > upstream-report.md
+          cat upstream-report.md
+          cat upstream-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open issue
+        if: steps.check.outputs.updates != '0'
+        env:
+          # 版本号来自上游 meta 文件，通过环境变量传入，不直接拼进脚本。
+          TITLE: ${{ steps.check.outputs.title }}
+        run: |
+          title="$TITLE"
+          if gh issue list --state all --search "in:title \"$title\"" --json title --jq '.[].title' | grep -Fxq "$title"; then
+            echo "已有 issue：$title"
+            exit 0
+          fi
+          gh label create upstream --color BFD4F2 --description "上游脚本有新版本" 2>/dev/null || true
+          {
+            echo "上游脚本发布了新版本，需要把改动合并进 nodeseek-max.user.js。"
+            echo
+            cat upstream-report.md
+            echo
+            echo "合并步骤见 [upstream/README.md](../blob/main/upstream/README.md)：\`node scripts/upstream.mjs --fetch\` 下载新源码，与 \`upstream/\` 里的基线对比后移植改动。"
+          } > issue.md
+          gh issue create --title "$title" --label upstream --body-file issue.md
