@@ -1558,6 +1558,46 @@ test("发帖页：标题是大号白色输入框，正文编辑器加高，发�
 	await context.close();
 });
 
+test("细节：作者行各项按中线对齐、「引用 / 回复」带图标、输入时输入区没有单独的聚焦边框、用户卡片按钮与名字左对齐、「屏蔽」有图标", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	await page.waitForSelector("ul.comments .nspp-user-badges .nspp-age", { timeout: 8e3 });
+	await settle(page, 400);
+	await page.click(".md-editor textarea");
+	await page.keyboard.type("测试");
+	const state = await page.evaluate(() => {
+		const li = document.querySelector("ul.comments li");
+		const middle = (element) => { const box = element.getBoundingClientRect(); return box.top + box.height / 2; };
+		const centers = Array.from(li.querySelectorAll(".author-info > a, .nspp-user-badges > *, .role-tag, a.floor-link")).map(middle);
+		const quote = getComputedStyle(li.querySelector(".comment-menu .menu-item[title=引用]"), "::before");
+		const textarea = getComputedStyle(document.querySelector(".md-editor textarea"));
+		const name = document.querySelector("[data-nsmax-usercard] .user-name").getBoundingClientRect();
+		const icon = document.querySelector("[data-nsmax-usercard] .nsmax-icon[data-nsmax-icon-for=card]").getBoundingClientRect();
+		return {
+			spread: Math.max(...centers) - Math.min(...centers),
+			quote: [quote.content, quote.width],
+			textarea: [textarea.boxShadow, textarea.borderBottomWidth],
+			iconLeft: Math.abs(icon.left - name.left)
+		};
+	});
+	assert.ok(state.spread <= 1.2, `作者行上下错开 ${state.spread.toFixed(1)}px`);
+	assert.deepEqual(state.quote, ['""', "14px"]);
+	assert.deepEqual(state.textarea, ["none", "0px"]);
+	assert.ok(state.iconLeft <= 1, `用户卡片图标与名字错开 ${state.iconLeft.toFixed(1)}px`);
+	await context.close();
+	const list = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await settle(list.page, 400);
+	await list.page.hover(".post-list-item .info-author");
+	await list.page.waitForSelector(".nspp-user-hover:not([hidden]) .nspp-block-toggle", { timeout: 8e3 });
+	const block = await list.page.evaluate(() => {
+		const button = document.querySelector(".nspp-user-hover:not([hidden]) .nspp-block-toggle");
+		return [getComputedStyle(button, "::before").content, getComputedStyle(button.querySelector("svg")).display];
+	});
+	assert.deepEqual(block, ['""', "none"]);
+	assert.deepEqual(errors, []);
+	assert.deepEqual(list.errors, []);
+	await list.context.close();
+});
+
 test("用户脚本元数据与版本一致", () => {
 	const source = fs.readFileSync(path.join(ROOT, "nodeseek-max.user.js"), "utf8");
 	const meta = fs.readFileSync(path.join(ROOT, "nodeseek-max.meta.js"), "utf8");

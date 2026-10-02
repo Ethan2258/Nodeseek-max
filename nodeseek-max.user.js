@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.5.6
+// @version      1.5.7
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.5.6";
+	var NSMAX_VERSION = "1.5.7";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -1339,7 +1339,11 @@ var nsmaxRedirecting = false;
 		at: "M15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm0 0v1.25a2.25 2.25 0 0 0 4.5 0V12a8 8 0 1 0-3.2 6.4",
 		gauge: "M4.5 17.39a8 8 0 1 1 15 0M12 13.89l3.5 -3.5M11.25 13.89a0.75 0.75 0 1 0 1.5 0 0.75 0.75 0 1 0 -1.5 0",
 		chart: "M4.5 18.5h15M7.5 15v-4M12 15V5.5M16.5 15V8.5",
-		tool: "M15.45 4.15a4.6 4.6 0 0 0 -4.4 6l-6.1 6.1a2 2 0 1 0 2.8 2.8l6.1 -6.1a4.6 4.6 0 0 0 6 -4.4c0 -0.5 -0.1 -1 -0.2 -1.4l-2.7 2.7 -2.4 -0.4 -0.4 -2.4 2.7 -2.7c-0.4 -0.1 -0.9 -0.2 -1.4 -0.2Z"
+		tool: "M15.45 4.15a4.6 4.6 0 0 0 -4.4 6l-6.1 6.1a2 2 0 1 0 2.8 2.8l6.1 -6.1a4.6 4.6 0 0 0 6 -4.4c0 -0.5 -0.1 -1 -0.2 -1.4l-2.7 2.7 -2.4 -0.4 -0.4 -2.4 2.7 -2.7c-0.4 -0.1 -0.9 -0.2 -1.4 -0.2Z",
+		thumbup: "M8 10.5v9.5H5a1 1 0 0 1-1-1v-7.5a1 1 0 0 1 1-1h3Zm0 0 3.4-6a1.7 1.7 0 0 1 3.1 1.3L13.8 9H18a2 2 0 0 1 2 2.3l-1.2 6.6a2.5 2.5 0 0 1-2.5 2.1H8",
+		thumbdown: "M8 13.5v-9.5H5a1 1 0 0 0 -1 1v7.5a1 1 0 0 0 1 1h3Zm0 0 3.4 6a1.7 1.7 0 0 0 3.1 -1.3L13.8 15H18a2 2 0 0 0 2 -2.3l-1.2 -6.6a2.5 2.5 0 0 0 -2.5 -2.1H8",
+		drumstick: "M14.27 3.12a6 6 0 0 1 4.2 10.2c-1.7 1.7 -4 2.2 -6 1.5l-2.2 2.2a2 2 0 1 1 -2.6 2.6 2 2 0 1 1 -2.6 -2.6l2.2 -2.2c-0.7 -2 -0.2 -4.3 1.5 -6A6 6 0 0 1 14.27 3.12Z",
+		ban: "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM6 6l12 12"
 	};
 	function toolIcon(name) {
 		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -26128,6 +26132,48 @@ ${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-motion] .md-editor:not(.nspp
 @keyframes nsmax-claude-in{from{opacity:0;scale:.97}}
 @keyframes nsmax-fade{from{opacity:0}}
 @keyframes nsmax-pop-in{from{opacity:0;translate:0 4px}}
+/* 细节打磨（v1.5.7） */
+/* 评论框的输入区：全站输入框的聚焦边框与光圈不作用到编辑器里（输入时底下不再出现一道灰边），由整块评论框的聚焦样式表示 */
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>textarea,${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>textarea:is(:hover,:focus,:focus-visible){border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:0!important}
+/* 回复楼层作者行：站点的身份标签与 NodeSeek++ 徽章按中线对齐（原来身份标签低 2px） */
+${NSMAX_ROOT}[data-nsmax-page=post] .nsk-content-meta-info :is(.role-tag,.nspp-user-badges){vertical-align:middle}
+${NSMAX_ROOT}[data-nsmax-page=post] .nsk-content-meta-info .author-info{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px}
+${NSMAX_ROOT}[data-nsmax-page=post] .nsk-content-meta-info .author-info>.nspp-user-badges{margin-inline-start:2px}
+${NSMAX_ROOT}[data-nsmax-page=post] .nsk-content-meta-info>:has(>a.floor-link){display:inline-flex;align-items:center}
+${NSMAX_ROOT}[data-nsmax-page=post] .nsk-content-meta-info .role-tag:not([data-nspp-role]){font-size:11.5px!important;line-height:16px!important}
+/* 用户卡片：签到 / 设置 / 退出这一排的图标与用户名左对齐（按钮比图标宽，左移半个差值）；统计区与头像左对齐 */
+${NSMAX_ROOT} [data-nsmax-usercard] a:has(>[data-nsmax-icon-for=card]):first-child{margin-left:-5.5px!important}
+${NSMAX_ROOT}[data-nsmax-palette=claude] [data-nsmax-usercard]>[data-nsmax-stat]{padding-left:12px!important;padding-right:12px!important}
+${NSMAX_ROOT}[data-nsmax-palette=claude] [data-nsmax-stat] .stat-block>*{padding-left:0;padding-right:0}
+/* 回复楼层的「引用 / 回复」：Claude 消息下方那种浅色操作按钮——线条图标 + 文字，悬停浅底圆角 */
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=post] ul.comments .comment-menu .menu-item{gap:5px;min-height:28px;padding:0 8px;border-radius:8px}
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=post] ul.comments .comment-menu .menu-item:hover{background:var(--nsmax-fill)!important}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .comment-menu .menu-item:is([title=引用],[title=回复])>:is(svg,img,i){display:none}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .comment-menu .menu-item:is([title=引用],[title=回复])::before{content:"";flex:none;width:14px;height:14px;background:currentColor;-webkit-mask:var(--nsmax-icon-menu) center/contain no-repeat;mask:var(--nsmax-icon-menu) center/contain no-repeat}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .comment-menu .menu-item[title=引用]{--nsmax-icon-menu:var(--nsmax-icon-quote)}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .comment-menu .menu-item[title=回复]{--nsmax-icon-menu:var(--nsmax-icon-reply)}
+/* 私信资料卡的统计框：不再是白底区域里再套一层带边框的框 */
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.nspp-chat-profile-data,.nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-data){border-color:transparent;border-radius:10px}
+/* 帖子行的分类标签：无边框的浅底标签 */
+${NSMAX_ROOT}[data-nsmax-palette=claude] .post-list-item .post-category{border-color:transparent;background-color:var(--nsmax-fill);color:var(--nsmax-text-2)}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .post-list-item .post-category:hover{border-color:transparent;background-color:color-mix(in srgb,var(--nsmax-fill) 70%,var(--nsmax-text) 6%);color:var(--nsmax-text)}
+/* 热榜前三名的序号用珊瑚色 */
+${NSMAX_ROOT}[data-nsmax-palette=claude] .nsmax-hot-rank:is([data-rank="1"],[data-rank="2"],[data-rank="3"]),${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings li:is([data-rank="1"],[data-rank="2"],[data-rank="3"]) .nspp-hot-rank{color:var(--nsmax-brand)}
+/* 点赞 / 加鸡腿 / 反对 / 屏蔽：站点雪碧图里的粗图标换成统一线条图标（按引用的图标名识别，识别不到的保持原样） */
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#good-one"])>svg.iconpark-icon{display:none}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#good-one"])::before{content:"";flex:none;width:15px;height:15px;background:currentColor;-webkit-mask:var(--nsmax-icon-thumbup) center/contain no-repeat;mask:var(--nsmax-icon-thumbup) center/contain no-repeat}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#bad-one"])>svg.iconpark-icon{display:none}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#bad-one"])::before{content:"";flex:none;width:15px;height:15px;background:currentColor;-webkit-mask:var(--nsmax-icon-thumbdown) center/contain no-repeat;mask:var(--nsmax-icon-thumbdown) center/contain no-repeat}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#chicken-leg"])>svg.iconpark-icon{display:none}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#chicken-leg"])::before{content:"";flex:none;width:15px;height:15px;background:currentColor;-webkit-mask:var(--nsmax-icon-drumstick) center/contain no-repeat;mask:var(--nsmax-icon-drumstick) center/contain no-repeat}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#forbid"])>svg.iconpark-icon{display:none}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(.menu-item,.nspp-list-actions button,.nspp-block-toggle,.nspp-user-hover-actions>*):has(>svg.iconpark-icon>use[href="#forbid"])::before{content:"";flex:none;width:15px;height:15px;background:currentColor;-webkit-mask:var(--nsmax-icon-ban) center/contain no-repeat;mask:var(--nsmax-icon-ban) center/contain no-repeat}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .nsk-post>.comment-menu .menu-item:has(>svg.iconpark-icon>use:is([href="#good-one"],[href="#bad-one"],[href="#chicken-leg"]))::before{width:17px;height:17px}
+/* 热榜抽屉的榜单切换：和左侧版块一样的无边框文字标签，当前榜单浅底；「刷新」是弱化的文字按钮 */
+${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav{gap:2px}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking]{border-color:transparent;background:transparent;color:var(--nsmax-muted)}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking]:hover:not(:disabled){border-color:transparent;background:var(--nsmax-fill);color:var(--nsmax-text)}
+${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking][aria-pressed=true],${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking][aria-pressed=true]:hover{border-color:transparent;background:var(--nsmax-seg-bg,var(--nsmax-fill));color:var(--nsmax-text);font-weight:500}
 #nsmax-progress{position:fixed;inset:0 0 auto;z-index:2147483000;height:2px;pointer-events:none;background:var(--nsmax-accent);transform-origin:0 50%;transform:scaleX(var(--nsmax-progress,0));opacity:.9;transition:opacity .3s ease}
 #nsmax-progress[data-idle]{opacity:0}
 ${NSMAX_ROOT} .user-card img:is(.avatar-normal,.avatar,[class*=avatar]),${NSMAX_ROOT} [data-nsmax-usercard] img:first-of-type{border-radius:var(--nsmax-avatar,20%);box-shadow:0 0 0 1px var(--nsmax-divider)}
@@ -26291,7 +26337,13 @@ ${NSMAX_ROOT} body{--nsmax-icon-close:url("data:image/svg+xml,%3Csvg xmlns='http
 --nsmax-icon-moon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 14.2A7.5 7.5 0 0 1 9.8 4.5a7.5 7.5 0 1 0 9.7 9.7Z'/%3E%3C/svg%3E");
 --nsmax-icon-shield:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 5.5 6v5.5c0 4 2.8 7.4 6.5 9 3.7-1.6 6.5-5 6.5-9V6L12 3.5ZM9 12l2 2 4-4'/%3E%3C/svg%3E");
 --nsmax-icon-calendar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 3.5v3M16 3.5v3M4 9.5h16M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z'/%3E%3C/svg%3E");
---nsmax-icon-level:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 19.5v-4M12 19.5v-9M18 19.5V5'/%3E%3C/svg%3E")}
+--nsmax-icon-level:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 19.5v-4M12 19.5v-9M18 19.5V5'/%3E%3C/svg%3E");
+--nsmax-icon-quote:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h3.5a1 1 0 0 1 1 1V16.5a1 1 0 0 1 -1 1H6a1 1 0 0 1 -1 -1v-4.5Zm0 0c0 -2.8 1.2 -4.6 3.5 -5.5M14.5 12H18a1 1 0 0 1 1 1V16.5a1 1 0 0 1 -1 1h-2.5a1 1 0 0 1 -1 -1v-4.5Zm0 0c0 -2.8 1.2 -4.6 3.5 -5.5'/%3E%3C/svg%3E");
+--nsmax-icon-reply:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5 8.5 5 13l4.5 4.5M5 13h9a5 5 0 0 0 5-5V6.5'/%3E%3C/svg%3E");
+--nsmax-icon-thumbup:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 10.5v9.5H5a1 1 0 0 1-1-1v-7.5a1 1 0 0 1 1-1h3Zm0 0 3.4-6a1.7 1.7 0 0 1 3.1 1.3L13.8 9H18a2 2 0 0 1 2 2.3l-1.2 6.6a2.5 2.5 0 0 1-2.5 2.1H8'/%3E%3C/svg%3E");
+--nsmax-icon-thumbdown:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 13.5v-9.5H5a1 1 0 0 0 -1 1v7.5a1 1 0 0 0 1 1h3Zm0 0 3.4 6a1.7 1.7 0 0 0 3.1 -1.3L13.8 15H18a2 2 0 0 0 2 -2.3l-1.2 -6.6a2.5 2.5 0 0 0 -2.5 -2.1H8'/%3E%3C/svg%3E");
+--nsmax-icon-drumstick:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.27 3.12a6 6 0 0 1 4.2 10.2c-1.7 1.7 -4 2.2 -6 1.5l-2.2 2.2a2 2 0 1 1 -2.6 2.6 2 2 0 1 1 -2.6 -2.6l2.2 -2.2c-0.7 -2 -0.2 -4.3 1.5 -6A6 6 0 0 1 14.27 3.12Z'/%3E%3C/svg%3E");
+--nsmax-icon-ban:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM6 6l12 12'/%3E%3C/svg%3E")}
 /* NodeSeek++ 工具弹窗（回帖足迹、阅读历史、帖子监控、热榜、转账、注册资料、确认框）：统一成卡片式模态框——
    标题栏 + 细分隔线、次要按钮描边、主要按钮用强调色、输入框浅灰底、列表行悬停浅灰、空状态居中带图标 */
 ${NSMAX_ROOT} ${nsmaxDialog}{--nsmax-dlg-fill:color-mix(in srgb,var(--nsmax-text) 5%,transparent);--nsmax-dlg-hover:color-mix(in srgb,var(--nsmax-text) 9%,transparent);background-color:var(--nsmax-popup);color:var(--nsmax-text);border:1px solid var(--nsmax-stroke);border-radius:var(--nsmax-dialog-radius,12px);box-shadow:var(--nsmax-shadow-pop);font-size:13.5px;line-height:1.55;-webkit-backdrop-filter:none;backdrop-filter:none}
@@ -26757,6 +26809,7 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .categories a{border-radius:8px;color:var(--text-2);font-size:13.5px}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .categories a:hover{background:var(--soft);color:var(--text)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .categories a[aria-current]{background:var(--nsmax-seg-bg,var(--soft));color:var(--text);font-weight:500}
+:host([data-nsmax-glass][data-nsmax-palette=claude][data-dark]) .categories a[aria-current]{background:var(--soft)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .settings-workspace .content{background:transparent;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 12px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to bottom,transparent,#000 12px,#000 calc(100% - 24px),transparent)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) h3{padding:14px 2px 8px;background:var(--canvas);color:var(--muted);font-size:12.5px;font-weight:500;letter-spacing:0}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .settings-workspace article{margin:0 0 12px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
