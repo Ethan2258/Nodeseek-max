@@ -89,7 +89,7 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 	await page.waitForSelector("[data-nsmax-cta]", { timeout: 5e3 });
 	const card = await page.evaluate(() => ({
 		stat: getComputedStyle(document.querySelector(".user-stat")).backgroundColor,
-		cta: getComputedStyle(document.querySelector("[data-nsmax-cta]")).backgroundColor,
+		cta: getComputedStyle(document.querySelector("[data-nsmax-cta]"), "::before").backgroundColor,
 		badge: getComputedStyle(document.querySelector(".notify-count")).backgroundColor,
 		quickReply: Array.from(document.querySelectorAll("button, a")).some((element) => element.textContent.trim() === "快速回复"),
 		ai: !!document.querySelector("[data-nspp-ai-launcher]"),
@@ -875,7 +875,7 @@ test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子�
 		return {
 			searchBackground: css(search).backgroundColor,
 			searchBorder: css(search).borderTopColor,
-			cta: css(document.querySelector("[data-nsmax-cta]")).borderTopLeftRadius,
+			cta: getComputedStyle(document.querySelector("[data-nsmax-cta]"), "::before").borderTopLeftRadius,
 			avatar: avatar.getBoundingClientRect().width,
 			titleWeight: css(document.querySelector(".post-list-item .post-title a")).fontWeight,
 			hotWrap: css(document.querySelector(".nsmax-hot-text")).whiteSpace,
@@ -1145,7 +1145,7 @@ test("设置页：输入框白底深一档边框（sb.sb）、提交按钮用强
 			cancel: css("button[type=button]", "backgroundColor"),
 			check: css("input[type=checkbox]", "accentColor"),
 			tab: css(".router-link-active", "fontWeight"),
-			cta: css(".btn-post", "backgroundColor")
+			cta: getComputedStyle(document.querySelector(".btn-post"), "::before").backgroundColor
 		};
 	});
 	assert.equal(state.page, "setting");
@@ -1323,7 +1323,7 @@ test("评论框（重新设计）：「内容 / 预览」与工具栏同一行�
 	assert.ok(state.headerRow, "「内容 / 预览」与工具栏不在同一行");
 	assert.ok(state.footerRow, "表情分类与发布评论不在同一行");
 	assert.ok(state.insideEditor, "发布评论超出评论框");
-	assert.equal(state.radius, "14px");
+	assert.equal(state.radius, "12px");
 	assert.equal(state.badgeBorder, "0px");
 	assert.equal(state.badgeBackground, "rgb(242, 244, 247)");
 	assert.deepEqual(errors, []);
