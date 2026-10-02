@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.5.8
+// @version      1.5.9
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.5.8";
+	var NSMAX_VERSION = "1.5.9";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -26062,7 +26062,8 @@ ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.su
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit)::before{content:"";flex:none;width:16px;height:16px;background:currentColor;-webkit-mask:var(--nsmax-icon-send) center/contain no-repeat;mask:var(--nsmax-icon-send) center/contain no-repeat}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit):hover{background:color-mix(in srgb,var(--nsmax-brand) 88%,#000)!important;opacity:1}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply):not(:has(.CodeMirror)):has(>textarea:placeholder-shown) :is(button.submit.btn,.btn.submit){opacity:.5}
-${NSMAX_ROOT}[data-nsmax-page=post] .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit){width:32px;padding:0!important;font-size:0!important}
+/* 帖子页只显示箭头：文字缩成 0 字号后仍算一个弹性项，6px 间距会把箭头往左推 3px，去掉间距让箭头正居中 */
+${NSMAX_ROOT}[data-nsmax-page=post] .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit){gap:0;width:32px;padding:0!important;font-size:0!important}
 /* 发帖页（/new-discussion）：标题输入框是一条大号的 Claude 式输入框（白底、12px 圆角、柔和投影，聚焦时加深）；
    分类下拉框与其他输入框一致；正文编辑器加高；发送按钮显示箭头 + 文字 */
 ${NSMAX_ROOT}[data-nsmax-page=new] #nsk-left :is(input:not([type]),input[type=text]):not(.md-editor *,[class*=nspp-] *,[class*=nspp-]){box-sizing:border-box;width:100%;height:48px;padding:0 16px!important;border:1px solid var(--nsmax-composer-line)!important;border-radius:12px!important;background:var(--nsmax-card)!important;box-shadow:var(--nsmax-composer-shadow)!important;color:var(--nsmax-text)!important;font-size:17px!important;font-weight:600;letter-spacing:-.01em;outline:0;transition:border-color .15s ease,box-shadow .2s ease}
