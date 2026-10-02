@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.5.0
+// @version      1.5.1
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -94,7 +94,6 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
-// @grant        GM.xmlHttpRequest
 // @grant        unsafeWindow
 // @run-at       document-start
 // @noframes
@@ -466,7 +465,7 @@ var nsmaxRedirecting = false;
 	// 并像论坛模块一样展开多层嵌套 /jump 与相对地址，避免被当作主机名解析。
 	var forumJump = () => {
 		try {
-			const settings = typeof GM_getValue === "function" ? GM_getValue(`nspp:settings:${location.hostname}`, {}) : JSON.parse(localStorage.getItem(`nsmax:store:nspp:settings:${location.hostname}`) || "{}");
+			const settings = typeof GM_getValue === "function" ? GM_getValue(`nspp:settings:${location.hostname}`, {}) : {};
 			const reading = settings?.["reading-content"];
 			if (reading?.enabled === false || reading?.cleanLinks === false) return;
 			let url = new URL(location.href);
@@ -884,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.5.0";
+	var NSMAX_VERSION = "1.5.1";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -932,87 +931,24 @@ var nsmaxRedirecting = false;
 	var _GM_notification = (() => typeof GM_notification != "undefined" ? GM_notification : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
-	// iOS Safari 的 Userscripts 等扩展只提供 Promise 风格的 GM.xmlHttpRequest（同样接受 onload 等回调），这里包成同一个接口。
-	var _GM_xmlhttpRequest = (() => {
-		if (typeof GM_xmlhttpRequest != "undefined") return GM_xmlhttpRequest;
-		if (typeof GM != "undefined" && typeof GM?.xmlHttpRequest === "function") return (details) => {
-			let request;
-			try {
-				request = GM.xmlHttpRequest(details);
-				request?.catch?.(() => {});
-			} catch (error) {
-				setTimeout(() => details.onerror?.(error));
-			}
-			return { abort() {
-				try {
-					request?.abort?.();
-				} catch {}
-			} };
-		};
-	})();
+	var _GM_xmlhttpRequest = (() => typeof GM_xmlhttpRequest != "undefined" ? GM_xmlhttpRequest : void 0)();
 	var _unsafeWindow = (() => typeof unsafeWindow != "undefined" ? unsafeWindow : void 0)();
 	var _monkeyWindow = (() => window)();
 	var memory = new Map();
 	var getter = () => typeof _GM_getValue === "function" ? _GM_getValue : _monkeyWindow.GM_getValue;
 	var setter = () => typeof _GM_setValue === "function" ? _GM_setValue : _monkeyWindow.GM_setValue;
 	var unsafeWindow$1 = _unsafeWindow || _monkeyWindow.unsafeWindow || window;
-	// 存储优先用油猴的同步 GM_getValue / GM_setValue。iOS Safari 的 Userscripts 等扩展只有异步的 GM.getValue，
-	// 这时改用站点自己的 localStorage（同步读写、按站点隔离），键名加前缀，不和站点的数据混在一起。
-	var NSMAX_STORE_PREFIX = "nsmax:store:";
-	var localStore = (() => {
-		try {
-			const store = window.localStorage;
-			store.setItem(`${NSMAX_STORE_PREFIX}probe`, "1");
-			store.removeItem(`${NSMAX_STORE_PREFIX}probe`);
-			return store;
-		} catch {
-			return null;
-		}
-	})();
 	function hasStorage() {
-		return typeof getter() === "function" && typeof setter() === "function" || !!localStore;
+		return typeof getter() === "function" && typeof setter() === "function";
 	}
 	function GM_getValue$1(key, fallback) {
 		const get = getter();
-		if (typeof get === "function") return get(key, fallback);
-		if (localStore) try {
-			const raw = localStore.getItem(NSMAX_STORE_PREFIX + key);
-			return raw === null ? fallback : JSON.parse(raw);
-		} catch {
-			return fallback;
-		}
-		return memory.has(key) ? structuredClone(memory.get(key)) : fallback;
+		return typeof get === "function" ? get(key, fallback) : memory.has(key) ? structuredClone(memory.get(key)) : fallback;
 	}
 	function GM_setValue$1(key, value) {
 		const set = setter();
 		if (typeof set === "function") set(key, value);
-		else if (localStore) try {
-			localStore.setItem(NSMAX_STORE_PREFIX + key, JSON.stringify(value));
-		} catch {
-			memory.set(key, structuredClone(value));
-		}
 		else memory.set(key, structuredClone(value));
-	}
-	// 页面配置（登录用户、帖子数据）：油猴提供 unsafeWindow 时直接读；脚本跑在隔离环境（iOS Userscripts 默认如此）
-	// 读不到页面变量时，插入一段页面脚本把 window.__config__ 序列化到根元素属性上再取回。页面解析完后只尝试一次并缓存。
-	var nsmaxBridgedConfig;
-	function nsmaxConfig() {
-		const direct = unsafeWindow$1.__config__;
-		if (direct || unsafeWindow$1 !== window) return direct;
-		if (nsmaxBridgedConfig !== void 0) return nsmaxBridgedConfig || void 0;
-		if (document.readyState === "loading") return void 0;
-		nsmaxBridgedConfig = null;
-		try {
-			const root = document.documentElement;
-			const script = document.createElement("script");
-			script.textContent = "document.documentElement.setAttribute(\"data-nsmax-config\", JSON.stringify(window.__config__ || null))";
-			(document.head || root).append(script);
-			script.remove();
-			const raw = root.getAttribute("data-nsmax-config");
-			root.removeAttribute("data-nsmax-config");
-			if (raw) nsmaxBridgedConfig = JSON.parse(raw);
-		} catch {}
-		return nsmaxBridgedConfig || void 0;
 	}
 	function GM_registerMenuCommand$1(label, callback) {
 		const register = typeof _GM_registerMenuCommand === "function" ? _GM_registerMenuCommand : _monkeyWindow.GM_registerMenuCommand;
@@ -4234,7 +4170,7 @@ var nsmaxRedirecting = false;
 					return entries;
 				};
 				const record = (name) => {
-					const pd = nsmaxConfig()?.postData;
+					const pd = unsafeWindow$1.__config__?.postData;
 					const path = pd?.postId ? key(`/post-${pd.postId}-1`) : key(location.href);
 					if (!path) return;
 					ctx.set(name, [{
@@ -4760,7 +4696,7 @@ var nsmaxRedirecting = false;
 	var checked = 0;
 	var loading;
 	var pending = new Set();
-	var ownId = () => nsmaxConfig()?.user?.member_id;
+	var ownId = () => unsafeWindow$1.__config__?.user?.member_id;
 	var render = () => controls.forEach(({ id, button }) => {
 		button.disabled = !!loading || pending.has(id);
 		button.textContent = followed.has(id) ? "取消关注" : "关注";
@@ -10197,6 +10133,10 @@ var nsmaxRedirecting = false;
 				if (row && row !== host && bar.parentElement !== row) {
 					row.prepend(bar);
 					row.setAttribute("data-nsmax-submit-row", "");
+				} else if (submit && row === host && bar.nextElementSibling !== submit) {
+					// 「发布评论」直接挂在编辑器下（没有单独的按钮行）：上传按钮放在它前面，由样式把两者排在同一行（NodeSeek Max）。
+					submit.before(bar);
+					host.setAttribute("data-nsmax-submit-inline", "");
 				} else if (!submit && !bar.isConnected) host.append(bar);
 			}
 			scan();
@@ -10206,7 +10146,7 @@ var nsmaxRedirecting = false;
 				scan();
 				for (const host of ctx.root.querySelectorAll(".md-editor")) {
 					const bar = barOf.get(host);
-					if (bar && !bar.parentElement?.hasAttribute("data-nsmax-submit-row")) placeBar(host, bar);
+					if (bar && !bar.parentElement?.hasAttribute("data-nsmax-submit-row") && !host.hasAttribute("data-nsmax-submit-inline")) placeBar(host, bar);
 				}
 				if (bars.length > count) checkLogin();
 			});
@@ -10215,13 +10155,14 @@ var nsmaxRedirecting = false;
 				apiKey = "";
 				bars.forEach((bar) => {
 					bar.parentElement?.removeAttribute("data-nsmax-submit-row");
+					bar.closest(".md-editor")?.removeAttribute("data-nsmax-submit-inline");
 					bar.remove();
 				});
 			};
 		}
 	};
 	function currentUser() {
-		return nsmaxConfig()?.user;
+		return unsafeWindow$1.__config__?.user;
 	}
 	function button$2(label, fn, ctx) {
 		const el = document.createElement("button");
@@ -11304,7 +11245,7 @@ var nsmaxRedirecting = false;
 		return target.href;
 	}
 	function pageConfig() {
-		return nsmaxConfig();
+		return unsafeWindow$1.__config__;
 	}
 	var extraFeatures = [{
 		id: "footprints",
@@ -11625,7 +11566,7 @@ var nsmaxRedirecting = false;
 			defaults: { enabled: true },
 			mount(ctx) {
 				const initialize = () => {
-					const uid = nsmaxConfig()?.user?.member_id;
+					const uid = unsafeWindow$1.__config__?.user?.member_id;
 					if (!uid) return;
 					const cacheKey = `counts:${uid}`;
 					const originals = new Map();
@@ -11966,7 +11907,7 @@ var nsmaxRedirecting = false;
 			const hideNotices = ctx.get("hideNotifications") === true;
 			const onNotificationPage = () => location.pathname === "/notification";
 			const currentUser = () => {
-				const uid = nsmaxConfig()?.user?.member_id;
+				const uid = unsafeWindow$1.__config__?.user?.member_id;
 				return uid ? String(uid) : "";
 			};
 			const persist = () => {
@@ -12026,7 +11967,7 @@ var nsmaxRedirecting = false;
 				return fetching;
 			}
 			const stop = ctx.watch(() => {
-				const ownId = nsmaxConfig()?.user?.member_id;
+				const ownId = unsafeWindow$1.__config__?.user?.member_id;
 				if (!ownId) return;
 				for (const [anchor, item] of buttons) if (!anchor.isConnected) {
 					item.button.remove();
@@ -12068,7 +12009,7 @@ var nsmaxRedirecting = false;
 							const action = remove ? "解除屏蔽" : "屏蔽";
 							if (!await confirmDialog(`${action} ${name}？`, remove ? "解除后将恢复显示该用户的内容。" : "屏蔽后将按站点规则隐藏该用户的内容，可随时解除。", `确认${action}`, ctx.signal)) return;
 							if (Date.now() - checked > 3e4) await refresh();
-							if (blocked.has(id) !== remove || nsmaxConfig()?.user?.member_id !== ownId) {
+							if (blocked.has(id) !== remove || unsafeWindow$1.__config__?.user?.member_id !== ownId) {
 								ctx.notify("状态已变化，请重新操作");
 								return;
 							}
@@ -23587,7 +23528,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		let listPageSignature = "";
 		let threadKey = "", threadBusy = false;
 		let routeController = new AbortController(), threadController = new AbortController();
-		const owner = () => nsmaxConfig()?.user?.member_id;
+		const owner = () => unsafeWindow$1.__config__?.user?.member_id;
 		const panelValid = () => !ctx.signal.aborted && !root.hidden && owner() === account;
 		const valid = () => panelValid() && category === "message";
 		const signal = () => AbortSignal.any([ctx.signal, routeController.signal]);
@@ -24260,7 +24201,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			if (location.pathname !== "/notification") return;
 			let account, dispose;
 			const stop = ctx.watch(() => {
-				const uid = nsmaxConfig()?.user?.member_id;
+				const uid = unsafeWindow$1.__config__?.user?.member_id;
 				if (uid === account) return;
 				dispose?.();
 				dispose = void 0;
@@ -25784,9 +25725,18 @@ ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body a[href^="#/"]:is(.router-link-a
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body img:is([class*=avatar],[src*="/avatar/"])${nsmaxSettingSkip}{border-radius:20%;box-shadow:0 0 0 1px var(--nsmax-divider)}
 /* 评论编辑器的提交行：站点若给这一行设了 width:100% 或给按钮设了浮动 / 外边距 / 定位，加上内边距后按钮会伸出编辑器边缘；
    这里固定为 border-box、按钮回到正常流并靠右，任何宽度下都在卡片内 */
-${NSMAX_ROOT} .md-editor [data-nsmax-submit-row]{box-sizing:border-box!important;width:auto!important;max-width:100%!important;min-width:0;min-height:50px;padding:8px 10px!important;overflow:hidden}
+${NSMAX_ROOT} .md-editor [data-nsmax-submit-row]{box-sizing:border-box!important;width:auto!important;max-width:100%!important;min-width:0;height:auto!important;min-height:52px;padding:8px 10px!important;overflow:visible!important}
 ${NSMAX_ROOT} .md-editor [data-nsmax-submit-row]>:is(button,.btn){position:static!important;float:none!important;inset:auto!important;transform:none!important;margin:0!important;max-width:100%}
 ${NSMAX_ROOT} .md-editor [data-nsmax-submit-row]>:is(button.submit,.btn.submit,button:last-child){margin-left:auto!important}
+/* 没被标记的按钮容器（上传功能关闭、或站点换了结构）：同样让「发布评论」回到正常流、容器随按钮撑开，不被编辑器底边裁掉 */
+${NSMAX_ROOT} .md-editor :is(button.submit,.btn.submit){position:static!important;float:none!important;inset:auto!important;transform:none!important;flex:none}
+${NSMAX_ROOT} .md-editor :not(.md-editor,[data-nsmax-submit-row]):has(>:is(button.submit,.btn.submit)):not(:has(textarea,.CodeMirror,.mde-toolbar,.expression)){display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;box-sizing:border-box!important;width:auto!important;max-width:100%;height:auto!important;min-height:52px;margin:0!important;padding:8px 10px!important;overflow:visible!important;border:0!important;border-top:1px solid var(--nsmax-divider)!important;background:transparent!important}
+${NSMAX_ROOT} .md-editor :not(.md-editor,[data-nsmax-submit-row]):has(>:is(button.submit,.btn.submit)):not(:has(textarea,.CodeMirror,.mde-toolbar,.expression))>:is(button.submit,.btn.submit){margin:0!important}
+/* 「发布评论」直接挂在编辑器下：自己占一行靠右；上传按钮（若有）贴在同一行左侧 */
+${NSMAX_ROOT} .md-editor>:is(button.submit,.btn.submit){display:flex!important;align-items:center;margin:9px 10px 9px auto!important}
+${NSMAX_ROOT} .md-editor[data-nsmax-submit-inline]{position:relative}
+${NSMAX_ROOT} .md-editor[data-nsmax-submit-inline]>.nspp-upload-status{position:absolute;left:8px;bottom:9px;max-width:calc(100% - 150px);min-height:34px;display:flex;align-items:center}
+${NSMAX_ROOT} .md-editor>:not(.nspp-upload-status,button):has(+ :is(button.submit,.btn.submit)),${NSMAX_ROOT} .md-editor>:has(+ .nspp-upload-status + :is(button.submit,.btn.submit)){border-bottom:1px solid var(--nsmax-divider)!important}
 ${NSMAX_ROOT} .md-editor .nspp-upload-choose{width:32px;height:32px;min-height:32px;border-radius:8px;color:var(--nsmax-muted)}
 ${NSMAX_ROOT} .md-editor .nspp-upload-choose:hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
 ${NSMAX_ROOT} .md-editor .nspp-upload-status{color:var(--nsmax-muted);font-size:12px}

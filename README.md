@@ -8,7 +8,7 @@ NodeSeek / DeepFlood 增强脚本：合并 NodeSeek++、redirect 外链跳转、
 
 ## 安装
 
-1. 电脑：安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey。iPhone / iPad：在 App Store 安装 [Userscripts](https://github.com/quoid/userscripts) 或 Stay，在 Safari 设置里启用扩展并允许它访问 nodeseek.com。
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey（电脑浏览器）。
 2. 打开 **[nodeseek-max.user.js](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)** 安装（各版本见 [Releases](https://github.com/Ethan2258/Nodeseek-max/releases)）。
 3. 停用原来的四个脚本，避免重复执行。
 4. 设置入口：右下角工具栏最下方的图标，或脚本管理器菜单「NodeSeek Max 设置」。
