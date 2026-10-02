@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.5.5（纯 CSS）
+ * NodeSeek Max 主题 v1.5.6（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -101,86 +101,137 @@ html:root body.dark-layout {
 	--nsmax-shadow-pop:0 18px 48px rgb(0 0 0/.6),inset 0 1px 0 var(--nsmax-highlight);
 	color-scheme:dark;
 }
+/* 配色（默认参考 Claude）：暖色米白页面底 #faf9f5、白色卡片、暖灰描边与文字；深色是暖炭灰（页面 #262624、卡片 #30302e）。
+   形状变量：--nsmax-pill 是按钮、标签页、分页的圆角（Claude 8px），--nsmax-chip 是小标签（6px），--nsmax-avatar 是头像（圆形），
+   --nsmax-composer-* 是评论框与私信输入框（20px 圆角 + 柔和投影）。sb.sb 风格把这些变量设为 initial，各处回到括号里原来的胶囊与圆角方形 */
 html:root:root {
-	--nsmax-canvas:#f7f8fa;
+	--nsmax-canvas:#faf9f5;
 	--nsmax-card:#fff;
 	--nsmax-surface:#fff;
-	--nsmax-fill:#f2f4f7;
-	--nsmax-glass:rgb(255 255 255/.96);
+	--nsmax-fill:#f2f0e9;
+	--nsmax-glass:rgb(250 249 245/.96);
 	--nsmax-popup:#fff;
 	--nsmax-blur:none;
-	--nsmax-stroke:#e0e2e8;
+	--nsmax-stroke:#e6e3da;
 	--nsmax-highlight:transparent;
 	--nsmax-sheen:transparent;
-	--nsmax-divider:#eef0f3;
-	--nsmax-panel-alt:#fafbfc;
-	--nsmax-stroke-strong:#c7cad5;
-	--nsmax-faint:#8e91a0;
-	--nsmax-text:#1c1c1e;
-	--nsmax-text-2:#555a6a;
-	--nsmax-muted:#6b6f7e;
-	--nsmax-thumb:rgb(107 111 126/.4);
-	--nsmax-shadow:0 1px 2px rgb(0 0 0/.04);
-	--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.04),0 6px 18px rgb(0 0 0/.05);
-	--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.14);
+	--nsmax-divider:#efede6;
+	--nsmax-panel-alt:#faf9f5;
+	--nsmax-stroke-strong:#d3d0c6;
+	--nsmax-faint:#9c9a92;
+	--nsmax-text:#1f1e1d;
+	--nsmax-text-2:#3d3d3a;
+	--nsmax-muted:#6f6d66;
+	--nsmax-thumb:rgb(115 114 108/.38);
+	--nsmax-ink:#1f1e1d;
+	--nsmax-on-ink:#fff;
+	--nsmax-bubble:#f0eee6;
+	--nsmax-on-bubble:#1f1e1d;
+	--nsmax-seg-bg:#efede5;
+	--nsmax-seg-thumb:#fff;
+	--nsmax-code-bg:#f5f4ee;
+	--nsmax-shadow:0 1px 2px rgb(31 30 29/.04);
+	--nsmax-shadow-hover:0 1px 2px rgb(31 30 29/.04),0 6px 18px rgb(31 30 29/.05);
+	--nsmax-shadow-pop:0 12px 40px -6px rgb(31 30 29/.16),0 2px 6px rgb(31 30 29/.04);
+	--nsmax-composer-line:rgb(31 30 29/.14);
+	--nsmax-composer-line-focus:rgb(31 30 29/.26);
+	--nsmax-composer-shadow:0 4px 20px rgb(31 30 29/.04);
+	--nsmax-composer-shadow-hover:0 4px 20px rgb(31 30 29/.06);
+	--nsmax-composer-shadow-focus:0 4px 24px rgb(31 30 29/.09);
+	--nsmax-pill:8px;
+	--nsmax-chip:6px;
+	--nsmax-avatar:50%;
+	--nsmax-composer-radius:20px;
+	--nsmax-dialog-radius:16px;
+	--nsmax-bubble-r:18px;
+	--nsmax-bubble-nub:18px;
 }
 html:root:root:has(>body.dark-layout) {
-	--nsmax-canvas:#0d0e14;
-	--nsmax-card:#14151c;
-	--nsmax-surface:#14151c;
-	--nsmax-fill:#20222c;
-	--nsmax-glass:rgb(20 21 28/.96);
-	--nsmax-popup:#14151c;
+	--nsmax-canvas:#262624;
+	--nsmax-card:#30302e;
+	--nsmax-surface:#30302e;
+	--nsmax-fill:#3a3a37;
+	--nsmax-glass:rgb(38 38 36/.96);
+	--nsmax-popup:#30302e;
 	--nsmax-blur:none;
-	--nsmax-stroke:#2a2c38;
+	--nsmax-stroke:#45443f;
 	--nsmax-highlight:transparent;
 	--nsmax-sheen:transparent;
-	--nsmax-divider:#20222c;
-	--nsmax-panel-alt:#1a1b24;
-	--nsmax-stroke-strong:#3a3d4c;
-	--nsmax-faint:#6e7284;
-	--nsmax-text:#e7e8ef;
-	--nsmax-text-2:#a8abbb;
-	--nsmax-muted:#8b8fa1;
-	--nsmax-thumb:rgb(139 143 161/.4);
-	--nsmax-shadow:0 1px 2px rgb(0 0 0/.34);
-	--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.34),0 8px 24px rgb(0 0 0/.4);
-	--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.62);
+	--nsmax-divider:#3b3a37;
+	--nsmax-panel-alt:#2b2b29;
+	--nsmax-stroke-strong:#5b5a54;
+	--nsmax-faint:#87857d;
+	--nsmax-text:#f2f1ec;
+	--nsmax-text-2:#c9c7bd;
+	--nsmax-muted:#a3a196;
+	--nsmax-thumb:rgb(163 161 150/.36);
+	--nsmax-ink:#f2f1ec;
+	--nsmax-on-ink:#262624;
+	--nsmax-bubble:#1f1e1d;
+	--nsmax-on-bubble:#f2f1ec;
+	--nsmax-seg-bg:#262624;
+	--nsmax-seg-thumb:#45443f;
+	--nsmax-code-bg:#2b2b29;
+	--nsmax-shadow:0 1px 2px rgb(0 0 0/.3);
+	--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.3),0 8px 24px rgb(0 0 0/.34);
+	--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.6);
+	--nsmax-composer-line:rgb(222 220 209/.15);
+	--nsmax-composer-line-focus:rgb(222 220 209/.3);
+	--nsmax-composer-shadow:0 4px 20px rgb(0 0 0/.2);
+	--nsmax-composer-shadow-hover:0 4px 20px rgb(0 0 0/.26);
+	--nsmax-composer-shadow-focus:0 4px 24px rgb(0 0 0/.34);
 }
 html:root:root body.dark-layout {
-	--nsmax-canvas:#0d0e14;
-	--nsmax-card:#14151c;
-	--nsmax-surface:#14151c;
-	--nsmax-fill:#20222c;
-	--nsmax-glass:rgb(20 21 28/.96);
-	--nsmax-popup:#14151c;
+	--nsmax-canvas:#262624;
+	--nsmax-card:#30302e;
+	--nsmax-surface:#30302e;
+	--nsmax-fill:#3a3a37;
+	--nsmax-glass:rgb(38 38 36/.96);
+	--nsmax-popup:#30302e;
 	--nsmax-blur:none;
-	--nsmax-stroke:#2a2c38;
+	--nsmax-stroke:#45443f;
 	--nsmax-highlight:transparent;
 	--nsmax-sheen:transparent;
-	--nsmax-divider:#20222c;
-	--nsmax-panel-alt:#1a1b24;
-	--nsmax-stroke-strong:#3a3d4c;
-	--nsmax-faint:#6e7284;
-	--nsmax-text:#e7e8ef;
-	--nsmax-text-2:#a8abbb;
-	--nsmax-muted:#8b8fa1;
-	--nsmax-thumb:rgb(139 143 161/.4);
-	--nsmax-shadow:0 1px 2px rgb(0 0 0/.34);
-	--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.34),0 8px 24px rgb(0 0 0/.4);
-	--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.62);
+	--nsmax-divider:#3b3a37;
+	--nsmax-panel-alt:#2b2b29;
+	--nsmax-stroke-strong:#5b5a54;
+	--nsmax-faint:#87857d;
+	--nsmax-text:#f2f1ec;
+	--nsmax-text-2:#c9c7bd;
+	--nsmax-muted:#a3a196;
+	--nsmax-thumb:rgb(163 161 150/.36);
+	--nsmax-ink:#f2f1ec;
+	--nsmax-on-ink:#262624;
+	--nsmax-bubble:#1f1e1d;
+	--nsmax-on-bubble:#f2f1ec;
+	--nsmax-seg-bg:#262624;
+	--nsmax-seg-thumb:#45443f;
+	--nsmax-code-bg:#2b2b29;
+	--nsmax-shadow:0 1px 2px rgb(0 0 0/.3);
+	--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.3),0 8px 24px rgb(0 0 0/.34);
+	--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.6);
+	--nsmax-composer-line:rgb(222 220 209/.15);
+	--nsmax-composer-line-focus:rgb(222 220 209/.3);
+	--nsmax-composer-shadow:0 4px 20px rgb(0 0 0/.2);
+	--nsmax-composer-shadow-hover:0 4px 20px rgb(0 0 0/.26);
+	--nsmax-composer-shadow-focus:0 4px 24px rgb(0 0 0/.34);
 }
 html:root body {
 	--nsmax-accent:var(--main-color,var(--primary-color,#1d1d1f));
 	--nsmax-on-accent:#fff;
 }
 html:root:root body {
-	--nsmax-accent:var(--nsmax-text);
-	--nsmax-on-accent:#fff;
+	--nsmax-accent:var(--nsmax-ink);
+	--nsmax-on-accent:var(--nsmax-on-ink);
 }
-html:root:root body.dark-layout {
-	--nsmax-accent:#eef0f6;
-	--nsmax-on-accent:#14151c;
+/* 发送 / 发帖等「创建」类主按钮的颜色：Claude 风格且强调色跟随设计风格时用 Claude 的珊瑚色，其余情况与强调色相同 */
+html:root body {
+	--nsmax-brand:var(--nsmax-accent);
+	--nsmax-on-brand:var(--nsmax-on-accent);
+}
+html:root:root:root body {
+	--nsmax-brand:#c15f3c;
+	--nsmax-on-brand:#fff;
 }
 html:root body {
 	--nsmax-accent-soft:color-mix(in srgb,var(--nsmax-accent) 12%,transparent);
@@ -226,6 +277,7 @@ html:root :is(a,button,summary,[role=button],[tabindex]):focus-visible {
 html:root:root {
 	--nsmax-font:"Inter Variable","Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI","PingFang SC","HarmonyOS Sans SC","MiSans","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",Roboto,"Helvetica Neue",Arial,sans-serif;
 	--nsmax-mono:"JetBrains Mono Variable","JetBrains Mono",ui-monospace,"SF Mono","Cascadia Mono","Cascadia Code",Menlo,Consolas,"Liberation Mono","PingFang SC","Microsoft YaHei UI",monospace;
+	--nsmax-serif:"Tiempos Text","Source Serif 4","Source Serif Pro","New York",ui-serif,Georgia,"Iowan Old Style","Palatino Linotype",Cambria,"Noto Serif SC","Source Han Serif SC","Noto Serif CJK SC","Songti SC",STSong,SimSun,serif;
 }
 html:root:root body {
 	font-family:var(--nsmax-font);
@@ -244,6 +296,19 @@ html:root:root body :not(code,pre,kbd,samp,svg,i,.hljs,[class*=iconfont]) {
 html:root:root body :is(code,pre,kbd,samp,.hljs),
 html:root:root body :is(code,pre,kbd,samp,.hljs) * {
 	font-family:var(--nsmax-mono)!important;
+}
+/* 字体「Claude」：界面（导航、按钮、列表、私信）用 Inter，阅读内容（帖子标题、正文、回复、悬停预览、通知详情、编辑器预览）用衬线体，
+   和 Claude 的回答正文一样；代码仍是等宽字体 */
+html:root:root :is(.post-content,.comment-content,.markdown-body,.nspp-preview-content,.nspp-notice-body,.md-editor :is(.preview,.md-preview,.editor-preview)),
+html:root:root :is(.post-content,.comment-content,.markdown-body,.nspp-preview-content,.nspp-notice-body,.md-editor :is(.preview,.md-preview,.editor-preview)) :not(code,pre,kbd,samp,svg,i,.hljs,[class*=iconfont],[class*=nspp-]:not(.nspp-callout),:is(code,pre,kbd,samp,.hljs) *) {
+	font-family:var(--nsmax-serif)!important;
+}
+html:root:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2),
+html:root:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2) a,
+html:root:root:root h1.post-title,
+html:root:root .nspp-post-preview>header a {
+	font-family:var(--nsmax-serif)!important;
+	letter-spacing:0!important;
 }
 html:root:root #nsk-head {
 	background:transparent!important;
@@ -377,7 +442,7 @@ html:root:root body {
 	background-image:none!important;
 }
 html:root .post-list-item .post-category {
-	border-radius:999px;
+	border-radius:var(--nsmax-chip,999px);
 	border:1px solid var(--nsmax-stroke);
 	background-color:var(--nsmax-panel-alt);
 	color:var(--nsmax-text-2);
@@ -414,7 +479,7 @@ html:root .nsk-content-meta-info {
 	color:var(--nsmax-muted);
 }
 html:root :is(.post-list-item,.content-item,.nsk-content-meta-info,.author-info) img:is(.avatar-normal,.avatar,[class*=avatar]) {
-	border-radius:20%;
+	border-radius:var(--nsmax-avatar,20%);
 	box-shadow:0 0 0 1px var(--nsmax-divider);
 	background-color:var(--nsmax-panel-alt);
 	object-fit:cover;
@@ -445,7 +510,7 @@ html:root .nsk-pager :is(a,span) {
 	margin:0;
 	padding:0 8px;
 	border:1px solid var(--nsmax-stroke)!important;
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 	box-shadow:none!important;
 	outline-offset:2px;
 	background-color:var(--nsmax-card);
@@ -474,7 +539,7 @@ html:root .nsk-pager a:hover {
 	color:var(--nsmax-text);
 }
 html:root .btn {
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 }
 html:root button.submit.btn {
 	background:var(--nsmax-accent);
@@ -581,7 +646,7 @@ html:root .md-editor .exp-container {
 html:root .md-editor :is(button.submit.btn,.btn.submit) {
 	min-height:34px;
 	padding:0 20px!important;
-	border-radius:999px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
 	font-size:13px!important;
 	font-weight:600!important;
 	box-shadow:none!important;
@@ -755,7 +820,7 @@ html:root:root :is(li.content-item:target,li.content-item:has(:target)) a.floor-
 	font-weight:600;
 }
 html:root .role-tag {
-	border-radius:999px;
+	border-radius:var(--nsmax-chip,999px);
 }
 html:root:root .signature {
 	margin-top:12px;
@@ -1006,9 +1071,10 @@ html:root .nspp-interaction form {
 html:root .nspp-interaction textarea {
 	min-height:88px;
 	padding:9px 11px;
-	border:1px solid var(--nsmax-stroke);
-	border-radius:8px;
-	background:var(--nsmax-panel-alt);
+	border:1px solid var(--nsmax-composer-line);
+	border-radius:12px;
+	background:var(--nsmax-card);
+	box-shadow:var(--nsmax-composer-shadow);
 	color:var(--nsmax-text);
 	font-size:14px;
 	line-height:1.6;
@@ -1016,9 +1082,9 @@ html:root .nspp-interaction textarea {
 	transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease;
 }
 html:root .nspp-interaction textarea:focus {
-	border-color:var(--nsmax-stroke-strong);
+	border-color:var(--nsmax-composer-line-focus);
 	background:var(--nsmax-card);
-	box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent);
+	box-shadow:var(--nsmax-composer-shadow-focus);
 }
 html:root .nspp-reply-actions {
 	margin-top:8px;
@@ -1030,12 +1096,15 @@ html:root .nspp-reply-actions span {
 }
 html:root .nspp-reply-actions button {
 	min-height:32px;
-	padding:0 16px;
-	border-radius:999px;
-	background:var(--nsmax-accent);
-	color:var(--nsmax-on-accent);
+	padding:0 14px;
+	border-radius:var(--nsmax-pill,999px);
+	background:var(--nsmax-brand);
+	color:var(--nsmax-on-brand);
 	font-size:12.5px;
-	font-weight:600;
+	font-weight:500;
+}
+html:root .nspp-reply-actions button:hover:not(:disabled) {
+	background:color-mix(in srgb,var(--nsmax-brand) 88%,#000);
 }
 html:root .nspp-reply-actions button:disabled {
 	opacity:.35;
@@ -1064,7 +1133,7 @@ html:root .nspp-floating-reply-header button {
 	min-height:30px;
 	padding:0 12px;
 	border:1px solid var(--nsmax-stroke);
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 	background:transparent;
 	color:var(--nsmax-text-2);
 	font-size:12.5px;
@@ -1130,7 +1199,7 @@ html:root:root :is(.nsk-content-meta-info,.author-info) .role-tag:not([data-nspp
 	height:18px;
 	padding:0 7px!important;
 	border:1px solid var(--nsmax-stroke)!important;
-	border-radius:999px;
+	border-radius:var(--nsmax-chip,999px);
 	background:transparent!important;
 	color:var(--nsmax-text-2)!important;
 	font-size:11px!important;
@@ -1231,15 +1300,6 @@ html:root:root .nsk-post>.comment-menu .menu-item svg {
 		translate:none;
 	}
 }
-html:root:root .md-editor:not(.nspp-floating-reply) {
-	background-color:var(--nsmax-card);
-	background-image:none;
-	border:1px solid var(--nsmax-stroke);
-	box-shadow:var(--nsmax-shadow);
-}
-html:root:root .md-editor .mde-toolbar {
-	border-bottom:1px solid var(--nsmax-divider);
-}
 html:root:root .md-editor .mde-toolbar .toolbar-item {
 	border-radius:calc(var(--nsmax-control-radius) - 2px);
 }
@@ -1250,113 +1310,423 @@ html:root:root .md-editor .mde-toolbar .toolbar-item:hover {
 html:root:root .md-editor .CodeMirror {
 	background:transparent;
 }
-/* 评论框（重新设计）：原来是「内容/预览」「工具栏」「输入区」「表情」「发布」五条横带一层层叠着，显得笨重。
-   现在合成三段——顶部一行左边是「内容 / 预览」分段切换、右边是工具栏；中间是宽松的输入区；底部一行左边表情分类、
-   右边上传图片与「发布评论」；表情面板展开时出现在底栏上方。整张卡片与其他卡片一样 12px 圆角，聚焦时描边加深并加一圈光晕。
+/* 评论框（参考 Claude 的输入框）：一整块白底大圆角（Claude 20px，sb.sb 12px）、柔和投影，聚焦时边框与投影加深，不加彩色光圈；
+   内部不再有分隔线——最上面是宽松的输入区；下面一行左边是工具栏图标、右边是「内容 / 预览」分段切换；最下面一行左边是表情分类与
+   上传图片、右边是方形的发送按钮（帖子页只显示向上箭头，其他页面箭头 + 文字）。表情面板展开时出现在输入区下方。
    只按 flex 排序重排，元素本身不动；站点结构不同时各部分照常一行一行排 */
 html:root .md-editor:not(.nspp-floating-reply) {
 	display:flex!important;
 	flex-wrap:wrap;
-	align-items:stretch;
-	border-radius:12px!important;
-	box-shadow:0 1px 2px rgb(0 0 0/.04)!important;
-	transition:border-color .15s ease,box-shadow .15s ease;
+	align-items:center;
+	overflow:hidden;
+	background-color:var(--nsmax-card)!important;
+	background-image:none!important;
+	border:1px solid var(--nsmax-composer-line)!important;
+	border-radius:var(--nsmax-composer-radius,12px)!important;
+	box-shadow:var(--nsmax-composer-shadow)!important;
+	transition:border-color .15s ease,box-shadow .2s ease;
+}
+html:root .md-editor:not(.nspp-floating-reply):hover {
+	box-shadow:var(--nsmax-composer-shadow-hover)!important;
+}
+html:root .md-editor:not(.nspp-floating-reply):focus-within {
+	border-color:var(--nsmax-composer-line-focus)!important;
+	box-shadow:var(--nsmax-composer-shadow-focus)!important;
 }
 html:root .md-editor:not(.nspp-floating-reply)>* {
+	order:0;
 	flex:1 1 100%;
 	min-width:0;
 	box-sizing:border-box;
 }
+html:root .md-editor:not(.nspp-floating-reply)>:is(.tab-select,.mde-toolbar,.expression,.exp-container,[data-nsmax-submit-row]),
+html:root .md-editor:not(.nspp-floating-reply)>:first-child:not(.mde-toolbar,.CodeMirror,textarea,.tab-select) {
+	border:0!important;
+	background:transparent!important;
+	box-shadow:none!important;
+}
+html:root .md-editor:not(.nspp-floating-reply)>textarea {
+	min-height:112px;
+	padding:16px 18px 6px!important;
+	font-size:15px;
+	line-height:1.7;
+	resize:none;
+}
+html:root .md-editor:not(.nspp-floating-reply) .CodeMirror-lines {
+	padding:14px 10px 6px!important;
+}
+html:root .md-editor:not(.nspp-floating-reply)>.exp-container {
+	order:1;
+}
+html:root .md-editor:not(.nspp-floating-reply)::after {
+	content:""!important;
+	display:block!important;
+	order:3;
+	flex:1 1 100%;
+	height:0;
+	margin:0;
+	padding:0;
+	clear:none;
+}
+html:root .md-editor:not(.nspp-floating-reply)>.exp-container:not(:empty) {
+	margin:4px 12px 0;
+	padding:8px!important;
+	border-radius:12px!important;
+	background:var(--nsmax-panel-alt)!important;
+}
+/* 工具栏与分段切换 */
+html:root .md-editor:not(.nspp-floating-reply)>.mde-toolbar {
+	order:2;
+	flex:1 1 0;
+	justify-content:flex-start;
+	gap:0;
+	padding:6px 8px 0 10px!important;
+}
 html:root .md-editor:not(.nspp-floating-reply)>.tab-select {
+	order:3;
 	flex:0 0 auto;
-	gap:2px!important;
-	padding:7px 4px 7px 8px!important;
-	border-bottom:1px solid var(--nsmax-divider)!important;
+	align-self:center;
+	gap:0!important;
+	margin:6px 12px 0 4px;
+	padding:2px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
+	background:var(--nsmax-seg-bg,var(--nsmax-fill))!important;
 }
 html:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab {
-	padding:3px 11px!important;
-	border-radius:6px;
+	padding:2px 10px!important;
+	border-radius:calc(var(--nsmax-pill,999px) - 2px)!important;
 	color:var(--nsmax-muted);
 	font-size:12.5px!important;
-	line-height:1.6;
-	transition:background-color .15s ease,color .15s ease;
+	font-weight:500;
+	line-height:1.7;
+	transition:background-color .15s ease,color .15s ease,box-shadow .15s ease;
 }
 html:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab:hover {
 	color:var(--nsmax-text);
 }
 html:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab:is(.active,[class*=active],[aria-selected=true]) {
-	background:var(--nsmax-fill)!important;
+	background:var(--nsmax-seg-thumb,var(--nsmax-card))!important;
 	color:var(--nsmax-text);
 	font-weight:500;
+	box-shadow:0 1px 2px rgb(0 0 0/.08),0 0 0 .5px rgb(0 0 0/.06);
 }
-html:root .md-editor:not(.nspp-floating-reply)>.tab-select+.mde-toolbar {
-	flex:1 1 0;
-	justify-content:flex-end;
-	padding:5px 8px!important;
-	background:transparent!important;
+/* 底栏：表情分类、上传图片、发送 */
+html:root .md-editor:not(.nspp-floating-reply)>:is(.expression,[data-nsmax-submit-row],button.submit,.btn.submit,.nspp-upload-status) {
+	order:4;
 }
-html:root .md-editor:not(.nspp-floating-reply)>.mde-toolbar:first-child {
-	background:transparent!important;
-}
-html:root .md-editor:not(.nspp-floating-reply)>textarea {
-	min-height:132px;
-	padding:14px 16px!important;
-	font-size:14.5px;
-	line-height:1.7;
-	resize:none;
-}
-html:root .md-editor:not(.nspp-floating-reply) .CodeMirror-lines {
-	padding:12px 8px!important;
-}
-html:root .md-editor:not(.nspp-floating-reply)>.exp-container {
-	order:2;
-}
-html:root .md-editor:not(.nspp-floating-reply)>.exp-container:not(:empty) {
-	padding:8px 10px!important;
-	border-top:1px solid var(--nsmax-divider)!important;
-	background:var(--nsmax-panel-alt)!important;
-}
-html:root .md-editor:not(.nspp-floating-reply):has(>[data-nsmax-submit-row])>.expression {
-	order:3;
+html:root .md-editor:not(.nspp-floating-reply)>.expression {
 	flex:0 1 auto;
-	align-self:stretch;
-	padding:8px 2px 8px 8px!important;
-}
-html:root .md-editor:not(.nspp-floating-reply):has(>[data-nsmax-submit-row])>[data-nsmax-submit-row] {
-	order:3;
-	flex:1 1 0;
-	min-width:180px;
-	min-height:0!important;
-	padding:7px 8px 7px 4px!important;
-	border-top:1px solid var(--nsmax-divider)!important;
-}
-html:root .md-editor:not(.nspp-floating-reply):has(>[data-nsmax-submit-row]>.nspp-upload-status)>.expression+.exp-container~[data-nsmax-submit-row]>.nspp-upload-status,
-html:root .md-editor:not(.nspp-floating-reply):has(>[data-nsmax-submit-row])>.expression~[data-nsmax-submit-row]>.nspp-upload-status {
-	padding-left:4px;
-	border-left:1px solid var(--nsmax-divider);
-	margin-left:2px;
+	align-self:center;
+	gap:2px;
+	padding:8px 0 10px 10px!important;
 }
 html:root .md-editor:not(.nspp-floating-reply) .expression>* {
-	padding:3px 10px!important;
-	border-radius:6px!important;
+	display:inline-flex;
+	align-items:center;
+	height:28px;
+	padding:0 10px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
+	color:var(--nsmax-muted)!important;
 	font-size:12.5px!important;
+	font-weight:500;
+}
+html:root .md-editor:not(.nspp-floating-reply) .expression>:hover {
+	background:var(--nsmax-fill)!important;
+	color:var(--nsmax-text)!important;
 }
 html:root .md-editor:not(.nspp-floating-reply) .expression>:is(.current-group,.active) {
 	background:var(--nsmax-fill)!important;
+	color:var(--nsmax-text)!important;
 	font-weight:500!important;
 }
+html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-submit-row] {
+	display:flex!important;
+	align-items:center;
+	justify-content:flex-end;
+	gap:6px;
+	flex:1 1 0;
+	min-width:120px;
+	min-height:0!important;
+	padding:8px 10px 10px 4px!important;
+}
+html:root .md-editor:not(.nspp-floating-reply):not(:has(>.expression))>[data-nsmax-submit-row] {
+	padding-left:10px!important;
+}
+html:root .md-editor:not(.nspp-floating-reply)>:is(button.submit,.btn.submit) {
+	margin:8px 10px 10px auto!important;
+}
+html:root .md-editor:not(.nspp-floating-reply)>:not(.nspp-upload-status,button):has(+ :is(button.submit,.btn.submit)),
+html:root .md-editor:not(.nspp-floating-reply)>:has(+ .nspp-upload-status + :is(button.submit,.btn.submit)) {
+	border-bottom:0!important;
+}
+html:root .md-editor:not(.nspp-floating-reply)[data-nsmax-submit-inline]>.nspp-upload-status {
+	left:10px;
+	bottom:10px;
+}
+html:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose {
+	display:inline-grid;
+	place-items:center;
+	width:32px;
+	height:32px;
+	min-height:32px;
+	padding:0;
+	border:1px solid var(--nsmax-composer-line);
+	border-radius:var(--nsmax-pill,999px);
+	background:transparent;
+	color:var(--nsmax-text-2);
+}
+html:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose:hover {
+	border-color:var(--nsmax-composer-line-focus);
+	background:var(--nsmax-fill);
+	color:var(--nsmax-text);
+}
+html:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose svg {
+	width:17px;
+	height:17px;
+}
+html:root .md-editor:not(.nspp-floating-reply) [data-nsmax-submit-row]>.nspp-upload-choose:first-child {
+	margin-right:auto;
+}
+/* 发送按钮（Claude 的珊瑚色方形按钮；sb.sb 风格是黑色胶囊）：32px 高、8px 圆角，向上箭头；输入框为空时变淡 */
 html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
-	min-height:34px;
-	padding:0 18px!important;
+	display:inline-flex!important;
+	align-items:center;
+	justify-content:center;
+	gap:6px;
+	box-sizing:border-box;
+	height:32px;
+	min-height:32px!important;
+	min-width:32px;
+	padding:0 14px 0 11px!important;
+	border:0!important;
+	border-radius:var(--nsmax-pill,999px)!important;
+	background:var(--nsmax-brand)!important;
+	background-image:none!important;
+	color:var(--nsmax-on-brand)!important;
+	font-size:13px!important;
 	font-weight:500!important;
+	line-height:1!important;
+	box-shadow:none!important;
+	cursor:pointer;
+	transition:background-color .15s ease,opacity .15s ease;
 }
-html:root .md-editor:not(.nspp-floating-reply):focus-within {
-	border-color:var(--nsmax-stroke-strong)!important;
-	box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 6%,transparent),0 1px 2px rgb(0 0 0/.04)!important;
+html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit)::before {
+	content:"";
+	flex:none;
+	width:16px;
+	height:16px;
+	background:currentColor;
+	-webkit-mask:var(--nsmax-icon-send) center/contain no-repeat;
+	mask:var(--nsmax-icon-send) center/contain no-repeat;
 }
+html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit):hover {
+	background:color-mix(in srgb,var(--nsmax-brand) 88%,#000)!important;
+	opacity:1;
+}
+html:root .md-editor:not(.nspp-floating-reply):not(:has(.CodeMirror)):has(>textarea:placeholder-shown) :is(button.submit.btn,.btn.submit) {
+	opacity:.5;
+}
+html:root:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
+	width:32px;
+	padding:0!important;
+	font-size:0!important;
+}
+html:root:root #nsk-left-panel-container .nsk-panel :is(a.router-link-active,a.router-link-exact-active,a[aria-current=page],a.active,.active>a) {
+	background:var(--nsmax-fill)!important;
+	clip-path:inset(0 6px round 8px);
+}
+/* Claude 版式：主栏与左侧版块栏不再是卡片，直接放在米白页面底上（Claude 的对话区与侧栏没有卡片外框），右侧栏保留白色细边卡片；
+   评论框、私信输入框这些白色输入框因此浮在米白底上。顶栏与页面同色、平时没有底边线，滚动后才出现一条细线。
+   帖子标题用 24px 衬线体，回复楼层悬停不再整行变色 */
+html:root:root #nsk-left {
+	background:transparent!important;
+	border-color:transparent!important;
+	box-shadow:none!important;
+}
+html:root:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *) table {
+	background:var(--nsmax-card);
+}
+html:root:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *) :is(th,tbody tr:nth-child(even)) {
+	background:color-mix(in srgb,var(--nsmax-fill) 55%,var(--nsmax-card));
+}
+html:root:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *) pre {
+	background:var(--nsmax-code-bg,var(--nsmax-panel-alt));
+}
+html:root:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *) :not(pre)>code {
+	background:var(--nsmax-fill);
+	border-color:transparent;
+}
+html:root:root #nsk-left :is(ul.post-list:not(.topic-carousel-panel),.nsk-post-wrapper,.nsk-post,ul.comments,.notification-list,.list-head) {
+	background-color:transparent!important;
+	background-image:none!important;
+}
+html:root:root:root #nsk-head {
+	border-bottom-color:transparent!important;
+	transition:border-color .2s ease,box-shadow .3s var(--nsmax-ease-out);
+}
+html:root:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2),
+html:root:root:root h1.post-title {
+	font-size:24px;
+	line-height:1.4;
+	font-weight:600;
+	letter-spacing:0;
+}
+html:root:root:root ul.comments>li.content-item:hover {
+	background-color:transparent;
+}
+html:root:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item):hover {
+	background-color:var(--nsmax-fill);
+}
+/* Claude 风格的弹窗与悬浮卡（参考 claude.ai 网页版）：工具弹窗的标题栏、底栏不再用分隔线隔成横条，整张弹窗一块底色、16px 圆角；
+   用户资料卡去掉浅底格子与分隔网格，统计数据是两列「左标签、右数字」的行，行间细线；操作按钮是 8px 圆角的描边按钮，「关注」用墨黑实心 */
+html:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)::backdrop {
+	background:rgb(31 30 29/.3);
+}
+html:root:root body.dark-layout :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)::backdrop {
+	background:rgb(0 0 0/.5);
+}
+html:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header) {
+	padding:16px 14px 8px 22px;
+	border-bottom:0;
+}
+html:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(h2,h3):not(section *) {
+	font-size:16px;
+}
+html:root:root .nspp-monitor>footer {
+	border-top:0;
+	padding:10px 22px 16px;
+}
+html:root:root .nspp-monitor-results section+section {
+	border-top:0;
+}
+html:root:root .nspp-user-hover,
+html:root:root .nspp-user-hover[data-trust] {
+	border-radius:16px!important;
+	box-shadow:0 12px 40px -8px rgb(31 30 29/.2),0 2px 6px rgb(31 30 29/.05)!important;
+}
+html:root:root body.dark-layout :is(.nspp-user-hover,.nspp-user-hover[data-trust]) {
+	box-shadow:0 16px 48px -8px rgb(0 0 0/.6)!important;
+}
+html:root:root .nspp-user-hover .nspp-user-hover-header {
+	padding:16px 16px 8px!important;
+}
+html:root:root .nspp-user-hover dl {
+	gap:0 20px!important;
+	padding:2px 16px 4px!important;
+	border:0!important;
+	background:transparent!important;
+}
+html:root:root .nspp-user-hover dl>div {
+	padding:8px 0!important;
+	background:transparent!important;
+	border-bottom:1px solid var(--nsmax-divider);
+}
+html:root:root .nspp-user-hover dl>div:nth-last-child(-n+2):nth-child(odd),
+html:root:root .nspp-user-hover dl>div:last-child {
+	border-bottom:0;
+}
+html:root:root .nspp-user-hover dl>div>dt {
+	font-size:12.5px!important;
+}
+html:root:root .nspp-user-hover dl>div>dd {
+	font-size:14px!important;
+}
+html:root:root .nspp-user-hover .nspp-user-hover-rich {
+	padding:8px 16px 0!important;
+}
+html:root:root .nspp-user-hover-actions {
+	gap:8px!important;
+	padding:12px 16px 16px!important;
+}
+html:root:root .nspp-user-hover-actions>:is(a,button) {
+	flex:1 1 0;
+	min-height:32px!important;
+	padding:0 10px!important;
+	border:1px solid var(--nsmax-composer-line)!important;
+	border-radius:8px!important;
+	background:transparent!important;
+	color:var(--nsmax-text)!important;
+	font-size:13px!important;
+}
+html:root:root .nspp-user-hover-actions>:is(a,button):hover {
+	border-color:var(--nsmax-composer-line-focus)!important;
+	background:var(--nsmax-fill)!important;
+	color:var(--nsmax-text)!important;
+}
+html:root:root .nspp-user-hover-actions>[data-action=follow] {
+	border-color:transparent!important;
+	background:var(--nsmax-ink)!important;
+	color:var(--nsmax-on-ink)!important;
+}
+html:root:root .nspp-user-hover-actions>[data-action=follow]:hover {
+	border-color:transparent!important;
+	background:color-mix(in srgb,var(--nsmax-ink) 86%,var(--nsmax-card))!important;
+	color:var(--nsmax-on-ink)!important;
+}
+html:root:root .nspp-user-hover-actions>.nspp-block-toggle:hover {
+	border-color:#e5484d!important;
+	background:rgb(229 72 77/.08)!important;
+	color:#e5484d!important;
+}
+/* 右侧用户卡片：统计区不再是卡片里一条米白底带，只留上方一条细线，和下面的发帖按钮连成一张干净的卡片 */
+html:root:root .user-card>.user-stat {
+	background:transparent!important;
+}
+/* NodeSeek++ 徽章图标（信任分、加入天数、等级）：站点雪碧图里的粗图标换成统一线条图标（盾牌、日历、信号格） */
+html:root .nspp-user-badges :is(.nspp-trust,.nspp-age,.nspp-level)>svg.iconpark-icon {
+	display:none;
+}
+html:root .nspp-user-badges :is(.nspp-trust,.nspp-age,.nspp-level)::before {
+	content:"";
+	flex:none;
+	width:11px;
+	height:11px;
+	background:currentColor;
+	-webkit-mask:var(--nsmax-icon-badge) center/contain no-repeat;
+	mask:var(--nsmax-icon-badge) center/contain no-repeat;
+	opacity:.85;
+}
+html:root .nspp-user-badges .nspp-trust {
+	--nsmax-icon-badge:var(--nsmax-icon-shield);
+}
+html:root .nspp-user-badges .nspp-age {
+	--nsmax-icon-badge:var(--nsmax-icon-calendar);
+}
+html:root .nspp-user-badges .nspp-level {
+	--nsmax-icon-badge:var(--nsmax-icon-level);
+}
+/* Claude 风格的动效（参考 claude.ai）：过渡短（150～250ms）、缓出曲线 cubic-bezier(.165,.85,.45,1)、没有回弹；按下只轻微缩小到 .98，
+   列表行按下不缩放；弹窗淡入并从 .97 放大、遮罩淡入；悬浮卡与帖子预览淡入并上移 4px；热榜滑块平滑滑动 */
+html:root:root {
+	--nsmax-ease-out:cubic-bezier(.165,.85,.45,1);
+	--nsmax-spring:cubic-bezier(.165,.85,.45,1);
+	--nsmax-press:cubic-bezier(.165,.85,.45,1);
+}
+html:root:root:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item):active:not(:has(:is(button,input,textarea,select):active)) {
+	scale:1;
+}
+html:root:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog):not(.nspp-hot-rankings)[open] {
+	animation:nsmax-claude-in .2s var(--nsmax-ease-out) both;
+}
+html:root:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)[open]::backdrop {
+	animation:nsmax-fade .2s ease both;
+}
+html:root:root:root .nspp-hot-rankings[open] {
+	animation:nsmax-drawer-in .25s var(--nsmax-ease-out) both;
+}
+html:root:root:root :is(.nspp-user-hover,.nspp-post-preview):not([hidden]) {
+	animation:nsmax-pop-in .16s var(--nsmax-ease-out) both;
+}
+html:root:root:root .md-editor:not(.nspp-floating-reply),
+html:root:root:root .nspp-messages-composer {
+	transition:border-color .2s ease,box-shadow .25s var(--nsmax-ease-out);
+}
+@keyframes nsmax-claude-in {from{opacity:0;scale:.97}}
+@keyframes nsmax-fade {from{opacity:0}}
+@keyframes nsmax-pop-in {from{opacity:0;translate:0 4px}}
 html:root .user-card img:is(.avatar-normal,.avatar,[class*=avatar]),
 html:root .user-card img:first-of-type {
-	border-radius:20%;
+	border-radius:var(--nsmax-avatar,20%);
 	box-shadow:0 0 0 1px var(--nsmax-divider);
 }
 html:root .user-stat {
@@ -1479,14 +1849,6 @@ html:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-
 html:root:root .user-stat {
 	font-size:15px;
 }
-html:root .user-card a:has(>svg:only-child) {
-	color:var(--nsmax-text-2)!important;
-	transition:color .2s ease,opacity .2s ease;
-}
-html:root .user-card a:has(>svg:only-child):hover {
-	color:var(--nsmax-text)!important;
-	opacity:.7;
-}
 /* NodeSeek++ 侧栏工具：图标统一线条、黑白灰，去掉热榜按钮的橙色渐变与监控运行时的绿色 */
 html:root #nspp-tools {
 	background:var(--nsmax-surface);
@@ -1583,7 +1945,7 @@ html:root :is(#nsk-right-panel-container,#nsk-left-panel-container) .nsk-panel>:
 html:root .user-card img:first-of-type {
 	width:40px!important;
 	height:40px!important;
-	border-radius:6px!important;
+	border-radius:var(--nsmax-avatar,6px)!important;
 	object-fit:cover;
 }
 html:root .user-card a[href*="/space/"]:not(:has(img)) {
@@ -1600,7 +1962,7 @@ html:root body.dark-layout .post-title .nspp-readonly {
 	height:20px;
 	padding:0 8px!important;
 	border:1px solid var(--nsmax-stroke)!important;
-	border-radius:999px!important;
+	border-radius:var(--nsmax-chip,999px)!important;
 	background:var(--nsmax-panel-alt)!important;
 	color:var(--nsmax-muted)!important;
 	font-size:11px!important;
@@ -1628,6 +1990,7 @@ html:root [data-nspp-copy] {
 	display:inline-flex;
 	align-items:center;
 	justify-content:center;
+	gap:0;
 	width:28px;
 	height:28px;
 	margin:8px 0 0;
@@ -1662,7 +2025,7 @@ html:root :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-ico
 	min-height:32px;
 	padding:0 14px;
 	border:1px solid var(--nsmax-stroke);
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 	background:var(--nsmax-card);
 	color:var(--nsmax-text-2);
 	font-size:12.5px;
@@ -1770,9 +2133,15 @@ html:root [data-nspp-monitor-match] {
 	box-shadow:inset 2px 0 0 var(--nsmax-accent);
 }
 html:root body {
-	--nsmax-icon-close:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E");
-	--nsmax-icon-flame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2c1 6-5 6-2 11 2-1 3-3 3-5 4 3 6 6 4 10a7 7 0 0 1-13-4c0-4 5-6 8-12Z'/%3E%3C/svg%3E");
-	--nsmax-icon-empty:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E");
+	--nsmax-icon-close:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
+	--nsmax-icon-flame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5c.6 3 4.5 4.9 4.5 9.6a4.5 4.5 0 0 1-9 0c0-1.8.8-3.2 2-4.2.3 1.3 1 2.1 1.9 2.5C11 9.1 10.9 6.2 12 3.5Z'/%3E%3C/svg%3E");
+	--nsmax-icon-empty:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.5h-5.5l-1.5 2.5h-4l-1.5-2.5H3M5.6 5.6 3 12.5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-5.5l-2.6-6.9A1.5 1.5 0 0 0 17 4.5H7a1.5 1.5 0 0 0-1.4 1.1Z'/%3E%3C/svg%3E");
+	--nsmax-icon-send:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19V5.5M6.5 11 12 5.5l5.5 5.5'/%3E%3C/svg%3E");
+	--nsmax-icon-sun:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM12 3v1.5M12 19.5V21M5.6 5.6l1.1 1.1M17.3 17.3l1.1 1.1M3 12h1.5M19.5 12H21M5.6 18.4l1.1-1.1M17.3 6.7l1.1-1.1'/%3E%3C/svg%3E");
+	--nsmax-icon-moon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 14.2A7.5 7.5 0 0 1 9.8 4.5a7.5 7.5 0 1 0 9.7 9.7Z'/%3E%3C/svg%3E");
+	--nsmax-icon-shield:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 5.5 6v5.5c0 4 2.8 7.4 6.5 9 3.7-1.6 6.5-5 6.5-9V6L12 3.5ZM9 12l2 2 4-4'/%3E%3C/svg%3E");
+	--nsmax-icon-calendar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 3.5v3M16 3.5v3M4 9.5h16M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z'/%3E%3C/svg%3E");
+	--nsmax-icon-level:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 19.5v-4M12 19.5v-9M18 19.5V5'/%3E%3C/svg%3E");
 }
 /* NodeSeek++ 工具弹窗（回帖足迹、阅读历史、帖子监控、热榜、转账、注册资料、确认框）：统一成卡片式模态框——
    标题栏 + 细分隔线、次要按钮描边、主要按钮用强调色、输入框浅灰底、列表行悬停浅灰、空状态居中带图标 */
@@ -1782,7 +2151,7 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) {
 	background-color:var(--nsmax-popup);
 	color:var(--nsmax-text);
 	border:1px solid var(--nsmax-stroke);
-	border-radius:12px;
+	border-radius:var(--nsmax-dialog-radius,12px);
 	box-shadow:var(--nsmax-shadow-pop);
 	font-size:13.5px;
 	line-height:1.55;
@@ -1834,7 +2203,7 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(button,form>
 	margin:0;
 	padding:0 14px;
 	border:1px solid var(--nsmax-stroke);
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 	background:transparent;
 	color:var(--nsmax-text);
 	font-size:12.5px;
@@ -2018,14 +2387,14 @@ html:root .nspp-history .nspp-history-toolbar:has(>button[data-tab]) {
 	gap:2px;
 	margin:0 18px 6px;
 	padding:3px;
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 	background:var(--nsmax-dlg-fill);
 }
 html:root .nspp-history button[data-tab] {
 	min-height:26px;
 	padding:0 12px;
 	border-color:transparent;
-	border-radius:999px;
+	border-radius:var(--nsmax-chip,999px);
 	color:var(--nsmax-muted);
 }
 html:root .nspp-history button[data-tab][aria-pressed=true] {
@@ -2089,7 +2458,7 @@ html:root .nspp-history-avatar {
 	width:20px;
 	height:20px;
 	margin-right:8px;
-	border-radius:6px;
+	border-radius:var(--nsmax-avatar,6px);
 }
 @media (hover:none) {
 	html:root .nspp-history li:not(.nspp-history-day) button {
@@ -2109,7 +2478,7 @@ html:root .nspp-profile-summary strong {
 }
 html:root .nspp-profile-dialog .nspp-age {
 	padding:2px 8px;
-	border-radius:999px;
+	border-radius:var(--nsmax-chip,999px);
 	background:var(--nsmax-dlg-fill);
 	color:var(--nsmax-text-2);
 	--nspp-age-color:var(--nsmax-text-2);
@@ -2311,7 +2680,7 @@ html:root .nspp-hot-rankings nav button {
 	min-height:26px;
 	padding:0 11px;
 	border:1px solid var(--nsmax-stroke);
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 	background:transparent;
 	color:var(--nsmax-text-2);
 	font-size:12px;
@@ -2549,7 +2918,7 @@ html:root .nspp-post-preview>footer .nspp-list-actions button {
 	gap:4px;
 	min-height:26px;
 	padding:0 8px;
-	border-radius:999px;
+	border-radius:var(--nsmax-pill,999px);
 	color:var(--nsmax-muted);
 }
 html:root .nspp-post-preview>footer .nspp-list-actions button:hover {
@@ -2628,7 +2997,7 @@ html:root .nspp-user-hover :is(.nspp-level,.nspp-age,.role-tag) * {
 }
 html:root .nspp-user-hover :is(.nspp-user-hover-avatar,.nspp-user-hover-monogram) {
 	outline:0!important;
-	border-radius:8px!important;
+	border-radius:var(--nsmax-avatar,8px)!important;
 }
 html:root .nspp-user-hover .nspp-user-hover-monogram {
 	background:var(--nsmax-fill)!important;
@@ -2690,6 +3059,9 @@ html:root .nspp-user-hover .nspp-user-hover-name {
 }
 html:root .nspp-user-hover .nspp-user-hover-score strong {
 	font-size:20px!important;
+}
+html:root .nspp-user-hover .nspp-user-hover-score {
+	justify-content:center!important;
 }
 html:root .nspp-user-hover dl {
 	display:grid!important;
@@ -2757,7 +3129,7 @@ html:root .nspp-user-hover-actions>:is(a,button) {
 	min-height:28px!important;
 	padding:0 12px!important;
 	border:1px solid var(--nsmax-stroke-strong)!important;
-	border-radius:999px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
 	background:var(--nsmax-card)!important;
 	color:var(--nsmax-text-2)!important;
 	font-size:12.5px!important;
@@ -2842,7 +3214,7 @@ html:root .nspp-messages-top-actions button,
 html:root .nspp-messages-top .nspp-messages-profile {
 	min-height:28px;
 	padding:0 10px!important;
-	border-radius:999px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
 	color:var(--nsmax-text-2)!important;
 	font-size:12.5px!important;
 }
@@ -2882,7 +3254,7 @@ html:root .nspp-messages-refresh {
 	width:34px;
 	min-width:34px;
 	height:34px;
-	border-radius:999px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
 	color:var(--nsmax-muted);
 }
 html:root .nspp-messages-search>button:hover,
@@ -2918,7 +3290,7 @@ html:root :is(.nspp-messages-peer[aria-pressed=true],.nspp-messages-fixed-contac
 	box-shadow:0 0 0 1px var(--nsmax-stroke),0 1px 2px rgb(0 0 0/.04);
 }
 html:root .nspp-messages-avatar {
-	border-radius:6px;
+	border-radius:var(--nsmax-avatar,6px);
 	background:var(--nsmax-fill);
 	box-shadow:0 0 0 1px var(--nsmax-divider);
 }
@@ -2947,7 +3319,7 @@ html:root .nspp-messages-unread {
 }
 html:root .nspp-messages-more,
 html:root .nspp-messages-earlier {
-	border-radius:999px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
 	font-size:12.5px!important;
 }
 html:root .nspp-messages-more:hover,
@@ -2955,7 +3327,7 @@ html:root .nspp-messages-earlier:hover {
 	color:var(--nsmax-text)!important;
 }
 html:root .nspp-messages-thread {
-	padding:16px 20px;
+	padding:18px 24px;
 	background:var(--nsmax-canvas);
 }
 @media (width<=700px) {
@@ -2988,10 +3360,10 @@ html:root .nspp-messages-message>.nspp-messages-avatar {
 	height:32px;
 }
 html:root .nspp-messages-bubble {
-	padding:8px 12px;
+	padding:8px 13px;
 	border:1px solid var(--nsmax-stroke);
-	border-radius:12px;
-	border-top-left-radius:4px;
+	border-radius:var(--nsmax-bubble-r,12px);
+	border-top-left-radius:var(--nsmax-bubble-nub,4px);
 	background:var(--nsmax-card);
 	color:var(--nsmax-text);
 	font-size:14px;
@@ -3003,10 +3375,11 @@ html:root .nspp-messages-bubble::before {
 }
 html:root .nspp-messages-message.is-mine .nspp-messages-bubble {
 	border-color:transparent;
-	border-radius:12px;
-	border-top-right-radius:4px;
-	background:var(--nsmax-accent);
-	color:var(--nsmax-on-accent);
+	border-radius:var(--nsmax-bubble-r,12px);
+	border-top-right-radius:var(--nsmax-bubble-nub,4px);
+	background:var(--nsmax-bubble,var(--nsmax-accent));
+	color:var(--nsmax-on-bubble,var(--nsmax-on-accent));
+	box-shadow:none;
 }
 html:root .nspp-messages-message.is-mine .nspp-messages-bubble a {
 	color:inherit;
@@ -3038,49 +3411,123 @@ html:root body.dark-layout .nspp-messages-message.is-system .nspp-messages-bubbl
 html:root .nspp-messages-system-time {
 	font-size:11.5px;
 }
+/* 私信输入框（参考 Claude 的输入框）：浮在会话区底部的一整块白底大圆角输入框，柔和投影；输入区在上，下面一行左边是格式工具与
+   Markdown 开关，右边是方形发送按钮（向上箭头，内容为空时变淡）；会话区用页面底色，让输入框和对方的白色气泡浮起来 */
+html:root .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-chat {
+	background:var(--nsmax-canvas);
+}
 html:root .nspp-messages-composer {
-	border-top-color:var(--nsmax-divider);
+	margin:0 16px 16px;
+	border:1px solid var(--nsmax-composer-line)!important;
+	border-radius:var(--nsmax-composer-radius,12px);
+	background:var(--nsmax-card)!important;
+	box-shadow:var(--nsmax-composer-shadow);
+	overflow:hidden;
+	transition:border-color .15s ease,box-shadow .2s ease;
+}
+html:root .nspp-messages-composer:hover {
+	box-shadow:var(--nsmax-composer-shadow-hover);
+}
+html:root .nspp-messages-composer:focus-within {
+	border-color:var(--nsmax-composer-line-focus)!important;
+	box-shadow:var(--nsmax-composer-shadow-focus);
+}
+html:root .nspp-messages-composer :is(.nspp-message-editor,.nspp-messages-compose-actions) {
+	background:transparent!important;
+}
+html:root .nspp-message-editor-body {
+	min-height:0;
 }
 html:root .nspp-message-editor-body textarea {
+	min-height:60px;
+	padding:14px 16px 4px!important;
+	resize:none;
 	caret-color:var(--nsmax-text);
-	font-size:14px;
+	font-size:14.5px;
+	line-height:1.65;
+}
+html:root .nspp-message-editor-preview {
+	min-height:60px;
+	padding:14px 16px 4px;
+}
+html:root .nspp-message-editor-status {
+	padding:2px 16px;
+}
+html:root .nspp-message-editor-toolbar {
+	gap:0;
 }
 html:root .nspp-message-editor-toolbar button {
-	border-radius:8px!important;
+	width:30px;
+	height:30px;
+	padding:6px;
+	border-radius:min(var(--nsmax-pill,8px),8px)!important;
+	color:var(--nsmax-muted);
 }
 html:root .nspp-message-editor-toolbar button:hover:not(:disabled),
 html:root .nspp-message-editor-toolbar button[aria-pressed=true] {
 	background:var(--nsmax-fill);
+	color:var(--nsmax-text);
+}
+html:root .nspp-message-editor-toolbar .nspp-message-editor-tab {
+	width:auto;
+	height:26px;
+	padding:0 9px;
+	font-size:12px;
 }
 html:root .nspp-messages-compose-actions {
-	gap:8px;
-	padding:6px 10px 10px;
+	gap:6px;
+	padding:4px 8px 8px 8px;
 }
 html:root .nspp-messages-compose-actions label {
-	font-size:12.5px;
+	color:var(--nsmax-muted);
+	font-size:12px;
 }
 html:root .nspp-messages-compose-actions input[type=checkbox] {
-	accent-color:var(--nsmax-accent);
+	accent-color:var(--nsmax-ink,var(--nsmax-accent));
 }
 html:root .nspp-messages .nspp-messages-send {
-	min-width:76px;
-	min-height:34px;
-	padding:0 20px;
-	border-radius:999px!important;
-	background:var(--nsmax-accent);
-	color:var(--nsmax-on-accent);
-	font-size:13px;
-	font-weight:600;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	box-sizing:border-box;
+	width:32px;
+	min-width:32px;
+	height:32px;
+	min-height:32px;
+	padding:0;
+	border:0;
+	border-radius:var(--nsmax-pill,999px)!important;
+	background:var(--nsmax-brand);
+	color:var(--nsmax-on-brand);
+	font-size:0;
+	transition:background-color .15s ease,opacity .15s ease;
+}
+html:root .nspp-messages .nspp-messages-send::before {
+	content:"";
+	width:16px;
+	height:16px;
+	background:currentColor;
+	-webkit-mask:var(--nsmax-icon-send) center/contain no-repeat;
+	mask:var(--nsmax-icon-send) center/contain no-repeat;
 }
 html:root .nspp-messages .nspp-messages-send:hover:not(:disabled) {
-	opacity:.88;
+	background:color-mix(in srgb,var(--nsmax-brand) 88%,#000);
+	opacity:1;
 }
 html:root .nspp-messages .nspp-messages-send:disabled {
-	opacity:.35;
+	opacity:.4;
+	cursor:default;
 }
+html:root .nspp-messages .nspp-messages-send[aria-busy=true] {
+	opacity:.7;
+}
+html:root .nspp-messages .nspp-messages-send[aria-busy=true]::before {
+	animation:nsmax-send-busy 1s ease-in-out infinite alternate;
+}
+@keyframes nsmax-send-busy {to{translate:0 -3px}}
 html:root :is(.nspp-messages .nspp-messages-sync-retry,.nspp-notice-back,.nspp-messages-back,.nspp-message-return) {
 	border:1px solid var(--nsmax-stroke)!important;
-	border-radius:999px!important;
+	border-radius:var(--nsmax-pill,999px)!important;
 	background:transparent!important;
 	color:var(--nsmax-text-2)!important;
 }
@@ -3113,7 +3560,7 @@ html:root .nspp-chat-profile[data-trust=perfect]::before {
 }
 html:root .nspp-chat-profile>a .nspp-messages-avatar,
 html:root .nspp-chat-profile[data-trust=perfect]>a .nspp-messages-avatar {
-	border-radius:8px;
+	border-radius:var(--nsmax-avatar,8px);
 	outline:0;
 }
 html:root .nspp-chat-profile-heading>strong,
@@ -3125,7 +3572,7 @@ html:root .nspp-chat-profile-level,
 html:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-level {
 	padding:0 7px;
 	border:1px solid var(--nsmax-stroke);
-	border-radius:999px;
+	border-radius:var(--nsmax-chip,999px);
 	background:transparent;
 	color:var(--nsmax-text-2);
 	font-size:11px;
