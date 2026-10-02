@@ -4006,8 +4006,15 @@ html:root:root .nspp-messages-top .nspp-messages-profile:hover {
 	background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;
 	color:var(--nsmax-text)!important;
 }
-html:root:root :is(.nspp-notice-back,.nspp-messages-back) {
+html:root:root .nspp-notice-back {
 	display:inline-flex;
+}
+@media (width<=700px) {
+	html:root:root .nspp-messages-back {
+		display:inline-flex;
+	}
+}
+html:root:root :is(.nspp-notice-back,.nspp-messages-back) {
 	align-items:center;
 	gap:2px;
 	min-height:30px;

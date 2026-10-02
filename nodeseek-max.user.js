@@ -26744,7 +26744,9 @@ ${nsmaxClaude} .nspp-messages-heading img.nspp-messages-avatar[src^="data:image/
 ${nsmaxClaude} .nspp-messages-top-actions{gap:4px}
 ${nsmaxClaude} .nspp-messages-top-actions button,${nsmaxClaude} .nspp-messages-top .nspp-messages-profile{min-height:30px;padding:0 11px!important;border-radius:8px!important;color:var(--nsmax-muted)!important;font-size:12.5px!important}
 ${nsmaxClaude} .nspp-messages-top-actions button:hover,${nsmaxClaude} .nspp-messages-top .nspp-messages-profile:hover{background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;color:var(--nsmax-text)!important}
-${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back){display:inline-flex;align-items:center;gap:2px;min-height:30px;padding:0 10px 0 6px!important;border-color:transparent!important;border-radius:8px!important;color:var(--nsmax-muted)!important;font-size:12.5px!important}
+${nsmaxClaude} .nspp-notice-back{display:inline-flex}
+@media (width<=700px){${nsmaxClaude} .nspp-messages-back{display:inline-flex}}
+${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back){align-items:center;gap:2px;min-height:30px;padding:0 10px 0 6px!important;border-color:transparent!important;border-radius:8px!important;color:var(--nsmax-muted)!important;font-size:12.5px!important}
 ${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back)::before{content:"";width:16px;height:16px;background:currentColor;-webkit-mask:var(--nsmax-icon-back) center/contain no-repeat;mask:var(--nsmax-icon-back) center/contain no-repeat}
 ${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back):hover{background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;color:var(--nsmax-text)!important}
 /* 左侧会话列表：搜索框带放大镜，条目是圆角浅底（悬停 / 当前），不再是白卡片加边框；@我 / 回复主题的图标放在圆形底里；

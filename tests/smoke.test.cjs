@@ -1535,6 +1535,18 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表通高；选
 	await page.evaluate(() => { location.hash = "#/message?mode=list"; });
 	await settle(page, 600);
 	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nspp-messages-top .nspp-messages-heading:not([hidden])")).display), "flex");
+	// @我：桌面上不显示手机布局才用的「联系人」返回按钮，搜索框的放大镜落在输入框里
+	await page.evaluate(() => { location.hash = "#/atMe"; });
+	await page.waitForSelector(".nspp-notice-workspace:not([hidden]) .nspp-messages-search input", { timeout: 8e3 });
+	await settle(page, 600);
+	const notice = await page.evaluate(() => {
+		const search = document.querySelector(".nspp-notice-workspace .nspp-messages-search");
+		const input = search.querySelector("input").getBoundingClientRect(), icon = getComputedStyle(search, "::before");
+		const left = search.getBoundingClientRect().left + parseFloat(icon.left);
+		return { back: Array.from(document.querySelectorAll(".nspp-messages-back")).map((button) => getComputedStyle(button).display), iconInside: left > input.left && left < input.left + 24 };
+	});
+	assert.deepEqual(notice, { back: notice.back.map(() => "none"), iconInside: true });
+	assert.ok(notice.back.length > 0);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
