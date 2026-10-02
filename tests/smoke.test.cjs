@@ -177,8 +177,8 @@ test("帖子页（深色）：主题跟随站点深色模式", async () => {
 		canvas: getComputedStyle(document.body).backgroundColor,
 		text: getComputedStyle(document.body).color
 	}));
-	assert.equal(colors.canvas, "rgb(24, 25, 29)");
-	assert.equal(colors.text, "rgb(232, 233, 237)");
+	assert.equal(colors.canvas, "rgb(13, 14, 20)");
+	assert.equal(colors.text, "rgb(231, 232, 239)");
 	await settle(page, 700);
 	await shot(page, "post-dark");
 	assert.deepEqual(errors, []);
@@ -314,19 +314,28 @@ test("用户资料卡：黑白灰配色、数字用 Inter 等宽数字，NodeSee
 	await context.close();
 });
 
-test("悬停：用户卡片统计项、帖子行、热榜条目、NQ 入口不出现胶囊底色，只改变文字", async () => {
+test("悬停：用户卡片统计项、热榜条目、NQ 入口、页码不出现胶囊底色，只改变文字；帖子行整行浅灰底（复刻 sb.sb）", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector(".nsmax-hot-list li a", { timeout: 5e3 });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
 	await settle(page, 400);
 	const transparent = "rgba(0, 0, 0, 0)";
-	for (const selector of ["[data-nsmax-stat] a:not([hidden])", "ul.post-list > li.post-list-item", ".nsmax-hot-list > li > a", ".nsmax-shortcut", ".nsk-pager a"]) {
+	for (const selector of ["[data-nsmax-stat] a:not([hidden])", ".nsmax-hot-list > li > a", ".nsmax-shortcut"]) {
 		const target = page.locator(selector).first();
 		await target.hover();
 		await settle(page, 260);
 		const background = await target.evaluate((element) => getComputedStyle(element).backgroundColor);
 		assert.equal(background, transparent, `${selector} 悬停时出现底色 ${background}`);
 	}
+	const pager = page.locator(".nsk-pager a").first();
+	const pagerBackground = await pager.evaluate((element) => getComputedStyle(element).backgroundColor);
+	await pager.hover();
+	await settle(page, 260);
+	assert.equal(await pager.evaluate((element) => getComputedStyle(element).backgroundColor), pagerBackground, "页码悬停时换了底色");
+	const row = page.locator("ul.post-list > li.post-list-item").first();
+	await row.hover();
+	await settle(page, 260);
+	assert.equal(await row.evaluate((element) => getComputedStyle(element).backgroundColor), "rgb(242, 244, 247)");
 	await page.locator("ul.post-list > li.post-list-item").first().hover();
 	await settle(page, 260);
 	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("ul.post-list > li.post-list-item .post-title a")).textDecorationLine), "underline");
@@ -334,7 +343,7 @@ test("悬停：用户卡片统计项、帖子行、热榜条目、NQ 入口不�
 	await context.close();
 });
 
-test("深色模式：柔和深灰而非纯黑，发布按钮不再是站点绿色，侧栏卡片保持圆角", async () => {
+test("深色模式：sb.sb 深色配色（#0d0e14 深蓝灰，不是纯黑），发布按钮不再是站点绿色，侧栏卡片保持圆角", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ dark: true }) });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await page.waitForSelector(".nsmax-hot-panel", { timeout: 5e3 });
@@ -348,7 +357,7 @@ test("深色模式：柔和深灰而非纯黑，发布按钮不再是站点绿�
 			panels: Array.from(document.querySelectorAll("#nsk-right-panel-container .nsk-panel")).map((panel) => getComputedStyle(panel).borderTopLeftRadius)
 		};
 	});
-	assert.equal(state.body, "rgb(24, 25, 29)");
+	assert.equal(state.body, "rgb(13, 14, 20)");
 	assert.notEqual(state.bgMain, "#000");
 	assert.notEqual(state.submit, "rgb(26, 143, 74)");
 	assert.ok(state.panels.length >= 2 && state.panels.every((radius) => radius === "12px"), `侧栏卡片圆角：${state.panels.join(", ")}`);
@@ -390,20 +399,33 @@ test("字体：输入框、按钮、NodeSeek++ 控件都用 Inter，代码用 Je
 	await context.close();
 });
 
-test("翻页：页码不加边框圆圈，当前页只用加粗深色文字区分", async () => {
+test("翻页（复刻 sb.sb）：居中一排 30px 圆形描边胶囊，当前页实心，「下一页」同高", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 300);
-	const state = await page.evaluate(() => Array.from(document.querySelectorAll(".nsk-pager :is(a,span)")).map((element) => {
-		const style = getComputedStyle(element);
-		return { text: element.textContent.trim(), border: style.borderTopColor, background: style.backgroundColor, weight: style.fontWeight };
-	}));
-	assert.ok(state.length >= 2);
-	for (const item of state) {
-		assert.equal(item.border, "rgba(0, 0, 0, 0)", `页码 ${item.text} 仍有边框`);
-		assert.equal(item.background, "rgba(0, 0, 0, 0)", `页码 ${item.text} 有背景`);
+	const state = await page.evaluate(() => {
+		const pager = document.querySelector(".nsk-pager");
+		return {
+			justify: getComputedStyle(pager).justifyContent,
+			items: Array.from(pager.querySelectorAll(":is(a,span)")).map((element) => {
+				const style = getComputedStyle(element);
+				return { text: element.textContent.trim(), current: element.matches(".pager-cur"), border: style.borderTopColor, background: style.backgroundColor, color: style.color, radius: style.borderTopLeftRadius, height: Math.round(element.getBoundingClientRect().height) };
+			})
+		};
+	});
+	assert.equal(state.justify, "center");
+	assert.ok(state.items.length >= 3);
+	for (const item of state.items) {
+		assert.equal(item.height, 30, `页码 ${item.text} 高度 ${item.height}`);
+		assert.equal(item.radius, "999px");
+		if (item.current) {
+			assert.equal(item.background, "rgb(28, 28, 30)");
+			assert.equal(item.color, "rgb(255, 255, 255)");
+		} else {
+			assert.equal(item.border, "rgb(224, 226, 232)", `页码 ${item.text} 边框`);
+			assert.equal(item.background, "rgb(255, 255, 255)");
+		}
 	}
-	assert.equal(state.find((item) => item.text === "1").weight, "600");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -775,10 +797,10 @@ test("工具弹窗：回帖足迹统一成卡片式模态框，关闭按钮为�
 			};
 		});
 		assert.equal(state.radius, "12px");
-		assert.equal(state.background, dark ? "rgb(38, 39, 45)" : "rgb(255, 255, 255)");
+		assert.equal(state.background, dark ? "rgb(20, 21, 28)" : "rgb(255, 255, 255)");
 		assert.equal(state.closeFont, "0px");
 		assert.match(state.closeIcon, /svg/);
-		assert.equal(state.syncBackground, dark ? "rgb(232, 233, 237)" : "rgb(28, 28, 30)");
+		assert.equal(state.syncBackground, dark ? "rgb(238, 240, 246)" : "rgb(28, 28, 30)");
 		assert.equal(state.emptyAlign, "center");
 		assert.equal(state.emptyIcon, '""');
 		await shot(page, `footprints-${dark ? "dark" : "light"}`);
@@ -968,7 +990,9 @@ test("侧栏热榜：上次的榜单存在本地，刷新后直接显示，未�
 test("加载：页面加载完才插入的热榜面板按上次实测高度预留位置，插入时下面的卡片不移动；其余榜单空闲时预取", async () => {
 	// 页面末尾的内联脚本记下模块启动前「快捷入口」卡片的位置（热榜插在它前面）；第一次打开记录面板高度，刷新后应原地填入
 	const probe = `<script>window.__cardTop = document.querySelector(".quick-access").getBoundingClientRect().top;</script>`;
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage().replace("</body>", `${probe}</body>`) });
+	// 「快捷入口」默认隐藏；这里打开它，用它来量热榜插入时下面卡片的位移
+	const seed = { "nspp:settings:www.nodeseek.com": { "modern-theme": { hideQuickAccess: false } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage().replace("</body>", `${probe}</body>`), seed });
 	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
 	await settle(page, 400);
 	const first = await page.evaluate(() => ({ before: window.__cardTop, after: document.querySelector(".quick-access").getBoundingClientRect().top }));
@@ -1107,7 +1131,7 @@ test("加载：NodeSeek++ 夜间模式在页面解析阶段就生效，不再先
 	await context.close();
 });
 
-test("设置页：输入框浅底细边框、提交按钮用强调色、复选框跟随强调色，子导航当前项加粗", async () => {
+test("设置页：输入框白底深一档边框（sb.sb）、提交按钮用强调色、复选框跟随强调色，子导航当前项加粗", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/setting#/profile", { html: settingPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 500);
@@ -1125,7 +1149,7 @@ test("设置页：输入框浅底细边框、提交按钮用强调色、复选�
 		};
 	});
 	assert.equal(state.page, "setting");
-	assert.equal(state.input, "rgb(250, 251, 252)");
+	assert.equal(state.input, "rgb(255, 255, 255)");
 	assert.equal(state.inputRadius, "8px");
 	assert.equal(state.submit, "rgb(28, 28, 30)");
 	assert.equal(state.cancel, "rgb(255, 255, 255)");
@@ -1263,6 +1287,47 @@ test("消息中心与设置页：外层主栏不再多套一张卡片；资料�
 		assert.deepEqual(errors, []);
 		await context.close();
 	}
+});
+
+test("右侧栏「快捷入口」面板默认隐藏（与用户卡片重复），关闭开关后恢复显示", async () => {
+	for (const [seed, visible] of [[undefined, false], [{ "nspp:settings:www.nodeseek.com": { "modern-theme": { hideQuickAccess: false } } }, true]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed });
+		await page.waitForSelector(".nsmax-hot-panel", { timeout: 5e3 });
+		await settle(page, 300);
+		const state = await page.evaluate(() => ({ display: getComputedStyle(document.querySelector(".nsk-panel.quick-access")).display, beforeQuick: document.querySelector(".nsmax-hot-panel").nextElementSibling?.classList.contains("quick-access") }));
+		assert.equal(state.display !== "none", visible);
+		assert.ok(state.beforeQuick, "热榜仍插在快捷入口前面");
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
+});
+
+test("评论框（重新设计）：「内容 / 预览」与工具栏同一行，表情分类与发布评论同一行；作者行徽章为无边框软标签", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	await page.waitForSelector("[data-nsmax-submit-row] .nspp-upload-choose");
+	await page.waitForSelector("ul.comments .nspp-user-badges .nspp-age", { timeout: 8e3 });
+	await settle(page, 500);
+	const state = await page.evaluate(() => {
+		const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+		const tabs = box(".md-editor>.tab-select"), tools = box(".md-editor>.mde-toolbar"), expression = box(".md-editor>.expression"), submit = box(".md-editor button.submit"), editor = box(".md-editor");
+		const badge = getComputedStyle(document.querySelector("ul.comments .nspp-user-badges .nspp-age"));
+		return {
+			headerRow: Math.abs(tabs.top - tools.top) < 2 && tools.left > tabs.right - 1,
+			footerRow: submit.top > expression.top - 4 && submit.bottom < expression.bottom + 8 && submit.left > expression.right,
+			insideEditor: submit.right <= editor.right && submit.bottom <= editor.bottom,
+			radius: getComputedStyle(document.querySelector(".md-editor")).borderTopLeftRadius,
+			badgeBorder: badge.borderTopWidth,
+			badgeBackground: badge.backgroundColor
+		};
+	});
+	assert.ok(state.headerRow, "「内容 / 预览」与工具栏不在同一行");
+	assert.ok(state.footerRow, "表情分类与发布评论不在同一行");
+	assert.ok(state.insideEditor, "发布评论超出评论框");
+	assert.equal(state.radius, "14px");
+	assert.equal(state.badgeBorder, "0px");
+	assert.equal(state.badgeBackground, "rgb(242, 244, 247)");
+	assert.deepEqual(errors, []);
+	await context.close();
 });
 
 test("用户脚本元数据与版本一致", () => {
