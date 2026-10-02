@@ -1077,6 +1077,25 @@ test("评论框：按钮容器被站点设成固定高度、或「发布评论�
 	}
 });
 
+test("评论框：隐藏「支持markdown语法 / 支持MD语法」提示，工具栏其他按钮不受影响", async () => {
+	// 手机版提示文字在标签栏里、写作「支持MD语法」，并且和全屏等按钮挨着
+	const html = postPage().replace('<span class="tab">预览</span></div>', '<span class="tab">预览</span><span class="tab-right"><span class="md-tip">支持MD语法</span><span class="toolbar-item" title="全屏">全屏</span></span></div>');
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html });
+	await page.waitForSelector("[data-nsmax-md-hint]", { state: "attached", timeout: 5e3 });
+	const state = await page.evaluate(() => ({
+		toolbarHint: getComputedStyle(document.querySelector(".mde-toolbar .toolbar-item.right")).display,
+		tabHint: getComputedStyle(document.querySelector(".md-tip")).display,
+		fullscreen: getComputedStyle(document.querySelector('.tab-right [title="全屏"]')).display,
+		tools: Array.from(document.querySelectorAll(".mde-toolbar .toolbar-item:not(.right)")).every((item) => getComputedStyle(item).display !== "none")
+	}));
+	assert.equal(state.toolbarHint, "none");
+	assert.equal(state.tabHint, "none");
+	assert.notEqual(state.fullscreen, "none");
+	assert.equal(state.tools, true);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
 test("加载：NodeSeek++ 夜间模式在页面解析阶段就生效，不再先亮后暗", async () => {
 	const seed = { "nspp:settings:www.nodeseek.com": { "reading-navigation": { enabled: true, dark: true } } };
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed, init: `document.addEventListener("readystatechange", () => { if (document.readyState === "interactive") window.__darkBeforeScripts = document.body.classList.contains("dark-layout"); });` });
