@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.5.2
+// @version      1.5.3
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.5.2";
+	var NSMAX_VERSION = "1.5.3";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -4482,62 +4482,19 @@ var nsmaxRedirecting = false;
 					});
 				});
 				const remove = style(".nspp-callout{border-inline-start:3px solid currentColor;padding:10px 16px;margin:1em 0}.nspp-callout summary{cursor:pointer;font-weight:600}.nspp-image-viewer{max-width:95vw;max-height:95vh;padding:12px}.nspp-image-viewer img{max-width:90vw;max-height:82vh;object-fit:contain}.nspp-image-viewer::backdrop{background:rgb(0 0 0 / .8)}");
-				let dialog;
+				let closeViewer;
 				if (ctx.get("images")) window.addEventListener("click", (e) => {
 					if (!(e.target instanceof Element) || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 					const img = e.target.closest(`${contentSelector} img`);
 					if (!img) return;
 					e.preventDefault();
 					e.stopImmediatePropagation();
-					dialog?.remove();
-					dialog = document.createElement("dialog");
-					dialog.className = "nspp-image-viewer";
-					const close = document.createElement("button");
-					close.textContent = "关闭预览";
-					close.type = "button";
-					close.addEventListener("click", () => dialog?.close(), { signal: ctx.signal });
-					const large = document.createElement("img");
-					const gallery = Array.from(document.querySelectorAll(`${contentSelector} img`));
-					let index = Math.max(0, gallery.indexOf(img));
-					const count = document.createElement("span");
-					const previous = document.createElement("button");
-					previous.type = "button";
-					previous.textContent = "上一张";
-					const next = document.createElement("button");
-					next.type = "button";
-					next.textContent = "下一张";
-					const display = () => {
-						const selected = gallery[index];
-						large.src = selected.currentSrc || selected.src;
-						large.alt = selected.alt;
-						count.textContent = `${index + 1} / ${gallery.length}`;
-						previous.disabled = index === 0;
-						next.disabled = index === gallery.length - 1;
-					};
-					previous.addEventListener("click", () => {
-						index--;
-						display();
-					}, { signal: ctx.signal });
-					next.addEventListener("click", () => {
-						index++;
-						display();
-					}, { signal: ctx.signal });
-					dialog.addEventListener("keydown", (event) => {
-						if (event.key === "ArrowLeft" && index > 0) {
-							event.preventDefault();
-							index--;
-							display();
-						}
-						if (event.key === "ArrowRight" && index < gallery.length - 1) {
-							event.preventDefault();
-							index++;
-							display();
-						}
-					}, { signal: ctx.signal });
-					display();
-					dialog.append(close, previous, count, next, large);
-					document.body.append(dialog);
-					dialog.showModal();
+					// NodeSeek Max：改用悬停预览里的 Viewer.js 大图查看（深色遮罩、可缩放、同一楼多图切换），
+					// 不再弹出没有样式的简易对话框；图集取被点图片所在的这一楼正文。
+					if (closeViewer) return;
+					closeViewer = openImagePreview(img.closest(contentSelector) || img.parentElement, img, () => {
+						closeViewer = void 0;
+					});
 				}, {
 					capture: true,
 					signal: ctx.signal
@@ -4545,7 +4502,7 @@ var nsmaxRedirecting = false;
 				return () => {
 					stop();
 					remove();
-					dialog?.remove();
+					closeViewer?.();
 					undo.reverse().forEach((fn) => fn());
 				};
 			}
@@ -25638,10 +25595,12 @@ ${NSMAX_ROOT} .post-list-item :is(.post-info,.info-item),${NSMAX_ROOT} .nsk-cont
 ${NSMAX_ROOT} :is(.post-list-item,.content-item,.nsk-content-meta-info,.author-info) img:is(.avatar-normal,.avatar,[class*=avatar]){border-radius:20%;box-shadow:0 0 0 1px var(--nsmax-divider);background-color:var(--nsmax-panel-alt);object-fit:cover}
 ${NSMAX_ROOT} .comment-menu .menu-item{border-radius:var(--nsmax-control-radius)}
 ${NSMAX_ROOT} .comment-menu .menu-item:hover{background:transparent!important;color:var(--nsmax-text)}
-${NSMAX_ROOT} .nsk-pager :is(a,span){border-color:transparent!important;border-radius:var(--nsmax-control-radius);box-shadow:none!important;outline:0;background-color:transparent;color:var(--nsmax-muted)}
-${NSMAX_ROOT} .nsk-pager :is(a,span){font-size:13.5px;font-weight:500;line-height:1.6}
+/* 分页：页码保持纯文字（不加边框圆圈、悬停不加底色，只加深文字），当前页加粗深色；整行居中，
+   「上一页 / 下一页」与页码同一字号、同一高度垂直居中（原来 11px 小字比页码高出一截） */
+${NSMAX_ROOT} .nsk-pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px}
+${NSMAX_ROOT} .nsk-pager :is(a,span){display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:28px;height:30px;margin:0;padding:0 6px;border-color:transparent!important;border-radius:var(--nsmax-control-radius);box-shadow:none!important;outline-offset:2px;background-color:transparent;color:var(--nsmax-muted);font-size:13.5px;font-weight:500;line-height:1;text-decoration:none}
 ${NSMAX_ROOT} .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-current]){color:var(--nsmax-text)!important;font-weight:600;background-color:transparent!important}
-${NSMAX_ROOT} .nsk-pager :is(.pager-prev,.pager-next){color:var(--nsmax-muted);font-size:11px}
+${NSMAX_ROOT} .nsk-pager :is(.pager-prev,.pager-next){padding:0 8px;font-size:13px}
 ${NSMAX_ROOT} .nsk-pager a:hover{background:transparent!important;color:var(--nsmax-text)}
 ${NSMAX_ROOT} .btn{border-radius:999px}
 ${NSMAX_ROOT} button.submit.btn{background:var(--nsmax-accent);color:var(--nsmax-on-accent);border-color:transparent;box-shadow:0 6px 18px rgb(0 0 0/.14),inset 0 1px 0 rgb(255 255 255/.35)}
@@ -25699,13 +25658,20 @@ ${NSMAX_ROOT}[data-nsmax-page=post] .comment-menu{gap:2px}
 ${NSMAX_ROOT}[data-nsmax-page=post] .comment-menu .menu-item{color:var(--nsmax-muted)}
 /* 设置页（/setting）：输入框浅灰底、聚焦描边加光晕；复选框用强调色；次要按钮描边、提交按钮用强调色；
    分组和表格用细分隔线；hash 路由子导航（#/xxx）做成标签，当前项浅灰底加粗 */
-${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=color],[type=submit],[type=button],[type=hidden],[type=image]),textarea,select)${nsmaxSettingSkip}{box-sizing:border-box;min-height:36px;padding:7px 11px;border:1px solid var(--nsmax-stroke)!important;border-radius:8px!important;background:var(--nsmax-panel-alt)!important;color:var(--nsmax-text)!important;font-size:13.5px;line-height:1.5;box-shadow:none!important;outline:0;transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease}
+${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=color],[type=submit],[type=button],[type=hidden],[type=image]),textarea,select)${nsmaxSettingSkip}{box-sizing:border-box;min-height:36px;padding:7px 11px;border:1px solid var(--nsmax-stroke)!important;border-radius:8px!important;background-color:var(--nsmax-panel-alt)!important;color:var(--nsmax-text)!important;font-size:13.5px;line-height:1.5;box-shadow:none!important;outline:0;transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(input,textarea,select)${nsmaxSettingSkip}:hover{border-color:var(--nsmax-stroke-strong)!important}
-${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(input,textarea,select)${nsmaxSettingSkip}:focus{background:var(--nsmax-card)!important;border-color:var(--nsmax-stroke-strong)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent)!important}
+${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(input,textarea,select)${nsmaxSettingSkip}:focus{background-color:var(--nsmax-card)!important;border-color:var(--nsmax-stroke-strong)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent)!important}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(input,textarea)${nsmaxSettingSkip}::placeholder{color:var(--nsmax-muted);opacity:1}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body textarea${nsmaxSettingSkip}{min-height:88px;resize:vertical}
+/* 下拉框：去掉系统箭头，换成与设置面板一致的细线箭头 */
+${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body select:not([multiple])${nsmaxSettingSkip}{-webkit-appearance:none;appearance:none;padding-right:32px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6f7e' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:14px!important;cursor:pointer}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(input[type=checkbox],input[type=radio])${nsmaxSettingSkip}{width:16px;height:16px;margin:0 6px 0 0;accent-color:var(--nsmax-accent);vertical-align:-3px}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body label${nsmaxSettingSkip}{color:var(--nsmax-text-2)}
+/* 包着输入框的标签：标签文字单独一行、输入框在下面，每项之间留出间距，不再和下一项挤在同一行；复选框标签单独成行 */
+${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body label:has(>:is(input:not([type=checkbox],[type=radio],[type=hidden]),textarea,select))${nsmaxSettingSkip}{display:grid;gap:6px;max-width:560px;margin:0 0 14px;font-size:13px;font-weight:500}
+${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body label:has(>:is(input[type=checkbox],input[type=radio])):not(:has(>:is(textarea,select)))${nsmaxSettingSkip}{display:flex;align-items:center;width:fit-content;margin:0 0 14px;font-size:13.5px}
+/* 主栏本身已是卡片：设置面板不再套第二层边框 */
+${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-left>.nsk-panel{padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(h1,h2,h3,h4,legend)${nsmaxSettingSkip}{color:var(--nsmax-text);font-weight:600;letter-spacing:-.01em}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(h1,h2)${nsmaxSettingSkip}{font-size:17px}
 ${NSMAX_ROOT}[data-nsmax-page=setting] #nsk-body :is(h3,h4,legend)${nsmaxSettingSkip}{font-size:15px}
@@ -25781,8 +25747,8 @@ ${NSMAX_ROOT} .nspp-floating-reply-header button{min-height:30px;padding:0 12px;
    操作栏平时淡一些，悬停这一楼时再清晰；顶部加「全部回复」小标题和主帖分开 */
 ${NSMAX_ROOT}[data-nsmax-page=post] ul.comments{--nsmax-reply-avatar:32px;--nsmax-reply-indent:44px}
 ${NSMAX_ROOT}[data-nsmax-page=post] ul.comments:has(>li.content-item){margin-top:18px;border-top:1px solid var(--nsmax-divider)}
-${NSMAX_ROOT}[data-nsmax-page=post] ul.comments:has(>li.content-item)::before{content:"全部回复";display:block;padding:13px 4px 3px;color:var(--nsmax-text);font-size:14px;font-weight:600}
-${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows] ul.comments>li.content-item{padding:14px 4px 12px}
+${NSMAX_ROOT}[data-nsmax-page=post] ul.comments:has(>li.content-item)::before{content:"全部回复";display:block;padding:13px 0 3px;color:var(--nsmax-text);font-size:14px;font-weight:600}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows] ul.comments>li.content-item{padding:14px 0 12px}
 ${NSMAX_ROOT}[data-nsmax-page=post] ul.comments>li.content-item>.nsk-content-meta-info{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-height:var(--nsmax-reply-avatar);margin:0}
 ${NSMAX_ROOT}[data-nsmax-page=post] ul.comments>li.content-item>.nsk-content-meta-info img:is(.avatar-normal,.avatar,[class*=avatar]){display:block;width:var(--nsmax-reply-avatar)!important;height:var(--nsmax-reply-avatar)!important;margin-right:4px}
 ${NSMAX_ROOT}[data-nsmax-page=post] ul.comments>li.content-item>:not(.nsk-content-meta-info){margin-left:var(--nsmax-reply-indent)}
@@ -25870,6 +25836,10 @@ ${NSMAX_ROOT} .nsmax-hot-rank{width:16px;font-size:12px;font-weight:500;color:va
 ${NSMAX_ROOT} .nsmax-hot-skeleton{box-sizing:border-box;height:32px;padding:6px 8px!important}
 /* NodeSeek++ 侧栏工具：图标统一线条、黑白灰，去掉热榜按钮的橙色渐变与监控运行时的绿色 */
 ${NSMAX_ROOT} #nspp-tools{background:var(--nsmax-surface);border-color:var(--nsmax-stroke);border-radius:14px;box-shadow:var(--nsmax-shadow-pop);gap:2px;padding:5px}
+/* 工具栏位置：内容区宽 M、内边距 p、窗口宽 W（100%）。工具栏放在内容右侧 24px 处：right = (W - M) / 2 - 68px，最少 12px；
+   右侧空白放不下时（W < M + 160px），内容区与顶栏右内边距加到 M + p + 160px - W（最多 p + 68px），内容右边正好让到工具栏左侧 24px 处。
+   两者都随窗口宽度连续变化，首屏就是最终位置，拖动窗口时也不会突然跳动 */
+@media (width>700px) and (hover:hover){${NSMAX_ROOT}:has(#nsk-body) #nspp-tools{right:max(12px,calc((100% - var(--nsmax-body-max,1100px)) / 2 - 68px))}${NSMAX_ROOT}[data-nsmax-tools] :is(#nsk-body,#nsk-head>.nsk-container){padding-right:clamp(var(--nsmax-body-pad,12px),calc(var(--nsmax-body-max,1100px) + var(--nsmax-body-pad,12px) + 160px - 100%),calc(var(--nsmax-body-pad,12px) + 68px))!important}}
 ${NSMAX_ROOT} body.dark-layout :is(#nspp-tools,.nspp-post-preview){--bg-color:var(--nsmax-surface);--text-color:var(--nsmax-text);--border-color:var(--nsmax-divider);--link-color:var(--nsmax-accent)}
 ${NSMAX_ROOT} #nspp-tools .nspp-tool-icon,${NSMAX_ROOT} #nspp-tools button.nspp-tool-icon:is([data-monitor-state],[data-unread=true]){width:32px;height:32px;min-height:32px;border:0;border-radius:9px;background:transparent;color:var(--nsmax-text-2);box-shadow:none;filter:none}
 ${NSMAX_ROOT} #nspp-tools .nspp-tool-icon:hover,${NSMAX_ROOT} #nspp-tools button.nspp-tool-icon:is([data-monitor-state],[data-unread=true]):hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
@@ -25892,6 +25862,12 @@ ${NSMAX_ROOT} [data-nsmax-usercard] a[href*="/space/"]:not(:has(img)){color:var(
 ${NSMAX_ROOT} .post-title :is(.nspp-readonly,[data-nspp-footprint]),${NSMAX_ROOT} body.dark-layout .post-title .nspp-readonly{display:inline-flex;align-items:center;height:20px;padding:0 8px!important;border:1px solid var(--nsmax-stroke)!important;border-radius:999px!important;background:var(--nsmax-panel-alt)!important;color:var(--nsmax-muted)!important;font-size:11px!important;font-weight:400!important;line-height:1!important;text-decoration:none!important;vertical-align:2px}
 ${NSMAX_ROOT} .post-title [data-nspp-footprint]:hover{border-color:var(--nsmax-stroke-strong)!important;color:var(--nsmax-text)!important}
 ${NSMAX_ROOT} .nspp-copy-button[data-copied=true]{color:var(--nsmax-text)}
+/* 代码块「复制代码」：不再单独占一行压在代码块上方，收成代码块右上角的图标按钮（不占版面），悬停代码块或聚焦时出现（参考 sb.sb） */
+${NSMAX_ROOT} :is(.post-content,.comment-content,.nsk-content,.markdown-body):has(>[data-nspp-copy]),${NSMAX_ROOT} :is(.post-content,.comment-content,.nsk-content,.markdown-body) :has(>[data-nspp-copy]){position:relative}
+${NSMAX_ROOT} [data-nspp-copy]{position:absolute;right:8px;z-index:1;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;margin:8px 0 0;padding:0;border:1px solid var(--nsmax-stroke);border-radius:7px;background:var(--nsmax-card);color:var(--nsmax-muted);font-size:0;line-height:1;opacity:0;transition:opacity .15s ease,color .15s ease,border-color .15s ease}
+${NSMAX_ROOT} [data-nspp-copy]:is(:hover,:focus-visible,[data-copied=true],:has(+pre:hover)){opacity:1}
+${NSMAX_ROOT} [data-nspp-copy]:hover{border-color:var(--nsmax-stroke-strong);background:var(--nsmax-card);color:var(--nsmax-text)}
+${NSMAX_ROOT} [data-nspp-copy] svg{width:14px;height:14px}
 /* NodeSeek++ 页面里的操作按钮（加载下一页、加载失败重试、签到等）：与站点按钮一致的描边胶囊 */
 ${NSMAX_ROOT} :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-icon){display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;border:1px solid var(--nsmax-stroke);border-radius:999px;background:var(--nsmax-card);color:var(--nsmax-text-2);font-size:12.5px;cursor:pointer;transition:border-color .15s ease,color .15s ease,background-color .15s ease}
 ${NSMAX_ROOT} :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-icon):hover:not(:disabled){border-color:var(--nsmax-stroke-strong);color:var(--nsmax-text)}
@@ -26011,10 +25987,13 @@ ${NSMAX_ROOT} .nspp-regex-help:hover{color:var(--nsmax-text);border-color:var(--
 ${NSMAX_ROOT} .nspp-monitor.nspp-hot-rankings{padding:0;border-radius:12px 0 0 12px;border-right-width:0}
 ${NSMAX_ROOT} .nspp-hot-rankings>.nspp-hot-header{gap:10px;padding:12px 10px 12px 18px}
 ${NSMAX_ROOT} .nspp-hot-rankings>.nspp-hot-header>h2{margin:0}
-${NSMAX_ROOT} .nspp-hot-rankings nav{gap:2px}
-${NSMAX_ROOT} .nspp-hot-rankings nav button{min-height:28px;padding:0 11px;border-color:transparent;border-radius:999px;color:var(--nsmax-muted);font-size:12.5px}
-${NSMAX_ROOT} .nspp-hot-rankings nav button[aria-pressed=true]{background:var(--nsmax-dlg-fill);color:var(--nsmax-text);font-weight:600}
-${NSMAX_ROOT} .nspp-hot-rankings nav>:last-child{margin-left:auto}
+/* 榜单切换与侧栏热榜同一套描边小胶囊（当前榜单实心）；「刷新」与榜单分开，放在右侧 */
+${NSMAX_ROOT} .nspp-hot-rankings nav{gap:6px}
+${NSMAX_ROOT} .nspp-hot-rankings nav button{min-height:26px;padding:0 11px;border:1px solid var(--nsmax-stroke);border-radius:999px;background:transparent;color:var(--nsmax-text-2);font-size:12px;font-weight:500;transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+${NSMAX_ROOT} .nspp-hot-rankings nav button:hover:not(:disabled){border-color:var(--nsmax-stroke-strong);background:transparent;color:var(--nsmax-text)}
+${NSMAX_ROOT} .nspp-hot-rankings nav button[aria-pressed=true],${NSMAX_ROOT} .nspp-hot-rankings nav button[aria-pressed=true]:hover{border-color:var(--nsmax-accent);background:var(--nsmax-accent);color:var(--nsmax-on-accent)}
+${NSMAX_ROOT} .nspp-hot-rankings nav>button:not([data-ranking]){margin-left:auto;border-color:transparent;color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nspp-hot-rankings nav>button:not([data-ranking]):hover:not(:disabled){border-color:transparent;background:transparent;color:var(--nsmax-text)}
 ${NSMAX_ROOT} .nspp-hot-rankings>[role=status]{margin:0;padding:8px 18px 4px;font-size:12px}
 ${NSMAX_ROOT} .nspp-hot-rankings>[role=status].nspp-sweep-shine{background-color:transparent}
 ${NSMAX_ROOT} .nspp-hot-rankings>ol{padding:0 10px 12px}
@@ -26031,7 +26010,37 @@ ${NSMAX_ROOT} .nspp-hot-rankings .nspp-hot-skeleton :is(span){background-color:v
 @media (width<=600px){${NSMAX_ROOT} .nspp-monitor:not(.nspp-hot-rankings){border-radius:12px 12px 0 0}}
 @media (width<=700px),(hover:none){${NSMAX_ROOT} .nspp-monitor.nspp-hot-rankings{border-radius:12px 12px 0 0;border-right-width:1px;border-bottom-width:0}${NSMAX_ROOT} .nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings){border-radius:12px 12px 0 0}}
 @media (width<=480px){${NSMAX_ROOT} .nspp-confirm-dialog{border-radius:12px 12px 0 0}}
+/* 大图查看（Viewer.js，帖子正文与悬停预览共用）：遮罩与工具栏从偏蓝的深色改成中性黑灰，底部缩略图条去掉黑色底带 */
+${NSMAX_ROOT} .nspp-image-preview::backdrop{background:rgb(12 12 14/.9)}
+${NSMAX_ROOT} .nspp-image-preview :is(.viewer-toolbar>ul,.viewer-button){border-color:rgb(255 255 255/.14);background:rgb(36 37 43/.92)}
+${NSMAX_ROOT} .nspp-image-preview .viewer-navbar{background:transparent}
+${NSMAX_ROOT} .nspp-image-preview .viewer-canvas>img{border-radius:6px}
 ${NSMAX_ROOT} .nspp-post-preview{background-color:var(--nsmax-popup);border-color:var(--nsmax-stroke);border-radius:12px;box-shadow:var(--nsmax-shadow-pop);-webkit-backdrop-filter:var(--nsmax-blur);backdrop-filter:var(--nsmax-blur)}
+/* 帖子悬停预览（参考 sb.sb 弹出卡片）：标题 14px 粗体，打开时自动聚焦标题也不画粗框，只加下划线；正文 13px 与帖子同一套排版
+   （代码块、引用、表格、行内代码），底栏把互动按钮与「查看原帖」排成一行 */
+${NSMAX_ROOT} .nspp-post-preview{width:min(400px,100vw - 24px);max-height:min(380px,100dvh - 24px)}
+${NSMAX_ROOT} .nspp-post-preview>header{gap:8px;padding:11px 14px 10px;border-bottom:1px solid var(--nsmax-divider);font-size:14px;line-height:1.45}
+${NSMAX_ROOT} .nspp-post-preview>header a{color:var(--nsmax-text);font-weight:600}
+${NSMAX_ROOT} .nspp-post-preview>header a:is(:hover,:focus,:focus-visible){outline:0;text-decoration:underline;text-decoration-color:var(--nsmax-stroke-strong);text-underline-offset:3px}
+${NSMAX_ROOT} .nspp-post-preview>p{padding:8px 14px 0;color:var(--nsmax-muted);font-size:12px}
+${NSMAX_ROOT} .nspp-post-preview .nspp-preview-content{padding:10px 14px 12px;color:var(--nsmax-text-2);font-size:13px;line-height:1.65}
+${NSMAX_ROOT} .nspp-post-preview .nspp-preview-meta{margin:0 0 6px;color:var(--nsmax-muted);font-size:12px}
+${NSMAX_ROOT} .nspp-preview-content :is(h1,h2,h3,h4,h5,h6){margin:.7em 0 .35em;color:var(--nsmax-text);font-size:14px;font-weight:600;line-height:1.45}
+${NSMAX_ROOT} .nspp-preview-content :is(p,ul,ol){margin:.45em 0}
+${NSMAX_ROOT} .nspp-preview-content :not(pre)>code{padding:.1em .35em;border-radius:4px;background:var(--nsmax-fill);color:var(--nsmax-text);font-size:.92em}
+${NSMAX_ROOT} .nspp-preview-content pre{margin:.6em 0;padding:8px 10px;overflow:auto;border:1px solid var(--nsmax-divider);border-radius:8px;background:var(--nsmax-panel-alt);color:var(--nsmax-text);font-size:12px;line-height:1.55}
+${NSMAX_ROOT} .nspp-preview-content blockquote{margin:.6em 0;padding:2px 0 2px 10px;border-left:2px solid var(--nsmax-stroke-strong);color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nspp-preview-content table{margin:.6em 0;border-collapse:collapse;font-size:12.5px}
+${NSMAX_ROOT} .nspp-preview-content :is(th,td){padding:4px 9px;border:1px solid var(--nsmax-divider);text-align:left}
+${NSMAX_ROOT} .nspp-preview-content th{background:var(--nsmax-panel-alt);color:var(--nsmax-text);font-weight:600}
+${NSMAX_ROOT} .nspp-preview-content img{max-width:100%;height:auto;border-radius:8px}
+${NSMAX_ROOT} .nspp-post-preview>footer{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 14px;border-top:1px solid var(--nsmax-divider);font-size:12px}
+${NSMAX_ROOT} .nspp-post-preview>footer .nspp-list-actions{gap:4px;margin-right:auto;padding:0}
+${NSMAX_ROOT} .nspp-post-preview>footer .nspp-list-actions:empty{display:none}
+${NSMAX_ROOT} .nspp-post-preview>footer .nspp-list-actions button{display:inline-flex;align-items:center;gap:4px;min-height:26px;padding:0 8px;border-radius:999px;color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nspp-post-preview>footer .nspp-list-actions button:hover{background:transparent;color:var(--nsmax-text);text-decoration:none}
+${NSMAX_ROOT} .nspp-post-preview>footer>a{margin-left:auto;color:var(--nsmax-muted);opacity:1}
+${NSMAX_ROOT} .nspp-post-preview>footer>a:hover{color:var(--nsmax-text);text-decoration:none}
 /* 用户资料卡（NodeSeek++ 悬浮卡）：黑白灰，不再按信任等级换底色；数字用等宽数字字体 */
 ${NSMAX_ROOT} .nspp-user-hover,${NSMAX_ROOT} .nspp-user-hover[data-trust]{background:var(--nsmax-popup)!important;color:var(--nsmax-text)!important;border:1px solid var(--nsmax-stroke)!important;border-radius:14px!important;box-shadow:var(--nsmax-shadow-pop)!important;color-scheme:light dark;width:272px!important;padding:12px!important;line-height:1.5!important}
 ${NSMAX_ROOT} .nspp-user-hover :is(.nspp-user-hover-name,dd,dd a,.nspp-user-hover-score,.nspp-user-hover-score strong){color:var(--nsmax-text)!important;text-shadow:none!important;filter:none!important}
@@ -26062,6 +26071,8 @@ ${NSMAX_ROOT} body.dark-layout .nspp-messages{--chat-bg:var(--nsmax-canvas);--ch
 ${NSMAX_ROOT} .nspp-messages :focus-visible{outline-color:color-mix(in srgb,var(--nsmax-text) 35%,transparent)}
 /* 消息中心接管的原生容器（通常是一张面板）：去掉它自己的边框、底色与内边距，只留消息中心这一张卡片，不再一层套一层 */
 ${NSMAX_ROOT} :is(#nsk-body,#nsk-left-panel-container,#nsk-right-panel-container,body) .nspp-messages-container[data-nspp-message-view=new]{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+/* 站点主栏本身也是一张卡片（白底 + 内边距）：消息中心接管时一并去掉，外面不再多一圈白边 */
+${NSMAX_ROOT} #nsk-left:has(>.nspp-messages-container[data-nspp-message-view=new]){padding:0!important;border-color:transparent!important;background:transparent!important;box-shadow:none!important}
 ${NSMAX_ROOT} .nspp-messages-top{min-height:48px;padding:0 10px 0 16px}
 ${NSMAX_ROOT} .nspp-messages-top .nspp-messages-heading strong{font-size:14px}
 ${NSMAX_ROOT} .nspp-messages-top-actions{align-items:center;gap:2px}
@@ -26075,6 +26086,10 @@ ${NSMAX_ROOT} .nspp-messages-search input:hover{border-color:var(--nsmax-stroke-
 ${NSMAX_ROOT} .nspp-messages-search input:focus{outline:0;border-color:var(--nsmax-stroke-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-text) 7%,transparent)}
 ${NSMAX_ROOT} .nspp-messages-search>button,${NSMAX_ROOT} .nspp-messages-refresh{width:34px;min-width:34px;height:34px;border-radius:999px!important;color:var(--nsmax-muted)}
 ${NSMAX_ROOT} .nspp-messages-search>button:hover,${NSMAX_ROOT} .nspp-messages-refresh:hover{background:var(--nsmax-fill)!important;color:var(--nsmax-text)}
+/* 搜索框旁的文字按钮（通知页的「刷新」）：与顶栏「全部已读」同样的胶囊文字按钮，不被压成 34px 宽 */
+${NSMAX_ROOT} .nspp-messages-search>button:not(.nspp-messages-refresh){width:auto;padding:0 12px!important;color:var(--nsmax-text-2);font-size:12.5px}
+/* 资料卡读取中 / 读取失败时只有一行文字：不按五列统计网格排，免得挤在第一格里折行 */
+${NSMAX_ROOT} .nspp-chat-profile-data:not(:has(>*)){display:block}
 ${NSMAX_ROOT} .nspp-messages .nspp-messages-peer{gap:10px;min-height:60px;margin:0 6px;width:calc(100% - 12px);padding:9px 10px;border-radius:8px;transition:background-color .15s ease}
 ${NSMAX_ROOT} .nspp-messages-peer:hover{background:var(--nsmax-fill)}
 ${NSMAX_ROOT} :is(.nspp-messages-peer[aria-pressed=true],.nspp-messages-fixed-contacts a[aria-current]){background:var(--nsmax-card);box-shadow:0 0 0 1px var(--nsmax-stroke),0 1px 2px rgb(0 0 0/.04)}
@@ -26265,7 +26280,7 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 :host([data-nsmax-glass]) button:active{scale:.96;transition-duration:.2s,.2s,.2s,.12s}
 :host([data-nsmax-glass]) .about-content{padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
 :host([data-nsmax-glass]) .about-links a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
-:host([data-nsmax-glass]) .toast{color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgb(0 0 0/.16)}
+:host([data-nsmax-glass]) .toast{color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgb(0 0 0/.16);inset:max(78px,env(safe-area-inset-top)) 16px auto auto}
 :host([data-nsmax-glass]) .toast[data-type=success] .toast-icon{color:var(--text)}
 :host([data-nsmax-glass]) .toast[data-type=error] .toast-icon{color:#ff3b30}
 @media (min-width:701px) and (hover:hover){
@@ -26617,6 +26632,8 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 					const height = Math.round(stat?.getBoundingClientRect().height || 0);
 					if (height > 0 && Math.abs((ctx.get("stat-height") || 0) - height) > 1) ctx.set("stat-height", height);
 				};
+				measureToolsGutter();
+				cleanups.push(clearToolsGutter);
 				const statTimer = setTimeout(settleStat, 3e3);
 				const stopStat = ctx.watch(() => {
 					if (document.querySelector("[data-nsmax-stat] .nspp-notification-row")) settleStat();
@@ -26722,9 +26739,12 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 	// 页面加载完后才插入的块（侧栏热榜、NQ 快捷入口）：页面解析阶段按上次实测的高度先在原位置留出空白，
 	// 插入时同一帧撤掉，内容不会被顶开。没有记录（第一次使用）时不预留；2.5 秒后无论如何撤掉。
 	var nsmaxReserved = new Map();
+	// 已经撤掉过的预留不再重新加：模块有时比页面解析阶段先完成插入（站点脚本与脚本加载的先后不固定），
+	// 这时再按记录预留，空白会一直挂到 2.5 秒兜底才撤掉，下面的卡片先被顶开再跳回来。
+	var nsmaxReleased = new Set();
 	// margin / padding：在原值上加上位移；min-height：shift 是要撑到的整体高度（含内边距与边框）。
 	function reserveSpace(name, element, property, shift) {
-		if (!element || !(shift > 0) || shift > 2e3) return;
+		if (!element || !(shift > 0) || shift > 2e3 || nsmaxReleased.has(name) || nsmaxReserved.has(name)) return;
 		const style = getComputedStyle(element);
 		let value;
 		if (property === "min-height") {
@@ -26744,8 +26764,27 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 		nsmaxReserved.set(name, () => element.style.removeProperty(property));
 	}
 	function releaseReserve(name) {
+		nsmaxReleased.add(name);
 		nsmaxReserved.get(name)?.();
 		nsmaxReserved.delete(name);
+	}
+	// 侧边工具栏：右侧留白足够时由 dockToolbar 停靠到内容区外侧；不够时 NodeSeek++ 原本固定在距右边 72px，
+	// 窗口在 1000～1400px 宽时正好压住右侧栏（热榜的回复数被挡住）。位置与让位都由主题样式按窗口宽度连续计算（见「工具栏位置」），
+	// 这里只把站点内容区的实际 max-width 与左右内边距写成变量（默认 1100px / 12px）。样式表还没加载完时读到的 max-width 是 none，
+	// 这时不写，沿用默认值。
+	function measureToolsGutter() {
+		const body = document.getElementById("nsk-body");
+		if (!body) return;
+		const style = getComputedStyle(body);
+		const pad = parseFloat(style.paddingLeft);
+		const max = parseFloat(style.maxWidth);
+		if (!Number.isFinite(max) || !Number.isFinite(pad)) return;
+		const root = document.documentElement;
+		root.style.setProperty("--nsmax-body-max", `${style.boxSizing === "border-box" ? max - pad * 2 : max}px`);
+		root.style.setProperty("--nsmax-body-pad", `${pad}px`);
+	}
+	function clearToolsGutter() {
+		for (const name of ["--nsmax-body-max", "--nsmax-body-pad"]) document.documentElement.style.removeProperty(name);
 	}
 	function featureState(id) {
 		const state = GM_getValue$1(`nspp:state:${location.hostname}:${id}`, {});
@@ -26816,6 +26855,7 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 				root.toggleAttribute("data-nsmax-sidenav", box.width > 0 && box.height > 0 && box.right > 0 && box.left < window.innerWidth);
 			});
 			region("right", () => document.getElementById("nsk-right-panel-container"), (sidebar) => {
+				measureToolsGutter();
 				(nsmaxCardMarker || (nsmaxCardMarker = createCardMarker({ hideNewMembers: options.hideNewMembers }))).apply();
 				// 用户卡的统计区：NodeSeek++「通知分类」要等未读数接口返回后才插入「回复 / @我 / 私信」一行，统计区会变高、
 				// 把下面所有卡片往下推；这里按上次的最终高度先撑开，那一行插入后再撤掉（见主题模块）。
@@ -26881,6 +26921,8 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 		root.dataset.nsmaxSize = options.fontSize;
 		// 只保留简洁风格（液态玻璃风格已移除）；属性保留，主题与设置面板的样式仍以它为条件。
 		root.dataset.nsmaxStyle = "flat";
+		// 脚本在运行（侧边工具栏会出现）：窄窗口时内容区给工具栏让位的规则以它为条件，独立主题 CSS 里没有工具栏，不让位。
+		root.setAttribute("data-nsmax-tools", "");
 		const custom = /^#[0-9a-f]{6}$/i.test(options.customAccent) ? options.customAccent : NSMAX_ACCENTS.indigo;
 		const accent = options.accent === "custom" ? custom : NSMAX_ACCENTS[options.accent];
 		if (accent) {

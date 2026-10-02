@@ -1137,6 +1137,134 @@ test("设置页：输入框浅底细边框、提交按钮用强调色、复选�
 	await context.close();
 });
 
+test("侧边工具栏：任何桌面宽度都放在内容右侧 24px 处，不压住右侧栏；窄窗口时内容区让出位置", async () => {
+	for (const width of [1024, 1240, 1280, 1366, 1440]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width, height: 860 } });
+		await page.waitForSelector("#nspp-tools button");
+		await settle(page, 500);
+		const state = await page.evaluate(() => {
+			const tools = document.getElementById("nspp-tools").getBoundingClientRect();
+			const right = document.getElementById("nsk-right-panel-container").getBoundingClientRect();
+			return { gap: Math.round(tools.left - right.right), edge: Math.round(innerWidth - tools.right), scroll: document.documentElement.scrollWidth - innerWidth };
+		});
+		assert.ok(state.gap >= 23, `${width}px：工具栏与右侧栏间距 ${state.gap}px`);
+		assert.ok(state.edge >= 12, `${width}px：工具栏离窗口右边 ${state.edge}px`);
+		assert.equal(state.scroll, 0, `${width}px：出现横向滚动`);
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
+});
+
+test("帖子页细节：复制代码收进代码块右上角、回复与主楼对齐、点图片用 Viewer.js 大图查看", async () => {
+	const image = `<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='320' height='180' fill='%23748094'/%3E%3C/svg%3E" alt="截图">`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage().replace("这是一段正文", `${image}这是一段正文`) });
+	await page.waitForSelector("[data-nspp-copy]");
+	await settle(page, 500);
+	const state = await page.evaluate(() => {
+		const button = document.querySelector("[data-nspp-copy]"), pre = button.nextElementSibling;
+		const b = button.getBoundingClientRect(), p = pre.getBoundingClientRect(), prev = button.previousElementSibling.getBoundingClientRect();
+		const avatar = (selector) => document.querySelector(`${selector} img.avatar-normal`).getBoundingClientRect().left;
+		return {
+			inside: b.top >= p.top && b.bottom <= p.bottom && b.right <= p.right && b.left >= p.left,
+			flow: Math.round(p.top - prev.bottom),
+			opacity: getComputedStyle(button).opacity,
+			avatars: [avatar(".nsk-post"), avatar("ul.comments>li")]
+		};
+	});
+	assert.ok(state.inside, "复制按钮不在代码块内");
+	assert.ok(state.flow <= 20, `复制按钮仍占一行：代码块与上一段间距 ${state.flow}px`);
+	assert.equal(state.opacity, "0");
+	assert.equal(state.avatars[0], state.avatars[1], `回复头像与主楼头像未对齐：${state.avatars.join(" / ")}`);
+	await page.hover("[data-nspp-copy] + pre");
+	await settle(page, 250);
+	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-nspp-copy]")).opacity), "1");
+	await page.click(".nsk-post .post-content img");
+	await page.waitForSelector("dialog.nspp-image-preview[open]");
+	assert.equal(await page.evaluate(() => document.querySelectorAll("dialog.nspp-image-viewer").length), 0);
+	await page.keyboard.press("Escape");
+	await settle(page, 400);
+	assert.equal(await page.evaluate(() => document.querySelectorAll("dialog[open]").length), 0);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("弹层细节：帖子预览标题不画粗聚焦框、表格有细线；热榜抽屉榜单与侧栏同款胶囊；提示条在顶栏下方", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages: { "/post-1000-1": postPage() } });
+	await page.waitForSelector("#nspp-tools button");
+	await settle(page, 500);
+	await page.hover(".post-list-item .post-title a");
+	await page.waitForSelector(".nspp-post-preview[open] .nspp-preview-content table");
+	await settle(page, 300);
+	const preview = await page.evaluate(() => {
+		const title = document.querySelector(".nspp-post-preview>header a"), cell = document.querySelector(".nspp-preview-content td");
+		return { outline: getComputedStyle(title).outlineStyle, size: getComputedStyle(title).fontSize, cell: getComputedStyle(cell).borderTopStyle, width: Math.round(document.querySelector(".nspp-post-preview").getBoundingClientRect().width) };
+	});
+	assert.equal(preview.outline, "none");
+	assert.equal(preview.size, "14px");
+	assert.equal(preview.cell, "solid");
+	assert.equal(preview.width, 400);
+	await page.mouse.move(5, 700);
+	await settle(page, 500);
+	await page.click("#nspp-tools [data-nspp-hot-launcher]");
+	await page.waitForSelector(".nspp-hot-rankings[open] nav button[aria-pressed=true]");
+	await settle(page, 400);
+	const hot = await page.evaluate(() => {
+		const style = (element) => getComputedStyle(element);
+		const active = document.querySelector(".nspp-hot-rankings nav button[aria-pressed=true]");
+		const idle = document.querySelector(".nspp-hot-rankings nav button[data-ranking][aria-pressed=false]");
+		const refresh = document.querySelector(".nspp-hot-rankings nav>button:not([data-ranking])");
+		return { active: style(active).backgroundColor, idle: style(idle).borderTopColor, refresh: style(refresh).borderTopColor };
+	});
+	assert.equal(hot.active, "rgb(28, 28, 30)");
+	assert.equal(hot.idle, "rgb(224, 226, 232)");
+	assert.equal(hot.refresh, "rgba(0, 0, 0, 0)");
+	const toastTop = await page.evaluate(() => {
+		const toast = document.getElementById("nspp-settings")?.shadowRoot?.querySelector(".toast");
+		return toast ? parseFloat(getComputedStyle(toast).top) : null;
+	});
+	if (toastTop !== null) assert.ok(toastTop >= 78, `提示条压在顶栏上：top ${toastTop}px`);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("消息中心与设置页：外层主栏不再多套一张卡片；资料读取中一行显示；设置项标签在输入框上方", async () => {
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
+		await page.waitForSelector(".nspp-messages:not([hidden])");
+		await settle(page, 600);
+		const state = await page.evaluate(() => {
+			const main = getComputedStyle(document.getElementById("nsk-left"));
+			const data = document.querySelector(".nspp-chat-profile-data");
+			return { padding: main.paddingTop, background: main.backgroundColor, data: data && !data.children.length ? getComputedStyle(data).display : "block" };
+		});
+		assert.equal(state.padding, "0px");
+		assert.equal(state.background, "rgba(0, 0, 0, 0)");
+		assert.equal(state.data, "block");
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/setting#/profile", { html: settingPage() });
+		await page.waitForSelector("html[data-nsmax-theme]");
+		await settle(page, 500);
+		const state = await page.evaluate(() => {
+			const label = document.querySelector("label:has(>input[type=email])"), input = label.querySelector("input");
+			const text = document.createRange();
+			text.selectNodeContents(label.firstChild);
+			return {
+				above: text.getBoundingClientRect().bottom <= input.getBoundingClientRect().top,
+				panel: getComputedStyle(document.querySelector("#nsk-left>.nsk-panel")).borderTopWidth,
+				select: getComputedStyle(document.querySelector("select")).appearance
+			};
+		});
+		assert.ok(state.above, "标签文字没有在输入框上方");
+		assert.equal(state.panel, "0px");
+		assert.equal(state.select, "none");
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
+});
+
 test("用户脚本元数据与版本一致", () => {
 	const source = fs.readFileSync(path.join(ROOT, "nodeseek-max.user.js"), "utf8");
 	const meta = fs.readFileSync(path.join(ROOT, "nodeseek-max.meta.js"), "utf8");
