@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.5.4
+@version        1.5.5
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.5.4（UserCSS）
+ * NodeSeek Max 主题 v1.5.5（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -1061,7 +1061,7 @@
 	html:root .md-editor.nspp-floating-reply {
 		border:1px solid var(--nsmax-stroke)!important;
 		border-bottom:0!important;
-		border-radius:14px 14px 0 0!important;
+		border-radius:12px 12px 0 0!important;
 		background:var(--nsmax-card)!important;
 		color:var(--nsmax-text);
 		box-shadow:0 -12px 40px -8px rgb(0 0 0/.18)!important;
@@ -1245,7 +1245,7 @@
 	}
 	html:root:root .md-editor:not(.nspp-floating-reply) {
 		background-color:var(--nsmax-card);
-		background-image:linear-gradient(165deg,var(--nsmax-sheen) 0%,transparent 46%);
+		background-image:none;
 		border:1px solid var(--nsmax-stroke);
 		box-shadow:var(--nsmax-shadow);
 	}
@@ -1264,13 +1264,13 @@
 	}
 	/* 评论框（重新设计）：原来是「内容/预览」「工具栏」「输入区」「表情」「发布」五条横带一层层叠着，显得笨重。
 	   现在合成三段——顶部一行左边是「内容 / 预览」分段切换、右边是工具栏；中间是宽松的输入区；底部一行左边表情分类、
-	   右边上传图片与「发布评论」；表情面板展开时出现在底栏上方。整张卡片 14px 圆角，聚焦时描边加深并加一圈光晕。
+	   右边上传图片与「发布评论」；表情面板展开时出现在底栏上方。整张卡片与其他卡片一样 12px 圆角，聚焦时描边加深并加一圈光晕。
 	   只按 flex 排序重排，元素本身不动；站点结构不同时各部分照常一行一行排 */
 	html:root .md-editor:not(.nspp-floating-reply) {
 		display:flex!important;
 		flex-wrap:wrap;
 		align-items:stretch;
-		border-radius:14px!important;
+		border-radius:12px!important;
 		box-shadow:0 1px 2px rgb(0 0 0/.04)!important;
 		transition:border-color .15s ease,box-shadow .15s ease;
 	}
@@ -1287,7 +1287,7 @@
 	}
 	html:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab {
 		padding:3px 11px!important;
-		border-radius:7px;
+		border-radius:6px;
 		color:var(--nsmax-muted);
 		font-size:12.5px!important;
 		line-height:1.6;
@@ -1350,7 +1350,7 @@
 	}
 	html:root .md-editor:not(.nspp-floating-reply) .expression>* {
 		padding:3px 10px!important;
-		border-radius:7px!important;
+		border-radius:6px!important;
 		font-size:12.5px!important;
 	}
 	html:root .md-editor:not(.nspp-floating-reply) .expression>:is(.current-group,.active) {
@@ -1400,6 +1400,41 @@
 	}
 	html:root .user-stat svg {
 		color:var(--nsmax-muted);
+	}
+	/* 左侧版块导航：站点自带的浅灰 #999 比全站其他文字都浅、显得发虚，改为次级文字色、图标用弱化色；悬停加深（不加底色），当前版块加粗 */
+	html:root #nsk-left-panel-container .nsk-panel :is(a,.nav-item>div,.nav-item[data-to]) {
+		color:var(--nsmax-text-2)!important;
+		transition:color .15s ease;
+	}
+	html:root #nsk-left-panel-container .nsk-panel :is(a,.nav-item>div,.nav-item[data-to]) svg:not([data-nsmax-shortcut] svg) {
+		color:var(--nsmax-muted);
+	}
+	html:root #nsk-left-panel-container .nsk-panel :is(a,.nav-item>div,.nav-item[data-to]):hover {
+		color:var(--nsmax-text)!important;
+	}
+	html:root #nsk-left-panel-container .nsk-panel :is(a.router-link-active,a.router-link-exact-active,a[aria-current=page],a.active,.active>a) {
+		color:var(--nsmax-text)!important;
+		font-weight:600;
+	}
+	/* 用户卡片统计区（重新设计）：原来是卡片里再套一个带边框的灰色圆角框，改成贯穿卡片的浅灰底带（上下各一条细分隔线，
+	   参考 sb.sb 资料卡的统计区），和下面并进来的发帖胶囊组成一张干净的卡片。卡片内边距由主题定为 12px；
+	   统计区不是卡片的直接子元素时保持原来的样子 */
+	html:root :is(#nsk-body,#nsk-right-panel-container,body) .user-card:has(>.user-stat) {
+		padding:12px!important;
+	}
+	html:root .user-card>.user-stat {
+		margin-left:-12px!important;
+		margin-right:-12px!important;
+		padding:10px 14px!important;
+		border:0!important;
+		border-top:1px solid var(--nsmax-divider)!important;
+		border-bottom:1px solid var(--nsmax-divider)!important;
+		border-radius:0!important;
+	}
+	html:root .user-card>.user-stat:last-child {
+		margin-bottom:-12px!important;
+		border-bottom:0!important;
+		border-radius:0 0 var(--nsmax-radius) var(--nsmax-radius)!important;
 	}
 	html:root .notify-count {
 		display:inline-flex!important;
@@ -1468,7 +1503,7 @@
 	html:root #nspp-tools {
 		background:var(--nsmax-surface);
 		border-color:var(--nsmax-stroke);
-		border-radius:14px;
+		border-radius:12px;
 		box-shadow:var(--nsmax-shadow-pop);
 		gap:2px;
 		padding:5px;
@@ -1493,7 +1528,7 @@
 		height:32px;
 		min-height:32px;
 		border:0;
-		border-radius:9px;
+		border-radius:8px;
 		background:transparent;
 		color:var(--nsmax-text-2);
 		box-shadow:none;
@@ -1610,7 +1645,7 @@
 		margin:8px 0 0;
 		padding:0;
 		border:1px solid var(--nsmax-stroke);
-		border-radius:7px;
+		border-radius:8px;
 		background:var(--nsmax-card);
 		color:var(--nsmax-muted);
 		font-size:0;
@@ -2549,7 +2584,7 @@
 		background:var(--nsmax-popup)!important;
 		color:var(--nsmax-text)!important;
 		border:1px solid var(--nsmax-stroke)!important;
-		border-radius:14px!important;
+		border-radius:12px!important;
 		box-shadow:var(--nsmax-shadow-pop)!important;
 		color-scheme:light dark;
 		width:272px!important;
@@ -2605,7 +2640,7 @@
 	}
 	html:root .nspp-user-hover :is(.nspp-user-hover-avatar,.nspp-user-hover-monogram) {
 		outline:0!important;
-		border-radius:10px!important;
+		border-radius:8px!important;
 	}
 	html:root .nspp-user-hover .nspp-user-hover-monogram {
 		background:var(--nsmax-fill)!important;
