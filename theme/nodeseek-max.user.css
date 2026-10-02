@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.5.9
+@version        1.6.0
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.5.9（UserCSS）
+ * NodeSeek Max 主题 v1.6.0（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -2353,6 +2353,10 @@
 	html:root body {
 		--nsmax-icon-close:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
 		--nsmax-icon-flame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5c.6 3 4.5 4.9 4.5 9.6a4.5 4.5 0 0 1-9 0c0-1.8.8-3.2 2-4.2.3 1.3 1 2.1 1.9 2.5C11 9.1 10.9 6.2 12 3.5Z'/%3E%3C/svg%3E");
+		--nsmax-icon-back:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 6 8.5 12l6 6'/%3E%3C/svg%3E");
+		--nsmax-icon-chat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 6v9a1.5 1.5 0 0 1-1.5 1.5h-9l-4 3.5v-3.5A1.5 1.5 0 0 1 4 15Z'/%3E%3C/svg%3E");
+		--nsmax-icon-search:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14ZM16 16l4 4'/%3E%3C/svg%3E");
+		--nsmax-icon-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 		--nsmax-icon-empty:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.5h-5.5l-1.5 2.5h-4l-1.5-2.5H3M5.6 5.6 3 12.5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-5.5l-2.6-6.9A1.5 1.5 0 0 0 17 4.5H7a1.5 1.5 0 0 0-1.4 1.1Z'/%3E%3C/svg%3E");
 		--nsmax-icon-send:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19V5.5M6.5 11 12 5.5l5.5 5.5'/%3E%3C/svg%3E");
 		--nsmax-icon-sun:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM12 3v1.5M12 19.5V21M5.6 5.6l1.1 1.1M17.3 17.3l1.1 1.1M3 12h1.5M19.5 12H21M5.6 18.4l1.1-1.1M17.3 6.7l1.1-1.1'/%3E%3C/svg%3E");
@@ -3920,6 +3924,590 @@
 	}
 	html:root:root :is(.nspp-messages-bubble,.nspp-message-editor-preview) code {
 		font-family:var(--nsmax-mono)!important;
+	}
+	/* 私信（参考 Claude 网页版的会话界面）：整块是 16px 圆角的框；左侧会话列表通高、底色略深（像 Claude 的侧边栏），右侧是会话。
+	   选中会话后，对方资料卡就是会话头（头像、名字、等级、信任分、统计在一块），「全部已读 / 原版页面」叠在它右上角，
+	   不再另起一条重复名字的标题栏；没选会话、系统通知、@我 / 回复主题时仍是一条标题栏 */
+	html:root:root .nspp-messages {
+		--nsmax-chat-side:#f5f4ed;
+		border-radius:16px;
+		background:var(--nsmax-canvas);
+	}
+	html:root:root body.dark-layout .nspp-messages {
+		--nsmax-chat-side:#1f1e1d;
+	}
+	@media (width>700px) {
+		html:root:root .nspp-messages {
+			display:grid;
+			grid-template-columns:272px minmax(0,1fr);
+			grid-template-rows:auto minmax(0,1fr);
+		}
+		html:root:root .nspp-messages>.nspp-messages-workspace:not(.nspp-notice-workspace) {
+			display:contents;
+		}
+		html:root:root .nspp-messages>.nspp-messages-top {
+			grid-column:2;
+			grid-row:1;
+		}
+		html:root:root .nspp-messages>.nspp-messages-workspace>.nspp-messages-sidebar {
+			grid-column:1;
+			grid-row:1/-1;
+			min-height:0;
+		}
+		html:root:root .nspp-messages>.nspp-messages-workspace>:is(.nspp-messages-chat,.nspp-notice-workspace) {
+			grid-column:2;
+			grid-row:2;
+			min-height:0;
+		}
+		html:root:root .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-workspace>.nspp-messages-chat {
+			grid-row:1/-1;
+		}
+		html:root:root .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-top {
+			z-index:2;
+			align-self:start;
+			justify-self:end;
+			min-height:0;
+			padding:20px 16px 0 0;
+			border:0;
+			background:transparent;
+			pointer-events:none;
+		}
+		html:root:root .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-top>.nspp-messages-heading {
+			display:none;
+		}
+		html:root:root .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-top>.nspp-messages-top-actions {
+			pointer-events:auto;
+		}
+		html:root:root .nspp-messages:has(.nspp-chat-profile:not([hidden])) .nspp-chat-profile-details {
+			padding-right:170px;
+		}
+	}
+	/* 标题栏 */
+	html:root:root .nspp-messages-top {
+		min-height:56px;
+		padding:0 16px 0 22px;
+		border-bottom:1px solid var(--nsmax-divider);
+		background:transparent;
+	}
+	html:root:root .nspp-messages-top .nspp-messages-heading strong {
+		font-size:15px;
+		font-weight:600;
+		letter-spacing:-.005em;
+	}
+	html:root:root .nspp-messages-heading img.nspp-messages-avatar[src^="data:image/svg+xml"] {
+		box-sizing:border-box;
+		width:28px;
+		height:28px;
+		border-radius:50%!important;
+		background:var(--nsmax-card)!important;
+		box-shadow:0 0 0 1px var(--nsmax-stroke)!important;
+	}
+	html:root:root .nspp-messages-top-actions {
+		gap:4px;
+	}
+	html:root:root .nspp-messages-top-actions button,
+	html:root:root .nspp-messages-top .nspp-messages-profile {
+		min-height:30px;
+		padding:0 11px!important;
+		border-radius:8px!important;
+		color:var(--nsmax-muted)!important;
+		font-size:12.5px!important;
+	}
+	html:root:root .nspp-messages-top-actions button:hover,
+	html:root:root .nspp-messages-top .nspp-messages-profile:hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;
+		color:var(--nsmax-text)!important;
+	}
+	html:root:root :is(.nspp-notice-back,.nspp-messages-back) {
+		display:inline-flex;
+		align-items:center;
+		gap:2px;
+		min-height:30px;
+		padding:0 10px 0 6px!important;
+		border-color:transparent!important;
+		border-radius:8px!important;
+		color:var(--nsmax-muted)!important;
+		font-size:12.5px!important;
+	}
+	html:root:root :is(.nspp-notice-back,.nspp-messages-back)::before {
+		content:"";
+		width:16px;
+		height:16px;
+		background:currentColor;
+		-webkit-mask:var(--nsmax-icon-back) center/contain no-repeat;
+		mask:var(--nsmax-icon-back) center/contain no-repeat;
+	}
+	html:root:root :is(.nspp-notice-back,.nspp-messages-back):hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;
+		color:var(--nsmax-text)!important;
+	}
+	/* 左侧会话列表：搜索框带放大镜，条目是圆角浅底（悬停 / 当前），不再是白卡片加边框；@我 / 回复主题的图标放在圆形底里；
+	   固定入口和会话之间一条细分隔线，会话上方一个「私信」小标题 */
+	html:root:root .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar {
+		border-right:1px solid var(--nsmax-divider);
+		background:var(--nsmax-chat-side);
+	}
+	html:root:root .nspp-messages-search {
+		position:relative;
+		align-items:center;
+		gap:4px;
+		min-height:56px;
+		padding:10px 10px 8px 12px;
+	}
+	html:root:root .nspp-messages-search::before {
+		content:"";
+		position:absolute;
+		top:50%;
+		left:23px;
+		z-index:1;
+		width:15px;
+		height:15px;
+		margin-top:1px;
+		background:var(--nsmax-faint);
+		-webkit-mask:var(--nsmax-icon-search) center/contain no-repeat;
+		mask:var(--nsmax-icon-search) center/contain no-repeat;
+		translate:0 -50%;
+		pointer-events:none;
+	}
+	html:root:root .nspp-messages-search input {
+		height:34px;
+		min-height:34px;
+		padding:0 12px 0 33px;
+		border:1px solid var(--nsmax-stroke);
+		border-radius:10px;
+		background:var(--nsmax-card);
+	}
+	html:root:root .nspp-messages-search input:focus {
+		border-color:var(--nsmax-composer-line-focus);
+		box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent);
+	}
+	html:root:root .nspp-messages-search>button,
+	html:root:root .nspp-messages-refresh {
+		width:32px;
+		min-width:32px;
+		height:32px;
+		border-radius:8px!important;
+	}
+	html:root:root .nspp-messages-search>button:hover,
+	html:root:root .nspp-messages-refresh:hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;
+	}
+	html:root:root .nspp-messages-search>button:not(.nspp-messages-refresh) {
+		width:auto;
+		padding:0 11px!important;
+	}
+	html:root:root .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-peer {
+		gap:11px;
+		min-height:54px;
+		margin:1px 8px;
+		width:calc(100% - 16px);
+		padding:8px 10px;
+		border-radius:10px;
+		box-shadow:none;
+	}
+	html:root:root .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-peer:hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 4.5%,transparent);
+	}
+	html:root:root :is(.nspp-messages-peer[aria-pressed=true],.nspp-messages-fixed-contacts a[aria-current]),
+	html:root:root :is(.nspp-messages-peer[aria-pressed=true],.nspp-messages-fixed-contacts a[aria-current]):hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 7.5%,transparent);
+		box-shadow:none;
+	}
+	html:root:root .nspp-messages-fixed-contacts {
+		padding-bottom:7px;
+		margin-bottom:2px;
+		background:linear-gradient(var(--nsmax-divider),var(--nsmax-divider)) center bottom/calc(100% - 36px) 1px no-repeat;
+	}
+	html:root:root .nspp-messages-fixed-contacts img.nspp-messages-avatar[src^="data:image/svg+xml"] {
+		box-sizing:border-box;
+		width:32px;
+		height:32px;
+		padding:0;
+		border-radius:50%!important;
+		background:var(--nsmax-card)!important;
+		box-shadow:0 0 0 1px var(--nsmax-stroke)!important;
+	}
+	html:root:root .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-conversations:not(:empty)::before {
+		content:"私信";
+		display:block;
+		padding:10px 20px 5px;
+		color:var(--nsmax-faint);
+		font-size:11.5px;
+		font-weight:500;
+		letter-spacing:.02em;
+	}
+	html:root:root .nspp-messages-peer-title strong,
+	html:root:root .nspp-messages-fixed-contacts strong {
+		color:var(--nsmax-text);
+		font-size:13.5px;
+		font-weight:500;
+	}
+	html:root:root .nspp-messages-snippet {
+		color:var(--nsmax-muted);
+		font-size:12.5px;
+	}
+	html:root:root .nspp-messages-peer-title time {
+		color:var(--nsmax-faint);
+		font-size:11px;
+	}
+	html:root:root .nspp-messages-unread {
+		border-color:var(--nsmax-chat-side);
+	}
+	/* 会话头（对方资料）：头像 40px + 名字 / 等级 / UID，第二行是信任分和统计（一排小字，不再是灰底大框），最后一行很淡的提示 */
+	html:root:root .nspp-chat-profile,
+	html:root:root .nspp-chat-profile[data-trust],
+	html:root:root body.dark-layout .nspp-chat-profile[data-trust] {
+		display:flex;
+		flex-wrap:wrap;
+		align-items:center;
+		gap:0;
+		padding:16px 20px 12px;
+		border-bottom:1px solid var(--nsmax-divider);
+		background:transparent;
+	}
+	html:root:root .nspp-chat-profile>a {
+		flex:none;
+		margin-right:12px;
+	}
+	html:root:root .nspp-chat-profile>a .nspp-messages-avatar,
+	html:root:root .nspp-chat-profile[data-trust=perfect]>a .nspp-messages-avatar {
+		width:40px;
+		height:40px;
+	}
+	html:root:root .nspp-chat-profile-details {
+		flex:1 1 calc(100% - 52px);
+		min-width:0;
+	}
+	html:root:root .nspp-chat-profile-heading {
+		gap:6px;
+	}
+	html:root:root .nspp-chat-profile-heading>strong,
+	html:root:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-heading>strong {
+		overflow:hidden;
+		font-size:15px;
+		font-weight:600;
+		text-overflow:ellipsis;
+		white-space:nowrap;
+	}
+	html:root:root .nspp-chat-profile-level,
+	html:root:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-level {
+		padding:0 6px;
+		border:0;
+		border-radius:6px;
+		background:var(--nsmax-fill);
+		color:var(--nsmax-text-2);
+		font-size:11px;
+		line-height:18px;
+	}
+	html:root:root .nspp-chat-profile-meta {
+		margin-top:2px;
+		color:var(--nsmax-muted);
+		font-size:12px;
+		line-height:18px;
+	}
+	html:root:root .nspp-chat-profile-bio {
+		color:var(--nsmax-text-2);
+		font-size:12.5px;
+	}
+	html:root:root .nspp-chat-profile-trust,
+	html:root:root .nspp-chat-profile[data-trust] .nspp-chat-profile-trust,
+	html:root:root body.dark-layout .nspp-chat-profile[data-trust] .nspp-chat-profile-trust {
+		order:2;
+		flex-direction:row-reverse;
+		align-items:baseline;
+		gap:5px;
+		min-width:0;
+		margin:10px 0 0 52px;
+		padding-right:14px;
+		border-right:1px solid var(--nsmax-divider);
+		line-height:20px;
+	}
+	html:root:root .nspp-chat-profile-trust>strong,
+	html:root:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-trust>strong {
+		color:var(--nsmax-text);
+		font-size:13px;
+		font-weight:600;
+		letter-spacing:0;
+		line-height:20px;
+	}
+	html:root:root .nspp-chat-profile-trust>span,
+	html:root:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-trust>span {
+		color:var(--nsmax-muted);
+		font-size:12px;
+		letter-spacing:0;
+		opacity:1;
+	}
+	html:root:root .nspp-chat-profile-data,
+	html:root:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-data {
+		order:3;
+		display:flex;
+		flex:1 1 0;
+		flex-wrap:wrap;
+		gap:2px 14px;
+		min-width:0;
+		margin:10px 0 0 14px;
+		padding:0;
+		border:0;
+		border-radius:0;
+		background:transparent;
+		color:var(--nsmax-faint);
+		font-size:12px;
+		line-height:20px;
+	}
+	html:root:root .nspp-chat-profile:not(:has(>.nspp-chat-profile-trust:not([hidden]))) .nspp-chat-profile-data {
+		margin-left:52px;
+	}
+	html:root:root .nspp-chat-profile-data:not(:has(>*)) {
+		display:block;
+	}
+	html:root:root .nspp-chat-profile-stat {
+		flex-wrap:nowrap;
+		gap:4px;
+	}
+	html:root:root .nspp-chat-profile-data a.nspp-chat-profile-stat>strong {
+		text-decoration:none;
+	}
+	html:root:root .nspp-chat-profile-data a.nspp-chat-profile-stat:hover>strong {
+		text-decoration:underline;
+		text-decoration-color:var(--nsmax-stroke-strong);
+		text-underline-offset:3px;
+	}
+	html:root:root .nspp-chat-profile-stat>small {
+		color:var(--nsmax-muted);
+		font-size:12px;
+	}
+	html:root:root .nspp-chat-profile-stat>strong,
+	html:root:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-stat>strong {
+		color:var(--nsmax-text);
+		font-size:12.5px;
+		font-weight:600;
+	}
+	html:root:root .nspp-chat-profile-notice,
+	html:root:root .nspp-chat-profile[data-trust] .nspp-chat-profile-notice,
+	html:root:root body.dark-layout .nspp-chat-profile[data-trust] .nspp-chat-profile-notice {
+		order:4;
+		flex-basis:100%;
+		margin:6px 0 0 52px;
+		color:var(--nsmax-faint);
+		font-size:11.5px;
+		line-height:1.5;
+	}
+	/* 消息：自己的消息靠右、暖灰气泡、不带头像；对方的消息白底细边框，连续几条只在第一条显示头像；
+	   同一方连续的气泡挨得更近，相接的一侧圆角收小（18px → 6px），读起来是一组 */
+	html:root:root .nspp-messages-thread {
+		padding:20px 28px 12px;
+		background:transparent;
+		-webkit-mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 18px),transparent);
+		mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 18px),transparent);
+	}
+	html:root:root .nspp-messages-stamp {
+		margin:16px 0 12px;
+		color:var(--nsmax-faint);
+		font-size:11.5px;
+	}
+	html:root:root .nspp-messages-thread>.nspp-messages-stamp:first-child {
+		margin-top:0;
+	}
+	html:root:root .nspp-messages-message {
+		gap:10px;
+		margin-bottom:12px;
+	}
+	html:root:root .nspp-messages-message.is-mine>:is(.nspp-chat-avatar-link,.nspp-messages-avatar) {
+		display:none;
+	}
+	html:root:root .nspp-messages-message:not(.is-system)>.nspp-chat-avatar-link {
+		margin-top:4px;
+	}
+	html:root:root .nspp-messages-message:not(.is-system)>:is(.nspp-chat-avatar-link .nspp-messages-avatar,.nspp-messages-avatar) {
+		width:28px;
+		height:28px;
+	}
+	html:root:root .nspp-messages-message:not(.is-mine,.is-system)+.nspp-messages-message:not(.is-mine,.is-system)>.nspp-chat-avatar-link {
+		visibility:hidden;
+	}
+	html:root:root .nspp-messages-message:not(.is-mine,.is-system):has(+.nspp-messages-message:not(.is-mine,.is-system)),
+	html:root:root .nspp-messages-message.is-mine:has(+.nspp-messages-message.is-mine) {
+		margin-bottom:3px;
+	}
+	html:root:root .nspp-messages-bubble,
+	html:root:root .nspp-messages-message.is-mine .nspp-messages-bubble {
+		max-width:min(72%,560px);
+		padding:9px 14px;
+		border-radius:18px;
+		font-size:14.5px;
+		line-height:1.6;
+		box-shadow:none;
+	}
+	html:root:root .nspp-messages-message:not(.is-mine,.is-system):has(+.nspp-messages-message:not(.is-mine,.is-system)) .nspp-messages-bubble {
+		border-bottom-left-radius:6px;
+	}
+	html:root:root .nspp-messages-message:not(.is-mine,.is-system)+.nspp-messages-message:not(.is-mine,.is-system) .nspp-messages-bubble {
+		border-top-left-radius:6px;
+	}
+	html:root:root .nspp-messages-message.is-mine:has(+.nspp-messages-message.is-mine) .nspp-messages-bubble {
+		border-bottom-right-radius:6px;
+	}
+	html:root:root .nspp-messages-message.is-mine+.nspp-messages-message.is-mine .nspp-messages-bubble {
+		border-top-right-radius:6px;
+	}
+	html:root:root .nspp-messages-message.is-system .nspp-messages-bubble {
+		max-width:none;
+		padding:0;
+		border-radius:0;
+		font-size:13.5px;
+	}
+	html:root:root .nspp-messages-empty {
+		flex-direction:column;
+		gap:12px;
+		color:var(--nsmax-muted);
+		font-size:13.5px;
+	}
+	html:root:root .nspp-messages-empty::before {
+		content:"";
+		width:36px;
+		height:36px;
+		background:var(--nsmax-faint);
+		-webkit-mask:var(--nsmax-icon-chat) center/contain no-repeat;
+		mask:var(--nsmax-icon-chat) center/contain no-repeat;
+	}
+	/* 输入框：浮在会话底部的大圆角框；格式工具默认收起，只留「格式」开关和图片按钮（32px 细边方形，和评论框的图片按钮一致），
+	   点开后整排工具在输入框下方单独一行；Markdown 复选框改成可点的小标签（开启时浅底，关闭时变淡并划线） */
+	html:root:root .nspp-messages-composer {
+		margin:4px 20px 20px;
+		border-radius:20px;
+	}
+	html:root:root .nspp-message-editor-body textarea {
+		field-sizing:content;
+		min-height:52px;
+		max-height:30dvh;
+		padding:14px 18px 6px!important;
+	}
+	html:root:root .nspp-message-editor-preview {
+		padding:14px 18px 6px;
+	}
+	html:root:root .nspp-messages-compose-actions {
+		flex-wrap:wrap;
+		gap:4px;
+		padding:4px 10px 10px;
+	}
+	html:root:root .nspp-messages .nspp-message-format-toggle,
+	html:root:root .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar>button[data-tool=image] {
+		display:inline-flex!important;
+		flex:none;
+		align-items:center;
+		justify-content:center;
+		box-sizing:border-box;
+		width:32px;
+		height:32px;
+		padding:0;
+		border:1px solid var(--nsmax-composer-line);
+		border-radius:8px!important;
+		background:transparent;
+		color:var(--nsmax-text-2);
+	}
+	html:root:root .nspp-messages .nspp-message-format-toggle svg {
+		width:17px;
+		height:17px;
+		fill:none;
+		stroke:currentColor;
+		stroke-width:1.5px;
+		stroke-linecap:round;
+		stroke-linejoin:round;
+	}
+	html:root:root .nspp-messages .nspp-message-format-toggle:hover,
+	html:root:root .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar>button[data-tool=image]:hover:not(:disabled) {
+		border-color:var(--nsmax-composer-line-focus);
+		background:var(--nsmax-fill);
+		color:var(--nsmax-text);
+	}
+	html:root:root .nspp-messages .nspp-message-format-toggle[aria-expanded=true] {
+		border-color:transparent;
+		background:var(--nsmax-fill);
+		color:var(--nsmax-text);
+	}
+	html:root:root .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar {
+		flex:none;
+		overflow:visible;
+	}
+	html:root:root .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar>:not([data-tool=image]) {
+		display:none;
+	}
+	html:root:root .nspp-messages-composer[data-format-open] .nspp-message-editor-toolbar {
+		order:-1;
+		flex:1 0 100%;
+		flex-wrap:wrap;
+		gap:2px;
+		overflow:visible;
+		padding:0 0 4px;
+	}
+	html:root:root .nspp-messages-compose-actions>label {
+		position:relative;
+		display:inline-flex;
+		align-items:center;
+		gap:0;
+		height:28px;
+		margin-left:auto;
+		padding:0 10px;
+		border-radius:8px;
+		color:var(--nsmax-faint);
+		font-size:12px;
+		text-decoration:line-through;
+		text-decoration-color:color-mix(in srgb,currentColor 60%,transparent);
+		cursor:pointer;
+		user-select:none;
+		transition:background-color .15s ease,color .15s ease;
+	}
+	html:root:root .nspp-messages-compose-actions>label:hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 5%,transparent);
+		color:var(--nsmax-muted);
+	}
+	html:root:root .nspp-messages-compose-actions>label:has(input:checked) {
+		background:var(--nsmax-fill);
+		color:var(--nsmax-text-2);
+		text-decoration:none;
+	}
+	html:root:root .nspp-messages-compose-actions>label:has(input:checked)::before {
+		content:"";
+		width:13px;
+		height:13px;
+		margin-right:5px;
+		background:currentColor;
+		-webkit-mask:var(--nsmax-icon-check) center/contain no-repeat;
+		mask:var(--nsmax-icon-check) center/contain no-repeat;
+	}
+	html:root:root .nspp-messages-compose-actions>label>input {
+		position:absolute;
+		inset:0;
+		width:100%;
+		height:100%;
+		margin:0;
+		opacity:0;
+		cursor:pointer;
+	}
+	html:root:root .nspp-messages-compose-actions>label:has(input:focus-visible) {
+		outline:2px solid color-mix(in srgb,var(--nsmax-ink) 40%,transparent);
+		outline-offset:2px;
+	}
+	html:root:root .nspp-messages .nspp-messages-send {
+		margin-left:6px;
+		border-radius:8px!important;
+	}
+	/* @我 / 回复主题：右侧列表和左侧会话一样的搜索框，条目之间细分隔线、悬停很浅的底 */
+	html:root:root .nspp-notice-workspace>.nspp-messages-sidebar {
+		background:transparent;
+	}
+	html:root:root .nspp-notice-workspace .nspp-messages-search {
+		padding:10px 16px 8px 20px;
+	}
+	html:root:root .nspp-notice-workspace .nspp-messages-search::before {
+		left:31px;
+	}
+	html:root:root .nspp-notice-workspace .nspp-messages-peer {
+		padding:14px 22px;
+		border-bottom-color:var(--nsmax-divider);
+	}
+	html:root:root .nspp-notice-workspace .nspp-messages-peer:hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 3%,transparent);
 	}
 	html:root:root {
 		scrollbar-width:thin;
