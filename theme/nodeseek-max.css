@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.5.8（纯 CSS）
+ * NodeSeek Max 主题 v1.5.9（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -1526,7 +1526,9 @@ html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit
 html:root .md-editor:not(.nspp-floating-reply):not(:has(.CodeMirror)):has(>textarea:placeholder-shown) :is(button.submit.btn,.btn.submit) {
 	opacity:.5;
 }
+/* 帖子页只显示箭头：文字缩成 0 字号后仍算一个弹性项，6px 间距会把箭头往左推 3px，去掉间距让箭头正居中 */
 html:root:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
+	gap:0;
 	width:32px;
 	padding:0!important;
 	font-size:0!important;

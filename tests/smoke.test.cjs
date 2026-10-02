@@ -1461,6 +1461,14 @@ test("按钮里的图标与文字都在正中（纯图标按钮误差 0.6px 以�
 				const s = svgs[0].getBoundingClientRect();
 				const dx = s.left + s.width / 2 - (r.left + r.width / 2), dy = s.top + s.height / 2 - (r.top + r.height / 2);
 				if (Math.abs(dx) > 0.6 || Math.abs(dy) > 0.6) out.push(`${el.className || el.title} 图标偏移 ${dx.toFixed(1)},${dy.toFixed(1)}`);
+			} else if (text && !svgs.length && parseFloat(cs.fontSize) === 0 && /flex/.test(cs.display) && !/^(none|normal)$/.test(getComputedStyle(el, "::before").content)) {
+				// 文字缩成 0 字号、只显示 ::before 图标的按钮（帖子页的发送按钮）：隐藏的文字仍是一个弹性项，
+				// 间距会把图标推偏。用文字节点的位置反推图标中心：图标在文字前，中间隔着 gap
+				const range = document.createRange();
+				range.selectNodeContents(el);
+				const t = range.getBoundingClientRect();
+				const dx = t.left - (parseFloat(cs.columnGap) || 0) - parseFloat(getComputedStyle(el, "::before").width) / 2 - (r.left + r.width / 2);
+				if (Math.abs(dx) > 0.6) out.push(`${el.className || text} 图标偏移 ${dx.toFixed(1)}`);
 			} else if (text && !svgs.length && parseFloat(cs.fontSize) > 0 && r.height <= 40 && /flex|grid/.test(cs.display) && el.matches("button,.btn,.nsk-pager a")) {
 				const range = document.createRange();
 				range.selectNodeContents(el);
