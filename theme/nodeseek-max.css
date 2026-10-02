@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.5.2（纯 CSS）
+ * NodeSeek Max 主题 v1.5.3（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -238,7 +238,7 @@ html:root:root :is(code,kbd,samp,pre) {
 	font-family:var(--nsmax-mono);
 }
 /* 全站统一字体：除代码与图标外的所有元素（含站点、NodeSeek++ 与第三方写死字体的地方、输入框、编辑器）都用 Inter，代码用 JetBrains Mono */
-html[data-nsmax-theme]:is([data-nsmax-font=inter],[data-nsmax-font=system]) body :not(code,pre,kbd,samp,svg,i,.hljs,[class*=iconfont]) {
+html:root:root body :not(code,pre,kbd,samp,svg,i,.hljs,[class*=iconfont]) {
 	font-family:var(--nsmax-font)!important;
 }
 html:root:root body :is(code,pre,kbd,samp,.hljs),
@@ -261,6 +261,14 @@ html:root:root #nsk-head::before {
 	-webkit-backdrop-filter:var(--nsmax-blur);
 	backdrop-filter:var(--nsmax-blur);
 	box-shadow:inset 0 1px 0 var(--nsmax-highlight);
+}
+html:root:root #nsk-head {
+	position:sticky;
+	top:0;
+	z-index:90;
+}
+html:root:root:root {
+	scroll-padding-top:calc(var(--nsmax-header-h,56px) + 12px);
 }
 @keyframes nsmax-appear {from{opacity:0}to{opacity:1}}
 html:root :is(#search-site2,header input[name=q]) {
@@ -352,7 +360,7 @@ html:root .post-list-item .post-title a:hover {
 	color:var(--nsmax-text);
 }
 /* 帖子行（参考 sb.sb）：24px 圆角方形头像与标题第一行对齐 */
-html[data-nsmax-theme]:not([data-nsmax-list=site]) ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item) img:is(.avatar-normal,.avatar,[class*=avatar]) {
+html:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item) img:is(.avatar-normal,.avatar,[class*=avatar]) {
 	width:24px!important;
 	height:24px!important;
 	min-width:0!important;
@@ -380,18 +388,34 @@ html:root .comment-menu .menu-item:hover {
 	background:transparent!important;
 	color:var(--nsmax-text);
 }
+/* 分页：页码保持纯文字（不加边框圆圈、悬停不加底色，只加深文字），当前页加粗深色；整行居中，
+   「上一页 / 下一页」与页码同一字号、同一高度垂直居中（原来 11px 小字比页码高出一截） */
+html:root .nsk-pager {
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	justify-content:center;
+	gap:2px;
+}
 html:root .nsk-pager :is(a,span) {
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	box-sizing:border-box;
+	min-width:28px;
+	height:30px;
+	margin:0;
+	padding:0 6px;
 	border-color:transparent!important;
 	border-radius:var(--nsmax-control-radius);
 	box-shadow:none!important;
-	outline:0;
+	outline-offset:2px;
 	background-color:transparent;
 	color:var(--nsmax-muted);
-}
-html:root .nsk-pager :is(a,span) {
 	font-size:13.5px;
 	font-weight:500;
-	line-height:1.6;
+	line-height:1;
+	text-decoration:none;
 }
 html:root .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-current]) {
 	color:var(--nsmax-text)!important;
@@ -399,8 +423,8 @@ html:root .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-curre
 	background-color:transparent!important;
 }
 html:root .nsk-pager :is(.pager-prev,.pager-next) {
-	color:var(--nsmax-muted);
-	font-size:11px;
+	padding:0 8px;
+	font-size:13px;
 }
 html:root .nsk-pager a:hover {
 	background:transparent!important;
@@ -425,7 +449,7 @@ html:root :is(input:not([type]),input[type=text],input[type=search],input[type=p
 	border-radius:var(--nsmax-radius-sm);
 }
 /* 全站输入框（参考 sb.sb）：浅底 + 1px 细边框，悬停边框加深，聚焦时卡片底色加柔和光晕；编辑器与各组件自己的输入框另有规则 */
-html[data-nsmax-theme][data-nsmax-style=flat] :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],select):not(.CodeMirror *,.md-editor *) {
+html:root:root :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],select):not(.CodeMirror *,.md-editor *) {
 	background-color:var(--nsmax-panel-alt);
 	border:1px solid var(--nsmax-stroke);
 }
@@ -671,7 +695,7 @@ html:root:root .comment-menu .menu-item {
 }
 /* 评论编辑器的提交行：站点若给这一行设了 width:100% 或给按钮设了浮动 / 外边距 / 定位，加上内边距后按钮会伸出编辑器边缘；
    这里固定为 border-box、按钮回到正常流并靠右，任何宽度下都在卡片内 */
-html[data-nsmax-theme] .md-editor [data-nsmax-submit-row] {
+html:root .md-editor [data-nsmax-submit-row] {
 	box-sizing:border-box!important;
 	width:auto!important;
 	max-width:100%!important;
@@ -693,7 +717,7 @@ html:root .md-editor [data-nsmax-submit-row]>:is(button.submit,.btn.submit,butto
 	margin-left:auto!important;
 }
 /* 没被标记的按钮容器（上传功能关闭、或站点换了结构）：同样让「发布评论」回到正常流、容器随按钮撑开，不被编辑器底边裁掉 */
-html[data-nsmax-theme] .md-editor :is(button.submit,.btn.submit) {
+html:root .md-editor :is(button.submit,.btn.submit) {
 	position:static!important;
 	float:none!important;
 	inset:auto!important;
@@ -722,7 +746,7 @@ html:root .md-editor :not(.md-editor,[data-nsmax-submit-row]):has(>:is(button.su
 	margin:0!important;
 }
 /* 「发布评论」直接挂在编辑器下：自己占一行靠右；上传按钮（若有）贴在同一行左侧 */
-html[data-nsmax-theme] .md-editor>:is(button.submit,.btn.submit) {
+html:root .md-editor>:is(button.submit,.btn.submit) {
 	display:flex!important;
 	align-items:center;
 	margin:9px 10px 9px auto!important;
@@ -789,7 +813,7 @@ html:root [data-nsmax-md-hint] {
 	display:none!important;
 }
 /* 编辑器里的 Markdown 高亮（引用、回复 @、链接、标题等）：CodeMirror 默认是绿色引用、蓝色链接与标题，统一成主题灰阶 */
-html[data-nsmax-theme] .md-editor .CodeMirror :is(.cm-quote,.cm-comment) {
+html:root .md-editor .CodeMirror :is(.cm-quote,.cm-comment) {
 	color:var(--nsmax-muted)!important;
 	font-style:normal;
 }
@@ -822,7 +846,7 @@ html:root .md-editor .CodeMirror-line>span>span::selection {
 	background:color-mix(in srgb,var(--nsmax-text) 12%,transparent)!important;
 }
 /* 编辑器「预览」：和帖子正文同一套排版 */
-html[data-nsmax-theme] .md-editor :is(.preview,.md-preview,.editor-preview,[class*=preview]):not(button,.tab) {
+html:root .md-editor :is(.preview,.md-preview,.editor-preview,[class*=preview]):not(button,.tab) {
 	color:var(--nsmax-text);
 	font-size:15px;
 	line-height:1.75;
@@ -836,7 +860,7 @@ html:root .md-editor :is(.preview,.md-preview,.editor-preview,[class*=preview]):
 	color:var(--nsmax-text-2);
 }
 /* 帖子列表里的内联回复 / 引用面板（NodeSeek++）：卡片 + 标题栏 + 输入框 + 胶囊发送按钮 */
-html[data-nsmax-theme] .nspp-interaction {
+html:root .nspp-interaction {
 	margin:4px 14px 12px 48px;
 	border:1px solid var(--nsmax-stroke);
 	border-radius:12px;
@@ -928,7 +952,7 @@ html:root .nspp-reply-actions button:disabled {
 	}
 }
 /* 手机悬浮回复（NodeSeek++）：底部抽屉，顶部标题栏，与弹窗同一套圆角与按钮 */
-html[data-nsmax-theme] .md-editor.nspp-floating-reply {
+html:root .md-editor.nspp-floating-reply {
 	border:1px solid var(--nsmax-stroke)!important;
 	border-bottom:0!important;
 	border-radius:14px 14px 0 0!important;
@@ -953,7 +977,7 @@ html:root .nspp-floating-reply-header button {
 }
 /* 评论区（参考 sb.sb 回复列表）：32px 圆角方形头像；名字、徽章、时间排一行，楼号靠右；正文、签名和操作栏与名字左对齐；
    操作栏平时淡一些，悬停这一楼时再清晰；顶部加「全部回复」小标题和主帖分开 */
-html[data-nsmax-theme][data-nsmax-page=post] ul.comments {
+html:root:root ul.comments {
 	--nsmax-reply-avatar:32px;
 	--nsmax-reply-indent:44px;
 }
@@ -964,13 +988,13 @@ html:root:root ul.comments:has(>li.content-item) {
 html:root:root ul.comments:has(>li.content-item)::before {
 	content:"全部回复";
 	display:block;
-	padding:13px 4px 3px;
+	padding:13px 0 3px;
 	color:var(--nsmax-text);
 	font-size:14px;
 	font-weight:600;
 }
 html:root:root:root ul.comments>li.content-item {
-	padding:14px 4px 12px;
+	padding:14px 0 12px;
 }
 html:root:root ul.comments>li.content-item>.nsk-content-meta-info {
 	display:flex;
@@ -1232,13 +1256,21 @@ html:root .user-card a:has(>svg:only-child):hover {
 	opacity:.7;
 }
 /* NodeSeek++ 侧栏工具：图标统一线条、黑白灰，去掉热榜按钮的橙色渐变与监控运行时的绿色 */
-html[data-nsmax-theme] #nspp-tools {
+html:root #nspp-tools {
 	background:var(--nsmax-surface);
 	border-color:var(--nsmax-stroke);
 	border-radius:14px;
 	box-shadow:var(--nsmax-shadow-pop);
 	gap:2px;
 	padding:5px;
+}
+/* 工具栏位置：内容区宽 M、内边距 p、窗口宽 W（100%）。工具栏放在内容右侧 24px 处：right = (W - M) / 2 - 68px，最少 12px；
+   右侧空白放不下时（W < M + 160px），内容区与顶栏右内边距加到 M + p + 160px - W（最多 p + 68px），内容右边正好让到工具栏左侧 24px 处。
+   两者都随窗口宽度连续变化，首屏就是最终位置，拖动窗口时也不会突然跳动 */
+@media (width>700px) and (hover:hover) {
+	html:root:has(#nsk-body) #nspp-tools {
+		right:max(12px,calc((100% - var(--nsmax-body-max,1100px)) / 2 - 68px));
+	}
 }
 html:root body.dark-layout :is(#nspp-tools,.nspp-post-preview) {
 	--bg-color:var(--nsmax-surface);
@@ -1295,13 +1327,18 @@ html:root .nspp-monitor-badge {
 }
 /* 手机宽度：帖子行的元信息（作者、徽章、浏览、回复、时间）放不下时换行，不撑出横向滚动 */
 @media (width<=700px) {
-	html[data-nsmax-theme] .post-list-item :is(.post-info,.post-title){flex-wrap:wrap;
-	row-gap:2px;
-	min-width:0;
-	max-width:100%}html[data-nsmax-theme] ul.post-list>li.post-list-item{min-width:0};
+	html:root .post-list-item :is(.post-info,.post-title) {
+		flex-wrap:wrap;
+		row-gap:2px;
+		min-width:0;
+		max-width:100%;
+	}
+	html:root ul.post-list>li.post-list-item {
+		min-width:0;
+	}
 }
 /* 侧栏卡片（参考 sb.sb）：卡片标题小号灰字；用户卡 40px 圆角方形头像、名字 15px 粗体 */
-html[data-nsmax-theme] :is(#nsk-right-panel-container,#nsk-left-panel-container) .nsk-panel>:is(.board-title,.panel-title,.title,h2,h3,h4,strong):first-child {
+html:root :is(#nsk-right-panel-container,#nsk-left-panel-container) .nsk-panel>:is(.board-title,.panel-title,.title,h2,h3,h4,strong):first-child {
 	color:var(--nsmax-muted);
 	font-size:13px;
 	font-weight:500;
@@ -1320,7 +1357,7 @@ html:root .user-card a[href*="/space/"]:not(:has(img)) {
 	text-decoration:none;
 }
 /* 帖子标题旁的小标记：「只读」不再是红底，「已回复 #N」足迹与它们一样是细边框灰色小胶囊 */
-html[data-nsmax-theme] .post-title :is(.nspp-readonly,[data-nspp-footprint]),
+html:root .post-title :is(.nspp-readonly,[data-nspp-footprint]),
 html:root body.dark-layout .post-title .nspp-readonly {
 	display:inline-flex;
 	align-items:center;
@@ -1343,8 +1380,45 @@ html:root .post-title [data-nspp-footprint]:hover {
 html:root .nspp-copy-button[data-copied=true] {
 	color:var(--nsmax-text);
 }
+/* 代码块「复制代码」：不再单独占一行压在代码块上方，收成代码块右上角的图标按钮（不占版面），悬停代码块或聚焦时出现（参考 sb.sb） */
+html:root :is(.post-content,.comment-content,.nsk-content,.markdown-body):has(>[data-nspp-copy]),
+html:root :is(.post-content,.comment-content,.nsk-content,.markdown-body) :has(>[data-nspp-copy]) {
+	position:relative;
+}
+html:root [data-nspp-copy] {
+	position:absolute;
+	right:8px;
+	z-index:1;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	width:28px;
+	height:28px;
+	margin:8px 0 0;
+	padding:0;
+	border:1px solid var(--nsmax-stroke);
+	border-radius:7px;
+	background:var(--nsmax-card);
+	color:var(--nsmax-muted);
+	font-size:0;
+	line-height:1;
+	opacity:0;
+	transition:opacity .15s ease,color .15s ease,border-color .15s ease;
+}
+html:root [data-nspp-copy]:is(:hover,:focus-visible,[data-copied=true],:has(+pre:hover)) {
+	opacity:1;
+}
+html:root [data-nspp-copy]:hover {
+	border-color:var(--nsmax-stroke-strong);
+	background:var(--nsmax-card);
+	color:var(--nsmax-text);
+}
+html:root [data-nspp-copy] svg {
+	width:14px;
+	height:14px;
+}
 /* NodeSeek++ 页面里的操作按钮（加载下一页、加载失败重试、签到等）：与站点按钮一致的描边胶囊 */
-html[data-nsmax-theme] :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-icon) {
+html:root :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-icon) {
 	display:inline-flex;
 	align-items:center;
 	justify-content:center;
@@ -1373,7 +1447,7 @@ html:root :is(.nspp-post-preview footer a,.nspp-preview-content a) {
 }
 /* 用户徽章（等级、加入天数、信任分、身份）：NodeSeek++ 默认按档位上红橙蓝绿色，这里统一成灰阶；
    NodeSeek++ 里选了「自定义」配色时，它那套带 !important 的颜色照常生效 */
-html[data-nsmax-theme] body :is(.nspp-level[data-level],.nspp-age[data-tone],.nspp-trust[data-tier],.nspp-level,.nspp-age,.nspp-trust) {
+html:root body :is(.nspp-level[data-level],.nspp-age[data-tone],.nspp-trust[data-tier],.nspp-level,.nspp-age,.nspp-trust) {
 	--nspp-badge-color:var(--nsmax-muted);
 	--nspp-age-color:var(--nsmax-muted);
 }
@@ -1397,7 +1471,7 @@ html:root body {
 }
 /* NodeSeek++ 工具弹窗（回帖足迹、阅读历史、帖子监控、热榜、转账、注册资料、确认框）：统一成卡片式模态框——
    标题栏 + 细分隔线、次要按钮描边、主要按钮用强调色、输入框浅灰底、列表行悬停浅灰、空状态居中带图标 */
-html[data-nsmax-theme] :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) {
+html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) {
 	--nsmax-dlg-fill:color-mix(in srgb,var(--nsmax-text) 5%,transparent);
 	--nsmax-dlg-hover:color-mix(in srgb,var(--nsmax-text) 9%,transparent);
 	background-color:var(--nsmax-popup);
@@ -1501,7 +1575,7 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(.nspp-footpr
 	opacity:.86;
 }
 /* 标题栏最右的关闭按钮：统一成同一个线条 × 图标 */
-html[data-nsmax-theme] :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header)>button:last-child {
+html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)>:is(header,.nspp-hot-header)>button:last-child {
 	width:32px;
 	min-width:32px;
 	height:32px;
@@ -1572,7 +1646,7 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) a:hover {
 	text-decoration:none;
 }
 /* 空状态 */
-html[data-nsmax-theme] :is(.nspp-footprints-list>p,.nspp-history ol>li:only-child:not(:has(a,button))) {
+html:root :is(.nspp-footprints-list>p,.nspp-history ol>li:only-child:not(:has(a,button))) {
 	display:flex;
 	flex-direction:column;
 	align-items:center;
@@ -1596,7 +1670,7 @@ html:root :is(.nspp-footprints-list>p,.nspp-history ol>li:only-child:not(:has(a,
 	mask:var(--nsmax-icon-empty) center/contain no-repeat;
 }
 /* 回帖足迹 */
-html[data-nsmax-theme] .nspp-history.nspp-footprints-dialog {
+html:root .nspp-history.nspp-footprints-dialog {
 	width:min(560px,100vw - 24px);
 	padding:0;
 }
@@ -1630,7 +1704,7 @@ html:root .nspp-footprints-list small {
 	font-variant-numeric:tabular-nums;
 }
 /* 阅读历史 */
-html[data-nsmax-theme] .nspp-history .nspp-history-toolbar {
+html:root .nspp-history .nspp-history-toolbar {
 	gap:8px;
 	padding:12px 18px 8px;
 }
@@ -1718,7 +1792,7 @@ html:root .nspp-history-avatar {
 	}
 }
 /* 注册资料 / 信任分 / 星辰转账 */
-html[data-nsmax-theme] .nspp-profile-summary {
+html:root .nspp-profile-summary {
 	gap:10px;
 	padding:16px 18px 14px;
 }
@@ -1784,7 +1858,7 @@ html:root .nspp-transfer-actions {
 	margin-top:4px;
 }
 /* 确认框 */
-html[data-nsmax-theme] .nspp-confirm-dialog {
+html:root .nspp-confirm-dialog {
 	width:min(380px,100vw - 32px);
 	padding:20px 20px 16px;
 }
@@ -1799,7 +1873,7 @@ html:root .nspp-confirm-dialog form>:is(button,a) {
 	padding:0 16px;
 }
 /* 帖子监控与配置 */
-html[data-nsmax-theme] .nspp-monitor:not(.nspp-hot-rankings) {
+html:root .nspp-monitor:not(.nspp-hot-rankings) {
 	padding:0;
 }
 html:root .nspp-monitor>p {
@@ -1912,7 +1986,7 @@ html:root .nspp-regex-help:hover {
 	border-color:var(--nsmax-text-2);
 }
 /* 热榜抽屉：去掉红橙金排名色，前三名用强调色加粗 */
-html[data-nsmax-theme] .nspp-monitor.nspp-hot-rankings {
+html:root .nspp-monitor.nspp-hot-rankings {
 	padding:0;
 	border-radius:12px 0 0 12px;
 	border-right-width:0;
@@ -1924,24 +1998,41 @@ html:root .nspp-hot-rankings>.nspp-hot-header {
 html:root .nspp-hot-rankings>.nspp-hot-header>h2 {
 	margin:0;
 }
+/* 榜单切换与侧栏热榜同一套描边小胶囊（当前榜单实心）；「刷新」与榜单分开，放在右侧 */
 html:root .nspp-hot-rankings nav {
-	gap:2px;
+	gap:6px;
 }
 html:root .nspp-hot-rankings nav button {
-	min-height:28px;
+	min-height:26px;
 	padding:0 11px;
-	border-color:transparent;
+	border:1px solid var(--nsmax-stroke);
 	border-radius:999px;
-	color:var(--nsmax-muted);
-	font-size:12.5px;
+	background:transparent;
+	color:var(--nsmax-text-2);
+	font-size:12px;
+	font-weight:500;
+	transition:background-color .15s ease,border-color .15s ease,color .15s ease;
 }
-html:root .nspp-hot-rankings nav button[aria-pressed=true] {
-	background:var(--nsmax-dlg-fill);
+html:root .nspp-hot-rankings nav button:hover:not(:disabled) {
+	border-color:var(--nsmax-stroke-strong);
+	background:transparent;
 	color:var(--nsmax-text);
-	font-weight:600;
 }
-html:root .nspp-hot-rankings nav>:last-child {
+html:root .nspp-hot-rankings nav button[aria-pressed=true],
+html:root .nspp-hot-rankings nav button[aria-pressed=true]:hover {
+	border-color:var(--nsmax-accent);
+	background:var(--nsmax-accent);
+	color:var(--nsmax-on-accent);
+}
+html:root .nspp-hot-rankings nav>button:not([data-ranking]) {
 	margin-left:auto;
+	border-color:transparent;
+	color:var(--nsmax-muted);
+}
+html:root .nspp-hot-rankings nav>button:not([data-ranking]):hover:not(:disabled) {
+	border-color:transparent;
+	background:transparent;
+	color:var(--nsmax-text);
 }
 html:root .nspp-hot-rankings>[role=status] {
 	margin:0;
@@ -2015,6 +2106,20 @@ html:root .nspp-hot-rankings .nspp-hot-skeleton :is(span) {
 		border-radius:12px 12px 0 0;
 	}
 }
+/* 大图查看（Viewer.js，帖子正文与悬停预览共用）：遮罩与工具栏从偏蓝的深色改成中性黑灰，底部缩略图条去掉黑色底带 */
+html:root .nspp-image-preview::backdrop {
+	background:rgb(12 12 14/.9);
+}
+html:root .nspp-image-preview :is(.viewer-toolbar>ul,.viewer-button) {
+	border-color:rgb(255 255 255/.14);
+	background:rgb(36 37 43/.92);
+}
+html:root .nspp-image-preview .viewer-navbar {
+	background:transparent;
+}
+html:root .nspp-image-preview .viewer-canvas>img {
+	border-radius:6px;
+}
 html:root .nspp-post-preview {
 	background-color:var(--nsmax-popup);
 	border-color:var(--nsmax-stroke);
@@ -2023,8 +2128,141 @@ html:root .nspp-post-preview {
 	-webkit-backdrop-filter:var(--nsmax-blur);
 	backdrop-filter:var(--nsmax-blur);
 }
+/* 帖子悬停预览（参考 sb.sb 弹出卡片）：标题 14px 粗体，打开时自动聚焦标题也不画粗框，只加下划线；正文 13px 与帖子同一套排版
+   （代码块、引用、表格、行内代码），底栏把互动按钮与「查看原帖」排成一行 */
+html:root .nspp-post-preview {
+	width:min(400px,100vw - 24px);
+	max-height:min(380px,100dvh - 24px);
+}
+html:root .nspp-post-preview>header {
+	gap:8px;
+	padding:11px 14px 10px;
+	border-bottom:1px solid var(--nsmax-divider);
+	font-size:14px;
+	line-height:1.45;
+}
+html:root .nspp-post-preview>header a {
+	color:var(--nsmax-text);
+	font-weight:600;
+}
+html:root .nspp-post-preview>header a:is(:hover,:focus,:focus-visible) {
+	outline:0;
+	text-decoration:underline;
+	text-decoration-color:var(--nsmax-stroke-strong);
+	text-underline-offset:3px;
+}
+html:root .nspp-post-preview>p {
+	padding:8px 14px 0;
+	color:var(--nsmax-muted);
+	font-size:12px;
+}
+html:root .nspp-post-preview .nspp-preview-content {
+	padding:10px 14px 12px;
+	color:var(--nsmax-text-2);
+	font-size:13px;
+	line-height:1.65;
+}
+html:root .nspp-post-preview .nspp-preview-meta {
+	margin:0 0 6px;
+	color:var(--nsmax-muted);
+	font-size:12px;
+}
+html:root .nspp-preview-content :is(h1,h2,h3,h4,h5,h6) {
+	margin:.7em 0 .35em;
+	color:var(--nsmax-text);
+	font-size:14px;
+	font-weight:600;
+	line-height:1.45;
+}
+html:root .nspp-preview-content :is(p,ul,ol) {
+	margin:.45em 0;
+}
+html:root .nspp-preview-content :not(pre)>code {
+	padding:.1em .35em;
+	border-radius:4px;
+	background:var(--nsmax-fill);
+	color:var(--nsmax-text);
+	font-size:.92em;
+}
+html:root .nspp-preview-content pre {
+	margin:.6em 0;
+	padding:8px 10px;
+	overflow:auto;
+	border:1px solid var(--nsmax-divider);
+	border-radius:8px;
+	background:var(--nsmax-panel-alt);
+	color:var(--nsmax-text);
+	font-size:12px;
+	line-height:1.55;
+}
+html:root .nspp-preview-content blockquote {
+	margin:.6em 0;
+	padding:2px 0 2px 10px;
+	border-left:2px solid var(--nsmax-stroke-strong);
+	color:var(--nsmax-muted);
+}
+html:root .nspp-preview-content table {
+	margin:.6em 0;
+	border-collapse:collapse;
+	font-size:12.5px;
+}
+html:root .nspp-preview-content :is(th,td) {
+	padding:4px 9px;
+	border:1px solid var(--nsmax-divider);
+	text-align:left;
+}
+html:root .nspp-preview-content th {
+	background:var(--nsmax-panel-alt);
+	color:var(--nsmax-text);
+	font-weight:600;
+}
+html:root .nspp-preview-content img {
+	max-width:100%;
+	height:auto;
+	border-radius:8px;
+}
+html:root .nspp-post-preview>footer {
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	gap:6px 12px;
+	padding:8px 14px;
+	border-top:1px solid var(--nsmax-divider);
+	font-size:12px;
+}
+html:root .nspp-post-preview>footer .nspp-list-actions {
+	gap:4px;
+	margin-right:auto;
+	padding:0;
+}
+html:root .nspp-post-preview>footer .nspp-list-actions:empty {
+	display:none;
+}
+html:root .nspp-post-preview>footer .nspp-list-actions button {
+	display:inline-flex;
+	align-items:center;
+	gap:4px;
+	min-height:26px;
+	padding:0 8px;
+	border-radius:999px;
+	color:var(--nsmax-muted);
+}
+html:root .nspp-post-preview>footer .nspp-list-actions button:hover {
+	background:transparent;
+	color:var(--nsmax-text);
+	text-decoration:none;
+}
+html:root .nspp-post-preview>footer>a {
+	margin-left:auto;
+	color:var(--nsmax-muted);
+	opacity:1;
+}
+html:root .nspp-post-preview>footer>a:hover {
+	color:var(--nsmax-text);
+	text-decoration:none;
+}
 /* 用户资料卡（NodeSeek++ 悬浮卡）：黑白灰，不再按信任等级换底色；数字用等宽数字字体 */
-html[data-nsmax-theme] .nspp-user-hover,
+html:root .nspp-user-hover,
 html:root .nspp-user-hover[data-trust] {
 	background:var(--nsmax-popup)!important;
 	color:var(--nsmax-text)!important;
@@ -2127,7 +2365,7 @@ html:root .nspp-user-hover :focus-visible {
 /* 紧凑消息中心（私信与 @我 / 回复通知，NodeSeek++）：原本是微信风格（绿色气泡与发送按钮、红色角标、按信任分换渐变底色），
    这里统一成主题配色——外框一张卡片、左侧会话栏浅底、当前会话浅灰、对方气泡白底细边框、自己的气泡用强调色、
    发送按钮为胶囊、资料卡与系统通知中性灰，和 sb.sb 的卡片与回复列表一致 */
-html[data-nsmax-theme] .nspp-messages {
+html:root .nspp-messages {
 	--chat-bg:var(--nsmax-canvas);
 	--chat-sidebar:var(--nsmax-panel-alt);
 	--chat-surface:var(--nsmax-card);
@@ -2151,10 +2389,17 @@ html:root .nspp-messages :focus-visible {
 	outline-color:color-mix(in srgb,var(--nsmax-text) 35%,transparent);
 }
 /* 消息中心接管的原生容器（通常是一张面板）：去掉它自己的边框、底色与内边距，只留消息中心这一张卡片，不再一层套一层 */
-html[data-nsmax-theme] :is(#nsk-body,#nsk-left-panel-container,#nsk-right-panel-container,body) .nspp-messages-container[data-nspp-message-view=new] {
+html:root :is(#nsk-body,#nsk-left-panel-container,#nsk-right-panel-container,body) .nspp-messages-container[data-nspp-message-view=new] {
 	padding:0!important;
 	border:0!important;
 	border-radius:0!important;
+	background:transparent!important;
+	box-shadow:none!important;
+}
+/* 站点主栏本身也是一张卡片（白底 + 内边距）：消息中心接管时一并去掉，外面不再多一圈白边 */
+html:root #nsk-left:has(>.nspp-messages-container[data-nspp-message-view=new]) {
+	padding:0!important;
+	border-color:transparent!important;
 	background:transparent!important;
 	box-shadow:none!important;
 }
@@ -2225,6 +2470,17 @@ html:root .nspp-messages-search>button:hover,
 html:root .nspp-messages-refresh:hover {
 	background:var(--nsmax-fill)!important;
 	color:var(--nsmax-text);
+}
+/* 搜索框旁的文字按钮（通知页的「刷新」）：与顶栏「全部已读」同样的胶囊文字按钮，不被压成 34px 宽 */
+html:root .nspp-messages-search>button:not(.nspp-messages-refresh) {
+	width:auto;
+	padding:0 12px!important;
+	color:var(--nsmax-text-2);
+	font-size:12.5px;
+}
+/* 资料卡读取中 / 读取失败时只有一行文字：不按五列统计网格排，免得挤在第一格里折行 */
+html:root .nspp-chat-profile-data:not(:has(>*)) {
+	display:block;
 }
 html:root .nspp-messages .nspp-messages-peer {
 	gap:10px;
@@ -2422,7 +2678,7 @@ html:root .nspp-messages-empty {
 	font-size:13.5px;
 }
 /* 聊天对象资料卡：不再按信任分换成绿 / 黄 / 红渐变，统一中性底色；信任分用正文色 */
-html[data-nsmax-theme] .nspp-chat-profile,
+html:root .nspp-chat-profile,
 html:root .nspp-chat-profile[data-trust],
 html:root body.dark-layout .nspp-chat-profile[data-trust] {
 	--chat-text:var(--nsmax-text);
@@ -2507,7 +2763,7 @@ html:root .nspp-chat-profile .role-tag[data-nspp-role] {
 	color:var(--nsmax-text-2)!important;
 }
 /* 通知（@我、回复主题）列表与详情 */
-html[data-nsmax-theme] .nspp-notice-workspace>.nspp-messages-sidebar {
+html:root .nspp-notice-workspace>.nspp-messages-sidebar {
 	background:var(--nsmax-card);
 }
 html:root .nspp-notice-workspace .nspp-messages-peer {
@@ -2566,7 +2822,7 @@ html:root .nspp-messages-unread {
 	background:var(--nsmax-accent)!important;
 }
 /* NodeSeek++ 的弹窗、徽章、按钮里写死了系统字体：统一换成主题字体（代码仍用等宽字体） */
-html[data-nsmax-theme]:is([data-nsmax-font=inter],[data-nsmax-font=system]) :is(.role-tag,[class^=nspp-],[class*=" nspp-"]):not(code,pre,kbd,samp,.hljs) {
+html:root:root :is(.role-tag,[class^=nspp-],[class*=" nspp-"]):not(code,pre,kbd,samp,.hljs) {
 	font-family:var(--nsmax-font)!important;
 }
 html:root:root :is(.nspp-user-badges,.role-tag,.nspp-level,.nspp-age,.nspp-monitor-badge,.nspp-messages-count) {

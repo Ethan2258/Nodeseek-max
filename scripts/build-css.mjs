@@ -40,6 +40,9 @@ const attributes = new Map([
 	["data-nsmax-accent", options.accent === "mono" ? "mono" : options.accent === "site" ? "site" : "color"]
 ]);
 for (const [option, attribute] of [["grid", "data-nsmax-grid"], ["glassHeader", "data-nsmax-glass"], ["typography", "data-nsmax-type"], ["motion", "data-nsmax-motion"], ["scrollbar", "data-nsmax-scrollbar"]]) if (options[option]) attributes.set(attribute, "");
+// 吸顶导航栏：脚本在站点顶栏是 static 时才给它加 data-nsmax-sticky（站点原生顶栏就是 static）。独立 CSS 直接按吸顶处理，
+// 否则顶栏的磨砂背景伪元素（position:absolute; inset:0）找不到定位容器，会铺满整个窗口、把页面盖成半透明。
+if (options.glassHeader) attributes.set("data-nsmax-sticky-header", "");
 // 页面类型由脚本按网址设置：独立 CSS 中这些规则只会命中对应页面才有的元素，直接视为满足；
 // 设置页的规则用的是通用表单选择器，放进独立 CSS 会影响所有页面，直接丢弃。
 const runtimeAttributes = new Set(["data-nsmax-page"]);
@@ -47,10 +50,11 @@ const scriptOnlyPages = new Set(["setting"]);
 // 只能由脚本标记的元素：能映射的换成站点选择器，其余规则丢弃。
 const markers = new Map([
 	["[data-nsmax-header]", "#nsk-head"],
+	["[data-nsmax-sticky]", ""],
 	["[data-nsmax-stat]", ".user-stat"],
 	["[data-nsmax-usercard]", ".user-card"]
 ]);
-const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|sticky|scrolled|sticky-header|sidenav|hidden|dup|booting|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
+const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|scrolled|sidenav|hidden|dup|tools|booting|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
 
 // ---- 极简 CSS 解析：规则块与 @media 等嵌套块 -----------------------------------------
 function parseBlocks(css) {
@@ -59,7 +63,11 @@ function parseBlocks(css) {
 	while (index < css.length) {
 		const open = css.indexOf("{", index);
 		if (open < 0) break;
-		const prelude = css.slice(index, open).trim();
+		// 规则前的注释会被一起读进选择器，导致选择器不以 html[data-nsmax-theme] 开头、条件没被解析（独立 CSS 里整条规则失效）；
+		// 这里把注释拆出来单独保留，输出时仍放在规则前面。
+		let prelude = css.slice(index, open);
+		const comments = (prelude.match(/\/\*[\s\S]*?\*\//g) || []).map((comment) => comment.trim());
+		prelude = prelude.replace(/\/\*[\s\S]*?\*\//g, "").trim();
 		let depth = 1, cursor = open + 1;
 		while (depth && cursor < css.length) {
 			if (css[cursor] === "{") depth++;
@@ -67,7 +75,7 @@ function parseBlocks(css) {
 			cursor++;
 		}
 		const body = css.slice(open + 1, cursor - 1);
-		blocks.push(/^@(media|supports|layer)\b/.test(prelude) ? { prelude, children: parseBlocks(body) } : { prelude, body: body.trim() });
+		blocks.push(/^@(media|supports|layer)\b/.test(prelude) ? { comments, prelude, children: parseBlocks(body) } : { comments, prelude, body: body.trim() });
 		index = cursor;
 	}
 	return blocks;
@@ -137,19 +145,20 @@ function rewriteSelector(selector) {
 function render(blocks, indent = "") {
 	const out = [];
 	for (const block of blocks) {
+		const comment = block.comments?.length ? `${block.comments.map((text) => `${indent}${text}`).join("\n")}\n` : "";
 		if (block.children) {
 			const inner = render(block.children, `${indent}\t`);
-			if (inner.trim()) out.push(`${indent}${block.prelude} {\n${inner}\n${indent}}`);
+			if (inner.trim()) out.push(`${comment}${indent}${block.prelude} {\n${inner}\n${indent}}`);
 			continue;
 		}
 		if (block.prelude.startsWith("@") || /^(from|to|\d+%)/.test(block.prelude)) {
-			out.push(`${indent}${block.prelude} {${block.body}}`);
+			out.push(`${comment}${indent}${block.prelude} {${block.body}}`);
 			continue;
 		}
 		const selectors = splitTopLevel(block.prelude).map(rewriteSelector).filter(Boolean);
 		if (!selectors.length || !block.body) continue;
 		const declarations = splitTopLevel(block.body, ";").map((declaration) => `${indent}\t${declaration};`).join("\n");
-		out.push(`${indent}${selectors.join(`,\n${indent}`)} {\n${declarations}\n${indent}}`);
+		out.push(`${comment}${indent}${selectors.join(`,\n${indent}`)} {\n${declarations}\n${indent}}`);
 	}
 	return out.join("\n");
 }
