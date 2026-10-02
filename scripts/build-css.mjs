@@ -43,6 +43,8 @@ for (const [option, attribute] of [["grid", "data-nsmax-grid"], ["glassHeader", 
 // 吸顶导航栏：脚本在站点顶栏是 static 时才给它加 data-nsmax-sticky（站点原生顶栏就是 static）。独立 CSS 直接按吸顶处理，
 // 否则顶栏的磨砂背景伪元素（position:absolute; inset:0）找不到定位容器，会铺满整个窗口、把页面盖成半透明。
 if (options.glassHeader) attributes.set("data-nsmax-sticky-header", "");
+// 「快捷入口」面板默认隐藏（与用户卡片重复），独立 CSS 同样隐藏。
+if (options.hideQuickAccess) attributes.set("data-nsmax-hide-quick", "");
 // 页面类型由脚本按网址设置：独立 CSS 中这些规则只会命中对应页面才有的元素，直接视为满足；
 // 设置页的规则用的是通用表单选择器，放进独立 CSS 会影响所有页面，直接丢弃。
 const runtimeAttributes = new Set(["data-nsmax-page"]);
