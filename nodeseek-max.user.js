@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.5.1
+// @version      1.5.2
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.5.1";
+	var NSMAX_VERSION = "1.5.2";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -25744,6 +25744,7 @@ ${NSMAX_ROOT} .md-editor .nspp-upload-status input[type=password]{min-height:30p
 ${NSMAX_ROOT} .md-editor :is(.tab-select,.tab-select~*):has(>.tab) .tab,${NSMAX_ROOT} .md-editor .tab-select .tab{padding:2px 4px;border:0!important;background:transparent!important;color:var(--nsmax-muted);font-size:13px;cursor:pointer}
 ${NSMAX_ROOT} .md-editor .tab-select .tab:is(.active,[class*=active],[aria-selected=true]){color:var(--nsmax-text);font-weight:600}
 ${NSMAX_ROOT} .md-editor .tab-select{display:flex;align-items:center;gap:12px;padding:8px 14px!important}
+${NSMAX_ROOT} [data-nsmax-md-hint]{display:none!important}
 /* 编辑器里的 Markdown 高亮（引用、回复 @、链接、标题等）：CodeMirror 默认是绿色引用、蓝色链接与标题，统一成主题灰阶 */
 ${NSMAX_ROOT} .md-editor .CodeMirror :is(.cm-quote,.cm-comment){color:var(--nsmax-muted)!important;font-style:normal}
 ${NSMAX_ROOT} .md-editor .CodeMirror :is(.cm-header,.cm-strong){color:var(--nsmax-text)!important;font-weight:650}
@@ -26539,7 +26540,27 @@ html[data-nsmax-theme] [data-nsmax-icon]{background-image:none!important;font-si
 .nsmax-tool-icon{display:block;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 				const marked = new Set();
+				// 编辑器里「支持markdown语法 / 支持MD语法」的提示文字：按文字找到后隐藏（只加属性，不删元素）。
+				// 只扫标签栏与工具栏，跳过输入区、预览和表情面板，内容再长也不影响性能。
+				const hintPattern = /^支持\s*(?:markdown|md)\s*(?:语法)?$/i;
+				const skip = ".CodeMirror, textarea, .expression, .exp-container, [class*=preview], .nspp-upload-status";
+				const hideHints = () => {
+					for (const editor of document.querySelectorAll(".md-editor")) {
+						const walker = document.createTreeWalker(editor, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, { acceptNode: (node) => node.nodeType === 1 && node.matches(skip) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+						while (walker.nextNode()) {
+							const node = walker.currentNode;
+							if (node.nodeType !== 3 || !hintPattern.test(node.data.trim())) continue;
+							let element = node.parentElement;
+							// 提示文字外面只包了一层链接之类时，隐藏到这一层为止（不碰含其他按钮的工具栏）。
+							while (element.parentElement && element.parentElement !== editor && hintPattern.test((element.parentElement.textContent || "").trim()) && element.parentElement.children.length === 1) element = element.parentElement;
+							if (element.hasAttribute("data-nsmax-md-hint")) continue;
+							element.setAttribute("data-nsmax-md-hint", "");
+							marked.add(element);
+						}
+					}
+				};
 				const modernize = () => {
+					hideHints();
 					for (const item of document.querySelectorAll(".md-editor .mde-toolbar .toolbar-item:not([data-nsmax-tool]):not(.right)")) {
 						if (item.closest(".nspp-compose, .nspp-message-editor")) continue;
 						const target = item.matches(".i-icon") ? item : item.querySelector(".i-icon") || item;
@@ -26564,6 +26585,7 @@ html:not([data-nsmax-theme]) .nsmax-tool-icon{display:none}`);
 				cleanups.push(() => {
 					stop();
 					for (const item of marked) {
+						item.removeAttribute("data-nsmax-md-hint");
 						item.removeAttribute("data-nsmax-tool");
 						item.querySelector("[data-nsmax-icon]")?.removeAttribute("data-nsmax-icon");
 						item.removeAttribute("data-nsmax-icon");
