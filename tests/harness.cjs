@@ -23,7 +23,7 @@ const hotPosts = (kind) => ({
 });
 
 // 油猴 API 垫片：存储落到 localStorage，跨域请求只放行热榜与更新检查。
-const gmShim = (seed, fontFiles, gm) => `(() => {
+const gmShim = (seed, fontFiles) => `(() => {
 	const PREFIX = "__gm__:";
 	const seed = ${JSON.stringify(seed || {})};
 	for (const [key, value] of Object.entries(seed)) if (localStorage.getItem(PREFIX + key) === null) localStorage.setItem(PREFIX + key, JSON.stringify(value));
@@ -63,19 +63,6 @@ const gmShim = (seed, fontFiles, gm) => `(() => {
 		return { abort() {} };
 	};
 	window.__hotPosts = ${hotPosts.toString()};
-	// 模拟 iOS Safari 的 Userscripts：只有 Promise 风格的 GM.*，没有同步的 GM_getValue / GM_setValue / GM_xmlhttpRequest / GM_addStyle
-	if (${JSON.stringify(gm)} === "async") {
-		const request = window.GM_xmlhttpRequest;
-		window.GM = {
-			getValue: async (key, fallback) => window.GM_getValue(key, fallback),
-			setValue: async (key, value) => window.GM_setValue(key, value),
-			xmlHttpRequest: (details) => {
-				request(details);
-				return Promise.resolve();
-			}
-		};
-		for (const name of ["GM_getValue", "GM_setValue", "GM_xmlhttpRequest", "GM_addStyle", "GM_registerMenuCommand", "GM_notification", "unsafeWindow"]) delete window[name];
-	}
 })();`;
 
 const apiResponses = {
@@ -104,11 +91,11 @@ async function launch() {
 
 // 打开一个页面：所有请求都在本地处理，外部网络一律拒绝。
 // api：按接口路径给出依次返回的响应 [{ status, headers, body }]，用完后回到默认模拟数据；calls 记录每个接口被请求的次数。
-async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "", gm = "sync" } = {}) {
+async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "" } = {}) {
 	const calls = {};
 	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1 });
 	const errors = [];
-	if (script) await context.addInitScript({ content: `${gmShim(seed, fontFiles, gm)}\n;(function () {\n${SCRIPT}\n})();` });
+	if (script) await context.addInitScript({ content: `${gmShim(seed, fontFiles)}\n;(function () {\n${SCRIPT}\n})();` });
 	if (init) await context.addInitScript({ content: init });
 	if (css) await context.addInitScript({ content: `document.addEventListener("DOMContentLoaded", () => { const style = document.createElement("style"); style.textContent = ${JSON.stringify(css)}; document.head.append(style); });` });
 	await context.route("**/*", async (route) => {

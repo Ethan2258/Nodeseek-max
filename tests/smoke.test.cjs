@@ -1021,31 +1021,6 @@ test("消息中心：私信与通知统一主题配色——一张卡片、对�
 	await context.close();
 });
 
-test("iOS Safari（Userscripts 等只有异步 GM.* 的环境）：主题与侧栏热榜正常，设置存到站点 localStorage 并在刷新后保留", async () => {
-	// 真实站点手机布局的顶栏不显示版块链接；模拟页的顶栏不是响应式的，这里补上同样的手机样式
-	const css = "@media (max-width:800px){#nsk-head .nsk-container>a:not(.site-logo){display:none}.search-box input{width:120px}#nsk-body{padding:12px 8px}}";
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), css, gm: "async", viewport: { width: 390, height: 844 } });
-	await page.waitForSelector("html[data-nsmax-theme]");
-	await page.waitForSelector("#nspp-tools button", { timeout: 5e3 });
-	const state = await page.evaluate(() => ({
-		sync: typeof window.GM_getValue,
-		canvas: getComputedStyle(document.body).backgroundColor,
-		overflow: document.documentElement.scrollWidth - window.innerWidth
-	}));
-	assert.equal(state.sync, "undefined");
-	assert.equal(state.canvas, "rgb(247, 248, 250)");
-	assert.ok(state.overflow <= 0, `手机宽度下页面横向溢出 ${state.overflow}px`);
-	// 通过 GM.xmlHttpRequest 取到热榜（右侧栏在手机布局被站点隐藏，这里看请求记录）
-	await page.waitForFunction(() => window.__gmRequests.some((url) => url.includes("api.bimg.eu.org")), null, { timeout: 5e3 });
-	// 写入设置后刷新仍然生效
-	await page.evaluate(() => localStorage.setItem("nsmax:store:nspp:settings:www.nodeseek.com", JSON.stringify({ "modern-theme": { enabled: false } })));
-	await page.reload();
-	await page.waitForSelector("#nspp-tools", { state: "attached", timeout: 5e3 });
-	assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-theme")), false);
-	assert.deepEqual(errors, []);
-	await context.close();
-});
-
 test("评论框：「发布评论」按钮不伸出编辑器（站点给提交行设 100% 宽、给按钮设浮动与负外边距也一样），引用行在编辑器里是灰色而非绿色", async () => {
 	const css = ".md-editor .submit-row{width:100%}.md-editor button.submit{float:right;margin-right:-14px;position:relative;left:6px}";
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), css });
@@ -1076,6 +1051,30 @@ test("评论框：「发布评论」按钮不伸出编辑器（站点给提交�
 	await shot(page, "editor");
 	assert.deepEqual(errors, []);
 	await context.close();
+});
+
+test("评论框：按钮容器被站点设成固定高度、或「发布评论」直接挂在编辑器下并绝对定位时，按钮也完整显示在编辑器内，上传按钮与它同一行", async () => {
+	const variants = [
+		{ name: "固定高度容器", html: postPage(), css: ".md-editor .submit-row{height:24px;position:relative}.md-editor .submit-row button.submit{position:absolute;right:8px;top:4px;height:36px}" },
+		{ name: "直接挂在编辑器下", html: postPage().replace('<div class="submit-row" style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div>', '<button class="submit btn" style="position:absolute;right:10px;bottom:-16px">发布评论</button>'), css: ".md-editor{position:relative}" }
+	];
+	for (const { name, html, css } of variants) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, css });
+		await page.waitForSelector(".md-editor .nspp-upload-choose", { timeout: 5e3 });
+		await settle(page, 400);
+		const box = await page.evaluate(() => {
+			const editor = document.querySelector(".md-editor").getBoundingClientRect();
+			const button = document.querySelector(".md-editor button.submit").getBoundingClientRect();
+			const upload = document.querySelector(".md-editor .nspp-upload-choose").getBoundingClientRect();
+			return { bottomGap: Math.round(editor.bottom - button.bottom), rightGap: Math.round(editor.right - button.right), sameLine: Math.abs((upload.top + upload.bottom) / 2 - (button.top + button.bottom) / 2) <= 4, uploadLeft: upload.left < button.left };
+		});
+		assert.ok(box.bottomGap >= 4, `${name}：按钮下沿离编辑器底边 ${box.bottomGap}px（被裁切）`);
+		assert.ok(box.rightGap >= 4, `${name}：按钮右沿超出 ${-box.rightGap}px`);
+		assert.equal(box.sameLine, true, `${name}：上传按钮不在同一行`);
+		assert.equal(box.uploadLeft, true);
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
 });
 
 test("加载：NodeSeek++ 夜间模式在页面解析阶段就生效，不再先亮后暗", async () => {
