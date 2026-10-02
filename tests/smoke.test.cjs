@@ -1489,7 +1489,7 @@ test("按钮里的图标与文字都在正中（纯图标按钮误差 0.6px 以�
 	}
 });
 
-test("私信（参考 Claude 的会话界面）：左侧会话列表通高；选中会话后资料卡就是会话头，标题栏只留右上角按钮；自己的消息不带头像，连续消息只显示一个头像、相接圆角收小；格式工具默认收起", async () => {
+test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的圆角浮层；选中会话后资料卡就是会话头，标题栏只留右上角按钮；自己的消息不带头像，连续消息只显示一个头像、相接圆角收小；格式工具默认收起", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
 	await page.waitForSelector(".nspp-chat-profile-data .nspp-chat-profile-stat", { timeout: 8e3 });
 	await settle(page, 300);
@@ -1503,8 +1503,8 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表通高；选
 		const visible = (element) => !!element && getComputedStyle(element).display !== "none" && getComputedStyle(element).visibility !== "hidden";
 		const tools = Array.from(document.querySelectorAll(".nspp-message-editor-toolbar>*")).filter(visible).map((element) => element.dataset.tool || element.textContent);
 		return {
-			sidebarTop: Math.round(sidebar.top - root.top) <= 1,
-			sidebarBottom: Math.round(root.bottom - sidebar.bottom) <= 1,
+			sidebarFull: sidebar.height >= root.height - 20 && Math.abs((sidebar.top - root.top) - (root.bottom - sidebar.bottom)) <= 1,
+			sidebarRadius: getComputedStyle(document.querySelector(".nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar")).borderTopLeftRadius,
 			heading: visible(document.querySelector(".nspp-messages-top .nspp-messages-heading:not([hidden])")),
 			actionsOverProfile: actions.top >= profile.top && actions.bottom <= profile.bottom && actions.right <= profile.right,
 			mineAvatar: visible(thread.querySelector(".nspp-messages-message.is-mine>.nspp-chat-avatar-link")),
@@ -1515,13 +1515,13 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表通高；选
 		};
 	});
 	assert.deepEqual(layout, {
-		sidebarTop: true,
-		sidebarBottom: true,
+		sidebarFull: true,
+		sidebarRadius: "16px",
 		heading: false,
 		actionsOverProfile: true,
 		mineAvatar: false,
 		groupAvatars: [false, false],
-		groupCorners: [["6px", "6px"], ["6px", "18px"]],
+		groupCorners: [["6px", "6px"], ["6px", "20px"]],
 		tools: ["image"],
 		toggle: true
 	});
@@ -1551,7 +1551,7 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表通高；选
 	await context.close();
 });
 
-test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、20px 圆角与投影，发送按钮是珊瑚色方形箭头；自己的气泡暖灰、对方白底细边框", async () => {
+test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、24px 圆角与投影，发送按钮是珊瑚色圆形箭头；自己的气泡暖灰、对方白底细边框", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
 	await page.waitForSelector(".nspp-messages-message.is-mine .nspp-messages-bubble", { timeout: 8e3 });
 	await settle(page, 300);
@@ -1560,15 +1560,15 @@ test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、
 		const send = document.querySelector(".nspp-messages-send").getBoundingClientRect();
 		return {
 			composer: [css(".nspp-messages-composer").borderTopLeftRadius, css(".nspp-messages-composer").backgroundColor, css(".nspp-messages-composer").boxShadow !== "none", css(".nspp-messages-composer").marginBottom],
-			send: [Math.round(send.width), Math.round(send.height), css(".nspp-messages-send").backgroundColor, css(".nspp-messages-send").fontSize],
+			send: [Math.round(send.width), Math.round(send.height), css(".nspp-messages-send").backgroundColor, css(".nspp-messages-send").fontSize, css(".nspp-messages-send").borderTopLeftRadius],
 			mine: css(".nspp-messages-message.is-mine .nspp-messages-bubble").backgroundColor,
 			theirs: css(".nspp-messages-message:not(.is-mine):not(.is-system) .nspp-messages-bubble").backgroundColor,
 			resize: css(".nspp-message-editor-body textarea").resize
 		};
 	});
 	assert.deepEqual(state, {
-		composer: ["20px", "rgb(255, 255, 255)", true, "20px"],
-		send: [32, 32, "rgb(193, 95, 60)", "0px"],
+		composer: ["24px", "rgb(255, 255, 255)", true, "18px"],
+		send: [32, 32, "rgb(193, 95, 60)", "0px", "50%"],
 		mine: "rgb(240, 238, 230)",
 		theirs: "rgb(255, 255, 255)",
 		resize: "none"
