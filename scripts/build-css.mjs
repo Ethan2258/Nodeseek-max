@@ -37,6 +37,7 @@ const attributes = new Map([
 	["data-nsmax-font", options.font],
 	["data-nsmax-size", options.fontSize],
 	["data-nsmax-style", "flat"],
+	["data-nsmax-palette", options.palette === "sbsb" ? "sbsb" : "claude"],
 	["data-nsmax-accent", options.accent === "mono" ? "mono" : options.accent === "site" ? "site" : "color"]
 ]);
 for (const [option, attribute] of [["grid", "data-nsmax-grid"], ["glassHeader", "data-nsmax-glass"], ["typography", "data-nsmax-type"], ["motion", "data-nsmax-motion"], ["scrollbar", "data-nsmax-scrollbar"]]) if (options[option]) attributes.set(attribute, "");
@@ -46,9 +47,9 @@ if (options.glassHeader) attributes.set("data-nsmax-sticky-header", "");
 // 「快捷入口」面板默认隐藏（与用户卡片重复），独立 CSS 同样隐藏。
 if (options.hideQuickAccess) attributes.set("data-nsmax-hide-quick", "");
 // 页面类型由脚本按网址设置：独立 CSS 中这些规则只会命中对应页面才有的元素，直接视为满足；
-// 设置页的规则用的是通用表单选择器，放进独立 CSS 会影响所有页面，直接丢弃。
+// 设置页与发帖页的规则用的是通用表单选择器，放进独立 CSS 会影响所有页面，直接丢弃。
 const runtimeAttributes = new Set(["data-nsmax-page"]);
-const scriptOnlyPages = new Set(["setting"]);
+const scriptOnlyPages = new Set(["setting", "new"]);
 // 只能由脚本标记的元素：能映射的换成站点选择器，其余规则丢弃。
 const markers = new Map([
 	["[data-nsmax-header]", "#nsk-head"],
@@ -56,7 +57,7 @@ const markers = new Map([
 	["[data-nsmax-stat]", ".user-stat"],
 	["[data-nsmax-usercard]", ".user-card"]
 ]);
-const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|scrolled|sidenav|hidden|dup|tools|booting|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
+const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|scrolled|sidenav|hidden|dup|tools|booting|icon-orig|icon-for|header-[\w-]+|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
 
 // ---- 极简 CSS 解析：规则块与 @media 等嵌套块 -----------------------------------------
 function parseBlocks(css) {

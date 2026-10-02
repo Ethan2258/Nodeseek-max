@@ -78,7 +78,15 @@ const settingPage = (options) => shell("设置 - NodeSeek", `<div id="nsk-left">
 <table><thead><tr><th>用户</th><th>屏蔽时间</th></tr></thead><tbody><tr><td>spammer</td><td>2026-09-01</td></tr></tbody></table>
 </div></div>${sidebar}`, options);
 
+// 发帖页：真实结构未知，这里用常见写法（标题输入框、分类下拉框、与评论框同一个编辑器、「发布帖子」按钮）。
+const newPostPage = (options) => shell("发帖 - NodeSeek", `<div id="nsk-left"><div class="nsk-panel new-discussion">
+<div class="title-row"><input type="text" class="post-title-input" placeholder="标题（最多 80 字）" maxlength="80"></div>
+<div class="category-row"><select class="category-select">${categories.slice(0, 7).map(([slug, name]) => `<option value="${slug}">${name}</option>`).join("")}</select></div>
+${editor.replace("说点什么…", "正文，支持 Markdown").replace("发布评论", "发布帖子")}
+</div></div>${sidebar}`, options);
+
 module.exports = {
+	newPostPage,
 	listPage,
 	postPage,
 	notificationPage,
