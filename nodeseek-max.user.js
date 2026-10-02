@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.6.0
+// @version      1.6.1
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.6.0";
+	var NSMAX_VERSION = "1.6.1";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -26723,60 +26723,60 @@ ${NSMAX_ROOT}:is([data-nsmax-font=inter],[data-nsmax-font=system],[data-nsmax-fo
 /* 私信（参考 Claude 网页版的会话界面）：整块是 16px 圆角的框；左侧会话列表通高、底色略深（像 Claude 的侧边栏），右侧是会话。
    选中会话后，对方资料卡就是会话头（头像、名字、等级、信任分、统计在一块），「全部已读 / 原版页面」叠在它右上角，
    不再另起一条重复名字的标题栏；没选会话、系统通知、@我 / 回复主题时仍是一条标题栏 */
-${nsmaxClaude} .nspp-messages{--nsmax-chat-side:#f5f4ed;border-radius:16px;background:var(--nsmax-canvas)}
+${nsmaxClaude} .nspp-messages{--nsmax-chat-side:#f5f4ed;border-radius:24px;background:var(--nsmax-canvas)}
 ${nsmaxClaude} body.dark-layout .nspp-messages{--nsmax-chat-side:#1f1e1d}
 @media (width>700px){
-${nsmaxClaude} .nspp-messages{display:grid;grid-template-columns:272px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+${nsmaxClaude} .nspp-messages{display:grid;grid-template-columns:284px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
 ${nsmaxClaude} .nspp-messages>.nspp-messages-workspace:not(.nspp-notice-workspace){display:contents}
 ${nsmaxClaude} .nspp-messages>.nspp-messages-top{grid-column:2;grid-row:1}
 ${nsmaxClaude} .nspp-messages>.nspp-messages-workspace>.nspp-messages-sidebar{grid-column:1;grid-row:1/-1;min-height:0}
 ${nsmaxClaude} .nspp-messages>.nspp-messages-workspace>:is(.nspp-messages-chat,.nspp-notice-workspace){grid-column:2;grid-row:2;min-height:0}
 ${nsmaxClaude} .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-workspace>.nspp-messages-chat{grid-row:1/-1}
-${nsmaxClaude} .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-top{z-index:2;align-self:start;justify-self:end;min-height:0;padding:20px 16px 0 0;border:0;background:transparent;pointer-events:none}
+${nsmaxClaude} .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-top{z-index:2;align-self:start;justify-self:end;min-height:0;margin:0;padding:22px 20px 0 0;border:0;border-radius:0;background:transparent;pointer-events:none}
 ${nsmaxClaude} .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-top>.nspp-messages-heading{display:none}
 ${nsmaxClaude} .nspp-messages:has(.nspp-chat-profile:not([hidden]))>.nspp-messages-top>.nspp-messages-top-actions{pointer-events:auto}
 ${nsmaxClaude} .nspp-messages:has(.nspp-chat-profile:not([hidden])) .nspp-chat-profile-details{padding-right:170px}
 }
 /* 标题栏 */
-${nsmaxClaude} .nspp-messages-top{min-height:56px;padding:0 16px 0 22px;border-bottom:1px solid var(--nsmax-divider);background:transparent}
+${nsmaxClaude} .nspp-messages-top{min-height:52px;margin:8px 8px 0 0;padding:0 10px 0 18px;border:0;border-radius:16px;background:var(--nsmax-chat-side)}
 ${nsmaxClaude} .nspp-messages-top .nspp-messages-heading strong{font-size:15px;font-weight:600;letter-spacing:-.005em}
 ${nsmaxClaude} .nspp-messages-heading img.nspp-messages-avatar[src^="data:image/svg+xml"]{box-sizing:border-box;width:28px;height:28px;border-radius:50%!important;background:var(--nsmax-card)!important;box-shadow:0 0 0 1px var(--nsmax-stroke)!important}
 ${nsmaxClaude} .nspp-messages-top-actions{gap:4px}
-${nsmaxClaude} .nspp-messages-top-actions button,${nsmaxClaude} .nspp-messages-top .nspp-messages-profile{min-height:30px;padding:0 11px!important;border-radius:8px!important;color:var(--nsmax-muted)!important;font-size:12.5px!important}
+${nsmaxClaude} .nspp-messages-top-actions button,${nsmaxClaude} .nspp-messages-top .nspp-messages-profile{min-height:30px;padding:0 12px!important;border-radius:999px!important;color:var(--nsmax-muted)!important;font-size:12.5px!important}
 ${nsmaxClaude} .nspp-messages-top-actions button:hover,${nsmaxClaude} .nspp-messages-top .nspp-messages-profile:hover{background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;color:var(--nsmax-text)!important}
 ${nsmaxClaude} .nspp-notice-back{display:inline-flex}
 @media (width<=700px){${nsmaxClaude} .nspp-messages-back{display:inline-flex}}
-${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back){align-items:center;gap:2px;min-height:30px;padding:0 10px 0 6px!important;border-color:transparent!important;border-radius:8px!important;color:var(--nsmax-muted)!important;font-size:12.5px!important}
+${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back){align-items:center;gap:2px;min-height:30px;padding:0 12px 0 7px!important;border-color:transparent!important;border-radius:999px!important;color:var(--nsmax-muted)!important;font-size:12.5px!important}
 ${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back)::before{content:"";width:16px;height:16px;background:currentColor;-webkit-mask:var(--nsmax-icon-back) center/contain no-repeat;mask:var(--nsmax-icon-back) center/contain no-repeat}
 ${nsmaxClaude} :is(.nspp-notice-back,.nspp-messages-back):hover{background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important;color:var(--nsmax-text)!important}
 /* 左侧会话列表：搜索框带放大镜，条目是圆角浅底（悬停 / 当前），不再是白卡片加边框；@我 / 回复主题的图标放在圆形底里；
    固定入口和会话之间一条细分隔线，会话上方一个「私信」小标题 */
-${nsmaxClaude} .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar{border-right:1px solid var(--nsmax-divider);background:var(--nsmax-chat-side)}
-${nsmaxClaude} .nspp-messages-search{position:relative;align-items:center;gap:4px;min-height:56px;padding:10px 10px 8px 12px}
+${nsmaxClaude} .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar{margin:8px;border:0;border-radius:16px;background:var(--nsmax-chat-side);overflow:hidden}
+${nsmaxClaude} .nspp-messages-search{position:relative;align-items:center;gap:4px;min-height:52px;padding:10px 8px 6px 10px}
 ${nsmaxClaude} .nspp-messages-search::before{content:"";position:absolute;top:50%;left:23px;z-index:1;width:15px;height:15px;margin-top:1px;background:var(--nsmax-faint);-webkit-mask:var(--nsmax-icon-search) center/contain no-repeat;mask:var(--nsmax-icon-search) center/contain no-repeat;translate:0 -50%;pointer-events:none}
-${nsmaxClaude} .nspp-messages-search input{height:34px;min-height:34px;padding:0 12px 0 33px;border:1px solid var(--nsmax-stroke);border-radius:10px;background:var(--nsmax-card)}
+${nsmaxClaude} .nspp-messages-search input{height:36px;min-height:36px;padding:0 14px 0 35px;border:1px solid var(--nsmax-stroke);border-radius:999px;background:var(--nsmax-card)}
 ${nsmaxClaude} .nspp-messages-search input:focus{border-color:var(--nsmax-composer-line-focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent)}
-${nsmaxClaude} .nspp-messages-search>button,${nsmaxClaude} .nspp-messages-refresh{width:32px;min-width:32px;height:32px;border-radius:8px!important}
+${nsmaxClaude} .nspp-messages-search>button,${nsmaxClaude} .nspp-messages-refresh{width:34px;min-width:34px;height:34px;border-radius:999px!important}
 ${nsmaxClaude} .nspp-messages-search>button:hover,${nsmaxClaude} .nspp-messages-refresh:hover{background:color-mix(in srgb,var(--nsmax-ink) 6%,transparent)!important}
-${nsmaxClaude} .nspp-messages-search>button:not(.nspp-messages-refresh){width:auto;padding:0 11px!important}
-${nsmaxClaude} .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-peer{gap:11px;min-height:54px;margin:1px 8px;width:calc(100% - 16px);padding:8px 10px;border-radius:10px;box-shadow:none}
+${nsmaxClaude} .nspp-messages-search>button:not(.nspp-messages-refresh){width:auto;padding:0 13px!important}
+${nsmaxClaude} .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-peer{gap:11px;min-height:56px;margin:2px 6px;width:calc(100% - 12px);padding:9px 10px;border-radius:14px;box-shadow:none}
 ${nsmaxClaude} .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-peer:hover{background:color-mix(in srgb,var(--nsmax-ink) 4.5%,transparent)}
 ${nsmaxClaude} :is(.nspp-messages-peer[aria-pressed=true],.nspp-messages-fixed-contacts a[aria-current]),${nsmaxClaude} :is(.nspp-messages-peer[aria-pressed=true],.nspp-messages-fixed-contacts a[aria-current]):hover{background:color-mix(in srgb,var(--nsmax-ink) 7.5%,transparent);box-shadow:none}
-${nsmaxClaude} .nspp-messages-fixed-contacts{padding-bottom:7px;margin-bottom:2px;background:linear-gradient(var(--nsmax-divider),var(--nsmax-divider)) center bottom/calc(100% - 36px) 1px no-repeat}
+${nsmaxClaude} .nspp-messages-fixed-contacts{padding-bottom:7px;margin-bottom:2px;background:linear-gradient(var(--nsmax-divider),var(--nsmax-divider)) center bottom/calc(100% - 32px) 1px no-repeat}
 ${nsmaxClaude} .nspp-messages-fixed-contacts img.nspp-messages-avatar[src^="data:image/svg+xml"]{box-sizing:border-box;width:32px;height:32px;padding:0;border-radius:50%!important;background:var(--nsmax-card)!important;box-shadow:0 0 0 1px var(--nsmax-stroke)!important}
-${nsmaxClaude} .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-conversations:not(:empty)::before{content:"私信";display:block;padding:10px 20px 5px;color:var(--nsmax-faint);font-size:11.5px;font-weight:500;letter-spacing:.02em}
+${nsmaxClaude} .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messages-sidebar .nspp-messages-conversations:not(:empty)::before{content:"私信";display:block;padding:10px 18px 5px;color:var(--nsmax-faint);font-size:11.5px;font-weight:500;letter-spacing:.02em}
 ${nsmaxClaude} .nspp-messages-peer-title strong,${nsmaxClaude} .nspp-messages-fixed-contacts strong{color:var(--nsmax-text);font-size:13.5px;font-weight:500}
 ${nsmaxClaude} .nspp-messages-snippet{color:var(--nsmax-muted);font-size:12.5px}
 ${nsmaxClaude} .nspp-messages-peer-title time{color:var(--nsmax-faint);font-size:11px}
 ${nsmaxClaude} .nspp-messages-unread{border-color:var(--nsmax-chat-side)}
 /* 会话头（对方资料）：头像 40px + 名字 / 等级 / UID，第二行是信任分和统计（一排小字，不再是灰底大框），最后一行很淡的提示 */
-${nsmaxClaude} .nspp-chat-profile,${nsmaxClaude} .nspp-chat-profile[data-trust],${nsmaxClaude} body.dark-layout .nspp-chat-profile[data-trust]{display:flex;flex-wrap:wrap;align-items:center;gap:0;padding:16px 20px 12px;border-bottom:1px solid var(--nsmax-divider);background:transparent}
+${nsmaxClaude} .nspp-chat-profile,${nsmaxClaude} .nspp-chat-profile[data-trust],${nsmaxClaude} body.dark-layout .nspp-chat-profile[data-trust]{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:8px 8px 0 0;padding:14px 18px 12px;border:0;border-radius:16px;background:var(--nsmax-chat-side)}
 ${nsmaxClaude} .nspp-chat-profile>a{flex:none;margin-right:12px}
 ${nsmaxClaude} .nspp-chat-profile>a .nspp-messages-avatar,${nsmaxClaude} .nspp-chat-profile[data-trust=perfect]>a .nspp-messages-avatar{width:40px;height:40px}
 ${nsmaxClaude} .nspp-chat-profile-details{flex:1 1 calc(100% - 52px);min-width:0}
 ${nsmaxClaude} .nspp-chat-profile-heading{gap:6px}
 ${nsmaxClaude} .nspp-chat-profile-heading>strong,${nsmaxClaude} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-heading>strong{overflow:hidden;font-size:15px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
-${nsmaxClaude} .nspp-chat-profile-level,${nsmaxClaude} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-level{padding:0 6px;border:0;border-radius:6px;background:var(--nsmax-fill);color:var(--nsmax-text-2);font-size:11px;line-height:18px}
+${nsmaxClaude} .nspp-chat-profile-level,${nsmaxClaude} .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-level{padding:0 8px;border:0;border-radius:999px;background:var(--nsmax-fill);color:var(--nsmax-text-2);font-size:11px;line-height:18px}
 ${nsmaxClaude} .nspp-chat-profile-meta{margin-top:2px;color:var(--nsmax-muted);font-size:12px;line-height:18px}
 ${nsmaxClaude} .nspp-chat-profile-bio{color:var(--nsmax-text-2);font-size:12.5px}
 ${nsmaxClaude} .nspp-chat-profile-trust,${nsmaxClaude} .nspp-chat-profile[data-trust] .nspp-chat-profile-trust,${nsmaxClaude} body.dark-layout .nspp-chat-profile[data-trust] .nspp-chat-profile-trust{order:2;flex-direction:row-reverse;align-items:baseline;gap:5px;min-width:0;margin:10px 0 0 52px;padding-right:14px;border-right:1px solid var(--nsmax-divider);line-height:20px}
@@ -26794,7 +26794,7 @@ ${nsmaxClaude} .nspp-chat-profile-notice,${nsmaxClaude} .nspp-chat-profile[data-
 /* 消息：自己的消息靠右、暖灰气泡、不带头像；对方的消息白底细边框，连续几条只在第一条显示头像；
    同一方连续的气泡挨得更近，相接的一侧圆角收小（18px → 6px），读起来是一组 */
 ${nsmaxClaude} .nspp-messages-thread{padding:20px 28px 12px;background:transparent;-webkit-mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 18px),transparent)}
-${nsmaxClaude} .nspp-messages-stamp{margin:16px 0 12px;color:var(--nsmax-faint);font-size:11.5px}
+${nsmaxClaude} .nspp-messages-stamp{display:table;margin:16px auto 12px;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--nsmax-ink) 4.5%,transparent);color:var(--nsmax-muted);font-size:11.5px;line-height:18px}
 ${nsmaxClaude} .nspp-messages-thread>.nspp-messages-stamp:first-child{margin-top:0}
 ${nsmaxClaude} .nspp-messages-message{gap:10px;margin-bottom:12px}
 ${nsmaxClaude} .nspp-messages-message.is-mine>:is(.nspp-chat-avatar-link,.nspp-messages-avatar){display:none}
@@ -26802,40 +26802,45 @@ ${nsmaxClaude} .nspp-messages-message:not(.is-system)>.nspp-chat-avatar-link{mar
 ${nsmaxClaude} .nspp-messages-message:not(.is-system)>:is(.nspp-chat-avatar-link .nspp-messages-avatar,.nspp-messages-avatar){width:28px;height:28px}
 ${nsmaxClaude} .nspp-messages-message:not(.is-mine,.is-system)+.nspp-messages-message:not(.is-mine,.is-system)>.nspp-chat-avatar-link{visibility:hidden}
 ${nsmaxClaude} .nspp-messages-message:not(.is-mine,.is-system):has(+.nspp-messages-message:not(.is-mine,.is-system)),${nsmaxClaude} .nspp-messages-message.is-mine:has(+.nspp-messages-message.is-mine){margin-bottom:3px}
-${nsmaxClaude} .nspp-messages-bubble,${nsmaxClaude} .nspp-messages-message.is-mine .nspp-messages-bubble{max-width:min(72%,560px);padding:9px 14px;border-radius:18px;font-size:14.5px;line-height:1.6;box-shadow:none}
+${nsmaxClaude} .nspp-messages-bubble,${nsmaxClaude} .nspp-messages-message.is-mine .nspp-messages-bubble{max-width:min(72%,560px);padding:9px 15px;border-radius:20px;font-size:14.5px;line-height:1.6;box-shadow:none}
 ${nsmaxClaude} .nspp-messages-message:not(.is-mine,.is-system):has(+.nspp-messages-message:not(.is-mine,.is-system)) .nspp-messages-bubble{border-bottom-left-radius:6px}
 ${nsmaxClaude} .nspp-messages-message:not(.is-mine,.is-system)+.nspp-messages-message:not(.is-mine,.is-system) .nspp-messages-bubble{border-top-left-radius:6px}
 ${nsmaxClaude} .nspp-messages-message.is-mine:has(+.nspp-messages-message.is-mine) .nspp-messages-bubble{border-bottom-right-radius:6px}
 ${nsmaxClaude} .nspp-messages-message.is-mine+.nspp-messages-message.is-mine .nspp-messages-bubble{border-top-right-radius:6px}
+${nsmaxClaude} .nspp-messages-message.is-system{border-radius:16px}
 ${nsmaxClaude} .nspp-messages-message.is-system .nspp-messages-bubble{max-width:none;padding:0;border-radius:0;font-size:13.5px}
+${nsmaxClaude} .nspp-messages-bubble img{border-radius:14px}
 ${nsmaxClaude} .nspp-messages-empty{flex-direction:column;gap:12px;color:var(--nsmax-muted);font-size:13.5px}
 ${nsmaxClaude} .nspp-messages-empty::before{content:"";width:36px;height:36px;background:var(--nsmax-faint);-webkit-mask:var(--nsmax-icon-chat) center/contain no-repeat;mask:var(--nsmax-icon-chat) center/contain no-repeat}
 /* 输入框：浮在会话底部的大圆角框；格式工具默认收起，只留「格式」开关和图片按钮（32px 细边方形，和评论框的图片按钮一致），
    点开后整排工具在输入框下方单独一行；Markdown 复选框改成可点的小标签（开启时浅底，关闭时变淡并划线） */
-${nsmaxClaude} .nspp-messages-composer{margin:4px 20px 20px;border-radius:20px}
+${nsmaxClaude} .nspp-messages-composer{margin:4px 18px 18px;border-radius:24px}
 ${nsmaxClaude} .nspp-message-editor-body textarea{field-sizing:content;min-height:52px;max-height:30dvh;padding:14px 18px 6px!important}
 ${nsmaxClaude} .nspp-message-editor-preview{padding:14px 18px 6px}
-${nsmaxClaude} .nspp-messages-compose-actions{flex-wrap:wrap;gap:4px;padding:4px 10px 10px}
-${nsmaxClaude} .nspp-messages .nspp-message-format-toggle,${nsmaxClaude} .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar>button[data-tool=image]{display:inline-flex!important;flex:none;align-items:center;justify-content:center;box-sizing:border-box;width:32px;height:32px;padding:0;border:1px solid var(--nsmax-composer-line);border-radius:8px!important;background:transparent;color:var(--nsmax-text-2)}
+${nsmaxClaude} .nspp-messages-compose-actions{flex-wrap:wrap;gap:6px;padding:4px 10px 10px 12px}
+${nsmaxClaude} .nspp-messages-composer[data-format-open] .nspp-message-editor-toolbar button{border-radius:10px!important}
+${nsmaxClaude} .nspp-messages .nspp-message-format-toggle,${nsmaxClaude} .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar>button[data-tool=image]{display:inline-flex!important;flex:none;align-items:center;justify-content:center;box-sizing:border-box;width:32px;height:32px;padding:0;border:1px solid var(--nsmax-composer-line);border-radius:50%!important;background:transparent;color:var(--nsmax-text-2)}
 ${nsmaxClaude} .nspp-messages .nspp-message-format-toggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:round}
 ${nsmaxClaude} .nspp-messages .nspp-message-format-toggle:hover,${nsmaxClaude} .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar>button[data-tool=image]:hover:not(:disabled){border-color:var(--nsmax-composer-line-focus);background:var(--nsmax-fill);color:var(--nsmax-text)}
 ${nsmaxClaude} .nspp-messages .nspp-message-format-toggle[aria-expanded=true]{border-color:transparent;background:var(--nsmax-fill);color:var(--nsmax-text)}
 ${nsmaxClaude} .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar{flex:none;overflow:visible}
 ${nsmaxClaude} .nspp-messages-composer:not([data-format-open]) .nspp-message-editor-toolbar>:not([data-tool=image]){display:none}
 ${nsmaxClaude} .nspp-messages-composer[data-format-open] .nspp-message-editor-toolbar{order:-1;flex:1 0 100%;flex-wrap:wrap;gap:2px;overflow:visible;padding:0 0 4px}
-${nsmaxClaude} .nspp-messages-compose-actions>label{position:relative;display:inline-flex;align-items:center;gap:0;height:28px;margin-left:auto;padding:0 10px;border-radius:8px;color:var(--nsmax-faint);font-size:12px;text-decoration:line-through;text-decoration-color:color-mix(in srgb,currentColor 60%,transparent);cursor:pointer;user-select:none;transition:background-color .15s ease,color .15s ease}
+${nsmaxClaude} .nspp-messages-compose-actions>label{position:relative;display:inline-flex;align-items:center;gap:0;height:28px;margin-left:auto;padding:0 12px 0 11px;border-radius:999px;color:var(--nsmax-faint);font-size:12px;text-decoration:line-through;text-decoration-color:color-mix(in srgb,currentColor 60%,transparent);cursor:pointer;user-select:none;transition:background-color .15s ease,color .15s ease}
 ${nsmaxClaude} .nspp-messages-compose-actions>label:hover{background:color-mix(in srgb,var(--nsmax-ink) 5%,transparent);color:var(--nsmax-muted)}
 ${nsmaxClaude} .nspp-messages-compose-actions>label:has(input:checked){background:var(--nsmax-fill);color:var(--nsmax-text-2);text-decoration:none}
 ${nsmaxClaude} .nspp-messages-compose-actions>label:has(input:checked)::before{content:"";width:13px;height:13px;margin-right:5px;background:currentColor;-webkit-mask:var(--nsmax-icon-check) center/contain no-repeat;mask:var(--nsmax-icon-check) center/contain no-repeat}
 ${nsmaxClaude} .nspp-messages-compose-actions>label>input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 ${nsmaxClaude} .nspp-messages-compose-actions>label:has(input:focus-visible){outline:2px solid color-mix(in srgb,var(--nsmax-ink) 40%,transparent);outline-offset:2px}
-${nsmaxClaude} .nspp-messages .nspp-messages-send{margin-left:6px;border-radius:8px!important}
+${nsmaxClaude} .nspp-messages .nspp-messages-send{margin-left:2px;border-radius:50%!important}
 /* @我 / 回复主题：右侧列表和左侧会话一样的搜索框，条目之间细分隔线、悬停很浅的底 */
 ${nsmaxClaude} .nspp-notice-workspace>.nspp-messages-sidebar{background:transparent}
-${nsmaxClaude} .nspp-notice-workspace .nspp-messages-search{padding:10px 16px 8px 20px}
-${nsmaxClaude} .nspp-notice-workspace .nspp-messages-search::before{left:31px}
-${nsmaxClaude} .nspp-notice-workspace .nspp-messages-peer{padding:14px 22px;border-bottom-color:var(--nsmax-divider)}
-${nsmaxClaude} .nspp-notice-workspace .nspp-messages-peer:hover{background:color-mix(in srgb,var(--nsmax-ink) 3%,transparent)}
+${nsmaxClaude} .nspp-notice-workspace .nspp-messages-search{padding:12px 12px 8px 14px}
+${nsmaxClaude} .nspp-notice-workspace .nspp-messages-search::before{left:27px}
+${nsmaxClaude} .nspp-notice-workspace .nspp-messages-peer{margin:2px 8px;width:calc(100% - 16px);padding:12px 14px;border-bottom:0;border-radius:16px}
+${nsmaxClaude} .nspp-notice-workspace .nspp-messages-peer:hover{background:color-mix(in srgb,var(--nsmax-ink) 4%,transparent)}
+${nsmaxClaude} .nspp-notice-workspace .nspp-messages-thread.nspp-notice-detail{margin:8px 8px 8px 0;padding:22px 26px;border:1px solid var(--nsmax-stroke);border-radius:16px;background:var(--nsmax-card);-webkit-mask-image:none;mask-image:none}
+${nsmaxClaude} :is(.nspp-notice-body,.nspp-messages-bubble.is-markdown,.nspp-message-editor-preview) pre{border-radius:12px}
 
 ${NSMAX_ROOT}[data-nsmax-scrollbar]{scrollbar-width:thin;scrollbar-color:var(--nsmax-thumb) transparent}
 ${NSMAX_ROOT}[data-nsmax-scrollbar] ::-webkit-scrollbar{width:10px;height:10px}
