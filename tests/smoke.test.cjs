@@ -771,7 +771,7 @@ test("设置面板：可打开、搜索，不再包含 AI 写作助手与快捷�
 	assert.equal(look.switchWidth, "36px");
 	assert.equal(look.appearance, "none");
 	assert.ok(look.dialogWidth >= 900, `设置面板宽度 ${look.dialogWidth}`);
-	assert.equal(look.card, "12px");
+	assert.equal(look.card, "16px");
 	await settle(page, 200);
 	await shot(page, "settings");
 	assert.deepEqual(errors, []);
@@ -1335,7 +1335,7 @@ test("评论框（参考 Claude 的输入框）：输入区在最上面，工具
 	assert.ok(state.toolRow, "「内容 / 预览」与工具栏不在同一行");
 	assert.ok(state.footerRow, "表情分类与发送按钮不在同一行");
 	assert.ok(state.insideEditor, "发送按钮超出评论框");
-	assert.equal(state.radius, "20px");
+	assert.equal(state.radius, "24px");
 	assert.ok(state.shadow, "评论框没有投影");
 	assert.deepEqual(state.send, [32, 32, "rgb(193, 95, 60)", "0px", "发布评论"]);
 	assert.equal(state.sendIcon, "16px");
@@ -1358,7 +1358,7 @@ test("评论框（参考 Claude 的输入框）：输入区在最上面，工具
 	await sb.context.close();
 });
 
-test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发帖按钮、8px 圆角按钮、圆形头像、帖子标题衬线体", async () => {
+test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发帖按钮、10px 圆角按钮、圆形头像、帖子标题衬线体", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
 	await settle(page, 300);
@@ -1383,8 +1383,8 @@ test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发�
 		main: "rgba(0, 0, 0, 0)",
 		nav: "rgba(0, 0, 0, 0)",
 		card: "rgb(255, 255, 255)",
-		cta: ["rgb(193, 95, 60)", "8px"],
-		pager: ["8px", "rgb(31, 30, 29)"],
+		cta: ["rgb(193, 95, 60)", "10px"],
+		pager: ["10px", "rgb(31, 30, 29)"],
 		avatar: "50%",
 		chip: "6px",
 		header: "rgba(0, 0, 0, 0)"
@@ -1489,7 +1489,60 @@ test("按钮里的图标与文字都在正中（纯图标按钮误差 0.6px 以�
 	}
 });
 
-test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的圆角浮层；选中会话后资料卡就是会话头，标题栏只留右上角按钮；自己的消息不带头像，连续消息只显示一个头像、相接圆角收小；格式工具默认收起", async () => {
+test("圆角统一（Claude 风格）：各页面、私信 / 通知、设置面板、弹窗里的圆角只有 6 / 10 / 16 / 24px 四档，另外只有头像、角标、开关等是圆形", async () => {
+	const probe = () => {
+		const allowed = new Set(["6px", "10px", "16px", "24px", "50%"]);
+		const bad = [];
+		const roots = [document, ...Array.from(document.querySelectorAll("*")).filter((element) => element.shadowRoot).map((element) => element.shadowRoot)];
+		for (const root of roots) for (const element of root.querySelectorAll("*")) {
+			const box = element.getBoundingClientRect();
+			if (box.width < 4 || box.height < 4) continue;
+			const style = getComputedStyle(element);
+			if (style.display === "none" || style.visibility === "hidden") continue;
+			if (style.backgroundColor === "rgba(0, 0, 0, 0)" && style.borderTopWidth === "0px" && style.boxShadow === "none" && !/^(IMG|INPUT|BUTTON|TEXTAREA|SELECT)$/.test(element.tagName)) continue;
+			for (const corner of ["borderTopLeftRadius", "borderTopRightRadius", "borderBottomLeftRadius", "borderBottomRightRadius"]) {
+				const radius = style[corner];
+				if (radius === "0px" || allowed.has(radius)) continue;
+				if (radius.endsWith("px") && parseFloat(radius) >= Math.min(box.width, box.height) / 2 - 0.5) continue;
+				bad.push(`${element.tagName.toLowerCase()}.${String(element.className?.baseVal ?? element.className).trim().split(/\s+/).slice(0, 2).join(".")} ${Math.round(box.width)}x${Math.round(box.height)} ${corner}=${radius}`);
+				break;
+			}
+		}
+		return Array.from(new Set(bad));
+	};
+	const pages = [
+		["https://www.nodeseek.com/", listPage()],
+		["https://www.nodeseek.com/post-1000-1", postPage()],
+		["https://www.nodeseek.com/notification#/message?mode=talk&to=7", messageCenterPage()],
+		["https://www.nodeseek.com/notification#/atMe", messageCenterPage()],
+		["https://www.nodeseek.com/new-discussion", newPostPage()],
+		["https://www.nodeseek.com/setting#/profile", settingPage()]
+	];
+	for (const [url, html] of pages) {
+		const { context, page, errors } = await open(browser, url, { html });
+		await settle(page, 1500);
+		assert.deepEqual(await page.evaluate(probe), [], url);
+		if (url === "https://www.nodeseek.com/") {
+			await page.click("[data-nspp-settings-launcher]");
+			await settle(page, 600);
+			assert.deepEqual(await page.evaluate(probe), [], "设置面板");
+			await page.keyboard.press("Escape");
+			await settle(page, 300);
+			await page.hover(".post-list-item .info-author");
+			await page.waitForSelector(".nspp-user-hover:not([hidden]) dd", { timeout: 8e3 });
+			await settle(page, 300);
+			assert.deepEqual(await page.evaluate(probe), [], "用户资料卡");
+			await page.mouse.move(5, 600);
+			await page.click('#nspp-tools button[title^="帖子监控"]');
+			await settle(page, 600);
+			assert.deepEqual(await page.evaluate(probe), [], "帖子监控");
+		}
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
+});
+
+test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的圆角浮层；选中会话后资料卡就是会话头，标题栏只留右上角按钮；自己的消息不带头像，对方连续消息只显示一个头像，自己连续的气泡相接圆角收小；格式工具默认收起", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
 	await page.waitForSelector(".nspp-chat-profile-data .nspp-chat-profile-stat", { timeout: 8e3 });
 	await settle(page, 300);
@@ -1499,7 +1552,9 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的
 		const thread = document.querySelector(".nspp-messages-thread");
 		const theirs = thread.querySelector(".nspp-messages-message:not(.is-mine,.is-system)");
 		thread.append(theirs.cloneNode(true), theirs.cloneNode(true));
-		const group = Array.from(thread.querySelectorAll(".nspp-messages-message")).slice(-2);
+		const mineGroup = [thread.querySelector(".nspp-messages-message.is-mine").cloneNode(true), thread.querySelector(".nspp-messages-message.is-mine").cloneNode(true)];
+		thread.append(...mineGroup);
+		const group = Array.from(thread.querySelectorAll(".nspp-messages-message")).slice(-4, -2);
 		const visible = (element) => !!element && getComputedStyle(element).display !== "none" && getComputedStyle(element).visibility !== "hidden";
 		const tools = Array.from(document.querySelectorAll(".nspp-message-editor-toolbar>*")).filter(visible).map((element) => element.dataset.tool || element.textContent);
 		return {
@@ -1509,7 +1564,7 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的
 			actionsOverProfile: actions.top >= profile.top && actions.bottom <= profile.bottom && actions.right <= profile.right,
 			mineAvatar: visible(thread.querySelector(".nspp-messages-message.is-mine>.nspp-chat-avatar-link")),
 			groupAvatars: group.map((message) => visible(message.querySelector(".nspp-chat-avatar-link"))),
-			groupCorners: group.map((message) => [getComputedStyle(message.querySelector(".nspp-messages-bubble")).borderTopLeftRadius, getComputedStyle(message.querySelector(".nspp-messages-bubble")).borderBottomLeftRadius]),
+			groupCorners: mineGroup.map((message) => [getComputedStyle(message.querySelector(".nspp-messages-bubble")).borderTopRightRadius, getComputedStyle(message.querySelector(".nspp-messages-bubble")).borderBottomRightRadius]),
 			tools,
 			toggle: visible(document.querySelector(".nspp-message-format-toggle"))
 		};
@@ -1521,7 +1576,7 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的
 		actionsOverProfile: true,
 		mineAvatar: false,
 		groupAvatars: [false, false],
-		groupCorners: [["6px", "6px"], ["6px", "20px"]],
+		groupCorners: [["16px", "6px"], ["6px", "16px"]],
 		tools: ["image"],
 		toggle: true
 	});
@@ -1551,7 +1606,7 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的
 	await context.close();
 });
 
-test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、24px 圆角与投影，发送按钮是珊瑚色圆形箭头；自己的气泡暖灰、对方白底细边框", async () => {
+test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、与会话头同样缩进 8px 的 16px 圆角卡片带投影，发送按钮是珊瑚色圆角方形箭头；自己的气泡暖灰；对方的消息像 Claude 的回复，不带气泡、衬线正文", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
 	await page.waitForSelector(".nspp-messages-message.is-mine .nspp-messages-bubble", { timeout: 8e3 });
 	await settle(page, 300);
@@ -1562,15 +1617,15 @@ test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、
 			composer: [css(".nspp-messages-composer").borderTopLeftRadius, css(".nspp-messages-composer").backgroundColor, css(".nspp-messages-composer").boxShadow !== "none", css(".nspp-messages-composer").marginBottom],
 			send: [Math.round(send.width), Math.round(send.height), css(".nspp-messages-send").backgroundColor, css(".nspp-messages-send").fontSize, css(".nspp-messages-send").borderTopLeftRadius],
 			mine: css(".nspp-messages-message.is-mine .nspp-messages-bubble").backgroundColor,
-			theirs: css(".nspp-messages-message:not(.is-mine):not(.is-system) .nspp-messages-bubble").backgroundColor,
+			theirs: (() => { const bubble = css(".nspp-messages-message:not(.is-mine):not(.is-system) .nspp-messages-bubble"); return [bubble.backgroundColor, bubble.borderTopWidth, /Tiempos|Serif/.test(bubble.fontFamily)]; })(),
 			resize: css(".nspp-message-editor-body textarea").resize
 		};
 	});
 	assert.deepEqual(state, {
-		composer: ["24px", "rgb(255, 255, 255)", true, "18px"],
-		send: [32, 32, "rgb(193, 95, 60)", "0px", "50%"],
+		composer: ["16px", "rgb(255, 255, 255)", true, "8px"],
+		send: [32, 32, "rgb(193, 95, 60)", "0px", "10px"],
 		mine: "rgb(240, 238, 230)",
-		theirs: "rgb(255, 255, 255)",
+		theirs: ["rgba(0, 0, 0, 0)", "0px", true],
 		resize: "none"
 	});
 	await shot(page, "messages-claude");
@@ -1603,7 +1658,7 @@ test("设置面板（参考 claude.ai 网页版）：整块米白底，顶栏、
 	assert.match(state.title, /Georgia/);
 	assert.equal(state.categories, "0px");
 	assert.equal(state.article, "rgb(255, 255, 255)");
-	assert.equal(state.primary, "8px");
+	assert.equal(state.primary, "10px");
 	await shot(page, "settings-claude");
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -1622,7 +1677,7 @@ test("发帖页：标题是大号白色输入框，正文编辑器加高，发�
 			button: [getComputedStyle(button).backgroundColor, parseFloat(getComputedStyle(button).fontSize) > 0, getComputedStyle(button, "::before").width]
 		};
 	});
-	assert.deepEqual(state, { page: "new", title: [48, "12px", "rgb(255, 255, 255)"], editor: true, button: ["rgb(193, 95, 60)", true, "16px"] });
+	assert.deepEqual(state, { page: "new", title: [48, "10px", "rgb(255, 255, 255)"], editor: true, button: ["rgb(193, 95, 60)", true, "16px"] });
 	await shot(page, "new-discussion");
 	assert.deepEqual(errors, []);
 	await context.close();
