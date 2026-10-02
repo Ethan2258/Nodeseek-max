@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.5.7
+@version        1.5.8
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.5.7（UserCSS）
+ * NodeSeek Max 主题 v1.5.8（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -1896,6 +1896,49 @@
 		background:var(--nsmax-seg-bg,var(--nsmax-fill));
 		color:var(--nsmax-text);
 		font-weight:500;
+	}
+	/* 细节打磨（v1.5.8） */
+	/* 主帖下方的点赞 / 加鸡腿 / 反对 / 引用 / 回复：Claude 回答下方那样靠左一排的小按钮——图标与数字并排、32px 高、8px 圆角细边，悬停浅底 */
+	html:root:root:root .nsk-post>.comment-menu {
+		justify-content:flex-start;
+		gap:6px;
+		margin-top:14px;
+	}
+	html:root:root:root .nsk-post>.comment-menu .menu-item {
+		flex-direction:row;
+		gap:6px;
+		min-width:0;
+		min-height:32px;
+		padding:0 12px;
+		border:1px solid var(--nsmax-composer-line);
+		border-radius:8px;
+		background:transparent;
+		color:var(--nsmax-text-2);
+		font-size:13px;
+		line-height:1;
+	}
+	html:root:root:root .nsk-post>.comment-menu .menu-item:hover {
+		border-color:var(--nsmax-composer-line-focus);
+		background:var(--nsmax-fill)!important;
+		color:var(--nsmax-text);
+	}
+	html:root:root:root .nsk-post>.comment-menu .menu-item::before {
+		width:16px!important;
+		height:16px!important;
+	}
+	html:root:root:root .nsk-post>.comment-menu .menu-item span {
+		font-variant-numeric:tabular-nums;
+	}
+	/* 键盘焦点：半透明墨色的 2px 焦点框（不再是一圈纯黑），左侧版块的焦点框收进条目内并带圆角 */
+	html:root:root :is(a,button,summary,[role=button],[tabindex]):focus-visible {
+		outline:2px solid color-mix(in srgb,var(--nsmax-ink) 40%,transparent);
+		outline-offset:2px;
+	}
+	/* 输入框聚焦：边框加深一档、外加一圈很淡的光晕（不再是墨黑边框加粗光圈），与评论框一致 */
+	html:root:root :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *):focus,
+	html:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([type=checkbox],[type=radio]),textarea,select):focus {
+		border-color:var(--nsmax-composer-line-focus);
+		box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent);
 	}
 	html:root .user-card img:is(.avatar-normal,.avatar,[class*=avatar]),
 	html:root .user-card img:first-of-type {

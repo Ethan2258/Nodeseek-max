@@ -1598,6 +1598,45 @@ test("细节：作者行各项按中线对齐、「引用 / 回复」带图标�
 	await list.context.close();
 });
 
+test("细节（v1.5.8）：设置面板点最后一个分类能跳到并高亮它；主帖操作按钮一行排开；输入框聚焦是很淡的光晕", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector("[data-nspp-settings-launcher]", { timeout: 5e3 });
+	await page.click("[data-nspp-settings-launcher]");
+	await page.waitForFunction(() => document.getElementById("nspp-settings")?.shadowRoot?.querySelector("dialog")?.open);
+	await settle(page, 400);
+	await page.evaluate(() => {
+		const links = document.getElementById("nspp-settings").shadowRoot.querySelectorAll(".categories a");
+		links[links.length - 1].click();
+	});
+	await settle(page, 1000);
+	const jump = await page.evaluate(() => {
+		const shadow = document.getElementById("nspp-settings").shadowRoot;
+		const content = shadow.querySelector(".content");
+		return { current: shadow.querySelector(".categories a[aria-current]")?.textContent, bottom: content.scrollTop + content.clientHeight >= content.scrollHeight - 2 };
+	});
+	assert.deepEqual(jump, { current: "关于", bottom: true });
+	await context.close();
+	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	await settle(post.page, 800);
+	const actions = await post.page.evaluate(() => Array.from(document.querySelectorAll(".nsk-post > .comment-menu .menu-item")).map((item) => {
+		const box = item.getBoundingClientRect();
+		return [getComputedStyle(item).flexDirection, Math.round(box.height), Math.round(box.top)];
+	}));
+	assert.ok(actions.length >= 3);
+	assert.ok(actions.every(([direction, height, top]) => direction === "row" && height === 32 && top === actions[0][2]), JSON.stringify(actions));
+	assert.deepEqual(errors, []);
+	assert.deepEqual(post.errors, []);
+	await post.context.close();
+	const setting = await open(browser, "https://www.nodeseek.com/setting#/profile", { html: settingPage() });
+	await settle(setting.page, 600);
+	await setting.page.focus("input[name=email]");
+	await settle(setting.page, 400);
+	const ring = await setting.page.evaluate(() => getComputedStyle(document.querySelector("input[name=email]")).boxShadow);
+	assert.match(ring, /0\.07\)/, ring);
+	assert.deepEqual(setting.errors, []);
+	await setting.context.close();
+});
+
 test("用户脚本元数据与版本一致", () => {
 	const source = fs.readFileSync(path.join(ROOT, "nodeseek-max.user.js"), "utf8");
 	const meta = fs.readFileSync(path.join(ROOT, "nodeseek-max.meta.js"), "utf8");

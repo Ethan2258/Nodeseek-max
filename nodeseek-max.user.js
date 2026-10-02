@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.5.7
+// @version      1.5.8
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.5.7";
+	var NSMAX_VERSION = "1.5.8";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -1803,8 +1803,13 @@ var nsmaxRedirecting = false;
 				else link.removeAttribute("aria-current");
 			});
 		}
+		// 刚点过的分类在短时间内保持高亮：程序滚动与卡片渲染出真实高度引起的滚动事件不改掉它。
+		let pinned = -1;
+		let pinnedUntil = 0;
 		function syncCategory() {
 			if (!sections.length) return;
+			if (pinned >= 0 && performance.now() < pinnedUntil) return activate(pinned);
+			pinned = -1;
 			const top = content.getBoundingClientRect().top;
 			let current = 0;
 			sections.forEach((section, index) => {
@@ -1812,6 +1817,25 @@ var nsmaxRedirecting = false;
 			});
 			if (content.scrollTop > 0 && content.scrollTop + content.clientHeight >= content.scrollHeight - 2) current = sections.length - 1;
 			activate(current);
+		}
+		// 点左侧分类跳到对应分组。屏幕外的功能卡片按估算高度排版（content-visibility），直接按估算位置滚过去，卡片渲染出
+		// 真实高度后位置会变（停在半路、高亮错位）：先让所有卡片按真实高度排版一次再算位置，下一帧恢复按需渲染（NodeSeek Max）。
+		function jumpTo(index) {
+			const section = sections[index];
+			if (!section) return;
+			const go = () => content.scrollTo({
+				top: content.scrollTop + section.getBoundingClientRect().top - content.getBoundingClientRect().top,
+				behavior: "instant"
+			});
+			pinned = index;
+			pinnedUntil = performance.now() + 800;
+			content.setAttribute("data-nsmax-jump", "");
+			go();
+			activate(index);
+			requestAnimationFrame(() => {
+				go();
+				content.removeAttribute("data-nsmax-jump");
+			});
 		}
 		let categoryFrame = 0;
 		content.addEventListener("scroll", () => {
@@ -1850,12 +1874,7 @@ var nsmaxRedirecting = false;
 					link.href = `#${group.id}`;
 					link.addEventListener("click", (event) => {
 						event.preventDefault();
-						const section = sections[index];
-						content.scrollTo({
-							top: content.scrollTop + section.getBoundingClientRect().top - content.getBoundingClientRect().top,
-							behavior: "instant"
-						});
-						activate(index);
+						jumpTo(index);
 					});
 					sections.push(group);
 					links.push(link);
@@ -1943,11 +1962,7 @@ var nsmaxRedirecting = false;
 				link.href = `#${group.id}`;
 				link.addEventListener("click", (event) => {
 					event.preventDefault();
-					content.scrollTo({
-						top: content.scrollTop + group.getBoundingClientRect().top - content.getBoundingClientRect().top,
-						behavior: "instant"
-					});
-					activate(index);
+					jumpTo(index);
 				});
 				group.append(element$1("h3", "关于"), aboutContent(() => updates.check()));
 				sections.push(group);
@@ -26174,6 +26189,19 @@ ${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav{gap:2px}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking]{border-color:transparent;background:transparent;color:var(--nsmax-muted)}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking]:hover:not(:disabled){border-color:transparent;background:var(--nsmax-fill);color:var(--nsmax-text)}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking][aria-pressed=true],${NSMAX_ROOT}[data-nsmax-palette=claude] .nspp-hot-rankings nav button[data-ranking][aria-pressed=true]:hover{border-color:transparent;background:var(--nsmax-seg-bg,var(--nsmax-fill));color:var(--nsmax-text);font-weight:500}
+/* 细节打磨（v1.5.8） */
+/* 主帖下方的点赞 / 加鸡腿 / 反对 / 引用 / 回复：Claude 回答下方那样靠左一排的小按钮——图标与数字并排、32px 高、8px 圆角细边，悬停浅底 */
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=post] .nsk-post>.comment-menu{justify-content:flex-start;gap:6px;margin-top:14px}
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=post] .nsk-post>.comment-menu .menu-item{flex-direction:row;gap:6px;min-width:0;min-height:32px;padding:0 12px;border:1px solid var(--nsmax-composer-line);border-radius:8px;background:transparent;color:var(--nsmax-text-2);font-size:13px;line-height:1}
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=post] .nsk-post>.comment-menu .menu-item:hover{border-color:var(--nsmax-composer-line-focus);background:var(--nsmax-fill)!important;color:var(--nsmax-text)}
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=post] .nsk-post>.comment-menu .menu-item::before{width:16px!important;height:16px!important}
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=post] .nsk-post>.comment-menu .menu-item span{font-variant-numeric:tabular-nums}
+/* 键盘焦点：半透明墨色的 2px 焦点框（不再是一圈纯黑），左侧版块的焦点框收进条目内并带圆角 */
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(a,button,summary,[role=button],[tabindex]):focus-visible{outline:2px solid color-mix(in srgb,var(--nsmax-ink) 40%,transparent);outline-offset:2px}
+${NSMAX_ROOT}[data-nsmax-palette=claude] #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to],a.nsmax-shortcut):focus-visible{outline-offset:-2px;border-radius:10px}
+/* 输入框聚焦：边框加深一档、外加一圈很淡的光晕（不再是墨黑边框加粗光圈），与评论框一致 */
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *):focus,${NSMAX_ROOT}[data-nsmax-palette=claude] ${nsmaxDialog} :is(input:not([type=checkbox],[type=radio]),textarea,select):focus{border-color:var(--nsmax-composer-line-focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent)}
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-page=setting] #nsk-body :is(input,textarea,select)${nsmaxSettingSkip}:focus{border-color:var(--nsmax-composer-line-focus)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent)!important}
 #nsmax-progress{position:fixed;inset:0 0 auto;z-index:2147483000;height:2px;pointer-events:none;background:var(--nsmax-accent);transform-origin:0 50%;transform:scaleX(var(--nsmax-progress,0));opacity:.9;transition:opacity .3s ease}
 #nsmax-progress[data-idle]{opacity:0}
 ${NSMAX_ROOT} .user-card img:is(.avatar-normal,.avatar,[class*=avatar]),${NSMAX_ROOT} [data-nsmax-usercard] img:first-of-type{border-radius:var(--nsmax-avatar,20%);box-shadow:0 0 0 1px var(--nsmax-divider)}
@@ -26742,6 +26770,7 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 :host([data-nsmax-glass]) h3{position:sticky;top:0;z-index:1;margin:0;padding:16px 2px 8px;background:var(--canvas);border:0;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.02em}
 :host([data-nsmax-glass]) .settings-workspace article{margin:0 0 10px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;content-visibility:auto;contain-intrinsic-size:auto 64px;transition:border-color .2s ease}
 :host([data-nsmax-glass]) .settings-workspace article+article{margin-top:0}
+:host([data-nsmax-glass]) .content[data-nsmax-jump] article{content-visibility:visible}
 :host([data-nsmax-glass]) .settings-workspace article:hover{background:var(--surface);border-color:var(--line-strong)}
 :host([data-nsmax-glass]) .feature-heading{gap:16px;min-height:22px}
 :host([data-nsmax-glass]) .feature-heading strong{font-size:14px;font-weight:600;color:var(--text)}
@@ -26823,6 +26852,8 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .settings-footer button{min-height:34px;border-radius:8px}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .primary,:host([data-nsmax-glass][data-nsmax-palette=claude]) .settings-footer .primary{min-width:96px;border-radius:8px;background:var(--nsmax-ink,var(--text));color:var(--nsmax-on-ink,var(--surface));font-weight:500}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .about-content{border-radius:12px}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .about-content button{min-height:32px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:transparent;box-shadow:none;color:var(--text)}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .about-content button:hover:not(:disabled){background:var(--soft)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .toast{border-radius:10px}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) button:active{scale:.98;transition-duration:.15s,.15s,.15s,.1s}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) input[type=checkbox]::before{transition:transform .2s cubic-bezier(.165,.85,.45,1),background-color .2s ease}
