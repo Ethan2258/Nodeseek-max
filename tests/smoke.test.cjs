@@ -2114,3 +2114,23 @@ test("站内跳转：新页面还没整理好时先停在旧页面，整理好�
 	assert.deepEqual(errors, []);
 	await context.close();
 });
+
+test("脚本管理器在 <html> 已存在时才注入（Chrome 上 Tampermonkey 的实际时机）：脚本不中断，各功能照常启动", async () => {
+	for (const [url, html] of [["https://www.nodeseek.com/", listPage()], ["https://www.nodeseek.com/post-1000-1", postPage()], ["https://www.nodeseek.com/setting", settingPage()]]) {
+		const { context, page, errors } = await open(browser, url, { html, injectWhenRoot: true });
+		await page.waitForSelector("#nspp-tools", { timeout: 5e3 });
+		await settle(page, 600);
+		const state = await page.evaluate(() => ({
+			injectError: window.__injectError || null,
+			theme: document.documentElement.hasAttribute("data-nsmax-theme"),
+			sidenav: document.documentElement.hasAttribute("data-nsmax-sidenav"),
+			hidden: document.querySelectorAll("[data-nsmax-hidden]").length,
+			cta: !!document.querySelector("[data-nsmax-cta]"),
+			boot: ["header", "left", "right"].filter((name) => document.documentElement.hasAttribute(`data-nsmax-boot-${name}`))
+		}));
+		assert.deepEqual(state, { injectError: null, theme: true, sidenav: true, hidden: 5, cta: true, boot: [] }, url);
+		if (url.endsWith("/")) await page.waitForSelector(".nsmax-hot-panel", { timeout: 5e3 });
+		assert.deepEqual(errors, [], url);
+		await context.close();
+	}
+});

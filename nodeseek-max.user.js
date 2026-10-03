@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.6.6
+// @version      1.6.7
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.6.6";
+	var NSMAX_VERSION = "1.6.7";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -28451,6 +28451,12 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 	function themeOptions() {
 		return normalizeSettings([modernTheme], { [modernTheme.id]: GM_getValue$1(SETTINGS_KEY, {})?.[modernTheme.id] })[modernTheme.id];
 	}
+	// 页面解析阶段用到的状态必须在 applyModernThemeEarly 之前定义：脚本管理器注入时 <html> 往往已经存在，
+	// whenRoot 的回调会立即同步执行，这时排在后面的 var 还是 undefined（v1.6.6 之前因此整段脚本中断，只剩配色生效）。
+	var NSMAX_BOOT_REGIONS = ["header", "left", "right"];
+	// 页面加载完后才插入的块的预留空间（见 reserveSpace）；已经撤掉过的预留不再重新加。
+	var nsmaxReserved = new Map();
+	var nsmaxReleased = new Set();
 	// 在 document-start 阶段（页面还未渲染）就挂上主题属性与样式，避免先闪一下原版界面。
 	(function applyModernThemeEarly() {
 		let options;
@@ -28464,16 +28470,21 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 		if (options.font === "inter" || options.font === "claude") loadWebFonts();
 		if (options.motion) enablePageTransitions();
 		whenRoot((root) => {
-			applyThemeAttributes(root, options);
-			// 启动遮罩分三块（顶栏、左侧栏、右侧栏）：页面解析过程中每块一解析完就立即整理并显示，见 startEarlyPass。
-			// 脚本出错时 2.5 秒后也会全部显示。
-			for (const region of NSMAX_BOOT_REGIONS) root.setAttribute(`data-nsmax-boot-${region}`, "");
-			setTimeout(revealAll, 2500);
-			if (options.minimalHeader) injectMinimalHeaderStyles();
-			startEarlyPass(options);
+			// 这里出任何错都只记录、不往外抛：否则整段脚本中断，后面的功能模块全都不会启动。
+			try {
+				applyThemeAttributes(root, options);
+				// 启动遮罩分三块（顶栏、左侧栏、右侧栏）：页面解析过程中每块一解析完就立即整理并显示，见 startEarlyPass。
+				// 脚本出错时 2.5 秒后也会全部显示。
+				for (const region of NSMAX_BOOT_REGIONS) root.setAttribute(`data-nsmax-boot-${region}`, "");
+				setTimeout(revealAll, 2500);
+				if (options.minimalHeader) injectMinimalHeaderStyles();
+				startEarlyPass(options);
+			} catch (error) {
+				nsmaxRecordError("early", error);
+				revealAll();
+			}
 		});
 	})();
-	var NSMAX_BOOT_REGIONS = ["header", "left", "right"];
 	// 站内页面之间切换时用浏览器原生的跨文档视图过渡（Chrome 126+）：旧页面与新页面短暂交叉淡入，顶栏与左侧栏
 	// 保持不动，不再「整页一换」。新页面还有区域没整理好（启动遮罩未撤）时跳过过渡，避免淡入到半成品；
 	// 系统开启「减弱动态效果」时不播放；不支持的浏览器忽略这些规则，行为与原来一样。
@@ -28516,10 +28527,8 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 	}
 	// 页面加载完后才插入的块（侧栏热榜、NQ 快捷入口）：页面解析阶段按上次实测的高度先在原位置留出空白，
 	// 插入时同一帧撤掉，内容不会被顶开。没有记录（第一次使用）时不预留；2.5 秒后无论如何撤掉。
-	var nsmaxReserved = new Map();
 	// 已经撤掉过的预留不再重新加：模块有时比页面解析阶段先完成插入（站点脚本与脚本加载的先后不固定），
 	// 这时再按记录预留，空白会一直挂到 2.5 秒兜底才撤掉，下面的卡片先被顶开再跳回来。
-	var nsmaxReleased = new Set();
 	// margin / padding：在原值上加上位移；min-height：shift 是要撑到的整体高度（含内边距与边框）。
 	function reserveSpace(name, element, property, shift) {
 		if (!element || !(shift > 0) || shift > 2e3 || nsmaxReleased.has(name) || nsmaxReserved.has(name)) return;
