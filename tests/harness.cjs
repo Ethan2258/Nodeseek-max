@@ -91,11 +91,13 @@ async function launch() {
 
 // 打开一个页面：所有请求都在本地处理，外部网络一律拒绝。
 // api：按接口路径给出依次返回的响应 [{ status, headers, body }]，用完后回到默认模拟数据；calls 记录每个接口被请求的次数。
-async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "" } = {}) {
+// injectWhenRoot：等 <html> 元素出现后再执行脚本（Tampermonkey 在 Chrome 上的实际注入时机），默认在文档创建时执行。
+async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "", injectWhenRoot = false } = {}) {
 	const calls = {};
 	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1 });
 	const errors = [];
-	if (script) await context.addInitScript({ content: `${gmShim(seed, fontFiles)}\n;(function () {\n${SCRIPT}\n})();` });
+	const body = `${gmShim(seed, fontFiles)}\n;(function () {\n${SCRIPT}\n})();`;
+	if (script) await context.addInitScript({ content: injectWhenRoot ? `(() => { const run = () => { try { (0, eval)(${JSON.stringify(body)}); } catch (error) { window.__injectError = String(error); throw error; } }; if (document.documentElement) run(); else new MutationObserver((records, observer) => { if (!document.documentElement) return; observer.disconnect(); run(); }).observe(document, { childList: true }); })();` : body });
 	if (init) await context.addInitScript({ content: init });
 	if (css) await context.addInitScript({ content: `document.addEventListener("DOMContentLoaded", () => { const style = document.createElement("style"); style.textContent = ${JSON.stringify(css)}; document.head.append(style); });` });
 	await context.route("**/*", async (route) => {
