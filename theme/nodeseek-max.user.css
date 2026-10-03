@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.6.4
+@version        1.6.5
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.6.4（UserCSS）
+ * NodeSeek Max 主题 v1.6.5（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -1577,6 +1577,192 @@
 		background:var(--nsmax-fill)!important;
 		clip-path:inset(0 6px round 8px);
 	}
+	/* 按钮、输入框、图标统一（Claude 风格）：
+	   按钮一律 32px 高、10px 圆角、13px / 500 字重，分四种：主要（墨黑）、珊瑚色（发送 / 发帖）、次要（暖白底细描边）、文字按钮（无底无边，悬停浅底）；
+	   图标按钮 32×32；输入框、下拉框与菜单项 36px、14px，和输入框排在一行的按钮也是 36px；评论引用 / 回复、热榜刷新这类行内小操作 28px。
+	   图标三档：行内 14px、按钮与导航 16px、侧边工具栏 18px，描边都是 1.5px */
+	html:root:root :is(#nsk-left>button.nspp-action,.nspp-user-hover-actions>:is(a,button),.nspp-confirm-dialog form>:is(button,a),.nspp-user-transfer .nspp-transfer-actions>button,.nspp-footprints-toolbar>button,.nspp-monitor>footer>button,.nspp-monitor>header>button:not(:last-child),.nspp-messages-top-actions button,.nspp-messages-top .nspp-messages-profile,.nspp-notice-back,.nspp-messages-back,.nspp-floating-reply-header button) {
+		box-sizing:border-box;
+		min-height:32px!important;
+		font-size:13px!important;
+		font-weight:500!important;
+	}
+	html:root:root .nsk-pager :is(a,span) {
+		min-width:32px;
+		height:32px;
+	}
+	html:root:root :is(.nspp-messages-top-actions button,.nspp-messages-top .nspp-messages-profile) {
+		color:var(--nsmax-text-2)!important;
+	}
+	html:root:root :is(.nspp-messages-top-actions button,.nspp-messages-top .nspp-messages-profile,.nspp-monitor>header>button:not(:last-child)):hover {
+		background:var(--nsmax-fill)!important;
+		color:var(--nsmax-text)!important;
+	}
+	html:root:root .comment-menu .menu-item {
+		font-weight:500;
+	}
+	/* 图标按钮 32×32：评论框工具栏、私信格式工具；和搜索框排在一行的刷新按钮跟搜索框一样 36px */
+	html:root:root .md-editor .mde-toolbar [data-nsmax-tool] {
+		width:32px!important;
+		min-width:32px!important;
+		height:32px!important;
+	}
+	html:root:root .nspp-message-editor-toolbar button:not(.nspp-message-editor-tab) {
+		width:32px;
+		height:32px;
+	}
+	html:root:root .nspp-messages-search>button {
+		height:36px!important;
+		min-height:36px!important;
+	}
+	html:root:root .nspp-messages-refresh {
+		width:36px!important;
+		min-width:36px!important;
+	}
+	/* 输入框、下拉框 36px、14px（对话框、站点设置页、关键词屏蔽、菜单项） */
+	html:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(input:not([type=checkbox],[type=radio],[type=range],[type=color]),select) {
+		min-height:36px;
+		font-size:14px;
+	}
+	html:root:root .nspp-history-toolbar>button:not([data-tab]) {
+		box-sizing:border-box;
+		height:36px;
+		min-height:36px;
+		font-size:13px;
+		font-weight:500;
+	}
+	/* 分段切换统一：外层浅底 10px 圆角、内边 3px，选项 26px 高、6px 圆角、13px / 500，选中项是浮起的滑块（热榜弹窗、阅读历史、私信格式工具里的标签） */
+	html:root:root .nspp-hot-rankings .nspp-hot-kinds {
+		gap:2px;
+		padding:3px;
+		border-radius:var(--nsmax-r-control,10px);
+		background:var(--nsmax-seg-bg,var(--nsmax-fill));
+	}
+	html:root:root .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking] {
+		height:26px;
+		min-height:26px;
+		padding:0 12px;
+		border:0!important;
+		border-radius:var(--nsmax-r-chip,6px)!important;
+		background:transparent!important;
+		color:var(--nsmax-muted)!important;
+		font-size:13px;
+		font-weight:500;
+	}
+	html:root:root .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking]:hover {
+		color:var(--nsmax-text)!important;
+	}
+	html:root:root .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking][aria-pressed=true] {
+		background:var(--nsmax-seg-thumb,var(--nsmax-card))!important;
+		color:var(--nsmax-text)!important;
+		box-shadow:0 1px 2px rgb(31 30 29/.1),0 0 0 .5px rgb(31 30 29/.06);
+	}
+	html:root:root body.dark-layout .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking][aria-pressed=true] {
+		box-shadow:0 1px 2px rgb(0 0 0/.35),0 0 0 .5px rgb(255 255 255/.06);
+	}
+	html:root:root .nspp-hot-rankings nav>.nspp-hot-refresh {
+		display:inline-flex;
+		flex:none;
+		align-items:center;
+		justify-content:center;
+		width:32px;
+		min-width:32px;
+		height:32px;
+		min-height:32px;
+		padding:0;
+		border:0!important;
+		border-radius:var(--nsmax-r-control,10px);
+		background:transparent!important;
+		color:var(--nsmax-muted)!important;
+		font-size:0;
+	}
+	html:root:root .nspp-hot-rankings nav>.nspp-hot-refresh::before {
+		content:"";
+		width:16px;
+		height:16px;
+		background:currentColor;
+		-webkit-mask:var(--nsmax-icon-refresh) center/contain no-repeat;
+		mask:var(--nsmax-icon-refresh) center/contain no-repeat;
+	}
+	html:root:root .nspp-hot-rankings nav>.nspp-hot-refresh:hover:not(:disabled) {
+		background:var(--nsmax-fill)!important;
+		color:var(--nsmax-text)!important;
+	}
+	html:root:root .nspp-hot-heat svg {
+		width:14px;
+		height:14px;
+		fill:none;
+		stroke-width:1.5px;
+	}
+	html:root:root .nspp-history .nspp-history-toolbar>button[data-tab] {
+		font-weight:500;
+	}
+	html:root:root .nspp-message-editor-toolbar .nspp-message-editor-tab {
+		border-radius:var(--nsmax-r-chip,6px)!important;
+		font-size:13px;
+		font-weight:500;
+	}
+	/* 图标三档：按钮、导航、顶栏、用户卡片统计里的图标都是 16px */
+	html:root:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose svg,
+	html:root:root .nspp-messages .nspp-message-format-toggle svg {
+		width:16px!important;
+		height:16px!important;
+	}
+	html:root:root .nspp-messages-search::before {
+		width:16px;
+		height:16px;
+	}
+	html:root:root :is(.nsk-post .comment-menu .menu-item,.nspp-user-hover-actions>*,.nspp-block-toggle):has(>svg.iconpark-icon>use:is([href="#good-one"],[href="#bad-one"],[href="#chicken-leg"],[href="#forbid"]))::before {
+		width:16px;
+		height:16px;
+	}
+	/* 复选框（Claude 风格）：16px 细描边方框、6px 圆角，选中是墨色底 + 对勾；数字输入框不显示浏览器自带的上下箭头 */
+	html:root:root input[type=checkbox]:not([role=switch]) {
+		-webkit-appearance:none;
+		appearance:none;
+		position:relative;
+		display:inline-grid;
+		flex:none;
+		place-items:center;
+		box-sizing:border-box;
+		width:16px;
+		height:16px;
+		margin:0;
+		border:1px solid var(--nsmax-stroke-strong);
+		border-radius:var(--nsmax-r-chip,6px);
+		background:var(--nsmax-card);
+		vertical-align:-3px;
+		cursor:pointer;
+		transition:background-color .15s ease,border-color .15s ease;
+	}
+	html:root:root input[type=checkbox]:not([role=switch]):hover {
+		border-color:var(--nsmax-muted);
+	}
+	html:root:root input[type=checkbox]:not([role=switch]):checked {
+		border-color:var(--nsmax-ink);
+		background:var(--nsmax-ink);
+	}
+	html:root:root input[type=checkbox]:not([role=switch]):checked::before {
+		content:"";
+		width:12px;
+		height:12px;
+		background:var(--nsmax-on-ink);
+		-webkit-mask:var(--nsmax-icon-check) center/contain no-repeat;
+		mask:var(--nsmax-icon-check) center/contain no-repeat;
+	}
+	html:root:root input[type=checkbox]:not([role=switch]):focus-visible {
+		outline:0;
+		box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 16%,transparent);
+	}
+	html:root:root input[type=number] {
+		-moz-appearance:textfield;
+		appearance:textfield;
+	}
+	html:root:root input[type=number]::-webkit-inner-spin-button,
+	html:root:root input[type=number]::-webkit-outer-spin-button {
+		-webkit-appearance:none;
+		margin:0;
+	}
 	@keyframes nsmax-pop-in {from{opacity:0;transform:translateY(-4px)}}
 	/* Claude 版式：主栏与左侧版块栏不再是卡片，直接放在米白页面底上（Claude 的对话区与侧栏没有卡片外框），右侧栏保留白色细边卡片；
 	   评论框、私信输入框这些白色输入框因此浮在米白底上。顶栏与页面同色、平时没有底边线，滚动后才出现一条细线。
@@ -2381,6 +2567,7 @@
 	}
 	html:root body {
 		--nsmax-icon-close:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
+		--nsmax-icon-refresh:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 12a7.5 7.5 0 0 1-13 5.1M4.5 12a7.5 7.5 0 0 1 13-5.1M17.5 3.5v3.4h-3.4M6.5 20.5v-3.4h3.4'/%3E%3C/svg%3E");
 		--nsmax-icon-flame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5c.6 3 4.5 4.9 4.5 9.6a4.5 4.5 0 0 1-9 0c0-1.8.8-3.2 2-4.2.3 1.3 1 2.1 1.9 2.5C11 9.1 10.9 6.2 12 3.5Z'/%3E%3C/svg%3E");
 		--nsmax-icon-back:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 6 8.5 12l6 6'/%3E%3C/svg%3E");
 		--nsmax-icon-chat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 6v9a1.5 1.5 0 0 1-1.5 1.5h-9l-4 3.5v-3.5A1.5 1.5 0 0 1 4 15Z'/%3E%3C/svg%3E");
