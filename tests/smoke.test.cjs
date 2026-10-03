@@ -906,7 +906,7 @@ test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子�
 		return { indent: Math.round(content.getBoundingClientRect().left - name.getBoundingClientRect().left), title: getComputedStyle(document.querySelector(".post-title h1")).fontSize };
 	});
 	assert.ok(Math.abs(post.indent) <= 2, `主楼正文应与作者名对齐，偏差 ${post.indent}px`);
-	assert.equal(post.title, "21px");
+	assert.equal(post.title, "20px");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -1536,6 +1536,52 @@ test("圆角统一（Claude 风格）：各页面、私信 / 通知、设置面�
 			await page.click('#nspp-tools button[title^="帖子监控"]');
 			await settle(page, 600);
 			assert.deepEqual(await page.evaluate(probe), [], "帖子监控");
+		}
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
+});
+
+test("字号与字重统一（Claude 风格）：界面文字只用 11–16 / 18 / 20 / 24px 这几档字号和 400 / 500 / 600 三档字重；帖子正文里作者写的标题不算", async () => {
+	const probe = () => {
+		const sizes = new Set(["11px", "12px", "13px", "14px", "15px", "16px", "18px", "20px", "24px"]);
+		const weights = new Set(["400", "500", "600"]);
+		const content = ".post-content,.comment-content,.markdown-body,.nspp-notice-body,.nspp-preview-content,.nspp-messages-bubble.is-markdown,code,pre,kbd,samp";
+		const bad = [];
+		const roots = [document, ...Array.from(document.querySelectorAll("*")).filter((element) => element.shadowRoot).map((element) => element.shadowRoot)];
+		for (const root of roots) for (const element of root.querySelectorAll("*")) {
+			if (!Array.from(element.childNodes).some((child) => child.nodeType === 3 && child.textContent.trim())) continue;
+			if (element.closest(content) || /^(SCRIPT|STYLE|TITLE|OPTION)$/.test(element.tagName)) continue;
+			const box = element.getBoundingClientRect();
+			if (box.width < 1 || box.height < 1) continue;
+			const style = getComputedStyle(element);
+			if (style.visibility === "hidden" || style.fontSize === "0px") continue;
+			if (!sizes.has(style.fontSize) || !weights.has(style.fontWeight)) bad.push(`${element.tagName.toLowerCase()}.${String(element.className?.baseVal ?? element.className).trim().split(/\s+/).slice(0, 2).join(".")} ${style.fontSize}/${style.fontWeight}`);
+		}
+		return Array.from(new Set(bad));
+	};
+	const pages = [
+		["https://www.nodeseek.com/", listPage()],
+		["https://www.nodeseek.com/post-1000-1", postPage()],
+		["https://www.nodeseek.com/notification#/message?mode=talk&to=7", messageCenterPage()],
+		["https://www.nodeseek.com/notification#/atMe", messageCenterPage()],
+		["https://www.nodeseek.com/new-discussion", newPostPage()],
+		["https://www.nodeseek.com/setting#/profile", settingPage()]
+	];
+	for (const [url, html] of pages) {
+		const { context, page, errors } = await open(browser, url, { html });
+		await settle(page, 1500);
+		assert.deepEqual(await page.evaluate(probe), [], url);
+		if (url === "https://www.nodeseek.com/") {
+			await page.click("[data-nspp-settings-launcher]");
+			await settle(page, 600);
+			assert.deepEqual(await page.evaluate(probe), [], "设置面板");
+			await page.keyboard.press("Escape");
+			await settle(page, 300);
+			await page.hover(".post-list-item .info-author");
+			await page.waitForSelector(".nspp-user-hover:not([hidden]) dd", { timeout: 8e3 });
+			await settle(page, 300);
+			assert.deepEqual(await page.evaluate(probe), [], "用户资料卡");
 		}
 		assert.deepEqual(errors, []);
 		await context.close();
