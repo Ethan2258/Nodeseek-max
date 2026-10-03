@@ -28563,6 +28563,15 @@ ${nsmaxClaude} #nsk-frame>.nsk-container .readme{margin:0!important;padding:16px
 ${nsmaxClaude} :is(.post-info .info-item,.nspp-user-badges>*,.nsmax-post-stats>span,.content-info) :is(svg,.nsmax-icon){stroke-width:2!important}
 ${nsmaxClaude} :is(#nsk-right-panel-container .nsk-panel ul>li>a,#nsk-right-panel-container .nsk-panel h4,ul.comments>li.content-item>.comment-menu>.menu-item,#nsk-head form.search-box) :is(svg,.nsmax-icon){stroke-width:1.85!important}
 ${nsmaxClaude} :is(#nsk-head .nsmax-header-action,#nsk-head a[data-nsmax-own-header=shortcut],.nsk-post>.content-item>.comment-menu>.menu-item) :is(svg,.nsmax-icon){stroke-width:1.7!important}
+/* 光学对齐：系统字体里数字和英文字母的字形比行框中心低约 0.8px（中文基本居中），只含数字 / 英文的小标签看起来「往下掉」。
+   这些标签整体上提 0.5px，图标（伪元素或 svg）下移 1px，数字与图标中线对齐、整体居中（逐个用字形实际边界量过，偏差 ≤0.5px） */
+${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*,#nsk-body-left .content-item .nspp-user-badges>*){padding-bottom:1px!important}
+${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*,#nsk-body-left .content-item .nspp-user-badges>*)::before{position:relative!important;top:1px!important}
+${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*,#nsk-body-left .content-item .nspp-user-badges>*)>:is(svg,.nsmax-icon){position:relative!important;top:1px!important}
+${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .post-info>.post-category{padding-bottom:1px!important}
+${nsmaxClaude} #nsk-body-left .content-item .floor-link{position:relative!important;top:-.5px!important}
+${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut]{padding-bottom:1px!important}
+${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{position:relative!important;top:1px!important}
 /* ---------- 页脚与回到顶部：页面底色、上方细线，链接弱化；回到顶部 / 底部是 36px 细边圆钮 ---------- */
 ${nsmaxClaude} body>footer{background:transparent!important;border-top:1px solid var(--nsmax-divider)!important;box-shadow:none!important;color:var(--nsmax-muted)!important}
 ${nsmaxClaude} body>footer .contain{max-width:var(--nsmax-wrap)!important;box-sizing:border-box!important;margin:0 auto!important;padding-left:16px!important;padding-right:16px!important}
