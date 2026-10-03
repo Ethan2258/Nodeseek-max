@@ -57,6 +57,11 @@ const markers = new Map([
 	["[data-nsmax-stat]", ".user-stat"],
 	["[data-nsmax-usercard]", ".user-card"]
 ]);
+// 脚本在 html 上同步的状态属性（为了性能不在根元素上用 :has()）：独立 CSS 里换回等价的 :has() 写法。
+const conditions = new Map([
+	["[data-nsmax-dark]", ":has(>body.dark-layout)"],
+	["[data-nsmax-site]", ":has(#nsk-body)"]
+]);
 const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|scrolled|sidenav|hidden|dup|tools|booting|icon-orig|icon-for|header-[\w-]+|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
 
 // ---- 极简 CSS 解析：规则块与 @media 等嵌套块 -----------------------------------------
@@ -103,6 +108,7 @@ function evaluate(simple) {
 	if (match) {
 		const [, name, raw] = match;
 		if (runtimeAttributes.has(name)) return !scriptOnlyPages.has(raw?.replace(/^["']|["']$/g, ""));
+		if (conditions.has(simple)) return null;
 		if (!name.startsWith("data-nsmax-")) return null;
 		const value = raw?.replace(/^["']|["']$/g, "");
 		return raw === void 0 ? attributes.has(name) : attributes.get(name) === value;
@@ -139,7 +145,7 @@ function rewriteSelector(selector) {
 		const result = evaluate(token);
 		if (result === false) return null;
 		if (result === true) satisfied++;
-		else kept.push(token);
+		else kept.push(conditions.get(token) ?? token);
 	}
 	for (const [marker, replacement] of markers) rest = rest.split(marker).join(replacement);
 	if (unmappable.test(rest)) return null;

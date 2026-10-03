@@ -565,22 +565,23 @@ test("新用户面板：默认整块隐藏；关闭隐藏后头像排成规整�
 
 test("精简顶栏：只保留标志、标题、搜索框与深浅色切换，隐藏版块与 DeepFlood", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
-	await page.waitForSelector("[data-nsmax-header-toggle]", { timeout: 5e3 });
+	await page.waitForSelector("[data-nsmax-own-header=colors]", { timeout: 5e3 });
 	await settle(page, 200);
 	const visible = (selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).filter((element) => element.getClientRects().length > 0).length, selector);
 	const layout = await page.evaluate(() => {
 		const shown = (element) => element.getClientRects().length > 0;
 		const head = document.querySelector("#nsk-head .nsk-container");
 		const logo = document.querySelector(".site-logo").getBoundingClientRect();
-		const toggle = document.querySelector(".tool-btn").getBoundingClientRect();
+		const toggle = document.querySelector("[data-nsmax-own-header=colors]").getBoundingClientRect();
 		return {
-			shown: Array.from(head.querySelectorAll("a, sup, input, .search-box, .tool-btn")).filter(shown).map((element) => element.className || element.tagName.toLowerCase()),
+			shown: Array.from(head.querySelectorAll("a, sup, input, .search-box, .tool-btn, .nsmax-header-action")).filter(shown).map((element) => element.dataset.nsmaxOwnHeader || element.className || element.tagName.toLowerCase()),
 			toggleAttr: document.querySelector(".tool-btn").hasAttribute("data-nsmax-header-toggle"),
 			sameRow: Math.abs(logo.top + logo.height / 2 - (toggle.top + toggle.height / 2)) < 6,
 			apart: toggle.left - logo.right > 400
 		};
 	});
-	assert.deepEqual(layout.shown, ["site-logo", "beta", "search-box", "input", "tool-btn"]);
+	// 站点自己的切换按钮（.tool-btn）隐藏，换成脚本的屏蔽按钮与深浅色按钮
+	assert.deepEqual(layout.shown, ["site-logo", "beta", "search-box", "input", "keywords", "colors"]);
 	assert.equal(layout.toggleAttr, true);
 	assert.equal(layout.sameRow, true);
 	assert.equal(layout.apart, true);
@@ -593,7 +594,7 @@ test("精简顶栏：只保留标志、标题、搜索框与深浅色切换，�
 
 test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动，宽屏同样精简顶栏并保留搜索框", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification", { html: notificationPage({ leftNav: false }) });
-	await page.waitForSelector("[data-nsmax-header-toggle]", { timeout: 5e3 });
+	await page.waitForSelector("[data-nsmax-own-header=colors]", { timeout: 5e3 });
 	// 记录根元素属性与顶栏隐藏标记的变化次数：稳定后不应再来回切换。
 	await page.evaluate(() => {
 		window.__flips = 0;
@@ -606,12 +607,12 @@ test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动�
 		flips: window.__flips,
 		sidenav: document.documentElement.hasAttribute("data-nsmax-sidenav"),
 		shortcutInHeader: !!document.querySelector("#nsk-head .nsmax-shortcuts"),
-		shown: Array.from(document.querySelectorAll("#nsk-head .nsk-container a, #nsk-head .nsk-container sup, #nsk-head .search-box, #nsk-head .tool-btn")).filter((element) => element.getClientRects().length > 0).map((element) => element.className || element.tagName.toLowerCase())
+		shown: Array.from(document.querySelectorAll("#nsk-head .nsk-container a, #nsk-head .nsk-container sup, #nsk-head .search-box, #nsk-head .tool-btn, #nsk-head .nsmax-header-action")).filter((element) => element.getClientRects().length > 0).map((element) => element.dataset.nsmaxOwnHeader || element.className || element.tagName.toLowerCase())
 	}));
 	assert.equal(state.flips, 0);
 	assert.equal(state.sidenav, false);
 	assert.equal(state.shortcutInHeader, false);
-	assert.deepEqual(state.shown, ["site-logo", "beta", "search-box", "tool-btn"]);
+	assert.deepEqual(state.shown, ["site-logo", "beta", "search-box", "keywords", "colors"]);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -1412,7 +1413,7 @@ test("线条图标：版块、用户卡片按钮、统计区、深浅色切换�
 		await settle(page, 400);
 		const state = await page.evaluate(() => {
 			const icons = (context) => document.querySelectorAll(`.nsmax-icon[data-nsmax-icon-for=${context}]`).length;
-			const toggle = document.querySelector("[data-nsmax-header-toggle] .nsmax-icon");
+			const toggle = document.querySelector("[data-nsmax-own-header=colors] .nsmax-icon");
 			return {
 				nav: icons("nav"),
 				card: icons("card"),
@@ -1540,7 +1541,7 @@ test("圆角统一（Claude 风格）：各页面、私信 / 通知、设置面�
 			assert.deepEqual(await page.evaluate(probe), [], "帖子监控");
 			await page.keyboard.press("Escape");
 			await settle(page, 300);
-			for (const [selector, name] of [["[data-nsmax-header-toggle]", "深浅色菜单"], [".nsmax-header-action", "关键词屏蔽"]]) {
+			for (const [selector, name] of [["[data-nsmax-own-header=colors]", "深浅色菜单"], ["[data-nsmax-own-header=keywords]", "关键词屏蔽"]]) {
 				await page.click(selector);
 				await settle(page, 300);
 				assert.deepEqual(await page.evaluate(probe), [], name);
@@ -1593,7 +1594,7 @@ test("字号与字重统一（Claude 风格）：界面文字只用 11–16 / 18
 			await settle(page, 300);
 			assert.deepEqual(await page.evaluate(probe), [], "用户资料卡");
 			await page.mouse.move(5, 600);
-			for (const [selector, name] of [["[data-nsmax-header-toggle]", "深浅色菜单"], [".nsmax-header-action", "关键词屏蔽"]]) {
+			for (const [selector, name] of [["[data-nsmax-own-header=colors]", "深浅色菜单"], ["[data-nsmax-own-header=keywords]", "关键词屏蔽"]]) {
 				await page.click(selector);
 				await settle(page, 300);
 				assert.deepEqual(await page.evaluate(probe), [], name);
@@ -1829,27 +1830,27 @@ test("深浅色：点右上角按钮弹出「浅色 / 深色 / 跟随系统」�
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), colorScheme: "dark" });
 	await settle(page, 1200);
 	assert.equal(await page.evaluate(() => document.documentElement.dataset.nsmaxColorMode), "site");
-	await page.click("[data-nsmax-header-toggle]");
+	await page.click("[data-nsmax-own-header=colors]");
 	await page.waitForSelector(".nsmax-pop[data-kind=colors]");
 	const menu = await page.evaluate(() => Array.from(document.querySelectorAll(".nsmax-pop [role=menuitemradio]")).map((item) => [item.textContent, item.getAttribute("aria-checked")]));
 	assert.deepEqual(menu, [["浅色", "true"], ["深色", "false"], ["跟随系统", "false"]]);
 	// 再点一次按钮关闭；Esc 也能关闭
-	await page.click("[data-nsmax-header-toggle]");
+	await page.click("[data-nsmax-own-header=colors]");
 	assert.equal(await page.evaluate(() => !!document.querySelector(".nsmax-pop")), false);
-	await page.click("[data-nsmax-header-toggle]");
+	await page.click("[data-nsmax-own-header=colors]");
 	await page.keyboard.press("Escape");
 	assert.equal(await page.evaluate(() => !!document.querySelector(".nsmax-pop")), false);
-	await page.click("[data-nsmax-header-toggle]");
+	await page.click("[data-nsmax-own-header=colors]");
 	await page.click(".nsmax-pop [role=menuitemradio]:nth-child(2)");
 	assert.deepEqual(await page.evaluate(() => [document.body.classList.contains("dark-layout"), !!document.querySelector(".nsmax-pop")]), [true, false]);
 	await page.reload();
 	await settle(page, 1200);
 	assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.nsmaxColorMode, document.body.classList.contains("dark-layout")]), ["dark", true]);
-	await page.click("[data-nsmax-header-toggle]");
+	await page.click("[data-nsmax-own-header=colors]");
 	await page.click(".nsmax-pop [role=menuitemradio]:nth-child(3)");
 	const system = await page.evaluate(() => ({
 		dark: document.body.classList.contains("dark-layout"),
-		icons: Array.from(document.querySelectorAll("[data-nsmax-header-toggle] .nsmax-icon path")).filter((path) => getComputedStyle(path).display !== "none").map((path) => path.getAttribute("class"))
+		icons: Array.from(document.querySelectorAll("[data-nsmax-own-header=colors] .nsmax-icon path")).filter((path) => getComputedStyle(path).display !== "none").map((path) => path.getAttribute("class"))
 	}));
 	assert.deepEqual(system, { dark: true, icons: ["nsmax-icon-display"] });
 	await page.emulateMedia({ colorScheme: "light" });
@@ -1867,7 +1868,7 @@ test("关键词屏蔽：顶栏深浅色按钮旁的屏蔽按钮可以添加、�
 	await settle(page, 1500);
 	const button = await page.evaluate(() => {
 		const action = document.querySelector(".nsmax-header-action");
-		return { adjacent: action?.nextElementSibling === document.querySelector("[data-nsmax-header-toggle]"), label: action?.getAttribute("aria-label") };
+		return { adjacent: action?.nextElementSibling === document.querySelector("[data-nsmax-own-header=colors]"), label: action?.getAttribute("aria-label") };
 	});
 	assert.deepEqual(button, { adjacent: true, label: "关键词屏蔽" });
 	await page.click(".nsmax-header-action");
@@ -2133,4 +2134,56 @@ test("脚本管理器在 <html> 已存在时才注入（Chrome 上 Tampermonkey 
 		assert.deepEqual(errors, [], url);
 		await context.close();
 	}
+});
+
+test("站点的深浅色切换只是一个裸图标（svg / img）时：顶栏照样有脚本自己的深浅色按钮，不会只剩屏蔽按钮", async () => {
+	for (const icon of ["svg", "img"]) {
+		const bare = icon === "svg" ? `<svg class="theme-switch" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg>` : `<img class="theme-switch" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'/%3E" width="18" height="18" alt="">`;
+		const html = listPage().replace(/<span class="tool-btn">[\s\S]*?<\/span>/, bare);
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, injectWhenRoot: true });
+		await page.waitForSelector("[data-nsmax-own-header=colors]", { timeout: 5e3 });
+		await settle(page, 400);
+		const state = await page.evaluate(() => {
+			const box = (selector) => {
+				const rect = document.querySelector(selector).getBoundingClientRect();
+				return rect.width > 0 && rect.height > 0;
+			};
+			// 顶栏右侧可见的图标都在按钮里（没有游离在外、点不了的图标）
+			const stray = Array.from(document.querySelectorAll("#nsk-head .header-right > :is(svg, img)")).filter((element) => element.getBoundingClientRect().width > 0).length;
+			return { colors: box("[data-nsmax-own-header=colors]"), keywords: box("[data-nsmax-own-header=keywords]"), order: document.querySelector("[data-nsmax-own-header=keywords]").nextElementSibling?.dataset.nsmaxOwnHeader, stray };
+		});
+		assert.deepEqual(state, { colors: true, keywords: true, order: "colors", stray: 0 }, icon);
+		await page.click("[data-nsmax-own-header=colors]");
+		await page.waitForSelector(".nsmax-pop[data-kind=colors]");
+		assert.deepEqual(errors, [], icon);
+		await context.close();
+	}
+});
+
+test("加载性能护栏：根元素上没有 :has()（会让任何 DOM 变化都触发整页样式重算），最右边的 :is() 已拆成可分桶的规则", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { colorMode: "dark" } } } });
+	await settle(page, 800);
+	const state = await page.evaluate(() => {
+		const selectors = [];
+		const walk = (rules) => {
+			for (const rule of rules) {
+				if (rule.selectorText) selectors.push(rule.selectorText);
+				else if (rule.cssRules) walk(rule.cssRules);
+			}
+		};
+		for (const sheet of document.styleSheets) try { walk(sheet.cssRules); } catch {}
+		const parts = selectors.flatMap((text) => text.split(/,(?![^(]*\))/).map((part) => part.trim()));
+		return {
+			rootHas: parts.filter((part) => /^html[^\s>+~]*:has\(/.test(part)).slice(0, 5),
+			rightmostIs: parts.filter((part) => /^html\[data-nsmax-theme\]\S*\s+:is\([^()]*\)$/.test(part)).length,
+			dark: document.documentElement.hasAttribute("data-nsmax-dark"),
+			canvas: getComputedStyle(document.body).backgroundColor
+		};
+	});
+	assert.deepEqual(state.rootHas, []);
+	assert.ok(state.rightmostIs < 20, `仍有 ${state.rightmostIs} 条最右边是 :is() 的规则`);
+	assert.equal(state.dark, true);
+	assert.equal(state.canvas, "rgb(38, 38, 36)");
+	assert.deepEqual(errors, []);
+	await context.close();
 });
