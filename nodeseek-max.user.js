@@ -28290,7 +28290,7 @@ ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,a[data-nsmax-header-cat],[data-nsm
 ${nsmaxClaude} #nsk-head :is(a[data-nsmax-header-cat-on],a[data-nsmax-header-cat-on]:hover,ul.nav-menu>li>a[aria-current=page],ul.nav-menu>li>a.router-link-exact-active){background:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-weight:500!important}
 ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,[data-nsmax-header-cat]>a) :is(svg,img,.nsmax-icon){display:none!important}
 ${nsmaxClaude} #nsk-head ul.nav-menu>li>a:is([data-nsmax-header-hide],[hidden]){display:none!important}
-${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut]{padding:0 11px 0 9px!important}
+${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut][data-nsmax-own-header]{padding:0 11px 0 9px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{flex:none;width:16px!important;height:16px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg[data-nsmax-brand] path{fill:currentColor!important}
 /* 搜索框：sb.sb 的浅底细边框输入框，放大镜在框内右侧（站点的图标原本绝对定位在表单上，表单不能改成 static） */
@@ -28571,7 +28571,7 @@ ${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*
 ${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*,#nsk-body-left .content-item .nspp-user-badges>*)>:is(svg,.nsmax-icon){position:relative!important;top:1px!important}
 ${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .post-info>.post-category{padding-bottom:1px!important}
 ${nsmaxClaude} #nsk-body-left .content-item .floor-link{position:relative!important;top:-.5px!important}
-${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut]{padding-bottom:2px!important}
+${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut][data-nsmax-own-header]{padding-bottom:2px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{position:relative!important;top:1px!important}
 /* ---------- 页脚与回到顶部：页面底色、上方细线，链接弱化；回到顶部 / 底部是 36px 细边圆钮 ---------- */
 ${nsmaxClaude} body>footer{background:transparent!important;border-top:1px solid var(--nsmax-divider)!important;box-shadow:none!important;color:var(--nsmax-muted)!important}
