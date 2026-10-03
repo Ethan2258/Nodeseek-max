@@ -28213,6 +28213,7 @@ ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,a[data-nsmax-header-cat],[data-nsm
 ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,a[data-nsmax-header-cat],[data-nsmax-header-cat]>a,a[data-nsmax-own-header=shortcut]):hover{background:var(--nsmax-hover)!important;color:var(--nsmax-text)!important}
 ${nsmaxClaude} #nsk-head :is(a[data-nsmax-header-cat-on],a[data-nsmax-header-cat-on]:hover,ul.nav-menu>li>a[aria-current=page],ul.nav-menu>li>a.router-link-exact-active){background:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-weight:500!important}
 ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,[data-nsmax-header-cat]>a) :is(svg,img,.nsmax-icon){display:none!important}
+${nsmaxClaude} #nsk-head ul.nav-menu>li>a:is([data-nsmax-header-hide],[hidden]){display:none!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut]{padding:0 11px 0 9px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{flex:none;width:16px!important;height:16px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg[data-nsmax-brand] path{fill:currentColor!important}
@@ -28271,7 +28272,8 @@ ${nsmaxClaude} #nsk-body-left>div:has(>.nsk-pager.pager-bottom){display:flex!imp
 
 /* ---------- 置顶轮播：浅珊瑚底的一行，和帖子行同样的版式，圆点在右下角 ---------- */
 ${nsmaxClaude} #nsk-body-left .topic-carousel-wrapper{position:relative!important;margin:0!important;padding:0!important;border-bottom:1px solid var(--nsmax-divider)!important;background:color-mix(in srgb,var(--nsmax-brand) 6%,var(--nsmax-card))!important}
-${nsmaxClaude} #nsk-body-left .topic-carousel-wrapper>.topic-carousel-panel{margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+${nsmaxClaude} #nsk-body-left .topic-carousel-wrapper>.topic-carousel-panel{position:relative!important;height:68px!important;min-height:68px!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;overflow:hidden!important}
+${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item.topic-carousel-item{position:absolute!important;top:0!important;left:0!important;width:100%!important;border-top:0!important}
 ${nsmaxClaude} #nsk-body-left .topic-carousel-wrapper .carousel-mask{display:none!important}
 ${nsmaxClaude} #nsk-body-left .topic-carousel-index-wrapper{position:absolute!important;right:var(--nsmax-row-x)!important;bottom:9px!important;left:auto!important;top:auto!important;display:flex!important;gap:4px!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important}
 ${nsmaxClaude} #nsk-body-left .topic-carousel-index-item{width:5px!important;height:5px!important;margin:0!important;border:0!important;border-radius:999px!important;background:color-mix(in srgb,var(--nsmax-ink) 18%,transparent)!important;transition:width .2s ease,background-color .2s ease!important}
@@ -28300,6 +28302,7 @@ ${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-it
 ${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .post-info>.post-category{position:absolute!important;top:50%!important;right:var(--nsmax-row-x)!important;bottom:auto!important;left:auto!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;height:24px!important;max-width:64px;margin:0!important;padding:0 9px!important;transform:translateY(-50%)!important;border:1px solid var(--nsmax-stroke)!important;border-radius:999px!important;background:var(--nsmax-panel-alt)!important;box-shadow:none!important;color:var(--nsmax-muted)!important;font-size:12px!important;font-weight:400!important;line-height:1!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;text-decoration:none!important;transition:border-color .15s ease,color .15s ease!important}
 ${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .post-info>.post-category:hover{border-color:var(--nsmax-stroke-strong)!important;color:var(--nsmax-text)!important}
 ${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .nspp-user-badges{font-size:12px!important}
+${nsmaxClaude} #nsk-body-left .post-list-item .nspp-user-badges:is([aria-busy=true],[data-nsmax-early],:empty):not([hidden]){height:6px!important;border-radius:3px!important;background:color-mix(in srgb,var(--nsmax-ink) 7%,transparent)!important}
 
 /* ---------- 右侧栏：sb.sb 的侧栏卡片（白底细边、16px 圆角、14px 16px 内边距、卡片间距 16px，卡片标题是小号灰字） ---------- */
 ${nsmaxClaude} #nsk-right-panel-container>:is(.nsk-panel,.nsmax-hot-panel){box-sizing:border-box!important;margin:0 0 16px!important;padding:14px 16px!important;background:var(--nsmax-card)!important;background-image:none!important;border:1px solid var(--nsmax-stroke)!important;border-radius:var(--nsmax-r-card,16px)!important;box-shadow:none!important;color:var(--nsmax-text-2)!important}
