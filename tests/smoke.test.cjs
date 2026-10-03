@@ -245,7 +245,7 @@ test("风格：只保留简洁风格，之前选了液态玻璃的设置也按�
 		return { style: document.documentElement.dataset.nsmaxStyle, background: card.backgroundColor, blur: card.backdropFilter };
 	});
 	assert.equal(state.style, "flat");
-	assert.equal(state.background, "rgb(255, 255, 255)");
+	assert.equal(state.background, "rgb(251, 250, 246)");
 	assert.ok(!state.blur || state.blur === "none");
 	await page.click("[data-nspp-settings-launcher]");
 	await page.waitForFunction(() => document.getElementById("nspp-settings")?.shadowRoot?.querySelector("dialog")?.open);
@@ -711,7 +711,7 @@ test("独立主题 CSS：不安装脚本、只加载 theme/nodeseek-max.css 也�
 		font: getComputedStyle(document.body).fontFamily
 	}));
 	// 默认 Claude 风格：米白页面底；用户卡片的统计区不再是一条浅底带（透明，透出卡片白底）
-	assert.equal(state.canvas, "rgb(250, 249, 245)");
+	assert.equal(state.canvas, "rgb(245, 244, 237)");
 	assert.equal(state.grid, "none");
 	assert.equal(state.row, "solid");
 	assert.equal(state.stat, "rgba(0, 0, 0, 0)");
@@ -1145,7 +1145,7 @@ test("设置页：输入框白底深一档边框（sb.sb）、提交按钮用强
 			input: css("input[type=email]", "backgroundColor"),
 			inputRadius: css("input[type=email]", "borderRadius"),
 			submit: css("button[type=submit]", "backgroundColor"),
-			cancel: css("button[type=button]", "backgroundColor"),
+			cancel: css("#nsk-body button[type=button]", "backgroundColor"),
 			check: css("input[type=checkbox]", "accentColor"),
 			tab: css(".router-link-active", "fontWeight"),
 			cta: getComputedStyle(document.querySelector(".btn-post"), "::before").backgroundColor
@@ -1340,7 +1340,7 @@ test("评论框（参考 Claude 的输入框）：输入区在最上面，工具
 	assert.deepEqual(state.send, [32, 32, "rgb(193, 95, 60)", "0px", "发布评论"]);
 	assert.equal(state.sendIcon, "16px");
 	assert.equal(state.badgeBorder, "0px");
-	assert.equal(state.badgeBackground, "rgb(242, 240, 233)");
+	assert.equal(state.badgeBackground, "rgb(236, 235, 227)");
 	assert.deepEqual(state.badgeIcon, ['""', "none"]);
 	await shot(page, "post-editor-claude");
 	assert.deepEqual(errors, []);
@@ -1379,10 +1379,10 @@ test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发�
 	});
 	assert.deepEqual(list, {
 		palette: "claude",
-		canvas: "rgb(250, 249, 245)",
+		canvas: "rgb(245, 244, 237)",
 		main: "rgba(0, 0, 0, 0)",
 		nav: "rgba(0, 0, 0, 0)",
-		card: "rgb(255, 255, 255)",
+		card: "rgb(251, 250, 246)",
 		cta: ["rgb(193, 95, 60)", "10px"],
 		pager: ["10px", "rgb(31, 30, 29)"],
 		avatar: "50%",
@@ -1428,7 +1428,8 @@ test("线条图标：版块、用户卡片按钮、统计区、深浅色切换�
 		assert.equal(state.card, 3);
 		assert.ok(state.stat, "统计区图标没有替换");
 		assert.ok(state.originalsHidden, "原图标没有隐藏");
-		assert.deepEqual([state.moon, state.sun], dark ? ["none", "inline"] : ["inline", "none"]);
+		// 深浅色按钮显示当前模式：浅色是太阳、深色是月亮
+		assert.deepEqual([state.moon, state.sun], dark ? ["inline", "none"] : ["none", "inline"]);
 		assert.equal(state.search, 1);
 		for (const label of ["等级Lv", "鸡腿", "主题帖", "评论数", "私信"]) assert.ok(state.labels.some((text) => text.startsWith(label)), `统计区缺少「${label}」：${state.labels.join("、")}`);
 		assert.equal(state.stroke, "1.5px");
@@ -1536,6 +1537,14 @@ test("圆角统一（Claude 风格）：各页面、私信 / 通知、设置面�
 			await page.click('#nspp-tools button[title^="帖子监控"]');
 			await settle(page, 600);
 			assert.deepEqual(await page.evaluate(probe), [], "帖子监控");
+			await page.keyboard.press("Escape");
+			await settle(page, 300);
+			for (const [selector, name] of [["[data-nsmax-header-toggle]", "深浅色菜单"], [".nsmax-header-action", "关键词屏蔽"]]) {
+				await page.click(selector);
+				await settle(page, 300);
+				assert.deepEqual(await page.evaluate(probe), [], name);
+				await page.keyboard.press("Escape");
+			}
 		}
 		assert.deepEqual(errors, []);
 		await context.close();
@@ -1582,6 +1591,13 @@ test("字号与字重统一（Claude 风格）：界面文字只用 11–16 / 18
 			await page.waitForSelector(".nspp-user-hover:not([hidden]) dd", { timeout: 8e3 });
 			await settle(page, 300);
 			assert.deepEqual(await page.evaluate(probe), [], "用户资料卡");
+			await page.mouse.move(5, 600);
+			for (const [selector, name] of [["[data-nsmax-header-toggle]", "深浅色菜单"], [".nsmax-header-action", "关键词屏蔽"]]) {
+				await page.click(selector);
+				await settle(page, 300);
+				assert.deepEqual(await page.evaluate(probe), [], name);
+				await page.keyboard.press("Escape");
+			}
 		}
 		assert.deepEqual(errors, []);
 		await context.close();
@@ -1668,9 +1684,9 @@ test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、
 		};
 	});
 	assert.deepEqual(state, {
-		composer: ["16px", "rgb(255, 255, 255)", true, "8px"],
+		composer: ["16px", "rgb(251, 250, 246)", true, "8px"],
 		send: [32, 32, "rgb(193, 95, 60)", "0px", "10px"],
-		mine: "rgb(240, 238, 230)",
+		mine: "rgb(235, 233, 224)",
 		theirs: ["rgba(0, 0, 0, 0)", "0px", true],
 		resize: "none"
 	});
@@ -1698,12 +1714,12 @@ test("设置面板（参考 claude.ai 网页版）：整块米白底，顶栏、
 			primary: css(".settings-footer .primary").borderTopLeftRadius
 		};
 	});
-	assert.deepEqual(state.dialog, ["rgb(250, 249, 245)", "16px"]);
+	assert.deepEqual(state.dialog, ["rgb(245, 244, 237)", "16px"]);
 	assert.deepEqual(state.header, ["rgba(0, 0, 0, 0)", "0px"]);
 	assert.deepEqual(state.footer, ["rgba(0, 0, 0, 0)", "0px"]);
 	assert.match(state.title, /Georgia/);
 	assert.equal(state.categories, "0px");
-	assert.equal(state.article, "rgb(255, 255, 255)");
+	assert.equal(state.article, "rgb(251, 250, 246)");
 	assert.equal(state.primary, "10px");
 	await shot(page, "settings-claude");
 	assert.deepEqual(errors, []);
@@ -1723,7 +1739,7 @@ test("发帖页：标题是大号白色输入框，正文编辑器加高，发�
 			button: [getComputedStyle(button).backgroundColor, parseFloat(getComputedStyle(button).fontSize) > 0, getComputedStyle(button, "::before").width]
 		};
 	});
-	assert.deepEqual(state, { page: "new", title: [48, "10px", "rgb(255, 255, 255)"], editor: true, button: ["rgb(193, 95, 60)", true, "16px"] });
+	assert.deepEqual(state, { page: "new", title: [48, "10px", "rgb(251, 250, 246)"], editor: true, button: ["rgb(193, 95, 60)", true, "16px"] });
 	await shot(page, "new-discussion");
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -1806,6 +1822,88 @@ test("细节（v1.5.8）：设置面板点最后一个分类能跳到并高亮�
 	assert.match(ring, /0\.07\)/, ring);
 	assert.deepEqual(setting.errors, []);
 	await setting.context.close();
+});
+
+test("深浅色：点右上角按钮弹出「浅色 / 深色 / 跟随系统」菜单，选中后由脚本决定深浅色并在刷新后保留；跟随系统时随系统切换，按钮显示显示器图标", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), colorScheme: "dark" });
+	await settle(page, 1200);
+	assert.equal(await page.evaluate(() => document.documentElement.dataset.nsmaxColorMode), "site");
+	await page.click("[data-nsmax-header-toggle]");
+	await page.waitForSelector(".nsmax-pop[data-kind=colors]");
+	const menu = await page.evaluate(() => Array.from(document.querySelectorAll(".nsmax-pop [role=menuitemradio]")).map((item) => [item.textContent, item.getAttribute("aria-checked")]));
+	assert.deepEqual(menu, [["浅色", "true"], ["深色", "false"], ["跟随系统", "false"]]);
+	// 再点一次按钮关闭；Esc 也能关闭
+	await page.click("[data-nsmax-header-toggle]");
+	assert.equal(await page.evaluate(() => !!document.querySelector(".nsmax-pop")), false);
+	await page.click("[data-nsmax-header-toggle]");
+	await page.keyboard.press("Escape");
+	assert.equal(await page.evaluate(() => !!document.querySelector(".nsmax-pop")), false);
+	await page.click("[data-nsmax-header-toggle]");
+	await page.click(".nsmax-pop [role=menuitemradio]:nth-child(2)");
+	assert.deepEqual(await page.evaluate(() => [document.body.classList.contains("dark-layout"), !!document.querySelector(".nsmax-pop")]), [true, false]);
+	await page.reload();
+	await settle(page, 1200);
+	assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.nsmaxColorMode, document.body.classList.contains("dark-layout")]), ["dark", true]);
+	await page.click("[data-nsmax-header-toggle]");
+	await page.click(".nsmax-pop [role=menuitemradio]:nth-child(3)");
+	const system = await page.evaluate(() => ({
+		dark: document.body.classList.contains("dark-layout"),
+		icons: Array.from(document.querySelectorAll("[data-nsmax-header-toggle] .nsmax-icon path")).filter((path) => getComputedStyle(path).display !== "none").map((path) => path.getAttribute("class"))
+	}));
+	assert.deepEqual(system, { dark: true, icons: ["nsmax-icon-display"] });
+	await page.emulateMedia({ colorScheme: "light" });
+	await settle(page, 200);
+	assert.equal(await page.evaluate(() => document.body.classList.contains("dark-layout")), false);
+	await page.reload();
+	await settle(page, 1200);
+	assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.nsmaxColorMode, document.body.classList.contains("dark-layout")]), ["system", false]);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("关键词屏蔽：顶栏深浅色按钮旁的屏蔽按钮可以添加、删除关键词，立即隐藏命中的帖子与侧栏热榜条目；可选同时匹配评论内容", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await settle(page, 1500);
+	const button = await page.evaluate(() => {
+		const action = document.querySelector(".nsmax-header-action");
+		return { adjacent: action?.nextElementSibling === document.querySelector("[data-nsmax-header-toggle]"), label: action?.getAttribute("aria-label") };
+	});
+	assert.deepEqual(button, { adjacent: true, label: "关键词屏蔽" });
+	await page.click(".nsmax-header-action");
+	await page.waitForSelector(".nsmax-pop[data-kind=keywords] input");
+	await page.keyboard.type("docker");
+	await page.keyboard.press("Enter");
+	await page.keyboard.type("/热帖 ?3：/");
+	await page.keyboard.press("Enter");
+	await settle(page, 300);
+	const state = await page.evaluate(() => ({
+		chips: Array.from(document.querySelectorAll(".nsmax-pop-chips li span")).map((chip) => chip.textContent),
+		hidden: Array.from(document.querySelectorAll(".post-list-item")).filter((item) => item.hidden).map((item) => item.querySelector(".post-title a").textContent),
+		hot: Array.from(document.querySelectorAll(".nsmax-hot-list .nsmax-hot-rank")).map((rank) => rank.textContent).slice(0, 4),
+		count: document.querySelector(".nsmax-pop-count").textContent
+	}));
+	assert.deepEqual(state, { chips: ["docker", "/热帖 ?3：/"], hidden: ["分享一个 Docker 一键部署脚本"], hot: ["1", "2", "4", "5"], count: "本页已屏蔽 2 条" });
+	await page.click(".nsmax-pop-chips li:first-child button");
+	await settle(page, 300);
+	assert.deepEqual(await page.evaluate(() => Array.from(document.querySelectorAll(".post-list-item")).filter((item) => item.hidden).length), 0);
+	await page.keyboard.press("Escape");
+	await page.reload();
+	await settle(page, 1500);
+	assert.deepEqual(await page.evaluate(() => Array.from(document.querySelectorAll(".nsmax-hot-list .nsmax-hot-rank")).map((rank) => rank.textContent).slice(0, 3)), ["1", "2", "4"]);
+	assert.deepEqual(errors, []);
+	await context.close();
+	// 评论内容：默认不匹配，打开「也匹配评论内容」后命中的楼层隐藏
+	const seed = { "nspp:settings:www.nodeseek.com": { "content-filter": { keywords: "私信你" } } };
+	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), seed });
+	await settle(post.page, 1500);
+	const floors = () => post.page.evaluate(() => Array.from(document.querySelectorAll(".comments .content-item")).filter((item) => item.hidden).length);
+	assert.equal(await floors(), 0);
+	await post.page.click(".nsmax-header-action");
+	await post.page.click(".nsmax-pop-foot input[type=checkbox]");
+	await settle(post.page, 300);
+	assert.equal(await floors(), 1);
+	assert.deepEqual(post.errors, []);
+	await post.context.close();
 });
 
 test("用户脚本元数据与版本一致", () => {

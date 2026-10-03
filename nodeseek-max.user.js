@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.6.3
+// @version      1.6.4
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.6.3";
+	var NSMAX_VERSION = "1.6.4";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -1301,6 +1301,8 @@ var nsmaxRedirecting = false;
 		users: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3 19.5c0-3 2.7-5 6-5s6 2 6 5M16 4.3a3.5 3.5 0 0 1 0 6.4M17.5 14.7c2 .6 3.5 2.3 3.5 4.8",
 		search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14ZM16 16l4 4",
 		moon: "M19.5 14.2A7.5 7.5 0 0 1 9.8 4.5a7.5 7.5 0 1 0 9.7 9.7Z",
+		display: "M4.5 5h15A1.5 1.5 0 0 1 21 6.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 15.5v-9A1.5 1.5 0 0 1 4.5 5ZM9 20h6M12 17v3",
+		filter: "M4 5.5h16l-6.2 7.3v5.4l-3.6 1.8v-7.2Z",
 		sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM12 3v1.5M12 19.5V21M5.6 5.6l1.1 1.1M17.3 17.3l1.1 1.1M3 12h1.5M19.5 12H21M5.6 18.4l1.1-1.1M17.3 6.7l1.1-1.1",
 		copy: "M9 8h9.5A1.5 1.5 0 0 1 20 9.5v9.5a1.5 1.5 0 0 1 -1.5 1.5H9a1.5 1.5 0 0 1 -1.5 -1.5V9.5A1.5 1.5 0 0 1 9 8ZM16.5 8v-3A1.5 1.5 0 0 0 15 3.5H5.5A1.5 1.5 0 0 0 4 5V14.5a1.5 1.5 0 0 0 1.5 1.5h2",
 		check: "M5 12.5l4.5 4.5L19 7.5",
@@ -4055,9 +4057,34 @@ var nsmaxRedirecting = false;
 		}
 	}
 	var filterLines = (value) => String(value || "").split(/\n|,/).map((s) => s.trim()).filter(Boolean);
-	function shouldFilter(title, author, keywords, users, level, required) {
-		return keywords.some((k) => title.toLowerCase().includes(k.toLowerCase())) || users.includes(author) || level >= 0 && Number.isFinite(required) && required > level;
+	// 屏蔽关键词：每行一个；逗号（含中文逗号）也能分隔，写成 /正则/ 的整行按正则匹配（不加标志时不分大小写）。
+	function keywordLines(value) {
+		const lines = [];
+		for (const line of String(value || "").split("\n").map((item) => item.trim()).filter(Boolean)) {
+			if (/^\/.+\/[a-z]*$/i.test(line)) lines.push(line);
+			else lines.push(...line.split(/[,，]/).map((item) => item.trim()).filter(Boolean));
+		}
+		return Array.from(new Set(lines));
 	}
+	function compileKeywordMatchers(value) {
+		return keywordLines(value).map((line) => {
+			const regex = /^\/(.+)\/([a-z]*)$/i.exec(line);
+			if (regex) try {
+				const pattern = new RegExp(regex[1], regex[2].replace(/[gy]/g, "") || "i");
+				return {
+					text: line,
+					test: (text) => pattern.test(text)
+				};
+			} catch {}
+			const plain = line.toLowerCase();
+			return {
+				text: line,
+				plain,
+				test: (text) => text.toLowerCase().includes(plain)
+			};
+		});
+	}
+	var nsmaxContentFilter = null;
 	var contentSelector = ":is(.post-content,.comment-content,.nsk-content,.markdown-body)";
 	function style(css) {
 		const el = document.createElement("style");
@@ -4612,7 +4639,7 @@ var nsmaxRedirecting = false;
 			},
 			mount(ctx) {
 				const previous = document.body.classList.contains("dark-layout") && !nsmaxEarlyDark;
-				if (ctx.get("dark")) document.body.classList.add("dark-layout");
+				if (ctx.get("dark") && !nsmaxThemeOwnsDark()) document.body.classList.add("dark-layout");
 				if (ctx.get("keyboard")) document.addEventListener("keydown", (e) => {
 					if (!e.altKey || !["ArrowUp", "ArrowDown"].includes(e.key) || e.target.closest("input,textarea,select,[contenteditable=\"true\"]")) return;
 					e.preventDefault();
@@ -5659,12 +5686,13 @@ var nsmaxRedirecting = false;
 		},
 		{
 			id: "content-filter",
-			title: "帖子与用户过滤",
-			description: "关键词按标题包含匹配，用户按名称精确匹配；等级过滤仅隐藏超过当前等级的锁定帖子。",
+			title: "关键词与用户屏蔽",
+			description: "关键词按包含匹配、不分大小写（写成 /正则/ 按正则匹配），作用于帖子标题与侧栏热榜，也可以同时匹配评论内容；用户按名称精确匹配；等级过滤仅隐藏超过当前等级的锁定帖子。顶栏右上角的屏蔽按钮可以随时添加或删除关键词，立即生效。",
 			group: "过滤",
 			defaults: {
 				enabled: true,
 				keywords: "",
+				comments: false,
 				users: "",
 				level: -1,
 				mode: "hide",
@@ -5694,8 +5722,12 @@ var nsmaxRedirecting = false;
 					type: "text"
 				},
 				keywords: {
-					label: "屏蔽标题关键词（每行一个）",
+					label: "屏蔽关键词（每行一个，不分大小写；写成 /正则/ 按正则匹配）",
 					type: "textarea"
+				},
+				comments: {
+					label: "关键词也匹配评论内容（命中的楼层按过滤方式处理）",
+					type: "text"
 				},
 				users: {
 					label: "屏蔽用户名（每行一个）",
@@ -5707,87 +5739,135 @@ var nsmaxRedirecting = false;
 				}
 			},
 			mount(ctx) {
-				const keywords = filterLines(ctx.get("keywords")).map((s) => s.toLowerCase()), users = filterLines(ctx.get("users"));
-				const hidden = new Map();
-				const seen = new WeakSet();
-				const restore = [];
-				const stop = ctx.watch(() => {
+				let matchers = compileKeywordMatchers(ctx.get("keywords"));
+				const users = filterLines(ctx.get("users"));
+				let seen = new WeakSet();
+				// 已处理的条目 → 还原函数；关键词变化时全部还原后重新匹配。
+				const filtered = new Map();
+				let hotHidden = 0;
+				const blocks = (text) => !!text && matchers.some((matcher) => matcher.test(text));
+				const highlightTitle = (anchor, undo) => {
+					const words = matchers.filter((matcher) => matcher.plain).map((matcher) => matcher.plain);
+					if (!words.length) return;
+					const walker = document.createTreeWalker(anchor, NodeFilter.SHOW_TEXT);
+					const nodes = [];
+					while (walker.nextNode()) nodes.push(walker.currentNode);
+					for (const node of nodes) {
+						const text = node.data;
+						const lower = text.toLowerCase();
+						const ranges = [];
+						for (const word of words) {
+							let at = lower.indexOf(word);
+							while (at >= 0) {
+								ranges.push([at, at + word.length]);
+								at = lower.indexOf(word, at + word.length);
+							}
+						}
+						if (!ranges.length) continue;
+						ranges.sort((a, b) => a[0] - b[0]);
+						const fragment = document.createDocumentFragment();
+						let offset = 0;
+						for (const [from, to] of ranges) {
+							if (from < offset) continue;
+							fragment.append(text.slice(offset, from));
+							const mark = document.createElement("mark");
+							mark.textContent = text.slice(from, to);
+							fragment.append(mark);
+							offset = to;
+						}
+						fragment.append(text.slice(offset));
+						const inserted = Array.from(fragment.childNodes);
+						node.replaceWith(fragment);
+						undo.push(() => {
+							inserted[0]?.before(node);
+							inserted.forEach((child) => child.remove());
+						});
+					}
+				};
+				const filter = (item, anchor) => {
+					const undo = [];
+					const mode = ctx.get("mode");
+					if (mode !== "highlight") {
+						const wasHidden = item.hidden;
+						item.hidden = true;
+						undo.push(() => {
+							item.hidden = wasHidden;
+						});
+						if (mode === "collapse") {
+							const placeholder = document.createElement(item.tagName === "LI" ? "li" : "div");
+							placeholder.className = "nsmax-filtered";
+							const button = document.createElement("button");
+							button.type = "button";
+							button.textContent = "已屏蔽的内容，点击展开";
+							button.setAttribute("aria-expanded", "false");
+							button.addEventListener("click", () => {
+								item.hidden = !item.hidden;
+								button.setAttribute("aria-expanded", String(!item.hidden));
+								button.textContent = item.hidden ? "已屏蔽的内容，点击展开" : "收起";
+							}, { signal: ctx.signal });
+							placeholder.append(button);
+							item.before(placeholder);
+							undo.push(() => placeholder.remove());
+						}
+					}
+					if (anchor && (ctx.get("highlight") || mode === "highlight")) highlightTitle(anchor, undo);
+					return () => undo.reverse().forEach((fn) => fn());
+				};
+				const changed = (type) => document.dispatchEvent(new CustomEvent(type));
+				const process = () => {
+					const level = Number(ctx.get("level"));
+					const comments = ctx.get("comments") === true;
+					const before = filtered.size;
 					document.querySelectorAll(".post-list-item, .comments .content-item").forEach((item) => {
 						if (seen.has(item)) return;
 						seen.add(item);
-						const title = item.querySelector(".post-title a")?.textContent?.toLowerCase() || "";
+						const anchor = item.querySelector(".post-title a");
 						const author = item.querySelector(authorSelector)?.textContent?.trim() || "";
 						const lock = item.querySelector("use[href=\"#lock\"]");
 						const required = Number(lock?.closest("span")?.textContent?.match(/\d+/)?.[0] ?? NaN);
-						const level = Number(ctx.get("level"));
-						if (shouldFilter(title, author, keywords, users, level, required)) {
-							const mode = ctx.get("mode");
-							if (mode !== "highlight") {
-								hidden.set(item, item.hidden);
-								item.hidden = true;
-								if (mode === "collapse") {
-									const placeholder = document.createElement(item.tagName === "LI" ? "li" : "div");
-									const button = document.createElement("button");
-									button.type = "button";
-									button.textContent = "已过滤内容，点击展开";
-									button.setAttribute("aria-expanded", "false");
-									button.addEventListener("click", () => {
-										item.hidden = !item.hidden;
-										button.setAttribute("aria-expanded", String(!item.hidden));
-										button.textContent = item.hidden ? "已过滤内容，点击展开" : "收起过滤内容";
-									}, { signal: ctx.signal });
-									placeholder.append(button);
-									item.before(placeholder);
-									restore.push(() => placeholder.remove());
-								}
-							}
-							if (ctx.get("highlight") || mode === "highlight") {
-								const anchor = item.querySelector(".post-title a");
-								if (anchor) {
-									const walker = document.createTreeWalker(anchor, NodeFilter.SHOW_TEXT);
-									const nodes = [];
-									while (walker.nextNode()) nodes.push(walker.currentNode);
-									for (const node of nodes) {
-										const text = node.data;
-										const ranges = [];
-										for (const keyword of keywords) {
-											let at = text.toLowerCase().indexOf(keyword);
-											while (at >= 0) {
-												ranges.push([at, at + keyword.length]);
-												at = text.toLowerCase().indexOf(keyword, at + keyword.length);
-											}
-										}
-										if (!ranges.length) continue;
-										ranges.sort((a, b) => a[0] - b[0]);
-										const fragment = document.createDocumentFragment();
-										let offset = 0;
-										for (const [start, end] of ranges) {
-											if (start < offset) continue;
-											fragment.append(text.slice(offset, start));
-											const mark = document.createElement("mark");
-											mark.textContent = text.slice(start, end);
-											fragment.append(mark);
-											offset = end;
-										}
-										fragment.append(text.slice(offset));
-										const inserted = Array.from(fragment.childNodes);
-										node.replaceWith(fragment);
-										restore.push(() => {
-											inserted[0]?.before(node);
-											inserted.forEach((child) => child.remove());
-										});
-									}
-								}
-							}
-						}
+						const hit = blocks(anchor?.textContent || "") || !anchor && comments && blocks(item.querySelector(".post-content")?.textContent || "") || users.includes(author) || level >= 0 && Number.isFinite(required) && required > level;
+						if (hit) filtered.set(item, filter(item, anchor));
 					});
-				});
+					if (filtered.size !== before) changed("nsmax:filter-count");
+				};
+				const reset = () => {
+					filtered.forEach((undo) => undo());
+					filtered.clear();
+					seen = new WeakSet();
+				};
+				const rerun = () => {
+					reset();
+					process();
+					changed("nsmax:filter-change");
+				};
+				// 顶栏「关键词屏蔽」弹窗与侧栏热榜通过它读写关键词；模块关闭时为 null，顶栏不显示屏蔽按钮。
+				nsmaxContentFilter = {
+					keywords: () => keywordLines(ctx.get("keywords")),
+					setKeywords(list) {
+						ctx.set("keywords", list.join("\n"));
+						matchers = compileKeywordMatchers(ctx.get("keywords"));
+						rerun();
+					},
+					comments: () => ctx.get("comments") === true,
+					setComments(on) {
+						ctx.set("comments", on === true);
+						rerun();
+					},
+					blocks,
+					count: () => Array.from(filtered.keys()).filter((item) => item.isConnected).length + hotHidden,
+					reportHot(count) {
+						if (count === hotHidden) return;
+						hotHidden = count;
+						changed("nsmax:filter-count");
+					}
+				};
+				const stop = ctx.watch(process);
+				changed("nsmax:filter-change");
 				return () => {
 					stop();
-					hidden.forEach((value, item) => {
-						item.hidden = value;
-					});
-					restore.reverse().forEach((fn) => fn());
+					reset();
+					nsmaxContentFilter = null;
+					changed("nsmax:filter-change");
 				};
 			}
 		},
@@ -24530,6 +24610,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			expanded = !expanded;
 			render();
 		}, { signal: ctx.signal });
+		document.addEventListener("nsmax:filter-change", () => render(), { signal: ctx.signal });
 		function render() {
 			if (ctx.signal.aborted) return;
 			const snapshot = store.cache.get(kind);
@@ -24541,6 +24622,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			refresh.disabled = busy;
 			refresh.toggleAttribute("data-busy", busy);
 			list.replaceChildren();
+			// 命中屏蔽关键词的帖子不显示，名次保留热榜原来的排名。
+			const allPosts = snapshot?.posts.map((post, index) => ({ ...post, rank: index + 1 })) ?? [];
+			const visiblePosts = allPosts.filter((post) => !nsmaxContentFilter?.blocks(post.title));
+			nsmaxContentFilter?.reportHot(allPosts.length - visiblePosts.length);
 			if (!snapshot) {
 				if (failed) {
 					const row = document.createElement("li");
@@ -24563,12 +24648,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					row.append(rank, line);
 					list.append(row);
 				}
-			} else if (!snapshot.posts.length) {
+			} else if (!visiblePosts.length) {
 				const row = document.createElement("li");
 				row.className = "nsmax-hot-empty";
-				row.textContent = "暂无数据";
+				row.textContent = snapshot.posts.length ? "热榜里的帖子都已屏蔽" : "暂无数据";
 				list.append(row);
-			} else for (const [index, post] of snapshot.posts.entries()) {
+			} else for (const [index, post] of visiblePosts.entries()) {
 				if (!expanded && index >= count) break;
 				const row = document.createElement("li");
 				const link = document.createElement("a");
@@ -24576,8 +24661,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				link.title = `${post.title}\n作者：${post.author || "未知"} · 浏览 ${post.views} · 回复 ${post.comments} · 热度 ${formatHeat(post.score)}`;
 				const rank = document.createElement("span");
 				rank.className = "nsmax-hot-rank";
-				rank.dataset.rank = String(index + 1);
-				rank.textContent = String(index + 1);
+				rank.dataset.rank = String(post.rank);
+				rank.textContent = String(post.rank);
 				const text = document.createElement("span");
 				text.className = "nsmax-hot-text";
 				text.textContent = post.title;
@@ -24589,7 +24674,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				row.append(link);
 				list.append(row);
 			}
-			const total = snapshot?.posts.length ?? 0;
+			const total = visiblePosts.length;
 			toggle.hidden = total <= count;
 			toggle.textContent = expanded ? "收起" : `展开全部 ${total}`;
 			toggle.setAttribute("aria-expanded", String(expanded));
@@ -24775,7 +24860,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				for (const control of [status, refresh]) if (busy) control.setAttribute("aria-busy", "true");
 				else control.removeAttribute("aria-busy");
 				const updated = snapshot?.updated ? new Date(snapshot.updated).toLocaleString("zh-CN") : "";
-				status.textContent = busy ? "正在加载…" : errors.has(active) ? `加载失败，点击重试${snapshot ? "；保留上次结果" : ""}` : `${snapshot?.posts.length ?? 0} 条${updated ? ` · 更新于 ${updated}` : ""}`;
+				const blocked = (snapshot?.posts ?? []).filter((post) => nsmaxContentFilter?.blocks(post.title)).length;
+				status.textContent = busy ? "正在加载…" : errors.has(active) ? `加载失败，点击重试${snapshot ? "；保留上次结果" : ""}` : `${snapshot?.posts.length ?? 0} 条${blocked ? `（已屏蔽 ${blocked} 条）` : ""}${updated ? ` · 更新于 ${updated}` : ""}`;
 				list.replaceChildren();
 				if (busy && !snapshot) for (let index = 0; index < 8; index++) {
 					const row = document.createElement("li");
@@ -24793,6 +24879,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					list.append(row);
 				}
 				for (const [index, post] of (snapshot?.posts ?? []).entries()) {
+					if (nsmaxContentFilter?.blocks(post.title)) continue;
 					const row = document.createElement("li");
 					row.dataset.rank = String(index + 1);
 					const rank = document.createElement("span");
@@ -24816,6 +24903,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				}
 			};
 			store.subscribe(render);
+			document.addEventListener("nsmax:filter-change", render, { signal: ctx.signal });
 			launch.addEventListener("click", () => {
 				panel.showModal();
 				render();
@@ -24862,10 +24950,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 ${scope} [data-nsmax-header]{box-sizing:content-box!important;padding-top:6px!important;padding-bottom:6px!important}
 ${scope} [data-nsmax-header-row]{display:flex!important;align-items:center!important;gap:6px}
 ${scope} [data-nsmax-header-end]{margin-left:auto!important}
-${scope} [data-nsmax-header-toggle]{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:30px;min-width:30px;height:30px;min-height:30px;border:1px solid var(--nsmax-stroke,#e0e2e8);border-radius:999px;cursor:pointer;color:var(--nsmax-text-2,inherit);transition:background-color .2s ease,color .2s ease,border-color .2s ease}
-${scope} [data-nsmax-header-toggle]:hover{background:transparent;border-color:var(--nsmax-stroke-strong,#c7cad5);color:var(--nsmax-text,inherit)}
-[data-nsmax-header-toggle] svg{width:15px!important;height:15px!important}`;
-		_css(`${minimalRules("html[data-nsmax-sidenav]")}
+${scope} :is([data-nsmax-header-toggle],.nsmax-header-action){display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:30px;min-width:30px;height:30px;min-height:30px;border:1px solid var(--nsmax-stroke,#e0e2e8);border-radius:999px;cursor:pointer;color:var(--nsmax-text-2,inherit);transition:background-color .2s ease,color .2s ease,border-color .2s ease}
+${scope} :is([data-nsmax-header-toggle],.nsmax-header-action):hover{background:transparent;border-color:var(--nsmax-stroke-strong,#c7cad5);color:var(--nsmax-text,inherit)}
+${scope} .nsmax-header-action{padding:0;background:transparent;font:inherit}
+${scope} .nsmax-header-action:has(+[data-nsmax-header-end]){margin-left:auto!important}
+${scope} .nsmax-header-action+[data-nsmax-header-end]{margin-left:0!important}
+:is([data-nsmax-header-toggle],.nsmax-header-action) svg{width:15px!important;height:15px!important}`;
+		_css(`.nsmax-header-action{display:none}
+${minimalRules("html[data-nsmax-sidenav]")}
 @media (min-width:1000px){${minimalRules("html:not([data-nsmax-sidenav-page])")}}
 /* 顶栏搜索框（参考 sb.sb）：固定宽度、不做宽度动画（站点原本悬停 / 聚焦时会伸缩），各页面长度一致；
    浅底 + 1px 细边框，图标在右侧；悬停边框加深，聚焦时换成卡片底色、边框加深（与 sb.sb 的搜索框一致，不加光圈） */
@@ -24947,6 +25039,279 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 				header = null;
 				signature = -1;
 				tries = 0;
+			}
+		};
+	}
+	// 深浅色：跟随站点（默认，不干预站点自己的切换）/ 浅色 / 深色 / 跟随系统。旧版的「跟随系统深色模式」开关等同于跟随系统。
+	function nsmaxColorMode(options) {
+		return [
+			"light",
+			"dark",
+			"system"
+		].includes(options?.colorMode) ? options.colorMode : options?.autoDark === true ? "system" : "site";
+	}
+	// 主题打开、深浅色不是「跟随站点」时，由主题决定 body 的 dark-layout（NodeSeek++ 的夜间模式不再另外加）。
+	function nsmaxThemeOwnsDark() {
+		try {
+			const options = themeOptions();
+			return options.enabled !== false && nsmaxColorMode(options) !== "site";
+		} catch {
+			return false;
+		}
+	}
+	// 顶栏右上角：点深浅色按钮弹出「浅色 / 深色 / 跟随系统」菜单；旁边的漏斗按钮打开关键词屏蔽（帖子与用户过滤模块打开时才显示）。
+	// 浮层挂在 body 上，固定在按钮下方右对齐；点外面、按 Esc、再点一次按钮都会关闭。
+	function mountHeaderActions(ctx, colors) {
+		const { signal } = ctx;
+		let pop = null;
+		const close = (focusBack) => {
+			if (!pop) return;
+			const { element, anchor } = pop;
+			pop = null;
+			element.remove();
+			anchor.setAttribute("aria-expanded", "false");
+			if (focusBack) anchor.focus?.({ preventScroll: true });
+		};
+		const open = (anchor, kind, build) => {
+			const same = pop?.anchor === anchor;
+			close(false);
+			if (same) return;
+			const element = document.createElement("div");
+			element.className = "nsmax-pop";
+			element.dataset.kind = kind;
+			const place = () => {
+				const box = anchor.getBoundingClientRect();
+				element.style.top = `${Math.round(box.bottom + 8)}px`;
+				element.style.right = `${Math.max(8, Math.round(document.documentElement.clientWidth - box.right))}px`;
+			};
+			pop = {
+				element,
+				anchor,
+				place,
+				refresh: () => build(element)
+			};
+			build(element);
+			document.body.append(element);
+			place();
+			anchor.setAttribute("aria-expanded", "true");
+			(element.querySelector("[aria-checked=true]") || element.querySelector("input,button"))?.focus({ preventScroll: true });
+		};
+		document.addEventListener("pointerdown", (event) => {
+			if (pop && !pop.element.contains(event.target) && !pop.anchor.contains(event.target)) close(false);
+		}, {
+			capture: true,
+			signal
+		});
+		document.addEventListener("keydown", (event) => {
+			if (!pop) return;
+			if (event.key === "Escape") {
+				event.preventDefault();
+				close(true);
+				return;
+			}
+			if (pop.element.dataset.kind !== "colors" || ![
+				"ArrowDown",
+				"ArrowUp",
+				"Home",
+				"End"
+			].includes(event.key)) return;
+			const items = Array.from(pop.element.querySelectorAll("[role=menuitemradio]"));
+			const at = items.indexOf(document.activeElement);
+			const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (at + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+			event.preventDefault();
+			items[next]?.focus();
+		}, { signal });
+		for (const type of ["resize", "scroll"]) window.addEventListener(type, () => pop?.place(), {
+			passive: true,
+			signal
+		});
+		const modes = [
+			["light", "浅色", "sun"],
+			["dark", "深色", "moon"],
+			["system", "跟随系统", "display"]
+		];
+		const buildColors = (element) => {
+			element.setAttribute("role", "menu");
+			element.setAttribute("aria-label", "深浅色");
+			const current = colors.get() === "site" ? document.body.classList.contains("dark-layout") ? "dark" : "light" : colors.get();
+			element.replaceChildren(...modes.map(([value, label, icon]) => {
+				const item = document.createElement("button");
+				item.type = "button";
+				item.className = "nsmax-pop-item";
+				item.setAttribute("role", "menuitemradio");
+				item.setAttribute("aria-checked", String(value === current));
+				const text = document.createElement("span");
+				text.textContent = label;
+				const check = toolIcon("check");
+				check.classList.add("nsmax-pop-check");
+				item.append(toolIcon(icon), text, check);
+				item.addEventListener("click", () => {
+					colors.set(value);
+					close(true);
+				});
+				return item;
+			}));
+		};
+		const buildKeywords = (element) => {
+			const filter = nsmaxContentFilter;
+			if (!filter) {
+				close(false);
+				return;
+			}
+			element.setAttribute("role", "dialog");
+			element.setAttribute("aria-label", "关键词屏蔽");
+			const keywords = filter.keywords();
+			const head = document.createElement("div");
+			head.className = "nsmax-pop-head";
+			const title = document.createElement("strong");
+			title.textContent = "关键词屏蔽";
+			const count = document.createElement("span");
+			count.className = "nsmax-pop-count";
+			const hidden = filter.count();
+			count.textContent = hidden ? `本页已屏蔽 ${hidden} 条` : keywords.length ? "本页没有命中" : "";
+			head.append(title, count);
+			const form = document.createElement("form");
+			form.className = "nsmax-pop-form";
+			const input = document.createElement("input");
+			input.type = "text";
+			input.placeholder = "输入关键词，回车添加";
+			input.maxLength = 80;
+			input.setAttribute("aria-label", "要屏蔽的关键词");
+			const add = document.createElement("button");
+			add.type = "submit";
+			add.textContent = "添加";
+			add.disabled = true;
+			input.addEventListener("input", () => {
+				add.disabled = !input.value.trim();
+			});
+			form.addEventListener("submit", (event) => {
+				event.preventDefault();
+				const words = keywordLines(input.value).filter((word) => !keywords.includes(word));
+				if (!words.length) return;
+				filter.setKeywords([...keywords, ...words]);
+				buildKeywords(element);
+				element.querySelector("input")?.focus();
+			});
+			form.append(input, add);
+			let list;
+			if (keywords.length) {
+				list = document.createElement("ul");
+				list.className = "nsmax-pop-chips";
+				for (const word of keywords) {
+					const chip = document.createElement("li");
+					const text = document.createElement("span");
+					text.textContent = word;
+					text.title = word;
+					const remove = document.createElement("button");
+					remove.type = "button";
+					remove.setAttribute("aria-label", `删除「${word}」`);
+					remove.append(toolIcon("close"));
+					remove.addEventListener("click", () => {
+						filter.setKeywords(keywords.filter((item) => item !== word));
+						buildKeywords(element);
+						element.querySelector("input")?.focus();
+					});
+					chip.append(text, remove);
+					list.append(chip);
+				}
+			} else {
+				list = document.createElement("p");
+				list.className = "nsmax-pop-empty";
+				list.textContent = "匹配帖子标题与侧栏热榜，不分大小写；写成 /正则/ 按正则匹配。";
+			}
+			const foot = document.createElement("div");
+			foot.className = "nsmax-pop-foot";
+			const label = document.createElement("label");
+			const comments = document.createElement("input");
+			comments.type = "checkbox";
+			comments.checked = filter.comments();
+			comments.addEventListener("change", () => {
+				filter.setComments(comments.checked);
+				buildKeywords(element);
+			});
+			label.append(comments, document.createTextNode("也匹配评论内容"));
+			const more = document.createElement("button");
+			more.type = "button";
+			more.textContent = "更多过滤设置";
+			more.addEventListener("click", () => {
+				close(false);
+				document.querySelector("[data-nspp-settings-launcher]")?.click();
+			});
+			foot.append(label, more);
+			element.replaceChildren(head, form, list, foot);
+		};
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "nsmax-header-action";
+		button.setAttribute("data-nsmax-own-header", "keywords");
+		button.title = "关键词屏蔽";
+		button.setAttribute("aria-label", "关键词屏蔽");
+		button.setAttribute("aria-haspopup", "dialog");
+		button.setAttribute("aria-expanded", "false");
+		button.append(toolIcon("filter"));
+		button.addEventListener("click", () => open(button, "keywords", buildKeywords), { signal });
+		// 拦截站点自己的深浅色切换：捕获阶段先于站点的处理函数，改成弹出菜单。
+		const toggleOf = (target) => target instanceof Element ? target.closest("[data-nsmax-header-toggle]") : null;
+		document.addEventListener("click", (event) => {
+			const toggle = toggleOf(event.target);
+			if (!toggle) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			open(toggle, "colors", buildColors);
+		}, {
+			capture: true,
+			signal
+		});
+		document.addEventListener("keydown", (event) => {
+			const toggle = toggleOf(event.target);
+			if (!toggle || toggle.matches("button, a[href]") || ![
+				"Enter",
+				" "
+			].includes(event.key)) return;
+			event.preventDefault();
+			open(toggle, "colors", buildColors);
+		}, {
+			capture: true,
+			signal
+		});
+		const ensure = () => {
+			const toggle = document.querySelector("[data-nsmax-header-toggle]");
+			if (toggle) {
+				toggle.setAttribute("aria-haspopup", "menu");
+				if (!toggle.hasAttribute("aria-expanded")) toggle.setAttribute("aria-expanded", "false");
+				toggle.setAttribute("aria-label", "深浅色");
+				toggle.title = "深浅色";
+				if (!toggle.matches("button, a[href]")) {
+					toggle.setAttribute("role", "button");
+					if (!toggle.hasAttribute("tabindex")) toggle.tabIndex = 0;
+				}
+			}
+			if (!toggle || !nsmaxContentFilter) {
+				if (pop?.anchor === button) close(false);
+				button.remove();
+				return;
+			}
+			if (button.isConnected && button.nextElementSibling === toggle) return;
+			toggle.before(button);
+		};
+		document.addEventListener("nsmax:filter-change", () => {
+			ensure();
+			if (pop?.anchor === button) pop.refresh();
+		}, { signal });
+		document.addEventListener("nsmax:filter-count", () => {
+			if (pop?.anchor === button && !pop.element.contains(document.activeElement)) pop.refresh();
+			else if (pop?.anchor === button) {
+				const filter = nsmaxContentFilter;
+				const count = pop.element.querySelector(".nsmax-pop-count");
+				if (filter && count) count.textContent = filter.count() ? `本页已屏蔽 ${filter.count()} 条` : filter.keywords().length ? "本页没有命中" : "";
+			}
+		}, { signal });
+		return {
+			ensure,
+			close,
+			clear() {
+				close(false);
+				button.remove();
 			}
 		};
 	}
@@ -25059,7 +25424,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 			svg.setAttribute("class", "nsmax-icon");
 			svg.setAttribute("data-nsmax-icon-for", context);
 			svg.setAttribute("aria-hidden", "true");
-			const names = name === "theme" ? ["moon", "sun"] : [name];
+			const names = name === "theme" ? ["sun", "moon", "display"] : [name];
 			for (const icon of names) {
 				const path = document.createElementNS(svg.namespaceURI, "path");
 				path.setAttribute("d", NSMAX_LINE_ICONS[icon]);
@@ -25165,6 +25530,8 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 		const walker = document.createTreeWalker(header, NodeFilter.SHOW_TEXT);
 		while (walker.nextNode()) if ([siteName, "beta"].includes(walker.currentNode.data.trim().toLowerCase()) && walker.currentNode.parentElement && walker.currentNode.parentElement !== header) keep.add(walker.currentNode.parentElement);
 		if (!keep.size) return null;
+		// 脚本自己加进顶栏的按钮（关键词屏蔽）：保留，也不会被当成深浅色切换。
+		for (const own of header.querySelectorAll("[data-nsmax-own-header]")) keep.add(own);
 		// 深浅色切换：优先按类名、标题、文字里的主题关键词识别；否则取最后一个不属于搜索框的纯图标元素。
 		const icons = Array.from(header.querySelectorAll("button, [role=button], a, svg, i, img")).filter((element) => !hasOwnText(element) && !hasFormControl(element) && ![...keep].some((kept) => kept.contains(element)));
 		const keyword = /theme|dark|light|night|mode|color-scheme|主题|深色|浅色|夜间|日间|暗色|亮色/i;
@@ -25717,13 +26084,13 @@ ${NSMAX_ROOT} body.dark-layout{--nsmax-canvas:#000;--nsmax-card:rgb(16 16 18/.97
 --nsmax-shadow-hover:0 12px 32px rgb(0 0 0/.5),inset 0 1px 0 var(--nsmax-highlight);
 --nsmax-shadow-pop:0 18px 48px rgb(0 0 0/.6),inset 0 1px 0 var(--nsmax-highlight);color-scheme:dark}
 
-/* 配色（默认参考 Claude）：暖色米白页面底 #faf9f5、白色卡片、暖灰描边与文字；深色是暖炭灰（页面 #262624、卡片 #30302e）。
+/* 配色（默认参考 Claude）：暖色米白页面底 #f5f4ed、暖白卡片 #fbfaf6（不用纯白，避免刺眼）、暖灰描边与文字；深色是暖炭灰（页面 #262624、卡片 #30302e）。
    形状变量：--nsmax-pill 是按钮、标签页、分页的圆角（Claude 8px），--nsmax-chip 是小标签（6px），--nsmax-avatar 是头像（圆形），
    --nsmax-composer-* 是评论框与私信输入框（20px 圆角 + 柔和投影）。sb.sb 风格把这些变量设为 initial，各处回到括号里原来的胶囊与圆角方形 */
-${NSMAX_ROOT}[data-nsmax-style=flat]{--nsmax-canvas:#faf9f5;--nsmax-card:#fff;--nsmax-surface:#fff;--nsmax-fill:#f2f0e9;
---nsmax-glass:rgb(250 249 245/.96);--nsmax-popup:#fff;--nsmax-blur:none;
---nsmax-stroke:#e6e3da;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#efede6;--nsmax-panel-alt:#faf9f5;--nsmax-stroke-strong:#d3d0c6;--nsmax-faint:#9c9a92;
---nsmax-text:#1f1e1d;--nsmax-text-2:#3d3d3a;--nsmax-muted:#6f6d66;--nsmax-thumb:rgb(115 114 108/.38);--nsmax-ink:#1f1e1d;--nsmax-on-ink:#fff;--nsmax-bubble:#f0eee6;--nsmax-on-bubble:#1f1e1d;--nsmax-seg-bg:#efede5;--nsmax-seg-thumb:#fff;--nsmax-code-bg:#f5f4ee;
+${NSMAX_ROOT}[data-nsmax-style=flat]{--nsmax-canvas:#f5f4ed;--nsmax-card:#fbfaf6;--nsmax-surface:#fbfaf6;--nsmax-fill:#ecebe3;
+--nsmax-glass:rgb(245 244 237/.96);--nsmax-popup:#fdfcf9;--nsmax-blur:none;
+--nsmax-stroke:#e3e0d6;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#ebe9e1;--nsmax-panel-alt:#f5f4ed;--nsmax-stroke-strong:#d3d0c6;--nsmax-faint:#9c9a92;
+--nsmax-text:#1f1e1d;--nsmax-text-2:#3d3d3a;--nsmax-muted:#6f6d66;--nsmax-thumb:rgb(115 114 108/.38);--nsmax-ink:#1f1e1d;--nsmax-on-ink:#fff;--nsmax-bubble:#ebe9e0;--nsmax-on-bubble:#1f1e1d;--nsmax-seg-bg:#eae8df;--nsmax-seg-thumb:#fdfcf9;--nsmax-code-bg:#f1efe7;
 --nsmax-shadow:0 1px 2px rgb(31 30 29/.04);--nsmax-shadow-hover:0 1px 2px rgb(31 30 29/.04),0 6px 18px rgb(31 30 29/.05);--nsmax-shadow-pop:0 12px 40px -6px rgb(31 30 29/.16),0 2px 6px rgb(31 30 29/.04);
 --nsmax-composer-line:rgb(31 30 29/.14);--nsmax-composer-line-focus:rgb(31 30 29/.26);--nsmax-composer-shadow:0 4px 20px rgb(31 30 29/.04);--nsmax-composer-shadow-hover:0 4px 20px rgb(31 30 29/.06);--nsmax-composer-shadow-focus:0 4px 24px rgb(31 30 29/.09);
 --nsmax-pill:8px;--nsmax-chip:6px;--nsmax-avatar:50%;--nsmax-composer-radius:20px;--nsmax-dialog-radius:16px;--nsmax-bubble-r:18px;--nsmax-bubble-nub:18px}
@@ -26112,8 +26479,45 @@ ${NSMAX_ROOT}[data-nsmax-palette=claude] .nsmax-hot-tabs button[aria-selected=tr
 ${NSMAX_ROOT}[data-nsmax-palette=claude] #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to],a.nsmax-shortcut){transition:background-color .15s ease,color .15s ease}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to],a.nsmax-shortcut):hover,${NSMAX_ROOT}[data-nsmax-palette=claude] #nsk-left-panel-container .nsk-panel :is(a.router-link-active,a.router-link-exact-active,a[aria-current=page],a.active,.active>a){background:var(--nsmax-fill)!important;clip-path:inset(0 6px round 8px)}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] [data-nsmax-header-search]:not(input),${NSMAX_ROOT}[data-nsmax-palette=claude] input[data-nsmax-header-search]{background:var(--nsmax-card)!important}
-${NSMAX_ROOT}[data-nsmax-palette=claude] [data-nsmax-header-toggle]{width:32px;min-width:32px;height:32px;min-height:32px;border-color:transparent!important;border-radius:var(--nsmax-r-control,8px)!important;color:var(--nsmax-text-2)}
-${NSMAX_ROOT}[data-nsmax-palette=claude] [data-nsmax-header-toggle]:hover{background:var(--nsmax-fill)!important;color:var(--nsmax-text)}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is([data-nsmax-header-toggle],.nsmax-header-action){width:32px;min-width:32px;height:32px;min-height:32px;border-color:transparent!important;border-radius:var(--nsmax-r-control,8px)!important;color:var(--nsmax-text-2)}
+${NSMAX_ROOT}[data-nsmax-palette=claude] :is([data-nsmax-header-toggle],.nsmax-header-action):is(:hover,[aria-expanded=true]){background:var(--nsmax-fill)!important;color:var(--nsmax-text)}
+/* 顶栏浮层（深浅色菜单、关键词屏蔽）：和设置面板、用户资料卡同一套卡片圆角、描边与弹出阴影，菜单项 34px 高、10px 圆角 */
+${NSMAX_ROOT} .nsmax-pop{position:fixed;z-index:10000;box-sizing:border-box;min-width:184px;max-width:calc(100vw - 16px);padding:6px;border:1px solid var(--nsmax-stroke);border-radius:var(--nsmax-r-card,12px);background:var(--nsmax-popup,var(--nsmax-card));box-shadow:var(--nsmax-shadow-pop);color:var(--nsmax-text);font-size:14px;line-height:1.5;text-align:left}
+${NSMAX_ROOT}[data-nsmax-motion] .nsmax-pop{animation:nsmax-pop-in .16s var(--nsmax-ease-out,ease-out)}
+@keyframes nsmax-pop-in{from{opacity:0;transform:translateY(-4px)}}
+${NSMAX_ROOT} .nsmax-pop-item{display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;height:34px;margin:0;padding:0 10px;border:0;border-radius:var(--nsmax-r-control,8px);background:transparent;color:var(--nsmax-text);font:inherit;font-size:14px;cursor:pointer}
+${NSMAX_ROOT} .nsmax-pop-item:is(:hover,:focus-visible){background:var(--nsmax-fill);outline:0}
+${NSMAX_ROOT} .nsmax-pop-item svg{flex:none;width:16px;height:16px;color:var(--nsmax-muted)}
+${NSMAX_ROOT} .nsmax-pop-item[aria-checked=true]{font-weight:500}
+${NSMAX_ROOT} .nsmax-pop-item[aria-checked=true] svg{color:var(--nsmax-text)}
+${NSMAX_ROOT} .nsmax-pop-item .nsmax-pop-check{margin-left:auto;visibility:hidden}
+${NSMAX_ROOT} .nsmax-pop-item[aria-checked=true] .nsmax-pop-check{visibility:visible}
+${NSMAX_ROOT} .nsmax-pop[data-kind=keywords]{width:328px;padding:14px}
+${NSMAX_ROOT} .nsmax-pop-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px}
+${NSMAX_ROOT} .nsmax-pop-head strong{font-size:15px;font-weight:600}
+${NSMAX_ROOT} .nsmax-pop-head span{color:var(--nsmax-muted);font-size:12px}
+${NSMAX_ROOT} .nsmax-pop-form{display:flex;gap:6px;margin:0}
+${NSMAX_ROOT} .nsmax-pop-form input{flex:1;min-width:0;box-sizing:border-box;height:34px;margin:0;padding:0 10px;border:1px solid var(--nsmax-composer-line,var(--nsmax-stroke));border-radius:var(--nsmax-r-control,8px);background:var(--nsmax-card);color:var(--nsmax-text);font:inherit;font-size:14px;outline:0;box-shadow:none}
+${NSMAX_ROOT} .nsmax-pop-form input:focus{border-color:var(--nsmax-composer-line-focus,var(--nsmax-stroke-strong))}
+${NSMAX_ROOT} .nsmax-pop-form input::placeholder{color:var(--nsmax-faint,var(--nsmax-muted))}
+${NSMAX_ROOT} .nsmax-pop-form button{flex:none;height:34px;margin:0;padding:0 14px;border:0;border-radius:var(--nsmax-r-control,8px);background:var(--nsmax-ink,var(--nsmax-text));color:var(--nsmax-on-ink,var(--nsmax-card));font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+${NSMAX_ROOT} .nsmax-pop-form button:disabled{opacity:.35;cursor:default}
+${NSMAX_ROOT} .nsmax-pop-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:184px;margin:12px 0 0;padding:0;overflow:auto;list-style:none}
+${NSMAX_ROOT} .nsmax-pop-chips li{display:inline-flex;align-items:center;gap:2px;max-width:100%;height:26px;margin:0;padding:0 3px 0 10px;border-radius:var(--nsmax-r-chip,6px);background:var(--nsmax-fill);color:var(--nsmax-text);font-size:13px}
+${NSMAX_ROOT} .nsmax-pop-chips li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+${NSMAX_ROOT} .nsmax-pop-chips button{display:grid;flex:none;place-items:center;width:20px;height:20px;margin:0;padding:0;border:0;border-radius:var(--nsmax-r-chip,6px);background:transparent;color:var(--nsmax-muted);cursor:pointer}
+${NSMAX_ROOT} .nsmax-pop-chips button:hover{background:color-mix(in srgb,var(--nsmax-text) 8%,transparent);color:var(--nsmax-text)}
+${NSMAX_ROOT} .nsmax-pop-chips svg{width:12px;height:12px}
+${NSMAX_ROOT} .nsmax-pop-empty{margin:12px 0 0;color:var(--nsmax-muted);font-size:13px}
+${NSMAX_ROOT} .nsmax-pop-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--nsmax-divider)}
+${NSMAX_ROOT} .nsmax-pop-foot label{display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--nsmax-text-2);font-size:13px;cursor:pointer}
+${NSMAX_ROOT} .nsmax-pop-foot input{width:14px;height:14px;margin:0;accent-color:var(--nsmax-ink,var(--nsmax-text))}
+${NSMAX_ROOT} .nsmax-pop-foot button{margin:0;padding:0;border:0;background:none;color:var(--nsmax-muted);font:inherit;font-size:13px;cursor:pointer}
+${NSMAX_ROOT} .nsmax-pop-foot button:hover{color:var(--nsmax-text)}
+/* 关键词屏蔽选「折叠」时留下的一行提示 */
+${NSMAX_ROOT} .nsmax-filtered{margin:0;padding:6px 0;list-style:none}
+${NSMAX_ROOT} .nsmax-filtered button{margin:0;padding:0;border:0;background:none;color:var(--nsmax-faint,var(--nsmax-muted));font:inherit;font-size:13px;cursor:pointer}
+${NSMAX_ROOT} .nsmax-filtered button:hover{color:var(--nsmax-text)}
 /* Claude 版式：主栏与左侧版块栏不再是卡片，直接放在米白页面底上（Claude 的对话区与侧栏没有卡片外框），右侧栏保留白色细边卡片；
    评论框、私信输入框这些白色输入框因此浮在米白底上。顶栏与页面同色、平时没有底边线，滚动后才出现一条细线。
    帖子标题用 24px 衬线体，回复楼层悬停不再整行变色 */
@@ -26387,7 +26791,8 @@ ${NSMAX_ROOT} .nsmax-icon{display:inline-block;flex:none;box-sizing:content-box;
 ${NSMAX_ROOT} .nsmax-icon:is([data-nsmax-icon-for=nav],[data-nsmax-icon-for=card]){width:17px;height:17px}
 ${NSMAX_ROOT} .nsmax-icon[data-nsmax-icon-for=stat]{width:15px;height:15px;vertical-align:-2px}
 ${NSMAX_ROOT} .nsmax-icon[data-nsmax-icon-for=search]{width:15px;height:15px}
-${NSMAX_ROOT} body:not(.dark-layout) .nsmax-icon-sun,${NSMAX_ROOT} body.dark-layout .nsmax-icon-moon{display:none}
+/* 深浅色按钮显示当前模式：浅色是太阳、深色是月亮、跟随系统是显示器 */
+${NSMAX_ROOT} body:not(.dark-layout) .nsmax-icon-moon,${NSMAX_ROOT} body.dark-layout .nsmax-icon-sun,${NSMAX_ROOT}:not([data-nsmax-color-mode=system]) .nsmax-icon-display,${NSMAX_ROOT}[data-nsmax-color-mode=system] :is(.nsmax-icon-sun,.nsmax-icon-moon){display:none}
 ${NSMAX_ROOT} body{--nsmax-icon-close:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
 --nsmax-icon-flame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5c.6 3 4.5 4.9 4.5 9.6a4.5 4.5 0 0 1-9 0c0-1.8.8-3.2 2-4.2.3 1.3 1 2.1 1.9 2.5C11 9.1 10.9 6.2 12 3.5Z'/%3E%3C/svg%3E");
 --nsmax-icon-back:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 6 8.5 12l6 6'/%3E%3C/svg%3E");
@@ -26746,7 +27151,7 @@ ${nsmaxClaude} :is([data-nsmax-header-search]:not(input),.nsk-pager a,:is(.nspp-
 ${nsmaxClaude} .md-editor:not(.nspp-floating-reply)>.tab-select .tab:is(.active,[class*=active],[aria-selected=true]){box-shadow:0 1px 2px rgb(31 30 29/.1),0 0 0 .5px rgb(31 30 29/.06)!important}
 ${nsmaxClaude} body.dark-layout :is(.md-editor:not(.nspp-floating-reply)>.tab-select .tab:is(.active,[class*=active],[aria-selected=true]),.nsmax-hot-slider){box-shadow:0 1px 2px rgb(0 0 0/.35),0 0 0 .5px rgb(255 255 255/.06)!important}
 ${nsmaxClaude} .nspp-user-hover[data-trust]{box-shadow:var(--nsmax-shadow-pop)!important}
-${nsmaxClaude} .nspp-messages{--nsmax-chat-side:#f5f4ed;border-radius:var(--nsmax-r-frame,24px);background:var(--nsmax-canvas)}
+${nsmaxClaude} .nspp-messages{--nsmax-chat-side:#efede5;border-radius:var(--nsmax-r-frame,24px);background:var(--nsmax-canvas)}
 ${nsmaxClaude} body.dark-layout .nspp-messages{--nsmax-chat-side:#1f1e1d}
 @media (width>700px){
 ${nsmaxClaude} .nspp-messages{display:grid;grid-template-columns:284px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
@@ -27070,11 +27475,12 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 			progress: true,
 			hideNewMembers: true,
 			hideQuickAccess: true,
+			colorMode: "site",
 			autoDark: false
 		},
 		fields: {
 			palette: {
-				label: "设计风格（Claude：暖色米白、白色输入框、珊瑚色发送按钮、圆角矩形按钮、圆形头像；sb.sb：冷灰黑白、胶囊按钮、圆角方形头像）",
+				label: "设计风格（Claude：暖色米白、暖白卡片与输入框、珊瑚色发送按钮、圆角矩形按钮、圆形头像；sb.sb：冷灰黑白、胶囊按钮、圆角方形头像）",
 				type: "select",
 				options: [{
 					value: "claude",
@@ -27253,14 +27659,56 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 				label: "帖子页顶部阅读进度条",
 				type: "text"
 			},
-			autoDark: {
-				label: "跟随系统深色模式（会覆盖站点自身的深浅色切换）",
-				type: "text"
+			colorMode: {
+				label: "深浅色（顶栏右上角的按钮也能切换；选浅色、深色或跟随系统后，由脚本决定，不再跟随站点自己的切换）",
+				type: "select",
+				options: [
+					{
+						value: "site",
+						label: "跟随站点（默认）"
+					},
+					{
+						value: "light",
+						label: "浅色"
+					},
+					{
+						value: "dark",
+						label: "深色"
+					},
+					{
+						value: "system",
+						label: "跟随系统"
+					}
+				]
 			}
 		},
 		mount(ctx) {
 			const root = document.documentElement;
 			const cleanups = [];
+			// 深浅色模式：「跟随站点」时不动站点的 dark-layout；浅色 / 深色 / 跟随系统时由这里决定，系统切换深浅色时跟着变。
+			const media = window.matchMedia("(prefers-color-scheme: dark)");
+			let colorMode = nsmaxColorMode({
+				colorMode: ctx.get("colorMode"),
+				autoDark: ctx.get("autoDark")
+			});
+			const applyColorMode = () => {
+				root.dataset.nsmaxColorMode = colorMode;
+				if (colorMode !== "site") document.body.classList.toggle("dark-layout", colorMode === "dark" || colorMode === "system" && media.matches);
+			};
+			applyColorMode();
+			media.addEventListener("change", () => {
+				if (colorMode === "system") applyColorMode();
+			}, { signal: ctx.signal });
+			const colors = {
+				get: () => colorMode,
+				set(mode) {
+					colorMode = mode;
+					ctx.set("colorMode", mode);
+					ctx.set("autoDark", false);
+					applyColorMode();
+				}
+			};
+			cleanups.push(() => root.removeAttribute("data-nsmax-color-mode"));
 			if (ctx.get("glassHeader")) {
 				let header;
 				let headerResize;
@@ -27404,9 +27852,14 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 				injectMinimalHeaderStyles();
 				const planner = nsmaxHeaderPlanner || (nsmaxHeaderPlanner = createHeaderPlanner());
 				planner.settleLater();
-				const stop = ctx.watch(planner.apply);
+				const actions = mountHeaderActions(ctx, colors);
+				const stop = ctx.watch(() => {
+					planner.apply();
+					actions.ensure();
+				});
 				cleanups.push(() => {
 					stop();
+					actions.clear();
 					planner.clear();
 					nsmaxHeaderPlanner = null;
 				});
@@ -27468,12 +27921,6 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 					signal: ctx.signal
 				});
 				cleanups.push(() => bar.remove());
-			}
-			if (ctx.get("autoDark")) {
-				const media = window.matchMedia("(prefers-color-scheme: dark)");
-				const sync = () => document.body.classList.toggle("dark-layout", media.matches);
-				sync();
-				media.addEventListener("change", sync, { signal: ctx.signal });
 			}
 			return () => cleanups.forEach((cleanup) => cleanup());
 		}
@@ -27692,7 +28139,7 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 	}
 	(function applyNightModeEarly() {
 		const options = GM_getValue$1(SETTINGS_KEY, {})?.["reading-navigation"];
-		if (options?.enabled === false || options?.dark !== true) return;
+		if (options?.enabled === false || options?.dark !== true || nsmaxThemeOwnsDark()) return;
 		whenBody((body) => {
 			if (body.classList.contains("dark-layout")) return;
 			body.classList.add("dark-layout");
@@ -27728,8 +28175,10 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 			root.dataset.nsmaxAccent = "color";
 			root.style.setProperty("--nsmax-accent-base", accent);
 		} else root.dataset.nsmaxAccent = options.accent === "mono" ? "mono" : "site";
-		if (options.autoDark) {
-			const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+		const colorMode = nsmaxColorMode(options);
+		root.dataset.nsmaxColorMode = colorMode;
+		if (colorMode !== "site") {
+			const dark = colorMode === "dark" || colorMode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches;
 			const apply = () => {
 				if (!document.body) return false;
 				document.body.classList.toggle("dark-layout", dark);
