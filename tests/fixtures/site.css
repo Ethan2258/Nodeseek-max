@@ -1,53 +1,85 @@
-/* 简化版 NodeSeek 页面骨架样式，仅用于冒烟测试与截图，不代表站点真实 CSS。 */
-:root{--bg-color:#fff;--bg-color-grey:#f4f4f4;--text-color:#333;--text-color-secondary:#888;--primary-color:#1f8a70;--link-color:#1f8a70;--border-color:#e5e5e5;--border-radius:4px}
+/* 模拟 NodeSeek 页面样式，仅用于冒烟测试与截图。顶栏、版心、帖子列表、左右侧栏的规则取自真实站点（2026-10），其余为简化写法。 */
+:root{--bg-color:#fff;--bg-color-grey:#f4f4f4;--text-color:#333;--text-color-secondary:#888;--primary-color:#1f8a70;--link-color:#1f8a70;--border-color:#e5e5e5;--border-radius:4px;--link-hover-color:#2ea44f}
 body{margin:0;background-color:#fdf9f4;background-image:linear-gradient(#efe6dc 1px,transparent 1px),linear-gradient(90deg,#efe6dc 1px,transparent 1px);background-size:28px 28px;color:var(--text-color);font:14px/1.6 sans-serif}
 body.dark-layout{--bg-color:#262626;--bg-color-grey:#2f2f2f;--text-color:#dedede;--text-color-secondary:#999;--border-color:#454545;background:#1b1b1b}
 a{color:var(--link-color);text-decoration:none}
-#nsk-head{background:var(--bg-color);border-bottom:1px solid var(--border-color)}
-#nsk-head .nsk-container{display:flex;align-items:center;justify-content:center;gap:20px;height:56px}
-#nsk-head .nsk-container a{color:var(--text-color);font-size:16px}
-.nsk-container{max-width:1100px;margin:0 auto;padding:0 12px}
-.site-logo{font-weight:700;font-size:18px;color:var(--text-color)}
-#nsk-body{display:flex;gap:16px;padding:16px 12px}
-#nsk-left-panel-container{width:120px;flex:none}
-#nsk-left-panel-container .nsk-panel{border-radius:12px;padding:8px 0}
-.category-list{list-style:none;margin:0;padding:0}
-.category-list .nav-item a{display:flex;align-items:center;gap:6px;padding:7px 18px;color:#999;font-size:15px}
-.category-list .nav-item a svg{width:16px;height:16px}
-#nsk-left{flex:1;min-width:0;background:var(--bg-color);border-radius:12px;padding:16px 20px}
-.list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.post-category{border:1px solid var(--border-color);padding:0 6px;color:var(--text-color-secondary);font-size:13px;margin-left:auto;align-self:center}
-#nsk-right-panel-container{width:280px;flex:none}
-.nsk-panel{background:var(--bg-color);border:1px solid var(--border-color);margin-bottom:12px;padding:12px}
-ul.post-list{list-style:none;margin:0;padding:0;background:var(--bg-color)}
-.post-list-item{display:flex;gap:10px;padding:10px;border-bottom:1px dashed var(--border-color)}
-.post-list-content{flex:1;min-width:0}
-.info-item{white-space:nowrap}
-.post-list-item img.avatar-normal{width:40px;height:40px}
-.post-info{display:flex;gap:10px;font-size:12px;color:var(--text-color-secondary)}
-.nsk-post-wrapper{background:var(--bg-color);padding:12px}
-.nsk-content-meta-info{display:flex;align-items:center;gap:6px;font-size:12px}
-.nsk-content-meta-info img.avatar-normal{width:36px;height:36px}
+/* 顶栏（真实站点：固定 40px，内容 1080px 居中） */
+header{position:fixed;top:0;left:0;right:0;z-index:10;height:40px;transition:background-color .5s;box-shadow:0 0 5px rgba(0,0,0,.1);background-color:var(--bg-main-color)}
+.nsk-container{width:1080px;box-sizing:border-box;margin:auto}
+@media (max-width:1200px){.nsk-container{width:auto;margin:0 20px}}
+#nsk-head{display:flex;align-items:center;height:40px}
+header .site-title{font-family:"helvetica neue",helvetica,arial,sans-serif;font-weight:700;font-size:24px;margin-right:6px}
+header .site-title a{color:var(--text-color)}
+header .beta-icon{position:relative;top:-14px;color:#ccc;font-size:11px;font-weight:400}
+#nsk-head .nav-menu{margin:0;padding:0;list-style:none;height:40px;display:flex;align-items:center}
+#nsk-head .nav-menu li{margin:0 8px}
+#nsk-head .nav-menu a{color:var(--text-color)}
+header .search-box{margin-left:auto;position:relative;max-width:290px;transition:1s ease-in-out;flex:0 1 170px}
+header .search-box:hover{flex:1 1 170px}
+header .search-box #search-site2{width:100%;transition:.5s ease-in-out;box-sizing:border-box}
+header .search-box input[type=text]:focus{border-color:#2ea44f}
+header .search-box .search-icon{position:absolute;top:7px;right:6px}
+header .search-box .search-hint{position:absolute;z-index:999;top:33px;left:0;width:100%;box-sizing:border-box;display:none;background-color:var(--bg-main-color);border-radius:4px;padding:5px 10px}
+header div.color-theme-switcher{padding:0 5px;color:var(--link-hover-color);position:absolute;right:10px;cursor:pointer}
+/* 版心：#nsk-body 是一张大白卡片，主栏与右侧栏并排；左侧版块栏固定在版心左外侧，窗口 ≤1360px 时隐藏 */
+#nsk-frame{margin:0 auto;width:100%;min-height:100vh;overflow:hidden;position:relative}
+@media (min-width:500px){section#nsk-frame{margin-top:40px}}
+#nsk-body{padding:25px 30px;box-sizing:border-box;margin-top:15px;margin-bottom:20px;background-color:var(--bg-main-color);transition:background-color .5s;border-radius:1rem;box-shadow:0 3px 8px rgba(0,0,0,.24);position:relative;display:flex}
+#nsk-body-left{flex:1 1 0%;min-width:0;box-sizing:border-box;padding-right:20px}
+#nsk-body-left .post-list-controler{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#nsk-body-left .post-list{list-style:none;margin:0;padding:0}
+#nsk-body-left .post-list .post-list-item{padding:8px;border-bottom:1px solid rgba(0,0,0,.05);position:relative;display:flex}
+#nsk-body-left .post-list .post-list-item .post-list-content{margin-left:10px}
+#nsk-body-left .post-list .post-list-item .post-title{font-weight:700;font-size:14px}
+#nsk-body-left .post-list .post-list-item .post-info{font-size:11px;color:var(--link-color)}
+#nsk-body-left .post-list .post-list-item .post-info .info-item{margin-left:4px;margin-right:4px;white-space:nowrap}
+#nsk-body-left .post-list .post-list-item .post-category{position:absolute;height:20px;line-height:20px;right:13px;bottom:8px;padding:0 4px;border:none;border-radius:2px;box-shadow:0 0 2px rgba(0,0,0,.5)}
+#nsk-body-left .sorter{margin:0 8px;display:inline-flex;overflow:hidden;border-radius:3px;border:1px solid #737373;background-color:#888}
+#nsk-body-left .sorter>a{cursor:pointer;display:block;background-color:var(--bg-main-color);padding:0 5px}
+#nsk-body-left .sorter>a.selected{background-color:#888;color:var(--bg-main-color)}
+.post-list-item img.avatar-normal{width:40px;height:40px;border-radius:5px}
+#nsk-right-panel-container{flex:0 0 260px}
+@media (max-width:1200px){#nsk-right-panel-container{flex:0 0 200px}}
+@media (max-width:800px){#nsk-right-panel-container{display:none}}
+@media (min-width:1360px){#nsk-right-panel-container .category-list{display:none}}
+#nsk-right-panel-container .nsk-panel{border-radius:1px;color:#888;padding:6px 10px;margin:0 0 10px;box-shadow:0 0 5px rgba(0,0,0,.1),0 0 1px rgba(0,0,0,.1);background:var(--bg-color)}
+#nsk-right-panel-container .nsk-panel h4{color:var(--text-color);margin:0}
+#nsk-right-panel-container .nsk-panel ul{padding-left:10px}
+#nsk-right-panel-container .nsk-panel ul li{line-height:24px;height:24px;padding-left:10px}
+#nsk-left-panel-container{position:fixed;left:calc(50% - 710px);top:55px;width:150px}
+@media (max-width:1360px){#nsk-left-panel-container{display:none}}
+#nsk-left-panel-container .category-list{width:100px;margin-left:auto;font-size:14px;background-color:var(--bg-main-color);box-shadow:2px 0 8px rgba(0,0,0,.08);border-radius:12px;overflow:hidden}
+#nsk-left-panel-container .category-list h4{margin:0;height:30px;line-height:30px;text-align:center;display:none}
+#nsk-left-panel-container .category-list ul{text-align:center;list-style:none;margin:0;padding:0}
+#nsk-left-panel-container .category-list li>:is(a,div){display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0;color:#999;cursor:pointer}
+#nsk-left-panel-container .category-list li svg{width:16px;height:16px}
+/* 分页（真实结构：三角箭头、span.pager-cur） */
+.nsk-pager>div{display:flex;align-items:center;gap:4px}
+.nsk-pager .pager-pos,.nsk-pager .pager-prev,.nsk-pager .pager-next{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;color:var(--text-color-secondary);font-size:13px}
+.nsk-pager .pager-cur{border:1px solid #aaa;border-radius:3px}
+.triangle-left{width:0;height:0;border-style:solid;border-width:5px 8px 5px 0;border-color:transparent #999 transparent transparent}
+.triangle-right{width:0;height:0;border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent #999}
+.nsk-pager .pager-group,.nsk-pager .pager-more{display:inline-flex;gap:4px}
+/* 帖子页（真实结构：.nsk-post 里是标题与主楼，回复在 .comment-container） */
+.nsk-post .post-title h1{font-size:20px;margin:0}
+.nsk-content-meta-info{display:flex;align-items:flex-start;gap:10px;font-size:12px}
+.nsk-content-meta-info .avatar-wrapper img{width:40px;height:40px;border-radius:5px}
+.content-info{color:var(--text-color-secondary);display:flex;gap:8px}
+.floor-link-wrapper{margin-left:auto}
 ul.comments{list-style:none;margin:12px 0 0;padding:0}
 ul.comments>li.content-item{padding:10px 0;border-bottom:1px solid var(--border-color)}
+.post-content h2{color:#2ea44f}
 .comment-menu{display:flex;gap:8px;justify-content:flex-end}
 .menu-item{padding:2px 6px;color:var(--text-color-secondary);cursor:pointer}
+.role-tag{font-size:12px;padding:0 4px;border-radius:3px;background:#eee;margin-left:4px}
 .md-editor{border:1px solid var(--border-color);margin-top:12px;background:var(--bg-color)}
 .mde-toolbar{display:flex;gap:4px;padding:6px}
 .toolbar-item{padding:2px 6px}
 .md-editor textarea{width:100%;min-height:90px;border:0;box-sizing:border-box;padding:8px;background:transparent;color:inherit}
 .btn{border:1px solid var(--border-color);background:var(--bg-color-grey);padding:4px 14px;color:var(--text-color)}
 .btn.submit{background:var(--primary-color);color:#fff;border-color:transparent}
-.nsk-pager{display:flex;gap:6px;margin:12px 0}
-.nsk-pager a,.nsk-pager span{padding:2px 10px;border:1px solid var(--border-color)}
 .notification-list{list-style:none;margin:0;padding:0;background:var(--bg-color)}
 .notification-list>li{padding:10px;border-bottom:1px solid var(--border-color)}
-@media (max-width:800px){#nsk-left-panel-container,#nsk-right-panel-container{display:none}}
-/* 窗口较窄时站点隐藏左侧栏，版块只剩顶栏里那一排（真实断点未知） */
-@media (max-width:1000px){#nsk-left-panel-container{display:none}}
-.post-sort{display:flex}
-.post-sort a{padding:0 6px;border:1px solid var(--border-color);color:var(--text-color)}
-.post-sort a+a,.post-sort span+a{background:#888;color:#fff}
 .user-head{display:flex;gap:10px;align-items:center;margin-bottom:10px}
 .user-head img{width:48px;height:48px}
 .user-actions{display:flex;gap:6px}
@@ -56,21 +88,16 @@ ul.comments>li.content-item{padding:10px 0;border-bottom:1px solid var(--border-
 .stat-block>*{display:flex;align-items:center;gap:4px;padding:2px 0;color:var(--text-color)}
 .notify-count{background:#e33;color:#fff;border-radius:4px;padding:0 4px;font-size:12px}
 .btn-post{display:block;margin-bottom:12px;background:#2e9d4f;color:#fff;text-align:center;border-radius:6px;padding:8px;font-weight:700}
-.category-list .nav-item>div,.category-list .nav-item[data-to]{display:flex;align-items:center;gap:6px;padding:7px 18px;color:#999;font-size:15px;cursor:pointer}
-.member-row{display:flex;flex-wrap:wrap}
-.member{width:80px;display:inline-flex;flex-direction:column;align-items:center;margin:4px}
-.member img{width:48px;height:48px}
+.nsk-new-member-board{display:flex;flex-wrap:wrap}
+.new-member-item{width:60px;display:inline-flex;flex-direction:column;align-items:center;margin:4px 0}
+.new-member-item img{width:40px;height:40px}
 .user-actions a{padding:0}
-.site-logo{display:inline-flex;align-items:center;gap:6px}
-.beta{font-size:10px;color:var(--text-color-secondary,#999);margin-left:-16px;align-self:flex-start;margin-top:12px}
-.header-right{display:flex;align-items:center;gap:12px;margin-left:24px}
-.search-box{display:flex;align-items:center;gap:4px;border:1px solid var(--border-color);border-radius:4px;padding:2px 6px}
-.search-box input{border:0;background:transparent;width:160px}
-.tool-btn{display:inline-flex;cursor:pointer}
 .tab-select{display:flex;gap:16px;padding:6px 12px;border-bottom:1px solid var(--border-color)}
 .toolbar-item{display:inline-flex;align-items:center;padding:4px;cursor:pointer}
 .toolbar-item.right{margin-left:auto;font-size:12px}
 .expression{display:flex;gap:6px;padding:4px 8px;font-size:12px;border-top:1px solid var(--border-color);background:#eee}
+#fast-nav-button-group{position:fixed;right:30px;bottom:30px}
+#fast-nav-button-group .nav-item-btn{width:30px;height:30px;align-items:center;justify-content:center;cursor:pointer}
 
 /* 模拟站点自身的主色变量、按钮与深色样式（按 NodeSeek 的变量名） */
 body{--main-color:#1a8f4a;--sub-color:#d7f0e1;--bg-main-color:#f0f0f0;--bg-sub-color:#fff}
@@ -79,8 +106,6 @@ body.bg1{background-color:var(--bg-main-color)}
 .btn.submit,.pure-button-primary{background:var(--main-color)!important;color:#fff}
 .dark-layout .btn.submit{background:#1a8f4a!important}
 body.dark-layout #nsk-right-panel-container .nsk-panel{border-radius:0!important}
-.search-box input{transition:width .3s}
-.search-box input:focus{width:280px}
 
 /* 发帖页（模拟） */
 .new-discussion .title-row, .new-discussion .category-row { margin-bottom: 12px; }

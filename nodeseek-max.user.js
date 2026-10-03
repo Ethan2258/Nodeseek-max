@@ -26149,7 +26149,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 			if (sorter?.isConnected && seen.get(sorter) === sorter.textContent) return;
 			if (sorter && !sorter.isConnected) sorter = null;
 			if (!sorter && sortScans >= 40) return;
-			const scope = document.getElementById("nsk-left") || document.getElementById("nsk-body") || document.body;
+			const scope = document.getElementById("nsk-body-left") || document.getElementById("nsk-left") || document.getElementById("nsk-body") || document.body;
 			if (!scope) return;
 			let box = sorter;
 			let labels;
@@ -26512,7 +26512,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 		const { matches, groups } = scanCategoryTexts(new Set([...NSMAX_CATEGORY_NAMES, ...nav?.hidden || []]));
 		const header = document.querySelector("[data-nsmax-header]") || pickSiteHeader();
 		const sortText = (() => {
-			const scope = document.getElementById("nsk-left") || document.body;
+			const scope = document.getElementById("nsk-body-left") || document.getElementById("nsk-left") || document.body;
 			const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
 			while (walker.nextNode()) if (walker.currentNode.data.trim() === "新评论") return walker.currentNode.parentElement;
 			return null;
@@ -28299,7 +28299,7 @@ ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,a[data-nsmax-header-cat],[data-nsm
 ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,a[data-nsmax-header-cat],[data-nsmax-header-cat]>a,a[data-nsmax-own-header=shortcut]):hover{background:var(--nsmax-hover)!important;color:var(--nsmax-text)!important}
 ${nsmaxClaude} #nsk-head :is(a[data-nsmax-header-cat-on],a[data-nsmax-header-cat-on]:hover,ul.nav-menu>li>a[aria-current=page],ul.nav-menu>li>a.router-link-exact-active){background:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-weight:500!important}
 ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,[data-nsmax-header-cat]>a) :is(svg,img,.nsmax-icon){display:none!important}
-${nsmaxClaude} #nsk-head ul.nav-menu>li>a:is([data-nsmax-header-hide],[data-nsmax-own-hide],[hidden]){display:none!important}
+${nsmaxClaude} #nsk-head ul.nav-menu>li>a:is([data-nsmax-header-hide],[data-nsmax-own-hide],[hidden]){display:none!important}
 ${nsmaxClaude} #nsk-head ul.nav-menu>li:not(:has(>a:not([data-nsmax-header-hide],[data-nsmax-own-hide],[hidden]))){display:none!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut][data-nsmax-own-header]{padding:0 11px 0 9px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{flex:none;width:16px!important;height:16px!important}
@@ -28584,6 +28584,37 @@ ${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .post-info>.post-ca
 ${nsmaxClaude} #nsk-body-left .content-item .floor-link{position:relative!important;top:-.5px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut][data-nsmax-own-header]{padding-bottom:2px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{position:relative!important;top:1px!important}
+/* ---------- 站点的搜索面板（登录后点搜索框弹出的 .search-overlay：帖子 / 用户 / 谷歌、版块筛选、搜索历史）：
+   站点的绿色强调色、白卡片都挂在组件自己的变量上，换成主题色；标签是 sb.sb 的下划线、筛选与历史是胶囊、搜索按钮是墨色胶囊 ---------- */
+${nsmaxClaude} .search-overlay{--bg-overlay:rgb(31 30 29/.24)!important;--bg-card:var(--nsmax-popup)!important;--bg-muted:var(--nsmax-panel-alt)!important;--border-color:var(--nsmax-stroke)!important;--text-main:var(--nsmax-text)!important;--text-muted:var(--nsmax-muted)!important;--accent:var(--nsmax-ink)!important;--accent-text:var(--nsmax-on-ink)!important;--ring-color:color-mix(in srgb,var(--nsmax-ink) 8%,transparent)!important;font-family:var(--nsmax-font)!important}
+${nsmaxClaude}[data-nsmax-dark] .search-overlay{--bg-overlay:rgb(0 0 0/.5)!important}
+${nsmaxClaude} .search-overlay .glass-card{border-radius:var(--nsmax-r-card,16px)!important;box-shadow:var(--nsmax-shadow-pop)!important}
+${nsmaxClaude} .search-overlay .dynamic-glow{display:none!important}
+${nsmaxClaude} .search-overlay .glass-tabs{gap:20px!important;padding:0 16px!important}
+${nsmaxClaude} .search-overlay .tab-btn{padding:14px 2px!important;font-size:14px!important;font-weight:400!important}
+${nsmaxClaude} .search-overlay .tab-btn.active{font-weight:500!important}
+${nsmaxClaude} .search-overlay .tab-btn.active::after{height:2px!important;border-radius:1px!important}
+${nsmaxClaude} .search-overlay .glass-close{width:32px!important;height:32px!important;border-radius:999px!important}
+${nsmaxClaude} .search-overlay .glass-close svg{width:18px!important;height:18px!important}
+${nsmaxClaude} .search-overlay .glass-content{padding:18px 18px 20px!important}
+${nsmaxClaude} .search-overlay .sub-nav{gap:6px!important;margin-bottom:14px!important}
+${nsmaxClaude} .search-overlay .sub-pill{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;height:28px!important;padding:0 12px!important;border:1px solid var(--nsmax-stroke)!important;border-radius:999px!important;background:transparent!important;color:var(--nsmax-muted)!important;font-size:12.5px!important;font-weight:400!important;line-height:1!important}
+${nsmaxClaude} .search-overlay .sub-pill:not(.active):hover{background:var(--nsmax-hover)!important;border-color:var(--nsmax-stroke-strong)!important;color:var(--nsmax-text)!important}
+${nsmaxClaude} .search-overlay .sub-pill.active{background:var(--nsmax-ink)!important;border-color:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-weight:500!important}
+${nsmaxClaude} .search-overlay .glass-input-group{gap:8px!important}
+${nsmaxClaude} .search-overlay .glass-input-group input{height:40px!important;padding:0 14px!important;border:1px solid var(--nsmax-stroke-strong)!important;border-radius:var(--nsmax-r-control,10px)!important;background:var(--nsmax-card)!important;font-size:14px!important}
+${nsmaxClaude} .search-overlay .glass-input-group input:focus{border-color:var(--nsmax-ink)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent)!important}
+${nsmaxClaude} .search-overlay .glass-input-group input::placeholder{color:var(--nsmax-faint)!important;opacity:1!important}
+${nsmaxClaude} .search-overlay .glass-search-btn{height:40px!important;padding:0 18px!important;border-radius:999px!important;background:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-size:14px!important;font-weight:500!important;opacity:1!important}
+${nsmaxClaude} .search-overlay .glass-search-btn:hover{background:color-mix(in srgb,var(--nsmax-ink) 88%,var(--nsmax-card))!important}
+${nsmaxClaude} .search-overlay .search-history{margin-top:18px!important;padding-top:14px!important;border-top:1px solid var(--nsmax-divider)!important}
+${nsmaxClaude} .search-overlay .history-header span{color:var(--nsmax-muted)!important;font-size:12.5px!important;font-weight:500!important}
+${nsmaxClaude} .search-overlay .clear-history-btn:hover{color:var(--nsmax-text)!important}
+${nsmaxClaude} .search-overlay .history-list{gap:8px!important}
+${nsmaxClaude} .search-overlay .history-item{box-sizing:border-box!important;height:30px!important;padding:0 6px 0 12px!important;border:1px solid var(--nsmax-stroke)!important;border-radius:999px!important;background:var(--nsmax-card)!important}
+${nsmaxClaude} .search-overlay .history-item:hover{border-color:var(--nsmax-stroke-strong)!important;background:var(--nsmax-panel-alt)!important}
+${nsmaxClaude} .search-overlay .history-keyword{color:var(--nsmax-text)!important;font-size:13px!important}
+${nsmaxClaude} .search-overlay .history-scope-tag{display:inline-flex!important;align-items:center!important;height:18px!important;padding:0 7px!important;border-radius:999px!important;background:var(--nsmax-fill)!important;color:var(--nsmax-muted)!important;font-size:11px!important;opacity:1!important}
 /* ---------- 页脚与回到顶部：页面底色、上方细线，链接弱化；回到顶部 / 底部是 36px 细边圆钮 ---------- */
 ${nsmaxClaude} body>footer{background:transparent!important;border-top:1px solid var(--nsmax-divider)!important;box-shadow:none!important;color:var(--nsmax-muted)!important}
 ${nsmaxClaude} body>footer .contain{max-width:var(--nsmax-wrap)!important;box-sizing:border-box!important;margin:0 auto!important;padding-left:16px!important;padding-right:16px!important}

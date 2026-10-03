@@ -570,12 +570,12 @@ test("精简顶栏：只保留标志、标题、搜索框与深浅色切换，�
 	const visible = (selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).filter((element) => element.getClientRects().length > 0).length, selector);
 	const layout = await page.evaluate(() => {
 		const shown = (element) => element.getClientRects().length > 0;
-		const head = document.querySelector("#nsk-head .nsk-container");
-		const logo = document.querySelector(".site-logo").getBoundingClientRect();
+		const head = document.querySelector("#nsk-head");
+		const logo = document.querySelector(".site-title").getBoundingClientRect();
 		const toggle = document.querySelector("[data-nsmax-own-header=colors]").getBoundingClientRect();
 		return {
-			shown: Array.from(head.querySelectorAll("a, sup, input, .search-box, .tool-btn, .nsmax-header-action")).filter(shown).map((element) => element.dataset.nsmaxOwnHeader || element.className || element.tagName.toLowerCase()),
-			toggleAttr: document.querySelector(".tool-btn").hasAttribute("data-nsmax-header-toggle"),
+			shown: Array.from(head.querySelectorAll("a, .beta-icon, input, .search-box, .color-theme-switcher, .nsmax-header-action")).filter(shown).map((element) => element.dataset.nsmaxOwnHeader || element.className || element.tagName.toLowerCase()),
+			toggleAttr: document.querySelector(".color-theme-switcher").hasAttribute("data-nsmax-header-toggle"),
 			sameRow: Math.abs(logo.top + logo.height / 2 - (toggle.top + toggle.height / 2)) < 6,
 			apart: toggle.left - logo.right > 400
 		};
@@ -607,7 +607,7 @@ test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动�
 		flips: window.__flips,
 		sidenav: document.documentElement.hasAttribute("data-nsmax-sidenav"),
 		shortcutInHeader: !!document.querySelector("#nsk-head .nsmax-shortcuts"),
-		shown: Array.from(document.querySelectorAll("#nsk-head .nsk-container a, #nsk-head .nsk-container sup, #nsk-head .search-box, #nsk-head .tool-btn, #nsk-head .nsmax-header-action")).filter((element) => element.getClientRects().length > 0).map((element) => element.dataset.nsmaxOwnHeader || element.className || element.tagName.toLowerCase())
+		shown: Array.from(document.querySelectorAll("#nsk-head a, #nsk-head .beta-icon, #nsk-head .search-box, #nsk-head .color-theme-switcher, #nsk-head .nsmax-header-action")).filter((element) => element.getClientRects().length > 0).map((element) => element.dataset.nsmaxOwnHeader || element.className || element.tagName.toLowerCase())
 	}));
 	assert.equal(state.flips, 0);
 	assert.equal(state.sidenav, false);
@@ -922,7 +922,7 @@ test("侧栏热榜：长标题单行省略，不会把按内容定宽的右侧�
 	await settle(page, 200);
 	const size = await page.evaluate(() => ({
 		right: document.getElementById("nsk-right-panel-container").getBoundingClientRect().width,
-		main: document.getElementById("nsk-left").getBoundingClientRect().width,
+		main: document.getElementById("nsk-body-left").getBoundingClientRect().width,
 		ellipsis: getComputedStyle(document.querySelector(".nsmax-hot-text")).textOverflow
 	}));
 	assert.ok(size.right < 360, `右侧栏被撑到 ${Math.round(size.right)}px`);
@@ -1262,7 +1262,7 @@ test("消息中心与设置页：外层主栏不再多套一张卡片；资料�
 		await page.waitForSelector(".nspp-messages:not([hidden])");
 		await settle(page, 600);
 		const state = await page.evaluate(() => {
-			const main = getComputedStyle(document.getElementById("nsk-left"));
+			const main = getComputedStyle(document.getElementById("nsk-body-left"));
 			const data = document.querySelector(".nspp-chat-profile-data");
 			return { padding: main.paddingTop, background: main.backgroundColor, data: data && !data.children.length ? getComputedStyle(data).display : "block" };
 		});
@@ -1282,7 +1282,7 @@ test("消息中心与设置页：外层主栏不再多套一张卡片；资料�
 			text.selectNodeContents(label.firstChild);
 			return {
 				above: text.getBoundingClientRect().bottom <= input.getBoundingClientRect().top,
-				panel: getComputedStyle(document.querySelector("#nsk-left>.nsk-panel")).borderTopWidth,
+				panel: getComputedStyle(document.querySelector("#nsk-body-left>.nsk-panel")).borderTopWidth,
 				select: getComputedStyle(document.querySelector("select")).appearance
 			};
 		});
@@ -1369,7 +1369,7 @@ test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发�
 		return {
 			palette: document.documentElement.dataset.nsmaxPalette,
 			canvas: css("body").backgroundColor,
-			main: css("#nsk-left").backgroundColor,
+			main: css("#nsk-body-left").backgroundColor,
 			nav: css("#nsk-left-panel-container .nsk-panel").backgroundColor,
 			card: css("[data-nsmax-usercard]").backgroundColor,
 			cta: [css("[data-nsmax-cta]", "::before").backgroundColor, css("[data-nsmax-cta]", "::before").borderTopLeftRadius],
@@ -1437,13 +1437,13 @@ test("线条图标：版块、用户卡片按钮、统计区、深浅色切换�
 		assert.equal(state.stroke, "1.5px");
 		// 站点重新渲染、原图标被换成新节点：只配一个线条图标，不重复
 		await page.evaluate(() => {
-			const old = document.querySelector("#nsk-left-panel-container .nav-item a svg[data-nsmax-icon-orig]");
+			const old = document.querySelector("#nsk-left-panel-container li a svg[data-nsmax-icon-orig]");
 			const fresh = old.cloneNode(true);
 			fresh.removeAttribute("data-nsmax-icon-orig");
 			old.replaceWith(fresh);
 		});
 		await settle(page, 400);
-		const counts = await page.evaluate(() => Array.from(document.querySelectorAll("#nsk-left-panel-container .nav-item a")).map((link) => link.querySelectorAll(".nsmax-icon").length));
+		const counts = await page.evaluate(() => Array.from(document.querySelectorAll("#nsk-left-panel-container li a")).map((link) => link.querySelectorAll(".nsmax-icon").length));
 		assert.ok(counts.every((count) => count === 1), counts.join(","));
 		assert.deepEqual(errors, []);
 		await context.close();
@@ -1934,7 +1934,7 @@ test("按钮与输入框统一（Claude 风格）：常规按钮 32px、输入�
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await settle(page, 1500);
 	const heights = (selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).filter((element) => element.getBoundingClientRect().height > 0).map((element) => Math.round(element.getBoundingClientRect().height)), selector);
-	assert.deepEqual([...new Set(await heights(".nsk-pager :is(a,span), #nsk-left>button.nspp-action"))], [32]);
+	assert.deepEqual([...new Set(await heights(".nsk-pager :is(a,span), #nsk-body-left>button.nspp-action"))], [32]);
 	const toast = await page.evaluate(() => { const toast = document.getElementById("nspp-settings").shadowRoot.querySelector(".toast"); return [!!toast.querySelector(".toast-icon svg"), !!toast.querySelector(".toast-close svg"), toast.querySelector(".toast-close").textContent]; });
 	assert.deepEqual(toast, [true, true, ""]);
 	await page.click('#nspp-tools button[title^="帖子监控"]');
@@ -2139,7 +2139,7 @@ test("脚本管理器在 <html> 已存在时才注入（Chrome 上 Tampermonkey 
 test("站点的深浅色切换只是一个裸图标（svg / img）时：顶栏照样有脚本自己的深浅色按钮，不会只剩屏蔽按钮", async () => {
 	for (const icon of ["svg", "img"]) {
 		const bare = icon === "svg" ? `<svg class="theme-switch" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg>` : `<img class="theme-switch" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'/%3E" width="18" height="18" alt="">`;
-		const html = listPage().replace(/<span class="tool-btn">[\s\S]*?<\/span>/, bare);
+		const html = listPage().replace(/<div class="color-theme-switcher">[\s\S]*?<\/div>/, bare);
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, injectWhenRoot: true });
 		await page.waitForSelector("[data-nsmax-own-header=colors]", { timeout: 5e3 });
 		await settle(page, 400);
@@ -2149,7 +2149,7 @@ test("站点的深浅色切换只是一个裸图标（svg / img）时：顶栏�
 				return rect.width > 0 && rect.height > 0;
 			};
 			// 顶栏右侧可见的图标都在按钮里（没有游离在外、点不了的图标）
-			const stray = Array.from(document.querySelectorAll("#nsk-head .header-right > :is(svg, img)")).filter((element) => element.getBoundingClientRect().width > 0).length;
+			const stray = Array.from(document.querySelectorAll("#nsk-head > :is(svg, img)")).filter((element) => element.getBoundingClientRect().width > 0).length;
 			return { colors: box("[data-nsmax-own-header=colors]"), keywords: box("[data-nsmax-own-header=keywords]"), order: document.querySelector("[data-nsmax-own-header=keywords]").nextElementSibling?.dataset.nsmaxOwnHeader, stray };
 		});
 		assert.deepEqual(state, { colors: true, keywords: true, order: "colors", stray: 0 }, icon);
