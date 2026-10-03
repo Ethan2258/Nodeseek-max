@@ -671,7 +671,7 @@ test("评论框：图床按钮与发布评论在同一行，工具栏换成统�
 	assert.deepEqual(state.names, ["bold", "italic", "strike", "heading", "unordered", "ordered", "quote", "link", "image", "code", "table", "rule", "undo", "redo", "clear", null]);
 	assert.equal(state.nativeHidden, true);
 	assert.equal(state.iconSize, 18);
-	assert.equal(state.itemSize, 30);
+	assert.equal(state.itemSize, 32);
 	assert.equal(state.right, false);
 	// 原生「图片」按钮仍然打开图床上传
 	const chooser = page.waitForEvent("filechooser", { timeout: 3e3 });
@@ -771,7 +771,8 @@ test("设置面板：可打开、搜索，不再包含 AI 写作助手与快捷�
 	assert.equal(look.switchWidth, "36px");
 	assert.equal(look.appearance, "none");
 	assert.ok(look.dialogWidth >= 900, `设置面板宽度 ${look.dialogWidth}`);
-	assert.equal(look.card, "16px");
+	// Claude 风格的设置面板像 Claude 的设置页：功能之间只用分隔线隔开，不套卡片
+	assert.equal(look.card, "0px");
 	await settle(page, 200);
 	await shot(page, "settings");
 	assert.deepEqual(errors, []);
@@ -1719,7 +1720,7 @@ test("设置面板（参考 claude.ai 网页版）：整块米白底，顶栏、
 	assert.deepEqual(state.footer, ["rgba(0, 0, 0, 0)", "0px"]);
 	assert.match(state.title, /Georgia/);
 	assert.equal(state.categories, "0px");
-	assert.equal(state.article, "rgb(251, 250, 246)");
+	assert.equal(state.article, "rgba(0, 0, 0, 0)");
 	assert.equal(state.primary, "10px");
 	await shot(page, "settings-claude");
 	assert.deepEqual(errors, []);
@@ -1904,6 +1905,75 @@ test("关键词屏蔽：顶栏深浅色按钮旁的屏蔽按钮可以添加、�
 	assert.equal(await floors(), 1);
 	assert.deepEqual(post.errors, []);
 	await post.context.close();
+});
+
+test("设置面板（参考 Claude 的设置页）：设计风格、深浅色、字体是带预览的选择卡片，方向键可切换，点「深色」并保存后生效；功能之间不套卡片", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await settle(page, 1200);
+	await page.click("[data-nspp-settings-launcher]");
+	await settle(page, 600);
+	const groups = await page.evaluate(() => Array.from(document.getElementById("nspp-settings").shadowRoot.querySelectorAll(".choice-cards")).map((group) => [group.getAttribute("aria-label"), Array.from(group.children).map((card) => `${card.textContent}${card.getAttribute("aria-checked") === "true" ? "*" : ""}`)]));
+	assert.deepEqual(groups, [["设计风格", ["Claude*", "sb.sb"]], ["字体", ["AaClaude*", "AaInter", "Aa系统字体", "Aa站点默认"]], ["深浅色", ["跟随站点*", "浅色", "深色", "跟随系统"]]]);
+	const hidden = await page.evaluate(() => Array.from(document.getElementById("nspp-settings").shadowRoot.querySelectorAll(".field[data-cards] select")).every((select) => getComputedStyle(select).display === "none"));
+	assert.equal(hidden, true);
+	// 方向键在同一组里切换
+	await page.evaluate(() => document.getElementById("nspp-settings").shadowRoot.querySelector('.choice-cards[aria-label="深浅色"] [aria-checked=true]').focus());
+	await page.keyboard.press("ArrowRight");
+	assert.equal(await page.evaluate(() => document.getElementById("nspp-settings").shadowRoot.querySelector('.choice-cards[aria-label="深浅色"] [aria-checked=true]').textContent), "浅色");
+	await page.evaluate(() => document.getElementById("nspp-settings").shadowRoot.querySelector('.choice-cards[aria-label="深浅色"] [data-value=dark]').click());
+	await page.evaluate(() => Array.from(document.getElementById("nspp-settings").shadowRoot.querySelectorAll("button")).find((button) => button.textContent === "保存并刷新").click());
+	await page.waitForLoadState("load");
+	await settle(page, 1200);
+	assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.nsmaxColorMode, document.body.classList.contains("dark-layout")]), ["dark", true]);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("按钮与输入框统一（Claude 风格）：常规按钮 32px、输入框与下拉框 36px；提示条与热榜弹窗用线条图标，热榜类型是分段切换", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await settle(page, 1500);
+	const heights = (selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).filter((element) => element.getBoundingClientRect().height > 0).map((element) => Math.round(element.getBoundingClientRect().height)), selector);
+	assert.deepEqual([...new Set(await heights(".nsk-pager :is(a,span), #nsk-left>button.nspp-action"))], [32]);
+	const toast = await page.evaluate(() => { const toast = document.getElementById("nspp-settings").shadowRoot.querySelector(".toast"); return [!!toast.querySelector(".toast-icon svg"), !!toast.querySelector(".toast-close svg"), toast.querySelector(".toast-close").textContent]; });
+	assert.deepEqual(toast, [true, true, ""]);
+	await page.click('#nspp-tools button[title^="帖子监控"]');
+	await settle(page, 600);
+	assert.deepEqual([...new Set(await heights(".nspp-monitor[open]>header>button:not(:last-child), .nspp-monitor[open]>footer>button"))], [32]);
+	await page.keyboard.press("Escape");
+	await page.click('#nspp-tools button[title="NodeSeek 热榜"]');
+	await settle(page, 600);
+	const hot = await page.evaluate(() => {
+		const dialog = document.querySelector(".nspp-hot-rankings[open]");
+		const group = dialog.querySelector(".nspp-hot-kinds"), refresh = dialog.querySelector(".nspp-hot-refresh");
+		return { tabs: group.querySelectorAll("button[data-ranking]").length, groupBg: getComputedStyle(group).backgroundColor !== "rgba(0, 0, 0, 0)", refresh: [Math.round(refresh.getBoundingClientRect().width), getComputedStyle(refresh).fontSize], heat: getComputedStyle(dialog.querySelector(".nspp-hot-heat svg") || dialog).strokeWidth };
+	});
+	assert.deepEqual(hot, { tabs: 3, groupBg: true, refresh: [32, "0px"], heat: "1.5px" });
+	await page.keyboard.press("Escape");
+	await page.click("[data-nspp-settings-launcher]");
+	await settle(page, 600);
+	const panel = await page.evaluate(() => {
+		const root = document.getElementById("nspp-settings").shadowRoot;
+		const visible = (element) => element.getBoundingClientRect().height > 0;
+		return {
+			inputs: [...new Set(Array.from(root.querySelectorAll("input:not([type=checkbox],[type=color]), select")).filter(visible).map((element) => Math.round(element.getBoundingClientRect().height)))],
+			footer: [...new Set(Array.from(root.querySelectorAll(".settings-footer button")).filter(visible).map((element) => Math.round(element.getBoundingClientRect().height)))]
+		};
+	});
+	assert.deepEqual(panel, { inputs: [36], footer: [32] });
+	assert.deepEqual(errors, []);
+	await context.close();
+	const setting = await open(browser, "https://www.nodeseek.com/setting#/profile", { html: settingPage() });
+	await settle(setting.page, 1200);
+	const form = await setting.page.evaluate(() => ({
+		fields: [...new Set(Array.from(document.querySelectorAll("#nsk-body :is(input[type=email],select)")).map((element) => Math.round(element.getBoundingClientRect().height)))],
+		buttons: [...new Set(Array.from(document.querySelectorAll("#nsk-body .actions button")).map((element) => Math.round(element.getBoundingClientRect().height)))],
+		checkbox: (() => { const box = document.querySelector("#nsk-body input[type=checkbox]"); const cs = getComputedStyle(box); return [cs.appearance, Math.round(box.getBoundingClientRect().width), cs.backgroundColor]; })()
+	}));
+	assert.deepEqual(form, { fields: [36], buttons: [32], checkbox: ["none", 16, "rgb(31, 30, 29)"] });
+	// 设置页的按钮规则只管主栏，右侧热榜的分段切换保持 26px
+	assert.deepEqual([...new Set(await setting.page.evaluate(() => Array.from(document.querySelectorAll(".nsmax-hot-tabs button")).map((button) => Math.round(button.getBoundingClientRect().height))))], [26]);
+	assert.deepEqual(setting.errors, []);
+	await setting.context.close();
 });
 
 test("用户脚本元数据与版本一致", () => {
