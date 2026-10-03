@@ -86,7 +86,8 @@ const apiResponses = {
 };
 
 async function launch() {
-	return chromium.launch({ args: ["--disable-gpu"] });
+	// NSMAX_CHROMIUM：本地没有 Playwright 自带的 Chromium 时，指向已安装的 Chrome / Edge 可执行文件
+	return chromium.launch({ executablePath: process.env.NSMAX_CHROMIUM || undefined, args: ["--disable-gpu"] });
 }
 
 // 打开一个页面：所有请求都在本地处理，外部网络一律拒绝。

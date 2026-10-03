@@ -25595,22 +25595,32 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 		if (!header) return;
 		const nav = sidebarNavSettings();
 		const hidden = nav?.hidden || new Set(filterLines(NSMAX_HIDDEN_DEFAULT).map((name) => name.toLocaleLowerCase()));
-		const cats = Array.from(header.querySelectorAll("[data-nsmax-header-cat]:not([data-nsmax-own-header])"));
+		// 顶栏里的 DeepFlood 入口（设置里隐藏时）：所有页面都按链接地址隐藏，不依赖规划器有没有标记到
+		if (hidden.has("deepflood")) for (const link of header.querySelectorAll("a[href*='deepflood.com']")) if (!link.hasAttribute("data-nsmax-own-hide")) link.setAttribute("data-nsmax-own-hide", "");
+		let cats = Array.from(header.querySelectorAll("[data-nsmax-header-cat]:not([data-nsmax-own-header])"));
+		if (!cats.length) cats = Array.from(header.querySelectorAll("ul.nav-menu>li"));
 		const present = new Set();
 		for (const element of cats) for (const link of element.matches("a") ? [element] : element.querySelectorAll("a[href]")) present.add(navLabel(link));
 		const extras = [];
+		// 版块来源：左侧版块栏；没有左侧栏的页面（用户空间、通知、设置等）用站点自带的版块数据 __config__.allCategory
 		const panel = document.getElementById("nsk-left-panel-container");
-		if (panel && cats.length) for (const item of panel.querySelectorAll("a[href], [data-to]")) {
+		const sources = [];
+		if (panel) for (const item of panel.querySelectorAll("a[href], [data-to]")) {
 			if (item.closest(".nsmax-shortcuts") || item.matches("[data-to]") && item.querySelector("a[href]")) continue;
-			const label = navLabel(item);
-			const href = item.getAttribute("href") || item.getAttribute("data-to");
+			sources.push({ label: navLabel(item), href: item.getAttribute("href") || item.getAttribute("data-to"), text: (item.textContent || "").replace(/\s+/g, "") });
+		}
+		if (!sources.length) {
+			const all = unsafeWindow$1.__config__?.allCategory;
+			if (Array.isArray(all)) for (const category of all) if (category && typeof category.key === "string" && typeof category.cn_text === "string" && !category.adminOnly) sources.push({ label: category.cn_text.replace(/\s+/g, " ").trim().toLocaleLowerCase(), href: `/categories/${category.key}`, text: category.cn_text.replace(/\s+/g, "") });
+		}
+		if (cats.length) for (const { label, href, text } of sources) {
 			if (!href || !NSMAX_CATEGORY_NAMES.includes(label) || hidden.has(label) || present.has(label)) continue;
 			present.add(label);
 			let link = nsmaxHeaderExtraCache.get(`cat:${label}`);
 			if (!link) {
 				link = document.createElement("a");
 				link.setAttribute("data-nsmax-own-header", "cat");
-				link.textContent = (item.textContent || "").replace(/\s+/g, "");
+				link.textContent = text;
 				nsmaxHeaderExtraCache.set(`cat:${label}`, link);
 			}
 			link.href = href;
@@ -28289,7 +28299,8 @@ ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,a[data-nsmax-header-cat],[data-nsm
 ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,a[data-nsmax-header-cat],[data-nsmax-header-cat]>a,a[data-nsmax-own-header=shortcut]):hover{background:var(--nsmax-hover)!important;color:var(--nsmax-text)!important}
 ${nsmaxClaude} #nsk-head :is(a[data-nsmax-header-cat-on],a[data-nsmax-header-cat-on]:hover,ul.nav-menu>li>a[aria-current=page],ul.nav-menu>li>a.router-link-exact-active){background:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-weight:500!important}
 ${nsmaxClaude} #nsk-head :is(ul.nav-menu>li>a,[data-nsmax-header-cat]>a) :is(svg,img,.nsmax-icon){display:none!important}
-${nsmaxClaude} #nsk-head ul.nav-menu>li>a:is([data-nsmax-header-hide],[hidden]){display:none!important}
+${nsmaxClaude} #nsk-head ul.nav-menu>li>a:is([data-nsmax-header-hide],[data-nsmax-own-hide],[hidden]){display:none!important}
+${nsmaxClaude} #nsk-head ul.nav-menu>li:not(:has(>a:not([data-nsmax-header-hide],[data-nsmax-own-hide],[hidden]))){display:none!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut][data-nsmax-own-header]{padding:0 11px 0 9px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{flex:none;width:16px!important;height:16px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg[data-nsmax-brand] path{fill:currentColor!important}
