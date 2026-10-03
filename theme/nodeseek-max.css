@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.6.3（纯 CSS）
+ * NodeSeek Max 主题 v1.6.4（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -101,22 +101,22 @@ html:root body.dark-layout {
 	--nsmax-shadow-pop:0 18px 48px rgb(0 0 0/.6),inset 0 1px 0 var(--nsmax-highlight);
 	color-scheme:dark;
 }
-/* 配色（默认参考 Claude）：暖色米白页面底 #faf9f5、白色卡片、暖灰描边与文字；深色是暖炭灰（页面 #262624、卡片 #30302e）。
+/* 配色（默认参考 Claude）：暖色米白页面底 #f5f4ed、暖白卡片 #fbfaf6（不用纯白，避免刺眼）、暖灰描边与文字；深色是暖炭灰（页面 #262624、卡片 #30302e）。
    形状变量：--nsmax-pill 是按钮、标签页、分页的圆角（Claude 8px），--nsmax-chip 是小标签（6px），--nsmax-avatar 是头像（圆形），
    --nsmax-composer-* 是评论框与私信输入框（20px 圆角 + 柔和投影）。sb.sb 风格把这些变量设为 initial，各处回到括号里原来的胶囊与圆角方形 */
 html:root:root {
-	--nsmax-canvas:#faf9f5;
-	--nsmax-card:#fff;
-	--nsmax-surface:#fff;
-	--nsmax-fill:#f2f0e9;
-	--nsmax-glass:rgb(250 249 245/.96);
-	--nsmax-popup:#fff;
+	--nsmax-canvas:#f5f4ed;
+	--nsmax-card:#fbfaf6;
+	--nsmax-surface:#fbfaf6;
+	--nsmax-fill:#ecebe3;
+	--nsmax-glass:rgb(245 244 237/.96);
+	--nsmax-popup:#fdfcf9;
 	--nsmax-blur:none;
-	--nsmax-stroke:#e6e3da;
+	--nsmax-stroke:#e3e0d6;
 	--nsmax-highlight:transparent;
 	--nsmax-sheen:transparent;
-	--nsmax-divider:#efede6;
-	--nsmax-panel-alt:#faf9f5;
+	--nsmax-divider:#ebe9e1;
+	--nsmax-panel-alt:#f5f4ed;
 	--nsmax-stroke-strong:#d3d0c6;
 	--nsmax-faint:#9c9a92;
 	--nsmax-text:#1f1e1d;
@@ -125,11 +125,11 @@ html:root:root {
 	--nsmax-thumb:rgb(115 114 108/.38);
 	--nsmax-ink:#1f1e1d;
 	--nsmax-on-ink:#fff;
-	--nsmax-bubble:#f0eee6;
+	--nsmax-bubble:#ebe9e0;
 	--nsmax-on-bubble:#1f1e1d;
-	--nsmax-seg-bg:#efede5;
-	--nsmax-seg-thumb:#fff;
-	--nsmax-code-bg:#f5f4ee;
+	--nsmax-seg-bg:#eae8df;
+	--nsmax-seg-thumb:#fdfcf9;
+	--nsmax-code-bg:#f1efe7;
 	--nsmax-shadow:0 1px 2px rgb(31 30 29/.04);
 	--nsmax-shadow-hover:0 1px 2px rgb(31 30 29/.04),0 6px 18px rgb(31 30 29/.05);
 	--nsmax-shadow-pop:0 12px 40px -6px rgb(31 30 29/.16),0 2px 6px rgb(31 30 29/.04);
@@ -1565,6 +1565,7 @@ html:root:root #nsk-left-panel-container .nsk-panel :is(a.router-link-active,a.r
 	background:var(--nsmax-fill)!important;
 	clip-path:inset(0 6px round 8px);
 }
+@keyframes nsmax-pop-in {from{opacity:0;transform:translateY(-4px)}}
 /* Claude 版式：主栏与左侧版块栏不再是卡片，直接放在米白页面底上（Claude 的对话区与侧栏没有卡片外框），右侧栏保留白色细边卡片；
    评论框、私信输入框这些白色输入框因此浮在米白底上。顶栏与页面同色、平时没有底边线，滚动后才出现一条细线。
    帖子标题用 24px 衬线体，回复楼层悬停不再整行变色 */
@@ -3969,7 +3970,7 @@ html:root:root .nspp-user-hover[data-trust] {
 	box-shadow:var(--nsmax-shadow-pop)!important;
 }
 html:root:root .nspp-messages {
-	--nsmax-chat-side:#f5f4ed;
+	--nsmax-chat-side:#efede5;
 	border-radius:var(--nsmax-r-frame,24px);
 	background:var(--nsmax-canvas);
 }
