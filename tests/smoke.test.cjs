@@ -406,7 +406,7 @@ test("翻页（复刻 sb.sb）：居中一排 30px 圆形描边胶囊，当前�
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 300);
 	const state = await page.evaluate(() => {
-		const pager = document.querySelector(".nsk-pager");
+		const pager = document.querySelector(".nsk-pager:not(.pager-top)");
 		return {
 			justify: getComputedStyle(pager).justifyContent,
 			items: Array.from(pager.querySelectorAll(":is(a,span)")).map((element) => {
@@ -1385,7 +1385,7 @@ test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发�
 		nav: "rgba(0, 0, 0, 0)",
 		card: "rgb(251, 250, 246)",
 		cta: ["rgb(193, 95, 60)", "10px"],
-		pager: ["10px", "rgb(31, 30, 29)"],
+		pager: ["10px", "color(srgb 0.121569 0.117647 0.113725 / 0.08)"],
 		avatar: "50%",
 		chip: "6px",
 		header: "rgba(0, 0, 0, 0)"
@@ -1986,4 +1986,131 @@ test("用户脚本元数据与版本一致", () => {
 	assert.match(header, /^\/\/ @icon\s+data:image\/svg\+xml;base64,/m);
 	assert.ok(header.indexOf("@match        https://www.nodeseek.com/*") < header.indexOf("@include"), "NodeSeek 应排在匹配列表最前");
 	assert.equal(source.match(/var NSMAX_VERSION = "([^"]+)";/)?.[1], version);
+});
+
+test("列表控件：排序是分段控件、页码是幽灵按钮，按网址判断当前页，站点结构多层包裹或全标 active 也能识别", async () => {
+	for (const pagerMode of [undefined, "wrapped"]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ pagerMode }) });
+		await page.waitForSelector("[data-nsmax-sorter]");
+		await settle(page, 300);
+		const state = await page.evaluate(() => {
+			const css = (element) => getComputedStyle(element);
+			const sorter = document.querySelector("[data-nsmax-sorter]");
+			const items = Array.from(document.querySelectorAll(".pager-top [data-nsmax-pg]"));
+			return {
+				sorter: [css(sorter).display, css(sorter).height, css(sorter).borderTopLeftRadius],
+				separator: css(document.querySelector("[data-nsmax-sort-sep]")).display,
+				on: document.querySelector("[data-nsmax-sort-on]").textContent,
+				onBackground: css(document.querySelector("[data-nsmax-sort-on]")).backgroundColor,
+				offBackground: css(document.querySelector("[data-nsmax-sort-item]:not([data-nsmax-sort-on])")).backgroundColor,
+				kinds: items.map((item) => `${item.dataset.nsmaxPg}${item.hasAttribute("data-nsmax-pg-cur") ? "*" : ""}${item.hasAttribute("data-nsmax-pg-off") ? "-" : ""}`).join(" "),
+				heights: [...new Set(items.map((item) => Math.round(item.getBoundingClientRect().height)))],
+				borders: [...new Set(items.map((item) => css(item).borderTopWidth))],
+				plain: css(items.find((item) => item.dataset.nsmaxPg === "num" && !item.hasAttribute("data-nsmax-pg-cur"))).backgroundColor,
+				arrow: `${getComputedStyle(items.at(-1), "::before").maskImage} ${getComputedStyle(items.at(-1), "::before").webkitMaskImage}`,
+				wraps: Array.from(document.querySelectorAll(".pager-top [data-nsmax-pg-wrap]")).map((element) => css(element).display)
+			};
+		});
+		assert.deepEqual(state.sorter, ["flex", "32px", "10px"], pagerMode);
+		assert.equal(state.separator, "none");
+		assert.equal(state.on, "新评论");
+		assert.equal(state.onBackground, "rgb(253, 252, 249)");
+		assert.equal(state.offBackground, "rgba(0, 0, 0, 0)");
+		assert.equal(state.kinds, "prev- num* num num gap num next", pagerMode);
+		assert.deepEqual(state.heights, [32]);
+		assert.deepEqual(state.borders, ["0px"]);
+		assert.equal(state.plain, "rgba(0, 0, 0, 0)");
+		assert.match(state.arrow, /svg/);
+		assert.ok(state.wraps.every((display) => display === "contents"), state.wraps.join());
+		assert.deepEqual(errors, []);
+		await context.close();
+	}
+	// 第 3 页：当前页按网址判断；站点没标状态时也对。
+	const third = listPage({ pagerMode: "wrapped" });
+	const { context, page } = await open(browser, "https://www.nodeseek.com/page-3", { html: third });
+	await page.waitForSelector("[data-nsmax-pg-cur]");
+	assert.equal(await page.evaluate(() => document.querySelector(".pager-top [data-nsmax-pg-cur]").textContent.trim()), "3");
+	await context.close();
+});
+
+test("窗口较窄、站点收起左侧栏时：顶栏保留版块标签（不含 DeepFlood），左侧栏可见时不显示；关掉侧栏导航功能也照常判断", async () => {
+	const seeds = [undefined, { "nspp:settings:www.nodeseek.com": { "sidebar-nav": { enabled: false } } }];
+	for (const seed of seeds) {
+		const wide = await open(browser, "https://www.nodeseek.com/categories/tech", { html: listPage(), seed });
+		await wide.page.waitForSelector("[data-nsmax-header-cat]", { state: "attached" });
+		await settle(wide.page, 300);
+		const wideState = await wide.page.evaluate(() => ({
+			sidenav: document.documentElement.hasAttribute("data-nsmax-sidenav"),
+			visible: Array.from(document.querySelectorAll("#nsk-head a")).filter((link) => link.offsetParent && link.getBoundingClientRect().width > 0).map((link) => link.textContent.trim()).filter((text) => text && text !== "NodeSeek"),
+			action: getComputedStyle(document.querySelector(".nsmax-header-action")).display
+		}));
+		assert.equal(wideState.sidenav, true, `seed ${JSON.stringify(seed)}`);
+		assert.deepEqual(wideState.visible, []);
+		assert.match(wideState.action, /flex/);
+		await wide.page.setViewportSize({ width: 905, height: 800 });
+		await settle(wide.page, 400);
+		const narrow = await wide.page.evaluate(() => {
+			const links = Array.from(document.querySelectorAll("#nsk-head a")).filter((link) => link.getBoundingClientRect().width > 0 && getComputedStyle(link).display !== "none");
+			const cats = links.filter((link) => link.hasAttribute("data-nsmax-header-cat"));
+			const boxes = cats.map((link) => link.getBoundingClientRect());
+			const header = document.querySelector("#nsk-head").getBoundingClientRect();
+			return {
+				sidenav: document.documentElement.hasAttribute("data-nsmax-sidenav"),
+				labels: cats.map((link) => link.textContent.trim()),
+				on: document.querySelector("[data-nsmax-header-cat-on]")?.textContent,
+				onBackground: getComputedStyle(document.querySelector("[data-nsmax-header-cat-on]")).backgroundColor,
+				heights: [...new Set(boxes.map((box) => Math.round(box.height)))],
+				gaps: boxes.slice(1).map((box, index) => Math.round(box.left - boxes[index].right)),
+				oneRow: new Set(boxes.map((box) => Math.round(box.top))).size === 1,
+				inside: links.every((link) => link.getBoundingClientRect().left >= header.left && link.getBoundingClientRect().right <= header.right),
+				action: getComputedStyle(document.querySelector(".nsmax-header-action")).display,
+				search: Math.round(document.querySelector("[data-nsmax-header-search]").getBoundingClientRect().width)
+			};
+		});
+		assert.equal(narrow.sidenav, false);
+		assert.deepEqual(narrow.labels, ["日常", "技术", "情报", "测评", "交易", "拼车", "推广"]);
+		assert.equal(narrow.on, "技术");
+		assert.notEqual(narrow.onBackground, "rgba(0, 0, 0, 0)");
+		assert.deepEqual(narrow.heights, [32]);
+		assert.ok(narrow.gaps.every((gap) => gap === 2), narrow.gaps.join());
+		assert.ok(narrow.oneRow && narrow.inside, JSON.stringify(narrow));
+		assert.match(narrow.action, /flex/);
+		assert.ok(narrow.search >= 168 && narrow.search <= 240, narrow.search);
+		if (!seed) await shot(wide.page, "narrow-header");
+		assert.deepEqual(wide.errors, []);
+		await wide.context.close();
+	}
+});
+
+test("悬停预加载：同标签页链接用 Speculation Rules，新标签页打开的帖子用 link prefetch，每个地址只预取一次", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	await page.waitForSelector(".post-title a[target=_blank]");
+	await settle(page, 300);
+	await page.locator(".pager-top a.pager-pos[href='/page-2']").hover();
+	await page.waitForTimeout(300);
+	await page.locator("ul.post-list .post-title a").first().hover();
+	await page.waitForTimeout(300);
+	await page.locator(".pager-top a.pager-pos[href='/page-2']").hover();
+	await page.waitForTimeout(300);
+	const nodes = await page.evaluate(() => Array.from(document.querySelectorAll("script[type=speculationrules], link[rel=prefetch]")).map((node) => node.tagName === "SCRIPT" ? JSON.parse(node.textContent).prefetch[0].urls[0] : `link ${node.href}`));
+	assert.deepEqual(nodes, ["https://www.nodeseek.com/page-2", "link https://www.nodeseek.com/post-1000-1"]);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("站内跳转：新页面还没整理好时先停在旧页面，整理好后交叉淡入（不跳过过渡）", async () => {
+	const init = `window.addEventListener("pagereveal", (event) => { window.__reveal = { transition: !!event.viewTransition, hold: document.documentElement.hasAttribute("data-nsmax-vt-hold") }; event.viewTransition?.ready.then(() => window.__animated = true, () => window.__animated = false); setTimeout(() => window.__holdLater = document.documentElement.hasAttribute("data-nsmax-vt-hold"), 0); });`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages: { "/page-2": listPage() }, init });
+	await settle(page, 400);
+	await page.locator(".pager-top a.pager-pos[href='/page-2']").click();
+	await page.waitForURL("**/page-2");
+	await page.waitForFunction(() => window.__animated !== undefined);
+	await settle(page, 600);
+	const state = await page.evaluate(() => ({ reveal: window.__reveal, animated: window.__animated, hold: document.documentElement.hasAttribute("data-nsmax-vt-hold"), boot: ["header", "left", "right"].filter((name) => document.documentElement.hasAttribute(`data-nsmax-boot-${name}`)) }));
+	assert.equal(state.reveal.transition, true);
+	assert.equal(state.animated, true);
+	assert.equal(state.hold, false);
+	assert.deepEqual(state.boot, []);
+	assert.deepEqual(errors, []);
+	await context.close();
 });

@@ -43,6 +43,11 @@ ul.comments>li.content-item{padding:10px 0;border-bottom:1px solid var(--border-
 .notification-list{list-style:none;margin:0;padding:0;background:var(--bg-color)}
 .notification-list>li{padding:10px;border-bottom:1px solid var(--border-color)}
 @media (max-width:800px){#nsk-left-panel-container,#nsk-right-panel-container{display:none}}
+/* 窗口较窄时站点隐藏左侧栏，版块只剩顶栏里那一排（真实断点未知） */
+@media (max-width:1000px){#nsk-left-panel-container{display:none}}
+.post-sort{display:flex}
+.post-sort a{padding:0 6px;border:1px solid var(--border-color);color:var(--text-color)}
+.post-sort a+a,.post-sort span+a{background:#888;color:#fff}
 .user-head{display:flex;gap:10px;align-items:center;margin-bottom:10px}
 .user-head img{width:48px;height:48px}
 .user-actions{display:flex;gap:6px}
