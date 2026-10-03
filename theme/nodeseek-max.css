@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.6.2（纯 CSS）
+ * NodeSeek Max 主题 v1.6.3（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -332,7 +332,9 @@ html:root:root:root .nspp-messages-message:not(.is-mine,.is-system) .nspp-messag
 html:root:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2),
 html:root:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2) a,
 html:root:root:root h1.post-title,
-html:root:root .nspp-post-preview>header a {
+html:root:root .nspp-post-preview>header a,
+html:root:root .nspp-notice-summary h3,
+html:root:root .nspp-notice-summary h3 a {
 	font-family:var(--nsmax-serif)!important;
 	letter-spacing:0!important;
 }
@@ -653,7 +655,7 @@ html:root .md-editor .expression>* {
 	border-radius:var(--nsmax-r-control,6px);
 	background:transparent!important;
 	color:var(--nsmax-muted)!important;
-	font-size:12.5px;
+	font-size:13px;
 	line-height:1.6;
 	cursor:pointer;
 	transform:none!important;
@@ -809,7 +811,7 @@ html:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-
 }
 html:root:root :is(.nsk-post-wrapper,.nsk-post) .post-title :is(h1,h2),
 html:root:root h1.post-title {
-	font-size:21px;
+	font-size:20px;
 	line-height:1.45;
 	font-weight:600;
 	letter-spacing:-.01em;
@@ -853,7 +855,7 @@ html:root:root .signature {
 	padding-top:10px;
 	border-top:1px dashed var(--nsmax-divider);
 	color:var(--nsmax-muted);
-	font-size:.92em;
+	font-size:13px;
 }
 html:root .signature,
 html:root .signature :not(img,svg,svg *) {
@@ -1126,7 +1128,7 @@ html:root .nspp-reply-actions button {
 	border-radius:var(--nsmax-pill,999px);
 	background:var(--nsmax-brand);
 	color:var(--nsmax-on-brand);
-	font-size:12.5px;
+	font-size:13px;
 	font-weight:500;
 }
 html:root .nspp-reply-actions button:hover:not(:disabled) {
@@ -1162,7 +1164,7 @@ html:root .nspp-floating-reply-header button {
 	border-radius:var(--nsmax-pill,999px);
 	background:transparent;
 	color:var(--nsmax-text-2);
-	font-size:12.5px;
+	font-size:13px;
 }
 /* 评论区（参考 sb.sb 回复列表）：32px 圆角方形头像；名字、徽章、时间排一行，楼号靠右；正文、签名和操作栏与名字左对齐；
    操作栏平时淡一些，悬停这一楼时再清晰；顶部加「全部回复」小标题和主帖分开 */
@@ -1216,7 +1218,7 @@ html:root:root ul.comments :is(.author-info,.nsk-content-meta-info) a[href*="/sp
 }
 html:root:root .nsk-content-meta-info :is(time,.date-created,.date-updated) {
 	color:var(--nsmax-muted);
-	font-size:12.5px;
+	font-size:13px;
 	font-variant-numeric:tabular-nums;
 }
 html:root:root :is(.nsk-content-meta-info,.author-info) .role-tag:not([data-nspp-role]) {
@@ -1249,7 +1251,7 @@ html:root:root ul.comments .comment-menu .menu-item {
 	min-height:26px;
 	margin:0;
 	padding:0 8px;
-	font-size:12.5px;
+	font-size:13px;
 	opacity:.7;
 }
 html:root:root ul.comments>li.content-item:is(:hover,:focus-within) .comment-menu .menu-item {
@@ -1302,7 +1304,7 @@ html:root:root .nsk-post>.comment-menu .menu-item {
 	border-radius:var(--nsmax-r-control,8px);
 	background:var(--nsmax-card)!important;
 	color:var(--nsmax-faint);
-	font-size:12.5px;
+	font-size:13px;
 	line-height:1;
 }
 html:root:root .nsk-post>.comment-menu .menu-item:hover {
@@ -1422,7 +1424,7 @@ html:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab {
 	padding:2px 10px!important;
 	border-radius:var(--nsmax-r-chip,calc(var(--nsmax-pill,999px) - 2px))!important;
 	color:var(--nsmax-muted);
-	font-size:12.5px!important;
+	font-size:13px!important;
 	font-weight:500;
 	line-height:1.7;
 	transition:background-color .15s ease,color .15s ease,box-shadow .15s ease;
@@ -1453,7 +1455,7 @@ html:root .md-editor:not(.nspp-floating-reply) .expression>* {
 	padding:0 10px!important;
 	border-radius:var(--nsmax-pill,999px)!important;
 	color:var(--nsmax-muted)!important;
-	font-size:12.5px!important;
+	font-size:13px!important;
 	font-weight:500;
 }
 html:root .md-editor:not(.nspp-floating-reply) .expression>:hover {
@@ -1513,7 +1515,7 @@ html:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose svg {
 html:root .md-editor:not(.nspp-floating-reply) [data-nsmax-submit-row]>.nspp-upload-choose:first-child {
 	margin-right:auto;
 }
-/* 发送按钮（Claude 的珊瑚色方形按钮；sb.sb 风格是黑色胶囊）：32px 高、8px 圆角，向上箭头；输入框为空时变淡 */
+/* 发送按钮（Claude 的珊瑚色方形按钮；sb.sb 风格是黑色胶囊）：32px 高、10px 圆角，向上箭头；输入框为空时变淡 */
 html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
 	display:inline-flex!important;
 	align-items:center;
@@ -1606,7 +1608,7 @@ html:root:root:root ul.post-list:not(.topic-carousel-panel)>li.post-list-item:no
 	background-color:var(--nsmax-fill);
 }
 /* Claude 风格的弹窗与悬浮卡（参考 claude.ai 网页版）：工具弹窗的标题栏、底栏不再用分隔线隔成横条，整张弹窗一块底色、16px 圆角；
-   用户资料卡去掉浅底格子与分隔网格，统计数据是两列「左标签、右数字」的行，行间细线；操作按钮是 8px 圆角的描边按钮，「关注」用墨黑实心 */
+   用户资料卡去掉浅底格子与分隔网格，统计数据是两列「左标签、右数字」的行，行间细线；操作按钮是 10px 圆角的描边按钮，「关注」用墨黑实心 */
 html:root:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog)::backdrop {
 	background:rgb(31 30 29/.3);
 }
@@ -1654,7 +1656,7 @@ html:root:root .nspp-user-hover dl>div:last-child {
 	border-bottom:0;
 }
 html:root:root .nspp-user-hover dl>div>dt {
-	font-size:12.5px!important;
+	font-size:13px!important;
 }
 html:root:root .nspp-user-hover dl>div>dd {
 	font-size:14px!important;
@@ -1780,7 +1782,7 @@ html:root:root .nsk-content-meta-info>:has(>a.floor-link) {
 	align-items:center;
 }
 html:root:root .nsk-content-meta-info .role-tag:not([data-nspp-role]) {
-	font-size:11.5px!important;
+	font-size:12px!important;
 	line-height:16px!important;
 }
 html:root:root .user-card>.user-stat {
@@ -1914,7 +1916,7 @@ html:root:root .nspp-hot-rankings nav button[data-ranking][aria-pressed=true]:ho
 	font-weight:500;
 }
 /* 细节打磨（v1.5.8） */
-/* 主帖下方的点赞 / 加鸡腿 / 反对 / 引用 / 回复：Claude 回答下方那样靠左一排的小按钮——图标与数字并排、32px 高、8px 圆角细边，悬停浅底 */
+/* 主帖下方的点赞 / 加鸡腿 / 反对 / 引用 / 回复：Claude 回答下方那样靠左一排的小按钮——图标与数字并排、32px 高、10px 圆角细边，悬停浅底 */
 html:root:root:root .nsk-post>.comment-menu {
 	justify-content:flex-start;
 	gap:6px;
@@ -2260,7 +2262,7 @@ html:root :is(.nspp-action,[data-nspp-resolve]):not(#nspp-tools *,.nspp-tool-ico
 	border-radius:var(--nsmax-pill,999px);
 	background:var(--nsmax-card);
 	color:var(--nsmax-text-2);
-	font-size:12.5px;
+	font-size:13px;
 	cursor:pointer;
 	transition:border-color .15s ease,color .15s ease,background-color .15s ease;
 }
@@ -2296,7 +2298,7 @@ html:root body .role-tag[data-nspp-role] {
 html:root:root .nsk-content-meta-info .nspp-user-badges {
 	gap:4px;
 	margin-inline-start:6px;
-	font-size:11.5px;
+	font-size:12px;
 	line-height:16px;
 }
 html:root:root .nsk-content-meta-info :is(.nspp-user-badges :is(.nspp-trust,.nspp-age,.nspp-level),.role-tag:not([data-nspp-role])) {
@@ -2313,7 +2315,7 @@ html:root:root .nsk-content-meta-info :is(.nspp-user-badges :is(.nspp-trust,.nsp
 	color:var(--nsmax-text-2)!important;
 	--nspp-badge-color:var(--nsmax-text-2);
 	--nspp-age-color:var(--nsmax-text-2);
-	font-size:11.5px;
+	font-size:12px;
 	font-weight:500;
 }
 html:root:root .nsk-content-meta-info .nspp-user-badges :is(.nspp-level[data-level="6"],.nspp-trust[data-tier=perfect]) {
@@ -2357,7 +2359,7 @@ html:root:root .nsk-post-wrapper>.post-title :is(h1,h2):first-child {
 /* 列表行里 NodeSeek++ 的徽章（信任分、天数、等级）：从 10px 小字放大到 11.5px，与同一行的浏览、回复数协调 */
 html:root .post-list-item .post-info .nspp-user-badges {
 	gap:8px;
-	font-size:11.5px;
+	font-size:12px;
 	line-height:18px;
 }
 html:root [data-nspp-monitor-match] {
@@ -2395,7 +2397,7 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) {
 	border:1px solid var(--nsmax-stroke);
 	border-radius:var(--nsmax-dialog-radius,12px);
 	box-shadow:var(--nsmax-shadow-pop);
-	font-size:13.5px;
+	font-size:14px;
 	line-height:1.55;
 	-webkit-backdrop-filter:none;
 	backdrop-filter:none;
@@ -2448,7 +2450,7 @@ html:root :is(.nspp-monitor,.nspp-history,.nspp-confirm-dialog) :is(button,form>
 	border-radius:var(--nsmax-pill,999px);
 	background:transparent;
 	color:var(--nsmax-text);
-	font-size:12.5px;
+	font-size:13px;
 	font-weight:500;
 	line-height:1;
 	white-space:nowrap;
@@ -2608,7 +2610,7 @@ html:root .nspp-footprints-dialog .nspp-footprints-list>a {
 	gap:14px;
 	padding:9px 10px;
 	border-radius:var(--nsmax-r-control,8px);
-	font-size:13.5px;
+	font-size:14px;
 }
 html:root .nspp-footprints-dialog .nspp-footprints-list>a:hover {
 	background:var(--nsmax-dlg-fill);
@@ -2660,7 +2662,7 @@ html:root .nspp-history li:hover {
 	background:var(--nsmax-dlg-fill);
 }
 html:root .nspp-history li a {
-	font-size:13.5px;
+	font-size:14px;
 }
 html:root .nspp-history time {
 	color:var(--nsmax-muted);
@@ -2714,7 +2716,7 @@ html:root .nspp-profile-summary {
 }
 html:root .nspp-profile-summary strong {
 	font-size:24px;
-	font-weight:700;
+	font-weight:600;
 	letter-spacing:-.02em;
 	line-height:1.2;
 }
@@ -2724,7 +2726,7 @@ html:root .nspp-profile-dialog .nspp-age {
 	background:var(--nsmax-dlg-fill);
 	color:var(--nsmax-text-2);
 	--nspp-age-color:var(--nsmax-text-2);
-	font-size:11.5px;
+	font-size:12px;
 	font-weight:500;
 }
 html:root .nspp-profile-dialog dl {
@@ -2752,7 +2754,7 @@ html:root .nspp-history.nspp-trust-dialog {
 html:root .nspp-trust-dialog p {
 	margin:0;
 	color:var(--nsmax-text-2);
-	font-size:13.5px;
+	font-size:14px;
 	line-height:1.8;
 	font-variant-numeric:tabular-nums;
 }
@@ -2762,12 +2764,12 @@ html:root .nspp-history.nspp-user-transfer {
 html:root .nspp-user-transfer>p {
 	margin:4px 0 16px;
 	color:var(--nsmax-muted);
-	font-size:12.5px;
+	font-size:13px;
 	font-variant-numeric:tabular-nums;
 }
 html:root .nspp-user-transfer label {
 	color:var(--nsmax-text-2);
-	font-size:12.5px;
+	font-size:13px;
 	font-weight:500;
 }
 html:root .nspp-transfer-actions {
@@ -2797,7 +2799,7 @@ html:root .nspp-monitor>p {
 	padding:10px 18px;
 	color:var(--nsmax-muted);
 	opacity:1;
-	font-size:12.5px;
+	font-size:13px;
 	font-variant-numeric:tabular-nums;
 }
 html:root .nspp-monitor-spinner {
@@ -2830,7 +2832,7 @@ html:root .nspp-monitor li {
 	margin:0;
 	padding:7px 8px;
 	border-radius:var(--nsmax-r-control,8px);
-	font-size:13.5px;
+	font-size:14px;
 }
 html:root .nspp-monitor:not(.nspp-hot-rankings) li:hover {
 	background:var(--nsmax-dlg-fill);
@@ -2839,7 +2841,7 @@ html:root .nspp-monitor section>p {
 	margin:6px 8px;
 	color:var(--nsmax-muted);
 	opacity:1;
-	font-size:12.5px;
+	font-size:13px;
 }
 html:root .nspp-monitor>.nspp-monitor-tracked {
 	padding:0 18px 10px;
@@ -2865,7 +2867,7 @@ html:root .nspp-monitor>footer {
 html:root .nspp-monitor>footer span {
 	color:var(--nsmax-muted);
 	opacity:1;
-	font-size:11.5px;
+	font-size:12px;
 }
 html:root .nspp-monitor-config .nspp-monitor-editor {
 	gap:10px;
@@ -2873,7 +2875,7 @@ html:root .nspp-monitor-config .nspp-monitor-editor {
 }
 html:root .nspp-monitor-editor label {
 	color:var(--nsmax-text-2);
-	font-size:12.5px;
+	font-size:13px;
 	font-weight:500;
 }
 html:root .nspp-monitor-editor textarea {
@@ -2894,7 +2896,7 @@ html:root .nspp-regex-help {
 	border:1px solid var(--nsmax-stroke);
 	color:var(--nsmax-muted);
 	opacity:1;
-	font-size:10px;
+	font-size:11px;
 	vertical-align:1px;
 }
 html:root .nspp-regex-help:hover {
@@ -2976,7 +2978,7 @@ html:root .nspp-hot-rankings li:is([data-rank="1"],[data-rank="2"],[data-rank="3
 	--nspp-rank-color:var(--nsmax-accent);
 }
 html:root .nspp-hot-rankings li a {
-	font-size:13.5px;
+	font-size:14px;
 	line-height:1.5;
 }
 html:root .nspp-hot-rankings li a:hover {
@@ -2985,16 +2987,16 @@ html:root .nspp-hot-rankings li a:hover {
 html:root .nspp-hot-rankings .nspp-hot-rank {
 	width:20px;
 	color:var(--nspp-rank-color);
-	font-size:12.5px;
+	font-size:13px;
 	font-weight:500;
 }
 html:root .nspp-hot-rankings :is([data-rank="1"],[data-rank="2"],[data-rank="3"]) .nspp-hot-rank {
 	background:none;
-	font-weight:700;
+	font-weight:600;
 }
 html:root .nspp-hot-rankings .nspp-hot-heat {
 	color:var(--nsmax-muted);
-	font-size:11.5px;
+	font-size:12px;
 }
 html:root .nspp-hot-rankings :is([data-rank="1"],[data-rank="2"],[data-rank="3"]) .nspp-hot-heat {
 	color:var(--nsmax-text-2);
@@ -3120,7 +3122,7 @@ html:root .nspp-preview-content blockquote {
 html:root .nspp-preview-content table {
 	margin:.6em 0;
 	border-collapse:collapse;
-	font-size:12.5px;
+	font-size:13px;
 }
 html:root .nspp-preview-content :is(th,td) {
 	padding:4px 9px;
@@ -3208,7 +3210,7 @@ html:root .nspp-user-hover dt {
 	font-size:12px!important;
 }
 html:root .nspp-user-hover dd {
-	font-size:12.5px!important;
+	font-size:13px!important;
 	font-weight:500!important;
 	font-variant-numeric:tabular-nums;
 }
@@ -3219,12 +3221,12 @@ html:root .nspp-user-hover .nspp-user-hover-name {
 html:root .nspp-user-hover .nspp-user-hover-score strong {
 	font-variant-numeric:tabular-nums;
 	font-size:24px!important;
-	font-weight:700!important;
+	font-weight:600!important;
 	letter-spacing:-.02em!important;
 	line-height:1!important;
 }
 html:root .nspp-user-hover .nspp-user-hover-score small {
-	font-size:10px!important;
+	font-size:11px!important;
 }
 html:root .nspp-user-hover :is(.nspp-level,.nspp-age,.role-tag),
 html:root .nspp-user-hover .nspp-user-hover-rich .nspp-age {
@@ -3374,7 +3376,7 @@ html:root .nspp-user-hover-actions>:is(a,button) {
 	border-radius:var(--nsmax-pill,999px)!important;
 	background:var(--nsmax-card)!important;
 	color:var(--nsmax-text-2)!important;
-	font-size:12.5px!important;
+	font-size:13px!important;
 	font-weight:500!important;
 	text-decoration:none!important;
 	transition:background-color .12s ease,border-color .12s ease,color .12s ease;
@@ -3458,7 +3460,7 @@ html:root .nspp-messages-top .nspp-messages-profile {
 	padding:0 10px!important;
 	border-radius:var(--nsmax-pill,999px)!important;
 	color:var(--nsmax-text-2)!important;
-	font-size:12.5px!important;
+	font-size:13px!important;
 }
 html:root .nspp-messages-top-actions button:hover,
 html:root .nspp-messages-top .nspp-messages-profile:hover {
@@ -3509,7 +3511,7 @@ html:root .nspp-messages-search>button:not(.nspp-messages-refresh) {
 	width:auto;
 	padding:0 12px!important;
 	color:var(--nsmax-text-2);
-	font-size:12.5px;
+	font-size:13px;
 }
 /* 资料卡读取中 / 读取失败时只有一行文字：不按五列统计网格排，免得挤在第一格里折行 */
 html:root .nspp-chat-profile-data:not(:has(>*)) {
@@ -3537,15 +3539,15 @@ html:root .nspp-messages-avatar {
 	box-shadow:0 0 0 1px var(--nsmax-divider);
 }
 html:root .nspp-messages-peer-title strong {
-	font-size:13.5px;
+	font-size:14px;
 	font-weight:500;
 }
 html:root .nspp-messages-peer-title time {
-	font-size:11.5px;
+	font-size:12px;
 	font-variant-numeric:tabular-nums;
 }
 html:root .nspp-messages-snippet {
-	font-size:12.5px;
+	font-size:13px;
 }
 html:root .nspp-messages-count {
 	min-width:18px;
@@ -3562,7 +3564,7 @@ html:root .nspp-messages-unread {
 html:root .nspp-messages-more,
 html:root .nspp-messages-earlier {
 	border-radius:var(--nsmax-pill,999px)!important;
-	font-size:12.5px!important;
+	font-size:13px!important;
 }
 html:root .nspp-messages-more:hover,
 html:root .nspp-messages-earlier:hover {
@@ -3590,7 +3592,7 @@ html:root .nspp-messages-thread {
 }
 html:root .nspp-messages-stamp {
 	margin:4px 0 14px;
-	font-size:11.5px;
+	font-size:12px;
 	font-variant-numeric:tabular-nums;
 }
 html:root .nspp-messages-message {
@@ -3644,14 +3646,14 @@ html:root .nspp-messages-message.is-system .nspp-messages-bubble {
 	border:0;
 	background:transparent;
 	box-shadow:none;
-	font-size:13.5px;
+	font-size:14px;
 }
 html:root .nspp-messages-message.is-system .nspp-messages-bubble a[href*="/space/"],
 html:root body.dark-layout .nspp-messages-message.is-system .nspp-messages-bubble a[href*="/space/"] {
 	color:var(--nsmax-text);
 }
 html:root .nspp-messages-system-time {
-	font-size:11.5px;
+	font-size:12px;
 }
 /* 私信输入框（参考 Claude 的输入框）：浮在会话区底部的一整块白底大圆角输入框，柔和投影；输入区在上，下面一行左边是格式工具与
    Markdown 开关，右边是方形发送按钮（向上箭头，内容为空时变淡）；会话区用页面底色，让输入框和对方的白色气泡浮起来 */
@@ -3685,7 +3687,7 @@ html:root .nspp-message-editor-body textarea {
 	padding:14px 16px 4px!important;
 	resize:none;
 	caret-color:var(--nsmax-text);
-	font-size:14.5px;
+	font-size:15px;
 	line-height:1.65;
 }
 html:root .nspp-message-editor-preview {
@@ -3776,14 +3778,14 @@ html:root :is(.nspp-messages .nspp-messages-sync-retry,.nspp-notice-back,.nspp-m
 html:root .nspp-message-return {
 	padding:4px 12px;
 	font:inherit;
-	font-size:12.5px;
+	font-size:13px;
 }
 html:root .nspp-messages-status,
 html:root .nspp-messages-list-status {
-	font-size:12.5px;
+	font-size:13px;
 }
 html:root .nspp-messages-empty {
-	font-size:13.5px;
+	font-size:14px;
 }
 /* 聊天对象资料卡：不再按信任分换成绿 / 黄 / 红渐变，统一中性底色；信任分用正文色 */
 html:root .nspp-chat-profile,
@@ -3808,7 +3810,7 @@ html:root .nspp-chat-profile[data-trust=perfect]>a .nspp-messages-avatar {
 html:root .nspp-chat-profile-heading>strong,
 html:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-heading>strong {
 	color:var(--nsmax-text);
-	font-size:14.5px;
+	font-size:15px;
 }
 html:root .nspp-chat-profile-level,
 html:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-level {
@@ -3822,7 +3824,7 @@ html:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-level {
 	line-height:16px;
 }
 html:root .nspp-chat-profile-meta {
-	font-size:11.5px;
+	font-size:12px;
 }
 html:root .nspp-chat-profile-trust,
 html:root .nspp-chat-profile-trust[data-tone],
@@ -3833,7 +3835,7 @@ html:root body.dark-layout .nspp-chat-profile[data-trust] .nspp-chat-profile-tru
 html:root .nspp-chat-profile-trust>strong,
 html:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-trust>strong {
 	font-size:24px;
-	font-weight:700;
+	font-weight:600;
 	letter-spacing:-.02em;
 	line-height:28px;
 	text-shadow:none;
@@ -3841,7 +3843,7 @@ html:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-trust>strong
 html:root .nspp-chat-profile-trust>span,
 html:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-trust>span {
 	color:var(--nsmax-muted);
-	font-size:10.5px;
+	font-size:11px;
 	letter-spacing:0;
 }
 html:root .nspp-chat-profile-data,
@@ -3946,6 +3948,26 @@ html:root:root :is(.nspp-messages-bubble,.nspp-message-editor-preview) code {
 html:root:root :is(.nspp-user-badges :is(.nspp-trust,.nspp-age,.nspp-level),.nspp-user-badges button,.nspp-copy-button:not([data-nspp-copy])) {
 	border-radius:var(--nsmax-r-chip);
 }
+/* 字号、字重、颜色统一（Claude 风格）：字号只用 11 / 12 / 13 / 14 / 15 / 16 / 18 / 20 / 24px，字重只用 400 / 500 / 600；
+   站点与 NodeSeek++ 自带样式里零散的 10px、18px 和浏览器默认的粗体 700 也归到档位里；NodeSeek++ 徽章的冷灰蓝字色改为暖灰 */
+html:root:root .nspp-user-hover .nspp-user-hover-rich .nspp-age {
+	font-size:12px;
+}
+html:root:root sup.beta {
+	font-size:11px;
+}
+html:root:root :is(.site-logo,.toast-icon,strong,b) {
+	font-weight:600;
+}
+html:root:root .nspp-user-badges {
+	color:var(--nsmax-muted);
+}
+html:root:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab:is(.active,[class*=active],[aria-selected=true]) {
+	box-shadow:0 1px 2px rgb(31 30 29/.1),0 0 0 .5px rgb(31 30 29/.06)!important;
+}
+html:root:root .nspp-user-hover[data-trust] {
+	box-shadow:var(--nsmax-shadow-pop)!important;
+}
 html:root:root .nspp-messages {
 	--nsmax-chat-side:#f5f4ed;
 	border-radius:var(--nsmax-r-frame,24px);
@@ -4033,7 +4055,7 @@ html:root:root .nspp-messages-top .nspp-messages-profile {
 	padding:0 12px!important;
 	border-radius:var(--nsmax-r-control,999px)!important;
 	color:var(--nsmax-muted)!important;
-	font-size:12.5px!important;
+	font-size:13px!important;
 }
 html:root:root .nspp-messages-top-actions button:hover,
 html:root:root .nspp-messages-top .nspp-messages-profile:hover {
@@ -4056,7 +4078,7 @@ html:root:root :is(.nspp-notice-back,.nspp-messages-back) {
 	border-color:transparent!important;
 	border-radius:var(--nsmax-r-control,999px)!important;
 	color:var(--nsmax-muted)!important;
-	font-size:12.5px!important;
+	font-size:13px!important;
 }
 html:root:root :is(.nspp-notice-back,.nspp-messages-back)::before {
 	content:"";
@@ -4164,19 +4186,19 @@ html:root:root .nspp-messages-workspace:not(.nspp-notice-workspace)>.nspp-messag
 	display:block;
 	padding:10px 18px 5px;
 	color:var(--nsmax-faint);
-	font-size:11.5px;
+	font-size:12px;
 	font-weight:500;
 	letter-spacing:.02em;
 }
 html:root:root .nspp-messages-peer-title strong,
 html:root:root .nspp-messages-fixed-contacts strong {
 	color:var(--nsmax-text);
-	font-size:13.5px;
+	font-size:14px;
 	font-weight:500;
 }
 html:root:root .nspp-messages-snippet {
 	color:var(--nsmax-muted);
-	font-size:12.5px;
+	font-size:13px;
 }
 html:root:root .nspp-messages-peer-title time {
 	color:var(--nsmax-faint);
@@ -4241,7 +4263,7 @@ html:root:root .nspp-chat-profile-meta {
 }
 html:root:root .nspp-chat-profile-bio {
 	color:var(--nsmax-text-2);
-	font-size:12.5px;
+	font-size:13px;
 }
 html:root:root .nspp-chat-profile-trust,
 html:root:root .nspp-chat-profile[data-trust] .nspp-chat-profile-trust,
@@ -4313,7 +4335,7 @@ html:root:root .nspp-chat-profile-stat>small {
 html:root:root .nspp-chat-profile-stat>strong,
 html:root:root .nspp-chat-profile[data-trust=perfect] .nspp-chat-profile-stat>strong {
 	color:var(--nsmax-text);
-	font-size:12.5px;
+	font-size:13px;
 	font-weight:600;
 }
 html:root:root .nspp-chat-profile-notice,
@@ -4323,7 +4345,7 @@ html:root:root body.dark-layout .nspp-chat-profile[data-trust] .nspp-chat-profil
 	flex-basis:100%;
 	margin:6px 0 0 52px;
 	color:var(--nsmax-faint);
-	font-size:11.5px;
+	font-size:12px;
 	line-height:1.5;
 }
 /* 消息：自己的消息靠右、暖灰气泡、不带头像；对方的消息白底细边框，连续几条只在第一条显示头像；
@@ -4341,7 +4363,7 @@ html:root:root .nspp-messages-stamp {
 	border-radius:0;
 	background:transparent;
 	color:var(--nsmax-faint);
-	font-size:11.5px;
+	font-size:12px;
 	line-height:18px;
 	text-align:center;
 }
@@ -4374,7 +4396,7 @@ html:root:root .nspp-messages-message.is-mine .nspp-messages-bubble {
 	max-width:min(72%,560px);
 	padding:9px 15px;
 	border-radius:var(--nsmax-r-card,20px);
-	font-size:14.5px;
+	font-size:15px;
 	line-height:1.6;
 	box-shadow:none;
 }
@@ -4401,7 +4423,7 @@ html:root:root .nspp-messages-message:not(.is-mine,.is-system) .nspp-messages-bu
 	box-shadow:none;
 	color:var(--nsmax-text);
 	font-family:var(--nsmax-serif,inherit);
-	font-size:15.5px;
+	font-size:16px;
 	line-height:1.7;
 }
 html:root:root .nspp-messages-message:not(.is-mine,.is-system):has(+.nspp-messages-message:not(.is-mine,.is-system)) {
@@ -4414,7 +4436,7 @@ html:root:root .nspp-messages-message.is-system .nspp-messages-bubble {
 	max-width:none;
 	padding:0;
 	border-radius:0;
-	font-size:13.5px;
+	font-size:14px;
 }
 html:root:root .nspp-messages-bubble img {
 	border-radius:var(--nsmax-r-control,14px);
@@ -4423,7 +4445,7 @@ html:root:root .nspp-messages-empty {
 	flex-direction:column;
 	gap:12px;
 	color:var(--nsmax-muted);
-	font-size:13.5px;
+	font-size:14px;
 }
 html:root:root .nspp-messages-empty::before {
 	content:"";
@@ -4594,6 +4616,12 @@ html:root:root .nspp-notice-workspace .nspp-messages-thread.nspp-notice-detail {
 	background:var(--nsmax-card);
 	-webkit-mask-image:none;
 	mask-image:none;
+}
+/* 通知详情的帖子标题和帖子页标题一样是衬线体标题，20px */
+html:root:root .nspp-notice-summary h3 {
+	margin-bottom:6px;
+	font-size:20px;
+	line-height:1.4;
 }
 html:root:root :is(.nspp-notice-body,.nspp-messages-bubble.is-markdown,.nspp-message-editor-preview) pre {
 	border-radius:var(--nsmax-r-control,12px);
