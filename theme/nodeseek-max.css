@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.6.5（纯 CSS）
+ * NodeSeek Max 主题 v1.6.6（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -548,7 +548,8 @@ html:root .nsk-pager :is(a,span) {
 	line-height:1;
 	text-decoration:none;
 }
-html:root .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-current]) {
+html:root .nsk-pager:not([data-nsmax-pager]) :is(.pager-cur,[aria-current=page]),
+html:root .nsk-pager [data-nsmax-pg-cur] {
 	border-color:var(--nsmax-accent)!important;
 	background-color:var(--nsmax-accent)!important;
 	color:var(--nsmax-on-accent)!important;
@@ -557,7 +558,11 @@ html:root .nsk-pager :is(.pager-cur,[class*=current],[class*=active],[aria-curre
 html:root .nsk-pager :is(.pager-prev,.pager-next) {
 	padding:0 12px;
 }
-html:root .nsk-pager span:not(.pager-cur,[class*=current],[class*=active],[aria-current]):not(:has(*)) {
+html:root .nsk-pager [data-nsmax-pg-wrap] {
+	display:contents!important;
+}
+html:root .nsk-pager:not([data-nsmax-pager]) span:not(.pager-cur,[aria-current=page]):not(:has(*)),
+html:root .nsk-pager [data-nsmax-pg=gap] {
 	border-color:transparent!important;
 	background-color:transparent;
 	color:var(--nsmax-faint);
@@ -1751,6 +1756,157 @@ html:root:root input[type=number]::-webkit-outer-spin-button {
 	-webkit-appearance:none;
 	margin:0;
 }
+/* 列表控件（Claude）：排序切换「新评论 / 新帖子」是和侧栏热榜同一套的分段控件；页码是 32px 幽灵按钮，悬停浅底，
+   当前页稍深的底色加粗，上一页 / 下一页换成线条箭头，省略号淡色不可点。只认 createListControlMarker 打的标记 */
+html:root:root .nsk-pager[data-nsmax-pager] {
+	gap:2px;
+}
+html:root:root .nsk-pager [data-nsmax-pg] {
+	display:inline-flex!important;
+	align-items:center;
+	justify-content:center;
+	box-sizing:border-box;
+	min-width:32px;
+	height:32px!important;
+	min-height:0!important;
+	margin:0!important;
+	padding:0 8px!important;
+	border:0!important;
+	border-radius:var(--nsmax-r-control,10px)!important;
+	background:transparent!important;
+	box-shadow:none!important;
+	color:var(--nsmax-muted)!important;
+	font-size:13px!important;
+	font-weight:500!important;
+	line-height:1!important;
+	text-decoration:none!important;
+	white-space:nowrap;
+	cursor:pointer;
+}
+html:root:root .nsk-pager [data-nsmax-pg] :not(svg,svg *) {
+	margin:0!important;
+	padding:0!important;
+	border:0!important;
+	background:transparent!important;
+	box-shadow:none!important;
+	color:inherit!important;
+	font:inherit!important;
+	text-decoration:none!important;
+}
+html:root:root .nsk-pager [data-nsmax-pg]:hover {
+	background:color-mix(in srgb,var(--nsmax-ink) 5%,transparent)!important;
+	color:var(--nsmax-text)!important;
+}
+html:root:root .nsk-pager [data-nsmax-pg-cur],
+html:root:root .nsk-pager [data-nsmax-pg-cur]:hover {
+	background:color-mix(in srgb,var(--nsmax-ink) 8%,transparent)!important;
+	color:var(--nsmax-text)!important;
+	font-weight:600!important;
+	cursor:default;
+}
+html:root:root .nsk-pager [data-nsmax-pg=gap],
+html:root:root .nsk-pager [data-nsmax-pg=gap]:hover {
+	min-width:20px;
+	padding:0!important;
+	background:transparent!important;
+	color:var(--nsmax-faint)!important;
+	cursor:default;
+	pointer-events:none;
+}
+html:root:root .nsk-pager :is([data-nsmax-pg=prev],[data-nsmax-pg=next]) {
+	width:32px;
+	padding:0!important;
+	font-size:0!important;
+}
+html:root:root .nsk-pager :is([data-nsmax-pg=prev],[data-nsmax-pg=next])>*,
+html:root:root .nsk-pager :is([data-nsmax-pg=prev],[data-nsmax-pg=next])::after {
+	display:none!important;
+}
+html:root:root .nsk-pager :is([data-nsmax-pg=prev],[data-nsmax-pg=next])::before {
+	content:""!important;
+	display:block;
+	width:16px;
+	height:16px;
+	margin:0;
+	background:currentColor;
+	-webkit-mask:var(--nsmax-icon-back) center/contain no-repeat;
+	mask:var(--nsmax-icon-back) center/contain no-repeat;
+}
+html:root:root .nsk-pager [data-nsmax-pg=next]::before {
+	-webkit-mask-image:var(--nsmax-icon-forward);
+	mask-image:var(--nsmax-icon-forward);
+}
+html:root:root .nsk-pager [data-nsmax-pg-off] {
+	opacity:.4;
+	pointer-events:none;
+}
+html:root:root [data-nsmax-sorter] {
+	display:inline-flex!important;
+	flex:none;
+	align-items:center;
+	gap:2px;
+	box-sizing:border-box;
+	width:auto!important;
+	height:32px!important;
+	margin:0;
+	padding:3px!important;
+	border:0!important;
+	border-radius:var(--nsmax-r-control,10px)!important;
+	background:var(--nsmax-seg-bg,var(--nsmax-fill))!important;
+	box-shadow:none!important;
+	font-size:0!important;
+	line-height:1!important;
+	vertical-align:middle;
+}
+html:root:root [data-nsmax-sort-sep] {
+	display:none!important;
+}
+html:root:root [data-nsmax-sort-item] {
+	display:inline-flex!important;
+	align-items:center;
+	justify-content:center;
+	box-sizing:border-box;
+	height:26px!important;
+	min-height:0!important;
+	margin:0!important;
+	padding:0 12px!important;
+	border:0!important;
+	border-radius:var(--nsmax-r-chip,6px)!important;
+	background:transparent!important;
+	box-shadow:none!important;
+	color:var(--nsmax-muted)!important;
+	font-size:13px!important;
+	font-weight:500!important;
+	line-height:1!important;
+	text-decoration:none!important;
+	white-space:nowrap;
+	cursor:pointer;
+}
+html:root:root [data-nsmax-sort-item] :not(svg,svg *) {
+	margin:0!important;
+	padding:0!important;
+	border:0!important;
+	background:transparent!important;
+	box-shadow:none!important;
+	color:inherit!important;
+	font:inherit!important;
+	text-decoration:none!important;
+}
+html:root:root [data-nsmax-sort-item]:hover {
+	color:var(--nsmax-text)!important;
+}
+html:root:root [data-nsmax-sort-item][data-nsmax-sort-on] {
+	background:var(--nsmax-seg-thumb,var(--nsmax-card))!important;
+	color:var(--nsmax-text)!important;
+	box-shadow:0 1px 2px rgb(31 30 29/.1),0 0 0 .5px rgb(31 30 29/.06)!important;
+	cursor:default;
+}
+html:root:root body.dark-layout [data-nsmax-sort-item][data-nsmax-sort-on] {
+	box-shadow:0 1px 2px rgb(0 0 0/.35),0 0 0 .5px rgb(255 255 255/.06)!important;
+}
+html:root:root :is([data-nsmax-sort-item],.nsk-pager [data-nsmax-pg]) {
+	transition:background-color .15s ease,color .15s ease,box-shadow .15s ease;
+}
 @keyframes nsmax-pop-in {from{opacity:0;transform:translateY(-4px)}}
 /* Claude 版式：主栏与左侧版块栏不再是卡片，直接放在米白页面底上（Claude 的对话区与侧栏没有卡片外框），右侧栏保留白色细边卡片；
    评论框、私信输入框这些白色输入框因此浮在米白底上。顶栏与页面同色、平时没有底边线，滚动后才出现一条细线。
@@ -2558,6 +2714,7 @@ html:root body {
 	--nsmax-icon-refresh:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 12a7.5 7.5 0 0 1-13 5.1M4.5 12a7.5 7.5 0 0 1 13-5.1M17.5 3.5v3.4h-3.4M6.5 20.5v-3.4h3.4'/%3E%3C/svg%3E");
 	--nsmax-icon-flame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5c.6 3 4.5 4.9 4.5 9.6a4.5 4.5 0 0 1-9 0c0-1.8.8-3.2 2-4.2.3 1.3 1 2.1 1.9 2.5C11 9.1 10.9 6.2 12 3.5Z'/%3E%3C/svg%3E");
 	--nsmax-icon-back:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 6 8.5 12l6 6'/%3E%3C/svg%3E");
+	--nsmax-icon-forward:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5 6l6 6-6 6'/%3E%3C/svg%3E");
 	--nsmax-icon-chat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 6v9a1.5 1.5 0 0 1-1.5 1.5h-9l-4 3.5v-3.5A1.5 1.5 0 0 1 4 15Z'/%3E%3C/svg%3E");
 	--nsmax-icon-search:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14ZM16 16l4 4'/%3E%3C/svg%3E");
 	--nsmax-icon-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");

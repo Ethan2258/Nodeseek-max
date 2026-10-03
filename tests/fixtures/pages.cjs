@@ -35,7 +35,13 @@ const listItems = titles.map((title, index) => `<li class="post-list-item"><a hr
 <div class="post-list-content"><div class="post-title"><a href="/post-${1000 + index}-1"${index === 1 ? ' class="nspp-read"' : ""}>${title}</a></div>
 <div class="post-info"><a class="info-item info-author" href="/space/${10 + index}">user${index}</a><span class="info-item info-views">${120 + index * 7} 浏览</span><span class="info-item info-comments-count">${index * 3} 回复</span><span class="info-item info-last-comment-time">${index + 1} 分钟前</span></div></div><a class="post-category" href="/categories/${categories[index % 5][0]}">${categories[index % 5][1]}</a></li>`).join("");
 
-const listPage = (options) => shell("NodeSeek", `<div id="nsk-left"><div class="list-head"><span>新评论 | 新帖子</span></div><ul class="post-list">${listItems}</ul><div class="nsk-pager"><span class="pager-cur">1</span><a class="pager-pos" href="/page-2">2</a><a class="pager-next" href="/page-2">下一页</a></div></div>${sidebar}`, options);
+// 列表顶部：排序切换与顶部分页（真实结构未知；pagerMode: "wrapped" 时用多层包裹、全是 span 的写法，两种都要能识别）。
+const ARROW = (d) => `<svg viewBox="0 0 24 24" width="14" height="14"><path d="${d}" fill="currentColor"/></svg>`;
+const topPager = (mode) => mode === "wrapped"
+	? `<div class="nsk-pager pager-top"><span class="pager-prev">${ARROW("M15 5 7 12l8 7z")}</span><span class="pager-group"><a class="pager-pos active" href="/page-1">1</a><a class="pager-pos active" href="/page-2">2</a><a class="pager-pos active" href="/page-3">3</a></span><span class="pager-more"><span>..</span><a class="pager-pos" href="/page-100"><span>100</span></a></span><a class="pager-next" href="/page-2">${ARROW("M9 5l8 7-8 7z")}</a></div>`
+	: `<div class="nsk-pager pager-top"><a class="pager-prev" href="/page-1">${ARROW("M15 5 7 12l8 7z")}</a><a class="pager-pos pager-cur" href="/page-1">1</a><a class="pager-pos" href="/page-2">2</a><a class="pager-pos" href="/page-3">3</a><span class="pager-pos">..</span><a class="pager-pos" href="/page-100">100</a><a class="pager-next" href="/page-2">${ARROW("M9 5l8 7-8 7z")}</a></div>`;
+const listHead = (mode) => `<div class="list-head"><div class="post-sort"><a class="sort-item" href="/">新评论</a><span class="sort-split">|</span><a class="sort-item" href="/?sortBy=postTime">新帖子</a></div>${topPager(mode)}</div>`;
+const listPage = (options = {}) => shell("NodeSeek", `<div id="nsk-left">${listHead(options.pagerMode)}<ul class="post-list">${listItems}</ul><div class="nsk-pager"><span class="pager-cur">1</span><a class="pager-pos" href="/page-2">2</a><a class="pager-next" href="/page-2">下一页</a></div></div>${sidebar}`, options);
 
 const content = `<h2>配置说明</h2><p>这是一段正文，包含 <a href="/jump?to=https%3A%2F%2Fexample.com%2Fdocs">外部链接</a> 和 <code>inline code</code>。</p>
 <blockquote><p>引用别人的楼层内容。</p></blockquote>
