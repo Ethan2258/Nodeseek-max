@@ -28566,11 +28566,12 @@ ${nsmaxClaude} :is(#nsk-head .nsmax-header-action,#nsk-head a[data-nsmax-own-hea
 /* 光学对齐：系统字体里数字和英文字母的字形比行框中心低约 0.8px（中文基本居中），只含数字 / 英文的小标签看起来「往下掉」。
    这些标签整体上提 0.5px，图标（伪元素或 svg）下移 1px，数字与图标中线对齐、整体居中（逐个用字形实际边界量过，偏差 ≤0.5px） */
 ${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*,#nsk-body-left .content-item .nspp-user-badges>*){padding-bottom:1px!important}
+${nsmaxClaude} #nsk-body-left .post-list-item .post-info .nspp-user-badges>*{box-sizing:border-box!important;height:18px!important}
 ${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*,#nsk-body-left .content-item .nspp-user-badges>*)::before{position:relative!important;top:1px!important}
 ${nsmaxClaude} :is(#nsk-body-left .post-list-item .post-info .nspp-user-badges>*,#nsk-body-left .content-item .nspp-user-badges>*)>:is(svg,.nsmax-icon){position:relative!important;top:1px!important}
 ${nsmaxClaude} #nsk-body-left ul.post-list>li.post-list-item .post-info>.post-category{padding-bottom:1px!important}
 ${nsmaxClaude} #nsk-body-left .content-item .floor-link{position:relative!important;top:-.5px!important}
-${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut]{padding-bottom:1px!important}
+${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut]{padding-bottom:2px!important}
 ${nsmaxClaude} #nsk-head a[data-nsmax-own-header=shortcut] svg{position:relative!important;top:1px!important}
 /* ---------- 页脚与回到顶部：页面底色、上方细线，链接弱化；回到顶部 / 底部是 36px 细边圆钮 ---------- */
 ${nsmaxClaude} body>footer{background:transparent!important;border-top:1px solid var(--nsmax-divider)!important;box-shadow:none!important;color:var(--nsmax-muted)!important}
