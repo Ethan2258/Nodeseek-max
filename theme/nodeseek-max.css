@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.6.7（纯 CSS）
+ * NodeSeek Max 主题 v1.6.8（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -57,6 +57,8 @@ html:root:root {
 	--nsmax-control-radius:8px;
 	--nsmax-seg-radius:8px;
 }
+/* 深色变量挂在 html[data-nsmax-dark] 上（脚本按 body.dark-layout 同步），不用 html:has(>body.dark-layout)：
+   根元素上的 :has() 让列表里任何一点 DOM 变化都触发整页样式重算（实测加载阶段约 0.5～0.8 秒） */
 html:root:has(>body.dark-layout) {
 	--nsmax-canvas:#000;
 	--nsmax-card:rgb(16 16 18/.97);
@@ -2046,6 +2048,31 @@ html:root:root .user-card>.user-stat {
 	background:transparent!important;
 }
 /* NodeSeek++ 徽章图标（信任分、加入天数、等级）：站点雪碧图里的粗图标换成统一线条图标（盾牌、日历、信号格） */
+/* 徽章还在读取时：一块和读完后差不多宽的浅色占位（不显示「加载中」文字），读完时这一行的其他信息不会再左右跳 */
+html:root .post-list-item .nspp-user-badges:is([aria-busy=true],[data-nsmax-early],:empty):not([hidden]) {
+	display:inline-block;
+	box-sizing:border-box;
+	width:9.75em;
+	height:1em;
+	margin:0 0 0 4px;
+	border-radius:var(--nsmax-r-chip,4px);
+	background:var(--nsmax-fill)!important;
+	-webkit-text-fill-color:transparent;
+	color:transparent!important;
+	font-size:12px;
+	line-height:1;
+	vertical-align:-.15em;
+	overflow:hidden;
+}
+html:root .post-list-item .nspp-user-badges[aria-busy=true]:not([hidden]) {
+	animation:nsmax-badge-wait 1.4s ease-in-out infinite;
+}
+@keyframes nsmax-badge-wait {50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce) {
+	html:root .post-list-item .nspp-user-badges[aria-busy=true]:not([hidden]) {
+		animation:none;
+	}
+}
 html:root .nspp-user-badges :is(.nspp-trust,.nspp-age,.nspp-level)>svg.iconpark-icon {
 	display:none;
 }
