@@ -52,12 +52,23 @@ const comment = (floor, uid, name, text) => `<li class="content-item" id="${floo
 <article class="post-content"><p>${text}</p></article><div class="comment-menu"><div class="menu-item" title="引用">引用</div><div class="menu-item" title="回复">回复</div></div></li>`;
 
 const EDITOR_TOOLS = [["text-bold", "加粗"], ["text-italic", "斜体"], ["strikethrough", "删除线"], ["h", "标题"], ["list-two", "无序列表"], ["ordered-list", "有序列表"], ["quote", "引用"], ["link-one", "链接"], ["pic", "图片"], ["code", "代码"], ["table-file", "表格"], ["minus", "分割线"], ["undo", "撤销"], ["redo", "重做"], ["clear-format", "清空"]];
-const editor = `<div class="md-editor"><div class="tab-select"><span class="tab active">内容</span><span class="tab">预览</span></div><div class="mde-toolbar">${EDITOR_TOOLS.map(([name, title]) => `<span class="toolbar-item i-icon i-icon-${name}" title="${title}"><svg viewBox="0 0 48 48" width="16" height="16"><rect x="10" y="10" width="28" height="28" fill="currentColor"/></svg></span>`).join("")}<span class="toolbar-item right">支持markdown语法</span></div><textarea placeholder="说点什么…"></textarea><div class="expression"><div class="exp-item current-group">AC娘</div><div class="exp-item">洋葱头</div><div class="exp-item">小黄鸡</div></div><div class="exp-container"><!----></div><div class="submit-row" style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div></div>`;
+// 编辑器：工具按钮之间有分组竖线（空元素），工具栏右侧是「支持markdown语法」提示和几个纯图标按钮。
+// editorMode: "wrapped" 时「内容 / 预览 / 对照」标签与工具栏包在同一个容器里、标签行右侧带图标按钮（站点真实结构未知，两种都要能排好）。
+const SPLIT_AFTER = new Set(["h", "quote", "code", "minus"]);
+const toolIcon = (name, title) => `<span class="toolbar-item i-icon i-icon-${name}" title="${title}"><svg viewBox="0 0 48 48" width="16" height="16"><rect x="10" y="10" width="28" height="28" fill="currentColor"/></svg></span>`;
+const toolButtons = EDITOR_TOOLS.map(([name, title]) => toolIcon(name, title) + (SPLIT_AFTER.has(name) ? `<span class="toolbar-split"></span>` : "")).join("");
+const asideIcons = [["list-numbers", "目录"], ["toolkit", "工具箱"], ["full-screen", "全屏"]].map(([name, title]) => `<span class="i-icon i-icon-${name}" title="${title}"><svg viewBox="0 0 48 48" width="16" height="16"><circle cx="24" cy="24" r="14" fill="currentColor"/></svg></span>`).join("");
+const editorTabs = `<span class="tab active">内容</span><span class="tab">预览</span><span class="tab">对照</span>`;
+const editorRest = `<textarea placeholder="说点什么…"></textarea><div class="expression"><div class="exp-item current-group">AC娘</div><div class="exp-item">洋葱头</div><div class="exp-item">小黄鸡</div></div><div class="exp-container"><!----></div><div class="submit-row" style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div></div>`;
+const editorFor = (mode) => mode === "wrapped"
+	? `<div class="md-editor"><div class="editor-head"><div class="tab-bar">${editorTabs}<div class="tab-aside"><span>支持markdown语法</span>${asideIcons}</div></div><div class="mde-toolbar">${toolButtons}</div></div>${editorRest}`
+	: `<div class="md-editor"><div class="tab-select">${editorTabs}</div><div class="mde-toolbar">${toolButtons}<span class="toolbar-item right">支持markdown语法</span>${asideIcons}</div>${editorRest}`;
+const editor = editorFor();
 const postPage = (options) => shell("出一台香港 CN2 GIA 小鸡 - NodeSeek", `<div id="nsk-left"><div class="nsk-post-wrapper"><div class="post-title"><h1><a class="nspp-read" href="/post-1000-1">出一台香港 CN2 GIA 小鸡，年付 99</a></h1></div>
 <div class="nsk-post"><div class="nsk-content-meta-info"><a href="/space/10"><img class="avatar-normal" src="${AVATAR}" alt="seller"></a><div class="author-info"><a href="/space/10">seller</a></div><span style="margin-left:auto"><a class="floor-link" href="#0">#0</a></span></div>
 <article class="post-content">${content}</article><div class="signature">签名：机器不跑路 <a href="https://example.com/x" style="color:#2ea44f">Xmanager</a> | <span style="color:#3fb950">Xshell</span></div><div class="comment-menu">${[["点赞", "good-one", "12"], ["加鸡腿", "chicken-leg", "3"], ["反对", "bad-one", "0"]].map(([title, icon, count]) => `<div class="menu-item" title="${title}"><svg class="iconpark-icon"><use href="#${icon}"></use></svg><span>${count}</span></div>`).join("")}<div class="menu-item" title="引用">引用</div><div class="menu-item" title="回复">回复</div></div></div>
 <ul class="comments">${comment(1, 11, "buyer", "收了，私信你")}${comment(2, 12, "passerby", "价格不错，帮顶")}${comment(3, 13, "curious", "线路怎么样？晚高峰丢包吗？")}</ul>
-${editor}
+${editorFor(options?.editorMode)}
 </div></div>${sidebar}`, options);
 
 const notificationPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-left"><ul class="notification-list">

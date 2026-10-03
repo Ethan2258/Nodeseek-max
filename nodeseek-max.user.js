@@ -25281,24 +25281,36 @@ ${scope} .nsmax-header-action{padding:0;background:transparent;font:inherit}
 ${scope} [data-nsmax-header-toggle]{display:none!important}
 ${scope} [data-nsmax-own-first]:is(:has(+[data-nsmax-header-end]),:has(+.nsmax-header-action+[data-nsmax-header-end])){margin-left:auto!important}
 ${scope} .nsmax-header-action+[data-nsmax-header-end]{margin-left:0!important}
+${scope} [data-nsmax-header-row]:has(>[data-nsmax-header-search-slot]){justify-content:flex-start!important}
+${scope} [data-nsmax-header-search-slot]{flex:none!important;position:static!important;inset:auto!important;transform:none!important;margin-left:auto!important;margin-right:0!important}
+${scope} [data-nsmax-header-search-slot]~[data-nsmax-header-end],${scope} [data-nsmax-header-search-slot]~[data-nsmax-own-first]{margin-left:6px!important}
 :is([data-nsmax-header-toggle],.nsmax-header-action) svg{width:15px!important;height:15px!important}`;
 		// 窗口较窄、站点收起左侧栏时（列表与帖子页本来都有左侧栏）：同样精简，但保留顶栏里的版块链接，排成一排 Claude 风格的标签。
-		const narrow = "html:not([data-nsmax-sidenav]):is([data-nsmax-sidenav-page],[data-nsmax-page=list],[data-nsmax-page=post])";
+		// 版块导航在顶栏（默认）时所有页面都排版块标签；放在左侧栏时，只有窗口较窄、站点收起左侧栏才排。
+		const narrow = "html:is([data-nsmax-nav=header],:not([data-nsmax-sidenav]):is([data-nsmax-sidenav-page],[data-nsmax-page=list],[data-nsmax-page=post]))";
 		const tabs = (scope) => `${scope} [data-nsmax-header-cat]:not([data-nsmax-header-hide]){display:flex!important}
 ${scope} [data-nsmax-header-cat]:not(a){align-items:center;gap:2px;flex:0 1 auto;min-width:0;padding:0!important;overflow:hidden}
 ${scope} [data-nsmax-header-cat]{margin-left:max(0px,calc(12px - var(--nsmax-cat-gap,0px)))!important}
 ${scope} [data-nsmax-header-cat]+[data-nsmax-header-cat]{margin-left:calc(2px - var(--nsmax-cat-gap,0px))!important}
 ${scope} [data-nsmax-header-cat] a{margin:0!important}
-${scope} :is(a[data-nsmax-header-cat],[data-nsmax-header-cat] a){align-items:center;flex:none;box-sizing:border-box;height:32px!important;margin-top:0!important;margin-bottom:0!important;padding:0 10px!important;border:0!important;border-radius:var(--nsmax-r-control,8px)!important;background:transparent!important;color:var(--nsmax-text-2,inherit)!important;font-size:14px!important;font-weight:500!important;line-height:1!important;white-space:nowrap!important;text-decoration:none!important;transition:background-color .15s ease,color .15s ease}
+${scope} :is(a[data-nsmax-header-cat],[data-nsmax-header-cat] a){align-items:center;flex:none;box-sizing:border-box;height:32px!important;margin-top:0!important;margin-bottom:0!important;padding:0 12px!important;border:0!important;border-radius:var(--nsmax-r-control,8px)!important;background:transparent!important;color:var(--nsmax-text-2,inherit)!important;font-size:14px!important;font-weight:500!important;gap:0!important;line-height:1!important;white-space:nowrap!important;text-decoration:none!important;transition:background-color .15s ease,color .15s ease}
 ${scope} [data-nsmax-header-cat] a{display:inline-flex!important}
+${scope} :is(a[data-nsmax-header-cat],[data-nsmax-header-cat] a) :is(svg,img,i,.iconpark-icon,.nsmax-icon,[data-nsmax-icon]){display:none!important}
+${scope} :is(a[data-nsmax-header-cat],[data-nsmax-header-cat] a)::before{content:none!important;display:none!important}
 ${scope} [data-nsmax-header-cat] a[data-nsmax-header-hide]{display:none!important}
 ${scope} :is(a[data-nsmax-header-cat],[data-nsmax-header-cat] a):hover{background:color-mix(in srgb,var(--nsmax-ink,#000) 5%,transparent)!important;color:var(--nsmax-text,inherit)!important}
 ${scope} a[data-nsmax-header-cat-on],${scope} a[data-nsmax-header-cat-on]:hover{background:color-mix(in srgb,var(--nsmax-ink,#000) 8%,transparent)!important;color:var(--nsmax-text,inherit)!important}
 ${scope} [data-nsmax-header-search]{width:clamp(168px,22vw,240px)!important}
+${scope} a[data-nsmax-own-header=shortcut]{display:inline-flex!important;align-items:center;gap:6px;flex:none;box-sizing:border-box;height:32px;margin:0 6px 0 0!important;padding:0 10px!important;border-radius:var(--nsmax-r-control,8px);color:var(--nsmax-text-2,inherit)!important;font-size:14px!important;font-weight:500!important;line-height:1!important;white-space:nowrap;text-decoration:none!important;transition:background-color .15s ease,color .15s ease}
+${scope} a[data-nsmax-own-header=shortcut]:hover{background:color-mix(in srgb,var(--nsmax-ink,#000) 5%,transparent);color:var(--nsmax-text,inherit)!important}
+${scope} a[data-nsmax-own-header=shortcut] svg{flex:none;width:16px;height:16px}
+${scope} [data-nsmax-header-search-slot]:has(>[data-nsmax-own-header=shortcut]){display:flex!important;align-items:center}
+${scope} [data-nsmax-own-lead]:has(~[data-nsmax-header-search-slot]){margin-left:auto!important}
+${scope} [data-nsmax-own-lead]~[data-nsmax-header-search-slot]{margin-left:0!important}
 @media (max-width:960px){${scope} :is(a[data-nsmax-header-cat],[data-nsmax-header-cat] a){padding:0 8px!important}}`;
-		_css(`.nsmax-header-action{display:none}
-${minimalRules("html[data-nsmax-sidenav]")}
-@media (min-width:1000px){${minimalRules("html:not([data-nsmax-sidenav-page]):not([data-nsmax-page=list],[data-nsmax-page=post])")}}
+		_css(`:is(.nsmax-header-action,[data-nsmax-own-header=shortcut],[data-nsmax-own-header=cat]){display:none}
+${minimalRules("html[data-nsmax-sidenav]:not([data-nsmax-nav=header])")}
+@media (min-width:1000px){${minimalRules("html:not([data-nsmax-sidenav-page]):not([data-nsmax-page=list],[data-nsmax-page=post],[data-nsmax-nav=header])")}}
 @media (min-width:800px){${minimalRules(narrow)}
 ${tabs(narrow)}}
 /* 顶栏搜索框（参考 sb.sb）：固定宽度、不做宽度动画（站点原本悬停 / 聚焦时会伸缩），各页面长度一致；
@@ -25320,7 +25332,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 	// 精简顶栏规划器：模块级单例。页面解析阶段顶栏一解析完就先规划一次，主题模块启动后沿用同一份标记继续跟踪顶栏变化。
 	var nsmaxHeaderPlanner = null;
 	function createHeaderPlanner() {
-		const headerAttributes = ["data-nsmax-header-hide", "data-nsmax-header-row", "data-nsmax-header-end", "data-nsmax-header-toggle", "data-nsmax-header-search", "data-nsmax-header-cat", "data-nsmax-header-cat-on"];
+		const headerAttributes = ["data-nsmax-header-hide", "data-nsmax-header-row", "data-nsmax-header-end", "data-nsmax-header-toggle", "data-nsmax-header-search", "data-nsmax-header-cat", "data-nsmax-header-cat-on", "data-nsmax-header-search-slot"];
 		const marked = new Set();
 		const mark = (element, attribute) => {
 			element.setAttribute(attribute, "");
@@ -25386,6 +25398,11 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 					let end = plan.toggle;
 					while (end.parentElement && end.parentElement !== row) end = end.parentElement;
 					mark(end, "data-nsmax-header-end");
+					// 站点把搜索框单独放在顶栏中间（和右侧按钮不在同一组）时：把搜索框那一组也推到右边，紧挨着按钮。
+					const search = plan.searches[0];
+					let slot = search;
+					while (slot?.parentElement && slot.parentElement !== row) slot = slot.parentElement;
+					if (slot && slot.parentElement === row && slot !== end && !slot.contains(plan.toggle)) mark(slot, "data-nsmax-header-search-slot");
 				}
 			}
 		};
@@ -25427,6 +25444,140 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 	}
 	// 顶栏右上角：点深浅色按钮弹出「浅色 / 深色 / 跟随系统」菜单；旁边的漏斗按钮打开关键词屏蔽（帖子与用户过滤模块打开时才显示）。
 	// 浮层挂在 body 上，固定在按钮下方右对齐；点外面、按 Esc、再点一次按钮都会关闭。
+	// 帖子页楼层对齐（参考 sb.sb）：站点上主楼和回复外面包的层数不同，头像、名字、正文、签名、按钮各有各的缩进，左边对不齐。
+	// 这里按语义标记——卡片（#nsk-left）、楼层（unit）、楼层头（head：头像 + 名字 + 时间 + 楼号）、头像、楼号，以及楼层到卡片之间的
+	// 包装层——样式里统一成「头像一列 + 内容一列」：名字、正文、签名、按钮都从头像右边同一条线开始，标题、「全部回复」、每一层的
+	// 头像都对齐卡片内边距。只加属性，不移动元素；页面解析阶段每解析一段就标记一次，之后站点加载的楼层由主题模块继续标记。
+	var nsmaxPostLayoutAttributes = ["data-nsmax-pm", "data-nsmax-pm-card", "data-nsmax-pm-wrap", "data-nsmax-pm-flat", "data-nsmax-pm-meta", "data-nsmax-pm-av", "data-nsmax-pm-floor", "data-nsmax-pm-main", "data-nsmax-pm-menu"];
+	function nsmaxMarkPostLayout() {
+		const root = document.documentElement;
+		const card = document.getElementById("nsk-left");
+		if (root.dataset.nsmaxPage !== "post" || !card) return;
+		const set = (element, name, value = "") => {
+			if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+		};
+		const childOf = (parent, node) => {
+			while (node && node.parentElement !== parent) node = node.parentElement;
+			return node;
+		};
+		const wrapUp = (element) => {
+			for (let node = element.parentElement; node && node !== card; node = node.parentElement) if (!node.hasAttribute("data-nsmax-pm")) set(node, "data-nsmax-pm-wrap");
+		};
+		let found = false;
+		for (const meta of card.querySelectorAll(".nsk-content-meta-info:not([data-nsmax-pm-meta])")) {
+			if (meta.closest(".md-editor, .nspp-floating-reply")) continue;
+			let unit = meta.closest(".content-item");
+			if (!unit || !card.contains(unit)) for (unit = meta.parentElement; unit && unit !== card && !unit.querySelector(".post-content"); unit = unit.parentElement);
+			if (!unit || unit === card || unit.querySelectorAll(".nsk-content-meta-info").length > 1 && !unit.matches(".content-item, .nsk-post")) continue;
+			const head = childOf(unit, meta);
+			for (let node = meta.parentElement; node && node !== head && node !== unit; node = node.parentElement) set(node, "data-nsmax-pm-flat");
+			if (head !== meta) set(head, "data-nsmax-pm", "head");
+			set(meta, "data-nsmax-pm-meta");
+			if (head === meta) set(meta, "data-nsmax-pm", "head");
+			const avatar = meta.querySelector("img.avatar-normal, img[class*=avatar], img");
+			const avatarSlot = avatar && childOf(meta, avatar);
+			if (avatarSlot) set(avatarSlot, "data-nsmax-pm-av");
+			const floor = meta.querySelector("a.floor-link, a[href^='#']");
+			const floorSlot = floor && childOf(meta, floor);
+			if (floorSlot && floorSlot !== avatarSlot && floorSlot.querySelectorAll("a").length === 1) set(floorSlot, "data-nsmax-pm-floor");
+			set(unit, "data-nsmax-pm", "unit");
+			if (!unit.closest("ul.comments") && !card.querySelector("[data-nsmax-pm-main]")) set(unit, "data-nsmax-pm-main");
+			wrapUp(unit);
+			found = true;
+		}
+		// 楼层里后解析出来的部分：含其他楼层的子元素（主楼里包着回复列表时）铺满整行；按钮行区分主楼与回复。
+		for (const unit of card.querySelectorAll("[data-nsmax-pm=unit]")) {
+			for (const child of unit.children) if (!child.hasAttribute("data-nsmax-pm") && child.querySelector(".nsk-content-meta-info")) set(child, "data-nsmax-pm", "nest");
+			for (const menu of unit.querySelectorAll(".comment-menu:not([data-nsmax-pm-menu])")) if (menu.closest("[data-nsmax-pm=unit]") === unit) set(menu, "data-nsmax-pm-menu", unit.hasAttribute("data-nsmax-pm-main") ? "main" : "reply");
+		}
+		if (!found && !card.hasAttribute("data-nsmax-pm-card")) return;
+		set(card, "data-nsmax-pm-card");
+		root.setAttribute("data-nsmax-pm", "");
+		const title = card.querySelector(".post-title:not([data-nsmax-pm])");
+		if (title && !title.closest("[data-nsmax-pm=unit]")) {
+			set(title, "data-nsmax-pm", "title");
+			wrapUp(title);
+		}
+		for (const editor of card.querySelectorAll(".md-editor:not(.nspp-floating-reply):not([data-nsmax-pm])")) {
+			set(editor, "data-nsmax-pm", "editor");
+			wrapUp(editor);
+		}
+	}
+	function nsmaxClearPostLayout() {
+		document.documentElement.removeAttribute("data-nsmax-pm");
+		const selector = nsmaxPostLayoutAttributes.map((name) => `[${name}]`).join(",");
+		for (const element of document.querySelectorAll(selector)) for (const name of nsmaxPostLayoutAttributes) element.removeAttribute(name);
+	}
+	// 版块导航在顶栏（默认，像 sb.sb）时：左侧栏里有、顶栏原本没有的版块（如曝光、内版）补进顶栏那一排标签，
+	// 侧栏导航的快捷入口（NQ 等）放在搜索框前面。只加脚本自己的元素（带 data-nsmax-own-header），站点原有元素不动。
+	var nsmaxHeaderExtraCache = new Map();
+	function nsmaxHeaderExtras() {
+		if (document.documentElement.dataset.nsmaxNav !== "header") return;
+		const header = document.querySelector("[data-nsmax-header]") || pickSiteHeader();
+		if (!header) return;
+		const nav = sidebarNavSettings();
+		const hidden = nav?.hidden || new Set(filterLines(NSMAX_HIDDEN_DEFAULT).map((name) => name.toLocaleLowerCase()));
+		const cats = Array.from(header.querySelectorAll("[data-nsmax-header-cat]:not([data-nsmax-own-header])"));
+		const present = new Set();
+		for (const element of cats) for (const link of element.matches("a") ? [element] : element.querySelectorAll("a[href]")) present.add(navLabel(link));
+		const extras = [];
+		const panel = document.getElementById("nsk-left-panel-container");
+		if (panel && cats.length) for (const item of panel.querySelectorAll("a[href], [data-to]")) {
+			if (item.closest(".nsmax-shortcuts") || item.matches("[data-to]") && item.querySelector("a[href]")) continue;
+			const label = navLabel(item);
+			const href = item.getAttribute("href") || item.getAttribute("data-to");
+			if (!href || !NSMAX_CATEGORY_NAMES.includes(label) || hidden.has(label) || present.has(label)) continue;
+			present.add(label);
+			let link = nsmaxHeaderExtraCache.get(`cat:${label}`);
+			if (!link) {
+				link = document.createElement("a");
+				link.setAttribute("data-nsmax-own-header", "cat");
+				link.textContent = (item.textContent || "").replace(/\s+/g, "");
+				nsmaxHeaderExtraCache.set(`cat:${label}`, link);
+			}
+			link.href = href;
+			const path = new URL(link.href, location.href).pathname.replace(/\/$/, "");
+			link.toggleAttribute("data-nsmax-header-cat-on", path.startsWith("/categories/") && (location.pathname === path || location.pathname.startsWith(`${path}/`)));
+			extras.push(link);
+		}
+		if (extras.length) {
+			const direct = cats.filter((element) => element.matches("a") && !element.hasAttribute("data-nsmax-header-hide"));
+			if (direct.length) {
+				const last = direct.at(-1);
+				if (!extras.every((link, index) => link.previousElementSibling === (index ? extras[index - 1] : last))) last.after(...extras);
+				for (const link of extras) link.setAttribute("data-nsmax-header-cat", "");
+				requestAnimationFrame(() => {
+					for (const link of extras) link.style.setProperty("--nsmax-cat-gap", last.style.getPropertyValue("--nsmax-cat-gap") || "0px");
+				});
+			} else {
+				const container = cats.at(-1);
+				if (!extras.every((link) => link.parentElement === container)) container.append(...extras);
+			}
+		}
+		// 快捷入口：放在搜索框前面
+		const options = featureEnabled(sidebarNav);
+		const shortcuts = options.enabled ? parseShortcuts(options.shortcuts) : [];
+		const links = shortcuts.map((shortcut) => {
+			let link = nsmaxHeaderExtraCache.get(`shortcut:${shortcut.href}`);
+			if (!link) {
+				link = document.createElement("a");
+				link.setAttribute("data-nsmax-own-header", "shortcut");
+				link.target = "_blank";
+				link.rel = "noopener noreferrer";
+				link.append(shortcutIcon(shortcut.icon), document.createTextNode(shortcut.name));
+				nsmaxHeaderExtraCache.set(`shortcut:${shortcut.href}`, link);
+			}
+			link.href = shortcut.href;
+			link.title = `${shortcut.note}（新标签页打开）`;
+			return link;
+		});
+		for (const [key, link] of nsmaxHeaderExtraCache) if (key.startsWith("shortcut:") && !links.includes(link)) link.remove();
+		const search = header.querySelector("[data-nsmax-header-search]");
+		const box = search?.matches("input") ? search.parentElement : search;
+		if (!links.length || !box) return;
+		if (!links.every((link, index) => link.nextElementSibling === (index === links.length - 1 ? box : links[index + 1]))) box.before(...links);
+		links.forEach((link, index) => link.toggleAttribute("data-nsmax-own-lead", index === 0));
+	}
 	// 顶栏右侧脚本自己的两个按钮（关键词屏蔽、深浅色）：模块级单例。页面解析阶段顶栏一整理完就放进去（首屏就在，
 	// 不会等模块启动后再插入、把搜索框挤开），主题模块启动后接上点击行为（mountHeaderActions）。
 	var nsmaxHeaderButtonCache = null;
@@ -26757,25 +26908,6 @@ ${nsmaxClaude}{--nsmax-r-chip:6px;--nsmax-r-control:10px;--nsmax-r-card:16px;--n
 ${nsmaxClaude}[data-nsmax-radius=medium]{--nsmax-r-chip:5px;--nsmax-r-control:8px;--nsmax-r-card:12px;--nsmax-r-frame:18px}
 ${nsmaxClaude}[data-nsmax-radius=small]{--nsmax-r-chip:4px;--nsmax-r-control:6px;--nsmax-r-card:8px;--nsmax-r-frame:12px}
 ${nsmaxClaude},${nsmaxClaude}[data-nsmax-radius]{--nsmax-radius:var(--nsmax-r-card);--nsmax-radius-sm:var(--nsmax-r-control);--nsmax-control-radius:var(--nsmax-r-control);--nsmax-seg-radius:var(--nsmax-r-control);--nsmax-pill:var(--nsmax-r-control);--nsmax-chip:var(--nsmax-r-chip);--nsmax-composer-radius:var(--nsmax-r-frame);--nsmax-dialog-radius:var(--nsmax-r-card);--nsmax-bubble-r:var(--nsmax-r-card);--nsmax-bubble-nub:var(--nsmax-r-card)}
-${NSMAX_ROOT}[data-nsmax-style=flat][data-nsmax-palette=sbsb]{--nsmax-canvas:#f7f8fa;--nsmax-card:#fff;--nsmax-surface:#fff;--nsmax-fill:#f2f4f7;
---nsmax-glass:rgb(255 255 255/.96);--nsmax-popup:#fff;--nsmax-blur:none;
---nsmax-stroke:#e0e2e8;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#eef0f3;--nsmax-panel-alt:#fafbfc;--nsmax-stroke-strong:#c7cad5;--nsmax-faint:#8e91a0;
---nsmax-text:#1c1c1e;--nsmax-text-2:#555a6a;--nsmax-muted:#6b6f7e;--nsmax-thumb:rgb(107 111 126/.4);--nsmax-ink:#1c1c1e;--nsmax-on-ink:#fff;--nsmax-bubble:initial;--nsmax-on-bubble:initial;--nsmax-seg-bg:initial;--nsmax-seg-thumb:initial;--nsmax-code-bg:initial;
---nsmax-shadow:0 1px 2px rgb(0 0 0/.04);--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.04),0 6px 18px rgb(0 0 0/.05);--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.14);
---nsmax-composer-line:var(--nsmax-stroke);--nsmax-composer-line-focus:var(--nsmax-stroke-strong);--nsmax-composer-shadow:0 1px 2px rgb(0 0 0/.04);--nsmax-composer-shadow-hover:0 1px 2px rgb(0 0 0/.04);--nsmax-composer-shadow-focus:0 0 0 3px rgb(28 28 30/.06),0 1px 2px rgb(0 0 0/.04);
---nsmax-pill:initial;--nsmax-chip:initial;--nsmax-avatar:initial;--nsmax-composer-radius:12px;--nsmax-dialog-radius:12px;--nsmax-bubble-r:initial;--nsmax-bubble-nub:initial}
-${NSMAX_ROOT}[data-nsmax-style=flat][data-nsmax-palette=sbsb][data-nsmax-dark]{--nsmax-canvas:#0d0e14;--nsmax-card:#14151c;--nsmax-surface:#14151c;--nsmax-fill:#20222c;
---nsmax-glass:rgb(20 21 28/.96);--nsmax-popup:#14151c;--nsmax-blur:none;
---nsmax-stroke:#2a2c38;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#20222c;--nsmax-panel-alt:#1a1b24;--nsmax-stroke-strong:#3a3d4c;--nsmax-faint:#6e7284;
---nsmax-text:#e7e8ef;--nsmax-text-2:#a8abbb;--nsmax-muted:#8b8fa1;--nsmax-thumb:rgb(139 143 161/.4);--nsmax-ink:#eef0f6;--nsmax-on-ink:#14151c;--nsmax-bubble:initial;--nsmax-on-bubble:initial;--nsmax-seg-bg:initial;--nsmax-seg-thumb:initial;--nsmax-code-bg:initial;
---nsmax-shadow:0 1px 2px rgb(0 0 0/.34);--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.34),0 8px 24px rgb(0 0 0/.4);--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.62);
---nsmax-composer-line:var(--nsmax-stroke);--nsmax-composer-line-focus:var(--nsmax-stroke-strong);--nsmax-composer-shadow:0 1px 2px rgb(0 0 0/.34);--nsmax-composer-shadow-hover:0 1px 2px rgb(0 0 0/.34);--nsmax-composer-shadow-focus:0 0 0 3px rgb(238 240 246/.06),0 1px 2px rgb(0 0 0/.34)}
-${NSMAX_ROOT}[data-nsmax-style=flat][data-nsmax-palette=sbsb] body.dark-layout{--nsmax-canvas:#0d0e14;--nsmax-card:#14151c;--nsmax-surface:#14151c;--nsmax-fill:#20222c;
---nsmax-glass:rgb(20 21 28/.96);--nsmax-popup:#14151c;--nsmax-blur:none;
---nsmax-stroke:#2a2c38;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#20222c;--nsmax-panel-alt:#1a1b24;--nsmax-stroke-strong:#3a3d4c;--nsmax-faint:#6e7284;
---nsmax-text:#e7e8ef;--nsmax-text-2:#a8abbb;--nsmax-muted:#8b8fa1;--nsmax-thumb:rgb(139 143 161/.4);--nsmax-ink:#eef0f6;--nsmax-on-ink:#14151c;--nsmax-bubble:initial;--nsmax-on-bubble:initial;--nsmax-seg-bg:initial;--nsmax-seg-thumb:initial;--nsmax-code-bg:initial;
---nsmax-shadow:0 1px 2px rgb(0 0 0/.34);--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.34),0 8px 24px rgb(0 0 0/.4);--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.62);
---nsmax-composer-line:var(--nsmax-stroke);--nsmax-composer-line-focus:var(--nsmax-stroke-strong);--nsmax-composer-shadow:0 1px 2px rgb(0 0 0/.34);--nsmax-composer-shadow-hover:0 1px 2px rgb(0 0 0/.34);--nsmax-composer-shadow-focus:0 0 0 3px rgb(238 240 246/.06),0 1px 2px rgb(0 0 0/.34)}
 
 ${NSMAX_ROOT} body{--nsmax-accent:var(--main-color,var(--primary-color,#1d1d1f));--nsmax-on-accent:#fff}
 ${NSMAX_ROOT}[data-nsmax-accent=mono] body{--nsmax-accent:var(--nsmax-ink);--nsmax-on-accent:var(--nsmax-on-ink)}
@@ -26818,6 +26950,8 @@ ${NSMAX_ROOT}[data-nsmax-glass][data-nsmax-sticky-header]{scroll-padding-top:cal
 
 ${NSMAX_ROOT}[data-nsmax-boot-header] :is(header:not(dialog *),#nsk-head,[data-nsmax-header]){opacity:0}
 ${NSMAX_ROOT}[data-nsmax-boot-left] #nsk-left-panel-container{opacity:0}
+/* 版块导航在顶栏（默认）：左侧版块栏不显示，主栏占满它的位置 */
+${NSMAX_ROOT}[data-nsmax-nav=header] #nsk-left-panel-container{display:none!important}
 ${NSMAX_ROOT}[data-nsmax-boot-right] #nsk-right-panel-container{opacity:0}
 ${NSMAX_ROOT}[data-nsmax-boot-fade] :is(header:not(dialog *),#nsk-head,[data-nsmax-header],#nsk-left-panel-container,#nsk-right-panel-container){transition:opacity .2s ease}
 ${NSMAX_ROOT}[data-nsmax-motion] :is(.nsmax-hot-panel,.nsmax-shortcuts){animation:nsmax-appear .24s ease both}
@@ -26843,11 +26977,34 @@ ${NSMAX_ROOT}[data-nsmax-list=rows] ul.post-list:not(.topic-carousel-panel)>li.p
 ${NSMAX_ROOT}[data-nsmax-list=rows] #nsk-left:has(>ul.post-list:not(.topic-carousel-panel)>li.post-list-item){padding-left:14px!important;padding-right:14px!important}
 ${NSMAX_ROOT}[data-nsmax-list=rows] #nsk-left>ul.post-list:not(.topic-carousel-panel):has(>li.post-list-item){margin-left:-14px;margin-right:-14px}
 ${NSMAX_ROOT}[data-nsmax-list=rows] #nsk-left>ul.post-list:not(.topic-carousel-panel):has(>li.post-list-item):not(:first-child){border-top:1px solid var(--nsmax-divider)}
-${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows] #nsk-left:has(>.nsk-post-wrapper>ul.comments){padding-left:0!important;padding-right:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows]:not([data-nsmax-pm]) #nsk-left:has(>.nsk-post-wrapper>ul.comments){padding-left:0!important;padding-right:0!important}
 ${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows] .nsk-post-wrapper:has(>ul.comments){padding-left:18px!important;padding-right:18px!important}
 ${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows] .nsk-post-wrapper>ul.comments{margin-left:-18px;margin-right:-18px}
 ${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows] .nsk-post-wrapper>ul.comments>li.content-item{padding-left:18px;padding-right:18px}
 ${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows] .nsk-post-wrapper>ul.comments:has(>li.content-item)::before{padding-left:18px;padding-right:18px}
+/* 帖子页楼层对齐（脚本标记后生效，见 nsmaxMark${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card]ostLayout；参考 sb.sb）：卡片左右 20px 内边距；楼层与卡片之间的包装层去掉左右缩进；
+   每个楼层是「32px 头像列 + 内容列」两列网格，楼层头铺满两列（头像、名字、徽章、时间一行，楼号靠右），正文、签名、按钮都在内容列，
+   与名字左对齐。楼层、回复列表左右各伸出 20px 再补回内边距：分隔线与悬停底色铺满卡片，内容仍对齐卡片内边距 */
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card]{--nsmax-pm-pad:20px;--nsmax-pm-av:32px;--nsmax-pm-gap:10px;padding-left:var(--nsmax-pm-pad)!important;padding-right:var(--nsmax-pm-pad)!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-wrap]{box-sizing:border-box;width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important;border-left:0!important;border-right:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] :is(ul.comments[data-nsmax-pm-wrap],[data-nsmax-pm=nest]){margin-left:calc(-1*var(--nsmax-pm-pad))!important;margin-right:calc(-1*var(--nsmax-pm-pad))!important;padding-left:var(--nsmax-pm-pad)!important;padding-right:var(--nsmax-pm-pad)!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] ul.comments[data-nsmax-pm-wrap]:has(>li.content-item)::before{padding-left:0;padding-right:0}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] :is([data-nsmax-pm=title],[data-nsmax-pm=editor]){margin-left:0!important;margin-right:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm=title]{padding-left:0!important;padding-right:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm=unit]{display:grid!important;grid-template-columns:var(--nsmax-pm-av) minmax(0,1fr);column-gap:var(--nsmax-pm-gap);align-items:start;box-sizing:border-box;width:auto!important;max-width:none!important;margin-left:calc(-1*var(--nsmax-pm-pad))!important;margin-right:calc(-1*var(--nsmax-pm-pad))!important;padding-left:var(--nsmax-pm-pad)!important;padding-right:var(--nsmax-pm-pad)!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm=unit]>*{grid-column:2;min-width:0;max-width:100%;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm=unit]>[data-nsmax-pm=head]{grid-column:1/-1}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm=unit]>[data-nsmax-pm=nest]{grid-column:1/-1}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-flat]{margin:0!important;padding:0!important;border:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-meta]{display:flex!important;flex-wrap:wrap;align-items:center;column-gap:8px;row-gap:2px;box-sizing:border-box;min-height:var(--nsmax-pm-av);margin:0!important;padding:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-meta]>*{margin-top:0!important;margin-bottom:0!important;margin-left:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-meta]>:not([data-nsmax-pm-av],[data-nsmax-pm-floor]){flex:0 1 auto;min-width:0;padding-left:0!important;padding-right:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-av]{flex:0 0 var(--nsmax-pm-av);display:block!important;position:static!important;box-sizing:border-box;width:var(--nsmax-pm-av)!important;min-width:0!important;height:var(--nsmax-pm-av)!important;margin:0 calc(var(--nsmax-pm-gap) - 8px) 0 0!important;padding:0!important;border:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-av] :is(a,picture){display:block!important;width:100%!important;height:100%!important;margin:0!important;padding:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-av] img{display:block!important;width:var(--nsmax-pm-av)!important;height:var(--nsmax-pm-av)!important;margin:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm-floor]{order:9;margin-left:auto!important;margin-right:0!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm=unit]>.post-content{margin-top:6px!important}
+${NSMAX_ROOT}[data-nsmax-page=post][data-nsmax-list=rows][data-nsmax-pm] #nsk-left[data-nsmax-pm-card] [data-nsmax-pm=unit]>[data-nsmax-pm=head]+*{margin-top:6px}
 /* 帖子行悬停（复刻 sb.sb 的 .post-item:hover）：整行浅灰底，标题加细下划线 */
 ${NSMAX_ROOT}[data-nsmax-list=rows] ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item):hover{background-color:var(--nsmax-fill)}
 ${NSMAX_ROOT}[data-nsmax-list=rows] ul.post-list:not(.topic-carousel-panel)>li.post-list-item:not(.topic-carousel-item):hover .post-title a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:var(--nsmax-accent-line)}
@@ -26888,7 +27045,18 @@ ${NSMAX_ROOT}[data-nsmax-style=flat] :is(input:not([type]),input[type=text],inpu
 ${NSMAX_ROOT}[data-nsmax-style=flat] :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],select):not(.CodeMirror *,.md-editor *):hover{border-color:var(--nsmax-stroke-strong)}
 ${NSMAX_ROOT} :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *):focus{background-color:var(--nsmax-card);border-color:var(--nsmax-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-accent) 14%,transparent);outline:none}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply){overflow:hidden;background-color:var(--nsmax-card)!important;background-image:none!important;border:1px solid var(--nsmax-stroke)!important;border-radius:var(--nsmax-radius)!important;box-shadow:none!important;color:var(--nsmax-text)}
-${NSMAX_ROOT} .md-editor .mde-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:1px;padding:4px 8px!important;background:var(--nsmax-panel-alt)!important;border:0!important;border-bottom:1px solid var(--nsmax-divider)!important}
+${NSMAX_ROOT} .md-editor .mde-toolbar{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:2px;box-sizing:border-box;height:auto!important;min-height:40px;max-height:none!important;margin:0!important;padding:5px 8px!important;overflow:visible!important;background:var(--nsmax-panel-alt)!important;border:0!important;border-bottom:1px solid var(--nsmax-divider)!important;border-radius:0!important;box-shadow:none!important}
+${NSMAX_ROOT} .md-editor .mde-toolbar>*{flex:none}
+${NSMAX_ROOT} .md-editor :is(.mde-toolbar :is(.toolbar-item,[data-nsmax-tool]):not(.right,[data-nsmax-md-hint]),[data-nsmax-ed-icon]){display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:30px!important;min-width:30px!important;height:28px!important;min-height:28px!important;margin:0!important;padding:0!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;color:var(--nsmax-muted)!important;line-height:0!important;cursor:pointer;transition:background-color .15s ease,color .15s ease}
+${NSMAX_ROOT} .md-editor :is(.mde-toolbar :is(.toolbar-item,[data-nsmax-tool]):not(.right,[data-nsmax-md-hint]),[data-nsmax-ed-icon]):is(:hover,[class*=active]){background:var(--nsmax-fill)!important;color:var(--nsmax-text)!important}
+${NSMAX_ROOT} .md-editor :is(.mde-toolbar :is(.toolbar-item,[data-nsmax-tool]),[data-nsmax-ed-icon]) :is(svg,img):not(.nsmax-tool-icon){width:16px!important;height:16px!important}
+${NSMAX_ROOT} .md-editor .mde-toolbar .nsmax-tool-icon{width:16px;height:16px;stroke-width:1.6}
+${NSMAX_ROOT} .md-editor :is(.mde-toolbar>:is(.separator,.toolbar-split,[class*=split],[class*=separator],[class*=divider]):not(.toolbar-item,[data-nsmax-tool]),[data-nsmax-tool-sep]){flex:none;display:block!important;box-sizing:border-box;width:1px!important;min-width:1px!important;height:16px!important;margin:0 4px!important;padding:0!important;border:0!important;background:var(--nsmax-divider)!important;font-size:0!important}
+${NSMAX_ROOT} .md-editor .mde-toolbar>.right:not([data-nsmax-md-hint]),${NSMAX_ROOT} .md-editor .mde-toolbar>.right+*{margin-left:auto!important}
+${NSMAX_ROOT} .md-editor :is(.tab-select .tab,[data-nsmax-ed-tab]){display:inline-flex!important;align-items:center;box-sizing:border-box;height:28px!important;margin:0!important;padding:0 10px!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;color:var(--nsmax-muted)!important;font-size:13px!important;font-weight:500!important;line-height:1!important;text-decoration:none!important;white-space:nowrap;cursor:pointer;transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
+${NSMAX_ROOT} .md-editor :is(.tab-select .tab,[data-nsmax-ed-tab]):hover{color:var(--nsmax-text)!important}
+${NSMAX_ROOT} .md-editor :is(.tab-select .tab,[data-nsmax-ed-tab]):is(.active,[class*=active],[class*=selected],[class*=current],[aria-selected=true]){background:var(--nsmax-card)!important;color:var(--nsmax-text)!important;box-shadow:0 0 0 1px var(--nsmax-stroke),0 1px 2px rgb(0 0 0/.04)!important}
+${NSMAX_ROOT} .md-editor :is(.tab-select .tab,[data-nsmax-ed-tab]):is(::before,::after){content:none!important;display:none!important}
 ${NSMAX_ROOT} .md-editor :is(.CodeMirror,.CodeMirror-scroll,.CodeMirror-sizer,textarea){background:transparent!important;color:var(--nsmax-text)!important}
 ${NSMAX_ROOT} .md-editor .CodeMirror-gutters{background:transparent!important;border-right:1px solid var(--nsmax-divider)!important}
 ${NSMAX_ROOT} .md-editor .CodeMirror-linenumber{color:var(--nsmax-muted)!important;opacity:.7}
@@ -26994,9 +27162,7 @@ ${NSMAX_ROOT} .md-editor .nspp-upload-choose{width:32px;height:32px;min-height:3
 ${NSMAX_ROOT} .md-editor .nspp-upload-choose:hover{background:var(--nsmax-fill);color:var(--nsmax-text)}
 ${NSMAX_ROOT} .md-editor .nspp-upload-status{color:var(--nsmax-muted);font-size:12px}
 ${NSMAX_ROOT} .md-editor .nspp-upload-status input[type=password]{min-height:30px;padding:0 10px;border:1px solid var(--nsmax-stroke);border-radius:var(--nsmax-r-control,8px);background:var(--nsmax-panel-alt);font-size:12px}
-${NSMAX_ROOT} .md-editor :is(.tab-select,.tab-select~*):has(>.tab) .tab,${NSMAX_ROOT} .md-editor .tab-select .tab{padding:2px 4px;border:0!important;background:transparent!important;color:var(--nsmax-muted);font-size:13px;cursor:pointer}
-${NSMAX_ROOT} .md-editor .tab-select .tab:is(.active,[class*=active],[aria-selected=true]){color:var(--nsmax-text);font-weight:600}
-${NSMAX_ROOT} .md-editor .tab-select{display:flex;align-items:center;gap:12px;padding:8px 14px!important}
+${NSMAX_ROOT} .md-editor .tab-select{display:flex;align-items:center;gap:2px;padding:6px 8px!important}
 ${NSMAX_ROOT} [data-nsmax-md-hint]{display:none!important}
 /* 编辑器里的 Markdown 高亮（引用、回复 @、链接、标题等）：CodeMirror 默认是绿色引用、蓝色链接与标题，统一成主题灰阶 */
 ${NSMAX_ROOT} .md-editor .CodeMirror :is(.cm-quote,.cm-comment){color:var(--nsmax-muted)!important;font-style:normal}
@@ -27073,18 +27239,22 @@ ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply){display:flex!important;flex-w
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply):hover{box-shadow:var(--nsmax-composer-shadow-hover)!important}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply):focus-within{border-color:var(--nsmax-composer-line-focus)!important;box-shadow:var(--nsmax-composer-shadow-focus)!important}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>*{order:0;flex:1 1 100%;min-width:0;box-sizing:border-box}
-${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>:is(.tab-select,.mde-toolbar,.expression,.exp-container,[data-nsmax-submit-row]),${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>:first-child:not(.mde-toolbar,.CodeMirror,textarea,.tab-select){border:0!important;background:transparent!important;box-shadow:none!important}
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>:is(.expression,.exp-container,[data-nsmax-submit-row]){border:0!important;background:transparent!important;box-shadow:none!important}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>textarea{min-height:112px;padding:16px 18px 6px!important;font-size:15px;line-height:1.7;resize:none}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply) .CodeMirror-lines{padding:14px 10px 6px!important}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.exp-container{order:1}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)::after{content:""!important;display:block!important;order:3;flex:1 1 100%;height:0;margin:0;padding:0;clear:none}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.exp-container:not(:empty){margin:4px 12px 0;padding:8px!important;border-radius:var(--nsmax-r-card,12px)!important;background:var(--nsmax-panel-alt)!important}
-/* 工具栏与分段切换 */
-${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.mde-toolbar{order:2;flex:1 1 0;justify-content:flex-start;gap:0;padding:6px 8px 0 10px!important}
-${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.tab-select{order:3;flex:0 0 auto;align-self:center;gap:0!important;margin:6px 12px 0 4px;padding:2px!important;border-radius:var(--nsmax-pill,999px)!important;background:var(--nsmax-seg-bg,var(--nsmax-fill))!important}
-${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.tab-select .tab{padding:2px 10px!important;border-radius:var(--nsmax-r-chip,calc(var(--nsmax-pill,999px) - 2px))!important;color:var(--nsmax-muted);font-size:13px!important;font-weight:500;line-height:1.7;transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
-${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.tab-select .tab:hover{color:var(--nsmax-text)}
-${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.tab-select .tab:is(.active,[class*=active],[aria-selected=true]){background:var(--nsmax-seg-thumb,var(--nsmax-card))!important;color:var(--nsmax-text);font-weight:500;box-shadow:0 1px 2px rgb(0 0 0/.08),0 0 0 .5px rgb(0 0 0/.06)}
+/* 工具栏与「内容 / 预览」切换（参考 sb.sb 的编辑器）：放在输入区上方，排成一条浅底工具条、下方 1px 分隔线。图标按钮 30×28、6px 圆角，
+   默认灰色、悬停浅底加深，分组之间 1px 竖线；「内容 / 预览」是右侧两个小标签，选中的一个白底描边。
+   站点把工具栏、标签栏包在别的容器里时，脚本按文字与类名标记（data-nsmax-ed-*）后同样排版 */
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>:is(.mde-toolbar,[data-nsmax-ed-bar=tools]){order:-2;flex:1 1 0}
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>:is(.tab-select,[data-nsmax-ed-bar=tabs]){order:-1;flex:0 0 auto;align-self:stretch;display:flex!important;align-items:center;gap:2px!important;margin:0!important;padding:0 8px!important;border:0!important;border-bottom:1px solid var(--nsmax-divider)!important;border-radius:0!important;background:var(--nsmax-panel-alt)!important;box-shadow:none!important}
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]{order:-2;display:flex!important;flex-wrap:wrap;align-items:stretch;margin:0!important;padding:0!important;border:0!important;border-bottom:1px solid var(--nsmax-divider)!important;border-radius:0!important;background:var(--nsmax-panel-alt)!important;box-shadow:none!important}
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>*{display:flex!important;align-items:center;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>:has(.mde-toolbar),${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>.mde-toolbar{order:1;flex:1 1 0;min-width:0}
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>:not(.mde-toolbar,:has(.mde-toolbar)){order:2;flex:0 0 auto;padding:0 8px!important;gap:2px}
+${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head] .mde-toolbar{border-bottom:0!important;background:transparent!important}
 /* 底栏：表情分类、上传图片、发送 */
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>:is(.expression,[data-nsmax-submit-row],button.submit,.btn.submit,.nspp-upload-status){order:4}
 ${NSMAX_ROOT} .md-editor:not(.nspp-floating-reply)>.expression{flex:0 1 auto;align-self:center;gap:2px;padding:8px 0 10px 10px!important}
@@ -27123,6 +27293,11 @@ ${NSMAX_ROOT}[data-nsmax-palette=claude] .nsmax-hot-tabs button{height:26px;padd
 ${NSMAX_ROOT}[data-nsmax-palette=claude] .nsmax-hot-tabs button:hover{border-color:transparent;color:var(--nsmax-text)}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] .nsmax-hot-tabs button[aria-selected=true]{border-color:transparent;background:transparent;color:var(--nsmax-text);font-weight:500}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to],a.nsmax-shortcut){transition:background-color .15s ease,color .15s ease}
+/* 左侧版块栏（Claude）：16px、500 字重、正文色，图标 18px，行高 40px，更醒目 */
+${nsmaxClaude} #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to],a.nsmax-shortcut){min-height:40px;box-sizing:border-box;align-items:center;gap:10px!important;font-size:16px!important;font-weight:500!important;line-height:1.25!important;color:var(--nsmax-text)!important}
+${nsmaxClaude} #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to],a.nsmax-shortcut) :is(.nsmax-icon,svg[data-nsmax-brand]){width:18px!important;height:18px!important}
+${nsmaxClaude} #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to]) .nsmax-icon{color:var(--nsmax-text-2)!important}
+${nsmaxClaude} #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to]):hover .nsmax-icon{color:var(--nsmax-text)!important}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] #nsk-left-panel-container .nsk-panel :is(.nav-item>a,.nav-item>div,.nav-item[data-to],a.nsmax-shortcut):hover,${NSMAX_ROOT}[data-nsmax-palette=claude] #nsk-left-panel-container .nsk-panel :is(a.router-link-active,a.router-link-exact-active,a[aria-current=page],a.active,.active>a){background:var(--nsmax-fill)!important;clip-path:inset(0 6px round 8px)}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] [data-nsmax-header-search]:not(input),${NSMAX_ROOT}[data-nsmax-palette=claude] input[data-nsmax-header-search]{background:var(--nsmax-card)!important}
 ${NSMAX_ROOT}[data-nsmax-palette=claude] :is([data-nsmax-header-toggle],.nsmax-header-action){width:32px;min-width:32px;height:32px;min-height:32px;border-color:transparent!important;border-radius:var(--nsmax-r-control,8px)!important;color:var(--nsmax-text-2)}
@@ -27137,8 +27312,7 @@ ${nsmaxClaude} .nsk-pager :is(a,span){min-width:32px;height:32px}
 ${nsmaxClaude} :is(.nspp-messages-top-actions button,.nspp-messages-top .nspp-messages-profile){color:var(--nsmax-text-2)!important}
 ${nsmaxClaude} :is(.nspp-messages-top-actions button,.nspp-messages-top .nspp-messages-profile,.nspp-monitor>header>button:not(:last-child)):hover{background:var(--nsmax-fill)!important;color:var(--nsmax-text)!important}
 ${nsmaxClaude} .comment-menu .menu-item{font-weight:500}
-/* 图标按钮 32×32：评论框工具栏、私信格式工具；和搜索框排在一行的刷新按钮跟搜索框一样 36px */
-${nsmaxClaude} .md-editor .mde-toolbar [data-nsmax-tool]{width:32px!important;min-width:32px!important;height:32px!important}
+/* 图标按钮 32×32：私信格式工具（评论框工具栏是 30×28，见上面的编辑器样式）；和搜索框排在一行的刷新按钮跟搜索框一样 36px */
 ${nsmaxClaude} .nspp-message-editor-toolbar button:not(.nspp-message-editor-tab){width:32px;height:32px}
 ${nsmaxClaude} .nspp-messages-search>button{height:36px!important;min-height:36px!important}
 ${nsmaxClaude} .nspp-messages-refresh{width:36px!important;min-width:36px!important}
@@ -27401,6 +27575,11 @@ ${NSMAX_ROOT} [data-nsmax-member] img{width:44px!important;height:44px!important
 ${NSMAX_ROOT} [data-nsmax-member] :is(a,span,div,p):not(:has(img)){display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:1.4;color:var(--nsmax-text-2)}
 ${NSMAX_ROOT} [data-nsmax-cta]{background:var(--nsmax-brand)!important;background-image:none!important;color:var(--nsmax-on-brand)!important;border-color:transparent!important;border-radius:var(--nsmax-pill,999px)!important;box-shadow:0 1px 2px rgb(0 0 0/.12)!important;font-weight:600;transition:opacity .2s ease,scale .38s var(--nsmax-spring)}
 ${NSMAX_ROOT} [data-nsmax-cta] *{color:inherit!important;fill:currentColor}
+/* 站点给发帖按钮写了更高优先级的悬停样式（悬停变回绿色）：常态、悬停、按下、聚焦都用更高的优先级锁住珊瑚色；
+   接在用户卡片下面的那种（背景由 ::before 画出圆角按钮）元素本身保持卡片底色 */
+${NSMAX_ROOT} :is(#nsk-body,#nsk-right-panel-container,body) [data-nsmax-cta][data-nsmax-cta]:is(:hover,:focus,:focus-visible,:active,:visited){background:var(--nsmax-brand)!important;background-image:none!important;border-color:transparent!important;color:var(--nsmax-on-brand)!important;filter:none!important;text-decoration:none!important}
+${NSMAX_ROOT} :is(#nsk-body,#nsk-right-panel-container,body) [data-nsmax-cta][data-nsmax-cta]:hover{background:color-mix(in srgb,var(--nsmax-brand) 90%,#000)!important}
+${NSMAX_ROOT} :is(#nsk-body,#nsk-right-panel-container,body) [data-nsmax-usercard]+[data-nsmax-cta][data-nsmax-cta]:is(:hover,:focus,:focus-visible,:active,:visited){background:var(--nsmax-card)!important;border-color:var(--nsmax-stroke)!important}
 ${NSMAX_ROOT} [data-nsmax-cta]:hover{opacity:.9}
 ${NSMAX_ROOT}[data-nsmax-motion] [data-nsmax-cta]:active{scale:.97}
 /* 发帖按钮（重新设计，参考 sb.sb 的 .btn-post）：原来是一整条黑色胶囊单独夹在用户卡片和热榜卡片之间，和圆角卡片不搭，也太抢眼。
@@ -27505,6 +27684,8 @@ ${NSMAX_ROOT} [data-nspp-monitor-match]{background-color:color-mix(in srgb,var(-
 ${NSMAX_ROOT} [data-nsmax-icon-orig]{display:none!important}
 ${NSMAX_ROOT} .nsmax-icon{display:inline-block;flex:none;box-sizing:content-box;width:16px;height:16px;margin:0;padding:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;pointer-events:none;overflow:visible}
 ${NSMAX_ROOT} .nsmax-icon:is([data-nsmax-icon-for=nav],[data-nsmax-icon-for=card]){width:17px;height:17px}
+/* 站点给导航里的 svg / path 写了 fill（线条图标会被填成实心块）：线条图标的每条路径都只描边 */
+${NSMAX_ROOT} .nsmax-icon :is(path,circle,rect,line,polyline,polygon,ellipse){fill:none!important;stroke:currentColor!important;stroke-width:inherit!important}
 ${NSMAX_ROOT} .nsmax-icon[data-nsmax-icon-for=stat]{width:15px;height:15px;vertical-align:-2px}
 ${NSMAX_ROOT} .nsmax-icon[data-nsmax-icon-for=search]{width:15px;height:15px}
 /* 深浅色按钮显示当前模式：浅色是太阳、深色是月亮、跟随系统是显示器 */
@@ -28205,7 +28386,6 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-panel{top:22px;left:12px;right:28px;bottom:-8px;border:1px solid var(--pv-stroke);border-radius:var(--nsmax-r-chip,6px);background:var(--pv-card)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-dot{right:10px;bottom:10px;width:12px;height:12px;border-radius:50%;background:var(--pv-accent)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview:is([data-preview=page-claude],[data-preview=mode-light]){--pv-bg:#f5f4ed;--pv-card:#fbfaf6;--pv-stroke:#e3e0d6;--pv-line:#e3e0d6;--pv-accent:#c15f3c}
-:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=page-sbsb]{--pv-bg:#f7f8fa;--pv-card:#fff;--pv-stroke:#e0e2e8;--pv-line:#e0e2e8;--pv-accent:#1c1c1e}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-dark]{--pv-bg:#262624;--pv-card:#30302e;--pv-stroke:#45443f;--pv-line:#45443f;--pv-accent:#c15f3c}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system]{--pv-stroke:#c9c7bd;--pv-accent:#c15f3c;background:linear-gradient(90deg,#f5f4ed 50%,#262624 50%)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system] .choice-bar{background:linear-gradient(90deg,#e3e0d6 50%,#45443f 50%)}
@@ -28237,6 +28417,7 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 			grid: false,
 			glassHeader: true,
 			minimalHeader: true,
+			navPosition: "header",
 			typography: true,
 			motion: true,
 			scrollbar: true,
@@ -28247,27 +28428,24 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 			autoDark: false
 		},
 		fields: {
-			palette: {
-				label: "设计风格（Claude：暖色米白、暖白卡片与输入框、珊瑚色发送按钮、圆角矩形按钮、圆形头像；sb.sb：冷灰黑白、胶囊按钮、圆角方形头像）",
+			navPosition: {
+				label: "版块导航位置（顶栏：像 sb.sb 那样所有版块和 NQ 等快捷入口排在顶栏一行，去掉左侧栏、主栏更宽；左侧栏：保持站点原来的左侧版块栏）",
 				type: "select",
-				cards: "page",
 				options: [{
-					value: "claude",
-					short: "Claude",
-					label: "Claude（默认）"
+					value: "header",
+					label: "顶栏（默认）"
 				}, {
-					value: "sbsb",
-					short: "sb.sb",
-					label: "sb.sb"
+					value: "sidebar",
+					label: "左侧栏"
 				}]
 			},
 			accent: {
-				label: "强调色（跟随设计风格时，Claude 为墨黑 + 珊瑚色发送按钮，sb.sb 为黑白）",
+				label: "强调色（默认墨黑，发送、发帖按钮为珊瑚色）",
 				type: "select",
 				options: [
 					{
 						value: "mono",
-						label: "跟随设计风格（默认）"
+						label: "墨黑 + 珊瑚色（默认）"
 					},
 					{
 						value: "site",
@@ -28552,6 +28730,14 @@ ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-durat
 					headerResize?.disconnect();
 				});
 			}
+			if (root.dataset.nsmaxPage === "post") {
+				// 帖子页楼层对齐：页面解析阶段已标记过，继续跟踪后来加载的楼层（自动翻页、站点重绘）。
+				const stop = ctx.watch(() => nsmaxMarkPostLayout());
+				cleanups.push(() => {
+					stop();
+					nsmaxClearPostLayout();
+				});
+			}
 			{
 				// 站点自带图标换成统一线条图标（页面解析阶段已先换过一次），继续跟踪站点后来插入或替换的元素。
 				const swapper = nsmaxIconSwapper || (nsmaxIconSwapper = createIconSwapper());
@@ -28591,10 +28777,57 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 						}
 					}
 				};
+				// 编辑器结构：站点可能把工具栏、「内容 / 预览」标签包在别的容器里。按类名找工具栏、按文字找标签，标记它们所在的那一行，
+				// 样式里统一排成输入区上方的一条工具条；工具栏里既没有文字也没有图标的小元素当作分组竖线，标签行里的纯图标按钮按工具按钮样式显示。
+				const tabWords = new Set(["内容", "预览", "对照", "编辑", "分屏"]);
+				const tabSkip = ".CodeMirror, textarea, .expression, .exp-container, .nspp-upload-status, .mde-toolbar, article, [class*=markdown-body], [class*=preview-content], .md-preview";
+				const structured = new Set();
+				const markAttr = (element, name, value = "") => {
+					if (element.getAttribute(name) === value) return;
+					element.setAttribute(name, value);
+					structured.add(element);
+				};
+				const markEditors = () => {
+					for (const editor of document.querySelectorAll(".md-editor:not(.nspp-floating-reply)")) {
+						if (editor.closest(".nspp-compose, .nspp-message-editor")) continue;
+						const top = (node) => {
+							while (node && node.parentElement !== editor) node = node.parentElement;
+							return node;
+						};
+						const toolbar = editor.querySelector(".mde-toolbar");
+						const tabs = [];
+						const walker = document.createTreeWalker(editor, NodeFilter.SHOW_ELEMENT, { acceptNode: (node) => node.matches(tabSkip) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+						let budget = 400;
+						while (walker.nextNode() && tabs.length < 6 && budget--) {
+							const node = walker.currentNode;
+							if (node.childElementCount && Array.from(node.children).some((child) => (child.textContent || "").trim())) continue;
+							if (tabWords.has((node.textContent || "").trim())) tabs.push(node);
+						}
+						for (const tab of tabs) markAttr(tab, "data-nsmax-ed-tab");
+						if (toolbar) for (const child of toolbar.children) {
+							if (child.matches(".toolbar-item, [data-nsmax-tool], .right, [data-nsmax-md-hint]") || (child.textContent || "").trim() || child.querySelector("svg, img")) continue;
+							markAttr(child, "data-nsmax-tool-sep");
+						}
+						const tabRow = tabs.length ? top(tabs[0]) : null;
+						const toolRow = toolbar ? top(toolbar) : null;
+						if (tabRow && tabRow === toolRow && tabRow !== toolbar) markAttr(tabRow, "data-nsmax-ed-head");
+						else {
+							if (toolRow && toolRow !== toolbar) markAttr(toolRow, "data-nsmax-ed-bar", "tools");
+							if (tabRow && !tabRow.matches(".tab-select")) markAttr(tabRow, "data-nsmax-ed-bar", "tabs");
+						}
+						const tabBox = tabRow && tabRow !== toolRow ? tabRow : tabs[0]?.parentElement;
+						if (tabBox) for (const element of tabBox.querySelectorAll("*")) {
+							if (element.matches("[data-nsmax-ed-tab], [data-nsmax-md-hint], svg, svg *, img") || element.closest("[data-nsmax-ed-icon]") || (element.textContent || "").trim() || element.querySelectorAll("svg, img").length !== 1) continue;
+							if (element.parentElement.closest("[data-nsmax-ed-tab]")) continue;
+							markAttr(element, "data-nsmax-ed-icon");
+						}
+					}
+				};
 				// 帖子页的发送按钮只显示箭头：把按钮文字（「发布评论」等）放进悬停提示。
 				const titled = new Set();
 				const modernize = () => {
 					hideHints();
+					markEditors();
 					for (const button of document.querySelectorAll(".md-editor :is(button.submit,.btn.submit):not([title])")) {
 						const label = (button.textContent || "").trim();
 						if (!label) continue;
@@ -28625,6 +28858,7 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 				cleanups.push(() => {
 					stop();
 					for (const button of titled) button.removeAttribute("title");
+					for (const element of structured) for (const name of ["data-nsmax-ed-tab", "data-nsmax-ed-head", "data-nsmax-ed-bar", "data-nsmax-ed-icon", "data-nsmax-tool-sep"]) element.removeAttribute(name);
 					for (const item of marked) {
 						item.removeAttribute("data-nsmax-md-hint");
 						item.removeAttribute("data-nsmax-tool");
@@ -28675,6 +28909,7 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 				const stop = ctx.watch(() => {
 					planner.apply();
 					actions.ensure();
+					nsmaxHeaderExtras();
 				});
 				cleanups.push(() => {
 					stop();
@@ -28965,6 +29200,7 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 					}
 				}
 				nsmaxSyncSidenav();
+				if (options.minimalHeader) nsmaxHeaderExtras();
 			});
 			region("right", () => document.getElementById("nsk-right-panel-container"), (sidebar) => {
 				measureToolsGutter();
@@ -29005,6 +29241,8 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 				listSeen ||= !!document.querySelector("ul.post-list");
 				(nsmaxListMarker || (nsmaxListMarker = createListControlMarker())).apply(parsed);
 			}
+			// 帖子页楼层对齐：每解析出一段楼层就标记（见 nsmaxMarkPostLayout），首屏就是对齐好的样子，不会先错开再跳回来。
+			if (root.dataset.nsmaxPage === "post") nsmaxMarkPostLayout();
 			if (!pending.size && listSeen && document.readyState !== "loading") observer.disconnect();
 		};
 		let listSeen = false;
@@ -29051,7 +29289,9 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 		root.setAttribute("data-nsmax-theme", "");
 		root.dataset.nsmaxPage = /^\/post-\d+/.test(location.pathname) ? "post" : location.pathname === "/notification" ? "notification" : /^\/space\//.test(location.pathname) ? "space" : /^\/setting(?:\/|$)/.test(location.pathname) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(location.pathname) ? "new" : "list";
 		// 设计风格：Claude（默认）或 sb.sb。只切换配色、圆角、头像形状与发送按钮颜色这些变量，布局两种风格共用。
-		root.dataset.nsmaxPalette = options.palette === "sbsb" ? "sbsb" : "claude";
+		root.dataset.nsmaxPalette = "claude";
+		// 版块导航放在顶栏（默认，像 sb.sb）时隐藏站点的左侧版块栏；需要精简顶栏来排版块标签。
+		root.dataset.nsmaxNav = options.navPosition === "sidebar" || !options.minimalHeader ? "sidebar" : "header";
 		root.dataset.nsmaxList = options.layout;
 		for (const [option, attribute] of [
 			["grid", "data-nsmax-grid"],
