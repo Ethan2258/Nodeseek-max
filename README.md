@@ -1,32 +1,30 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 增强脚本：合并 NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件、NodeSeek 自动屏蔽黑名单用户通知四个脚本，并加入 sing-box 风格的简洁主题。所有功能都能在设置里单独开关。
+NodeSeek / DeepFlood 增强脚本：把 NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件、NodeSeek 自动屏蔽黑名单用户通知合成一个，并带一套参考 Claude 网页版的主题。每项功能都能在设置里单独开关。
 
 | 首页 | 帖子页（深色） |
 | --- | --- |
-| ![首页](docs/screenshots/list-light-fonts.png) | ![帖子页](docs/screenshots/post-dark.png) |
+| ![首页](docs/screenshots/home-light.png) | ![帖子页](docs/screenshots/post-dark.png) |
+| **私信** | **设置** |
+| ![私信](docs/screenshots/messages-light.png) | ![设置](docs/screenshots/settings-light.png) |
 
 ## 安装
 
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey（电脑浏览器）。
-2. 打开 **[nodeseek-max.user.js](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)** 安装（各版本见 [Releases](https://github.com/Ethan2258/Nodeseek-max/releases)）。
+1. 电脑浏览器装好 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey。
+2. 打开 **[nodeseek-max.user.js](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)** 安装（历史版本见 [Releases](https://github.com/Ethan2258/Nodeseek-max/releases)）。
 3. 停用原来的四个脚本，避免重复执行。
-4. 设置入口：右下角工具栏最下方的图标，或脚本管理器菜单「NodeSeek Max 设置」。
 
-只要主题：用 [Stylus](https://add0n.com/stylus.html) 安装 [nodeseek-max.user.css](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css)。NodeSeek++ 的配置可直接导入。
+设置在右下角工具栏最下方，或脚本管理器菜单「NodeSeek Max 设置」；NodeSeek++ 的配置可以直接导入。只想要主题，可用 [Stylus](https://add0n.com/stylus.html) 安装 [nodeseek-max.user.css](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css)。
 
 ## 功能
 
-- **主题**：参考 Claude（claude.ai 网页版）的界面设计——暖色米白底、白色卡片、珊瑚色发送按钮、统一的四档圆角（标签 6px、按钮 10px、卡片 16px、大输入框 24px）、九档字号与三档字重、一种描边和一种弹出阴影、圆形头像、统一线条图标、界面 Inter + 正文衬线体，评论框与私信是 Claude 式的大圆角输入框，私信是 Claude 式的会话界面（通高的会话列表、资料卡当会话头、对方消息像 Claude 的回复一样不带气泡），深色模式为暖炭灰；也可在设置里切换回 sb.sb 的冷灰风格。评论区、设置页、发帖页和 NodeSeek++ 的各个工具弹窗一并适配；渲染前生效，刷新不闪原版界面。
-- **精简顶栏**：桌面端只保留站点标志、标题、搜索框和深浅色切换。
-- **版块导航**：去掉顶栏与侧栏重复的版块；默认隐藏 生活、Dev、贴图、沙盒、DeepFlood；侧栏加入 NQ（NodeQuality）入口。
-- **评论框**：统一线条图标，图床按钮与「发布评论」同一行；默认上传到欧记图床 image.110726.com（可填 API Token，也支持 NodeImage 等）。
+- **主题**：暖米白底、白色卡片、珊瑚色发送按钮，界面用 Inter、正文用衬线体；圆角、字号、描边、阴影各只用少数几档，深色模式为暖炭灰。评论框、私信、设置页、发帖页和各个工具弹窗一并适配，页面渲染前生效，刷新不闪。也可切回 sb.sb 的冷灰风格。
+- **顶栏与导航**：顶栏只留标志、搜索和深浅色切换；去掉重复版块，默认隐藏生活、Dev、贴图、沙盒、DeepFlood，侧栏加入 NQ（NodeQuality）入口。
+- **评论框**：图床按钮和「发布评论」在同一行，默认上传到欧记图床（也支持 NodeImage 等）。
 - **侧栏热榜**：实时 / 日榜 / 周榜。
 - **黑名单**：隐藏黑名单用户的 @、回复和私信通知。
-- **外链直达**：60 多个站点的外链中转页与 NodeSeek `/jump` 直接跳转。
-- **NodeSeek++ 原有功能**：自动翻页、阅读历史、用户等级、内容过滤、RSS 监控、紧凑消息中心等（已移除快速回复与 AI 写作）。
-
-上游 NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件发布新版本时，`Upstream` 工作流会开 issue，合并后随新版本发布（见 [upstream/](upstream/)）。
+- **外链直达**：60 多个站点的外链中转页和 NodeSeek `/jump` 直接跳转。
+- **NodeSeek++ 原有功能**：自动翻页、阅读历史、用户等级、内容过滤、RSS 监控等（去掉了快速回复与 AI 写作）。
 
 导航或顶栏识别不对时，在脚本管理器菜单点「NodeSeek Max：复制导航诊断信息」，把内容发到 [Issues](https://github.com/Ethan2258/Nodeseek-max/issues)。
 
@@ -34,14 +32,15 @@ NodeSeek / DeepFlood 增强脚本：合并 NodeSeek++、redirect 外链跳转、
 
 ```bash
 npm install && npx playwright install chromium
-npm run check   # 语法、meta 与主题 CSS 同步检查
-npm test        # 冒烟测试（模拟页面）
-npm run meta    # 重新生成 nodeseek-max.meta.js
-npm run css     # 重新生成 theme/ 下的独立 CSS
+npm run check     # 语法、meta 与主题 CSS 同步检查
+npm test          # 冒烟测试（模拟页面）
+npm run meta      # 重新生成 nodeseek-max.meta.js
+npm run css       # 重新生成 theme/ 下的独立 CSS
 npm run upstream  # 检查上游脚本是否有新版本
 ```
 
-发版：改 `@version`、`NSMAX_VERSION`、`package.json` 版本号并在 `CHANGELOG.md` 写对应一节；合并到 main 且 CI 通过后自动发布 Release。
+- 发版：改 `@version`、`NSMAX_VERSION`、`package.json` 的版本号，并在 `CHANGELOG.md` 写对应一节；合并到 main、CI 通过后自动发布 Release。
+- 上游：NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件发布新版本时，`Upstream` 工作流会开 issue，合并步骤见 [upstream/](upstream/)。
 
 ## 许可证
 
