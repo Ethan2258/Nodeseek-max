@@ -2176,6 +2176,9 @@
 	html:root .nspp-user-badges .nspp-level {
 		--nsmax-icon-badge:var(--nsmax-icon-level);
 	}
+	html:root:root .nspp-user-badges {
+		border-radius:var(--nsmax-r-chip,6px)!important;
+	}
 	/* Claude 风格的动效（参考 claude.ai）：过渡短（150～250ms）、缓出曲线 cubic-bezier(.165,.85,.45,1)、没有回弹；按下只轻微缩小到 .98，
 	   列表行按下不缩放；弹窗淡入并从 .97 放大、遮罩淡入；悬浮卡与帖子预览淡入并上移 4px；热榜滑块平滑滑动 */
 	html:root:root {
@@ -5806,7 +5809,7 @@
 	}
 	html:root:root #nsk-body-left .post-list-item .nspp-user-badges:is([aria-busy=true],[data-nsmax-early],:empty):not([hidden]) {
 		height:6px!important;
-		border-radius:3px!important;
+		border-radius:var(--nsmax-r-chip,6px)!important;
 		background:color-mix(in srgb,var(--nsmax-ink) 7%,transparent)!important;
 	}
 	html:root:root #nsk-right-panel-container>.nsk-panel h4 {
@@ -6153,7 +6156,7 @@
 	html:root:root #nsk-body-left .content-item .nspp-user-badges:is([aria-busy=true],:empty):not([hidden]) {
 		width:9em!important;
 		height:6px!important;
-		border-radius:3px!important;
+		border-radius:var(--nsmax-r-chip,6px)!important;
 		background:color-mix(in srgb,var(--nsmax-ink) 7%,transparent)!important;
 		color:transparent!important;
 		-webkit-text-fill-color:transparent;
@@ -6230,9 +6233,29 @@
 	html:root:root #nsk-body-left .content-item .floor-link:hover {
 		color:var(--nsmax-brand)!important;
 	}
+	/* 热门楼层标记（站点是一张红色 HOT 图）：换成和「楼主」同色的珊瑚色小标签「热评」 */
 	html:root:root #nsk-body-left .content-item .hot-badge {
-		transform:scale(.75);
-		transform-origin:right center;
+		display:inline-flex!important;
+		align-items:center!important;
+		flex:none!important;
+		box-sizing:border-box!important;
+		width:auto!important;
+		height:20px!important;
+		margin:0 8px 0 0!important;
+		padding:0 7px!important;
+		border:0!important;
+		border-radius:999px!important;
+		background:color-mix(in srgb,var(--nsmax-brand) 12%,var(--nsmax-card))!important;
+		background-image:none!important;
+		box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--nsmax-brand) 30%,var(--nsmax-card))!important;
+		color:var(--nsmax-brand)!important;
+		font-size:11px!important;
+		font-weight:500!important;
+		line-height:1!important;
+		transform:none!important;
+	}
+	html:root:root #nsk-body-left .content-item .hot-badge::before {
+		content:"热评";
 	}
 	html:root:root #nsk-body-left .content-item>:not(.nsk-content-meta-info) {
 		grid-column:2/-1!important;
