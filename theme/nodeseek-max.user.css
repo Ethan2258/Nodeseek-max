@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.1
+@version        1.7.2
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.1（UserCSS）
+ * NodeSeek Max 主题 v1.7.2（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -33,251 +33,7 @@
 		src: url("https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono@5.3.0/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
 		unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-200F,U+2028-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 	}
-	html:root {
-		--nsmax-radius:12px;
-		--nsmax-radius-sm:8px;
-		--nsmax-control-radius:999px;
-		--nsmax-seg-radius:999px;
-		--nsmax-gap:10px;
-		--nsmax-pad:14px 16px;
-		--nsmax-ease-out:cubic-bezier(.2,.65,.3,1);
-		--nsmax-spring:cubic-bezier(.2,.65,.3,1);
-		--nsmax-press:cubic-bezier(.2,.65,.3,1);
-		--nsmax-canvas:#f5f5f7;
-		--nsmax-card:rgb(255 255 255/.66);
-		--nsmax-surface:#fff;
-		--nsmax-fill:rgb(0 0 0/.05);
-		--nsmax-glass:rgb(245 245 247/.72);
-		--nsmax-popup:rgb(255 255 255/.84);
-		--nsmax-stroke:rgb(255 255 255/.78);
-		--nsmax-highlight:rgb(255 255 255/.92);
-		--nsmax-sheen:rgb(255 255 255/.8);
-		--nsmax-divider:rgb(0 0 0/.08);
-		--nsmax-text:#1d1d1f;
-		--nsmax-text-2:#3a3a3c;
-		--nsmax-muted:#6e6e73;
-		--nsmax-thumb:rgb(120 120 128/.42);
-		--nsmax-blur:blur(28px) saturate(180%);
-		--nsmax-card-blur:blur(24px) saturate(180%);
-		--nsmax-shadow:0 1px 2px rgb(0 0 0/.03),0 10px 28px rgb(0 0 0/.05),inset 0 1px 0 var(--nsmax-highlight);
-		--nsmax-shadow-hover:0 2px 6px rgb(0 0 0/.04),0 16px 36px rgb(0 0 0/.08),inset 0 1px 0 var(--nsmax-highlight);
-		--nsmax-shadow-pop:0 18px 48px rgb(0 0 0/.12),inset 0 1px 0 var(--nsmax-highlight);
-		background-color:var(--nsmax-canvas);
-		color-scheme:light;
-	}
-	html:root:root {
-		--nsmax-control-radius:8px;
-		--nsmax-seg-radius:8px;
-	}
-	html:root:has(>body.dark-layout) {
-		--nsmax-canvas:#000;
-		--nsmax-card:rgb(16 16 18/.97);
-		--nsmax-surface:#101012;
-		--nsmax-fill:rgb(255 255 255/.07);
-		--nsmax-glass:rgb(0 0 0/.78);
-		--nsmax-popup:rgb(22 22 24/.94);
-		--nsmax-stroke:rgb(255 255 255/.14);
-		--nsmax-highlight:rgb(255 255 255/.08);
-		--nsmax-sheen:rgb(255 255 255/.045);
-		--nsmax-divider:rgb(255 255 255/.12);
-		--nsmax-text:#f5f5f7;
-		--nsmax-text-2:#e5e5ea;
-		--nsmax-muted:#a1a1a6;
-		--nsmax-thumb:rgb(200 200 206/.32);
-		--nsmax-blur:blur(20px) saturate(110%);
-		--nsmax-card-blur:blur(20px) saturate(110%);
-		--nsmax-shadow:0 1px 0 rgb(0 0 0/.4),inset 0 1px 0 var(--nsmax-highlight);
-		--nsmax-shadow-hover:0 12px 32px rgb(0 0 0/.5),inset 0 1px 0 var(--nsmax-highlight);
-		--nsmax-shadow-pop:0 18px 48px rgb(0 0 0/.6),inset 0 1px 0 var(--nsmax-highlight);
-		color-scheme:dark;
-	}
-	html:root body.dark-layout {
-		--nsmax-canvas:#000;
-		--nsmax-card:rgb(16 16 18/.97);
-		--nsmax-surface:#101012;
-		--nsmax-fill:rgb(255 255 255/.07);
-		--nsmax-glass:rgb(0 0 0/.78);
-		--nsmax-popup:rgb(22 22 24/.94);
-		--nsmax-stroke:rgb(255 255 255/.14);
-		--nsmax-highlight:rgb(255 255 255/.08);
-		--nsmax-sheen:rgb(255 255 255/.045);
-		--nsmax-divider:rgb(255 255 255/.12);
-		--nsmax-text:#f5f5f7;
-		--nsmax-text-2:#e5e5ea;
-		--nsmax-muted:#a1a1a6;
-		--nsmax-thumb:rgb(200 200 206/.32);
-		--nsmax-blur:blur(20px) saturate(110%);
-		--nsmax-card-blur:blur(20px) saturate(110%);
-		--nsmax-shadow:0 1px 0 rgb(0 0 0/.4),inset 0 1px 0 var(--nsmax-highlight);
-		--nsmax-shadow-hover:0 12px 32px rgb(0 0 0/.5),inset 0 1px 0 var(--nsmax-highlight);
-		--nsmax-shadow-pop:0 18px 48px rgb(0 0 0/.6),inset 0 1px 0 var(--nsmax-highlight);
-		color-scheme:dark;
-	}
-	html:root:root {
-		--nsmax-canvas:#f7f8fa;
-		--nsmax-card:#fff;
-		--nsmax-surface:#fff;
-		--nsmax-fill:#f2f3f5;
-		--nsmax-glass:rgb(245 244 237/.96);
-		--nsmax-popup:#fdfcf9;
-		--nsmax-blur:none;
-		--nsmax-stroke:#e0e2e8;
-		--nsmax-highlight:transparent;
-		--nsmax-sheen:transparent;
-		--nsmax-divider:#e0e2e8;
-		--nsmax-panel-alt:#f7f8fa;
-		--nsmax-stroke-strong:#cfd3da;
-		--nsmax-faint:#8a8f98;
-		--nsmax-text:#1c1c1e;
-		--nsmax-text-2:#35363a;
-		--nsmax-muted:#555a6a;
-		--nsmax-thumb:rgb(85 90 106/.38);
-		--nsmax-ink:#1c1c1e;
-		--nsmax-on-ink:#fff;
-		--nsmax-bubble:#f2f3f5;
-		--nsmax-on-bubble:#1c1c1e;
-		--nsmax-seg-bg:#f2f3f5;
-		--nsmax-seg-thumb:#fff;
-		--nsmax-code-bg:#f2f3f5;
-		--nsmax-shadow:0 1px 2px rgb(28 28 30/.04);
-		--nsmax-shadow-hover:0 1px 2px rgb(28 28 30/.05),0 8px 24px rgb(28 28 30/.08);
-		--nsmax-shadow-pop:0 12px 40px -6px rgb(28 28 30/.16),0 2px 6px rgb(28 28 30/.04);
-		--nsmax-composer-line:rgb(28 28 30/.14);
-		--nsmax-composer-line-focus:rgb(28 28 30/.28);
-		--nsmax-composer-shadow:0 4px 20px rgb(28 28 30/.04);
-		--nsmax-composer-shadow-hover:0 4px 20px rgb(28 28 30/.07);
-		--nsmax-composer-shadow-focus:0 4px 24px rgb(28 28 30/.1);
-		--nsmax-pill:6px;
-		--nsmax-chip:6px;
-		--nsmax-avatar:6px;
-		--nsmax-composer-radius:12px;
-		--nsmax-dialog-radius:12px;
-		--nsmax-bubble-r:12px;
-		--nsmax-bubble-nub:12px;
-	}
-	html:root:root:has(>body.dark-layout) {
-		--nsmax-canvas:#111318;
-		--nsmax-card:#1b1e24;
-		--nsmax-surface:#1b1e24;
-		--nsmax-fill:#242832;
-		--nsmax-glass:rgb(38 38 36/.96);
-		--nsmax-popup:#30302e;
-		--nsmax-blur:none;
-		--nsmax-stroke:#30343d;
-		--nsmax-highlight:transparent;
-		--nsmax-sheen:transparent;
-		--nsmax-divider:#30343d;
-		--nsmax-panel-alt:#15181e;
-		--nsmax-stroke-strong:#454b57;
-		--nsmax-faint:#858c99;
-		--nsmax-text:#f2f3f5;
-		--nsmax-text-2:#d1d5dc;
-		--nsmax-muted:#a7adb8;
-		--nsmax-thumb:rgb(167 173 184/.36);
-		--nsmax-ink:#f2f3f5;
-		--nsmax-on-ink:#1c1c1e;
-		--nsmax-bubble:#242832;
-		--nsmax-on-bubble:#f2f3f5;
-		--nsmax-seg-bg:#15181e;
-		--nsmax-seg-thumb:#30343d;
-		--nsmax-code-bg:#15181e;
-		--nsmax-shadow:0 1px 2px rgb(0 0 0/.3);
-		--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.3),0 8px 24px rgb(0 0 0/.34);
-		--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.6);
-		--nsmax-composer-line:rgb(222 220 209/.15);
-		--nsmax-composer-line-focus:rgb(222 220 209/.3);
-		--nsmax-composer-shadow:0 4px 20px rgb(0 0 0/.2);
-		--nsmax-composer-shadow-hover:0 4px 20px rgb(0 0 0/.26);
-		--nsmax-composer-shadow-focus:0 4px 24px rgb(0 0 0/.34);
-	}
-	html:root:root body.dark-layout {
-		--nsmax-canvas:#111318;
-		--nsmax-card:#1b1e24;
-		--nsmax-surface:#1b1e24;
-		--nsmax-fill:#242832;
-		--nsmax-glass:rgb(38 38 36/.96);
-		--nsmax-popup:#30302e;
-		--nsmax-blur:none;
-		--nsmax-stroke:#30343d;
-		--nsmax-highlight:transparent;
-		--nsmax-sheen:transparent;
-		--nsmax-divider:#30343d;
-		--nsmax-panel-alt:#15181e;
-		--nsmax-stroke-strong:#454b57;
-		--nsmax-faint:#858c99;
-		--nsmax-text:#f2f3f5;
-		--nsmax-text-2:#d1d5dc;
-		--nsmax-muted:#a7adb8;
-		--nsmax-thumb:rgb(167 173 184/.36);
-		--nsmax-ink:#f2f3f5;
-		--nsmax-on-ink:#1c1c1e;
-		--nsmax-bubble:#242832;
-		--nsmax-on-bubble:#f2f3f5;
-		--nsmax-seg-bg:#15181e;
-		--nsmax-seg-thumb:#30343d;
-		--nsmax-code-bg:#15181e;
-		--nsmax-shadow:0 1px 2px rgb(0 0 0/.3);
-		--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.3),0 8px 24px rgb(0 0 0/.34);
-		--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.6);
-		--nsmax-composer-line:rgb(222 220 209/.15);
-		--nsmax-composer-line-focus:rgb(222 220 209/.3);
-		--nsmax-composer-shadow:0 4px 20px rgb(0 0 0/.2);
-		--nsmax-composer-shadow-hover:0 4px 20px rgb(0 0 0/.26);
-		--nsmax-composer-shadow-focus:0 4px 24px rgb(0 0 0/.34);
-	}
-	html:root:root {
-		--nsmax-r-chip:6px;
-		--nsmax-r-control:10px;
-		--nsmax-r-card:16px;
-		--nsmax-r-frame:24px;
-	}
-	html:root:root,
-	html:root:root:root {
-		--nsmax-radius:var(--nsmax-r-card);
-		--nsmax-radius-sm:var(--nsmax-r-control);
-		--nsmax-control-radius:var(--nsmax-r-control);
-		--nsmax-seg-radius:var(--nsmax-r-control);
-		--nsmax-pill:var(--nsmax-r-control);
-		--nsmax-chip:var(--nsmax-r-chip);
-		--nsmax-composer-radius:var(--nsmax-r-frame);
-		--nsmax-dialog-radius:var(--nsmax-r-card);
-		--nsmax-bubble-r:var(--nsmax-r-card);
-		--nsmax-bubble-nub:var(--nsmax-r-card);
-	}
-	html:root body {
-		--nsmax-accent:var(--main-color,var(--primary-color,#1d1d1f));
-		--nsmax-on-accent:#fff;
-	}
-	html:root:root body {
-		--nsmax-accent:var(--nsmax-ink);
-		--nsmax-on-accent:var(--nsmax-on-ink);
-	}
-	html:root body {
-		--nsmax-brand:var(--nsmax-accent);
-		--nsmax-on-brand:var(--nsmax-on-accent);
-	}
-	html:root:root:root body {
-		--nsmax-brand:#ffd02f;
-		--nsmax-on-brand:#1c1c1e;
-	}
-	html:root body {
-		--nsmax-accent-soft:color-mix(in srgb,var(--nsmax-accent) 12%,transparent);
-		--nsmax-accent-line:color-mix(in srgb,var(--nsmax-accent) 32%,var(--nsmax-divider));
-	}
-	html:root:root {
-		--nsmax-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI","PingFang SC","HarmonyOS Sans SC","MiSans","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",Roboto,"Helvetica Neue",Arial,sans-serif;
-		--nsmax-mono:ui-monospace,"SF Mono","Cascadia Mono","Cascadia Code",Menlo,Consolas,"Liberation Mono","PingFang SC","Microsoft YaHei UI",monospace;
-	}
 	@keyframes nsmax-appear {from{opacity:0}to{opacity:1}}
-	html:root .md-editor>:first-child:not(.mde-toolbar,.CodeMirror,textarea) {
-		background:transparent!important;
-		border:0!important;
-		border-bottom:1px solid var(--nsmax-divider)!important;
-	}
-	html:root:root:root:has(.nsk-post) #nsk-left:has(>.nsk-post-wrapper>ul.comments) {
-		padding-left:0!important;
-		padding-right:0!important;
-	}
 	@keyframes nsmax-target-fade {from{background-color:var(--nsmax-fill)}to{background-color:transparent}}
 	html:root .comment-menu .menu-item {
 		border-radius:var(--nsmax-control-radius);
@@ -339,44 +95,6 @@
 		border-color:var(--nsmax-stroke-strong)!important;
 		color:var(--nsmax-text);
 	}
-	html:root:root :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],select):not(.CodeMirror *,.md-editor *) {
-		background-color:var(--nsmax-card);
-		border:1px solid var(--nsmax-stroke-strong);
-	}
-	html:root:root :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],select):not(.CodeMirror *,.md-editor *):hover {
-		border-color:var(--nsmax-stroke-strong);
-	}
-	html:root .md-editor:not(.nspp-floating-reply) {
-		overflow:hidden;
-		background-color:var(--nsmax-card)!important;
-		background-image:none!important;
-		border:1px solid var(--nsmax-stroke)!important;
-		border-radius:var(--nsmax-radius)!important;
-		box-shadow:none!important;
-		color:var(--nsmax-text);
-	}
-	html:root .md-editor .mde-toolbar {
-		display:flex!important;
-		flex-wrap:wrap;
-		align-items:center;
-		justify-content:flex-start;
-		gap:2px;
-		box-sizing:border-box;
-		height:auto!important;
-		min-height:40px;
-		max-height:none!important;
-		margin:0!important;
-		padding:5px 8px!important;
-		overflow:visible!important;
-		background:var(--nsmax-panel-alt)!important;
-		border:0!important;
-		border-bottom:1px solid var(--nsmax-divider)!important;
-		border-radius:0!important;
-		box-shadow:none!important;
-	}
-	html:root .md-editor .mde-toolbar>* {
-		flex:none;
-	}
 	html:root .md-editor :is(.mde-toolbar :is(.toolbar-item,[data-nsmax-tool]):not(.right,[data-nsmax-md-hint]),[data-nsmax-ed-icon]) {
 		display:inline-flex!important;
 		align-items:center;
@@ -400,19 +118,6 @@
 	html:root .md-editor :is(.mde-toolbar :is(.toolbar-item,[data-nsmax-tool]):not(.right,[data-nsmax-md-hint]),[data-nsmax-ed-icon]):is(:hover,[class*=active]) {
 		background:var(--nsmax-fill)!important;
 		color:var(--nsmax-text)!important;
-	}
-	html:root .md-editor :is(.mde-toolbar>:is(.separator,.toolbar-split,[class*=split],[class*=separator],[class*=divider]):not(.toolbar-item,[data-nsmax-tool]),[data-nsmax-tool-sep]) {
-		flex:none;
-		display:block!important;
-		box-sizing:border-box;
-		width:1px!important;
-		min-width:1px!important;
-		height:16px!important;
-		margin:0 4px!important;
-		padding:0!important;
-		border:0!important;
-		background:var(--nsmax-divider)!important;
-		font-size:0!important;
 	}
 	html:root .md-editor .mde-toolbar>.right:not([data-nsmax-md-hint]),
 	html:root .md-editor .mde-toolbar>.right+* {
@@ -450,249 +155,14 @@
 		content:none!important;
 		display:none!important;
 	}
-	html:root .md-editor :is(.CodeMirror,.CodeMirror-scroll,.CodeMirror-sizer,textarea) {
-		background:transparent!important;
-		color:var(--nsmax-text)!important;
-	}
-	html:root .md-editor .CodeMirror-gutters {
-		background:transparent!important;
-		border-right:1px solid var(--nsmax-divider)!important;
-	}
-	html:root .md-editor .CodeMirror-linenumber {
-		color:var(--nsmax-muted)!important;
-		opacity:.7;
-	}
-	html:root .md-editor .CodeMirror-cursor {
-		border-left-color:var(--nsmax-text)!important;
-	}
-	html:root .md-editor :is(.CodeMirror-placeholder,textarea::placeholder) {
-		color:var(--nsmax-muted)!important;
-		opacity:.8;
-	}
-	html:root .md-editor .expression {
-		display:flex;
-		flex-wrap:wrap;
-		align-items:center;
-		gap:2px;
-		margin:0!important;
-		padding:5px 8px!important;
-		background:transparent!important;
-		border:0!important;
-		border-top:1px solid var(--nsmax-divider)!important;
-		color:var(--nsmax-muted);
-	}
-	html:root .md-editor .expression>* {
-		padding:2px 8px;
-		border:0!important;
-		border-radius:var(--nsmax-r-control,6px);
-		background:transparent!important;
-		color:var(--nsmax-muted)!important;
-		font-size:13px;
-		line-height:1.6;
-		cursor:pointer;
-		transform:none!important;
-	}
-	html:root .md-editor .expression>:hover {
-		color:var(--nsmax-text)!important;
-	}
-	html:root .md-editor .expression>.current-group,
-	html:root .md-editor .expression>.active {
-		color:var(--nsmax-text)!important;
-		font-weight:600;
-	}
-	html:root .md-editor .exp-container {
-		background:transparent!important;
-		border-color:var(--nsmax-divider)!important;
-	}
-	html:root .md-editor :is(button.submit.btn,.btn.submit) {
-		min-height:34px;
-		padding:0 20px!important;
-		border-radius:var(--nsmax-pill,999px)!important;
-		font-size:13px!important;
-		font-weight:600!important;
-		box-shadow:none!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply):focus-within {
-		border-color:var(--nsmax-accent-line);
-		box-shadow:0 0 0 4px var(--nsmax-accent-soft);
-	}
 	html:root:has(.nsk-post) .comment-menu {
 		gap:2px;
 	}
 	html:root:has(.nsk-post) .comment-menu .menu-item {
 		color:var(--nsmax-muted);
 	}
-	html:root .md-editor [data-nsmax-submit-row] {
-		box-sizing:border-box!important;
-		width:auto!important;
-		max-width:100%!important;
-		min-width:0;
-		height:auto!important;
-		min-height:52px;
-		padding:8px 10px!important;
-		overflow:visible!important;
-	}
-	html:root .md-editor [data-nsmax-submit-row]>:is(button,.btn) {
-		position:static!important;
-		float:none!important;
-		inset:auto!important;
-		transform:none!important;
-		margin:0!important;
-		max-width:100%;
-	}
-	html:root .md-editor [data-nsmax-submit-row]>:is(button.submit,.btn.submit,button:last-child) {
-		margin-left:auto!important;
-	}
-	html:root .md-editor :is(button.submit,.btn.submit) {
-		position:static!important;
-		float:none!important;
-		inset:auto!important;
-		transform:none!important;
-		flex:none;
-	}
-	html:root .md-editor :not(.md-editor,[data-nsmax-submit-row]):has(>:is(button.submit,.btn.submit)):not(:has(textarea,.CodeMirror,.mde-toolbar,.expression)) {
-		display:flex!important;
-		flex-wrap:wrap;
-		align-items:center;
-		justify-content:flex-end;
-		gap:8px;
-		box-sizing:border-box!important;
-		width:auto!important;
-		max-width:100%;
-		height:auto!important;
-		min-height:52px;
-		margin:0!important;
-		padding:8px 10px!important;
-		overflow:visible!important;
-		border:0!important;
-		border-top:1px solid var(--nsmax-divider)!important;
-		background:transparent!important;
-	}
-	html:root .md-editor :not(.md-editor,[data-nsmax-submit-row]):has(>:is(button.submit,.btn.submit)):not(:has(textarea,.CodeMirror,.mde-toolbar,.expression))>:is(button.submit,.btn.submit) {
-		margin:0!important;
-	}
-	html:root .md-editor>:is(button.submit,.btn.submit) {
-		display:flex!important;
-		align-items:center;
-		margin:9px 10px 9px auto!important;
-	}
-	html:root .md-editor[data-nsmax-submit-inline] {
-		position:relative;
-	}
-	html:root .md-editor[data-nsmax-submit-inline]>.nspp-upload-status {
-		position:absolute;
-		left:8px;
-		bottom:9px;
-		max-width:calc(100% - 150px);
-		min-height:34px;
-		display:flex;
-		align-items:center;
-	}
-	html:root .md-editor>:not(.nspp-upload-status,button):has(+ :is(button.submit,.btn.submit)),
-	html:root .md-editor>:has(+ .nspp-upload-status + :is(button.submit,.btn.submit)) {
-		border-bottom:1px solid var(--nsmax-divider)!important;
-	}
-	html:root .md-editor .nspp-upload-choose {
-		width:32px;
-		height:32px;
-		min-height:32px;
-		border-radius:var(--nsmax-r-control,8px);
-		color:var(--nsmax-muted);
-	}
-	html:root .md-editor .nspp-upload-choose:hover {
-		background:var(--nsmax-fill);
-		color:var(--nsmax-text);
-	}
-	html:root .md-editor .nspp-upload-status {
-		color:var(--nsmax-muted);
-		font-size:12px;
-	}
-	html:root .md-editor .nspp-upload-status input[type=password] {
-		min-height:30px;
-		padding:0 10px;
-		border:1px solid var(--nsmax-stroke);
-		border-radius:var(--nsmax-r-control,8px);
-		background:var(--nsmax-panel-alt);
-		font-size:12px;
-	}
-	html:root .md-editor .tab-select {
-		display:flex;
-		align-items:center;
-		gap:2px;
-		padding:6px 8px!important;
-	}
 	html:root [data-nsmax-md-hint] {
 		display:none!important;
-	}
-	html:root .md-editor .CodeMirror .cm-quote,
-	html:root .md-editor .CodeMirror .cm-comment {
-		color:var(--nsmax-muted)!important;
-		font-style:normal;
-	}
-	html:root .md-editor .CodeMirror .cm-header,
-	html:root .md-editor .CodeMirror .cm-strong {
-		color:var(--nsmax-text)!important;
-		font-weight:650;
-	}
-	html:root .md-editor .CodeMirror .cm-link,
-	html:root .md-editor .CodeMirror .cm-url,
-	html:root .md-editor .CodeMirror .cm-string,
-	html:root .md-editor .CodeMirror .cm-variable-2,
-	html:root .md-editor .CodeMirror .cm-variable-3,
-	html:root .md-editor .CodeMirror .cm-keyword,
-	html:root .md-editor .CodeMirror .cm-atom,
-	html:root .md-editor .CodeMirror .cm-number,
-	html:root .md-editor .CodeMirror .cm-tag,
-	html:root .md-editor .CodeMirror .cm-attribute,
-	html:root .md-editor .CodeMirror .cm-builtin,
-	html:root .md-editor .CodeMirror .cm-def {
-		color:var(--nsmax-text-2)!important;
-	}
-	html:root .md-editor .CodeMirror .cm-url {
-		text-decoration:underline;
-		text-decoration-color:var(--nsmax-stroke-strong);
-		text-underline-offset:2px;
-	}
-	html:root .md-editor .CodeMirror .cm-formatting,
-	html:root .md-editor .CodeMirror .cm-formatting-quote,
-	html:root .md-editor .CodeMirror .cm-formatting-list,
-	html:root .md-editor .CodeMirror .cm-formatting-header,
-	html:root .md-editor .CodeMirror .cm-hr,
-	html:root .md-editor .CodeMirror .cm-meta {
-		color:var(--nsmax-faint)!important;
-	}
-	html:root .md-editor .CodeMirror .cm-em {
-		color:inherit!important;
-	}
-	html:root .md-editor .CodeMirror .cm-comment {
-		border-radius:var(--nsmax-r-chip,4px);
-		background:var(--nsmax-fill);
-	}
-	html:root .md-editor .CodeMirror :is(.CodeMirror-selected,.CodeMirror-focused .CodeMirror-selected),
-	html:root .md-editor .CodeMirror-line::selection,
-	html:root .md-editor .CodeMirror-line>span::selection,
-	html:root .md-editor .CodeMirror-line>span>span::selection {
-		background:color-mix(in srgb,var(--nsmax-text) 12%,transparent)!important;
-	}
-	html:root .md-editor .preview:not(button,.tab),
-	html:root .md-editor .md-preview:not(button,.tab),
-	html:root .md-editor .editor-preview:not(button,.tab),
-	html:root .md-editor [class*=preview]:not(button,.tab) {
-		color:var(--nsmax-text);
-		font-size:15px;
-		line-height:1.75;
-	}
-	html:root .md-editor :is(.preview,.md-preview,.editor-preview,[class*=preview]):not(button,.tab) blockquote {
-		margin:8px 0;
-		padding:6px 14px;
-		border-left:3px solid var(--nsmax-stroke-strong);
-		border-radius:0 var(--nsmax-r-control,8px) var(--nsmax-r-control,8px) 0;
-		background:var(--nsmax-panel-alt);
-		color:var(--nsmax-text-2);
-	}
-	html:root:has(.nsk-post) ul.comments {
-		--nsmax-reply-avatar:32px;
-		--nsmax-reply-indent:44px;
 	}
 	html:root:has(.nsk-post) ul.comments .comment-menu {
 		display:flex;
@@ -753,83 +223,9 @@
 		height:16px;
 	}
 	@media (width<=600px) {
-		html:root:has(.nsk-post) ul.comments {
-			--nsmax-reply-indent:0px;
-		}
 		html:root:has(.nsk-post) ul.comments .comment-menu {
 			translate:none;
 		}
-	}
-	html:root:has(.nsk-post) .md-editor .mde-toolbar .toolbar-item {
-		border-radius:calc(var(--nsmax-control-radius) - 2px);
-	}
-	html:root:has(.nsk-post) .md-editor .mde-toolbar .toolbar-item:hover {
-		background:transparent;
-		color:var(--nsmax-text);
-	}
-	html:root:has(.nsk-post) .md-editor .CodeMirror {
-		background:transparent;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) {
-		display:flex!important;
-		flex-wrap:wrap;
-		align-items:center;
-		overflow:hidden;
-		background-color:var(--nsmax-card)!important;
-		background-image:none!important;
-		border:1px solid var(--nsmax-composer-line)!important;
-		border-radius:var(--nsmax-composer-radius,12px)!important;
-		box-shadow:var(--nsmax-composer-shadow)!important;
-		transition:border-color .15s ease,box-shadow .2s ease;
-	}
-	html:root .md-editor:not(.nspp-floating-reply):hover {
-		box-shadow:var(--nsmax-composer-shadow-hover)!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply):focus-within {
-		border-color:var(--nsmax-composer-line-focus)!important;
-		box-shadow:var(--nsmax-composer-shadow-focus)!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>* {
-		order:0;
-		flex:1 1 100%;
-		min-width:0;
-		box-sizing:border-box;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>.expression,
-	html:root .md-editor:not(.nspp-floating-reply)>.exp-container,
-	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-submit-row] {
-		border:0!important;
-		background:transparent!important;
-		box-shadow:none!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>textarea {
-		min-height:112px;
-		padding:16px 18px 6px!important;
-		font-size:15px;
-		line-height:1.7;
-		resize:none;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) .CodeMirror-lines {
-		padding:14px 10px 6px!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>.exp-container {
-		order:1;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)::after {
-		content:""!important;
-		display:block!important;
-		order:3;
-		flex:1 1 100%;
-		height:0;
-		margin:0;
-		padding:0;
-		clear:none;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>.exp-container:not(:empty) {
-		margin:4px 12px 0;
-		padding:8px!important;
-		border-radius:var(--nsmax-r-card,12px)!important;
-		background:var(--nsmax-panel-alt)!important;
 	}
 	html:root .md-editor:not(.nspp-floating-reply)>.mde-toolbar,
 	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-bar=tools] {
@@ -888,176 +284,6 @@
 	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head] .mde-toolbar {
 		border-bottom:0!important;
 		background:transparent!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>:is(.expression,[data-nsmax-submit-row],button.submit,.btn.submit,.nspp-upload-status) {
-		order:4;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>.expression {
-		flex:0 1 auto;
-		align-self:center;
-		gap:2px;
-		padding:8px 0 10px 10px!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) .expression>* {
-		display:inline-flex;
-		align-items:center;
-		height:28px;
-		padding:0 10px!important;
-		border-radius:var(--nsmax-pill,999px)!important;
-		color:var(--nsmax-muted)!important;
-		font-size:13px!important;
-		font-weight:500;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) .expression>:hover {
-		background:var(--nsmax-fill)!important;
-		color:var(--nsmax-text)!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) .expression>.current-group,
-	html:root .md-editor:not(.nspp-floating-reply) .expression>.active {
-		background:var(--nsmax-fill)!important;
-		color:var(--nsmax-text)!important;
-		font-weight:500!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-submit-row] {
-		display:flex!important;
-		align-items:center;
-		justify-content:flex-end;
-		gap:6px;
-		flex:1 1 0;
-		min-width:120px;
-		min-height:0!important;
-		padding:8px 10px 10px 4px!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply):not(:has(>.expression))>[data-nsmax-submit-row] {
-		padding-left:10px!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>:is(button.submit,.btn.submit) {
-		margin:8px 10px 10px auto!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)>:not(.nspp-upload-status,button):has(+ :is(button.submit,.btn.submit)),
-	html:root .md-editor:not(.nspp-floating-reply)>:has(+ .nspp-upload-status + :is(button.submit,.btn.submit)) {
-		border-bottom:0!important;
-	}
-	html:root .md-editor:not(.nspp-floating-reply)[data-nsmax-submit-inline]>.nspp-upload-status {
-		left:10px;
-		bottom:10px;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose {
-		display:inline-grid;
-		place-items:center;
-		width:32px;
-		height:32px;
-		min-height:32px;
-		padding:0;
-		border:1px solid var(--nsmax-composer-line);
-		border-radius:var(--nsmax-pill,999px);
-		background:transparent;
-		color:var(--nsmax-text-2);
-	}
-	html:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose:hover {
-		border-color:var(--nsmax-composer-line-focus);
-		background:var(--nsmax-fill);
-		color:var(--nsmax-text);
-	}
-	html:root .md-editor:not(.nspp-floating-reply) .nspp-upload-choose svg {
-		width:17px;
-		height:17px;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) [data-nsmax-submit-row]>.nspp-upload-choose:first-child {
-		margin-right:auto;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
-		display:inline-flex!important;
-		align-items:center;
-		justify-content:center;
-		gap:6px;
-		box-sizing:border-box;
-		height:32px;
-		min-height:32px!important;
-		min-width:32px;
-		padding:0 14px 0 11px!important;
-		border:0!important;
-		border-radius:var(--nsmax-pill,999px)!important;
-		background:var(--nsmax-brand)!important;
-		background-image:none!important;
-		color:var(--nsmax-on-brand)!important;
-		font-size:13px!important;
-		font-weight:500!important;
-		line-height:1!important;
-		box-shadow:none!important;
-		cursor:pointer;
-		transition:background-color .15s ease,opacity .15s ease;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit)::before {
-		content:"";
-		flex:none;
-		width:16px;
-		height:16px;
-		background:currentColor;
-		-webkit-mask:var(--nsmax-icon-send) center/contain no-repeat;
-		mask:var(--nsmax-icon-send) center/contain no-repeat;
-	}
-	html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit):hover {
-		background:color-mix(in srgb,var(--nsmax-brand) 88%,#000)!important;
-		opacity:1;
-	}
-	html:root .md-editor:not(.nspp-floating-reply):not(:has(.CodeMirror)):has(>textarea:placeholder-shown) :is(button.submit.btn,.btn.submit) {
-		opacity:.5;
-	}
-	html:root:has(.nsk-post) .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
-		gap:0;
-		width:32px;
-		padding:0!important;
-		font-size:0!important;
-	}
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input:not([type]):not(.md-editor *,[class*=nspp-] *,[class*=nspp-]),
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input[type=text]:not(.md-editor *,[class*=nspp-] *,[class*=nspp-]) {
-		box-sizing:border-box;
-		width:100%;
-		height:48px;
-		padding:0 16px!important;
-		border:1px solid var(--nsmax-composer-line)!important;
-		border-radius:var(--nsmax-r-control,12px)!important;
-		background:var(--nsmax-card)!important;
-		box-shadow:var(--nsmax-composer-shadow)!important;
-		color:var(--nsmax-text)!important;
-		font-size:18px!important;
-		font-weight:600;
-		letter-spacing:-.01em;
-		outline:0;
-		transition:border-color .15s ease,box-shadow .2s ease;
-	}
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input:not([type]):not(.md-editor *,[class*=nspp-] *,[class*=nspp-]):focus,
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input[type=text]:not(.md-editor *,[class*=nspp-] *,[class*=nspp-]):focus {
-		border-color:var(--nsmax-composer-line-focus)!important;
-		box-shadow:var(--nsmax-composer-shadow-focus)!important;
-	}
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input:not([type]):not(.md-editor *,[class*=nspp-] *,[class*=nspp-])::placeholder,
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input[type=text]:not(.md-editor *,[class*=nspp-] *,[class*=nspp-])::placeholder {
-		color:var(--nsmax-faint);
-		font-weight:500;
-	}
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) select:not(.md-editor *,[class*=nspp-] *) {
-		box-sizing:border-box;
-		height:36px;
-		padding:0 32px 0 12px!important;
-		border:1px solid var(--nsmax-stroke-strong)!important;
-		border-radius:var(--nsmax-r-control,min(var(--nsmax-pill,8px),8px))!important;
-		background:var(--nsmax-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2373726c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") right 10px center/16px no-repeat!important;
-		color:var(--nsmax-text);
-		font-size:14px;
-		-webkit-appearance:none;
-		appearance:none;
-	}
-	html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) .nsk-panel:has(.md-editor) {
-		padding:0!important;
-		border:0!important;
-		background:transparent!important;
-		box-shadow:none!important;
-	}
-	html:root:has(.new-discussion) .md-editor:not(.nspp-floating-reply)>textarea,
-	html:root:has(.new-discussion) .md-editor:not(.nspp-floating-reply) .CodeMirror {
-		min-height:360px;
 	}
 	html:root:root .nsk-pager a,
 	html:root:root .nsk-pager span {
@@ -1225,25 +451,9 @@
 	}
 	@keyframes nsmax-pop-in {from{opacity:0;transform:translateY(-4px)}}
 	@keyframes nsmax-badge-wait {50%{opacity:.55}}
-	html:root:root {
-		--nsmax-ease-out:cubic-bezier(.165,.85,.45,1);
-		--nsmax-spring:cubic-bezier(.165,.85,.45,1);
-		--nsmax-press:cubic-bezier(.165,.85,.45,1);
-	}
-	html:root:root:root .md-editor:not(.nspp-floating-reply) {
-		transition:border-color .2s ease,box-shadow .25s var(--nsmax-ease-out);
-	}
 	@keyframes nsmax-claude-in {from{opacity:0;scale:.97}}
 	@keyframes nsmax-fade {from{opacity:0}}
 	@keyframes nsmax-pop-in {from{opacity:0;translate:0 4px}}
-	html:root .md-editor:not(.nspp-floating-reply)>textarea,
-	html:root .md-editor:not(.nspp-floating-reply)>textarea:is(:hover,:focus,:focus-visible) {
-		border:0!important;
-		border-radius:0!important;
-		background:transparent!important;
-		box-shadow:none!important;
-		outline:0!important;
-	}
 	html:root:root:has(.nsk-post) ul.comments .comment-menu .menu-item {
 		gap:5px;
 		min-height:28px;
@@ -1370,9 +580,6 @@
 	}
 	html:root:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) select:not(.md-editor *,[class*=nspp-] *):hover {
 		border-color:var(--nsmax-composer-line-focus)!important;
-	}
-	html:root:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab:is(.active,[class*=active],[aria-selected=true]) {
-		box-shadow:0 1px 2px rgb(31 30 29/.1),0 0 0 .5px rgb(31 30 29/.06)!important;
 	}
 	html:root:root :is(ul.post-list>li.post-list-item,ul.comments>li.content-item,.post-title a,.comment-menu .menu-item,.nsk-pager a,.btn) {
 		transition:background-color .2s ease,color .2s ease,border-color .2s ease,box-shadow .3s var(--nsmax-ease-out),scale .48s var(--nsmax-spring);
@@ -5635,6 +4842,14 @@
 		background:var(--bg)!important;
 		color:var(--text)!important;
 	}
+	html:root:root:root:root body,
+	html:root:root:root:root button,
+	html:root:root:root:root input,
+	html:root:root:root:root textarea,
+	html:root:root:root:root select {
+		font-family:var(--font-sans)!important;
+		letter-spacing:0!important;
+	}
 	html:root:root:root:root body > footer {
 		display:none!important;
 	}
@@ -5706,6 +4921,28 @@
 		gap:10px;
 		padding-top:6px;
 	}
+	html:root:root:root:root #nsk-right-panel-container .user-head .menu > div > a,
+	html:root:root:root:root #nsk-right-panel-container .user-head .menu > div > span {
+		display:inline-flex!important;
+		align-items:center;
+		justify-content:center;
+		width:26px;
+		height:26px;
+		padding:0!important;
+		border:0!important;
+		border-radius:6px;
+		color:var(--text-subtle)!important;
+		background:transparent!important;
+	}
+	html:root:root:root:root #nsk-right-panel-container .user-head .menu > div > a:hover,
+	html:root:root:root:root #nsk-right-panel-container .user-head .menu > div > span:hover {
+		background:var(--panel-hover)!important;
+		color:var(--text)!important;
+	}
+	html:root:root:root:root #nsk-right-panel-container .user-head .menu > div svg {
+		width:16px!important;
+		height:16px!important;
+	}
 	html:root:root:root:root #nsk-right-panel-container .user-stat {
 		display:grid!important;
 		grid-template-columns:repeat(2,minmax(0,1fr));
@@ -5737,8 +4974,78 @@
 		width:14px!important;
 		height:14px!important;
 	}
+	html:root:root:root:root #nsk-right-panel-container > div:has(>a.new-discussion) {
+		padding:0;
+		margin:-1px 0 0!important;
+	}
+	html:root:root:root:root #nsk-right-panel-container > div > a.new-discussion {
+		display:flex!important;
+		align-items:center;
+		justify-content:center;
+		width:100%;
+		height:36px!important;
+		margin:0!important;
+		padding:0 14px!important;
+		border:0!important;
+		border-radius:999px!important;
+		background:var(--mark)!important;
+		color:var(--mark-text)!important;
+		font:600 13px/1 var(--font-sans)!important;
+	}
+	html:root:root:root:root #nsk-right-panel-container > div > a.new-discussion svg {
+		width:14px!important;
+		height:14px!important;
+		flex:none;
+	}
 	html:root:root:root:root #nsk-body-left > .nsk-post-wrapper {
 		background:transparent!important;
+	}
+	html:root:root:root:root #nsk-body:has(.nsk-post) > #nsk-body-left {
+		border:0!important;
+		background:transparent!important;
+		box-shadow:none!important;
+		overflow:visible!important;
+	}
+	html:root:root:root:root #nsk-body-left .nsk-post-wrapper > div:has(>.md-editor) {
+		margin:0!important;
+		padding:0!important;
+		background:transparent!important;
+		border:0!important;
+		border-radius:0!important;
+		box-shadow:none!important;
+	}
+	html:root:root:root:root #nsk-body-left .content-item {
+		position:relative;
+		display:grid!important;
+		grid-template-columns:32px minmax(0,1fr)!important;
+		column-gap:12px!important;
+	}
+	html:root:root:root:root #nsk-body-left .content-item > .nsk-content-meta-info {
+		display:contents!important;
+	}
+	html:root:root:root:root #nsk-body-left .content-item > .nsk-content-meta-info > .avatar-wrapper {
+		grid-column:1!important;
+		grid-row:1!important;
+	}
+	html:root:root:root:root #nsk-body-left .content-item > .nsk-content-meta-info > div:not(.avatar-wrapper):not(.floor-link-wrapper) {
+		grid-column:2!important;
+		grid-row:1!important;
+		min-width:0;
+		padding-right:56px!important;
+	}
+	html:root:root:root:root #nsk-body-left .content-item > .nsk-content-meta-info > .floor-link-wrapper {
+		position:absolute!important;
+		right:18px;
+		top:15px;
+		height:24px!important;
+	}
+	html:root:root:root:root #nsk-body-left .content-item > :not(.nsk-content-meta-info) {
+		grid-column:2!important;
+		min-width:0;
+		max-width:100%;
+	}
+	html:root:root:root:root #nsk-body-left .content-item > article.post-content {
+		font:15px/1.8 var(--font-sans)!important;
 	}
 	html:root:root:root:root #nsk-body-left .md-editor {
 		display:block!important;
@@ -5750,10 +5057,51 @@
 		background:var(--panel)!important;
 		box-shadow:var(--shadow-base)!important;
 	}
+	html:root:root:root:root #nsk-body-left .md-editor {
+		overflow:hidden!important;
+	}
 	html:root:root:root:root #nsk-body-left .md-editor #editor-body {
 		display:block!important;
 		min-width:0!important;
 		background:var(--panel)!important;
+	}
+	html:root:root:root:root #nsk-body-left .md-editor #editor-body {
+		border:0!important;
+		border-radius:0!important;
+		box-shadow:none!important;
+		overflow:hidden;
+	}
+	html:root:root:root:root #nsk-body-left .md-editor .tab-select {
+		display:flex!important;
+		align-items:center;
+		gap:4px;
+		padding:0 10px!important;
+		height:40px;
+		border:0!important;
+		border-bottom:1px solid var(--line-soft)!important;
+	}
+	html:root:root:root:root #nsk-body-left .md-editor .mde-toolbar {
+		display:flex;
+		align-items:center;
+		flex-wrap:wrap;
+		gap:2px;
+		padding:6px 10px!important;
+		border-bottom:1px solid var(--line-soft);
+	}
+	html:root:root:root:root #nsk-body-left .md-editor .expression {
+		border-top:1px solid var(--line-soft)!important;
+		background:var(--panel)!important;
+		padding:6px 10px!important;
+	}
+	html:root:root:root:root #nsk-body-left .md-editor .exp-item {
+		padding:4px 8px;
+		border-radius:6px;
+		font-size:12px;
+		color:var(--text-subtle)!important;
+	}
+	html:root:root:root:root #nsk-body-left .md-editor .exp-item:hover {
+		background:var(--panel-hover);
+		color:var(--text)!important;
 	}
 	html:root:root:root:root #nsk-body-left .md-editor textarea:not(.CodeMirror textarea) {
 		display:block;
@@ -5851,7 +5199,15 @@
 		display:none!important;
 	}
 	html:root:root:root:root #nsk-body-left .md-editor .submit-row {
+		display:flex!important;
+		align-items:center;
+		justify-content:flex-end;
+		gap:8px;
+		min-height:48px;
+		width:100%;
+		padding:10px 14px!important;
 		text-align:right!important;
+		background:var(--panel);
 	}
 	html:root:root:root:root #nsk-body-left .comment-menu .menu-item[title]::before {
 		content:""!important;
@@ -5960,6 +5316,307 @@
 		overflow-x:auto;
 		white-space:nowrap;
 	}
+	html:root:root:root:root .nsk-notification {
+		width:calc(100% - 32px)!important;
+		max-width:1168px!important;
+		margin:24px auto!important;
+		padding:0!important;
+		border:0!important;
+		box-shadow:none!important;
+		background:transparent!important;
+		font:14px/1.5 var(--font-sans)!important;
+	}
+	html:root:root:root:root .nsk-notification > .app-switch {
+		display:flex!important;
+		align-items:center;
+		justify-content:flex-start;
+		gap:6px;
+		padding:0 0 14px!important;
+		margin:0!important;
+		background:transparent!important;
+		border:0!important;
+		min-height:48px;
+	}
+	html:root:root:root:root .nsk-notification .app-switch .app-title {
+		display:inline-flex!important;
+		align-items:center;
+		justify-content:center;
+		gap:6px;
+		height:34px!important;
+		min-height:34px;
+		margin:0!important;
+		padding:0 14px!important;
+		line-height:1!important;
+		border:1px solid var(--line)!important;
+		border-radius:999px!important;
+		background:var(--panel)!important;
+		color:var(--text-muted)!important;
+		font:500 13px/1 var(--font-sans)!important;
+		white-space:nowrap;
+	}
+	html:root:root:root:root .nsk-notification .app-switch .app-title.router-link-active {
+		background:var(--action)!important;
+		color:var(--action-text)!important;
+		border-color:var(--action)!important;
+	}
+	html:root:root:root:root .nsk-notification .unread-count {
+		display:inline-flex!important;
+		align-items:center;
+		justify-content:center;
+		min-width:16px;
+		height:16px!important;
+		margin:0!important;
+		padding:0 4px!important;
+		border-radius:999px!important;
+		background:var(--mark)!important;
+		color:var(--mark-text)!important;
+		font:600 10px/1 var(--font-sans)!important;
+	}
+	html:root:root:root:root .nsk-notification > div:not(.app-switch) {
+		position:relative!important;
+		background:transparent!important;
+		padding:0!important;
+		border:0!important;
+		box-shadow:none!important;
+	}
+	html:root:root:root:root .nsk-notification > div > div:has(>button) {
+		position:static!important;
+		display:flex;
+		justify-content:flex-end;
+		padding:0 0 12px!important;
+	}
+	html:root:root:root:root .nsk-notification button.btn,
+	html:root:root:root:root .nsk-notification .app-switch > a:not(.app-title) {
+		position:static!important;
+		display:inline-flex;
+		align-items:center;
+		justify-content:center;
+		min-height:30px;
+		height:30px;
+		padding:0 12px!important;
+		border:1px solid var(--line)!important;
+		border-radius:999px;
+		background:var(--panel)!important;
+		color:var(--text-muted)!important;
+		font:500 12px/1 var(--font-sans)!important;
+	}
+	html:root:root:root:root .nsk-notification .talk-list {
+		overflow:hidden;
+		background:var(--panel)!important;
+		border:1px solid var(--line);
+		border-radius:12px;
+	}
+	html:root:root:root:root .nsk-notification .talk-list > a {
+		display:block;
+		color:var(--text)!important;
+		text-decoration:none;
+	}
+	html:root:root:root:root .nsk-notification .talk-item {
+		display:grid!important;
+		grid-template-columns:40px minmax(0,1fr) auto;
+		align-items:center;
+		gap:12px;
+		padding:14px 16px!important;
+		min-height:72px;
+		border:0!important;
+		border-bottom:1px solid var(--line-soft)!important;
+	}
+	html:root:root:root:root .nsk-notification .talk-list > a:last-child .talk-item {
+		border-bottom:0!important;
+	}
+	html:root:root:root:root .nsk-notification .talk-item:hover {
+		background:var(--panel-hover);
+	}
+	html:root:root:root:root .nsk-notification .avatar {
+		width:40px!important;
+		height:40px!important;
+		border-radius:6px!important;
+		object-fit:cover;
+	}
+	html:root:root:root:root .nsk-notification .talk-item .middle {
+		padding:0!important;
+		min-width:0;
+	}
+	html:root:root:root:root .nsk-notification .talk-item .name {
+		font:600 14px/1.5 var(--font-sans)!important;
+		color:var(--text-strong)!important;
+	}
+	html:root:root:root:root .nsk-notification .talk-item .content {
+		padding:3px 0 0!important;
+		font:13px/1.5 var(--font-sans)!important;
+		color:var(--text-muted)!important;
+		overflow:hidden;
+		text-overflow:ellipsis;
+		white-space:nowrap;
+	}
+	html:root:root:root:root .nsk-notification .talk-item .right {
+		font-size:12px;
+		color:var(--text-subtle);
+		white-space:nowrap;
+	}
+	html:root:root:root:root .nsk-notification .unviewed {
+		background:var(--mark)!important;
+	}
+	html:root:root:root:root .nsk-notification > div > .app-switch {
+		display:flex;
+		align-items:center;
+		gap:12px;
+		background:var(--panel)!important;
+		border:1px solid var(--line)!important;
+		border-bottom:0!important;
+		border-radius:12px 12px 0 0;
+		padding:10px 14px;
+		margin:0;
+	}
+	html:root:root:root:root .nsk-notification > div > .app-switch .app-title {
+		justify-content:flex-start;
+		background:transparent!important;
+		color:var(--text)!important;
+		border:0!important;
+		padding:0!important;
+	}
+	html:root:root:root:root .nsk-notification .message-wrapper {
+		margin:0!important;
+		padding:18px!important;
+		max-height:55dvh!important;
+		min-height:180px;
+		background:var(--panel)!important;
+		border:1px solid var(--line);
+		box-shadow:none!important;
+		overflow:auto;
+	}
+	html:root:root:root:root .nsk-notification .message-item {
+		display:flex;
+		align-items:flex-start;
+		gap:10px;
+		margin:0 0 16px!important;
+	}
+	html:root:root:root:root .nsk-notification .message-item .content-column {
+		min-width:0;
+		margin:0!important;
+	}
+	html:root:root:root:root .nsk-notification .message-item .content-column .content {
+		width:auto!important;
+		max-width:100%!important;
+		padding:10px 14px!important;
+		border:1px solid var(--line)!important;
+		border-radius:8px!important;
+		background:var(--panel-alt)!important;
+		color:var(--text)!important;
+		font:14px/1.7 var(--font-sans)!important;
+		overflow-wrap:anywhere;
+	}
+	html:root:root:root:root .nsk-notification .message-item .content img {
+		display:block;
+		max-width:100%!important;
+		max-height:360px;
+		object-fit:contain;
+	}
+	html:root:root:root:root .nsk-notification .message-item .content a {
+		color:var(--link)!important;
+	}
+	html:root:root:root:root .nsk-notification .message-item .msg-time {
+		margin-top:4px;
+		color:var(--text-subtle)!important;
+		font-size:11px;
+	}
+	html:root:root:root:root .nsk-notification .message-item .avatar-blank {
+		width:40px;
+		flex:none;
+	}
+	html:root:root:root:root .nsk-notification .message-input {
+		background:var(--panel)!important;
+		border:1px solid var(--line);
+		border-top:0;
+		border-radius:0 0 12px 12px;
+		overflow:hidden;
+	}
+	html:root:root:root:root .nsk-notification .message-input textarea {
+		box-sizing:border-box;
+		width:100%;
+		height:140px;
+		padding:12px 14px!important;
+		background:var(--panel)!important;
+		color:var(--text)!important;
+		border:0!important;
+		font:14px/1.7 var(--font-sans)!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input .input-area .cm-wrapper {
+		height:122px;
+		border-top-color:var(--line-soft)!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input .CodeMirror {
+		background:var(--panel)!important;
+		color:var(--text)!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input .mde-toolbar {
+		padding:6px 10px;
+		background:var(--panel-alt)!important;
+		color:var(--text-muted)!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input > div:last-child {
+		border-top:1px solid var(--line-soft);
+		background:var(--panel)!important;
+		padding:8px 14px!important;
+		height:auto!important;
+		min-height:48px;
+	}
+	html:root:root:root:root .nsk-notification .message-input > div:last-child > span {
+		color:var(--text-subtle)!important;
+		font-size:12px;
+	}
+	html:root:root:root:root .nsk-notification .message-input .v-switch-core {
+		background:var(--line-strong)!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input .vue-js-switch {
+		position:relative;
+		display:inline-flex;
+		align-items:center;
+		width:30px;
+		height:18px;
+		cursor:pointer;
+	}
+	html:root:root:root:root .nsk-notification .message-input .vue-js-switch .v-switch-input {
+		position:absolute;
+		width:1px;
+		height:1px;
+		margin:0;
+		opacity:0;
+	}
+	html:root:root:root:root .nsk-notification .message-input .vue-js-switch .v-switch-core {
+		position:relative;
+		display:block;
+		width:30px!important;
+		height:18px!important;
+		border-radius:999px!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input .v-switch-core::before {
+		content:"";
+		position:absolute;
+		left:2px;
+		top:2px;
+		width:14px;
+		height:14px;
+		border-radius:50%;
+		background:#fff;
+		transition:transform .12s;
+	}
+	html:root:root:root:root .nsk-notification .message-input .vue-js-switch.toggled .v-switch-core::before {
+		transform:translateX(12px);
+	}
+	html:root:root:root:root .nsk-notification .message-input .v-switch-label,
+	html:root:root:root:root .nsk-notification .message-input .v-switch-button {
+		display:none!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input .vue-js-switch.toggled .v-switch-core {
+		background:var(--brand)!important;
+	}
+	html:root:root:root:root .nsk-notification .message-input button.btn {
+		background:var(--action)!important;
+		color:var(--action-text)!important;
+		min-width:64px;
+		height:32px;
+	}
 	html:root:root:root:root .nsk-notification .reply-item {
 		overflow-wrap:anywhere;
 	}
@@ -6021,6 +5678,31 @@
 		padding:10px;
 		border-bottom:1px solid var(--line-soft);
 		color:var(--text);
+	}
+	html:root:root:root:root #nsk-frame :is(.pure-form,.configure-groups) input:not([type=checkbox]):not([type=radio]):not([type=file]),
+	html:root:root:root:root #nsk-frame :is(.pure-form,.configure-groups) select {
+		box-sizing:border-box;
+		max-width:100%;
+		min-height:36px;
+		padding:7px 10px;
+		border:1px solid var(--line)!important;
+		border-radius:8px!important;
+		background:var(--panel-alt)!important;
+		color:var(--text)!important;
+		box-shadow:none!important;
+	}
+	html:root:root:root:root #nsk-frame .pure-form textarea:not(.CodeMirror textarea) {
+		max-width:100%;
+		padding:10px;
+		border:1px solid var(--line)!important;
+		border-radius:8px!important;
+		background:var(--panel-alt)!important;
+		color:var(--text)!important;
+	}
+	html:root:root:root:root #nsk-frame .pure-form button {
+		border-color:var(--line)!important;
+		background:var(--action)!important;
+		color:var(--action-text)!important;
 	}
 	html:root:root:root:root:has(.nsk-notification) #nsk-body,
 	html:root:root:root:root:has(#user-setting-panel) #nsk-body,
@@ -6099,6 +5781,29 @@
 		html:root:root:root:root .nsk-notification .reply-item > div:first-child .avatar {
 			width:32px!important;
 			height:32px!important;
+		}
+		html:root:root:root:root .nsk-notification {
+			width:calc(100% - 24px)!important;
+			margin:12px auto!important;
+		}
+		html:root:root:root:root .nsk-notification .talk-item {
+			grid-template-columns:32px minmax(0,1fr);
+			gap:10px;
+			padding:12px!important;
+		}
+		html:root:root:root:root .nsk-notification .talk-item .right {
+			grid-column:2;
+			font-size:11px;
+		}
+		html:root:root:root:root .nsk-notification .avatar {
+			width:32px!important;
+			height:32px!important;
+		}
+		html:root:root:root:root .nsk-notification .message-wrapper {
+			padding:12px!important;
+		}
+		html:root:root:root:root .nsk-notification .app-switch .app-title {
+			padding:0 10px!important;
 		}
 	}
 	@media (prefers-reduced-motion:reduce) {

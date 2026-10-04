@@ -1,6 +1,6 @@
 {
   "name": "nodeseek-max",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "private": true,
   "description": "NodeSeek 全能增强用户脚本：融合 NodeSeek++、外链跳转、黑名单通知屏蔽、侧栏热榜与现代化主题",
   "license": "GPL-3.0-only",
@@ -16,6 +16,7 @@
     "css": "node scripts/build-css.mjs",
     "test": "node --test --test-concurrency=1 tests/smoke.test.cjs",
     "screenshots": "node tests/ui-audit.cjs",
+    "performance": "node tests/performance.cjs",
     "upstream": "node scripts/upstream.mjs"
   },
   "devDependencies": {

@@ -7,6 +7,9 @@ const root = new URL("../", import.meta.url);
 const scriptPath = new URL("nodeseek-max.user.js", root);
 let source = readFileSync(scriptPath, "utf8").replace(/\r\n?/g, "\n");
 const original = source;
+const settingsCss = readFileSync(new URL("theme/settings.css", root), "utf8").replace(/\r\n?/g, "\n");
+source = source.replace(/\tvar settings_sb_default = .*;\n/, "");
+source = source.replace("\tvar style_default$1 = ", "\tvar settings_sb_default = " + JSON.stringify(settingsCss) + ";\n\tvar style_default$1 = ");
 const themePath = new URL("theme/source.js", root);
 let themeSource;
 if (existsSync(themePath)) themeSource = readFileSync(themePath, "utf8").replace(/\r\n?/g, "\n");
@@ -77,8 +80,8 @@ const retired = /^nspp-(?:monitor|history|footprint|user-hover|user-badges|trust
 ast.walkRules(rule => {
   if (rule.parent.type === "atrule" && /keyframes$/.test(rule.parent.name)) return;
   if (rule.source.start.offset < skinStart) {
-    const variables = rule.nodes.some(node => node.type === "decl" && node.prop.startsWith("--nsmax-"));
-    const bindings = /(?:md-editor|comment-menu|nsk-pager|data-nsmax-pg|data-nsmax-pm|data-nsmax-sort|data-nsmax-md-hint|data-nsmax-ed|data-nsmax-icon|\.nsmax-icon|data-nsmax-header-hide|data-nsmax-own-hide|data-nsmax-hidden|data-nsmax-dup|nspp-confirm)/.test(rule.selector);
+    const variables = rule.nodes.some(node => node.type === "decl" && node.prop.startsWith("--nsmax-icon-"));
+    const bindings = /(?:comment-menu|nsk-pager|data-nsmax-pg|data-nsmax-sort|data-nsmax-md-hint|data-nsmax-ed|data-nsmax-icon|\.nsmax-icon|data-nsmax-header-hide|data-nsmax-own-hide|data-nsmax-hidden|data-nsmax-dup|nspp-confirm)/.test(rule.selector);
     if (!variables && !bindings) { rule.remove(); return; }
   }
   const selectors = selectorParser().astSync(rule.selector);
