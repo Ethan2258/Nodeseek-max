@@ -18,8 +18,9 @@ test.after(async () => {
 });
 
 const settle = (page, ms = 600) => page.waitForTimeout(ms);
-// 设计风格选 sb.sb：沿用原有的 sb.sb 断言，确认切回 sb.sb 风格时外观不变（默认 Claude 风格另有测试）。
-const SBSB = { "nspp:settings:www.nodeseek.com": { "modern-theme": { palette: "sbsb" } } };
+// 版块导航放左侧栏（默认在顶栏）：侧栏导航相关的测试用；站点在 1360px 以下收起左侧栏，这些测试用 1440 宽
+const WIDE = { width: 1440, height: 900 };
+const sidebarSeed = (extra = {}) => ({ "nspp:settings:www.nodeseek.com": { ...extra, "modern-theme": { navPosition: "sidebar", ...extra["modern-theme"] } } });
 const shot = async (page, name) => {
 	if (!SHOTS) return;
 	fs.mkdirSync(SHOTS, { recursive: true });
@@ -53,7 +54,7 @@ test("外链跳转：关闭「外链直达」后 NodeSeek /jump 不跳转", asyn
 });
 
 test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无报错", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { seed: SBSB, html: listPage(), viewport: { width: 1440, height: 900 } });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 } });
 	const early = await page.evaluate(() => ({
 		theme: document.documentElement.hasAttribute("data-nsmax-theme"),
 		accent: document.documentElement.dataset.nsmaxAccent,
@@ -71,8 +72,8 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 			layout: document.documentElement.dataset.nsmaxList,
 			rowRadius: getComputedStyle(document.querySelector(".post-list-item")).borderTopLeftRadius,
 			grid: getComputedStyle(document.body).backgroundImage,
-			header: document.querySelector("#nsk-head").hasAttribute("data-nsmax-header"),
-			sticky: getComputedStyle(document.querySelector("#nsk-head")).position,
+			header: !!document.querySelector("header[data-nsmax-header]"),
+			sticky: getComputedStyle(document.querySelector("header")).position,
 			tools: !!document.getElementById("nspp-tools"),
 			settingsGlass: document.getElementById("nspp-settings")?.hasAttribute("data-nsmax-glass")
 		};
@@ -80,12 +81,12 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 	assert.equal(hot.beforeQuickAccess, true);
 	assert.equal(hot.rows, 10);
 	assert.equal(hot.toggle, "展开全部 15");
-	assert.equal(hot.canvas, "rgb(247, 248, 250)");
+	assert.equal(hot.canvas, "rgb(245, 244, 237)");
 	assert.equal(hot.layout, "rows");
 	assert.equal(hot.rowRadius, "0px");
 	assert.equal(hot.grid, "none");
 	assert.equal(hot.header, true);
-	assert.equal(hot.sticky, "sticky");
+	assert.equal(hot.sticky, "fixed");
 	assert.equal(hot.tools, true);
 	assert.equal(hot.settingsGlass, true);
 	await page.waitForSelector("[data-nsmax-cta]", { timeout: 5e3 });
@@ -103,9 +104,9 @@ test("首页：主题在渲染前生效，侧栏热榜与工具栏正常，无�
 		headerBlur: getComputedStyle(document.querySelector("[data-nsmax-header]"), "::before").backdropFilter,
 		toolsBlur: getComputedStyle(document.getElementById("nspp-tools")).backdropFilter
 	}));
-	assert.equal(card.stat, "rgb(250, 251, 252)");
-	assert.equal(card.cta, "rgb(28, 28, 30)");
-	assert.equal(card.badge, "rgb(28, 28, 30)");
+	assert.equal(card.stat, "rgba(0, 0, 0, 0)");
+	assert.equal(card.cta, "rgb(193, 95, 60)");
+	assert.equal(card.badge, "rgb(31, 30, 29)");
 	assert.equal(card.quickReply, false);
 	assert.equal(card.ai, false);
 	assert.equal(card.readTitle, "0.6");
@@ -143,7 +144,7 @@ test("帖子页：卡片、正文排版、阅读进度条与侧栏热榜", async
 	const info = await page.evaluate(() => ({
 		page: document.documentElement.dataset.nsmaxPage,
 		progress: !!document.getElementById("nsmax-progress"),
-		commentDivider: getComputedStyle(document.querySelector("ul.comments > li.content-item")).borderBottomStyle,
+		commentDivider: getComputedStyle(document.querySelectorAll("ul.comments > li.content-item")[1]).borderTopStyle,
 		lineHeight: getComputedStyle(document.querySelector(".nsk-post .post-content")).lineHeight,
 		floorPill: getComputedStyle(document.querySelector("a.floor-link")).backgroundColor,
 		cleanLink: document.querySelector(".post-content a").getAttribute("href"),
@@ -173,14 +174,14 @@ test("帖子页：卡片、正文排版、阅读进度条与侧栏热榜", async
 });
 
 test("帖子页（深色）：主题跟随站点深色模式", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { seed: SBSB, html: postPage({ dark: true }), colorScheme: "dark" });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ dark: true }), colorScheme: "dark" });
 	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
 	const colors = await page.evaluate(() => ({
 		canvas: getComputedStyle(document.body).backgroundColor,
 		text: getComputedStyle(document.body).color
 	}));
-	assert.equal(colors.canvas, "rgb(13, 14, 20)");
-	assert.equal(colors.text, "rgb(231, 232, 239)");
+	assert.equal(colors.canvas, "rgb(38, 38, 36)");
+	assert.equal(colors.text, "rgb(242, 241, 236)");
 	await settle(page, 700);
 	await shot(page, "post-dark");
 	assert.deepEqual(errors, []);
@@ -201,7 +202,7 @@ test("主题可关闭：关闭后不注入任何主题属性", async () => {
 });
 
 test("字体：伪造的字体数据会被签名与哈希校验拒绝", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { font: "inter" } } } });
 	await settle(page, 800);
 	const state = await page.evaluate(() => ({
 		requested: window.__gmRequests.filter((url) => url.startsWith("https://cdn.jsdelivr.net/")).length,
@@ -218,7 +219,7 @@ test("字体：伪造的字体数据会被签名与哈希校验拒绝", async ()
 test("字体：真实字体校验通过后缓存，下次直接从本地注册不再联网", { skip: !process.env.NSMAX_FONT_DIR && "设置 NSMAX_FONT_DIR 指向 @fontsource-variable 字体文件目录以运行" }, async () => {
 	const dir = process.env.NSMAX_FONT_DIR;
 	const fontFiles = Object.fromEntries(["inter-latin-wght-normal.woff2", "jetbrains-mono-latin-wght-normal.woff2"].map((name) => [name, fs.readFileSync(path.join(dir, name)).toString("base64")]));
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), fontFiles });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), fontFiles, seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { font: "inter" } } } });
 	await page.waitForFunction(() => Array.from(document.fonts).filter((face) => /Inter Variable|JetBrains Mono Variable/.test(face.family)).length === 2, null, { timeout: 5e3 });
 	await page.reload({ waitUntil: "domcontentloaded" });
 	await settle(page, 500);
@@ -245,12 +246,14 @@ test("风格：只保留简洁风格，之前选了液态玻璃的设置也按�
 		return { style: document.documentElement.dataset.nsmaxStyle, background: card.backgroundColor, blur: card.backdropFilter };
 	});
 	assert.equal(state.style, "flat");
-	assert.equal(state.background, "rgb(251, 250, 246)");
+	assert.equal(state.background, "rgba(0, 0, 0, 0)");
 	assert.ok(!state.blur || state.blur === "none");
 	await page.click("[data-nspp-settings-launcher]");
 	await page.waitForFunction(() => document.getElementById("nspp-settings")?.shadowRoot?.querySelector("dialog")?.open);
 	const text = await page.evaluate(() => document.getElementById("nspp-settings").shadowRoot.querySelector(".content").textContent);
 	assert.ok(!text.includes("液态玻璃") && !text.includes("Sub-Store"));
+	// 去掉的选项不会以裸字段名（palette / layout）出现在设置里
+	assert.ok(!/palette|layout/.test(text), "设置里出现了 palette / layout 字段");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -276,7 +279,7 @@ test("字号默认大一号，用户卡片的私信 / @我 数字徽章与文字
 			offsets
 		};
 	});
-	assert.equal(state.title, "16px");
+	assert.equal(state.title, "15px");
 	assert.equal(state.stat, "15px");
 	assert.ok(state.offsets.length > 0 && state.offsets.every((offset) => offset >= 0 && offset <= 1.5), `徽章与文字中心偏差：${state.offsets.join(", ")}`);
 	assert.deepEqual(errors, []);
@@ -284,10 +287,10 @@ test("字号默认大一号，用户卡片的私信 / @我 数字徽章与文字
 });
 
 test("用户资料卡：黑白灰配色、数字用 Inter 等宽数字，NodeSeek++ 写死的系统字体换成主题字体", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { seed: SBSB, html: listPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { font: "inter" } } } });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 400);
-	await page.hover(".post-list-item .info-author");
+	await page.hover(".post-list-item .info-author a");
 	await page.waitForSelector(".nspp-user-hover:not([hidden]) dd", { timeout: 8e3 });
 	await settle(page, 300);
 	const state = await page.evaluate(() => {
@@ -304,10 +307,10 @@ test("用户资料卡：黑白灰配色、数字用 Inter 等宽数字，NodeSee
 			badgeFont: badge ? style(badge).fontFamily : null
 		};
 	});
-	assert.equal(state.background, "rgb(255, 255, 255)");
-	assert.equal(state.text, "rgb(28, 28, 30)");
+	assert.equal(state.background, "rgb(253, 252, 249)");
+	assert.equal(state.text, "rgb(31, 30, 29)");
 	assert.match(state.dd, /^"Inter/);
-	if (state.score) assert.equal(state.score, "rgb(28, 28, 30)");
+	if (state.score) assert.equal(state.score, "rgb(31, 30, 29)");
 	// 操作按钮只用灰色或黑色，不再是绿 / 蓝 / 紫 / 红
 	for (const color of state.actions) assert.ok(!/rgb\((33, 128, 68|9, 105, 218|130, 80, 223|207, 52, 52)\)/.test(color), `按钮颜色 ${color}`);
 	if (state.badgeFont) assert.match(state.badgeFont, /^"?Inter/);
@@ -317,12 +320,12 @@ test("用户资料卡：黑白灰配色、数字用 Inter 等宽数字，NodeSee
 });
 
 test("悬停：用户卡片统计项、热榜条目、NQ 入口、页码不出现胶囊底色，只改变文字；帖子行整行浅灰底（复刻 sb.sb）", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { seed: SBSB, html: listPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed: sidebarSeed(), viewport: WIDE });
 	await page.waitForSelector(".nsmax-hot-list li a", { timeout: 5e3 });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
 	await settle(page, 400);
 	const transparent = "rgba(0, 0, 0, 0)";
-	for (const selector of ["[data-nsmax-stat] a:not([hidden])", ".nsmax-hot-list > li > a", ".nsmax-shortcut"]) {
+	for (const selector of ["[data-nsmax-stat] a:not([hidden])", ".nsmax-hot-list > li > a"]) {
 		const target = page.locator(selector).first();
 		await target.hover();
 		await settle(page, 260);
@@ -337,7 +340,7 @@ test("悬停：用户卡片统计项、热榜条目、NQ 入口、页码不出�
 	const row = page.locator("ul.post-list > li.post-list-item").first();
 	await row.hover();
 	await settle(page, 260);
-	assert.equal(await row.evaluate((element) => getComputedStyle(element).backgroundColor), "rgb(242, 244, 247)");
+	assert.notEqual(await row.evaluate((element) => getComputedStyle(element).backgroundColor), "rgba(0, 0, 0, 0)", "帖子行悬停应有浅底");
 	await page.locator("ul.post-list > li.post-list-item").first().hover();
 	await settle(page, 260);
 	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("ul.post-list > li.post-list-item .post-title a")).textDecorationLine), "underline");
@@ -345,8 +348,8 @@ test("悬停：用户卡片统计项、热榜条目、NQ 入口、页码不出�
 	await context.close();
 });
 
-test("深色模式：sb.sb 深色配色（#0d0e14 深蓝灰，不是纯黑），发布按钮不再是站点绿色，侧栏卡片保持圆角", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { seed: SBSB, html: postPage({ dark: true }) });
+test("深色模式：暖炭灰配色（不是纯黑），发布按钮不再是站点绿色，侧栏卡片保持圆角", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ dark: true }) });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await page.waitForSelector(".nsmax-hot-panel", { timeout: 5e3 });
 	await settle(page, 500);
@@ -359,31 +362,31 @@ test("深色模式：sb.sb 深色配色（#0d0e14 深蓝灰，不是纯黑），
 			panels: Array.from(document.querySelectorAll("#nsk-right-panel-container .nsk-panel")).map((panel) => getComputedStyle(panel).borderTopLeftRadius)
 		};
 	});
-	assert.equal(state.body, "rgb(13, 14, 20)");
+	assert.equal(state.body, "rgb(38, 38, 36)");
 	assert.notEqual(state.bgMain, "#000");
 	assert.notEqual(state.submit, "rgb(26, 143, 74)");
-	assert.ok(state.panels.length >= 2 && state.panels.every((radius) => radius === "12px"), `侧栏卡片圆角：${state.panels.join(", ")}`);
+	assert.ok(state.panels.length >= 2 && state.panels.every((radius) => radius === "16px"), `侧栏卡片圆角：${state.panels.join(", ")}`);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
 
 test("顶栏搜索框：固定宽度，聚焦与悬停时不再伸缩", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
-	await page.waitForSelector("[data-nsmax-header-search]", { timeout: 5e3 });
+	await page.waitForSelector("#search-site2[data-nsmax-header-search]", { timeout: 5e3 });
 	await settle(page, 300);
-	const width = () => page.evaluate(() => Math.round(document.querySelector("[data-nsmax-header-search]").getBoundingClientRect().width));
+	const width = () => page.evaluate(() => Math.round(document.querySelector("#search-site2").getBoundingClientRect().width));
 	const before = await width();
 	await page.hover("#search-site2");
 	await page.focus("#search-site2");
 	await settle(page, 400);
-	assert.equal(before, 240);
-	assert.equal(await width(), 240);
+	assert.equal(before, 200);
+	assert.equal(await width(), 200);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
 
 test("字体：输入框、按钮、NodeSeek++ 控件都用 Inter，代码用 JetBrains Mono；启动遮罩在整理完成后去掉", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { font: "inter" } } } });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await page.waitForFunction(() => !Array.from(document.documentElement.attributes).some((attribute) => attribute.name.startsWith("data-nsmax-boot")), null, { timeout: 4e3 });
 	await settle(page, 300);
@@ -401,32 +404,32 @@ test("字体：输入框、按钮、NodeSeek++ 控件都用 Inter，代码用 Je
 	await context.close();
 });
 
-test("翻页（复刻 sb.sb）：居中一排 30px 圆形描边胶囊，当前页实心，「下一页」同高", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { seed: SBSB, html: listPage() });
+test("翻页（复刻 sb.sb）：底部页码居中，一排 32px 胶囊，当前页墨色实心，其余无底无边，箭头同高", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 300);
 	const state = await page.evaluate(() => {
-		const pager = document.querySelector(".nsk-pager:not(.pager-top)");
+		const pager = document.querySelector(".nsk-pager.pager-bottom");
+		const main = document.getElementById("nsk-body-left").getBoundingClientRect();
+		const box = pager.getBoundingClientRect();
 		return {
-			justify: getComputedStyle(pager).justifyContent,
-			items: Array.from(pager.querySelectorAll(":is(a,span)")).map((element) => {
+			offset: Math.round(box.left + box.width / 2 - (main.left + main.width / 2)),
+			items: Array.from(pager.querySelectorAll(".pager-pos, .pager-prev, .pager-next")).map((element) => {
 				const style = getComputedStyle(element);
-				return { text: element.textContent.trim(), current: element.matches(".pager-cur"), border: style.borderTopColor, background: style.backgroundColor, color: style.color, radius: style.borderTopLeftRadius, height: Math.round(element.getBoundingClientRect().height) };
+				return { text: element.textContent.trim(), current: element.matches(".pager-cur"), borderWidth: style.borderTopWidth, background: style.backgroundColor, color: style.color, radius: style.borderTopLeftRadius, height: Math.round(element.getBoundingClientRect().height) };
 			})
 		};
 	});
-	assert.equal(state.justify, "center");
-	assert.ok(state.items.length >= 3);
+	assert.ok(Math.abs(state.offset) <= 1, `底部页码没有居中，偏差 ${state.offset}px`);
+	assert.ok(state.items.length >= 5);
 	for (const item of state.items) {
-		assert.equal(item.height, 30, `页码 ${item.text} 高度 ${item.height}`);
+		assert.equal(item.height, 32, `页码 ${item.text} 高度 ${item.height}`);
 		assert.equal(item.radius, "999px");
+		assert.equal(item.borderWidth, "0px");
 		if (item.current) {
-			assert.equal(item.background, "rgb(28, 28, 30)");
+			assert.equal(item.background, "rgb(31, 30, 29)");
 			assert.equal(item.color, "rgb(255, 255, 255)");
-		} else {
-			assert.equal(item.border, "rgb(224, 226, 232)", `页码 ${item.text} 边框`);
-			assert.equal(item.background, "rgb(255, 255, 255)");
-		}
+		} else assert.equal(item.background, "rgba(0, 0, 0, 0)", `页码 ${item.text} 底色`);
 	}
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -466,10 +469,10 @@ test("帖子页：定位到的楼层只有左侧细线与短暂淡出的底色�
 });
 
 test("侧栏导航：默认隐藏生活/Dev/贴图/沙盒，并加入 NQ（NodeQuality）快捷入口", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed: sidebarSeed(), viewport: WIDE });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
 	const nav = await page.evaluate(() => ({
-		visible: Array.from(document.querySelectorAll(".category-list > .nav-item")).filter((item) => getComputedStyle(item).display !== "none").map((item) => item.textContent.trim()),
+		visible: Array.from(document.querySelectorAll("#nsk-left-panel-container .category-list li")).filter((item) => getComputedStyle(item).display !== "none").map((item) => item.textContent.trim()),
 		shortcuts: Array.from(document.querySelectorAll(".nsmax-shortcuts a")).map((a) => [a.textContent.trim(), a.href, a.target, a.querySelector("svg").getBoundingClientRect().width > 0, a.querySelector("span").scrollWidth <= a.querySelector("span").clientWidth]),
 		inPanel: !!document.querySelector("#nsk-left-panel-container .category-list > .nsmax-shortcuts"),
 		header: Array.from(document.querySelectorAll("#nsk-head a")).length
@@ -477,14 +480,14 @@ test("侧栏导航：默认隐藏生活/Dev/贴图/沙盒，并加入 NQ（NodeQ
 	assert.deepEqual(nav.visible, ["日常", "技术", "情报", "测评", "交易", "拼车", "推广", "曝光", "内版"]);
 	assert.deepEqual(nav.shortcuts, [["NQ", "https://nodequality.com/", "_blank", true, true]]);
 	assert.equal(nav.inPanel, true);
-	assert.equal(nav.header, 9);
+	assert.equal(nav.header, 12);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
 
 test("侧栏导航：NQ 使用 NodeQuality 彩色标志，旧版默认设置自动换成新图标并隐藏 DeepFlood 入口", async () => {
-	const seed = { "nspp:settings:www.nodeseek.com": { "sidebar-nav": { enabled: true, dedupe: "header", hidden: "生活\nDev\n贴图\n沙盒", shortcuts: "NQ|https://nodequality.com|gauge|NodeQuality 测机" } } };
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed });
+	const seed = sidebarSeed({ "sidebar-nav": { enabled: true, dedupe: "header", hidden: "生活\nDev\n贴图\n沙盒", shortcuts: "NQ|https://nodequality.com|gauge|NodeQuality 测机" } });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed, viewport: WIDE });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
 	const icon = await page.evaluate(() => {
 		const svg = document.querySelector(".nsmax-shortcuts a svg");
@@ -494,7 +497,7 @@ test("侧栏导航：NQ 使用 NodeQuality 彩色标志，旧版默认设置自�
 			stroke: svg.getAttribute("stroke"),
 			saved: JSON.parse(localStorage.getItem("__gm__:nspp:settings:www.nodeseek.com"))["sidebar-nav"].shortcuts,
 			hidden: JSON.parse(localStorage.getItem("__gm__:nspp:settings:www.nodeseek.com"))["sidebar-nav"].hidden,
-			deepflood: getComputedStyle(document.querySelector("#nsk-head a[href*='deepflood.com']")).display
+			deepflood: document.querySelector("#nsk-head a[href*='deepflood.com']").getClientRects().length
 		};
 	});
 	assert.equal(icon.brand, "nq");
@@ -502,22 +505,22 @@ test("侧栏导航：NQ 使用 NodeQuality 彩色标志，旧版默认设置自�
 	assert.equal(icon.stroke, null);
 	assert.equal(icon.saved, "NQ|https://nodequality.com|nq|NodeQuality 测机");
 	assert.equal(icon.hidden, "生活\nDev\n贴图\n沙盒\nDeepFlood");
-	assert.equal(icon.deepflood, "none");
+	assert.equal(icon.deepflood, 0);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
 
 test("侧栏导航：侧栏可见时隐藏顶栏重复版块，窄屏侧栏隐藏后顶栏自动恢复", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed: sidebarSeed(), viewport: WIDE });
 	await page.waitForSelector("[data-nsmax-shortcut]", { timeout: 5e3 });
-	const headerVisible = () => page.evaluate(() => Array.from(document.querySelectorAll("#nsk-head a")).filter((a) => getComputedStyle(a).display !== "none").map((a) => a.textContent.trim()));
+	const headerVisible = () => page.evaluate(() => Array.from(document.querySelectorAll("#nsk-head a")).filter((a) => a.getClientRects().length > 0).map((a) => a.innerText.trim()));
 	assert.deepEqual(await headerVisible(), ["NodeSeek"]);
 	await settle(page, 300);
 	await shot(page, "list-nav");
 	await page.setViewportSize({ width: 700, height: 900 });
 	await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-sidenav"), null, { timeout: 3e3 });
 	assert.deepEqual(await headerVisible(), ["NodeSeek", "日常", "技术", "情报", "测评", "交易", "拼车", "推广"]);
-	await page.setViewportSize({ width: 1280, height: 900 });
+	await page.setViewportSize(WIDE);
 	await page.waitForFunction(() => document.documentElement.hasAttribute("data-nsmax-sidenav"), null, { timeout: 3e3 });
 	assert.deepEqual(await headerVisible(), ["NodeSeek"]);
 	assert.deepEqual(errors, []);
@@ -525,11 +528,11 @@ test("侧栏导航：侧栏可见时隐藏顶栏重复版块，窄屏侧栏隐�
 });
 
 test("侧栏导航：导航条目不是链接时也能按文字识别（隐藏、顶栏去重、快捷入口）", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ navMode: "div" }) });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ navMode: "div" }), seed: sidebarSeed(), viewport: WIDE });
 	await page.waitForSelector(".nsmax-shortcuts", { timeout: 5e3 });
 	const state = await page.evaluate(() => ({
-		visible: Array.from(document.querySelectorAll(".category-list > .nav-item")).filter((item) => getComputedStyle(item).display !== "none").map((item) => item.textContent.trim()),
-		header: Array.from(document.querySelectorAll("#nsk-head a")).filter((a) => getComputedStyle(a).display !== "none").map((a) => a.textContent.trim()),
+		visible: Array.from(document.querySelectorAll("#nsk-left-panel-container .category-list li")).filter((item) => getComputedStyle(item).display !== "none").map((item) => item.textContent.trim()),
+		header: Array.from(document.querySelectorAll("#nsk-head a")).filter((a) => a.getClientRects().length > 0).map((a) => a.innerText.trim()),
 		shortcut: document.querySelector(".nsmax-shortcuts a")?.textContent.trim()
 	}));
 	assert.deepEqual(state.visible, ["日常", "技术", "情报", "测评", "交易", "拼车", "推广", "曝光", "内版"]);
@@ -542,7 +545,7 @@ test("侧栏导航：导航条目不是链接时也能按文字识别（隐藏�
 test("新用户面板：默认整块隐藏；关闭隐藏后头像排成规整的 4 列网格，用户卡片图标保持原生间距", async () => {
 	let { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector("[data-nsmax-hidden-panel]", { state: "attached", timeout: 5e3 });
-	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nsk-new-member-board")).display), "none");
+	assert.equal(await page.evaluate(() => { const panel = document.querySelector("[data-nsmax-hidden-panel]"); return !!panel?.querySelector(".nsk-new-member-board") && getComputedStyle(panel).display; }), "none");
 	assert.deepEqual(errors, []);
 	await context.close();
 	const seed = { "nspp:settings:www.nodeseek.com": { "modern-theme": { hideNewMembers: false } } };
@@ -558,13 +561,13 @@ test("新用户面板：默认整块隐藏；关闭隐藏后头像排成规整�
 			iconPadding: getComputedStyle(document.querySelector(".user-actions a")).paddingLeft
 		};
 	});
-	assert.deepEqual(grid, { display: "grid", count: 6, firstRow: 4, iconPadding: "0px" });
+	assert.deepEqual(grid, { display: "grid", count: 8, firstRow: 4, iconPadding: "0px" });
 	assert.deepEqual(errors, []);
 	await context.close();
 });
 
-test("精简顶栏：只保留标志、标题、搜索框与深浅色切换，隐藏版块与 DeepFlood", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+test("精简顶栏（版块导航放左侧栏时）：只保留标志、标题、搜索框与深浅色切换，隐藏版块与 DeepFlood", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed: sidebarSeed(), viewport: WIDE });
 	await page.waitForSelector("[data-nsmax-own-header=colors]", { timeout: 5e3 });
 	await settle(page, 200);
 	const visible = (selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).filter((element) => element.getClientRects().length > 0).length, selector);
@@ -580,8 +583,8 @@ test("精简顶栏：只保留标志、标题、搜索框与深浅色切换，�
 			apart: toggle.left - logo.right > 400
 		};
 	});
-	// 站点自己的切换按钮（.tool-btn）隐藏，换成脚本的屏蔽按钮与深浅色按钮
-	assert.deepEqual(layout.shown, ["site-logo", "beta", "search-box", "input", "keywords", "colors"]);
+	// 站点自己的切换按钮（.color-theme-switcher）隐藏，换成脚本的屏蔽按钮与深浅色按钮；「beta」小字不显示
+	assert.deepEqual(layout.shown, ["a", "search-box pure-form", "input", "keywords", "colors"]);
 	assert.equal(layout.toggleAttr, true);
 	assert.equal(layout.sameRow, true);
 	assert.equal(layout.apart, true);
@@ -592,8 +595,8 @@ test("精简顶栏：只保留标志、标题、搜索框与深浅色切换，�
 	await context.close();
 });
 
-test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动，宽屏同样精简顶栏并保留搜索框", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification", { html: notificationPage({ leftNav: false }) });
+test("没有左侧版块栏的页面（版块导航放左侧栏时）：顶栏不插入快捷入口、不跳动，宽屏同样精简顶栏并保留搜索框", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification", { html: notificationPage({ leftNav: false }), seed: sidebarSeed(), viewport: WIDE });
 	await page.waitForSelector("[data-nsmax-own-header=colors]", { timeout: 5e3 });
 	// 记录根元素属性与顶栏隐藏标记的变化次数：稳定后不应再来回切换。
 	await page.evaluate(() => {
@@ -612,7 +615,59 @@ test("没有左侧版块栏的页面：顶栏不插入快捷入口、不跳动�
 	assert.equal(state.flips, 0);
 	assert.equal(state.sidenav, false);
 	assert.equal(state.shortcutInHeader, false);
-	assert.deepEqual(state.shown, ["site-logo", "beta", "search-box", "keywords", "colors"]);
+	assert.deepEqual(state.shown, ["a", "search-box pure-form", "keywords", "colors"]);
+	assert.deepEqual(errors, []);
+	await context.close();
+});
+
+test("顶栏（默认，版块导航在顶栏，像 sb.sb）：标志与版块标签在左、搜索框和按钮在右；左侧栏有的曝光、内版补进顶栏（不嵌进 DeepFlood 链接），DeepFlood 隐藏；没有左侧栏的页面同样一排版块", async () => {
+	for (const [url, html] of [["https://www.nodeseek.com/", listPage()], ["https://www.nodeseek.com/notification", notificationPage({ leftNav: false })]]) {
+		const { context, page, errors } = await open(browser, url, { html, viewport: WIDE });
+		await page.waitForSelector("[data-nsmax-own-header=colors]", { timeout: 5e3 });
+		await settle(page, 300);
+		const state = await page.evaluate(() => {
+			const shown = (element) => element.getClientRects().length > 0;
+			const head = document.querySelector("#nsk-head");
+			const cats = Array.from(head.querySelectorAll("ul.nav-menu a")).filter(shown);
+			const search = head.querySelector("form.search-box").getBoundingClientRect();
+			const toggle = head.querySelector("[data-nsmax-own-header=colors]").getBoundingClientRect();
+			const content = head.getBoundingClientRect().right - parseFloat(getComputedStyle(head).paddingRight);
+			return {
+				cats: cats.map((link) => link.innerText.trim()),
+				nested: head.querySelectorAll("a a").length,
+				deepflood: Array.from(head.querySelectorAll("a[href*='deepflood.com']")).some(shown),
+				heights: [...new Set(cats.map((link) => Math.round(link.getBoundingClientRect().height)))],
+				right: Math.round(content - toggle.right),
+				apart: search.left - cats.at(-1).getBoundingClientRect().right > 40,
+				header: Math.round(document.querySelector("body>header").getBoundingClientRect().height)
+			};
+		});
+		assert.deepEqual(state, { cats: ["日常", "技术", "情报", "测评", "交易", "拼车", "推广", "曝光", "内版"], nested: 0, deepflood: false, heights: [32], right: 0, apart: true, header: 56 }, url);
+		assert.deepEqual(errors, [], url);
+		await context.close();
+	}
+});
+
+test("字体（v1.6.9）：默认系统字体；之前保存的「Claude」字体自动换成系统字体，只换一次，之后再选 Claude 保持衬线体", async () => {
+	const key = "__gm__:nspp:settings:www.nodeseek.com";
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { font: "claude" } } } });
+	await settle(page, 600);
+	const first = await page.evaluate((key) => ({
+		font: document.documentElement.dataset.nsmaxFont,
+		saved: JSON.parse(localStorage.getItem(key))["modern-theme"].font,
+		marker: JSON.parse(localStorage.getItem("__gm__:nsmax:migrate:font-system"))
+	}), key);
+	assert.deepEqual(first, { font: "system", saved: "system", marker: true });
+	await page.evaluate((key) => {
+		const all = JSON.parse(localStorage.getItem(key));
+		all["modern-theme"].font = "claude";
+		localStorage.setItem(key, JSON.stringify(all));
+	}, key);
+	await page.reload();
+	await settle(page, 600);
+	const second = await page.evaluate(() => [document.documentElement.dataset.nsmaxFont, getComputedStyle(document.querySelector(".nsk-post .post-content")).fontFamily]);
+	assert.equal(second[0], "claude");
+	assert.match(second[1], /Georgia/);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -671,8 +726,8 @@ test("评论框：图床按钮与发布评论在同一行，工具栏换成统�
 	assert.ok(state.editorBottomGap < 24, `编辑器底部空白 ${state.editorBottomGap}px`);
 	assert.deepEqual(state.names, ["bold", "italic", "strike", "heading", "unordered", "ordered", "quote", "link", "image", "code", "table", "rule", "undo", "redo", "clear", null]);
 	assert.equal(state.nativeHidden, true);
-	assert.equal(state.iconSize, 18);
-	assert.equal(state.itemSize, 32);
+	assert.equal(state.iconSize, 16);
+	assert.equal(state.itemSize, 30);
 	assert.equal(state.right, false);
 	// 原生「图片」按钮仍然打开图床上传
 	const chooser = page.waitForEvent("filechooser", { timeout: 3e3 });
@@ -707,7 +762,7 @@ test("独立主题 CSS：不安装脚本、只加载 theme/nodeseek-max.css 也�
 	const state = await page.evaluate(() => ({
 		canvas: getComputedStyle(document.body).backgroundColor,
 		grid: getComputedStyle(document.body).backgroundImage,
-		row: getComputedStyle(document.querySelector(".post-list-item")).borderBottomStyle,
+		row: getComputedStyle(document.querySelectorAll(".post-list-item")[1]).borderTopStyle,
 		stat: getComputedStyle(document.querySelector(".user-stat")).backgroundColor,
 		font: getComputedStyle(document.body).fontFamily
 	}));
@@ -716,7 +771,7 @@ test("独立主题 CSS：不安装脚本、只加载 theme/nodeseek-max.css 也�
 	assert.equal(state.grid, "none");
 	assert.equal(state.row, "solid");
 	assert.equal(state.stat, "rgba(0, 0, 0, 0)");
-	assert.match(state.font, /^"Inter Variable"/);
+	assert.match(state.font, /^-apple-system/);
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -782,7 +837,7 @@ test("设置面板：可打开、搜索，不再包含 AI 写作助手与快捷�
 
 test("工具弹窗：回帖足迹统一成卡片式模态框，关闭按钮为线条图标，主要按钮用强调色，空状态居中", async () => {
 	for (const dark of [false, true]) {
-		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { seed: SBSB, html: listPage({ dark }) });
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ dark }) });
 		await page.waitForSelector('#nspp-tools button[title="回帖足迹"]', { timeout: 5e3 });
 		await page.click('#nspp-tools button[title="回帖足迹"]');
 		await settle(page, 400);
@@ -801,11 +856,11 @@ test("工具弹窗：回帖足迹统一成卡片式模态框，关闭按钮为�
 				emptyIcon: getComputedStyle(empty, "::before").content
 			};
 		});
-		assert.equal(state.radius, "12px");
-		assert.equal(state.background, dark ? "rgb(20, 21, 28)" : "rgb(255, 255, 255)");
+		assert.equal(state.radius, "16px");
+		assert.equal(state.background, dark ? "rgb(48, 48, 46)" : "rgb(253, 252, 249)");
 		assert.equal(state.closeFont, "0px");
 		assert.match(state.closeIcon, /svg/);
-		assert.equal(state.syncBackground, dark ? "rgb(238, 240, 246)" : "rgb(28, 28, 30)");
+		assert.equal(state.syncBackground, dark ? "rgb(242, 241, 236)" : "rgb(31, 30, 29)");
 		assert.equal(state.emptyAlign, "center");
 		assert.equal(state.emptyIcon, '""');
 		await shot(page, `footprints-${dark ? "dark" : "light"}`);
@@ -843,7 +898,7 @@ test("侧栏工具与徽章：热榜按钮去掉橙色渐变改线条图标，�
 });
 
 test("评论区：圆角方形头像，正文与名字左对齐，顶部有「全部回复」分隔；代码块仍按需高亮", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { seed: SBSB, html: postPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await page.evaluate(() => document.querySelector(".nsk-post .post-content").insertAdjacentHTML("beforeend", "<pre><code class=\"language-javascript\">const answer = 42;</code></pre>"));
 	await page.waitForSelector("pre code.language-javascript .hljs-keyword", { timeout: 5e3 });
@@ -857,25 +912,25 @@ test("评论区：圆角方形头像，正文与名字左对齐，顶部有「�
 			avatar: avatar.getBoundingClientRect().width,
 			radius: getComputedStyle(avatar).borderRadius,
 			indent: Math.round(content.getBoundingClientRect().left - name.getBoundingClientRect().left),
-			heading: getComputedStyle(document.querySelector("ul.comments"), "::before").content
+			heading: document.querySelector(".comment-container .nsmax-reply-title")?.textContent
 		};
 	});
 	assert.equal(state.avatar, 32);
-	assert.equal(state.radius, "20%");
+	assert.equal(state.radius, "6px");
 	assert.ok(Math.abs(state.indent) <= 2, `正文应与名字对齐，偏差 ${state.indent}px`);
-	assert.equal(state.heading, '"全部回复"');
+	assert.match(state.heading || "", /^\d+ 条回复$|^全部回复/);
 	await shot(page, "comments");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
 
 test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子行小头像、标题中等字重、热榜单行带回复数、主楼正文与作者名对齐", async () => {
-	let { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { seed: SBSB, html: listPage() });
+	let { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector(".nsmax-hot-list li a .nsmax-hot-count", { timeout: 5e3 });
 	await settle(page, 300);
 	const list = await page.evaluate(() => {
 		const css = (element) => getComputedStyle(element);
-		const search = document.querySelector("[data-nsmax-header-search]");
+		const search = document.getElementById("search-site2");
 		const avatar = document.querySelector(".post-list-item img.avatar-normal");
 		return {
 			searchBackground: css(search).backgroundColor,
@@ -888,23 +943,23 @@ test("sb.sb 风格：顶栏搜索框浅底细边框、按钮为胶囊、帖子�
 			activeTab: css(document.querySelector(".nsmax-hot-tabs button[aria-selected=true]")).backgroundColor
 		};
 	});
-	assert.equal(list.searchBackground, "rgb(250, 251, 252)");
-	assert.equal(list.searchBorder, "rgb(224, 226, 232)");
+	assert.equal(list.searchBackground, "rgb(245, 244, 237)");
+	assert.equal(list.searchBorder, "rgb(227, 224, 214)");
 	assert.equal(list.cta, "999px");
 	assert.equal(list.avatar, 24);
 	assert.equal(list.titleWeight, "500");
 	assert.equal(list.hotWrap, "nowrap");
 	assert.match(list.hotCount, /^\d+$/);
-	assert.equal(list.activeTab, "rgb(28, 28, 30)");
+	assert.equal(list.activeTab, "rgb(31, 30, 29)");
 	await shot(page, "list-sbsb");
 	assert.deepEqual(errors, []);
 	await context.close();
-	({ context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { seed: SBSB, html: postPage() }));
+	({ context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() }));
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 400);
 	const post = await page.evaluate(() => {
 		const name = document.querySelector('.nsk-post .author-info a[href*="/space/"]');
-		const content = document.querySelector(".nsk-post > .post-content");
+		const content = document.querySelector(".nsk-post .content-item > .post-content");
 		return { indent: Math.round(content.getBoundingClientRect().left - name.getBoundingClientRect().left), title: getComputedStyle(document.querySelector(".post-title h1")).fontSize };
 	});
 	assert.ok(Math.abs(post.indent) <= 2, `主楼正文应与作者名对齐，偏差 ${post.indent}px`);
@@ -949,7 +1004,7 @@ test("加载：顶栏、左侧栏、右侧栏在页面解析阶段就整理好�
 			leftOpacity: getComputedStyle(document.getElementById("nsk-left-panel-container")).opacity
 		};
 	})();</script>`;
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage().replace("</body>", `${probe}</body>`) });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage().replace("</body>", `${probe}</body>`), seed: sidebarSeed(), viewport: WIDE });
 	await page.waitForSelector("#nspp-tools button", { timeout: 5e3 });
 	const early = await page.evaluate(() => window.__early);
 	assert.equal(early.modules, false, "探测脚本应在模块启动前运行");
@@ -1021,7 +1076,7 @@ test("加载：页面加载完才插入的热榜面板按上次实测高度预�
 });
 
 test("消息中心：私信与通知统一主题配色——一张卡片、对方气泡白底细边框、自己的气泡用强调色、发送按钮为胶囊、无绿色", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { seed: SBSB, html: messageCenterPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
 	await page.waitForSelector(".nspp-messages-message.is-mine .nspp-messages-bubble", { timeout: 8e3 });
 	await settle(page, 300);
 	const state = await page.evaluate(() => {
@@ -1037,13 +1092,12 @@ test("消息中心：私信与通知统一主题配色——一张卡片、对�
 			profile: css(".nspp-chat-profile").backgroundImage
 		};
 	});
-	assert.equal(state.frame, "12px");
+	assert.equal(state.frame, "24px");
 	assert.equal(state.container, "0px");
-	assert.equal(state.mine, "rgb(28, 28, 30)");
-	assert.equal(state.theirs, "rgb(255, 255, 255)");
-	assert.equal(state.theirsBorder, "rgb(224, 226, 232)");
-	assert.equal(state.send, "999px");
-	assert.equal(state.sendBackground, "rgb(28, 28, 30)");
+	assert.equal(state.mine, "rgb(235, 233, 224)");
+	assert.equal(state.theirs, "rgba(0, 0, 0, 0)");
+	assert.equal(state.send, "10px");
+	assert.equal(state.sendBackground, "rgb(193, 95, 60)");
 	assert.equal(state.profile, "none");
 	await shot(page, "messages");
 	assert.deepEqual(errors, []);
@@ -1108,7 +1162,7 @@ test("评论框：按钮容器被站点设成固定高度、或「发布评论�
 
 test("评论框：隐藏「支持markdown语法 / 支持MD语法」提示，工具栏其他按钮不受影响", async () => {
 	// 手机版提示文字在标签栏里、写作「支持MD语法」，并且和全屏等按钮挨着
-	const html = postPage().replace('<span class="tab">预览</span></div>', '<span class="tab">预览</span><span class="tab-right"><span class="md-tip">支持MD语法</span><span class="toolbar-item" title="全屏">全屏</span></span></div>');
+	const html = postPage().replace('<span class="tab">对照</span></div>', '<span class="tab">对照</span><span class="tab-right"><span class="md-tip">支持MD语法</span><span class="toolbar-item" title="全屏">全屏</span></span></div>');
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html });
 	await page.waitForSelector("[data-nsmax-md-hint]", { state: "attached", timeout: 5e3 });
 	const state = await page.evaluate(() => ({
@@ -1137,7 +1191,7 @@ test("加载：NodeSeek++ 夜间模式在页面解析阶段就生效，不再先
 });
 
 test("设置页：输入框白底深一档边框（sb.sb）、提交按钮用强调色、复选框跟随强调色，子导航当前项加粗", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/setting#/profile", { seed: SBSB, html: settingPage() });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/setting#/profile", { html: settingPage() });
 	await page.waitForSelector("html[data-nsmax-theme]");
 	await settle(page, 500);
 	const state = await page.evaluate(() => {
@@ -1154,13 +1208,13 @@ test("设置页：输入框白底深一档边框（sb.sb）、提交按钮用强
 		};
 	});
 	assert.equal(state.page, "setting");
-	assert.equal(state.input, "rgb(255, 255, 255)");
-	assert.equal(state.inputRadius, "8px");
-	assert.equal(state.submit, "rgb(28, 28, 30)");
-	assert.equal(state.cancel, "rgb(255, 255, 255)");
-	assert.equal(state.check, "rgb(28, 28, 30)");
+	assert.equal(state.input, "rgb(251, 250, 246)");
+	assert.equal(state.inputRadius, "10px");
+	assert.equal(state.submit, "rgb(31, 30, 29)");
+	assert.equal(state.cancel, "rgb(251, 250, 246)");
+	assert.equal(state.check, "rgb(31, 30, 29)");
 	assert.equal(state.tab, "600");
-	assert.equal(state.cta, "rgb(28, 28, 30)");
+	assert.equal(state.cta, "rgb(193, 95, 60)");
 	await shot(page, "setting");
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -1218,7 +1272,7 @@ test("帖子页细节：复制代码收进代码块右上角、回复与主楼�
 });
 
 test("弹层细节：帖子预览标题不画粗聚焦框、表格有细线；热榜抽屉榜单与侧栏同款胶囊；提示条在顶栏下方", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { seed: SBSB, html: listPage(), pages: { "/post-1000-1": postPage() } });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages: { "/post-1000-1": postPage() } });
 	await page.waitForSelector("#nspp-tools button");
 	await settle(page, 500);
 	await page.hover(".post-list-item .post-title a");
@@ -1242,11 +1296,11 @@ test("弹层细节：帖子预览标题不画粗聚焦框、表格有细线；�
 		const active = document.querySelector(".nspp-hot-rankings nav button[aria-pressed=true]");
 		const idle = document.querySelector(".nspp-hot-rankings nav button[data-ranking][aria-pressed=false]");
 		const refresh = document.querySelector(".nspp-hot-rankings nav>button:not([data-ranking])");
-		return { active: style(active).backgroundColor, idle: style(idle).borderTopColor, refresh: style(refresh).borderTopColor };
+		return { active: style(active).backgroundColor, idle: style(idle).borderTopColor, refresh: style(refresh).borderTopWidth };
 	});
-	assert.equal(hot.active, "rgb(28, 28, 30)");
-	assert.equal(hot.idle, "rgb(224, 226, 232)");
-	assert.equal(hot.refresh, "rgba(0, 0, 0, 0)");
+	assert.equal(hot.active, "rgb(31, 30, 29)");
+	assert.equal(hot.idle, "rgb(227, 224, 214)");
+	assert.equal(hot.refresh, "0px");
 	const toastTop = await page.evaluate(() => {
 		const toast = document.getElementById("nspp-settings")?.shadowRoot?.querySelector(".toast");
 		return toast ? parseFloat(getComputedStyle(toast).top) : null;
@@ -1307,7 +1361,7 @@ test("右侧栏「快捷入口」面板默认隐藏（与用户卡片重复）�
 	}
 });
 
-test("评论框（参考 Claude 的输入框）：输入区在最上面，工具栏与「内容 / 预览」一行，表情分类、上传与发送按钮一行；发送按钮是珊瑚色方形箭头", async () => {
+test("评论框（参考 sb.sb 的编辑器）：工具栏与「内容 / 预览」在输入区上方一行，表情分类、上传与发送按钮一行；发送按钮是珊瑚色方形箭头", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
 	await page.waitForSelector("[data-nsmax-submit-row] .nspp-upload-choose");
 	await page.waitForSelector("ul.comments .nspp-user-badges .nspp-age", { timeout: 8e3 });
@@ -1320,9 +1374,9 @@ test("评论框（参考 Claude 的输入框）：输入区在最上面，工具
 		const button = document.querySelector(".md-editor button.submit");
 		const badge = document.querySelector("ul.comments .nspp-user-badges .nspp-age");
 		return {
-			inputFirst: input.bottom <= tools.top + 1 && input.bottom <= tabs.top + 1,
+			toolsFirst: tools.bottom <= input.top + 1 && tabs.bottom <= input.top + 1,
 			toolRow: Math.abs(middle(tabs) - middle(tools)) < 6 && tabs.left >= tools.right - 1,
-			footerRow: Math.abs(middle(submit) - middle(expression)) < 6 && submit.left > expression.right && expression.top >= tools.bottom - 1,
+			footerRow: Math.abs(middle(submit) - middle(expression)) < 6 && submit.left > expression.right && expression.top >= input.bottom - 1,
 			insideEditor: submit.right <= editor.right && submit.bottom <= editor.bottom,
 			radius: style.borderTopLeftRadius,
 			shadow: style.boxShadow !== "none",
@@ -1333,34 +1387,23 @@ test("评论框（参考 Claude 的输入框）：输入区在最上面，工具
 			badgeIcon: [getComputedStyle(badge, "::before").content, getComputedStyle(badge.querySelector("svg")).display]
 		};
 	});
-	assert.ok(state.inputFirst, "输入区不在工具栏上方");
+	assert.ok(state.toolsFirst, "工具栏不在输入区上方");
 	assert.ok(state.toolRow, "「内容 / 预览」与工具栏不在同一行");
 	assert.ok(state.footerRow, "表情分类与发送按钮不在同一行");
 	assert.ok(state.insideEditor, "发送按钮超出评论框");
-	assert.equal(state.radius, "24px");
-	assert.ok(state.shadow, "评论框没有投影");
+	assert.equal(state.radius, "16px");
+	assert.ok(!state.shadow, "评论框不应有投影");
 	assert.deepEqual(state.send, [32, 32, "rgb(193, 95, 60)", "0px", "发布评论"]);
 	assert.equal(state.sendIcon, "16px");
-	assert.equal(state.badgeBorder, "0px");
-	assert.equal(state.badgeBackground, "rgb(236, 235, 227)");
+	assert.equal(state.badgeBorder, "1px");
+	assert.equal(state.badgeBackground, "rgb(245, 244, 237)");
 	assert.deepEqual(state.badgeIcon, ['""', "none"]);
 	await shot(page, "post-editor-claude");
 	assert.deepEqual(errors, []);
 	await context.close();
-	// sb.sb 风格：同一套布局，12px 圆角、黑色胶囊发送按钮
-	const sb = await open(browser, "https://www.nodeseek.com/post-1000-1", { seed: SBSB, html: postPage() });
-	await sb.page.waitForSelector("[data-nsmax-submit-row] .nspp-upload-choose");
-	await settle(sb.page, 300);
-	const look = await sb.page.evaluate(() => {
-		const button = getComputedStyle(document.querySelector(".md-editor button.submit"));
-		return [getComputedStyle(document.querySelector(".md-editor")).borderTopLeftRadius, button.backgroundColor, button.borderTopLeftRadius];
-	});
-	assert.deepEqual(look, ["12px", "rgb(28, 28, 30)", "999px"]);
-	assert.deepEqual(sb.errors, []);
-	await sb.context.close();
 });
 
-test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发帖按钮、10px 圆角按钮、圆形头像、帖子标题衬线体", async () => {
+test("默认设计（sb.sb 版式 + Claude 配色）：米白底、主栏一张卡片、珊瑚色胶囊发帖按钮、胶囊页码、圆角方形头像；选 Claude 字体时帖子标题与正文是衬线体", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await page.waitForSelector(".nsmax-hot-panel .nsmax-hot-list li a", { timeout: 5e3 });
 	await settle(page, 300);
@@ -1376,27 +1419,27 @@ test("Claude 风格（默认）：米白底、主栏不套卡片、珊瑚色发�
 			pager: [css(".nsk-pager .pager-cur").borderTopLeftRadius, css(".nsk-pager .pager-cur").backgroundColor],
 			avatar: css(".post-list-item img.avatar-normal").borderTopLeftRadius,
 			chip: css(".post-list-item .post-category").borderTopLeftRadius,
-			header: css("#nsk-head").borderBottomColor
+			header: css("header").borderBottomColor
 		};
 	});
 	assert.deepEqual(list, {
 		palette: "claude",
 		canvas: "rgb(245, 244, 237)",
-		main: "rgba(0, 0, 0, 0)",
+		main: "rgb(251, 250, 246)",
 		nav: "rgba(0, 0, 0, 0)",
 		card: "rgb(251, 250, 246)",
-		cta: ["rgb(193, 95, 60)", "10px"],
-		pager: ["10px", "color(srgb 0.121569 0.117647 0.113725 / 0.08)"],
-		avatar: "50%",
-		chip: "6px",
-		header: "rgba(0, 0, 0, 0)"
+		cta: ["rgb(193, 95, 60)", "999px"],
+		pager: ["999px", "rgb(31, 30, 29)"],
+		avatar: "6px",
+		chip: "999px",
+		header: "rgb(235, 233, 225)"
 	});
 	await shot(page, "claude-list");
 	await context.close();
-	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { font: "claude" } }, "nsmax:migrate:font-system": true } });
 	await settle(post.page, 600);
 	const title = await post.page.evaluate(() => getComputedStyle(document.querySelector(".post-title h1")));
-	const font = await post.page.evaluate(() => [getComputedStyle(document.querySelector(".post-title h1")).fontFamily, getComputedStyle(document.querySelector(".nsk-post .post-content p")).fontFamily, getComputedStyle(document.querySelector(".post-list-item, .nsk-content-meta-info")).fontFamily]);
+	const font = await post.page.evaluate(() => [getComputedStyle(document.querySelector(".post-title h1")).fontFamily, getComputedStyle(document.querySelector(".nsk-post .post-content p")).fontFamily, getComputedStyle(document.querySelector(".nsk-content-meta-info .author-name")).fontFamily]);
 	assert.match(font[0], /Georgia/);
 	assert.match(font[1], /Georgia/);
 	assert.match(font[2], /^"?Inter/);
@@ -1423,7 +1466,7 @@ test("线条图标：版块、用户卡片按钮、统计区、深浅色切换�
 				sun: getComputedStyle(toggle.querySelector(".nsmax-icon-sun")).display,
 				search: icons("search"),
 				labels: Array.from(document.querySelectorAll(".user-stat a, .user-stat .stat-block > div")).map((item) => item.textContent.replace(/\s+/g, "").replace(/\d+$/, "")),
-				stroke: getComputedStyle(document.querySelector(".nsmax-icon")).strokeWidth
+				stroke: getComputedStyle(document.querySelector(".nsmax-icon[data-nsmax-icon-for=nav]")).strokeWidth
 			};
 		});
 		assert.equal(state.nav, 13);
@@ -1531,7 +1574,7 @@ test("圆角统一（Claude 风格）：各页面、私信 / 通知、设置面�
 			assert.deepEqual(await page.evaluate(probe), [], "设置面板");
 			await page.keyboard.press("Escape");
 			await settle(page, 300);
-			await page.hover(".post-list-item .info-author");
+			await page.hover(".post-list-item .info-author a");
 			await page.waitForSelector(".nspp-user-hover:not([hidden]) dd", { timeout: 8e3 });
 			await settle(page, 300);
 			assert.deepEqual(await page.evaluate(probe), [], "用户资料卡");
@@ -1589,7 +1632,7 @@ test("字号与字重统一（Claude 风格）：界面文字只用 11–16 / 18
 			assert.deepEqual(await page.evaluate(probe), [], "设置面板");
 			await page.keyboard.press("Escape");
 			await settle(page, 300);
-			await page.hover(".post-list-item .info-author");
+			await page.hover(".post-list-item .info-author a");
 			await page.waitForSelector(".nspp-user-hover:not([hidden]) dd", { timeout: 8e3 });
 			await settle(page, 300);
 			assert.deepEqual(await page.evaluate(probe), [], "用户资料卡");
@@ -1633,6 +1676,7 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的
 			toggle: visible(document.querySelector(".nspp-message-format-toggle"))
 		};
 	});
+	assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nspp-messages-top")).boxShadow), "none");
 	assert.deepEqual(layout, {
 		sidebarFull: true,
 		sidebarRadius: "16px",
@@ -1670,7 +1714,7 @@ test("私信（参考 Claude 的会话界面）：左侧会话列表是通高的
 	await context.close();
 });
 
-test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、与会话头同样缩进 8px 的 16px 圆角卡片带投影，发送按钮是珊瑚色圆角方形箭头；自己的气泡暖灰；对方的消息像 Claude 的回复，不带气泡、衬线正文", async () => {
+test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、与会话头同样缩进 8px 的 16px 圆角卡片带投影，发送按钮是珊瑚色圆角方形箭头；自己的气泡暖灰；对方的消息像 Claude 的回复，不带气泡（正文字体跟随设置，默认系统字体）", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: messageCenterPage() });
 	await page.waitForSelector(".nspp-messages-message.is-mine .nspp-messages-bubble", { timeout: 8e3 });
 	await settle(page, 300);
@@ -1689,7 +1733,7 @@ test("私信（参考 Claude 的输入框）：输入框浮在会话区底部、
 		composer: ["16px", "rgb(251, 250, 246)", true, "8px"],
 		send: [32, 32, "rgb(193, 95, 60)", "0px", "10px"],
 		mine: "rgb(235, 233, 224)",
-		theirs: ["rgba(0, 0, 0, 0)", "0px", true],
+		theirs: ["rgba(0, 0, 0, 0)", "0px", false],
 		resize: "none"
 	});
 	await shot(page, "messages-claude");
@@ -1775,7 +1819,7 @@ test("细节：作者行各项按中线对齐、「引用 / 回复」带图标�
 	await context.close();
 	const list = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await settle(list.page, 400);
-	await list.page.hover(".post-list-item .info-author");
+	await list.page.hover(".post-list-item .info-author a");
 	await list.page.waitForSelector(".nspp-user-hover:not([hidden]) .nspp-block-toggle", { timeout: 8e3 });
 	const block = await list.page.evaluate(() => {
 		const button = document.querySelector(".nspp-user-hover:not([hidden]) .nspp-block-toggle");
@@ -1807,12 +1851,12 @@ test("细节（v1.5.8）：设置面板点最后一个分类能跳到并高亮�
 	await context.close();
 	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
 	await settle(post.page, 800);
-	const actions = await post.page.evaluate(() => Array.from(document.querySelectorAll(".nsk-post > .comment-menu .menu-item")).map((item) => {
+	const actions = await post.page.evaluate(() => Array.from(document.querySelectorAll(".nsk-post > .content-item > .comment-menu > .menu-item")).map((item) => {
 		const box = item.getBoundingClientRect();
-		return [getComputedStyle(item).flexDirection, Math.round(box.height), Math.round(box.top)];
+		return [getComputedStyle(item).display, Math.round(box.height), Math.round(box.top)];
 	}));
 	assert.ok(actions.length >= 3);
-	assert.ok(actions.every(([direction, height, top]) => direction === "row" && height === 32 && top === actions[0][2]), JSON.stringify(actions));
+	assert.ok(actions.every(([display, height, top]) => display === "grid" && height === actions[0][1] && top === actions[0][2]), JSON.stringify(actions));
 	assert.deepEqual(errors, []);
 	assert.deepEqual(post.errors, []);
 	await post.context.close();
@@ -1908,13 +1952,13 @@ test("关键词屏蔽：顶栏深浅色按钮旁的屏蔽按钮可以添加、�
 	await post.context.close();
 });
 
-test("设置面板（参考 Claude 的设置页）：设计风格、深浅色、字体是带预览的选择卡片，方向键可切换，点「深色」并保存后生效；功能之间不套卡片", async () => {
+test("设置面板（参考 Claude 的设置页）：深浅色、字体是带预览的选择卡片，方向键可切换，点「深色」并保存后生效；功能之间不套卡片", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await settle(page, 1200);
 	await page.click("[data-nspp-settings-launcher]");
 	await settle(page, 600);
 	const groups = await page.evaluate(() => Array.from(document.getElementById("nspp-settings").shadowRoot.querySelectorAll(".choice-cards")).map((group) => [group.getAttribute("aria-label"), Array.from(group.children).map((card) => `${card.textContent}${card.getAttribute("aria-checked") === "true" ? "*" : ""}`)]));
-	assert.deepEqual(groups, [["设计风格", ["Claude*", "sb.sb"]], ["字体", ["AaClaude*", "AaInter", "Aa系统字体", "Aa站点默认"]], ["深浅色", ["跟随站点*", "浅色", "深色", "跟随系统"]]]);
+	assert.deepEqual(groups, [["字体", ["AaClaude", "AaInter", "Aa系统字体*", "Aa站点默认"]], ["深浅色", ["跟随站点*", "浅色", "深色", "跟随系统"]]]);
 	const hidden = await page.evaluate(() => Array.from(document.getElementById("nspp-settings").shadowRoot.querySelectorAll(".field[data-cards] select")).every((select) => getComputedStyle(select).display === "none"));
 	assert.equal(hidden, true);
 	// 方向键在同一组里切换
@@ -1930,7 +1974,7 @@ test("设置面板（参考 Claude 的设置页）：设计风格、深浅色、
 	await context.close();
 });
 
-test("按钮与输入框统一（Claude 风格）：常规按钮 32px、输入框与下拉框 36px；提示条与热榜弹窗用线条图标，热榜类型是分段切换", async () => {
+test("按钮与输入框统一（Claude 风格）：常规按钮 32px、输入框与下拉框 36px；提示条与热榜弹窗用线条图标，热榜类型是胶囊切换", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await settle(page, 1500);
 	const heights = (selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).filter((element) => element.getBoundingClientRect().height > 0).map((element) => Math.round(element.getBoundingClientRect().height)), selector);
@@ -1948,7 +1992,7 @@ test("按钮与输入框统一（Claude 风格）：常规按钮 32px、输入�
 		const group = dialog.querySelector(".nspp-hot-kinds"), refresh = dialog.querySelector(".nspp-hot-refresh");
 		return { tabs: group.querySelectorAll("button[data-ranking]").length, groupBg: getComputedStyle(group).backgroundColor !== "rgba(0, 0, 0, 0)", refresh: [Math.round(refresh.getBoundingClientRect().width), getComputedStyle(refresh).fontSize], heat: getComputedStyle(dialog.querySelector(".nspp-hot-heat svg") || dialog).strokeWidth };
 	});
-	assert.deepEqual(hot, { tabs: 3, groupBg: true, refresh: [32, "0px"], heat: "1.5px" });
+	assert.deepEqual(hot, { tabs: 3, groupBg: false, refresh: [32, "0px"], heat: "1.5px" });
 	await page.keyboard.press("Escape");
 	await page.click("[data-nspp-settings-launcher]");
 	await settle(page, 600);
@@ -1971,8 +2015,8 @@ test("按钮与输入框统一（Claude 风格）：常规按钮 32px、输入�
 		checkbox: (() => { const box = document.querySelector("#nsk-body input[type=checkbox]"); const cs = getComputedStyle(box); return [cs.appearance, Math.round(box.getBoundingClientRect().width), cs.backgroundColor]; })()
 	}));
 	assert.deepEqual(form, { fields: [36], buttons: [32], checkbox: ["none", 16, "rgb(31, 30, 29)"] });
-	// 设置页的按钮规则只管主栏，右侧热榜的分段切换保持 26px
-	assert.deepEqual([...new Set(await setting.page.evaluate(() => Array.from(document.querySelectorAll(".nsmax-hot-tabs button")).map((button) => Math.round(button.getBoundingClientRect().height))))], [26]);
+	// 设置页的按钮规则只管主栏，右侧热榜的胶囊切换保持 28px
+	assert.deepEqual([...new Set(await setting.page.evaluate(() => Array.from(document.querySelectorAll(".nsmax-hot-tabs button")).map((button) => Math.round(button.getBoundingClientRect().height))))], [28]);
 	assert.deepEqual(setting.errors, []);
 	await setting.context.close();
 });
@@ -1989,38 +2033,45 @@ test("用户脚本元数据与版本一致", () => {
 	assert.equal(source.match(/var NSMAX_VERSION = "([^"]+)";/)?.[1], version);
 });
 
-test("列表控件：排序是分段控件、页码是幽灵按钮，按网址判断当前页，站点结构多层包裹或全标 active 也能识别", async () => {
+test("列表控件：排序是 sb.sb 的下划线标签、页码是 32px 胶囊，按网址判断当前页，站点结构多层包裹或全标 active 也能识别", async () => {
 	for (const pagerMode of [undefined, "wrapped"]) {
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ pagerMode }) });
 		await page.waitForSelector("[data-nsmax-sorter]");
 		await settle(page, 300);
 		const state = await page.evaluate(() => {
-			const css = (element) => getComputedStyle(element);
+			const css = (element, pseudo) => getComputedStyle(element, pseudo);
 			const sorter = document.querySelector("[data-nsmax-sorter]");
+			const on = document.querySelector("[data-nsmax-sort-on]"), off = document.querySelector("[data-nsmax-sort-item]:not([data-nsmax-sort-on])");
 			const items = Array.from(document.querySelectorAll(".pager-top [data-nsmax-pg]"));
 			return {
-				sorter: [css(sorter).display, css(sorter).height, css(sorter).borderTopLeftRadius],
-				separator: css(document.querySelector("[data-nsmax-sort-sep]")).display,
-				on: document.querySelector("[data-nsmax-sort-on]").textContent,
-				onBackground: css(document.querySelector("[data-nsmax-sort-on]")).backgroundColor,
-				offBackground: css(document.querySelector("[data-nsmax-sort-item]:not([data-nsmax-sort-on])")).backgroundColor,
+				sorter: [css(sorter).display, css(sorter).columnGap, css(sorter).borderTopLeftRadius],
+				separators: Array.from(document.querySelectorAll("[data-nsmax-sort-sep]")).filter((element) => element.getClientRects().length > 0).length,
+				on: on.textContent,
+				onColor: css(on).color,
+				onLine: [css(on, "::after").height, css(on, "::after").backgroundColor],
+				offColor: css(off).color,
+				backgrounds: [css(on).backgroundColor, css(off).backgroundColor],
 				kinds: items.map((item) => `${item.dataset.nsmaxPg}${item.hasAttribute("data-nsmax-pg-cur") ? "*" : ""}${item.hasAttribute("data-nsmax-pg-off") ? "-" : ""}`).join(" "),
 				heights: [...new Set(items.map((item) => Math.round(item.getBoundingClientRect().height)))],
 				borders: [...new Set(items.map((item) => css(item).borderTopWidth))],
 				plain: css(items.find((item) => item.dataset.nsmaxPg === "num" && !item.hasAttribute("data-nsmax-pg-cur"))).backgroundColor,
+				current: css(items.find((item) => item.hasAttribute("data-nsmax-pg-cur"))).backgroundColor,
 				arrow: `${getComputedStyle(items.at(-1), "::before").maskImage} ${getComputedStyle(items.at(-1), "::before").webkitMaskImage}`,
-				wraps: Array.from(document.querySelectorAll(".pager-top [data-nsmax-pg-wrap]")).map((element) => css(element).display)
+				wraps: Array.from(document.querySelectorAll(".pager-top [data-nsmax-pg-wrap]:not([role=navigation])")).map((element) => css(element).display)
 			};
 		});
-		assert.deepEqual(state.sorter, ["flex", "32px", "10px"], pagerMode);
-		assert.equal(state.separator, "none");
+		assert.deepEqual(state.sorter, ["flex", "20px", "0px"], String(pagerMode));
+		assert.equal(state.separators, 0);
 		assert.equal(state.on, "新评论");
-		assert.equal(state.onBackground, "rgb(253, 252, 249)");
-		assert.equal(state.offBackground, "rgba(0, 0, 0, 0)");
-		assert.equal(state.kinds, "prev- num* num num gap num next", pagerMode);
+		assert.equal(state.onColor, "rgb(31, 30, 29)");
+		assert.deepEqual(state.onLine, ["2px", "rgb(31, 30, 29)"]);
+		assert.equal(state.offColor, "rgb(111, 109, 102)");
+		assert.deepEqual(state.backgrounds, ["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)"]);
+		assert.equal(state.kinds, pagerMode === "wrapped" ? "prev- num* num num gap num next" : "prev- num* num num num next", String(pagerMode));
 		assert.deepEqual(state.heights, [32]);
 		assert.deepEqual(state.borders, ["0px"]);
 		assert.equal(state.plain, "rgba(0, 0, 0, 0)");
+		assert.equal(state.current, "rgb(31, 30, 29)");
 		assert.match(state.arrow, /svg/);
 		assert.ok(state.wraps.every((display) => display === "contents"), state.wraps.join());
 		assert.deepEqual(errors, []);
@@ -2035,14 +2086,14 @@ test("列表控件：排序是分段控件、页码是幽灵按钮，按网址�
 });
 
 test("窗口较窄、站点收起左侧栏时：顶栏保留版块标签（不含 DeepFlood），左侧栏可见时不显示；关掉侧栏导航功能也照常判断", async () => {
-	const seeds = [undefined, { "nspp:settings:www.nodeseek.com": { "sidebar-nav": { enabled: false } } }];
+	const seeds = [sidebarSeed(), sidebarSeed({ "sidebar-nav": { enabled: false } })];
 	for (const seed of seeds) {
-		const wide = await open(browser, "https://www.nodeseek.com/categories/tech", { html: listPage(), seed });
+		const wide = await open(browser, "https://www.nodeseek.com/categories/tech", { html: listPage(), seed, viewport: WIDE });
 		await wide.page.waitForSelector("[data-nsmax-header-cat]", { state: "attached" });
 		await settle(wide.page, 300);
 		const wideState = await wide.page.evaluate(() => ({
 			sidenav: document.documentElement.hasAttribute("data-nsmax-sidenav"),
-			visible: Array.from(document.querySelectorAll("#nsk-head a")).filter((link) => link.offsetParent && link.getBoundingClientRect().width > 0).map((link) => link.textContent.trim()).filter((text) => text && text !== "NodeSeek"),
+			visible: Array.from(document.querySelectorAll("#nsk-head a")).filter((link) => link.offsetParent && link.getBoundingClientRect().width > 0).map((link) => link.innerText.trim()).filter((text) => text && text !== "NodeSeek"),
 			action: getComputedStyle(document.querySelector(".nsmax-header-action")).display
 		}));
 		assert.equal(wideState.sidenav, true, `seed ${JSON.stringify(seed)}`);
@@ -2052,7 +2103,7 @@ test("窗口较窄、站点收起左侧栏时：顶栏保留版块标签（不�
 		await settle(wide.page, 400);
 		const narrow = await wide.page.evaluate(() => {
 			const links = Array.from(document.querySelectorAll("#nsk-head a")).filter((link) => link.getBoundingClientRect().width > 0 && getComputedStyle(link).display !== "none");
-			const cats = links.filter((link) => link.hasAttribute("data-nsmax-header-cat"));
+			const cats = links.filter((link) => link.closest("[data-nsmax-header-cat]"));
 			const boxes = cats.map((link) => link.getBoundingClientRect());
 			const header = document.querySelector("#nsk-head").getBoundingClientRect();
 			return {
@@ -2065,7 +2116,7 @@ test("窗口较窄、站点收起左侧栏时：顶栏保留版块标签（不�
 				oneRow: new Set(boxes.map((box) => Math.round(box.top))).size === 1,
 				inside: links.every((link) => link.getBoundingClientRect().left >= header.left && link.getBoundingClientRect().right <= header.right),
 				action: getComputedStyle(document.querySelector(".nsmax-header-action")).display,
-				search: Math.round(document.querySelector("[data-nsmax-header-search]").getBoundingClientRect().width)
+				search: Math.round(Math.max(...Array.from(document.querySelectorAll("[data-nsmax-header-search]")).map((element) => element.getBoundingClientRect().width)))
 			};
 		});
 		assert.equal(narrow.sidenav, false);
@@ -2076,8 +2127,8 @@ test("窗口较窄、站点收起左侧栏时：顶栏保留版块标签（不�
 		assert.ok(narrow.gaps.every((gap) => gap === 2), narrow.gaps.join());
 		assert.ok(narrow.oneRow && narrow.inside, JSON.stringify(narrow));
 		assert.match(narrow.action, /flex/);
-		assert.ok(narrow.search >= 168 && narrow.search <= 240, narrow.search);
-		if (!seed) await shot(wide.page, "narrow-header");
+		assert.ok(narrow.search >= 168 && narrow.search <= 240, `搜索框宽 ${narrow.search}px`);
+		if (seed === seeds[0]) await shot(wide.page, "narrow-header");
 		assert.deepEqual(wide.errors, []);
 		await wide.context.close();
 	}
@@ -2129,7 +2180,7 @@ test("脚本管理器在 <html> 已存在时才注入（Chrome 上 Tampermonkey 
 			cta: !!document.querySelector("[data-nsmax-cta]"),
 			boot: ["header", "left", "right"].filter((name) => document.documentElement.hasAttribute(`data-nsmax-boot-${name}`))
 		}));
-		assert.deepEqual(state, { injectError: null, theme: true, sidenav: true, hidden: 5, cta: true, boot: [] }, url);
+		assert.deepEqual(state, { injectError: null, theme: true, sidenav: false, hidden: 5, cta: true, boot: [] }, url);
 		if (url.endsWith("/")) await page.waitForSelector(".nsmax-hot-panel", { timeout: 5e3 });
 		assert.deepEqual(errors, [], url);
 		await context.close();

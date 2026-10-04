@@ -3,11 +3,14 @@
 body{margin:0;background-color:#fdf9f4;background-image:linear-gradient(#efe6dc 1px,transparent 1px),linear-gradient(90deg,#efe6dc 1px,transparent 1px);background-size:28px 28px;color:var(--text-color);font:14px/1.6 sans-serif}
 body.dark-layout{--bg-color:#262626;--bg-color-grey:#2f2f2f;--text-color:#dedede;--text-color-secondary:#999;--border-color:#454545;background:#1b1b1b}
 a{color:var(--link-color);text-decoration:none}
-/* 顶栏（真实站点：固定 40px，内容 1080px 居中） */
-header{position:fixed;top:0;left:0;right:0;z-index:10;height:40px;transition:background-color .5s;box-shadow:0 0 5px rgba(0,0,0,.1);background-color:var(--bg-main-color)}
+/* 顶栏（真实站点：宽于 500px 时 body>header 固定在顶部，版块栏 40px 高、内容 1080px 居中）。
+   注意站点的 header{…}（底色、投影）对页面里所有 header 元素都生效，脚本自己的弹窗、私信标题栏用了 header 也会受影响 */
+header{transition:background-color .5s;box-shadow:0 0 5px rgba(0,0,0,.1);background-color:var(--bg-main-color)}
+@media screen and (max-width:500px){header{background-color:unset;box-shadow:none}}
+@media screen and (min-width:500px){body>header{position:fixed;z-index:10;left:0;top:0;width:100%}}
 .nsk-container{width:1080px;box-sizing:border-box;margin:auto}
 @media (max-width:1200px){.nsk-container{width:auto;margin:0 20px}}
-#nsk-head{display:flex;align-items:center;height:40px}
+#nsk-head{display:flex;align-items:center}
 header .site-title{font-family:"helvetica neue",helvetica,arial,sans-serif;font-weight:700;font-size:24px;margin-right:6px}
 header .site-title a{color:var(--text-color)}
 header .beta-icon{position:relative;top:-14px;color:#ccc;font-size:11px;font-weight:400}

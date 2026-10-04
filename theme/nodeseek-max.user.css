@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.6.8
+@version        1.6.9
 @description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.6.8（UserCSS）
+ * NodeSeek Max 主题 v1.6.9（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -1708,32 +1708,33 @@
 	}
 	/* 分段切换统一：外层浅底 10px 圆角、内边 3px，选项 26px 高、6px 圆角、13px / 500，选中项是浮起的滑块（热榜弹窗、阅读历史、私信格式工具里的标签） */
 	html:root:root .nspp-hot-rankings .nspp-hot-kinds {
-		gap:2px;
-		padding:3px;
-		border-radius:var(--nsmax-r-control,10px);
-		background:var(--nsmax-seg-bg,var(--nsmax-fill));
+		gap:6px;
+		padding:0;
+		border-radius:0;
+		background:none;
 	}
 	html:root:root .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking] {
-		height:26px;
-		min-height:26px;
+		box-sizing:border-box;
+		height:28px;
+		min-height:28px;
 		padding:0 12px;
-		border:0!important;
-		border-radius:var(--nsmax-r-chip,6px)!important;
+		border:1px solid var(--nsmax-stroke)!important;
+		border-radius:999px!important;
 		background:transparent!important;
 		color:var(--nsmax-muted)!important;
-		font-size:13px;
+		font-size:12px;
 		font-weight:500;
+		line-height:1;
 	}
 	html:root:root .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking]:hover {
+		border-color:var(--nsmax-stroke-strong)!important;
 		color:var(--nsmax-text)!important;
 	}
 	html:root:root .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking][aria-pressed=true] {
-		background:var(--nsmax-seg-thumb,var(--nsmax-card))!important;
-		color:var(--nsmax-text)!important;
-		box-shadow:0 1px 2px rgb(31 30 29/.1),0 0 0 .5px rgb(31 30 29/.06);
-	}
-	html:root:root body.dark-layout .nspp-hot-rankings .nspp-hot-kinds>button[data-ranking][aria-pressed=true] {
-		box-shadow:0 1px 2px rgb(0 0 0/.35),0 0 0 .5px rgb(255 255 255/.06);
+		border-color:var(--nsmax-ink)!important;
+		background:var(--nsmax-ink)!important;
+		color:var(--nsmax-on-ink)!important;
+		box-shadow:none;
 	}
 	html:root:root .nspp-hot-rankings nav>.nspp-hot-refresh {
 		display:inline-flex;
@@ -2339,6 +2340,19 @@
 		background:currentColor;
 		-webkit-mask:var(--nsmax-icon-ban) center/contain no-repeat;
 		mask:var(--nsmax-icon-ban) center/contain no-repeat;
+	}
+	/* 收藏（站点的图标名带随机后缀，如 #star-6negdgdk）：线条五角星 */
+	html:root:root :is(.menu-item,.nspp-list-actions button):has(>svg.iconpark-icon>use[href^="#star"])>svg.iconpark-icon {
+		display:none;
+	}
+	html:root:root :is(.menu-item,.nspp-list-actions button):has(>svg.iconpark-icon>use[href^="#star"])::before {
+		content:"";
+		flex:none;
+		width:15px;
+		height:15px;
+		background:currentColor;
+		-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.75l2.55 5.17 5.7.83-4.13 4.02.98 5.68L12 16.77l-5.1 2.68.98-5.68-4.13-4.02 5.7-.83Z'/%3E%3C/svg%3E") center/contain no-repeat;
+		mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.75l2.55 5.17 5.7.83-4.13 4.02.98 5.68L12 16.77l-5.1 2.68.98-5.68-4.13-4.02 5.7-.83Z'/%3E%3C/svg%3E") center/contain no-repeat;
 	}
 	html:root:root .nsk-post>.comment-menu .menu-item:has(>svg.iconpark-icon>use:is([href="#good-one"],[href="#bad-one"],[href="#chicken-leg"]))::before {
 		width:17px;
@@ -3884,7 +3898,7 @@
 		box-shadow:none!important;
 	}
 	/* 站点主栏本身也是一张卡片（白底 + 内边距）：消息中心接管时一并去掉，外面不再多一圈白边 */
-	html:root #nsk-left:has(>.nspp-messages-container[data-nspp-message-view=new]) {
+	html:root :is(#nsk-left,#nsk-body-left):has(>.nspp-messages-container[data-nspp-message-view=new]) {
 		padding:0!important;
 		border-color:transparent!important;
 		background:transparent!important;
@@ -5116,10 +5130,6 @@
 			scale:none!important;
 		}
 	}
-	/* ==================== v1.6.9 全站重做：按真实页面结构，用 sb.sb 的版式覆盖站点原有设计，配色与字体沿用 Claude ====================
-	   之前不少规则是照模拟页面写的（主栏写成 #nsk-left），真实站点的主栏是 #nsk-body-left，顶栏是 header>#nsk-head（.site-title / ul.nav-menu /
-	   form.search-box），这些规则在真站上没有生效。这一段只用真实页面的选择器重新定义：56px 顶栏、1200px 版心、主栏一张卡片 + 260px 侧栏卡片、
-	   sb.sb 的列表行与楼层版式、胶囊分页与标签。数值取自 sb.sb（顶栏 56px、行内边距 11px 16px、24px 头像、15px 标题、12.5px 元信息）。 */
 	html:root:root {
 		--nsmax-head-h:56px;
 		--nsmax-wrap:1200px;
@@ -5194,7 +5204,7 @@
 		width:26px!important;
 		height:26px!important;
 		max-height:none!important;
-		border-radius:7px!important;
+		border-radius:6px!important;
 	}
 	html:root:root #nsk-head .site-title .title-text {
 		font-family:var(--nsmax-font)!important;
@@ -5209,7 +5219,6 @@
 		display:none!important;
 	}
 	html:root:root #nsk-head ul.nav-menu {
-		display:flex!important;
 		align-items:center!important;
 		gap:2px!important;
 		flex:0 1 auto!important;
@@ -5221,7 +5230,6 @@
 		overflow:hidden!important;
 	}
 	html:root:root #nsk-head ul.nav-menu>li {
-		display:flex!important;
 		flex:none!important;
 		margin:0!important;
 		padding:0!important;
@@ -5248,7 +5256,7 @@
 		width:200px!important;
 		max-width:none!important;
 		height:34px!important;
-		margin:0!important;
+		margin:0 0 0 auto!important;
 		padding:0!important;
 		border:0!important;
 		background:none!important;
@@ -5272,7 +5280,7 @@
 		box-shadow:none!important;
 		outline:0!important;
 		color:var(--nsmax-text)!important;
-		font-size:13.5px!important;
+		font-size:14px!important;
 		line-height:32px!important;
 		transition:border-color .15s ease,background-color .15s ease!important;
 	}
@@ -5287,19 +5295,6 @@
 	html:root:root #nsk-head form.search-box #search-site2::placeholder {
 		color:var(--nsmax-faint)!important;
 		opacity:1;
-	}
-	html:root:root #nsk-head form.search-box .search-icon {
-		position:absolute!important;
-		top:50%!important;
-		right:11px!important;
-		left:auto!important;
-		display:block!important;
-		width:15px!important;
-		height:15px!important;
-		margin:0!important;
-		transform:translateY(-50%)!important;
-		color:var(--nsmax-muted)!important;
-		pointer-events:none!important;
 	}
 	html:root:root #nsk-head form.search-box .search-hint {
 		top:40px!important;
@@ -5489,8 +5484,8 @@
 		background:var(--nsmax-hover)!important;
 		color:var(--nsmax-text)!important;
 	}
-	html:root:root .nsk-pager .pager-pos.pager-cur,
-	html:root:root .nsk-pager .pager-pos.pager-cur:hover {
+	html:root:root .nsk-pager .pager-pos:is(.pager-cur,[data-nsmax-pg-cur]),
+	html:root:root .nsk-pager .pager-pos:is(.pager-cur,[data-nsmax-pg-cur]):hover {
 		background:var(--nsmax-ink)!important;
 		color:var(--nsmax-on-ink)!important;
 		cursor:default;
@@ -5522,10 +5517,7 @@
 		pointer-events:none;
 	}
 	html:root:root #nsk-body-left>.post-list-controler .nsk-pager :is(.pager-pos,.pager-prev,.pager-next) {
-		min-width:28px!important;
-		height:28px!important;
-		padding:0 7px!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 	}
 	html:root:root #nsk-body-left>div:has(>.nsk-pager.pager-bottom) {
 		display:flex!important;
@@ -5656,7 +5648,7 @@
 		margin:0!important;
 		padding:0!important;
 		font-family:var(--nsmax-font)!important;
-		font-size:15px!important;
+		font-size:var(--nsmax-list-title,15px)!important;
 		font-weight:500!important;
 		line-height:1.5!important;
 		letter-spacing:0!important;
@@ -5731,7 +5723,7 @@
 		margin:3px 0 0!important;
 		padding:0!important;
 		color:var(--nsmax-muted)!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		line-height:20px!important;
 	}
 	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item {
@@ -5742,6 +5734,31 @@
 		padding:0!important;
 		color:inherit!important;
 		white-space:nowrap!important;
+	}
+	/* 列表信息行的图标（作者 / 浏览 / 评论 / 最后回复）：站点的 iconpark 图标换成与全站一致的线条图标（13px、2px 线宽，画在 ::before，原图标隐藏） */
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use:is([href="#user"],[href="#eyes"],[href="#comments"],[href="#lightning"]))>svg.iconpark-icon {
+		display:none!important;
+	}
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use:is([href="#user"],[href="#eyes"],[href="#comments"],[href="#lightning"]))::before {
+		content:""!important;
+		flex:none!important;
+		width:13px!important;
+		height:13px!important;
+		background:var(--nsmax-faint)!important;
+		-webkit-mask:var(--nsmax-meta-icon) center/13px 13px no-repeat!important;
+		mask:var(--nsmax-meta-icon) center/13px 13px no-repeat!important;
+	}
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#user"]) {
+		--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12%2011.5a3.75%203.75%200%201%200%200-7.5%203.75%203.75%200%200%200%200%207.5ZM5%2020c0-3.6%203.1-6%207-6s7%202.4%207%206'/%3E%3C/svg%3E");
+	}
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#eyes"]) {
+		--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.75%2012S6.25%205.75%2012%205.75%2021.25%2012%2021.25%2012%2017.75%2018.25%2012%2018.25%202.75%2012%202.75%2012ZM12%2014.5a2.5%202.5%200%201%200%200-5%202.5%202.5%200%200%200%200%205Z'/%3E%3C/svg%3E");
+	}
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#comments"]) {
+		--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4%206a1.5%201.5%200%200%201%201.5-1.5h13A1.5%201.5%200%200%201%2020%206v9a1.5%201.5%200%200%201-1.5%201.5h-9l-4%203.5v-3.5A1.5%201.5%200%200%201%204%2015Z'/%3E%3C/svg%3E");
+	}
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#lightning"]) {
+		--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5%208.5%205%2013l4.5%204.5M5%2013h9a5%205%200%200%200%205-5V6.5'/%3E%3C/svg%3E");
 	}
 	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item a,
 	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>a.info-item:not(.post-category) {
@@ -5802,7 +5819,7 @@
 		background:none!important;
 		border:0!important;
 		color:var(--nsmax-muted)!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		font-weight:500!important;
 		line-height:1.6!important;
 		text-align:left!important;
@@ -5845,7 +5862,7 @@
 		background-image:none!important;
 		box-shadow:none!important;
 		color:var(--nsmax-text)!important;
-		font-size:13.5px!important;
+		font-size:14px!important;
 		font-weight:500!important;
 		line-height:1!important;
 		text-decoration:none!important;
@@ -5884,7 +5901,7 @@
 		padding:0 8px!important;
 		border-radius:var(--nsmax-r-control,10px)!important;
 		color:var(--nsmax-text-2)!important;
-		font-size:13.5px!important;
+		font-size:14px!important;
 		text-decoration:none!important;
 		transition:background-color .15s ease,color .15s ease!important;
 	}
@@ -5893,7 +5910,7 @@
 		color:var(--nsmax-text)!important;
 	}
 	/* 用户数目与欢迎新用户：数字一行，新用户四列头像网格 */
-	html:root:root #nsk-right-panel-container>.nsk-panel>div[style]:not(.small-margin) {
+	html:root:root #nsk-right-panel-container>.nsk-panel>h4+div[style]:not(.small-margin,.user-stat) {
 		margin:0!important;
 		padding:0!important;
 		color:var(--nsmax-text-2)!important;
@@ -5929,7 +5946,7 @@
 		width:36px!important;
 		height:36px!important;
 		margin:0!important;
-		border-radius:8px!important;
+		border-radius:6px!important;
 		box-shadow:none!important;
 	}
 	html:root:root #nsk-right-panel-container .nsk-new-member-board>.new-member-item>div {
@@ -6002,8 +6019,8 @@
 		min-width:0!important;
 		margin:0!important;
 		padding:0!important;
-		font-family:var(--nsmax-font)!important;
-		font-size:21px!important;
+		font-family:var(--nsmax-read-font,var(--nsmax-font))!important;
+		font-size:20px!important;
 		font-weight:600!important;
 		line-height:1.45!important;
 		letter-spacing:-.01em!important;
@@ -6176,7 +6193,7 @@
 		margin:0!important;
 		padding:0!important;
 		color:var(--nsmax-faint)!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		line-height:21px!important;
 		white-space:nowrap;
 	}
@@ -6206,7 +6223,7 @@
 		color:var(--nsmax-faint)!important;
 		font-family:var(--nsmax-font)!important;
 		font-variant-numeric:tabular-nums!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		font-weight:400!important;
 		text-decoration:none!important;
 	}
@@ -6231,7 +6248,7 @@
 	html:root:root #nsk-body-left .content-item>article.post-content {
 		margin:0!important;
 		padding:0!important;
-		font-family:var(--nsmax-font)!important;
+		font-family:var(--nsmax-read-font,var(--nsmax-font))!important;
 		font-size:15px!important;
 		line-height:1.8!important;
 		color:var(--nsmax-text)!important;
@@ -6285,7 +6302,7 @@
 	html:root:root #nsk-body-left article.post-content :not(pre)>code {
 		padding:1px 5px!important;
 		border:1px solid var(--nsmax-divider)!important;
-		border-radius:4px!important;
+		border-radius:var(--nsmax-r-chip,6px)!important;
 		background:var(--nsmax-panel-alt)!important;
 		color:var(--nsmax-text)!important;
 		font-size:.92em!important;
@@ -6378,11 +6395,11 @@
 		margin:0!important;
 		padding:8px 4px!important;
 		border:1px solid var(--nsmax-stroke)!important;
-		border-radius:8px!important;
+		border-radius:var(--nsmax-r-control,10px)!important;
 		background:var(--nsmax-card)!important;
 		box-shadow:none!important;
 		color:var(--nsmax-muted)!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		line-height:1!important;
 		cursor:pointer;
 		transition:border-color .15s ease,background-color .15s ease,color .15s ease!important;
@@ -6412,7 +6429,7 @@
 		mask:none!important;
 		align-self:baseline!important;
 		color:inherit!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		line-height:1!important;
 		white-space:nowrap;
 	}
@@ -6422,7 +6439,7 @@
 		margin:0!important;
 		color:inherit!important;
 		font-family:var(--nsmax-font)!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		font-weight:500!important;
 		line-height:1!important;
 		font-variant-numeric:tabular-nums;
@@ -6451,7 +6468,7 @@
 		border-radius:999px!important;
 		background:transparent!important;
 		color:var(--nsmax-faint)!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		line-height:1!important;
 		cursor:pointer;
 		transition:background-color .15s ease,color .15s ease!important;
@@ -6489,10 +6506,7 @@
 		border-top:0!important;
 	}
 	html:root:root #nsk-body-left .comment-container .nsk-pager :is(.pager-pos,.pager-prev,.pager-next) {
-		min-width:28px!important;
-		height:28px!important;
-		padding:0 7px!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 	}
 	html:root:root #nsk-body-left .comment-container>div:has(>.post-bottom-pager) .nsk-pager :is(.pager-pos,.pager-prev,.pager-next) {
 		min-width:32px!important;
@@ -6559,7 +6573,7 @@
 		padding:0!important;
 		border:0!important;
 		color:var(--nsmax-text)!important;
-		font-size:22px!important;
+		font-size:20px!important;
 		font-weight:600!important;
 		line-height:1.3!important;
 		letter-spacing:-.01em;
@@ -6689,7 +6703,7 @@
 		margin:0!important;
 		padding:0!important;
 		color:var(--nsmax-text)!important;
-		font-size:22px!important;
+		font-size:20px!important;
 		font-weight:600!important;
 		line-height:1.3!important;
 	}
@@ -6802,7 +6816,7 @@
 	html:root:root #nsk-frame>.nsk-container .card-block>.card-item .name {
 		margin:0!important;
 		color:var(--nsmax-muted)!important;
-		font-size:12.5px!important;
+		font-size:13px!important;
 		line-height:1.4!important;
 		width:auto!important;
 	}
@@ -6848,6 +6862,211 @@
 	html:root:root #nsk-head a[data-nsmax-own-header=shortcut] svg {
 		position:relative!important;
 		top:1px!important;
+	}
+	/* ---------- 站点的搜索面板（登录后点搜索框弹出的 .search-overlay：帖子 / 用户 / 谷歌、版块筛选、搜索历史）：
+	   站点的绿色强调色、白卡片都挂在组件自己的变量上，换成主题色；标签是 sb.sb 的下划线、筛选与历史是胶囊、搜索按钮是墨色胶囊 ---------- */
+	html:root:root .search-overlay {
+		--bg-overlay:rgb(31 30 29/.24)!important;
+		--bg-card:var(--nsmax-popup)!important;
+		--bg-muted:var(--nsmax-panel-alt)!important;
+		--border-color:var(--nsmax-stroke)!important;
+		--text-main:var(--nsmax-text)!important;
+		--text-muted:var(--nsmax-muted)!important;
+		--accent:var(--nsmax-ink)!important;
+		--accent-text:var(--nsmax-on-ink)!important;
+		--ring-color:color-mix(in srgb,var(--nsmax-ink) 8%,transparent)!important;
+		font-family:var(--nsmax-font)!important;
+	}
+	html:root:root:has(>body.dark-layout) .search-overlay {
+		--bg-overlay:rgb(0 0 0/.5)!important;
+	}
+	html:root:root .search-overlay .glass-card {
+		border-radius:var(--nsmax-r-card,16px)!important;
+		box-shadow:var(--nsmax-shadow-pop)!important;
+	}
+	html:root:root .search-overlay .dynamic-glow {
+		display:none!important;
+	}
+	html:root:root .search-overlay .glass-tabs {
+		gap:20px!important;
+		padding:0 16px!important;
+	}
+	html:root:root .search-overlay .tab-btn {
+		padding:14px 2px!important;
+		font-size:14px!important;
+		font-weight:400!important;
+	}
+	html:root:root .search-overlay .tab-btn.active {
+		font-weight:500!important;
+	}
+	html:root:root .search-overlay .tab-btn.active::after {
+		height:2px!important;
+		border-radius:1px!important;
+	}
+	html:root:root .search-overlay .glass-close {
+		width:32px!important;
+		height:32px!important;
+		border-radius:999px!important;
+	}
+	html:root:root .search-overlay .glass-close svg {
+		width:18px!important;
+		height:18px!important;
+	}
+	html:root:root .search-overlay .glass-content {
+		padding:18px 18px 20px!important;
+	}
+	html:root:root .search-overlay .sub-nav {
+		gap:6px!important;
+		margin-bottom:14px!important;
+	}
+	html:root:root .search-overlay .sub-pill {
+		box-sizing:border-box!important;
+		display:inline-flex!important;
+		align-items:center!important;
+		height:28px!important;
+		padding:0 12px!important;
+		border:1px solid var(--nsmax-stroke)!important;
+		border-radius:999px!important;
+		background:transparent!important;
+		color:var(--nsmax-muted)!important;
+		font-size:13px!important;
+		font-weight:400!important;
+		line-height:1!important;
+	}
+	html:root:root .search-overlay .sub-pill:not(.active):hover {
+		background:var(--nsmax-hover)!important;
+		border-color:var(--nsmax-stroke-strong)!important;
+		color:var(--nsmax-text)!important;
+	}
+	html:root:root .search-overlay .sub-pill.active {
+		background:var(--nsmax-ink)!important;
+		border-color:var(--nsmax-ink)!important;
+		color:var(--nsmax-on-ink)!important;
+		font-weight:500!important;
+	}
+	html:root:root .search-overlay .glass-input-group {
+		gap:8px!important;
+	}
+	html:root:root .search-overlay .glass-input-group input {
+		height:40px!important;
+		padding:0 14px!important;
+		border:1px solid var(--nsmax-stroke-strong)!important;
+		border-radius:var(--nsmax-r-control,10px)!important;
+		background:var(--nsmax-card)!important;
+		font-size:14px!important;
+	}
+	html:root:root .search-overlay .glass-input-group input:focus {
+		border-color:var(--nsmax-ink)!important;
+		box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent)!important;
+	}
+	html:root:root .search-overlay .glass-input-group input::placeholder {
+		color:var(--nsmax-faint)!important;
+		opacity:1!important;
+	}
+	html:root:root .search-overlay .glass-search-btn {
+		height:40px!important;
+		padding:0 18px!important;
+		border-radius:999px!important;
+		background:var(--nsmax-ink)!important;
+		color:var(--nsmax-on-ink)!important;
+		font-size:14px!important;
+		font-weight:500!important;
+		opacity:1!important;
+	}
+	html:root:root .search-overlay .glass-search-btn:hover {
+		background:color-mix(in srgb,var(--nsmax-ink) 88%,var(--nsmax-card))!important;
+	}
+	html:root:root .search-overlay .search-history {
+		margin-top:18px!important;
+		padding-top:14px!important;
+		border-top:1px solid var(--nsmax-divider)!important;
+	}
+	html:root:root .search-overlay .history-header span {
+		color:var(--nsmax-muted)!important;
+		font-size:13px!important;
+		font-weight:500!important;
+	}
+	html:root:root .search-overlay .clear-history-btn:hover {
+		color:var(--nsmax-text)!important;
+	}
+	html:root:root .search-overlay .history-list {
+		gap:8px!important;
+	}
+	html:root:root .search-overlay .history-item {
+		box-sizing:border-box!important;
+		height:30px!important;
+		padding:0 6px 0 12px!important;
+		border:1px solid var(--nsmax-stroke)!important;
+		border-radius:999px!important;
+		background:var(--nsmax-card)!important;
+	}
+	html:root:root .search-overlay .history-item:hover {
+		border-color:var(--nsmax-stroke-strong)!important;
+		background:var(--nsmax-panel-alt)!important;
+	}
+	html:root:root .search-overlay .history-keyword {
+		color:var(--nsmax-text)!important;
+		font-size:13px!important;
+	}
+	html:root:root .search-overlay .history-scope-tag {
+		display:inline-flex!important;
+		align-items:center!important;
+		height:18px!important;
+		padding:0 7px!important;
+		border-radius:999px!important;
+		background:var(--nsmax-fill)!important;
+		color:var(--nsmax-muted)!important;
+		font-size:11px!important;
+		opacity:1!important;
+	}
+	/* 定位到的楼层（链接带 #楼号）：左侧一道珊瑚色细线（上面统一去掉了楼层的投影，这里补回来） */
+	html:root:root #nsk-body-left ul.comments>li.content-item:is(:target,:has(:target)) {
+		box-shadow:inset 2px 0 0 var(--nsmax-brand)!important;
+	}
+	/* 页码悬停只改文字颜色，不出底色（当前页除外） */
+	html:root:root .nsk-pager a:is(.pager-pos,.pager-prev,.pager-next):hover {
+		background:transparent!important;
+		color:var(--nsmax-text)!important;
+	}
+	/* 主栏里已经是一整张卡片的内容（NodeSeek++ 消息中心、设置页等的面板）：主栏本身不再套一层卡片 */
+	html:root:root #nsk-body>#nsk-body-left:has(>:is(.nspp-messages-container,.nsk-panel)) {
+		background:transparent!important;
+		border:0!important;
+		border-radius:0!important;
+	}
+	/* 帖子预览的标题：弹层打开时会拿到焦点，这里不画粗聚焦框，只在悬停 / 聚焦时加下划线 */
+	html:root:root .nspp-post-preview>header a:is(:focus,:focus-visible) {
+		outline:0!important;
+	}
+	/* 站点的 header {
+		…;
+	}
+	给页面里所有 header 元素都加了投影：脚本自己的弹窗标题、私信标题栏等去掉（站点顶栏本身不受影响） */
+	html[data-nsmax-theme] header:not(body>header) {
+		box-shadow:none;
+	}
+	/* 自动翻页的「加载下一页 / 已加载全部内容」：卡片里一行居中的弱化文字按钮，不画边框 */
+	html:root:root #nsk-body-left>button.nspp-action {
+		display:flex!important;
+		align-items:center!important;
+		justify-content:center!important;
+		box-sizing:border-box!important;
+		width:100%!important;
+		height:32px!important;
+		min-height:32px!important;
+		margin:4px 0!important;
+		padding:0 12px!important;
+		border:0!important;
+		border-radius:0!important;
+		background:transparent!important;
+		box-shadow:none!important;
+		color:var(--nsmax-faint)!important;
+		font-size:13px!important;
+		font-weight:400!important;
+	}
+	html:root:root #nsk-body-left>button.nspp-action:is(:hover,:focus-visible) {
+		background:transparent!important;
+		color:var(--nsmax-text)!important;
 	}
 	/* ---------- 页脚与回到顶部：页面底色、上方细线，链接弱化；回到顶部 / 底部是 36px 细边圆钮 ---------- */
 	html:root:root body>footer {
