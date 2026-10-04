@@ -28686,6 +28686,11 @@ ${nsmaxClaude} :is(.btn,.pure-button):not(.nsmax-header-action,[data-nsmax-cta])
 ${nsmaxClaude} .btn:not(.nsmax-header-action,[data-nsmax-cta],.small-margin .btn){background-color:var(--nsmax-ink)!important;border-color:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important}
 /* SB Theme UI 套件：完整设计 token、组件和 CSS 动效，放在兼容层最后以保持套件视觉优先级。 */
 ${sb_theme_ui_default}
+/* SB Theme UI 的最终桥接：覆盖 NodeSeek 原生高优先级规则，确保套件的基础尺寸在真实正文节点上生效。 */
+${nsmaxClaude} ${nsmaxContent} pre{border-radius:8px!important}
+${nsmaxClaude} ${nsmaxContent} :is(code:not(pre code),kbd){border-radius:4px!important}
+${NSMAX_ROOT}[data-nsmax-page=post] .post-content pre{border-radius:8px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-body-left>.setting-panel{border-radius:12px!important;background:var(--nsmax-card)!important;border:1px solid var(--nsmax-stroke)!important;box-shadow:var(--nsmax-shadow)!important}
 /* ---------- 页面级收口：所有页面使用 sb.sb 的单栏骨架 ---------- */
 ${nsmaxClaude} :is(#nsk-left-panel-container,#nsk-right-panel-container){display:none!important}
 ${nsmaxClaude} :is(#nsk-body,#nsk-frame) :is(#nsk-body-left,.nsk-container){box-sizing:border-box;max-width:1200px;margin-inline:auto}

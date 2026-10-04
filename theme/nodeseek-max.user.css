@@ -8787,6 +8787,16 @@
 		font-family: var(--font-mono);
 		font-size: 11px;
 	}
+	/* SB Theme UI 的最终桥接：覆盖 NodeSeek 原生高优先级规则，确保套件的基础尺寸在真实正文节点上生效。 */
+	html:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *) pre {
+		border-radius:8px!important;
+	}
+	html:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *) :is(code:not(pre code),kbd) {
+		border-radius:4px!important;
+	}
+	html:root:root .post-content pre {
+		border-radius:8px!important;
+	}
 	/* ---------- 页面级收口：所有页面使用 sb.sb 的单栏骨架 ---------- */
 	html:root:root :is(#nsk-left-panel-container,#nsk-right-panel-container) {
 		display:none!important;

@@ -80,11 +80,12 @@ const postPage = (options = {}) => shell("出一台香港 CN2 GIA 小鸡 - NodeS
 ${editorFor(options.editorMode)}
 </div></div>${sidebar}`, { ...options, postData });
 
-const notificationPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><ul class="notification-list">
-<li class="notification-item"><a href="/space/42">spammer</a> 在 <a href="/post-2001-1">某帖</a> 中 @了你</li>
-<li class="notification-item"><a href="/space/7">friend</a> 回复了你的主题 <a href="/post-2002-1">另一帖</a></li>
-<li class="notification-item"><a href="/notification#/message?mode=talk&to=42">来自 spammer 的私信</a></li>
-</ul></div>${sidebar}`, options);
+const notificationPage = (options = {}) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-notification">
+<div class="app-switch"><a class="app-title router-link-exact-active router-link-active" href="#/atMe">@我</a><a class="app-title" href="#/reply">回复主题</a><a class="app-title" href="#/message?mode=list">私信 1</a></div>
+<div><button>全部标为已读</button><div class="reply-container">
+<div class="reply-item"><img class="avatar" src="${AVATAR}" alt="头像"><div><a href="/space/42">spammer</a> 在帖子 <a href="/post-2001-1">某帖</a> 中@了我 <span>2026/10/3 17:43:53</span></div></div>
+<div class="reply-item"><img class="avatar" src="${AVATAR}" alt="头像"><div><a href="/space/7">friend</a> 回复了主题 <a href="/post-2002-1">另一帖</a> <span>2026/10/3 17:40:00</span></div></div>
+</div></div></div></div>${sidebar}`, options);
 
 // 消息中心页：原生通知页的「@我 / 回复主题 / 私信」标签，NodeSeek++ 紧凑消息中心据此找到容器并接管（私信与通知都在里面）。
 const messageCenterPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-panel notification-panel">
