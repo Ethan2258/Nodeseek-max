@@ -24,16 +24,18 @@ function shell(title, main, { dark = false, navMode = "link", leftNav: withLeftN
 	return `<!doctype html><html data-server-rendered="true"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}</style>
 <script>${config}${postData ? `window.__config__.postData = ${JSON.stringify(postData)};` : ""}</script></head>
 <body class="bg1 ${dark ? "dark-layout" : "light-layout"}">
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><symbol id="star" viewBox="0 0 48 48" fill="none"><path stroke-linejoin="round" stroke-width="4" stroke="currentColor" d="m23.999 5-6.113 12.478L4 19.49l10.059 9.834L11.654 43 24 36.42 36.345 43 33.96 29.325 44 19.491l-13.809-2.013L24 5Z"></path></symbol></svg>
 ${header}
 <section id="nsk-frame"><div id="nsk-frame-block"></div> <div id="nsk-body" class="nsk-container">${leftNav}${main}</div> <div id="nsk-frame-block"></div></section>
 <div id="fast-nav-button-group"><div id="back-to-top" class="nav-item-btn" style="display: none;">${iconpark("up")}</div> <div id="back-to-bottom" class="nav-item-btn" style="display: flex;">${iconpark("down")}</div></div>
+<footer><div class="contain"><div class="col"><div class="group-head-link">相关网站</div><ul><a href="https://example.org"><li>LowEndTalk</li></a></ul></div><div class="col"><div class="group-head-link">站内导航</div><ul><a href="/about"><li>关于本站</li></a></ul></div></div></footer>
 </body></html>`;
 }
 
 const members = ["泡泡mercy", "vader", "weseeker", "cwavguy", "NewYork", "Luna10", "dogixhgeyk", "elankey"];
 // 右侧栏：用户卡片与发帖按钮是登录后的结构（未知，按常见写法模拟）；快捷功能区与欢迎新用户照真实结构。
 const sidebar = `<div id="nsk-right-panel-container">
-<div class="nsk-panel user-card"><div class="user-head"><a href="/space/1"><img class="avatar-normal" src="${AVATAR}" alt="tester"></a><div><a class="user-name" href="/space/1">tester</a><div class="user-actions"><a href="/board" title="签到">${ICON}</a><a href="/setting" title="设置">${ICON}</a><a href="/logout" title="退出">${ICON}</a></div></div></div>
+<div class="user-card"><div class="user-head"><a href="/space/1"><img class="avatar-normal" src="${AVATAR}" alt="tester"></a><div class="menu"><a class="Username" href="/space/1">tester</a><div class="user-actions"><a href="/board" title="签到">${ICON}</a><a href="/setting" title="设置">${ICON}</a><a href="/logout" title="退出">${ICON}</a></div></div></div>
 <div class="user-stat"><div class="stat-block"><div>${ICON}<span>等级 Lv 6</span></div><div>${ICON}<span>鸡腿 4132</span></div><a href="/notification#/message?mode=list">${ICON}<span>私信 </span><span class="notify-count">1</span></a></div><div class="stat-block"><div>${ICON}<span>主题帖 221</span></div><div>${ICON}<span>评论数 3945</span></div><a href="/notification#/atMe">${ICON}<span>@我 </span><span class="notify-count">5</span></a></div></div></div>
 <a class="btn-post" href="/new-discussion">+ 发帖</a>
 <div class="nsk-panel quick-access"><h4 aria-level="2">${iconpark("rocket-one")} <span>快捷功能区</span></h4> <ul role="nav"><li><a href="/award">${iconpark("diamonds")} <span>推荐阅读</span></a></li> <li><a href="/ruling">${iconpark("balance-two")} <span>管理记录</span></a></li> <li><a href="/lucky">${iconpark("optimize")} <span>幸运抽奖</span></a></li></ul></div>
@@ -69,22 +71,25 @@ const toolIcon = (name, title) => `<span class="toolbar-item i-icon i-icon-${nam
 const toolButtons = EDITOR_TOOLS.map(([name, title]) => toolIcon(name, title) + (SPLIT_AFTER.has(name) ? `<span class="toolbar-split"></span>` : "")).join("");
 const asideIcons = [["list-numbers", "目录"], ["toolkit", "工具箱"], ["full-screen", "全屏"]].map(([name, title]) => `<span class="i-icon i-icon-${name}" title="${title}"><svg viewBox="0 0 48 48" width="16" height="16"><circle cx="24" cy="24" r="14" fill="currentColor"/></svg></span>`).join("");
 const editorTabs = `<span class="tab active">内容</span><span class="tab">预览</span><span class="tab">对照</span>`;
-const editorRest = `<textarea placeholder="说点什么…"></textarea><div class="expression"><div class="exp-item current-group">AC娘</div><div class="exp-item">洋葱头</div><div class="exp-item">小黄鸡</div></div><div class="exp-container"><!----></div><div class="submit-row" style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div></div>`;
-const editorFor = (mode) => mode === "wrapped"
+const editorRest = `<textarea placeholder="说点什么…" aria-label="回复内容"></textarea><div class="expression"><div class="exp-item current-group">AC娘</div><div class="exp-item">洋葱头</div><div class="exp-item">小黄鸡</div></div><div class="exp-container"><!----></div><div class="submit-row" style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div></div>`;
+const editorFor = (mode) => mode === "native"
+  ? `<div class="md-editor"><div id="editor-body"><div class="tab-select window_header"><div style="display:flex"><div class="tab-option tab-option-item-0" style="border-bottom:3px solid black">内容</div><div class="tab-option tab-option-item-1">预览</div><div class="tab-option tab-option-item-2">对照</div></div><div style="margin-left:auto">支持<a href="#">markdown语法</a></div>${asideIcons}</div><div class="mde-toolbar">${toolButtons}</div>${editorRest}</div>`
+  : mode === "wrapped"
 	? `<div class="md-editor"><div class="editor-head"><div class="tab-bar">${editorTabs}<div class="tab-aside"><span>支持markdown语法</span>${asideIcons}</div></div><div class="mde-toolbar">${toolButtons}</div></div>${editorRest}`
 	: `<div class="md-editor"><div class="tab-select">${editorTabs}</div><div class="mde-toolbar">${toolButtons}<span class="toolbar-item right">支持markdown语法</span>${asideIcons}</div>${editorRest}`;
 const editor = editorFor();
+const codeMirrorEditor = `<div class="md-editor"><div id="editor-body"><div class="tab-select window_header"><div class="tab-option">内容</div><div class="tab-option">预览</div></div><div class="mde-toolbar">${toolButtons}</div><div class="vue-codemirror"><div class="CodeMirror"><div style="overflow:hidden;position:relative;width:3px;height:0"><textarea style="position:absolute;bottom:-1em;padding:0;width:1000px;height:1em;min-height:1em"></textarea></div><div class="CodeMirror-scroll"><div class="CodeMirror-lines"><div class="CodeMirror-code" contenteditable="true" role="textbox" aria-label="CodeMirror 回复">鼓励友善发言，禁止人身攻击</div></div></div></div></div><div class="expression"><div class="exp-item">AC娘</div></div></div><div class="topic-select"><div></div><button class="submit btn">发布评论</button></div></div>`;
 const postData = { category: "trade", categoryWord: "交易", categoryLink: "/categories/trade", postId: 1000, postPage: 1, title: "出一台香港 CN2 GIA 小鸡，年付 99", views: "1234", postPageCount: 1, collectionCount: 5 };
 const signature = `<div class="signature">签名：机器不跑路 <a href="https://example.com/x" style="color:#2ea44f">Xmanager</a> | <span style="color:#3fb950">Xshell</span></div>`;
 const postPage = (options = {}) => shell("出一台香港 CN2 GIA 小鸡 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-post-wrapper"><div class="nsk-post"><div class="post-title"><h1><a href="/post-1000-1" class="post-title-link nspp-read">出一台香港 CN2 GIA 小鸡，年付 99</a></h1></div> ${entry("div", 0, 10, "seller", content, { op: true, extra: signature })}</div> <div class="comment-container"><div><div class="nsk-pager post-top-pager">${pagerHtml(undefined, 1, 3)}</div></div> <ul class="comments">${comment(1, 11, "buyer", "收了，私信你")}${comment(2, 12, "passerby", "价格不错，帮顶")}${comment(3, 13, "curious", "线路怎么样？晚高峰丢包吗？")}</ul> <div><div class="nsk-pager post-bottom-pager">${pagerHtml(undefined, 1, 3)}</div></div></div>
-${editorFor(options.editorMode)}
+${options.editorMode === "codemirror" ? codeMirrorEditor : editorFor(options.editorMode || "native")}
 </div></div>${sidebar}`, { ...options, postData });
 
 const notificationPage = (options = {}) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-notification">
 <div class="app-switch"><a class="app-title router-link-exact-active router-link-active" href="#/atMe">@我</a><a class="app-title" href="#/reply">回复主题</a><a class="app-title" href="#/message?mode=list">私信 1</a></div>
 <div><button>全部标为已读</button><div class="reply-container">
-<div class="reply-item"><img class="avatar" src="${AVATAR}" alt="头像"><div><a href="/space/42">spammer</a> 在帖子 <a href="/post-2001-1">某帖</a> 中@了我 <span>2026/10/3 17:43:53</span></div></div>
-<div class="reply-item"><img class="avatar" src="${AVATAR}" alt="头像"><div><a href="/space/7">friend</a> 回复了主题 <a href="/post-2002-1">另一帖</a> <span>2026/10/3 17:40:00</span></div></div>
+<div class="reply-item"><div style="position:relative"><img class="avatar" src="${AVATAR}" alt="头像"><div class="unviewed"></div></div><div style="flex:1"><a href="/space/42">spammer</a> 在帖子 <a href="/post-2001-1">某帖</a> 中@了我 <span>2026/10/3 17:43:53</span></div><div><div>${iconpark("check")}</div></div></div>
+<div class="reply-item"><div style="position:relative"><img class="avatar" src="${AVATAR}" alt="头像"></div><div style="flex:1"><a href="/space/7">friend</a> 回复了主题 <a href="/post-2002-1">另一帖</a> <span>2026/10/3 17:40:00</span></div><div><div>${iconpark("check")}</div></div></div>
 </div></div></div></div>${sidebar}`, options);
 
 // 消息中心页：原生通知页的「@我 / 回复主题 / 私信」标签，NodeSeek++ 紧凑消息中心据此找到容器并接管（私信与通知都在里面）。

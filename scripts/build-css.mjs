@@ -22,7 +22,7 @@ const end = source.indexOf("\tvar hot_sidebar_default = `");
 if (start < 0 || end < 0 || end < start) throw new Error("未找到主题源码");
 const context = {};
 vm.runInNewContext(source.slice(start, end), context);
-const themeCss = context.modern_theme_default.replace(/\r\n?/g, "\n");
+const themeCss = (context.modern_theme_compiled || context.modern_theme_default).replace(/\r\n?/g, "\n");
 const fonts = context.NSMAX_WEB_FONTS;
 const latinRange = context.NSMAX_LATIN_RANGE;
 if (typeof themeCss !== "string" || !Array.isArray(fonts)) throw new Error("主题源码求值失败");
@@ -47,10 +47,8 @@ for (const [option, attribute] of [["grid", "data-nsmax-grid"], ["glassHeader", 
 if (options.glassHeader) attributes.set("data-nsmax-sticky-header", "");
 // 「快捷入口」面板默认隐藏（与用户卡片重复），独立 CSS 同样隐藏。
 if (options.hideQuickAccess) attributes.set("data-nsmax-hide-quick", "");
-// 页面类型由脚本按网址设置：独立 CSS 中这些规则只会命中对应页面才有的元素，直接视为满足；
-// 设置页与发帖页的规则用的是通用表单选择器，放进独立 CSS 会影响所有页面，直接丢弃。
+// 独立 CSS 没有脚本设置页面属性，用真实容器作为条件，避免通知页规则隐藏所有页面的侧栏。
 const runtimeAttributes = new Set(["data-nsmax-page"]);
-const scriptOnlyPages = new Set(["setting", "new"]);
 // 只能由脚本标记的元素：能映射的换成站点选择器，其余规则丢弃。
 const markers = new Map([
 	["[data-nsmax-header]", "#nsk-head"],
@@ -63,6 +61,9 @@ const conditions = new Map([
 	["[data-nsmax-dark]", ":has(>body.dark-layout)"],
 	["[data-nsmax-site]", ":has(#nsk-body)"]
 ]);
+for (const [page, selector] of [["post", ".nsk-post"], ["notification", ".nsk-notification"], ["setting", "#user-setting-panel"], ["new", ".new-discussion"], ["space", ".head-container"], ["list", "ul.post-list"]]) {
+	for (const value of [page, `"${page}"`, `'${page}'`]) conditions.set(`[data-nsmax-page=${value}]`, `:has(${selector})`);
+}
 const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|scrolled|sidenav|hidden|dup|tools|booting|icon-orig|icon-for|header-[\w-]+|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
 
 // ---- 极简 CSS 解析：规则块与 @media 等嵌套块 -----------------------------------------
@@ -84,7 +85,7 @@ function parseBlocks(css) {
 			cursor++;
 		}
 		const body = css.slice(open + 1, cursor - 1);
-		blocks.push(/^@(media|supports|layer)\b/.test(prelude) ? { comments, prelude, children: parseBlocks(body) } : { comments, prelude, body: body.trim() });
+		blocks.push(/^@(media|supports|layer|starting-style)\b/.test(prelude) ? { comments, prelude, children: parseBlocks(body) } : { comments, prelude, body: body.trim() });
 		index = cursor;
 	}
 	return blocks;
@@ -108,7 +109,7 @@ function evaluate(simple) {
 	let match = simple.match(/^\[([\w-]+)(?:=([^\]]+))?\]$/);
 	if (match) {
 		const [, name, raw] = match;
-		if (runtimeAttributes.has(name)) return !scriptOnlyPages.has(raw?.replace(/^["']|["']$/g, ""));
+		if (runtimeAttributes.has(name)) return null;
 		if (conditions.has(simple)) return null;
 		if (!name.startsWith("data-nsmax-")) return null;
 		const value = raw?.replace(/^["']|["']$/g, "");
@@ -186,7 +187,7 @@ const fontFaces = fonts.map((font) => `@font-face {
 const banner = (kind) => `/*
  * NodeSeek Max 主题 v${version}（${kind}）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
-	 * 主题源码在脚本的 modern_theme_default 中。默认设置：SB Theme UI、分隔行布局、系统字体。
+ * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
  * https://github.com/Ethan2258/Nodeseek-max · GPL-3.0-only
  */`;
@@ -218,7 +219,7 @@ if (process.argv.includes("--check")) {
 	for (const [path, content] of outputs) {
 		let current = "";
 		try {
-			current = readFileSync(new URL(path, root), "utf8");
+			current = readFileSync(new URL(path, root), "utf8").replace(/\r\n?/g, "\n");
 		} catch {}
 		if (current !== content) {
 			console.error(`${path} 与脚本中的主题不一致，请运行 npm run css`);
