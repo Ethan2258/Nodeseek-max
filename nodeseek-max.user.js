@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.6.9
+// @version      1.7.0
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -883,7 +883,7 @@ var nsmaxRedirecting = false;
 (function() {
 	"use strict";
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
-	var NSMAX_VERSION = "1.6.9";
+	var NSMAX_VERSION = "1.7.0";
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
 	function whenRoot(callback) {
@@ -26703,13 +26703,13 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 	var sidebarNav = {
 		id: "sidebar-nav",
 		title: "侧栏版块导航",
-		description: "隐藏不常用的版块入口，去掉顶栏与侧栏重复的版块分类，并在版块列表末尾加入 NQ（NodeQuality 测机）等站外快捷入口（新标签页打开）。",
+		description: "整理版块导航，去掉顶栏与侧栏重复项；版块统一放进 sb.sb 风格的顶栏。",
 		group: "导航",
 		defaults: {
 			enabled: true,
 			dedupe: "header",
 			hidden: NSMAX_HIDDEN_DEFAULT,
-			shortcuts: NSMAX_NQ_SHORTCUT
+			shortcuts: ""
 		},
 		fields: {
 			dedupe: {
@@ -26735,17 +26735,18 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 				type: "textarea"
 			},
 			shortcuts: {
-				label: "快捷入口（每行：名称|网址|图标|提示，图标可选 nq、gauge、image、chart、tool、link）",
+				label: "快捷入口（已按 sb.sb 风格移除）",
+				hidden: true,
 				type: "textarea"
 			}
 		},
 		mount(ctx) {
-			// 之前保存的默认入口用的是通用仪表盘图标，换成 NodeQuality 自己的标志。
-			if (ctx.get("shortcuts") === "NQ|https://nodequality.com|gauge|NodeQuality 测机") ctx.set("shortcuts", NSMAX_NQ_SHORTCUT);
+			// 顶栏按 sb.sb 保持纯版块导航，旧版本保存的 NQ / 快捷入口不再注入页面。
+			if (ctx.get("shortcuts")) ctx.set("shortcuts", "");
 			// 之前保存的默认隐藏名单补上 DeepFlood 入口。
 			if (ctx.get("hidden") === "生活\nDev\n贴图\n沙盒") ctx.set("hidden", NSMAX_HIDDEN_DEFAULT);
 			const hidden = new Set(filterLines(ctx.get("hidden")).map((name) => name.toLocaleLowerCase()));
-			const shortcuts = parseShortcuts(ctx.get("shortcuts"));
+			const shortcuts = [];
 			const dedupe = ctx.get("dedupe");
 			if (!hidden.size && !shortcuts.length && dedupe === "off") return;
 			const names = new Set([...NSMAX_CATEGORY_NAMES, ...hidden]);
@@ -26947,9 +26948,11 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 	var nsmaxContent = `:is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *)`;
 	var nsmaxClaude = `${NSMAX_ROOT}[data-nsmax-palette=claude]`;
 	var nsmaxPress = ":is(.btn,button.submit,.nsk-pager a,.comment-menu .menu-item,.nsmax-hot-tabs button,.nsmax-hot-refresh,.nsmax-hot-toggle,.nspp-tool-icon)";
+	// SB Theme UI 套件的 CSS 在发布构建时内置到这里；规则已在导入时限定到 html[data-nsmax-theme]。
+	var sb_theme_ui_default = "html[data-nsmax-theme]{\r\n  color-scheme: light;\r\n\r\n  /* Surfaces & Backgrounds */\r\n  --bg: #f7f8fa;\r\n  --panel: #ffffff;\r\n  --panel-alt: #fafbfc;\r\n  --panel-hover: #f2f4f7;\r\n\r\n  /* Borders & Dividers */\r\n  --line: #e0e2e8;\r\n  --line-soft: #eef0f3;\r\n  --line-strong: #c7cad5;\r\n\r\n  /* Typography */\r\n  --text-strong: #050038;\r\n  --text: #1c1c1e;\r\n  --text-muted: #555a6a;\r\n  --text-subtle: #6b6f7e;\r\n  --text-disabled: #8e91a0;\r\n\r\n  /* Brand Accents */\r\n  --brand: #33408f;\r\n  --brand-hover: #232a63;\r\n  --brand-soft: #eef0f8;\r\n  --brand-border: #c7cbe4;\r\n  --focus-ring: #33408f;\r\n\r\n  /* Links & Actions */\r\n  --link: #2f4fd0;\r\n  --link-hover: #2440a8;\r\n  --link-soft: #e8ecfb;\r\n  --action: #1c1c1e;\r\n  --action-hover: #2c2c34;\r\n  --action-text: #ffffff;\r\n  --action-border: #1c1c1e;\r\n\r\n  /* Badges & Feedback */\r\n  --mark: #ffd02f;\r\n  --mark-deep: #fcb900;\r\n  --mark-text: #1c1c1e;\r\n  --mark-soft: #fff4c4;\r\n  --mark-soft-text: #746019;\r\n  --success: #007a4e;\r\n  --success-soft: #e4f6ee;\r\n  --success-soft-text: #007a4e;\r\n  --danger: #cf2b2b;\r\n  --on-danger: #ffffff;\r\n  --danger-fill: #cf2b2b;\r\n  --on-danger-fill: #ffffff;\r\n  --danger-soft: #fbd4d4;\r\n  --danger-soft-text: #600000;\r\n  --danger-border: #e3c5c5;\r\n  --warning: #8a6500;\r\n  --warning-border: #f0d98a;\r\n  --warning-soft: #fff4c4;\r\n  --warning-soft-text: #746019;\r\n  --info: #33408f;\r\n  --info-soft: #eef0f8;\r\n  --info-soft-text: #33408f;\r\n  --accent-teal-soft: #c3faf5;\r\n  --accent-teal-text: #187574;\r\n\r\n  /* Inverted & Overlays */\r\n  --inverse: #1c1c1e;\r\n  --inverse-text: #ffffff;\r\n  --inverse-border: #2c2c34;\r\n  --backdrop: rgb(5 0 56 / 0.42);\r\n  --selection: #c7cfef;\r\n\r\n  /* Shadows */\r\n  --shadow-base: 0 1px 2px rgb(5 0 56 / 0.04);\r\n  --shadow-medium: 0 16px 48px -8px rgb(5 0 56 / 0.12);\r\n\r\n  /* Border Radiuses */\r\n  --r-xs: 4px;\r\n  --r-sm: 6px;\r\n  --r-input: 8px;\r\n  --r: 12px;\r\n  --r-pill: 9999px;\r\n\r\n  /* Motion & Easings */\r\n  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);\r\n  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);\r\n\r\n  /* Sizing & Layout Constraints */\r\n  --container: 1200px;\r\n  --sidebar-w: 260px;\r\n  --gap: 20px;\r\n  --post-image-max: 720px;\r\n\r\n  /* Typography Font Families */\r\n  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\r\n    \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\r\n  --font-mono: \"Space Mono\", ui-monospace, SFMono-Regular, \"SF Mono\", Menlo,\r\n    Consolas, monospace;\r\n\r\n  /* Syntax Highlighting */\r\n  --code-keyword: #a626a4;\r\n  --code-string: #50a14f;\r\n  --code-number: #986801;\r\n  --code-title: #4078f2;\r\n  --code-name: #e45649;\r\n}\n@media (max-width: 980px){html[data-nsmax-theme]{\r\n    --sidebar-w: 220px;\r\n    --gap: 16px;\r\n  }}\nhtml[data-nsmax-theme][data-nsmax-dark]{\r\n  color-scheme: dark;\r\n\r\n  /* Surfaces & Backgrounds */\r\n  --bg: #0d0e14;\r\n  --panel: #14151c;\r\n  --panel-alt: #1a1b24;\r\n  --panel-hover: #20222c;\r\n\r\n  /* Borders & Dividers */\r\n  --line: #2a2c38;\r\n  --line-soft: #20222c;\r\n  --line-strong: #3a3d4c;\r\n\r\n  /* Typography */\r\n  --text-strong: #f2f3f8;\r\n  --text: #e7e8ef;\r\n  --text-muted: #a8abbb;\r\n  --text-subtle: #8b8fa1;\r\n  --text-disabled: #6e7284;\r\n\r\n  /* Brand Accents */\r\n  --brand: #9aa6e8;\r\n  --brand-hover: #bcc4f0;\r\n  --brand-soft: #20233a;\r\n  --brand-border: #363b57;\r\n  --focus-ring: #9aa6e8;\r\n\r\n  /* Links & Actions */\r\n  --link: #9aa6e8;\r\n  --link-hover: #bcc4f0;\r\n  --link-soft: #22273f;\r\n  --action: #eef0f6;\r\n  --action-hover: #ffffff;\r\n  --action-text: #14151c;\r\n  --action-border: #eef0f6;\r\n\r\n  /* Badges & Feedback */\r\n  --mark: #ffd02f;\r\n  --mark-deep: #fcb900;\r\n  --mark-text: #1c1c1e;\r\n  --mark-soft: #2e2717;\r\n  --mark-soft-text: #ffd977;\r\n  --success: #2fce93;\r\n  --success-soft: #10291f;\r\n  --success-soft-text: #4fdca7;\r\n  --danger: #ff9999;\r\n  --on-danger: #14151c;\r\n  --danger-fill: #d13b3b;\r\n  --on-danger-fill: #ffffff;\r\n  --danger-soft: #341a1a;\r\n  --danger-soft-text: #ffb3b3;\r\n  --danger-border: #5a2b2b;\r\n  --warning: #ffc94d;\r\n  --warning-border: #4a3f1e;\r\n  --warning-soft: #2e2717;\r\n  --warning-soft-text: #ffd977;\r\n  --info: #9aa6e8;\r\n  --info-soft: #20233a;\r\n  --info-soft-text: #b0b9ea;\r\n  --accent-teal-soft: #10302e;\r\n  --accent-teal-text: #4fd4c8;\r\n\r\n  /* Inverted & Overlays */\r\n  --inverse: #e7e8ef;\r\n  --inverse-text: #0d0e14;\r\n  --inverse-border: #3a3d4c;\r\n  --backdrop: rgb(3 2 12 / 0.66);\r\n  --selection: #323963;\r\n\r\n  /* Shadows */\r\n  --shadow-base: 0 1px 2px rgb(0 0 0 / 0.34);\r\n  --shadow-medium: 0 16px 48px -8px rgb(0 0 0 / 0.62);\r\n\r\n  /* Syntax Highlighting */\r\n  --code-keyword: #c678dd;\r\n  --code-string: #98c379;\r\n  --code-number: #d19a66;\r\n  --code-title: #61afef;\r\n  --code-name: #e06c75;\r\n}\nhtml[data-nsmax-theme] *,html[data-nsmax-theme] *::before,html[data-nsmax-theme] *::after{\r\n  box-sizing: border-box;\r\n}\nhtml[data-nsmax-theme]{\r\n  -webkit-text-size-adjust: 100%;\r\n  tab-size: 4;\r\n  font-family: var(--font-sans);\r\n  background-color: var(--bg);\r\n  color: var(--text);\r\n  line-height: 1.5;\r\n  scroll-behavior: smooth;\r\n}\nhtml[data-nsmax-theme] body{\r\n  margin: 0;\r\n  padding: 0;\r\n  background-color: var(--bg);\r\n  color: var(--text);\r\n  font-size: 14px;\r\n  -webkit-font-smoothing: antialiased;\r\n  -moz-osx-font-smoothing: grayscale;\r\n}\nhtml[data-nsmax-theme] h1,html[data-nsmax-theme] h2,html[data-nsmax-theme] h3,html[data-nsmax-theme] h4,html[data-nsmax-theme] h5,html[data-nsmax-theme] h6{\r\n  margin: 0;\r\n  color: var(--text-strong);\r\n  font-weight: 600;\r\n  line-height: 1.35;\r\n}\nhtml[data-nsmax-theme] p{\r\n  margin: 0 0 1em;\r\n}\nhtml[data-nsmax-theme] p:last-child{\r\n  margin-bottom: 0;\r\n}\nhtml[data-nsmax-theme] a{\r\n  color: var(--link);\r\n  text-decoration: none;\r\n  transition: color 0.12s ease;\r\n}\nhtml[data-nsmax-theme] a:hover{\r\n  color: var(--link-hover);\r\n}\nhtml[data-nsmax-theme] ul,html[data-nsmax-theme] ol{\r\n  margin: 0;\r\n  padding: 0;\r\n  list-style: none;\r\n}\nhtml[data-nsmax-theme] code,html[data-nsmax-theme] kbd,html[data-nsmax-theme] samp,html[data-nsmax-theme] pre{\r\n  font-family: var(--font-mono);\r\n  font-size: 0.9em;\r\n}\nhtml[data-nsmax-theme] code{\r\n  padding: 2px 5px;\r\n  border-radius: var(--r-xs);\r\n  background: var(--panel-alt);\r\n  color: var(--code-keyword);\r\n  border: 1px solid var(--line-soft);\r\n}\nhtml[data-nsmax-theme] pre code{\r\n  padding: 0;\r\n  background: transparent;\r\n  border: none;\r\n  color: inherit;\r\n}\nhtml[data-nsmax-theme] hr{\r\n  height: 1px;\r\n  margin: 1.5em 0;\r\n  border: 0;\r\n  background: var(--line);\r\n}\nhtml[data-nsmax-theme] button,html[data-nsmax-theme] input,html[data-nsmax-theme] select,html[data-nsmax-theme] textarea{\r\n  font: inherit;\r\n  color: inherit;\r\n}\nhtml[data-nsmax-theme] button{\r\n  cursor: pointer;\r\n  background: none;\r\n  border: none;\r\n}\nhtml[data-nsmax-theme] :focus-visible{\r\n  outline: 2px solid var(--focus-ring);\r\n  outline-offset: 2px;\r\n}\nhtml[data-nsmax-theme] ::selection{\r\n  background: var(--selection);\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] ::-webkit-scrollbar{\r\n  width: 8px;\r\n  height: 8px;\r\n}\nhtml[data-nsmax-theme] ::-webkit-scrollbar-track{\r\n  background: transparent;\r\n}\nhtml[data-nsmax-theme] ::-webkit-scrollbar-thumb{\r\n  background: var(--line);\r\n  border-radius: 4px;\r\n}\nhtml[data-nsmax-theme] ::-webkit-scrollbar-thumb:hover{\r\n  background: var(--line-strong);\r\n}\nhtml[data-nsmax-theme] .wrap{\r\n  width: min(var(--container), calc(100vw - 32px));\r\n  margin: 0 auto;\r\n  padding: 16px 0 40px;\r\n}\n@media (max-width: 640px){html[data-nsmax-theme] .wrap{\r\n    width: 100%;\r\n    padding: 0 0 32px;\r\n  }}\nhtml[data-nsmax-theme] .home-shell{\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: var(--gap);\r\n}\nhtml[data-nsmax-theme] .forum-layout{\r\n  display: grid;\r\n  grid-template-columns: minmax(0, 1fr) var(--sidebar-w);\r\n  gap: var(--gap);\r\n  align-items: start;\r\n}\n@media (max-width: 860px){html[data-nsmax-theme] .forum-layout{\r\n    grid-template-columns: 1fr;\r\n  }}\nhtml[data-nsmax-theme] .forum-main{\r\n  min-width: 0;\r\n}\nhtml[data-nsmax-theme] .main-panel{\r\n  background: var(--panel);\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r);\r\n  overflow: hidden;\r\n}\n@media (max-width: 640px){html[data-nsmax-theme] .main-panel{\r\n    border-radius: 0;\r\n    border-left: 0;\r\n    border-right: 0;\r\n  }}\nhtml[data-nsmax-theme] .card,html[data-nsmax-theme] .form-panel{\r\n  background: var(--panel);\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r);\r\n  overflow: hidden;\r\n}\nhtml[data-nsmax-theme] .sidebar{\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: var(--gap);\r\n  min-width: 0;\r\n}\nhtml[data-nsmax-theme] .top{\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 40;\r\n  background: var(--panel);\r\n  border-bottom: 1px solid var(--line);\r\n  transition: border-color 0.15s ease, background-color 0.15s ease;\r\n}\nhtml[data-nsmax-theme] .bar{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n  width: min(var(--container), calc(100vw - 32px));\r\n  height: 52px;\r\n  margin: 0 auto;\r\n}\n@media (max-width: 640px){html[data-nsmax-theme] .bar{\r\n    width: calc(100vw - 24px);\r\n    height: 48px;\r\n    gap: 8px;\r\n  }}\nhtml[data-nsmax-theme] .brand{\r\n  font-weight: 700;\r\n  font-size: 16px;\r\n  color: var(--text-strong);\r\n  letter-spacing: -0.02em;\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n  flex: none;\r\n}\nhtml[data-nsmax-theme] .brand:hover{\r\n  color: var(--brand);\r\n}\nhtml[data-nsmax-theme] .forum-nav{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 2px;\r\n  overflow-x: auto;\r\n  scrollbar-width: none;\r\n  margin-left: 8px;\r\n}\nhtml[data-nsmax-theme] .forum-nav::-webkit-scrollbar{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .forum-link{\r\n  padding: 6px 10px;\r\n  font-size: 13.5px;\r\n  color: var(--text-muted);\r\n  border-radius: var(--r-sm);\r\n  white-space: nowrap;\r\n  transition: background-color 0.12s ease, color 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .forum-link:hover,html[data-nsmax-theme] .forum-link.active{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .forum-more-toggle{\r\n  padding: 5px 9px;\r\n  font-size: 13px;\r\n  color: var(--text-subtle);\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-sm);\r\n  white-space: nowrap;\r\n  background: var(--panel);\r\n  transition: all 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .forum-more-toggle:hover,html[data-nsmax-theme] .forum-more-toggle.active{\r\n  border-color: var(--line-strong);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .nav-sister{\r\n  font-family: var(--font-mono);\r\n  font-size: 12.5px;\r\n  font-weight: 700;\r\n  color: var(--text-muted);\r\n  padding: 5px 8px;\r\n  border-radius: var(--r-sm);\r\n  background: var(--panel-alt);\r\n}\nhtml[data-nsmax-theme] .nav-sister:hover{\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .search-form{\r\n  position: relative;\r\n  display: flex;\r\n  align-items: center;\r\n  margin-left: auto;\r\n}\nhtml[data-nsmax-theme] .search-input{\r\n  width: 140px;\r\n  height: 32px;\r\n  padding: 0 28px 0 10px;\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-pill);\r\n  background: var(--panel-alt);\r\n  color: var(--text);\r\n  font-size: 13px;\r\n  transition: width 0.2s var(--ease-out), border-color 0.15s ease, background 0.15s ease;\r\n}\nhtml[data-nsmax-theme] .search-input:focus{\r\n  width: 200px;\r\n  border-color: var(--focus-ring);\r\n  background: var(--panel);\r\n  outline: none;\r\n}\nhtml[data-nsmax-theme] .search-btn{\r\n  position: absolute;\r\n  right: 8px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  color: var(--text-disabled);\r\n  padding: 0;\r\n}\nhtml[data-nsmax-theme] .search-btn:hover{\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .script-toggle button{\r\n  padding: 4px 8px;\r\n  font-size: 12.5px;\r\n  color: var(--text-subtle);\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-xs);\r\n  background: transparent;\r\n  transition: all 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .script-toggle button:hover{\r\n  border-color: var(--line-strong);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .nav-mine{\r\n  padding: 6px 14px;\r\n  font-size: 13.5px;\r\n  font-weight: 500;\r\n  color: var(--action-text);\r\n  background: var(--action);\r\n  border: 1px solid var(--action-border);\r\n  border-radius: var(--r-pill);\r\n  transition: all 0.12s ease;\r\n  white-space: nowrap;\r\n}\nhtml[data-nsmax-theme] .nav-mine:hover{\r\n  background: var(--action-hover);\r\n  color: var(--action-text);\r\n}\n@media (max-width: 860px){html[data-nsmax-theme] .forum-nav,html[data-nsmax-theme] .forum-more-toggle,html[data-nsmax-theme] .nav-sister,html[data-nsmax-theme] .script-toggle{\r\n    display: none;\r\n  }\nhtml[data-nsmax-theme] .search-input{\r\n    width: 110px;\r\n  }\nhtml[data-nsmax-theme] .search-input:focus{\r\n    width: 140px;\r\n  }}\nhtml[data-nsmax-theme] .theme-menu{\r\n  position: relative;\r\n  flex: none;\r\n}\nhtml[data-nsmax-theme] .theme-toggle{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  width: 32px;\r\n  height: 32px;\r\n  padding: 0;\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-pill);\r\n  background: var(--panel);\r\n  color: var(--text-muted);\r\n  transition: all 0.15s ease;\r\n}\nhtml[data-nsmax-theme] .theme-toggle:hover{\r\n  border-color: var(--line-strong);\r\n  color: var(--text);\r\n  background: var(--panel-hover);\r\n}\nhtml[data-nsmax-theme] .theme-menu[data-open=\"1\"] .theme-toggle{\r\n  border-color: var(--brand-border);\r\n  color: var(--brand);\r\n}\nhtml[data-nsmax-theme] .theme-toggle svg{\r\n  width: 17px;\r\n  height: 17px;\r\n}\nhtml[data-nsmax-theme] .theme-toggle .icon-sun,html[data-nsmax-theme] .theme-toggle .icon-moon{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme][data-theme=\"light\"] .theme-toggle .icon-system,html[data-nsmax-theme]html[data-nsmax-theme][data-nsmax-dark] .theme-toggle .icon-system{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme][data-theme=\"light\"] .theme-toggle .icon-sun{\r\n  display: block;\r\n}\nhtml[data-nsmax-theme]html[data-nsmax-theme][data-nsmax-dark] .theme-toggle .icon-moon{\r\n  display: block;\r\n}\nhtml[data-nsmax-theme] .theme-menu-pop{\r\n  position: absolute;\r\n  right: 0;\r\n  top: calc(100% + 8px);\r\n  z-index: 50;\r\n  min-width: 136px;\r\n  padding: 5px;\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-sm);\r\n  background: var(--panel);\r\n  box-shadow: var(--shadow-medium);\r\n  transition: opacity 120ms var(--ease-out), transform 120ms var(--ease-out), display 120ms allow-discrete;\r\n}\n@starting-style{html[data-nsmax-theme] .theme-menu-pop{\r\n    opacity: 0;\r\n    transform: translateY(-3px);\r\n  }}\nhtml[data-nsmax-theme] .theme-menu-pop[hidden]{\r\n  display: none;\r\n  opacity: 0;\r\n  transform: translateY(-3px);\r\n}\nhtml[data-nsmax-theme] .theme-menu-pop button{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 8px;\r\n  width: 100%;\r\n  padding: 7px 10px;\r\n  border: 0;\r\n  border-radius: var(--r-xs);\r\n  background: transparent;\r\n  color: var(--text);\r\n  font-size: 13px;\r\n  transition: background-color 0.12s ease;\r\n  text-align: left;\r\n}\nhtml[data-nsmax-theme] .theme-menu-pop button:hover{\r\n  background: var(--panel-hover);\r\n}\nhtml[data-nsmax-theme] .theme-menu-pop button svg:not(.theme-check){\r\n  width: 16px;\r\n  height: 16px;\r\n  color: var(--text-muted);\r\n}\nhtml[data-nsmax-theme] .theme-check{\r\n  width: 14px;\r\n  height: 14px;\r\n  margin-left: auto;\r\n  color: var(--brand);\r\n  opacity: 0;\r\n  transition: opacity 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .theme-menu-pop button[aria-checked=\"true\"]{\r\n  color: var(--brand);\r\n  font-weight: 500;\r\n}\nhtml[data-nsmax-theme] .theme-menu-pop button[aria-checked=\"true\"] .theme-check{\r\n  opacity: 1;\r\n}\nhtml[data-nsmax-theme] .mobile-menu-button{\r\n  display: none;\r\n  align-items: center;\r\n  justify-content: center;\r\n  width: 32px;\r\n  height: 32px;\r\n  margin-left: -4px;\r\n  padding: 0;\r\n  border: 0;\r\n  border-radius: var(--r-sm);\r\n  background: transparent;\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .mobile-menu-button:hover{\r\n  background: var(--panel-hover);\r\n}\n@media (max-width: 860px){html[data-nsmax-theme] .mobile-menu-button{\r\n    display: inline-flex;\r\n  }}\nhtml[data-nsmax-theme] .mobile-menu-backdrop{\r\n  position: fixed;\r\n  inset: 0;\r\n  z-index: 60;\r\n  background: var(--backdrop);\r\n  backdrop-filter: blur(2px);\r\n  transition: opacity 200ms var(--ease-drawer), display 200ms allow-discrete;\r\n}\n@starting-style{html[data-nsmax-theme] .mobile-menu-backdrop:not([hidden]){\r\n    opacity: 0;\r\n  }\nhtml[data-nsmax-theme] .mobile-menu-backdrop:not([hidden]) .mobile-menu-drawer{\r\n    transform: translateX(-100%);\r\n  }}\nhtml[data-nsmax-theme] .mobile-menu-backdrop[hidden]{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .mobile-menu-drawer{\r\n  display: flex;\r\n  flex-direction: column;\r\n  width: min(300px, 84vw);\r\n  height: 100%;\r\n  border-right: 1px solid var(--line);\r\n  background: var(--panel);\r\n  box-shadow: var(--shadow-medium);\r\n  transition: transform 220ms var(--ease-drawer);\r\n}\nhtml[data-nsmax-theme] .mobile-menu-head{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  padding: 14px 18px;\r\n  border-bottom: 1px solid var(--line);\r\n}\nhtml[data-nsmax-theme] .mobile-menu-head strong{\r\n  font-size: 15px;\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .mobile-menu-close{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  width: 28px;\r\n  height: 28px;\r\n  font-size: 20px;\r\n  line-height: 1;\r\n  color: var(--text-muted);\r\n  border-radius: var(--r-xs);\r\n}\nhtml[data-nsmax-theme] .mobile-menu-close:hover{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .mobile-menu-body{\r\n  flex: 1;\r\n  overflow-y: auto;\r\n  padding: 16px 18px 24px;\r\n}\nhtml[data-nsmax-theme] .mobile-menu-section{\r\n  margin-bottom: 24px;\r\n}\nhtml[data-nsmax-theme] .mobile-menu-section h3{\r\n  font-size: 12px;\r\n  font-weight: 600;\r\n  color: var(--text-subtle);\r\n  text-transform: uppercase;\r\n  letter-spacing: 0.05em;\r\n  margin-bottom: 8px;\r\n}\nhtml[data-nsmax-theme] .mobile-menu-links{\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 2px;\r\n}\nhtml[data-nsmax-theme] .mobile-menu-link{\r\n  display: block;\r\n  padding: 8px 10px;\r\n  font-size: 14px;\r\n  color: var(--text);\r\n  border-radius: var(--r-sm);\r\n  transition: background-color 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .mobile-menu-link:hover,html[data-nsmax-theme] .mobile-menu-link.active{\r\n  background: var(--panel-hover);\r\n  color: var(--brand);\r\n}\nhtml[data-nsmax-theme] body.mobile-menu-open{\r\n  overflow: hidden;\r\n}\nhtml[data-nsmax-theme] .forum-more-region{\r\n  background: var(--panel);\r\n  border-bottom: 1px solid var(--line);\r\n  transition: all 0.2s var(--ease-out);\r\n}\nhtml[data-nsmax-theme] .forum-more-region[hidden]{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .forum-more-panel{\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  gap: 6px;\r\n  width: min(var(--container), calc(100vw - 32px));\r\n  margin: 0 auto;\r\n  padding: 12px 0 16px;\r\n}\nhtml[data-nsmax-theme] .forum-more-link{\r\n  padding: 5px 12px;\r\n  font-size: 13px;\r\n  color: var(--text-muted);\r\n  background: var(--panel-alt);\r\n  border: 1px solid var(--line-soft);\r\n  border-radius: var(--r-pill);\r\n  transition: all 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .forum-more-link:hover,html[data-nsmax-theme] .forum-more-link.active{\r\n  background: var(--panel-hover);\r\n  border-color: var(--line-strong);\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .mobile-forum-strip{\r\n  display: none;\r\n  gap: 6px;\r\n  padding: 10px 14px;\r\n  overflow-x: auto;\r\n  scrollbar-width: none;\r\n  border-bottom: 1px solid var(--line-soft);\r\n  background: var(--panel);\r\n}\nhtml[data-nsmax-theme] .mobile-forum-strip::-webkit-scrollbar{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .mobile-forum-link{\r\n  flex: none;\r\n  padding: 4px 10px;\r\n  font-size: 13px;\r\n  color: var(--text-muted);\r\n  background: var(--panel-alt);\r\n  border-radius: var(--r-pill);\r\n}\nhtml[data-nsmax-theme] .mobile-forum-link.active{\r\n  background: var(--action);\r\n  color: var(--action-text);\r\n  font-weight: 500;\r\n}\n@media (max-width: 860px){html[data-nsmax-theme] .mobile-forum-strip{\r\n    display: flex;\r\n  }}\nhtml[data-nsmax-theme] .topic-badge{\r\n  display: inline-flex;\r\n  align-items: center;\r\n  padding: 1px 6px;\r\n  font-size: 11px;\r\n  font-weight: 600;\r\n  line-height: 1.5;\r\n  border-radius: var(--r-xs);\r\n  flex: none;\r\n}\nhtml[data-nsmax-theme] .topic-badge.pinned{\r\n  background: var(--brand-soft);\r\n  color: var(--brand);\r\n  border: 1px solid var(--brand-border);\r\n}\nhtml[data-nsmax-theme] .topic-badge.lottery-badge{\r\n  background: var(--mark-soft);\r\n  color: var(--mark-soft-text);\r\n  border: 1px solid var(--warning-border);\r\n}\nhtml[data-nsmax-theme] .topic-badge.bounty-badge{\r\n  background: var(--success-soft);\r\n  color: var(--success-soft-text);\r\n}\nhtml[data-nsmax-theme] .topic-badge.danger-badge{\r\n  background: var(--danger-soft);\r\n  color: var(--danger-soft-text);\r\n}\nhtml[data-nsmax-theme] .verify-badge{\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 3px;\r\n  padding: 1px 6px;\r\n  font-size: 11px;\r\n  font-weight: 500;\r\n  border-radius: var(--r-xs);\r\n  background: #0000a0;\r\n  color: #ffffff;\r\n  vertical-align: middle;\r\n}\nhtml[data-nsmax-theme] .verify-badge-value{\r\n  opacity: 0.9;\r\n}\nhtml[data-nsmax-theme] .post-user-group{\r\n  display: inline-block;\r\n  padding: 1px 5px;\r\n  font-size: 11px;\r\n  border-radius: var(--r-xs);\r\n  background: var(--panel-alt);\r\n  border: 1px solid var(--line);\r\n  color: var(--text-subtle);\r\n  vertical-align: middle;\r\n}\nhtml[data-nsmax-theme] .post-user-group--staff{\r\n  background: var(--brand-soft);\r\n  color: var(--brand);\r\n  border-color: var(--brand-border);\r\n  font-weight: 500;\r\n}\nhtml[data-nsmax-theme] .post-user-group--op{\r\n  background: var(--success-soft);\r\n  color: var(--success-soft-text);\r\n  border-color: var(--success-soft);\r\n}\nhtml[data-nsmax-theme] .post-tag{\r\n  display: inline-flex;\r\n  align-items: center;\r\n  padding: 2px 7px;\r\n  font-size: 11.5px;\r\n  border-radius: var(--r-xs);\r\n  background: var(--panel-alt);\r\n  color: var(--text-subtle);\r\n  transition: all 0.12s ease;\r\n  white-space: nowrap;\r\n}\nhtml[data-nsmax-theme] .post-tag:hover{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .btn{\r\n  display: inline-flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  gap: 6px;\r\n  padding: 7px 16px;\r\n  font-size: 13.5px;\r\n  font-weight: 500;\r\n  border-radius: var(--r-sm);\r\n  border: 1px solid var(--line);\r\n  background: var(--panel);\r\n  color: var(--text);\r\n  transition: all 0.12s ease;\r\n  cursor: pointer;\r\n}\nhtml[data-nsmax-theme] .btn:hover{\r\n  background: var(--panel-hover);\r\n  border-color: var(--line-strong);\r\n}\nhtml[data-nsmax-theme] .btn-primary{\r\n  background: var(--action);\r\n  color: var(--action-text);\r\n  border-color: var(--action-border);\r\n}\nhtml[data-nsmax-theme] .btn-primary:hover{\r\n  background: var(--action-hover);\r\n  color: var(--action-text);\r\n}\nhtml[data-nsmax-theme] .btn-pill{\r\n  border-radius: var(--r-pill);\r\n}\nhtml[data-nsmax-theme] .btn-sm{\r\n  padding: 4px 10px;\r\n  font-size: 12px;\r\n}\nhtml[data-nsmax-theme] .avatar-img{\r\n  width: 100%;\r\n  height: 100%;\r\n  border-radius: var(--r-pill);\r\n  object-fit: cover;\r\n  background: var(--panel-alt);\r\n}\nhtml[data-nsmax-theme] .post-avatar{\r\n  width: 44px;\r\n  height: 44px;\r\n  border-radius: var(--r-pill);\r\n  flex: none;\r\n  overflow: hidden;\r\n}\n@media (max-width: 640px){html[data-nsmax-theme] .post-avatar{\r\n    width: 36px;\r\n    height: 36px;\r\n  }}\nhtml[data-nsmax-theme] .user-avatar-big{\r\n  width: 56px;\r\n  height: 56px;\r\n  border-radius: var(--r-pill);\r\n  overflow: hidden;\r\n  flex: none;\r\n}\nhtml[data-nsmax-theme] .visitor-avatar{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  background: var(--panel-hover);\r\n  color: var(--text-subtle);\r\n  font-weight: 700;\r\n  font-size: 20px;\r\n}\nhtml[data-nsmax-theme] .topic-toolbar{\r\n  padding: 10px 16px;\r\n  border-bottom: 1px solid var(--line-soft);\r\n  background: var(--panel);\r\n}\nhtml[data-nsmax-theme] .tab-bar{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 4px;\r\n  overflow-x: auto;\r\n  scrollbar-width: none;\r\n}\nhtml[data-nsmax-theme] .tab-bar::-webkit-scrollbar{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .tab{\r\n  padding: 6px 12px;\r\n  font-size: 13.5px;\r\n  color: var(--text-muted);\r\n  border-radius: var(--r-sm);\r\n  white-space: nowrap;\r\n  transition: all 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .tab:hover{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .tab.active{\r\n  background: var(--panel-hover);\r\n  color: var(--brand);\r\n  font-weight: 600;\r\n}\nhtml[data-nsmax-theme] .pagination-bar{\r\n  padding: 14px 16px;\r\n  border-top: 1px solid var(--line-soft);\r\n}\nhtml[data-nsmax-theme] .pagination ul{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 4px;\r\n  flex-wrap: wrap;\r\n}\nhtml[data-nsmax-theme] .pagination li a,html[data-nsmax-theme] .pagination li span{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  min-width: 30px;\r\n  height: 30px;\r\n  padding: 0 6px;\r\n  font-size: 13px;\r\n  border-radius: var(--r-sm);\r\n  border: 1px solid var(--line-soft);\r\n  color: var(--text-muted);\r\n}\nhtml[data-nsmax-theme] .pagination li a:hover{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n  border-color: var(--line);\r\n}\nhtml[data-nsmax-theme] .pagination li.active a{\r\n  background: var(--action);\r\n  color: var(--action-text);\r\n  border-color: var(--action-border);\r\n  font-weight: 600;\r\n}\nhtml[data-nsmax-theme] .page-scroll{\r\n  position: fixed;\r\n  right: 24px;\r\n  bottom: 24px;\r\n  z-index: 30;\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 8px;\r\n}\nhtml[data-nsmax-theme] .to-top{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  width: 36px;\r\n  height: 36px;\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-pill);\r\n  background: var(--panel);\r\n  color: var(--text-muted);\r\n  box-shadow: var(--shadow-base);\r\n  transition: all 0.15s ease;\r\n}\nhtml[data-nsmax-theme] .to-top:hover{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n  border-color: var(--line-strong);\r\n}\nhtml[data-nsmax-theme] .to-top[hidden]{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .post-list{\r\n  display: flex;\r\n  flex-direction: column;\r\n}\nhtml[data-nsmax-theme] .post-item{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 14px;\r\n  padding: 12px 16px;\r\n  border-bottom: 1px solid var(--line-soft);\r\n  transition: background-color 0.1s ease;\r\n}\nhtml[data-nsmax-theme] .post-item:hover{\r\n  background-color: var(--panel-hover);\r\n}\nhtml[data-nsmax-theme] .post-item:last-child{\r\n  border-bottom: none;\r\n}\nhtml[data-nsmax-theme] .post-item.topic-pinned{\r\n  background-color: color-mix(in srgb, var(--brand) 4%, var(--panel));\r\n}\nhtml[data-nsmax-theme] .post-item.topic-pinned:hover{\r\n  background-color: color-mix(in srgb, var(--brand) 8%, var(--panel));\r\n}\nhtml[data-nsmax-theme] .post-body{\r\n  flex: 1;\r\n  min-width: 0;\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 5px;\r\n}\nhtml[data-nsmax-theme] .post-title-row{\r\n  display: flex;\r\n  align-items: baseline;\r\n  gap: 6px;\r\n  flex-wrap: wrap;\r\n}\nhtml[data-nsmax-theme] .post-title{\r\n  font-size: 15px;\r\n  font-weight: 500;\r\n  color: var(--text-strong);\r\n  line-height: 1.4;\r\n  word-break: break-word;\r\n}\nhtml[data-nsmax-theme] .post-title:hover{\r\n  color: var(--link);\r\n}\nhtml[data-nsmax-theme] .topic-pages{\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 3px;\r\n  font-size: 11px;\r\n  color: var(--text-disabled);\r\n  margin-left: 4px;\r\n}\nhtml[data-nsmax-theme] .topic-pages a{\r\n  padding: 0 4px;\r\n  border-radius: var(--r-xs);\r\n  background: var(--panel-alt);\r\n  color: var(--text-subtle);\r\n}\nhtml[data-nsmax-theme] .topic-pages a:hover{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .post-meta{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n  font-size: 12px;\r\n  color: var(--text-subtle);\r\n  flex-wrap: wrap;\r\n}\nhtml[data-nsmax-theme] .post-meta a{\r\n  color: var(--text-subtle);\r\n}\nhtml[data-nsmax-theme] .post-meta a:hover{\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .meta-icon{\r\n  width: 14px;\r\n  height: 14px;\r\n  vertical-align: -2px;\r\n  margin-right: 3px;\r\n  color: var(--text-disabled);\r\n}\nhtml[data-nsmax-theme] .post-forum-badge{\r\n  margin-left: auto;\r\n  flex: none;\r\n}\n@media (max-width: 640px){html[data-nsmax-theme] .post-item{\r\n    padding: 10px 12px;\r\n    gap: 10px;\r\n  }\nhtml[data-nsmax-theme] .post-title{\r\n    font-size: 14px;\r\n  }\nhtml[data-nsmax-theme] .post-meta{\r\n    gap: 8px;\r\n    font-size: 11.5px;\r\n  }\nhtml[data-nsmax-theme] .post-forum-badge{\r\n    display: none;\r\n  }}\nhtml[data-nsmax-theme] .post-entry{\r\n  padding: 18px 20px;\r\n  border-bottom: 1px solid var(--line-soft);\r\n}\nhtml[data-nsmax-theme] .post-head{\r\n  display: flex;\r\n  align-items: flex-start;\r\n  gap: 12px;\r\n  margin-bottom: 16px;\r\n}\nhtml[data-nsmax-theme] .post-author{\r\n  font-weight: 600;\r\n  color: var(--text-strong);\r\n  font-size: 14.5px;\r\n}\nhtml[data-nsmax-theme] .post-user-uid{\r\n  font-family: var(--font-mono);\r\n  font-size: 11px;\r\n  color: var(--text-disabled);\r\n}\nhtml[data-nsmax-theme] .post-time{\r\n  font-size: 12px;\r\n  color: var(--text-subtle);\r\n}\nhtml[data-nsmax-theme] .post-content,html[data-nsmax-theme] .markdown-body{\r\n  font-size: 14.5px;\r\n  line-height: 1.68;\r\n  color: var(--text);\r\n  word-break: break-word;\r\n}\nhtml[data-nsmax-theme] .post-content p{\r\n  margin-bottom: 1em;\r\n}\nhtml[data-nsmax-theme] .post-content img{\r\n  max-width: 100%;\r\n  height: auto;\r\n  border-radius: var(--r-sm);\r\n  margin: 8px 0;\r\n}\nhtml[data-nsmax-theme] .post-content blockquote{\r\n  margin: 1em 0;\r\n  padding: 8px 16px;\r\n  border-left: 3px solid var(--brand);\r\n  background: var(--panel-alt);\r\n  color: var(--text-muted);\r\n  border-radius: 0 var(--r-xs) var(--r-xs) 0;\r\n}\nhtml[data-nsmax-theme] .post-content table{\r\n  width: 100%;\r\n  border-collapse: collapse;\r\n  margin: 1em 0;\r\n  font-size: 13.5px;\r\n}\nhtml[data-nsmax-theme] .post-content th,html[data-nsmax-theme] .post-content td{\r\n  padding: 8px 12px;\r\n  border: 1px solid var(--line);\r\n  text-align: left;\r\n}\nhtml[data-nsmax-theme] .post-content th{\r\n  background: var(--panel-alt);\r\n  font-weight: 600;\r\n}\nhtml[data-nsmax-theme] .post-content tbody tr:nth-child(even){\r\n  background: var(--panel-alt);\r\n}\nhtml[data-nsmax-theme] .post-content pre{\r\n  position: relative;\r\n  margin: 1em 0;\r\n  padding: 14px 16px;\r\n  border-radius: var(--r-input);\r\n  background: var(--panel-alt);\r\n  border: 1px solid var(--line);\r\n  overflow-x: auto;\r\n}\nhtml[data-nsmax-theme] .code-block{\r\n  position: relative;\r\n}\nhtml[data-nsmax-theme] .code-copy{\r\n  position: absolute;\r\n  top: 8px;\r\n  right: 8px;\r\n  padding: 3px 9px;\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-pill);\r\n  background: var(--panel);\r\n  color: var(--text-muted);\r\n  font-size: 12px;\r\n  line-height: 1.6;\r\n  cursor: pointer;\r\n  opacity: 0;\r\n  transition: opacity 0.12s ease, border-color 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .code-block:hover .code-copy,html[data-nsmax-theme] .code-copy:focus-visible{\r\n  opacity: 1;\r\n}\nhtml[data-nsmax-theme] .code-copy:hover{\r\n  border-color: var(--line-strong);\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .code-copy.copied{\r\n  border-color: var(--success) !important;\r\n  color: var(--success) !important;\r\n}\nhtml[data-nsmax-theme] .topic-actions{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 8px;\r\n  margin-top: 20px;\r\n  padding-top: 16px;\r\n  border-top: 1px solid var(--line-soft);\r\n  flex-wrap: wrap;\r\n}\nhtml[data-nsmax-theme] .topic-action{\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 5px;\r\n  padding: 5px 12px;\r\n  font-size: 12.5px;\r\n  color: var(--text-muted);\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-pill);\r\n  background: var(--panel);\r\n  cursor: pointer;\r\n  transition: all 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .topic-action:hover{\r\n  background: var(--panel-hover);\r\n  border-color: var(--line-strong);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .topic-action.active{\r\n  background: var(--brand-soft);\r\n  border-color: var(--brand-border);\r\n  color: var(--brand);\r\n}\nhtml[data-nsmax-theme] .topic-action-icon{\r\n  width: 14px;\r\n  height: 14px;\r\n}\nhtml[data-nsmax-theme] .comment-item{\r\n  display: flex;\r\n  gap: 12px;\r\n  padding: 14px 18px;\r\n  border-bottom: 1px solid var(--line-soft);\r\n  transition: background-color 0.1s ease;\r\n}\nhtml[data-nsmax-theme] .comment-item:hover{\r\n  background: var(--panel-hover);\r\n}\nhtml[data-nsmax-theme] .post-ops{\r\n  margin-left: auto;\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 8px;\r\n  flex: none;\r\n}\nhtml[data-nsmax-theme] .reply-light{\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 4px;\r\n  font-size: 12px;\r\n  color: var(--text-disabled);\r\n  cursor: pointer;\r\n}\nhtml[data-nsmax-theme] .reply-light:hover,html[data-nsmax-theme] .reply-light.has-lights{\r\n  color: var(--brand);\r\n}\nhtml[data-nsmax-theme] .post-reply-no{\r\n  font-family: var(--font-mono);\r\n  font-size: 12px;\r\n  color: var(--text-disabled);\r\n  cursor: pointer;\r\n}\nhtml[data-nsmax-theme] .post-reply-no:hover{\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .reply-panel{\r\n  margin-top: var(--gap);\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r);\r\n  background: var(--panel);\r\n  overflow: hidden;\r\n}\nhtml[data-nsmax-theme] .reply-panel-head{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  padding: 12px 18px;\r\n  border-bottom: 1px solid var(--line-soft);\r\n}\nhtml[data-nsmax-theme] .reply-panel-head h3{\r\n  font-size: 14.5px;\r\n  font-weight: 600;\r\n}\nhtml[data-nsmax-theme] .reply-panel form{\r\n  padding: 16px 18px;\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 12px;\r\n}\nhtml[data-nsmax-theme] .reply-panel textarea{\r\n  width: 100%;\r\n  min-height: 140px;\r\n  padding: 12px;\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r-input);\r\n  background: var(--panel-alt);\r\n  color: var(--text);\r\n  font-family: var(--font-sans);\r\n  font-size: 14px;\r\n  line-height: 1.6;\r\n  resize: vertical;\r\n  transition: border-color 0.15s ease, background 0.15s ease;\r\n}\nhtml[data-nsmax-theme] .reply-panel textarea:focus{\r\n  outline: none;\r\n  border-color: var(--focus-ring);\r\n  background: var(--panel);\r\n}\nhtml[data-nsmax-theme] .reply-login-box{\r\n  padding: 24px 18px;\r\n  text-align: center;\r\n  color: var(--text-muted);\r\n}\nhtml[data-nsmax-theme] .reply-login-box a{\r\n  font-weight: 600;\r\n  color: var(--brand);\r\n}\nhtml[data-nsmax-theme] .sidebar-card{\r\n  padding: 16px;\r\n}\nhtml[data-nsmax-theme] .user-wrap{\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 14px;\r\n}\nhtml[data-nsmax-theme] .user-header{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n}\nhtml[data-nsmax-theme] .user-name{\r\n  font-size: 15px;\r\n  font-weight: 600;\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .user-rank{\r\n  font-size: 12px;\r\n  color: var(--text-subtle);\r\n}\nhtml[data-nsmax-theme] .side-auth{\r\n  display: flex;\r\n  gap: 10px;\r\n}\nhtml[data-nsmax-theme] .side-auth a{\r\n  flex: 1;\r\n  text-align: center;\r\n  padding: 7px 0;\r\n  font-size: 13.5px;\r\n  border-radius: var(--r-sm);\r\n  border: 1px solid var(--line);\r\n  background: var(--panel-alt);\r\n  color: var(--text);\r\n  transition: all 0.12s ease;\r\n}\nhtml[data-nsmax-theme] .side-auth a:hover{\r\n  background: var(--action);\r\n  color: var(--action-text);\r\n  border-color: var(--action-border);\r\n}\nhtml[data-nsmax-theme] .quick-title{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  font-size: 13.5px;\r\n  font-weight: 600;\r\n  color: var(--text-strong);\r\n  margin-bottom: 12px;\r\n  padding-bottom: 8px;\r\n  border-bottom: 1px solid var(--line-soft);\r\n}\nhtml[data-nsmax-theme] .sidebar-topic-list{\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 8px;\r\n}\nhtml[data-nsmax-theme] .sidebar-topic-list li a{\r\n  display: flex;\r\n  align-items: flex-start;\r\n  justify-content: space-between;\r\n  gap: 8px;\r\n  font-size: 13px;\r\n  color: var(--text);\r\n  line-height: 1.45;\r\n}\nhtml[data-nsmax-theme] .sidebar-topic-list li a:hover .sidebar-topic-title{\r\n  color: var(--link);\r\n}\nhtml[data-nsmax-theme] .sidebar-topic-title{\r\n  flex: 1;\r\n  word-break: break-word;\r\n}\nhtml[data-nsmax-theme] .sidebar-topic-count{\r\n  font-family: var(--font-mono);\r\n  font-size: 11px;\r\n  padding: 1px 5px;\r\n  background: var(--panel-alt);\r\n  border-radius: var(--r-xs);\r\n  color: var(--text-subtle);\r\n  flex: none;\r\n}\nhtml[data-nsmax-theme] .sidebar-links{\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  gap: 8px;\r\n}\nhtml[data-nsmax-theme] .sidebar-link{\r\n  font-size: 12.5px;\r\n  color: var(--text-muted);\r\n  padding: 3px 8px;\r\n  border-radius: var(--r-xs);\r\n  background: var(--panel-alt);\r\n}\nhtml[data-nsmax-theme] .sidebar-link:hover{\r\n  color: var(--text);\r\n  background: var(--panel-hover);\r\n}\nhtml[data-nsmax-theme] .toast{\r\n  position: fixed;\r\n  bottom: 24px;\r\n  left: 50%;\r\n  z-index: 70;\r\n  max-width: calc(100vw - 32px);\r\n  padding: 9px 18px;\r\n  border-radius: var(--r);\r\n  background: var(--inverse);\r\n  color: var(--inverse-text);\r\n  box-shadow: var(--shadow-medium);\r\n  font-size: 13.5px;\r\n  font-weight: 500;\r\n  pointer-events: none;\r\n  transform: translate(-50%, 0);\r\n  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out), display 200ms allow-discrete;\r\n}\n@starting-style{html[data-nsmax-theme] .toast:not([hidden]){\r\n    opacity: 0;\r\n    transform: translate(-50%, 8px);\r\n  }}\nhtml[data-nsmax-theme] .toast[hidden]{\r\n  display: none;\r\n  opacity: 0;\r\n  transform: translate(-50%, 8px);\r\n}\nhtml[data-nsmax-theme] .toast.is-error{\r\n  background: var(--danger-fill);\r\n  color: var(--on-danger-fill);\r\n}\nhtml[data-nsmax-theme] .modal-backdrop{\r\n  position: fixed;\r\n  inset: 0;\r\n  z-index: 60;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  padding: 20px;\r\n  background: var(--backdrop);\r\n  backdrop-filter: blur(2px);\r\n  transition: opacity 160ms var(--ease-out), display 160ms allow-discrete;\r\n}\n@starting-style{html[data-nsmax-theme] .modal-backdrop:not([hidden]){\r\n    opacity: 0;\r\n  }\nhtml[data-nsmax-theme] .modal-backdrop:not([hidden]) .modal-panel{\r\n    transform: scale(0.97);\r\n    opacity: 0;\r\n  }}\nhtml[data-nsmax-theme] .modal-backdrop[hidden]{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .modal-panel{\r\n  width: min(440px, 100%);\r\n  background: var(--panel);\r\n  border: 1px solid var(--line);\r\n  border-radius: var(--r);\r\n  box-shadow: var(--shadow-medium);\r\n  overflow: hidden;\r\n  transition: transform 160ms var(--ease-out), opacity 160ms var(--ease-out);\r\n}\nhtml[data-nsmax-theme] .modal-head{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  padding: 14px 18px;\r\n  border-bottom: 1px solid var(--line-soft);\r\n}\nhtml[data-nsmax-theme] .modal-head strong{\r\n  font-size: 15px;\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .modal-close{\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  width: 26px;\r\n  height: 26px;\r\n  font-size: 20px;\r\n  color: var(--text-subtle);\r\n  border-radius: var(--r-xs);\r\n}\nhtml[data-nsmax-theme] .modal-close:hover{\r\n  background: var(--panel-hover);\r\n  color: var(--text);\r\n}\nhtml[data-nsmax-theme] .modal-body{\r\n  padding: 18px;\r\n  font-size: 14px;\r\n  color: var(--text);\r\n  line-height: 1.6;\r\n}\nhtml[data-nsmax-theme] .sb-lightbox-overlay{\r\n  position: fixed;\r\n  inset: 0;\r\n  z-index: 100;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\nhtml[data-nsmax-theme] .sb-lightbox-overlay[hidden]{\r\n  display: none;\r\n}\nhtml[data-nsmax-theme] .sb-lightbox-backdrop{\r\n  position: absolute;\r\n  inset: 0;\r\n  background: var(--backdrop);\r\n  backdrop-filter: blur(6px);\r\n}\nhtml[data-nsmax-theme] .sb-lightbox-content{\r\n  position: relative;\r\n  z-index: 2;\r\n  max-width: 90vw;\r\n  max-height: 90vh;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\nhtml[data-nsmax-theme] .sb-lightbox-img{\r\n  max-width: 100%;\r\n  max-height: 90vh;\r\n  border-radius: var(--r);\r\n  box-shadow: var(--shadow-medium);\r\n  object-fit: contain;\r\n}\nhtml[data-nsmax-theme] .sb-lightbox-close{\r\n  position: absolute;\r\n  top: -40px;\r\n  right: 0;\r\n  width: 32px;\r\n  height: 32px;\r\n  background: var(--panel);\r\n  border: 1px solid var(--line);\r\n  color: var(--text);\r\n  border-radius: var(--r-pill);\r\n  font-size: 20px;\r\n  line-height: 1;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  cursor: pointer;\r\n  transition: all 0.15s ease;\r\n}\nhtml[data-nsmax-theme] .sb-lightbox-close:hover{\r\n  background: var(--panel-hover);\r\n  border-color: var(--line-strong);\r\n}\nhtml[data-nsmax-theme] .footer{\r\n  margin-top: 40px;\r\n  padding: 24px 0 36px;\r\n  border-top: 1px solid var(--line);\r\n  color: var(--text-subtle);\r\n  font-size: 13px;\r\n}\nhtml[data-nsmax-theme] .footer-inner{\r\n  width: min(var(--container), calc(100vw - 32px));\r\n  margin: 0 auto;\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 12px;\r\n}\nhtml[data-nsmax-theme] .footer-links{\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  gap: 14px;\r\n}\nhtml[data-nsmax-theme] .footer-links a{\r\n  color: var(--text-muted);\r\n}\nhtml[data-nsmax-theme] .footer-links a:hover{\r\n  color: var(--text-strong);\r\n}\nhtml[data-nsmax-theme] .footer-legal{\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 8px;\r\n  font-size: 12px;\r\n  color: var(--text-disabled);\r\n}\nhtml[data-nsmax-theme] .footer-version{\r\n  font-family: var(--font-mono);\r\n  font-size: 11px;\r\n}";
 	var modern_theme_default = `
 ${NSMAX_ROOT}{--nsmax-radius:12px;--nsmax-radius-sm:8px;--nsmax-control-radius:999px;--nsmax-seg-radius:999px;--nsmax-gap:10px;--nsmax-pad:14px 16px;
---nsmax-ease-out:cubic-bezier(.22,1,.36,1);--nsmax-spring:cubic-bezier(.34,1.4,.64,1);--nsmax-press:cubic-bezier(.2,0,0,1);
+--nsmax-ease-out:cubic-bezier(.2,.65,.3,1);--nsmax-spring:cubic-bezier(.2,.65,.3,1);--nsmax-press:cubic-bezier(.2,.65,.3,1);
 --nsmax-canvas:#f5f5f7;--nsmax-card:rgb(255 255 255/.66);--nsmax-surface:#fff;--nsmax-fill:rgb(0 0 0/.05);
 --nsmax-glass:rgb(245 245 247/.72);--nsmax-popup:rgb(255 255 255/.84);
 --nsmax-stroke:rgb(255 255 255/.78);--nsmax-highlight:rgb(255 255 255/.92);--nsmax-sheen:rgb(255 255 255/.8);--nsmax-divider:rgb(0 0 0/.08);
@@ -26982,30 +26985,27 @@ ${NSMAX_ROOT} body.dark-layout{--nsmax-canvas:#000;--nsmax-card:rgb(16 16 18/.97
 --nsmax-shadow-hover:0 12px 32px rgb(0 0 0/.5),inset 0 1px 0 var(--nsmax-highlight);
 --nsmax-shadow-pop:0 18px 48px rgb(0 0 0/.6),inset 0 1px 0 var(--nsmax-highlight);color-scheme:dark}
 
-/* 配色（默认参考 Claude）：暖色米白页面底 #f5f4ed、暖白卡片 #fbfaf6（不用纯白，避免刺眼）、暖灰描边与文字；深色是暖炭灰（页面 #262624、卡片 #30302e）。
-   形状变量：--nsmax-pill 是按钮、标签页、分页的圆角（Claude 8px），--nsmax-chip 是小标签（6px），--nsmax-avatar 是头像（圆形），
-   --nsmax-composer-* 是评论框与私信输入框（20px 圆角 + 柔和投影）。sb.sb 风格把这些变量设为 initial，各处回到括号里原来的胶囊与圆角方形 */
-${NSMAX_ROOT}[data-nsmax-style=flat]{--nsmax-canvas:#f5f4ed;--nsmax-card:#fbfaf6;--nsmax-surface:#fbfaf6;--nsmax-fill:#ecebe3;
+/* 配色与 sb.sb 同步：浅灰页面底、白色卡片、深色文字、黄色主操作；布局、组件和动效共用这套 token。 */
+${NSMAX_ROOT}[data-nsmax-style=flat]{--nsmax-canvas:#f7f8fa;--nsmax-card:#fff;--nsmax-surface:#fff;--nsmax-fill:#f2f3f5;
 --nsmax-glass:rgb(245 244 237/.96);--nsmax-popup:#fdfcf9;--nsmax-blur:none;
---nsmax-stroke:#e3e0d6;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#ebe9e1;--nsmax-panel-alt:#f5f4ed;--nsmax-stroke-strong:#d3d0c6;--nsmax-faint:#9c9a92;
---nsmax-text:#1f1e1d;--nsmax-text-2:#3d3d3a;--nsmax-muted:#6f6d66;--nsmax-thumb:rgb(115 114 108/.38);--nsmax-ink:#1f1e1d;--nsmax-on-ink:#fff;--nsmax-bubble:#ebe9e0;--nsmax-on-bubble:#1f1e1d;--nsmax-seg-bg:#eae8df;--nsmax-seg-thumb:#fdfcf9;--nsmax-code-bg:#f1efe7;
---nsmax-shadow:0 1px 2px rgb(31 30 29/.04);--nsmax-shadow-hover:0 1px 2px rgb(31 30 29/.04),0 6px 18px rgb(31 30 29/.05);--nsmax-shadow-pop:0 12px 40px -6px rgb(31 30 29/.16),0 2px 6px rgb(31 30 29/.04);
---nsmax-composer-line:rgb(31 30 29/.14);--nsmax-composer-line-focus:rgb(31 30 29/.26);--nsmax-composer-shadow:0 4px 20px rgb(31 30 29/.04);--nsmax-composer-shadow-hover:0 4px 20px rgb(31 30 29/.06);--nsmax-composer-shadow-focus:0 4px 24px rgb(31 30 29/.09);
---nsmax-pill:8px;--nsmax-chip:6px;--nsmax-avatar:50%;--nsmax-composer-radius:20px;--nsmax-dialog-radius:16px;--nsmax-bubble-r:18px;--nsmax-bubble-nub:18px}
-${NSMAX_ROOT}[data-nsmax-style=flat][data-nsmax-dark]{--nsmax-canvas:#262624;--nsmax-card:#30302e;--nsmax-surface:#30302e;--nsmax-fill:#3a3a37;
+--nsmax-stroke:#e0e2e8;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#e0e2e8;--nsmax-panel-alt:#f7f8fa;--nsmax-stroke-strong:#cfd3da;--nsmax-faint:#8a8f98;
+--nsmax-text:#1c1c1e;--nsmax-text-2:#35363a;--nsmax-muted:#555a6a;--nsmax-thumb:rgb(85 90 106/.38);--nsmax-ink:#1c1c1e;--nsmax-on-ink:#fff;--nsmax-bubble:#f2f3f5;--nsmax-on-bubble:#1c1c1e;--nsmax-seg-bg:#f2f3f5;--nsmax-seg-thumb:#fff;--nsmax-code-bg:#f2f3f5;
+--nsmax-shadow:0 1px 2px rgb(28 28 30/.04);--nsmax-shadow-hover:0 1px 2px rgb(28 28 30/.05),0 8px 24px rgb(28 28 30/.08);--nsmax-shadow-pop:0 12px 40px -6px rgb(28 28 30/.16),0 2px 6px rgb(28 28 30/.04);
+--nsmax-composer-line:rgb(28 28 30/.14);--nsmax-composer-line-focus:rgb(28 28 30/.28);--nsmax-composer-shadow:0 4px 20px rgb(28 28 30/.04);--nsmax-composer-shadow-hover:0 4px 20px rgb(28 28 30/.07);--nsmax-composer-shadow-focus:0 4px 24px rgb(28 28 30/.1);
+--nsmax-pill:6px;--nsmax-chip:6px;--nsmax-avatar:6px;--nsmax-composer-radius:12px;--nsmax-dialog-radius:12px;--nsmax-bubble-r:12px;--nsmax-bubble-nub:12px}
+${NSMAX_ROOT}[data-nsmax-style=flat][data-nsmax-dark]{--nsmax-canvas:#111318;--nsmax-card:#1b1e24;--nsmax-surface:#1b1e24;--nsmax-fill:#242832;
 --nsmax-glass:rgb(38 38 36/.96);--nsmax-popup:#30302e;--nsmax-blur:none;
---nsmax-stroke:#45443f;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#3b3a37;--nsmax-panel-alt:#2b2b29;--nsmax-stroke-strong:#5b5a54;--nsmax-faint:#87857d;
---nsmax-text:#f2f1ec;--nsmax-text-2:#c9c7bd;--nsmax-muted:#a3a196;--nsmax-thumb:rgb(163 161 150/.36);--nsmax-ink:#f2f1ec;--nsmax-on-ink:#262624;--nsmax-bubble:#1f1e1d;--nsmax-on-bubble:#f2f1ec;--nsmax-seg-bg:#262624;--nsmax-seg-thumb:#45443f;--nsmax-code-bg:#2b2b29;
+--nsmax-stroke:#30343d;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#30343d;--nsmax-panel-alt:#15181e;--nsmax-stroke-strong:#454b57;--nsmax-faint:#858c99;
+--nsmax-text:#f2f3f5;--nsmax-text-2:#d1d5dc;--nsmax-muted:#a7adb8;--nsmax-thumb:rgb(167 173 184/.36);--nsmax-ink:#f2f3f5;--nsmax-on-ink:#1c1c1e;--nsmax-bubble:#242832;--nsmax-on-bubble:#f2f3f5;--nsmax-seg-bg:#15181e;--nsmax-seg-thumb:#30343d;--nsmax-code-bg:#15181e;
 --nsmax-shadow:0 1px 2px rgb(0 0 0/.3);--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.3),0 8px 24px rgb(0 0 0/.34);--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.6);
 --nsmax-composer-line:rgb(222 220 209/.15);--nsmax-composer-line-focus:rgb(222 220 209/.3);--nsmax-composer-shadow:0 4px 20px rgb(0 0 0/.2);--nsmax-composer-shadow-hover:0 4px 20px rgb(0 0 0/.26);--nsmax-composer-shadow-focus:0 4px 24px rgb(0 0 0/.34)}
-${NSMAX_ROOT}[data-nsmax-style=flat] body.dark-layout{--nsmax-canvas:#262624;--nsmax-card:#30302e;--nsmax-surface:#30302e;--nsmax-fill:#3a3a37;
+${NSMAX_ROOT}[data-nsmax-style=flat] body.dark-layout{--nsmax-canvas:#111318;--nsmax-card:#1b1e24;--nsmax-surface:#1b1e24;--nsmax-fill:#242832;
 --nsmax-glass:rgb(38 38 36/.96);--nsmax-popup:#30302e;--nsmax-blur:none;
---nsmax-stroke:#45443f;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#3b3a37;--nsmax-panel-alt:#2b2b29;--nsmax-stroke-strong:#5b5a54;--nsmax-faint:#87857d;
---nsmax-text:#f2f1ec;--nsmax-text-2:#c9c7bd;--nsmax-muted:#a3a196;--nsmax-thumb:rgb(163 161 150/.36);--nsmax-ink:#f2f1ec;--nsmax-on-ink:#262624;--nsmax-bubble:#1f1e1d;--nsmax-on-bubble:#f2f1ec;--nsmax-seg-bg:#262624;--nsmax-seg-thumb:#45443f;--nsmax-code-bg:#2b2b29;
+--nsmax-stroke:#30343d;--nsmax-highlight:transparent;--nsmax-sheen:transparent;--nsmax-divider:#30343d;--nsmax-panel-alt:#15181e;--nsmax-stroke-strong:#454b57;--nsmax-faint:#858c99;
+--nsmax-text:#f2f3f5;--nsmax-text-2:#d1d5dc;--nsmax-muted:#a7adb8;--nsmax-thumb:rgb(167 173 184/.36);--nsmax-ink:#f2f3f5;--nsmax-on-ink:#1c1c1e;--nsmax-bubble:#242832;--nsmax-on-bubble:#f2f3f5;--nsmax-seg-bg:#15181e;--nsmax-seg-thumb:#30343d;--nsmax-code-bg:#15181e;
 --nsmax-shadow:0 1px 2px rgb(0 0 0/.3);--nsmax-shadow-hover:0 1px 2px rgb(0 0 0/.3),0 8px 24px rgb(0 0 0/.34);--nsmax-shadow-pop:0 16px 48px -8px rgb(0 0 0/.6);
 --nsmax-composer-line:rgb(222 220 209/.15);--nsmax-composer-line-focus:rgb(222 220 209/.3);--nsmax-composer-shadow:0 4px 20px rgb(0 0 0/.2);--nsmax-composer-shadow-hover:0 4px 20px rgb(0 0 0/.26);--nsmax-composer-shadow-focus:0 4px 24px rgb(0 0 0/.34)}
-/* 圆角统一（Claude 风格）：只用四档——标签 6px、按钮与输入框 10px、卡片与弹窗 16px、大输入框与私信外框 24px，
-   外加圆形（头像、数字角标、开关、翻页）。主题设置里的「圆角」大 / 中 / 小整体缩放这四档；sb.sb 风格不定义这些变量，保持原样 */
+/* 圆角统一为 sb.sb 的小圆角、胶囊按钮和 12px 卡片。 */
 ${nsmaxClaude}{--nsmax-r-chip:6px;--nsmax-r-control:10px;--nsmax-r-card:16px;--nsmax-r-frame:24px}
 ${nsmaxClaude}[data-nsmax-radius=medium]{--nsmax-r-chip:5px;--nsmax-r-control:8px;--nsmax-r-card:12px;--nsmax-r-frame:18px}
 ${nsmaxClaude}[data-nsmax-radius=small]{--nsmax-r-chip:4px;--nsmax-r-control:6px;--nsmax-r-card:8px;--nsmax-r-frame:12px}
@@ -27015,9 +27015,9 @@ ${NSMAX_ROOT} body{--nsmax-accent:var(--main-color,var(--primary-color,#1d1d1f))
 ${NSMAX_ROOT}[data-nsmax-accent=mono] body{--nsmax-accent:var(--nsmax-ink);--nsmax-on-accent:var(--nsmax-on-ink)}
 ${NSMAX_ROOT}[data-nsmax-accent=color] body{--nsmax-accent:var(--nsmax-accent-base);--nsmax-on-accent:#fff}
 ${NSMAX_ROOT}[data-nsmax-accent=color] body.dark-layout{--nsmax-accent:color-mix(in srgb,var(--nsmax-accent-base) 80%,#fff)}
-/* 发送 / 发帖等「创建」类主按钮的颜色：Claude 风格且强调色跟随设计风格时用 Claude 的珊瑚色，其余情况与强调色相同 */
+/* 发送 / 发帖等「创建」类主按钮使用 sb.sb 的黄色。 */
 ${NSMAX_ROOT} body{--nsmax-brand:var(--nsmax-accent);--nsmax-on-brand:var(--nsmax-on-accent)}
-${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-accent=mono] body{--nsmax-brand:#c15f3c;--nsmax-on-brand:#fff}
+${NSMAX_ROOT}[data-nsmax-palette=claude][data-nsmax-accent=mono] body{--nsmax-brand:#ffd02f;--nsmax-on-brand:#1c1c1e}
 ${NSMAX_ROOT} body{--nsmax-accent-soft:color-mix(in srgb,var(--nsmax-accent) 12%,transparent);--nsmax-accent-line:color-mix(in srgb,var(--nsmax-accent) 32%,var(--nsmax-divider))}
 ${NSMAX_ROOT} body,${NSMAX_ROOT} body.dark-layout{--bg-color:var(--nsmax-surface);--bg-color-grey:color-mix(in srgb,var(--nsmax-surface) 94%,var(--nsmax-text));--border-color:var(--nsmax-divider);--text-color:var(--nsmax-text);--text-color-secondary:var(--nsmax-muted);--border-radius:var(--nsmax-radius-sm);
 --bg-main-color:var(--nsmax-canvas)!important;--bg-sub-color:var(--nsmax-card)!important;--glass-color:var(--nsmax-glass)!important;
@@ -28291,7 +28291,7 @@ ${NSMAX_ROOT}[data-nsmax-motion]:not([data-nsmax-list=site]) ul.post-list:not(.t
 ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}{transition:background-color .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease,opacity .2s ease,scale .38s var(--nsmax-spring)}
 ${NSMAX_ROOT}[data-nsmax-motion] ${nsmaxPress}:active{scale:.94;transition-duration:.2s,.2s,.2s,.2s,.2s,.12s}
 @media (prefers-reduced-motion:reduce){${NSMAX_ROOT} *,${NSMAX_ROOT} *::before,${NSMAX_ROOT} *::after{animation-duration:0s!important;animation-iteration-count:1!important;transition-duration:0s!important;scroll-behavior:auto!important}${NSMAX_ROOT} :active{scale:none!important}}
-/* ==================== v1.6.9 全站重做：按真实页面结构，用 sb.sb 的版式覆盖站点原有设计，配色与字体沿用 Claude ====================
+/* ==================== v1.7.0 全站重做：按真实页面结构完整复刻 sb.sb 的版式、配色与动效 ====================
    之前不少规则是照模拟页面写的（主栏写成 #nsk-left），真实站点的主栏是 #nsk-body-left，顶栏是 header>#nsk-head（.site-title / ul.nav-menu /
    form.search-box），这些规则在真站上没有生效。这一段只用真实页面的选择器重新定义：56px 顶栏、1200px 版心、主栏一张卡片 + 260px 侧栏卡片、
    sb.sb 的列表行与楼层版式、胶囊分页与标签。数值取自 sb.sb（顶栏 56px、行内边距 11px 16px、24px 头像、15px 标题、12.5px 元信息）。 */
@@ -28684,6 +28684,115 @@ ${nsmaxClaude} #fast-nav-button-group .nav-item-btn svg{width:16px!important;hei
 /* ---------- 站点自带按钮（.btn / .pure-button）：sb.sb 的墨色胶囊，不再是绿色 ---------- */
 ${nsmaxClaude} :is(.btn,.pure-button):not(.nsmax-header-action,[data-nsmax-cta]){border-radius:999px!important;background-image:none!important;box-shadow:none!important}
 ${nsmaxClaude} .btn:not(.nsmax-header-action,[data-nsmax-cta],.small-margin .btn){background-color:var(--nsmax-ink)!important;border-color:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important}
+/* SB Theme UI 套件：完整设计 token、组件和 CSS 动效，放在兼容层最后以保持套件视觉优先级。 */
+${sb_theme_ui_default}
+/* SB Theme UI 的最终桥接：覆盖 NodeSeek 原生高优先级规则，确保套件的基础尺寸在真实正文节点上生效。 */
+${nsmaxClaude} ${nsmaxContent} pre{border-radius:8px!important}
+${nsmaxClaude} ${nsmaxContent} :is(code:not(pre code),kbd){border-radius:4px!important}
+${NSMAX_ROOT}[data-nsmax-page=post] .post-content pre{border-radius:8px!important}
+${nsmaxClaude}[data-nsmax-page=post] #nsk-body-left article.post-content pre{border-radius:8px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-body-left>.setting-panel{border-radius:12px!important;background:var(--nsmax-card)!important;border:1px solid var(--nsmax-stroke)!important;box-shadow:var(--nsmax-shadow)!important}
+${nsmaxClaude}[data-nsmax-page=post] #nsk-body-left .md-editor{display:none!important}
+/* ---------- 页面级收口：所有页面使用 sb.sb 的单栏骨架 ---------- */
+${nsmaxClaude} :is(#nsk-left-panel-container,#nsk-right-panel-container){display:none!important}
+${nsmaxClaude} :is(#nsk-body,#nsk-frame) :is(#nsk-body-left,.nsk-container){box-sizing:border-box;max-width:1200px;margin-inline:auto}
+${nsmaxClaude} #nsk-body{display:block!important;max-width:1200px!important;padding:0 16px!important}
+${nsmaxClaude} #nsk-body>#nsk-body-left{width:100%!important;max-width:none!important;margin:0!important}
+${nsmaxClaude} #nspp-tools{display:none!important}
+${nsmaxClaude} #fast-nav-button-group{display:none!important}
+${nsmaxClaude} :is(.nspp-monitor,.nspp-history,.nspp-footprints-dialog,.nspp-hot-rankings,.nspp-post-preview){display:none!important}
+${nsmaxClaude} :is(.nsk-panel.quick-access,.nsk-panel:has(.user-card),[data-nsmax-usercard],[data-nsmax-hidden-panel],[data-nsmax-cta]){display:none!important}
+/* 通知页：sb.sb 风格的顶部标签 + 白色通知列表，去掉资料卡、侧栏和旧页脚。 */
+${nsmaxClaude}[data-nsmax-page=notification] #nsk-frame{margin-top:var(--nsmax-head-h,56px);padding:24px 0 48px!important;background:var(--nsmax-canvas)!important}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification{box-sizing:border-box;max-width:1200px!important;margin:0 auto!important;padding:0 16px!important}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .app-switch{display:flex;align-items:center;gap:4px;margin:0 0 14px;padding:0 0 8px;border-bottom:1px solid var(--nsmax-stroke)}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .app-title{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:999px;color:var(--nsmax-muted)!important;font-size:14px;font-weight:500;text-decoration:none!important;transition:background-color .2s var(--nsmax-ease-out),color .2s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .app-title:hover{background:var(--nsmax-fill);color:var(--nsmax-text)!important}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .app-title.router-link-active{background:var(--nsmax-ink);color:var(--nsmax-on-ink)!important}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-container{overflow:hidden;border:1px solid var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card);box-shadow:var(--nsmax-shadow)}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item{display:grid;grid-template-columns:40px minmax(0,1fr);align-items:center;gap:12px;min-height:64px;margin:0;padding:12px 16px;border-top:1px solid var(--nsmax-divider);background:transparent;transition:background-color .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item:first-child{border-top:0}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item:hover{background:var(--nsmax-fill)}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item>.avatar{width:40px!important;height:40px!important;border-radius:6px;object-fit:cover}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item>div:last-child{min-width:0;color:var(--nsmax-muted);font-size:13px;line-height:1.6}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item a{color:var(--nsmax-text)!important;font-weight:500;text-decoration:none!important}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item a:hover{text-decoration:underline!important;text-underline-offset:3px}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item span{color:var(--nsmax-faint);font-size:12px}
+${nsmaxClaude}[data-nsmax-page=notification] body>footer{display:none!important}
+/* 设置页：保留设置内容，使用单栏分组，不加载旧侧栏、资料卡和浮动工具。 */
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame{margin-top:var(--nsmax-head-h,56px);padding:24px 0 48px!important;background:var(--nsmax-canvas)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container{max-width:900px!important;margin:0 auto!important;padding:0 16px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.head-container{display:flex;align-items:center;min-height:52px;margin:0 0 14px;padding:0 2px;border-bottom:1px solid var(--nsmax-stroke);color:var(--nsmax-text)}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector{display:block!important;margin:0!important;padding:0!important;border:1px solid var(--nsmax-stroke)!important;border-radius:12px!important;background:var(--nsmax-card)!important;box-shadow:var(--nsmax-shadow)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.select-item{display:flex;align-items:center;min-height:52px;padding:0 18px;border-bottom:1px solid var(--nsmax-divider);color:var(--nsmax-text)!important;font-size:14px;font-weight:500;text-decoration:none!important;transition:background-color .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.select-item:hover{background:var(--nsmax-fill)}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.select-item.active{background:var(--nsmax-fill);color:var(--nsmax-text)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.hr{height:1px;margin:0;background:var(--nsmax-divider)}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.card-block{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.card-block>.card-item{min-height:44px;margin:0;padding:12px 14px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-card);color:var(--nsmax-text)!important;box-shadow:none;transition:border-color .18s var(--nsmax-ease-out),background-color .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.card-block>.card-item:hover{border-color:var(--nsmax-stroke-strong);background:var(--nsmax-fill)}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.readme{margin:0;padding:18px;border-top:1px solid var(--nsmax-divider);color:var(--nsmax-muted);font-size:13px;line-height:1.7}
+${nsmaxClaude}[data-nsmax-page=setting] body>footer{display:none!important}
+/* 真实设置页：NodeSeek 当前使用 .user-setting-panel，而不是旧版 .selector 结构。 */
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel{box-sizing:border-box;display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px;max-width:900px;margin:0 auto;padding:20px;border:1px solid var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card);box-shadow:var(--nsmax-shadow);color:var(--nsmax-text)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head){grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:48px;padding:0 0 16px;border-bottom:1px solid var(--nsmax-divider)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head) img{width:40px;height:40px;border-radius:8px;object-fit:cover}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head) :is(strong,a){color:var(--nsmax-text);font-size:15px;font-weight:600;text-decoration:none}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav){align-self:start;display:flex;flex-direction:column;gap:3px;min-width:0}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a{display:flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;color:var(--nsmax-muted)!important;font-size:13px;font-weight:500;text-decoration:none!important;transition:background-color .18s var(--nsmax-ease-out),color .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a:hover{background:var(--nsmax-fill);color:var(--nsmax-text)!important}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a:is(.active,.router-link-active,[aria-current=page]){background:var(--nsmax-ink);color:var(--nsmax-on-ink)!important}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-content,.setting-main,.setting-form,main){min-width:0}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(h1,h2,h3){margin:0 0 16px;color:var(--nsmax-text);font-size:16px;font-weight:600;line-height:1.4}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(label,.setting-field){display:grid;gap:7px;margin:0 0 14px;color:var(--nsmax-muted);font-size:13px;line-height:1.5}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(input:not([type=checkbox]),textarea,select){box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-panel-alt);color:var(--nsmax-text);font:inherit;outline:0;transition:border-color .18s var(--nsmax-ease-out),box-shadow .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel textarea{min-height:92px;resize:vertical;line-height:1.6}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(input,textarea,select):focus{border-color:var(--nsmax-stroke-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.actions,.setting-actions){display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--nsmax-divider)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel button{min-height:36px;padding:0 16px;border:1px solid var(--nsmax-ink);border-radius:999px;background:var(--nsmax-ink);color:var(--nsmax-on-ink);font:inherit;font-weight:600;cursor:pointer;transition:transform .18s var(--nsmax-ease-out),opacity .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel button:hover{opacity:.86;transform:translateY(-1px)}
+/* 线上设置页的真实 Vue 结构：根节点为 #user-setting-panel，内部是 selector-left/right。 */
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel{box-sizing:border-box;max-width:900px!important;margin:0 auto!important;padding:0!important;color:var(--nsmax-text);background:transparent!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container{box-sizing:border-box;display:flex;align-items:center;height:88px!important;min-height:88px;margin:0 0 16px!important;padding:0 20px!important;border:1px solid var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card)!important;box-shadow:var(--nsmax-shadow)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .avatar-wrapper{position:relative;flex:none}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .avatar-wrapper>.avatar{width:48px!important;height:48px!important;border-radius:8px;object-fit:cover}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .setting-icon{right:-8px!important;bottom:-8px!important;width:24px!important;height:24px!important;padding:4px;border-radius:999px;background:var(--nsmax-ink);color:var(--nsmax-on-ink);fill:currentColor}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .word{padding-left:14px;color:var(--nsmax-text)!important;font-size:14px;line-height:1.3}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .username{margin:0;color:var(--nsmax-text)!important;font-size:18px!important;font-weight:600}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.selector{display:grid!important;grid-template-columns:168px minmax(0,1fr);gap:0;margin:0!important;padding:0!important;border:1px solid var(--nsmax-stroke)!important;border-radius:12px!important;background:var(--nsmax-card)!important;box-shadow:var(--nsmax-shadow)!important;overflow:hidden}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-left-side{display:block!important;min-width:0;margin:0!important;padding:14px 10px;border-right:1px solid var(--nsmax-divider);background:var(--nsmax-panel-alt)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-item-wrapper{display:flex!important;flex-direction:column;gap:3px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item{display:flex!important;align-items:center;min-height:36px;margin:0!important;padding:0 12px!important;border:0!important;border-radius:8px;color:var(--nsmax-muted)!important;font-size:13px;font-weight:500;text-decoration:none!important;transition:background-color .18s var(--nsmax-ease-out),color .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item:hover{background:var(--nsmax-fill);color:var(--nsmax-text)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item.selected{background:var(--nsmax-ink);color:var(--nsmax-on-ink)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .expend-left{display:none!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-right-side{min-width:0;padding:20px 22px;background:var(--nsmax-card)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info{padding:0!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info fieldset{min-width:0;margin:0;padding:0 0 18px;border:0;border-bottom:1px solid var(--nsmax-divider)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info fieldset+fieldset{padding-top:18px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info fieldset>h2{margin:0 0 8px;color:var(--nsmax-text)!important;font-size:15px;font-weight:600;line-height:1.4}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info :is(input[type=text],textarea){box-sizing:border-box;width:100%;max-width:none!important;min-height:36px;padding:7px 10px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-panel-alt);color:var(--nsmax-text);font:inherit;outline:0;transition:border-color .18s var(--nsmax-ease-out),box-shadow .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info textarea{min-height:112px;resize:vertical;line-height:1.6}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info :is(input,textarea):focus{border-color:var(--nsmax-stroke-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info>.btn{min-height:36px;margin:18px 0 0;padding:0 18px;border:1px solid var(--nsmax-ink);border-radius:999px;background:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-weight:600}
+@media (max-width:700px){
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification{padding-inline:12px!important}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .app-title{padding-inline:10px;font-size:13px}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item{grid-template-columns:32px minmax(0,1fr);gap:10px;padding:10px 12px}
+${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item>.avatar{width:32px!important;height:32px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.card-block{grid-template-columns:1fr;padding:12px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel{grid-template-columns:1fr;gap:12px;margin-inline:12px;padding:14px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head){padding-bottom:12px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav){flex-direction:row;overflow-x:auto;padding-bottom:2px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a{white-space:nowrap;flex:none}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel{margin-inline:12px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container{height:72px!important;min-height:72px;margin-bottom:12px!important;padding-inline:14px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.selector{display:block!important;border-radius:12px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-left-side{border-right:0;border-bottom:1px solid var(--nsmax-divider);padding:8px 10px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-item-wrapper{flex-direction:row;overflow-x:auto;padding-bottom:1px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item{flex:none;white-space:nowrap}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-right-side{padding:16px 14px}
+}
 `;
 	// 侧栏热榜面板样式：不依赖主题开关（主题关闭时沿用站点配色变量）。
 	var hot_sidebar_default = `
@@ -28883,12 +28992,12 @@ ${nsmaxClaude} .btn:not(.nsmax-header-action,[data-nsmax-cta],.small-margin .btn
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-bar{top:10px;left:12px;right:12px;height:6px;border-radius:3px;background:var(--pv-line)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-panel{top:22px;left:12px;right:28px;bottom:-8px;border:1px solid var(--pv-stroke);border-radius:var(--nsmax-r-chip,6px);background:var(--pv-card)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-dot{right:10px;bottom:10px;width:12px;height:12px;border-radius:50%;background:var(--pv-accent)}
-:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview:is([data-preview=page-claude],[data-preview=mode-light]){--pv-bg:#f5f4ed;--pv-card:#fbfaf6;--pv-stroke:#e3e0d6;--pv-line:#e3e0d6;--pv-accent:#c15f3c}
-:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-dark]{--pv-bg:#262624;--pv-card:#30302e;--pv-stroke:#45443f;--pv-line:#45443f;--pv-accent:#c15f3c}
-:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system]{--pv-stroke:#c9c7bd;--pv-accent:#c15f3c;background:linear-gradient(90deg,#f5f4ed 50%,#262624 50%)}
-:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system] .choice-bar{background:linear-gradient(90deg,#e3e0d6 50%,#45443f 50%)}
-:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system] .choice-panel{right:12px;background:linear-gradient(90deg,#fbfaf6 50%,#30302e 50%)}
-:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-site]{background:linear-gradient(135deg,#f5f4ed 50%,#262624 50%)}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview:is([data-preview=page-claude],[data-preview=mode-light]){--pv-bg:#f7f8fa;--pv-card:#fff;--pv-stroke:#e0e2e8;--pv-line:#e0e2e8;--pv-accent:#ffd02f}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-dark]{--pv-bg:#111318;--pv-card:#1b1e24;--pv-stroke:#30343d;--pv-line:#30343d;--pv-accent:#ffd02f}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system]{--pv-stroke:#cfd3da;--pv-accent:#ffd02f;background:linear-gradient(90deg,#f7f8fa 50%,#111318 50%)}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system] .choice-bar{background:linear-gradient(90deg,#e0e2e8 50%,#30343d 50%)}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-system] .choice-panel{right:12px;background:linear-gradient(90deg,#fff 50%,#1b1e24 50%)}
+:host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-site]{background:linear-gradient(135deg,#f7f8fa 50%,#111318 50%)}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=mode-site] i{display:none}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview^=font-]{display:grid;place-items:center;background:var(--surface);color:var(--text);font-size:24px;font-weight:400;line-height:1}
 :host([data-nsmax-glass][data-nsmax-palette=claude]) .choice-preview[data-preview=font-claude]{font-family:var(--nsmax-serif,Georgia,serif)}
@@ -28900,7 +29009,7 @@ ${nsmaxClaude} .btn:not(.nsmax-header-action,[data-nsmax-cta],.small-margin .btn
 	var modernTheme = {
 		id: "modern-theme",
 		title: "现代化主题",
-		description: "版式照 sb.sb（56px 顶栏、分隔行帖子列表、卡片式帖子页、细边胶囊标签与页码），配色参考 Claude：暖色米白底与暖白卡片、暖灰文字、珊瑚色发帖与发送按钮；字号、字重、边框和阴影各自只用少数几档，圆角统一为 6 / 10 / 16 / 24px。页面解析阶段就整理好，刷新与切换页面不闪、不跳，自动适配深色模式。",
+		description: "全站按 sb.sb 重做：56px 顶栏、分隔行列表、卡片式帖子页、胶囊导航、统一线条图标、同款加载和动效。",
 		group: "外观",
 		defaults: {
 			enabled: true,
@@ -28927,7 +29036,8 @@ ${nsmaxClaude} .btn:not(.nsmax-header-action,[data-nsmax-cta],.small-margin .btn
 		},
 		fields: {
 			navPosition: {
-				label: "版块导航位置（顶栏：像 sb.sb 那样所有版块和 NQ 等快捷入口排在顶栏一行，去掉左侧栏、主栏更宽；左侧栏：保持站点原来的左侧版块栏）",
+				hidden: true,
+				label: "版块导航位置（固定使用 sb.sb 风格顶栏）",
 				type: "select",
 				options: [{
 					value: "header",
@@ -28938,6 +29048,7 @@ ${nsmaxClaude} .btn:not(.nsmax-header-action,[data-nsmax-cta],.small-margin .btn
 				}]
 			},
 			accent: {
+				hidden: true,
 				label: "强调色（默认墨黑，发送、发帖按钮为珊瑚色）",
 				type: "select",
 				options: [
@@ -29058,38 +29169,47 @@ ${nsmaxClaude} .btn:not(.nsmax-header-action,[data-nsmax-cta],.small-margin .btn
 				]
 			},
 			grid: {
+				hidden: true,
 				label: "保留站点网格背景",
 				type: "text"
 			},
 			glassHeader: {
+				hidden: true,
 				label: "吸顶导航栏（滚动时固定在顶部）",
 				type: "text"
 			},
 			minimalHeader: {
+				hidden: true,
 				label: "精简顶栏：只保留站点标志、标题、搜索框与深浅色切换，隐藏 DeepFlood 与版块链接（桌面端生效，手机布局保持原样）",
 				type: "text"
 			},
 			typography: {
+				hidden: true,
 				label: "优化正文排版（行高、代码块、引用、表格、图片）",
 				type: "text"
 			},
 			motion: {
+				hidden: true,
 				label: "回弹与淡入动效（遵循系统「减弱动态效果」）",
 				type: "text"
 			},
 			scrollbar: {
+				hidden: true,
 				label: "纤细滚动条",
 				type: "text"
 			},
 			hideNewMembers: {
+				hidden: true,
 				label: "隐藏右侧栏「欢迎新用户」面板",
 				type: "text"
 			},
 			hideQuickAccess: {
+				hidden: true,
 				label: "隐藏右侧栏「快捷入口」面板（与用户卡片的通知、发帖重复）",
 				type: "text"
 			},
 			progress: {
+				hidden: true,
 				label: "帖子页顶部阅读进度条",
 				type: "text"
 			},
@@ -29637,6 +29757,55 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 			dedupe: options.dedupe
 		};
 	}
+	// 把真实 NodeSeek DOM 映射到 SB Theme UI 套件的语义类名，让套件的帖子、正文、导航和组件规则直接复用。
+	function nsmaxApplySbSuiteAliases() {
+		const add = (element, ...names) => {
+			if (!element) return;
+			for (const name of names) element.classList.add(name);
+		};
+		const header = pickSiteHeader();
+		add(header, "top");
+		const head = document.querySelector("#nsk-head");
+		add(head, "bar");
+		add(head?.querySelector("strong.site-title > a, .site-title > a"), "brand");
+		add(head?.querySelector("ul.nav-menu"), "forum-nav");
+		const search = head?.querySelector("form.search-box, form.search-form");
+		add(search, "search-form");
+		add(search?.querySelector("input"), "search-input");
+		add(search?.querySelector("button"), "search-btn");
+
+		const frame = document.querySelector("#nsk-frame");
+		const body = document.querySelector("#nsk-body");
+		const left = document.querySelector("#nsk-body-left");
+		add(frame, "wrap");
+		add(body, "forum-layout");
+		add(left, "forum-main", "main-panel");
+		const list = document.querySelector("ul.post-list");
+		add(list, "post-list");
+		for (const item of document.querySelectorAll("ul.post-list > li.post-list-item")) {
+			add(item, "post-item");
+			if (item.querySelector(".post-title svg.pined, .post-title .pined")) add(item, "topic-pinned");
+			add(item.querySelector(".post-list-content"), "post-body");
+			add(item.querySelector(".post-info"), "post-meta");
+			add(item.querySelector(".post-category"), "post-forum-badge");
+		}
+
+		const post = document.querySelector(".nsk-post");
+		add(post, "post-entry");
+		for (const item of document.querySelectorAll("ul.comments > li.content-item")) {
+			add(item, "comment-item");
+			add(item.querySelector(".nsk-content-meta-info"), "post-head");
+			add(item.querySelector(".author-info > a.author-name, .author-info > a"), "post-author");
+			add(item.querySelector(".floor-link"), "post-reply-no");
+			add(item.querySelector(".comment-menu"), "post-ops");
+		}
+		add(document.querySelector(".nsk-post .comment-menu"), "topic-actions");
+
+		const footer = document.querySelector("body > footer");
+		add(footer, "footer");
+		add(footer?.querySelector(".contain"), "footer-inner");
+		for (const list of footer?.querySelectorAll("ul") || []) add(list, "footer-links");
+	}
 	// 页面解析阶段的整理：不等整页加载完（DOMContentLoaded），顶栏、左侧栏、右侧栏各自一解析完，就立即做只加属性、
 	// 不改结构的那部分整理（精简顶栏、吸顶标记、隐藏版块与重复项、用户卡与发帖按钮），然后显示这一块——
 	// 首屏直接是整理好的样子，不再先空着再淡入。会插入新元素的部分（热榜面板、NQ 快捷入口）仍在页面加载完后由各模块完成，
@@ -29664,6 +29833,7 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 		};
 		const step = () => {
 			if (!document.body) return;
+			nsmaxApplySbSuiteAliases();
 			if (!root.hasAttribute("data-nsmax-site") && document.getElementById("nsk-body")) root.setAttribute("data-nsmax-site", "");
 			region("header", () => document.querySelector("#nsk-head, body > header, header.nsk-header, .nsk-header, body > div > header"), (candidate) => {
 				const header = pickSiteHeader() || candidate;
@@ -29834,34 +30004,33 @@ html[data-nsmax-theme] #nsk-left-panel-container{view-transition-name:nsmax-left
 	function main() {
 		if (nsmaxRedirecting || document.getElementById("nspp-settings")) return;
 		const loadingStyle = document.createElement("style");
-		loadingStyle.textContent = loading_default.replaceAll("[aria-busy=\"true\"]", ":is([class*=\"nspp-\"], [data-nspp-resolve], [data-nspp-copy], #nspp-tools *, .nspp-compose *, .nspp-monitor *, .nspp-history *, .nspp-post-preview *, .nspp-interaction *, .nspp-quick-replies *, [data-nspp-footprints] *, [data-nspp-ai], [data-nspp-ai-test])[aria-busy=\"true\"]");
+		loadingStyle.textContent = loading_default.replaceAll("[aria-busy=\"true\"]", ":is([class*=\"nspp-\"], [data-nspp-resolve], [data-nspp-copy], [data-nspp-ai], [data-nspp-ai-test])[aria-busy=\"true\"]");
 		document.head.append(loadingStyle);
 		const tools = document.createElement("div");
 		tools.id = "nspp-tools";
 		tools.setAttribute("aria-label", "NodeSeek Max");
-		document.body.append(tools);
+		const page = location.pathname;
+		const isPost = /^\/post-\d+/.test(page);
+		const isNotification = page === "/notification";
+		const isSetting = /^\/setting(?:\/|$)/.test(page);
+		if (!isNotification && !isSetting) document.body.append(tools);
 		const features = [
 			requestSettings$1,
 			modernTheme,
-			...readingFeatures,
+			...readingFeatures.filter((feature) => feature.id !== "reading-history"),
 			...filteringFeatures,
-			...actionFeatures,
-			...monitoringFeatures,
-			...extraFeatures,
-			...serviceFeatures,
+			...(isPost ? actionFeatures.filter((feature) => feature.id === "compose") : []),
+			...serviceFeatures.filter((feature) => !(isNotification || isSetting) || feature.id !== "notification-categories"),
 			...relationshipFeatures,
 			codeHighlight,
-			postPreview,
+			...(isPost ? [] : [postPreview]),
 			listInteractions,
-			discussionStatsFeature,
-			messagesFeature,
-			floatingReply,
-			hotRankings,
+			...(isPost || isNotification ? [] : [discussionStatsFeature]),
 			sidebarNav
 		];
 		if (new Set(features.map((feature) => feature.id)).size !== features.length) throw new Error("重复功能 ID");
 		const ui = mountSettings(features);
-		const undock = dockToolbar(tools);
+		const undock = () => {};
 		GM_registerMenuCommand$1("NodeSeek Max 设置", ui.open);
 		GM_registerMenuCommand$1("NodeSeek Max：复制导航诊断信息", () => copyDiagnostics(ui.notify));
 		const stop = startFeatures(features, loadSettings(features), ui.notify);

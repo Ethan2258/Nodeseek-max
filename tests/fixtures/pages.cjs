@@ -80,11 +80,12 @@ const postPage = (options = {}) => shell("出一台香港 CN2 GIA 小鸡 - NodeS
 ${editorFor(options.editorMode)}
 </div></div>${sidebar}`, { ...options, postData });
 
-const notificationPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><ul class="notification-list">
-<li class="notification-item"><a href="/space/42">spammer</a> 在 <a href="/post-2001-1">某帖</a> 中 @了你</li>
-<li class="notification-item"><a href="/space/7">friend</a> 回复了你的主题 <a href="/post-2002-1">另一帖</a></li>
-<li class="notification-item"><a href="/notification#/message?mode=talk&to=42">来自 spammer 的私信</a></li>
-</ul></div>${sidebar}`, options);
+const notificationPage = (options = {}) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-notification">
+<div class="app-switch"><a class="app-title router-link-exact-active router-link-active" href="#/atMe">@我</a><a class="app-title" href="#/reply">回复主题</a><a class="app-title" href="#/message?mode=list">私信 1</a></div>
+<div><button>全部标为已读</button><div class="reply-container">
+<div class="reply-item"><img class="avatar" src="${AVATAR}" alt="头像"><div><a href="/space/42">spammer</a> 在帖子 <a href="/post-2001-1">某帖</a> 中@了我 <span>2026/10/3 17:43:53</span></div></div>
+<div class="reply-item"><img class="avatar" src="${AVATAR}" alt="头像"><div><a href="/space/7">friend</a> 回复了主题 <a href="/post-2002-1">另一帖</a> <span>2026/10/3 17:40:00</span></div></div>
+</div></div></div></div>${sidebar}`, options);
 
 // 消息中心页：原生通知页的「@我 / 回复主题 / 私信」标签，NodeSeek++ 紧凑消息中心据此找到容器并接管（私信与通知都在里面）。
 const messageCenterPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-panel notification-panel">
@@ -92,16 +93,11 @@ const messageCenterPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-
 <div class="notification-content"><img src="${AVATAR}" alt=""><span>正在加载…</span></div>
 </div></div>${sidebar}`, { ...options, leftNav: false });
 
-// 设置页：真实结构未知，这里用常见的表单写法（hash 路由子导航、文本框、下拉框、复选框、提交按钮、表格）。
-const settingPage = (options) => shell("设置 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-panel setting-panel">
-<nav class="setting-nav"><a href="#/profile" class="router-link-active">个人资料</a><a href="#/security">账号安全</a><a href="#/block">屏蔽列表</a></nav>
-<form class="setting-form"><h2>个人资料</h2>
-<label>签名<textarea name="signature" placeholder="一句话介绍自己"></textarea></label>
-<label>邮箱<input type="email" name="email" value="tester@example.com"></label>
-<label>主页可见范围<select name="visibility"><option>所有人</option><option>仅登录用户</option></select></label>
-<label class="check"><input type="checkbox" name="public" checked> 公开我的回复记录</label>
-<div class="actions"><button type="button" class="btn">取消</button><button type="submit" class="btn">保存</button></div></form>
-<table><thead><tr><th>用户</th><th>屏蔽时间</th></tr></thead><tbody><tr><td>spammer</td><td>2026-09-01</td></tr></tbody></table>
+// 设置页：按真实 NodeSeek 当前结构模拟（.user-setting-panel、用户头部、侧边导航和表单内容）。
+const settingPage = (options = {}) => shell("设置 - NodeSeek", `<div id="nsk-body-left"><div id="user-setting-panel">
+<div class="head-container"><div class="avatar-wrapper"><img class="avatar" src="${AVATAR}" alt="avatar of user"><svg class="setting-icon"></svg></div><div class="word"><h1 class="username">tester</h1></div></div>
+<div class="selector"><div class="selector-left-side"><div class="selector-item-wrapper"><a href="#introduction" class="select-item selected">个人信息</a><a href="#security" class="select-item">安全</a><a href="#2fa" class="select-item">双因素验证</a><a href="#contact" class="select-item">联系方式</a><a href="#block" class="select-item">屏蔽用户</a><a href="#preference" class="select-item">常用偏好</a><a href="#homepage" class="select-item">首页版块</a><a href="#extend" class="select-item">论坛扩展</a></div><div class="expend-left"></div></div>
+<div class="selector-right-side"><form class="personal-info"><fieldset><h2>头像</h2><div class="set-avatar"><img class="avatar" src="${AVATAR}" alt="avatar"><a class="btn">设置头像</a></div></fieldset><fieldset><h2>Bio</h2><input type="text" placeholder="请用一句话介绍自己"></fieldset><fieldset><h2>签名</h2><textarea placeholder="帖子内容下显示；支持markdown"></textarea></fieldset><fieldset><h2>Readme</h2><textarea placeholder="用户主页中显示；支持markdown"></textarea></fieldset><div style="text-align:right"><button class="btn">确定</button></div></form></div></div>
 </div></div>${sidebar}`, options);
 
 // 发帖页：真实结构未知，这里用常见写法（标题输入框、分类下拉框、与评论框同一个编辑器、「发布帖子」按钮）。
