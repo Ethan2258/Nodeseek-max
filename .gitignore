@@ -1,4 +1,5 @@
 node_modules/
+docs/validation/
 package-lock.json
 .fonts/
 test-results/

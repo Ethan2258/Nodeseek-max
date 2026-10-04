@@ -93,7 +93,7 @@ async function launch() {
 // 打开一个页面：所有请求都在本地处理，外部网络一律拒绝。
 // api：按接口路径给出依次返回的响应 [{ status, headers, body }]，用完后回到默认模拟数据；calls 记录每个接口被请求的次数。
 // injectWhenRoot：等 <html> 元素出现后再执行脚本（Tampermonkey 在 Chrome 上的实际注入时机），默认在文档创建时执行。
-async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "", injectWhenRoot = false } = {}) {
+async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "", injectWhenRoot = false, beforeNavigate } = {}) {
 	const calls = {};
 	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1 });
 	const errors = [];
@@ -126,6 +126,7 @@ async function open(browser, url, { html, seed, fontFiles, colorScheme = "light"
 	page.on("console", (message) => {
 		if (message.type() === "error" && !/Failed to load resource|net::ERR_FAILED/.test(message.text())) errors.push(`console: ${message.text()}`);
 	});
+	if (beforeNavigate) await beforeNavigate(page);
 	await page.goto(url, { waitUntil: "domcontentloaded" });
 	return { context, page, errors, calls };
 }

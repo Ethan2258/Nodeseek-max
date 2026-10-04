@@ -22,7 +22,7 @@ const end = source.indexOf("\tvar hot_sidebar_default = `");
 if (start < 0 || end < 0 || end < start) throw new Error("未找到主题源码");
 const context = {};
 vm.runInNewContext(source.slice(start, end), context);
-const themeCss = context.modern_theme_default.replace(/\r\n?/g, "\n");
+const themeCss = (context.modern_theme_compiled || context.modern_theme_default).replace(/\r\n?/g, "\n");
 const fonts = context.NSMAX_WEB_FONTS;
 const latinRange = context.NSMAX_LATIN_RANGE;
 if (typeof themeCss !== "string" || !Array.isArray(fonts)) throw new Error("主题源码求值失败");
@@ -84,7 +84,7 @@ function parseBlocks(css) {
 			cursor++;
 		}
 		const body = css.slice(open + 1, cursor - 1);
-		blocks.push(/^@(media|supports|layer)\b/.test(prelude) ? { comments, prelude, children: parseBlocks(body) } : { comments, prelude, body: body.trim() });
+		blocks.push(/^@(media|supports|layer|starting-style)\b/.test(prelude) ? { comments, prelude, children: parseBlocks(body) } : { comments, prelude, body: body.trim() });
 		index = cursor;
 	}
 	return blocks;
@@ -186,7 +186,7 @@ const fontFaces = fonts.map((font) => `@font-face {
 const banner = (kind) => `/*
  * NodeSeek Max 主题 v${version}（${kind}）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
-	 * 主题源码在脚本的 modern_theme_default 中。默认设置：SB Theme UI、分隔行布局、系统字体。
+ * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
  * https://github.com/Ethan2258/Nodeseek-max · GPL-3.0-only
  */`;
@@ -218,7 +218,7 @@ if (process.argv.includes("--check")) {
 	for (const [path, content] of outputs) {
 		let current = "";
 		try {
-			current = readFileSync(new URL(path, root), "utf8");
+			current = readFileSync(new URL(path, root), "utf8").replace(/\r\n?/g, "\n");
 		} catch {}
 		if (current !== content) {
 			console.error(`${path} 与脚本中的主题不一致，请运行 npm run css`);
