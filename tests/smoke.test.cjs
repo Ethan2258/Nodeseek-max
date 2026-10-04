@@ -79,7 +79,7 @@ test("帖子页：SB Theme UI 正文、代码块、回复流和操作块生效",
 		comments: document.querySelectorAll(".comment-item").length,
 		code: getComputedStyle(document.querySelector(".post-content pre")).borderRadius,
 		actions: document.querySelector(".topic-actions") !== null,
-		editor: document.querySelector(".md-editor") !== null,
+		editor: (() => { const editor = document.querySelector(".md-editor"); return !editor || getComputedStyle(editor).display === "none"; })(),
 		fastNav: getComputedStyle(document.querySelector("#fast-nav-button-group")).display
 	}));
 	assert.equal(state.page, "post");
@@ -87,7 +87,7 @@ test("帖子页：SB Theme UI 正文、代码块、回复流和操作块生效",
 	assert.equal(state.comments, 3);
 	assert.equal(state.code, "8px");
 	assert.equal(state.actions, true);
-	assert.equal(state.editor, false);
+	assert.equal(state.editor, true);
 	assert.equal(state.fastNav, "none");
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -142,8 +142,11 @@ test("设置页：单栏 SB Theme UI 表单，不加载右栏和工具条", asyn
 		page: document.documentElement.dataset.nsmaxPage,
 		right: getComputedStyle(document.querySelector("#nsk-right-panel-container")).display,
 		tools: document.querySelector("#nspp-tools"),
-		panel: getComputedStyle(document.querySelector(".setting-panel")).borderRadius,
-		input: getComputedStyle(document.querySelector("input[type=email]")).borderRadius,
+		panel: getComputedStyle(document.querySelector("#user-setting-panel > .selector")).borderRadius,
+		input: getComputedStyle(document.querySelector("#user-setting-panel input[type=text]")).borderRadius,
+		nav: document.querySelectorAll("#user-setting-panel .select-item").length,
+		fields: document.querySelectorAll("#user-setting-panel .personal-info fieldset").length,
+		save: document.querySelector("#user-setting-panel .personal-info button.btn") !== null,
 		footer: document.querySelector("body > footer") ? getComputedStyle(document.querySelector("body > footer")).display : "none"
 	}));
 	assert.equal(state.page, "setting");
@@ -151,6 +154,9 @@ test("设置页：单栏 SB Theme UI 表单，不加载右栏和工具条", asyn
 	assert.equal(state.tools, null);
 	assert.equal(state.panel, "12px");
 	assert.equal(state.input, "10px");
+	assert.equal(state.nav, 8);
+	assert.equal(state.fields, 4);
+	assert.equal(state.save, true);
 	assert.equal(state.footer, "none");
 	assert.deepEqual(errors, []);
 	await context.close();

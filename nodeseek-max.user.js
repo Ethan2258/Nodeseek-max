@@ -28690,7 +28690,9 @@ ${sb_theme_ui_default}
 ${nsmaxClaude} ${nsmaxContent} pre{border-radius:8px!important}
 ${nsmaxClaude} ${nsmaxContent} :is(code:not(pre code),kbd){border-radius:4px!important}
 ${NSMAX_ROOT}[data-nsmax-page=post] .post-content pre{border-radius:8px!important}
+${nsmaxClaude}[data-nsmax-page=post] #nsk-body-left article.post-content pre{border-radius:8px!important}
 ${nsmaxClaude}[data-nsmax-page=setting] #nsk-body-left>.setting-panel{border-radius:12px!important;background:var(--nsmax-card)!important;border:1px solid var(--nsmax-stroke)!important;box-shadow:var(--nsmax-shadow)!important}
+${nsmaxClaude}[data-nsmax-page=post] #nsk-body-left .md-editor{display:none!important}
 /* ---------- 页面级收口：所有页面使用 sb.sb 的单栏骨架 ---------- */
 ${nsmaxClaude} :is(#nsk-left-panel-container,#nsk-right-panel-container){display:none!important}
 ${nsmaxClaude} :is(#nsk-body,#nsk-frame) :is(#nsk-body-left,.nsk-container){box-sizing:border-box;max-width:1200px;margin-inline:auto}
@@ -28731,12 +28733,65 @@ ${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.car
 ${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.card-block>.card-item:hover{border-color:var(--nsmax-stroke-strong);background:var(--nsmax-fill)}
 ${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.readme{margin:0;padding:18px;border-top:1px solid var(--nsmax-divider);color:var(--nsmax-muted);font-size:13px;line-height:1.7}
 ${nsmaxClaude}[data-nsmax-page=setting] body>footer{display:none!important}
+/* 真实设置页：NodeSeek 当前使用 .user-setting-panel，而不是旧版 .selector 结构。 */
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel{box-sizing:border-box;display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px;max-width:900px;margin:0 auto;padding:20px;border:1px solid var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card);box-shadow:var(--nsmax-shadow);color:var(--nsmax-text)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head){grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:48px;padding:0 0 16px;border-bottom:1px solid var(--nsmax-divider)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head) img{width:40px;height:40px;border-radius:8px;object-fit:cover}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head) :is(strong,a){color:var(--nsmax-text);font-size:15px;font-weight:600;text-decoration:none}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav){align-self:start;display:flex;flex-direction:column;gap:3px;min-width:0}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a{display:flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;color:var(--nsmax-muted)!important;font-size:13px;font-weight:500;text-decoration:none!important;transition:background-color .18s var(--nsmax-ease-out),color .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a:hover{background:var(--nsmax-fill);color:var(--nsmax-text)!important}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a:is(.active,.router-link-active,[aria-current=page]){background:var(--nsmax-ink);color:var(--nsmax-on-ink)!important}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-content,.setting-main,.setting-form,main){min-width:0}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(h1,h2,h3){margin:0 0 16px;color:var(--nsmax-text);font-size:16px;font-weight:600;line-height:1.4}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(label,.setting-field){display:grid;gap:7px;margin:0 0 14px;color:var(--nsmax-muted);font-size:13px;line-height:1.5}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(input:not([type=checkbox]),textarea,select){box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-panel-alt);color:var(--nsmax-text);font:inherit;outline:0;transition:border-color .18s var(--nsmax-ease-out),box-shadow .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel textarea{min-height:92px;resize:vertical;line-height:1.6}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(input,textarea,select):focus{border-color:var(--nsmax-stroke-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.actions,.setting-actions){display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--nsmax-divider)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel button{min-height:36px;padding:0 16px;border:1px solid var(--nsmax-ink);border-radius:999px;background:var(--nsmax-ink);color:var(--nsmax-on-ink);font:inherit;font-weight:600;cursor:pointer;transition:transform .18s var(--nsmax-ease-out),opacity .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel button:hover{opacity:.86;transform:translateY(-1px)}
+/* 线上设置页的真实 Vue 结构：根节点为 #user-setting-panel，内部是 selector-left/right。 */
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel{box-sizing:border-box;max-width:900px!important;margin:0 auto!important;padding:0!important;color:var(--nsmax-text);background:transparent!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container{box-sizing:border-box;display:flex;align-items:center;height:88px!important;min-height:88px;margin:0 0 16px!important;padding:0 20px!important;border:1px solid var(--nsmax-stroke);border-radius:12px;background:var(--nsmax-card)!important;box-shadow:var(--nsmax-shadow)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .avatar-wrapper{position:relative;flex:none}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .avatar-wrapper>.avatar{width:48px!important;height:48px!important;border-radius:8px;object-fit:cover}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .setting-icon{right:-8px!important;bottom:-8px!important;width:24px!important;height:24px!important;padding:4px;border-radius:999px;background:var(--nsmax-ink);color:var(--nsmax-on-ink);fill:currentColor}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .word{padding-left:14px;color:var(--nsmax-text)!important;font-size:14px;line-height:1.3}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container .username{margin:0;color:var(--nsmax-text)!important;font-size:18px!important;font-weight:600}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.selector{display:grid!important;grid-template-columns:168px minmax(0,1fr);gap:0;margin:0!important;padding:0!important;border:1px solid var(--nsmax-stroke)!important;border-radius:12px!important;background:var(--nsmax-card)!important;box-shadow:var(--nsmax-shadow)!important;overflow:hidden}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-left-side{display:block!important;min-width:0;margin:0!important;padding:14px 10px;border-right:1px solid var(--nsmax-divider);background:var(--nsmax-panel-alt)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-item-wrapper{display:flex!important;flex-direction:column;gap:3px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item{display:flex!important;align-items:center;min-height:36px;margin:0!important;padding:0 12px!important;border:0!important;border-radius:8px;color:var(--nsmax-muted)!important;font-size:13px;font-weight:500;text-decoration:none!important;transition:background-color .18s var(--nsmax-ease-out),color .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item:hover{background:var(--nsmax-fill);color:var(--nsmax-text)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item.selected{background:var(--nsmax-ink);color:var(--nsmax-on-ink)!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .expend-left{display:none!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-right-side{min-width:0;padding:20px 22px;background:var(--nsmax-card)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info{padding:0!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info fieldset{min-width:0;margin:0;padding:0 0 18px;border:0;border-bottom:1px solid var(--nsmax-divider)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info fieldset+fieldset{padding-top:18px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info fieldset>h2{margin:0 0 8px;color:var(--nsmax-text)!important;font-size:15px;font-weight:600;line-height:1.4}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info :is(input[type=text],textarea){box-sizing:border-box;width:100%;max-width:none!important;min-height:36px;padding:7px 10px;border:1px solid var(--nsmax-stroke);border-radius:8px;background:var(--nsmax-panel-alt);color:var(--nsmax-text);font:inherit;outline:0;transition:border-color .18s var(--nsmax-ease-out),box-shadow .18s var(--nsmax-ease-out)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info textarea{min-height:112px;resize:vertical;line-height:1.6}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info :is(input,textarea):focus{border-color:var(--nsmax-stroke-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent)}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .personal-info>.btn{min-height:36px;margin:18px 0 0;padding:0 18px;border:1px solid var(--nsmax-ink);border-radius:999px;background:var(--nsmax-ink)!important;color:var(--nsmax-on-ink)!important;font-weight:600}
 @media (max-width:700px){
 ${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification{padding-inline:12px!important}
 ${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .app-title{padding-inline:10px;font-size:13px}
 ${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item{grid-template-columns:32px minmax(0,1fr);gap:10px;padding:10px 12px}
 ${nsmaxClaude}[data-nsmax-page=notification] .nsk-notification .reply-item>.avatar{width:32px!important;height:32px!important}
 ${nsmaxClaude}[data-nsmax-page=setting] #nsk-frame>.nsk-container>.selector>.card-block{grid-template-columns:1fr;padding:12px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel{grid-template-columns:1fr;gap:12px;margin-inline:12px;padding:14px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-user-head,.user-head){padding-bottom:12px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav){flex-direction:row;overflow-x:auto;padding-bottom:2px}
+${nsmaxClaude}[data-nsmax-page=setting] .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a{white-space:nowrap;flex:none}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel{margin-inline:12px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.head-container{height:72px!important;min-height:72px;margin-bottom:12px!important;padding-inline:14px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel>.selector{display:block!important;border-radius:12px!important}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-left-side{border-right:0;border-bottom:1px solid var(--nsmax-divider);padding:8px 10px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-item-wrapper{flex-direction:row;overflow-x:auto;padding-bottom:1px}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector .select-item{flex:none;white-space:nowrap}
+${nsmaxClaude}[data-nsmax-page=setting] #user-setting-panel .selector-right-side{padding:16px 14px}
 }
 `;
 	// 侧栏热榜面板样式：不依赖主题开关（主题关闭时沿用站点配色变量）。

@@ -8797,6 +8797,12 @@
 	html:root:root .post-content pre {
 		border-radius:8px!important;
 	}
+	html:root:root:root #nsk-body-left article.post-content pre {
+		border-radius:8px!important;
+	}
+	html:root:root:root #nsk-body-left .md-editor {
+		display:none!important;
+	}
 	/* ---------- 页面级收口：所有页面使用 sb.sb 的单栏骨架 ---------- */
 	html:root:root :is(#nsk-left-panel-container,#nsk-right-panel-container) {
 		display:none!important;
