@@ -22,7 +22,7 @@ const end = source.indexOf("\tvar hot_sidebar_default = `");
 if (start < 0 || end < 0 || end < start) throw new Error("未找到主题源码");
 const context = {};
 vm.runInNewContext(source.slice(start, end), context);
-const themeCss = context.modern_theme_default;
+const themeCss = context.modern_theme_default.replace(/\r\n?/g, "\n");
 const fonts = context.NSMAX_WEB_FONTS;
 const latinRange = context.NSMAX_LATIN_RANGE;
 if (typeof themeCss !== "string" || !Array.isArray(fonts)) throw new Error("主题源码求值失败");
