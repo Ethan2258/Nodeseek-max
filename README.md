@@ -1,6 +1,6 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 `1.7.1`。采用你提供的 [SB Theme UI](https://sb.sb/) 套件，并适配 NodeSeek 的原生页面和交互。
+NodeSeek / DeepFlood 用户脚本，当前版本 `1.7.2`。采用 [SB Theme UI](https://sb.sb/) 套件，并适配 NodeSeek 的原生页面和交互。
 
 ## 安装
 
@@ -25,8 +25,8 @@ NodeSeek / DeepFlood 用户脚本，当前版本 `1.7.1`。采用你提供的 [S
 - 关键词、用户和等级过滤。
 - 黑名单通知过滤。
 - 帖子自动翻页、正文排版、代码复制、图片预览和编辑器增强。
-- 桌面个人资料卡、发帖入口和实时/日榜/周榜；热榜仅在可见或切换标签时请求，并复用缓存。
-- 设置面板、主题切换、搜索面板和消息相关页面适配。
+- SB 桌面个人卡：四项真实统计、两列功能链接和卡片内发帖入口；今日热门为单行十条日榜，按需请求并复用缓存。
+- 通知、原生私信列表与会话、主题切换和搜索面板适配。脚本设置按需打开，仅显示当前分类，保存时保留其他页面设置。
 
 信用分及作者资料批量请求已移除。阅读历史、帖子监控、回帖足迹、NQ 快捷入口、旧工具条、手机悬浮回复和旧消息中心编辑器不启动；底部相关网站/站内导航/商业推广等链接组隐藏。
 
@@ -38,6 +38,7 @@ npm run check     # 语法、meta、独立 CSS
 npm test          # 功能与手机布局回归
 npm run sb        # 编译套件、适配层和运行时主题
 npm run screenshots # 浅色/深色/手机截图及加载指标
+npm run performance # 同一 fixture 对比 v1.7.1 与当前脚本，三次中位数
 npm run meta      # 生成 nodeseek-max.meta.js
 npm run css       # 生成 theme/ 下的独立 CSS
 ```
@@ -49,7 +50,7 @@ $env:NSMAX_CHROMIUM="C:\Path\To\chrome.exe"
 npm test
 ```
 
-套件快照在 `theme/sb-suite.css`，站点适配在 `theme/sb-adapter.css`，桥接源在 `theme/source.js`。构建阶段裁剪已删除模块的规则并优化选择器；安装包只携带编译后主题，不加载演示页面、模拟点赞逻辑或重复编辑器库。默认使用系统字体。原生接口、验证码及权限检查由站点处理。
+套件快照在 `theme/sb-suite.css`，站点适配在 `theme/sb-adapter.css`，设置面板在 `theme/settings.css`，桥接源在 `theme/source.js`。构建时裁剪无用规则并优化选择器。输入期间不触发全页增强扫描；默认系统字体，不加载演示内容或重复编辑器库。原生接口、验证码及权限检查由站点处理。
 
 ## 许可证
 

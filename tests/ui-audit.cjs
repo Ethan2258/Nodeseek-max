@@ -2,7 +2,7 @@
 const { mkdirSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 const { launch, open, ROOT } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, newPostPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, newPostPage, nativeMessagePage, nativeTalkPage } = require("./fixtures/pages.cjs");
 
 async function main() {
 	const browser = await launch();
@@ -10,7 +10,7 @@ async function main() {
 	mkdirSync(output, { recursive: true });
 	const reports = [];
 	try {
-		for (const [name, url, render] of [["home", "/", listPage], ["post", "/post-1000-1", postPage], ["notification", "/notification", notificationPage], ["setting", "/setting", settingPage], ["new", "/new-discussion", newPostPage]]) {
+		for (const [name, url, render] of [["home", "/", listPage], ["home-50", "/", o=>listPage({...o,count:50})], ["post", "/post-1000-1", postPage], ["notification", "/notification", notificationPage], ["messages", "/notification#/message?mode=list", nativeMessagePage], ["talk", "/notification#/message?mode=talk&to=10", nativeTalkPage], ["setting", "/setting", settingPage], ["new", "/new-discussion", newPostPage]]) {
 			for (const [width, dark] of [[1440, false], [1440, true], [390, false]]) {
 				const { context, page, errors, calls } = await open(browser, `https://www.nodeseek.com${url}`, {
 					html: render({ dark }), viewport: { width, height: 900 }, colorScheme: dark ? "dark" : "light",
@@ -28,6 +28,12 @@ async function main() {
 					});
 					await page.screenshot({ path: path.join(output, `${name}-${width}-${dark ? "dark" : "light"}.png`), fullPage: true });
 					if (name === "post") await page.locator(".md-editor").screenshot({ path: path.join(output, `reply-${width}-${dark ? "dark" : "light"}.png`), timeout: 1000 }).catch(()=>{});
+					if (name === "home") {
+						const start = performance.now();
+						await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
+						state.settingsOpenMs = Math.round(performance.now()-start);
+						await page.screenshot({path:path.join(output,`script-settings-${width}-${dark?'dark':'light'}.png`)});
+					}
 					reports.push({ name, width, dark, ...state, calls, errors });
 				} finally { await context.close(); }
 			}

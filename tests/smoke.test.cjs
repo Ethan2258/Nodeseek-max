@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -197,18 +197,19 @@ test("回复编辑器：真实嵌套结构可输入、引用和点击原生提�
 	} finally { await context.close(); }
 });
 
-test("热榜：只请求当前可见榜单，切换按需获取并复用缓存", async () => {
+test("今日热门：单行十条和浏览数，仅请求日榜", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 } });
 	try {
 		await page.waitForSelector(".nsmax-hot-text");
 		const count = kind => page.evaluate(kind => window.__gmRequests.filter(url => url.includes(`/` + kind + `.json`)).length, kind);
-		assert.equal(await count("hot"), 1);
-		assert.equal(await count("daily"), 0);
-		await page.locator('.nsmax-hot-tabs button').nth(1).click();
-		await page.waitForFunction(() => document.querySelector('.nsmax-hot-text')?.textContent.includes('日榜'));
+		assert.equal(await count("hot"), 0);
 		assert.equal(await count("daily"), 1);
-		await page.locator('.nsmax-hot-tabs button').first().click();
-		assert.equal(await count("hot"), 1);
+		assert.equal(await count("weekly"), 0);
+		assert.equal(await page.locator('.nsmax-hot-tabs').isVisible(), false);
+		assert.equal(await page.locator('.nsmax-hot-title').innerText(), '今日热门');
+		assert.equal(await page.locator('.nsmax-hot-list li').count(),10);
+		assert.equal(await page.locator('.nsmax-hot-count').first().innerText(),'1000');
+		assert.equal(await page.locator('.nsmax-hot-text').first().evaluate(e=>getComputedStyle(e).whiteSpace),'nowrap');
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -294,5 +295,177 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.1");
+	assert.equal(packageJson.version, "1.7.2");
+});
+
+test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
+	for(const [render,hash] of [[nativeMessagePage,'#/message?mode=list'],[nativeTalkPage,'#/message?mode=talk&to=10']]) {
+		for(const width of [1440,390]){
+			const {context,page,errors}=await open(browser,'https://www.nodeseek.com/notification'+hash,{html:render({dark:true}),viewport:{width,height:900},colorScheme:'dark'});
+			try{
+				await wait(page);
+				const state=await page.evaluate(()=>{const r=document.querySelector('.nsk-notification');const badge=r.querySelector('.unread-count');return{bg:getComputedStyle(r.children[1]).backgroundColor,bar:getComputedStyle(r.children[0]).backgroundColor,h:getComputedStyle(badge).height,overflow:document.documentElement.scrollWidth>innerWidth+1,font:getComputedStyle(r).fontFamily}});
+				assert.equal(state.bg,'rgba(0, 0, 0, 0)');
+				assert.equal(state.bar,'rgba(0, 0, 0, 0)');
+				assert.equal(state.h,'16px');
+				assert.equal(state.overflow,false);
+				assert.ok(state.font.includes('system-ui'));
+				if(render===nativeMessagePage&&width===1440){
+					const position=await page.locator('.talk-item').first().evaluate(e=>{const avatar=e.querySelector('.avatar').getBoundingClientRect();const name=e.querySelector('.middle').getBoundingClientRect();const time=e.querySelector('.right').getBoundingClientRect();return{gap:name.left-avatar.right,time:time.left-name.right}});
+					assert.ok(position.gap>=8&&position.gap<=16,JSON.stringify(position));
+					assert.ok(position.time>=0,JSON.stringify(position));
+				}
+				if(render===nativeTalkPage){
+					await page.locator('.message-input textarea').fill('只测试本地输入');
+					assert.equal(await page.locator('.message-input button').isEnabled(),true);
+					assert.equal(await page.locator('.message-wrapper .content').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(26, 27, 36)');
+				}
+				assert.deepEqual(errors,[]);
+			}finally{await context.close();}
+		}
+	}
+});
+
+test("SB 个人卡：四列统计、两列菜单和卡片内的发帖入口",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900}});
+	try{
+		await page.waitForSelector('.nsmax-sb-account');
+		assert.equal(await page.locator('.nsmax-account-numbers dd').count(),4);
+		assert.equal(await page.locator('.nsmax-account-menu a').count(),12);
+		assert.equal(await page.locator('.nsmax-sb-account a[href="/new-discussion"]').isVisible(),true);
+		assert.equal(await page.locator('.user-card>.user-head').isVisible(),false);
+		await page.evaluate(()=>document.querySelector('.user-card>.user-stat').append(document.createTextNode('鸡腿 4161')));
+		await wait(page,500);
+		assert.equal(await page.locator('.nsmax-sb-account a[href="/new-discussion"]').isVisible(),true);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("楼层与正文：正文使用完整剩余宽度，回复框只有一层边框",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:postPage(),viewport:{width:1440,height:900}});
+	try{
+		await wait(page);
+		const dims=await page.evaluate(()=>{const row=document.querySelector('.content-item');const article=row.querySelector('article');const floor=row.querySelector('.floor-link-wrapper');const editor=document.querySelector('.md-editor');return{right:row.getBoundingClientRect().right-article.getBoundingClientRect().right,floor:getComputedStyle(floor).position,mainBorder:getComputedStyle(document.querySelector('#nsk-body-left')).borderTopWidth,editorBorder:getComputedStyle(editor).borderTopWidth}});
+		assert.ok(dims.right<=20,JSON.stringify(dims));
+		assert.equal(dims.floor,'absolute');
+		assert.equal(dims.mainBorder,'0px');
+		assert.equal(dims.editorBorder,'1px');
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("脚本设置：延迟挂载、切分类、搜索、开关和保存均可用",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900},seed:{'nspp:settings:www.nodeseek.com':{'compose':{enabled:true,ctrlEnter:true}}}});
+	try{
+		await wait(page);
+		assert.equal(await page.locator('#nspp-settings').count(),0);
+		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
+		const host=page.locator('#nspp-settings');
+		assert.equal(await host.locator('dialog').isVisible(),true);
+		assert.equal(await host.locator('.content section:not([hidden])').count(),1);
+		const links=await host.locator('.categories a').all();
+		for(const link of links){await link.click();assert.equal(await host.locator('.content section:not([hidden])').count(),1);}
+		assert.equal(await host.getByLabel('信用分').count(),0);
+		await host.getByLabel('搜索功能').fill('接口请求');
+		await wait(page,180);
+		const concurrent=host.getByLabel('最大并发请求数', {exact:true});
+		await concurrent.fill('3');
+		await host.getByLabel('接口请求并发与延迟',{exact:true}).uncheck();
+		await page.waitForTimeout(100);
+		const navigation=page.waitForNavigation({waitUntil:'domcontentloaded'});
+		await host.getByRole('button',{name:'保存并刷新',exact:true}).click();
+		await navigation;
+		const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('__gm__:nspp:settings:www.nodeseek.com')));
+		assert.equal(saved['request-settings'].maxConcurrent,3);
+		assert.equal(saved['request-settings'].enabled,false);
+		assert.equal(saved.compose.ctrlEnter,true);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("编辑期间：CodeMirror 重绘不触发全页作者/图标扫描",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:postPage({editorMode:'codemirror'})});
+	try{
+		await wait(page,3200);
+		const count=await page.evaluate(async()=>{
+			let calls=0;
+			const native=Document.prototype.querySelectorAll;
+			Document.prototype.querySelectorAll=function(selector){calls++;return native.call(this,selector)};
+			try{
+				const editor=document.querySelector('.CodeMirror-code');
+				for(let i=0;i<20;i++){editor.replaceChildren(document.createTextNode('本地输入 '+i));await new Promise(r=>setTimeout(r,12));}
+				await new Promise(r=>setTimeout(r,250));
+				return calls;
+			}finally{Document.prototype.querySelectorAll=native;}
+		});
+		assert.ok(count<=2,`输入期间触发了 ${count} 次全页扫描`);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("手机脚本设置：所有分类、控件和保存按钮没有横向溢出",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/notification',{html:notificationPage(),viewport:{width:390,height:844}});
+	try{
+		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
+		const host=page.locator('#nspp-settings');
+		for(const link of await host.locator('.categories a').all()){
+			await link.click();
+			const dims=await host.locator('dialog').evaluate(e=>({width:e.getBoundingClientRect().width,overflow:e.scrollWidth>e.clientWidth+1}));
+			assert.ok(dims.width<=390&&!dims.overflow,JSON.stringify(dims));
+		}
+		await host.getByLabel('搜索功能').fill('深浅色');await wait(page,180);
+		const select=host.locator('select');assert.equal(await select.count(),1);
+		await select.selectOption('light');
+		assert.equal(await select.inputValue(),'light');
+		await host.getByRole('button',{name:'关闭',exact:true}).click();
+		assert.equal(await host.locator('dialog').isVisible(),false);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("脚本设置：导入、导出、恢复默认、清空缓存和检查更新可用",async()=>{
+	const snapshot={fetched:Date.now(),posts:[]};
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),seed:{'nspp:state:www.nodeseek.com:hot-rankings':{'snapshot:daily':snapshot}}});
+	try{
+		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
+		const host=page.locator('#nspp-settings');
+		await host.locator('input[type=file]').setInputFiles({name:'test-config.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'nodeseek-plus-plus',schema:1,settings:{'request-settings':{enabled:true,maxConcurrent:3,requestInterval:90}}}))});
+		await page.waitForFunction(()=>document.querySelector('#nspp-settings').shadowRoot.querySelector('.toast-message')?.textContent.includes('已导入'));
+		assert.equal(await host.getByLabel('最大并发请求数',{exact:true}).inputValue(),'3');
+		const download=page.waitForEvent('download');
+		await host.getByRole('button',{name:'导出配置',exact:true}).click();
+		const data=JSON.parse(require('node:fs').readFileSync(await(await download).path(),'utf8'));
+		assert.equal(data.settings['request-settings'].requestInterval,90);
+		await host.getByRole('button',{name:'恢复默认',exact:true}).click();
+		assert.equal(await host.getByLabel('最大并发请求数',{exact:true}).inputValue(),'8');
+		await host.getByRole('button',{name:'检查更新',exact:true}).click();
+		await page.waitForFunction(()=>document.querySelector('#nspp-settings').shadowRoot.querySelector('.toast-message')?.textContent.includes('最新版本'));
+		const navigation=page.waitForNavigation({waitUntil:'domcontentloaded'});
+		await host.getByRole('button',{name:'清空缓存',exact:true}).click();await navigation;
+		const cleared=await page.evaluate(()=>JSON.parse(localStorage.getItem('__gm__:nspp:state:www.nodeseek.com:hot-rankings')));
+		assert.equal(cleared['snapshot:daily'],undefined);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("设置控件绑定：全部可见分类的每个控件都能更新草稿",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage()});
+	try{
+		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
+		const expected=await page.evaluate(()=>{
+			const root=document.querySelector('#nspp-settings').shadowRoot;
+			return [...root.querySelectorAll('[data-feature][data-key]')].map(e=>{
+				if(e.type==='checkbox')e.checked=!e.checked;
+				else if(e.tagName==='SELECT'&&e.options.length>1)e.selectedIndex=(e.selectedIndex+1)%e.options.length;
+				else if(e.type==='number'){const n=Number(e.value);e.value=String(n===0?1:Math.max(1,n-1));}
+				e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));
+				return{feature:e.dataset.feature,key:e.dataset.key,value:e.type==='checkbox'?e.checked:e.type==='number'?Number(e.value):e.value};
+			});
+		});
+		const download=page.waitForEvent('download');await page.locator('#nspp-settings').getByRole('button',{name:'导出配置',exact:true}).click();
+		const exported=JSON.parse(require('node:fs').readFileSync(await(await download).path(),'utf8')).settings;
+		assert.ok(expected.length>20);
+		for(const field of expected)assert.deepEqual(exported[field.feature][field.key],field.value,`${field.feature}.${field.key}`);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
 });
