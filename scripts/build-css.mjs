@@ -47,10 +47,8 @@ for (const [option, attribute] of [["grid", "data-nsmax-grid"], ["glassHeader", 
 if (options.glassHeader) attributes.set("data-nsmax-sticky-header", "");
 // 「快捷入口」面板默认隐藏（与用户卡片重复），独立 CSS 同样隐藏。
 if (options.hideQuickAccess) attributes.set("data-nsmax-hide-quick", "");
-// 页面类型由脚本按网址设置：独立 CSS 中这些规则只会命中对应页面才有的元素，直接视为满足；
-// 设置页与发帖页的规则用的是通用表单选择器，放进独立 CSS 会影响所有页面，直接丢弃。
+// 独立 CSS 没有脚本设置页面属性，用真实容器作为条件，避免通知页规则隐藏所有页面的侧栏。
 const runtimeAttributes = new Set(["data-nsmax-page"]);
-const scriptOnlyPages = new Set(["setting", "new"]);
 // 只能由脚本标记的元素：能映射的换成站点选择器，其余规则丢弃。
 const markers = new Map([
 	["[data-nsmax-header]", "#nsk-head"],
@@ -63,6 +61,9 @@ const conditions = new Map([
 	["[data-nsmax-dark]", ":has(>body.dark-layout)"],
 	["[data-nsmax-site]", ":has(#nsk-body)"]
 ]);
+for (const [page, selector] of [["post", ".nsk-post"], ["notification", ".nsk-notification"], ["setting", "#user-setting-panel"], ["new", ".new-discussion"], ["space", ".head-container"], ["list", "ul.post-list"]]) {
+	for (const value of [page, `"${page}"`, `'${page}'`]) conditions.set(`[data-nsmax-page=${value}]`, `:has(${selector})`);
+}
 const unmappable = /\[data-nsmax-(?:cta|members|members-row|member|scrolled|sidenav|hidden|dup|tools|booting|icon-orig|icon-for|header-[\w-]+|boot-[\w-]+)\b|#nsmax-progress|\.nsmax-/;
 
 // ---- 极简 CSS 解析：规则块与 @media 等嵌套块 -----------------------------------------
@@ -108,7 +109,7 @@ function evaluate(simple) {
 	let match = simple.match(/^\[([\w-]+)(?:=([^\]]+))?\]$/);
 	if (match) {
 		const [, name, raw] = match;
-		if (runtimeAttributes.has(name)) return !scriptOnlyPages.has(raw?.replace(/^["']|["']$/g, ""));
+		if (runtimeAttributes.has(name)) return null;
 		if (conditions.has(simple)) return null;
 		if (!name.startsWith("data-nsmax-")) return null;
 		const value = raw?.replace(/^["']|["']$/g, "");

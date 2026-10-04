@@ -47,7 +47,7 @@ if (input) {
     }).processSync(rule.selector, { lossless: false });
     rule.walkDecls("letter-spacing", decl => { decl.value = "0"; });
   });
-  const suite = css.toString();
+  const suite = css.toString().trimEnd();
   writeFileSync(new URL("theme/sb-suite.css", root), suite + "\n");
   const begin = themeSource.indexOf("\tvar sb_theme_ui_default = ");
   const end = themeSource.indexOf("\n\tvar modern_theme_default =", begin);

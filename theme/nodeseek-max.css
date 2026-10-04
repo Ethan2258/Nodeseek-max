@@ -262,7 +262,7 @@ html:root .md-editor>:first-child:not(.mde-toolbar,.CodeMirror,textarea) {
 	border:0!important;
 	border-bottom:1px solid var(--nsmax-divider)!important;
 }
-html:root:root:root:root #nsk-left:has(>.nsk-post-wrapper>ul.comments) {
+html:root:root:root:has(.nsk-post) #nsk-left:has(>.nsk-post-wrapper>ul.comments) {
 	padding-left:0!important;
 	padding-right:0!important;
 }
@@ -504,10 +504,10 @@ html:root .md-editor:not(.nspp-floating-reply):focus-within {
 	border-color:var(--nsmax-accent-line);
 	box-shadow:0 0 0 4px var(--nsmax-accent-soft);
 }
-html:root:root .comment-menu {
+html:root:has(.nsk-post) .comment-menu {
 	gap:2px;
 }
-html:root:root .comment-menu .menu-item {
+html:root:has(.nsk-post) .comment-menu .menu-item {
 	color:var(--nsmax-muted);
 }
 html:root .md-editor [data-nsmax-submit-row] {
@@ -678,11 +678,11 @@ html:root .md-editor :is(.preview,.md-preview,.editor-preview,[class*=preview]):
 	background:var(--nsmax-panel-alt);
 	color:var(--nsmax-text-2);
 }
-html:root:root ul.comments {
+html:root:has(.nsk-post) ul.comments {
 	--nsmax-reply-avatar:32px;
 	--nsmax-reply-indent:44px;
 }
-html:root:root ul.comments .comment-menu {
+html:root:has(.nsk-post) ul.comments .comment-menu {
 	display:flex;
 	flex-wrap:wrap;
 	justify-content:flex-start;
@@ -691,7 +691,7 @@ html:root:root ul.comments .comment-menu {
 	margin-bottom:-4px;
 	translate:-8px 0;
 }
-html:root:root ul.comments .comment-menu .menu-item {
+html:root:has(.nsk-post) ul.comments .comment-menu .menu-item {
 	display:inline-flex;
 	align-items:center;
 	gap:4px;
@@ -701,20 +701,20 @@ html:root:root ul.comments .comment-menu .menu-item {
 	font-size:13px;
 	opacity:.7;
 }
-html:root:root ul.comments>li.content-item:is(:hover,:focus-within) .comment-menu .menu-item {
+html:root:has(.nsk-post) ul.comments>li.content-item:is(:hover,:focus-within) .comment-menu .menu-item {
 	opacity:1;
 }
-html:root:root ul.comments .comment-menu .menu-item:hover {
+html:root:has(.nsk-post) ul.comments .comment-menu .menu-item:hover {
 	color:var(--nsmax-text);
 	opacity:1;
 }
-html:root:root .nsk-post>.comment-menu {
+html:root:has(.nsk-post) .nsk-post>.comment-menu {
 	display:flex;
 	flex-wrap:wrap;
 	gap:10px;
 	margin-top:16px;
 }
-html:root:root .nsk-post>.comment-menu .menu-item {
+html:root:has(.nsk-post) .nsk-post>.comment-menu .menu-item {
 	display:inline-flex;
 	flex-direction:column;
 	align-items:center;
@@ -732,30 +732,30 @@ html:root:root .nsk-post>.comment-menu .menu-item {
 	font-size:13px;
 	line-height:1;
 }
-html:root:root .nsk-post>.comment-menu .menu-item:hover {
+html:root:has(.nsk-post) .nsk-post>.comment-menu .menu-item:hover {
 	border-color:var(--nsmax-stroke-strong);
 	color:var(--nsmax-text);
 }
-html:root:root .nsk-post>.comment-menu .menu-item svg {
+html:root:has(.nsk-post) .nsk-post>.comment-menu .menu-item svg {
 	width:16px;
 	height:16px;
 }
 @media (width<=600px) {
-	html:root:root ul.comments {
+	html:root:has(.nsk-post) ul.comments {
 		--nsmax-reply-indent:0px;
 	}
-	html:root:root ul.comments .comment-menu {
+	html:root:has(.nsk-post) ul.comments .comment-menu {
 		translate:none;
 	}
 }
-html:root:root .md-editor .mde-toolbar .toolbar-item {
+html:root:has(.nsk-post) .md-editor .mde-toolbar .toolbar-item {
 	border-radius:calc(var(--nsmax-control-radius) - 2px);
 }
-html:root:root .md-editor .mde-toolbar .toolbar-item:hover {
+html:root:has(.nsk-post) .md-editor .mde-toolbar .toolbar-item:hover {
 	background:transparent;
 	color:var(--nsmax-text);
 }
-html:root:root .md-editor .CodeMirror {
+html:root:has(.nsk-post) .md-editor .CodeMirror {
 	background:transparent;
 }
 html:root .md-editor:not(.nspp-floating-reply) {
@@ -992,11 +992,60 @@ html:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit
 html:root .md-editor:not(.nspp-floating-reply):not(:has(.CodeMirror)):has(>textarea:placeholder-shown) :is(button.submit.btn,.btn.submit) {
 	opacity:.5;
 }
-html:root:root .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
+html:root:has(.nsk-post) .md-editor:not(.nspp-floating-reply) :is(button.submit.btn,.btn.submit) {
 	gap:0;
 	width:32px;
 	padding:0!important;
 	font-size:0!important;
+}
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input:not([type]):not(.md-editor *,[class*=nspp-] *,[class*=nspp-]),
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input[type=text]:not(.md-editor *,[class*=nspp-] *,[class*=nspp-]) {
+	box-sizing:border-box;
+	width:100%;
+	height:48px;
+	padding:0 16px!important;
+	border:1px solid var(--nsmax-composer-line)!important;
+	border-radius:var(--nsmax-r-control,12px)!important;
+	background:var(--nsmax-card)!important;
+	box-shadow:var(--nsmax-composer-shadow)!important;
+	color:var(--nsmax-text)!important;
+	font-size:18px!important;
+	font-weight:600;
+	letter-spacing:-.01em;
+	outline:0;
+	transition:border-color .15s ease,box-shadow .2s ease;
+}
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input:not([type]):not(.md-editor *,[class*=nspp-] *,[class*=nspp-]):focus,
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input[type=text]:not(.md-editor *,[class*=nspp-] *,[class*=nspp-]):focus {
+	border-color:var(--nsmax-composer-line-focus)!important;
+	box-shadow:var(--nsmax-composer-shadow-focus)!important;
+}
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input:not([type]):not(.md-editor *,[class*=nspp-] *,[class*=nspp-])::placeholder,
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) input[type=text]:not(.md-editor *,[class*=nspp-] *,[class*=nspp-])::placeholder {
+	color:var(--nsmax-faint);
+	font-weight:500;
+}
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) select:not(.md-editor *,[class*=nspp-] *) {
+	box-sizing:border-box;
+	height:36px;
+	padding:0 32px 0 12px!important;
+	border:1px solid var(--nsmax-stroke-strong)!important;
+	border-radius:var(--nsmax-r-control,min(var(--nsmax-pill,8px),8px))!important;
+	background:var(--nsmax-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2373726c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") right 10px center/16px no-repeat!important;
+	color:var(--nsmax-text);
+	font-size:14px;
+	-webkit-appearance:none;
+	appearance:none;
+}
+html:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) .nsk-panel:has(.md-editor) {
+	padding:0!important;
+	border:0!important;
+	background:transparent!important;
+	box-shadow:none!important;
+}
+html:root:has(.new-discussion) .md-editor:not(.nspp-floating-reply)>textarea,
+html:root:has(.new-discussion) .md-editor:not(.nspp-floating-reply) .CodeMirror {
+	min-height:360px;
 }
 html:root:root .nsk-pager a,
 html:root:root .nsk-pager span {
@@ -1183,13 +1232,13 @@ html:root .md-editor:not(.nspp-floating-reply)>textarea:is(:hover,:focus,:focus-
 	box-shadow:none!important;
 	outline:0!important;
 }
-html:root:root:root ul.comments .comment-menu .menu-item {
+html:root:root:has(.nsk-post) ul.comments .comment-menu .menu-item {
 	gap:5px;
 	min-height:28px;
 	padding:0 8px;
 	border-radius:var(--nsmax-r-control,8px);
 }
-html:root:root:root ul.comments .comment-menu .menu-item:hover {
+html:root:root:has(.nsk-post) ul.comments .comment-menu .menu-item:hover {
 	background:var(--nsmax-fill)!important;
 }
 html:root:root .comment-menu .menu-item:is([title=引用],[title=回复])>svg,
@@ -1216,12 +1265,12 @@ html:root:root .nsk-post>.comment-menu .menu-item:has(>svg.iconpark-icon>use:is(
 	width:17px;
 	height:17px;
 }
-html:root:root:root .nsk-post>.comment-menu {
+html:root:root:has(.nsk-post) .nsk-post>.comment-menu {
 	justify-content:flex-start;
 	gap:6px;
 	margin-top:14px;
 }
-html:root:root:root .nsk-post>.comment-menu .menu-item {
+html:root:root:has(.nsk-post) .nsk-post>.comment-menu .menu-item {
 	flex-direction:row;
 	gap:6px;
 	min-width:0;
@@ -1234,26 +1283,26 @@ html:root:root:root .nsk-post>.comment-menu .menu-item {
 	font-size:13px;
 	line-height:1;
 }
-html:root:root:root .nsk-post>.comment-menu .menu-item:hover {
+html:root:root:has(.nsk-post) .nsk-post>.comment-menu .menu-item:hover {
 	border-color:var(--nsmax-composer-line-focus);
 	background:var(--nsmax-fill)!important;
 	color:var(--nsmax-text);
 }
-html:root:root:root .nsk-post>.comment-menu .menu-item::before {
+html:root:root:has(.nsk-post) .nsk-post>.comment-menu .menu-item::before {
 	width:16px!important;
 	height:16px!important;
 }
-html:root:root:root .nsk-post>.comment-menu .menu-item span {
+html:root:root:has(.nsk-post) .nsk-post>.comment-menu .menu-item span {
 	font-variant-numeric:tabular-nums;
 }
 html:root:root :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *):focus {
 	border-color:var(--nsmax-composer-line-focus);
 	box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent);
 }
-html:root:root ul.comments>li.content-item .comment-menu {
+html:root:has(.nsk-post) ul.comments>li.content-item .comment-menu {
 	margin-top:2px;
 }
-html:root:root ul.comments>li.content-item .comment-menu .menu-item {
+html:root:has(.nsk-post) ul.comments>li.content-item .comment-menu .menu-item {
 	min-height:24px;
 	opacity:.55;
 	transition:opacity .15s ease,color .15s ease;
@@ -1304,6 +1353,12 @@ html:root .nspp-confirm-dialog form>a {
 	}
 }
 @keyframes nsmax-send-busy {to{translate:0 -3px}}
+html:root:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) select:not(.md-editor *,[class*=nspp-] *) {
+	border-color:var(--nsmax-composer-line)!important;
+}
+html:root:root:has(.new-discussion) :is(#nsk-left,#nsk-body-left) select:not(.md-editor *,[class*=nspp-] *):hover {
+	border-color:var(--nsmax-composer-line-focus)!important;
+}
 html:root:root .md-editor:not(.nspp-floating-reply)>.tab-select .tab:is(.active,[class*=active],[aria-selected=true]) {
 	box-shadow:0 1px 2px rgb(31 30 29/.1),0 0 0 .5px rgb(31 30 29/.06)!important;
 }
@@ -4919,11 +4974,17 @@ html:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-
 html:root:root :is(.post-content,.comment-content,.markdown-body):not(:is(.nspp-post-preview,.nspp-messages,.nspp-history,.nspp-monitor) *) :is(code:not(pre code),kbd) {
 	border-radius:4px!important;
 }
-html:root:root .post-content pre {
+html:root:has(.nsk-post) .post-content pre {
 	border-radius:8px!important;
 }
-html:root:root:root #nsk-body-left article.post-content pre {
+html:root:root:has(.nsk-post) #nsk-body-left article.post-content pre {
 	border-radius:8px!important;
+}
+html:root:root:has(#user-setting-panel) #nsk-body-left>.setting-panel {
+	border-radius:12px!important;
+	background:var(--nsmax-card)!important;
+	border:1px solid var(--nsmax-stroke)!important;
+	box-shadow:var(--nsmax-shadow)!important;
 }
 html:root:root #nsk-left-panel-container {
 	display:none!important;
@@ -4951,18 +5012,18 @@ html:root:root #nspp-tools {
 html:root:root #fast-nav-button-group {
 	display:none!important;
 }
-html:root:root:root #nsk-frame {
+html:root:root:has(.nsk-notification) #nsk-frame {
 	margin-top:var(--nsmax-head-h,56px);
 	padding:24px 0 48px!important;
 	background:var(--nsmax-canvas)!important;
 }
-html:root:root:root .nsk-notification {
+html:root:root:has(.nsk-notification) .nsk-notification {
 	box-sizing:border-box;
 	max-width:1200px!important;
 	margin:0 auto!important;
 	padding:0 16px!important;
 }
-html:root:root:root .nsk-notification .app-switch {
+html:root:root:has(.nsk-notification) .nsk-notification .app-switch {
 	display:flex;
 	align-items:center;
 	gap:4px;
@@ -4970,7 +5031,7 @@ html:root:root:root .nsk-notification .app-switch {
 	padding:0 0 8px;
 	border-bottom:1px solid var(--nsmax-stroke);
 }
-html:root:root:root .nsk-notification .app-title {
+html:root:root:has(.nsk-notification) .nsk-notification .app-title {
 	display:inline-flex;
 	align-items:center;
 	height:34px;
@@ -4982,22 +5043,22 @@ html:root:root:root .nsk-notification .app-title {
 	text-decoration:none!important;
 	transition:background-color .2s var(--nsmax-ease-out),color .2s var(--nsmax-ease-out);
 }
-html:root:root:root .nsk-notification .app-title:hover {
+html:root:root:has(.nsk-notification) .nsk-notification .app-title:hover {
 	background:var(--nsmax-fill);
 	color:var(--nsmax-text)!important;
 }
-html:root:root:root .nsk-notification .app-title.router-link-active {
+html:root:root:has(.nsk-notification) .nsk-notification .app-title.router-link-active {
 	background:var(--nsmax-ink);
 	color:var(--nsmax-on-ink)!important;
 }
-html:root:root:root .nsk-notification .reply-container {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-container {
 	overflow:hidden;
 	border:1px solid var(--nsmax-stroke);
 	border-radius:12px;
 	background:var(--nsmax-card);
 	box-shadow:var(--nsmax-shadow);
 }
-html:root:root:root .nsk-notification .reply-item {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item {
 	display:grid;
 	grid-template-columns:40px minmax(0,1fr);
 	align-items:center;
@@ -5009,56 +5070,490 @@ html:root:root:root .nsk-notification .reply-item {
 	background:transparent;
 	transition:background-color .18s var(--nsmax-ease-out);
 }
-html:root:root:root .nsk-notification .reply-item:first-child {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item:first-child {
 	border-top:0;
 }
-html:root:root:root .nsk-notification .reply-item:hover {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item:hover {
 	background:var(--nsmax-fill);
 }
-html:root:root:root .nsk-notification .reply-item>.avatar {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item>.avatar {
 	width:40px!important;
 	height:40px!important;
 	border-radius:6px;
 	object-fit:cover;
 }
-html:root:root:root .nsk-notification .reply-item>div:last-child {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item>div:last-child {
 	min-width:0;
 	color:var(--nsmax-muted);
 	font-size:13px;
 	line-height:1.6;
 }
-html:root:root:root .nsk-notification .reply-item a {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item a {
 	color:var(--nsmax-text)!important;
 	font-weight:500;
 	text-decoration:none!important;
 }
-html:root:root:root .nsk-notification .reply-item a:hover {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item a:hover {
 	text-decoration:underline!important;
 	text-underline-offset:3px;
 }
-html:root:root:root .nsk-notification .reply-item span {
+html:root:root:has(.nsk-notification) .nsk-notification .reply-item span {
 	color:var(--nsmax-faint);
 	font-size:12px;
 }
-html:root:root:root body>footer {
+html:root:root:has(.nsk-notification) body>footer {
 	display:none!important;
 }
+html:root:root:has(#user-setting-panel) #nsk-frame {
+	margin-top:var(--nsmax-head-h,56px);
+	padding:24px 0 48px!important;
+	background:var(--nsmax-canvas)!important;
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container {
+	max-width:900px!important;
+	margin:0 auto!important;
+	padding:0 16px!important;
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.head-container {
+	display:flex;
+	align-items:center;
+	min-height:52px;
+	margin:0 0 14px;
+	padding:0 2px;
+	border-bottom:1px solid var(--nsmax-stroke);
+	color:var(--nsmax-text);
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector {
+	display:block!important;
+	margin:0!important;
+	padding:0!important;
+	border:1px solid var(--nsmax-stroke)!important;
+	border-radius:12px!important;
+	background:var(--nsmax-card)!important;
+	box-shadow:var(--nsmax-shadow)!important;
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.select-item {
+	display:flex;
+	align-items:center;
+	min-height:52px;
+	padding:0 18px;
+	border-bottom:1px solid var(--nsmax-divider);
+	color:var(--nsmax-text)!important;
+	font-size:14px;
+	font-weight:500;
+	text-decoration:none!important;
+	transition:background-color .18s var(--nsmax-ease-out);
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.select-item:hover {
+	background:var(--nsmax-fill);
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.select-item.active {
+	background:var(--nsmax-fill);
+	color:var(--nsmax-text)!important;
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.hr {
+	height:1px;
+	margin:0;
+	background:var(--nsmax-divider);
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.card-block {
+	display:grid;
+	grid-template-columns:repeat(2,minmax(0,1fr));
+	gap:12px;
+	padding:18px;
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.card-block>.card-item {
+	min-height:44px;
+	margin:0;
+	padding:12px 14px;
+	border:1px solid var(--nsmax-stroke);
+	border-radius:8px;
+	background:var(--nsmax-card);
+	color:var(--nsmax-text)!important;
+	box-shadow:none;
+	transition:border-color .18s var(--nsmax-ease-out),background-color .18s var(--nsmax-ease-out);
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.card-block>.card-item:hover {
+	border-color:var(--nsmax-stroke-strong);
+	background:var(--nsmax-fill);
+}
+html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.readme {
+	margin:0;
+	padding:18px;
+	border-top:1px solid var(--nsmax-divider);
+	color:var(--nsmax-muted);
+	font-size:13px;
+	line-height:1.7;
+}
+html:root:root:has(#user-setting-panel) body>footer {
+	display:none!important;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel {
+	box-sizing:border-box;
+	display:grid;
+	grid-template-columns:190px minmax(0,1fr);
+	gap:20px;
+	max-width:900px;
+	margin:0 auto;
+	padding:20px;
+	border:1px solid var(--nsmax-stroke);
+	border-radius:12px;
+	background:var(--nsmax-card);
+	box-shadow:var(--nsmax-shadow);
+	color:var(--nsmax-text);
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel .setting-user-head,
+html:root:root:has(#user-setting-panel) .user-setting-panel .user-head {
+	grid-column:1/-1;
+	display:flex;
+	align-items:center;
+	gap:12px;
+	min-height:48px;
+	padding:0 0 16px;
+	border-bottom:1px solid var(--nsmax-divider);
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-user-head,.user-head) img {
+	width:40px;
+	height:40px;
+	border-radius:8px;
+	object-fit:cover;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-user-head,.user-head) strong,
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-user-head,.user-head) a {
+	color:var(--nsmax-text);
+	font-size:15px;
+	font-weight:600;
+	text-decoration:none;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) {
+	align-self:start;
+	display:flex;
+	flex-direction:column;
+	gap:3px;
+	min-width:0;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a {
+	display:flex;
+	align-items:center;
+	min-height:36px;
+	padding:0 12px;
+	border-radius:8px;
+	color:var(--nsmax-muted)!important;
+	font-size:13px;
+	font-weight:500;
+	text-decoration:none!important;
+	transition:background-color .18s var(--nsmax-ease-out),color .18s var(--nsmax-ease-out);
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a:hover {
+	background:var(--nsmax-fill);
+	color:var(--nsmax-text)!important;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a:is(.active,.router-link-active,[aria-current=page]) {
+	background:var(--nsmax-ink);
+	color:var(--nsmax-on-ink)!important;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-content,.setting-main,.setting-form,main) {
+	min-width:0;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel h1,
+html:root:root:has(#user-setting-panel) .user-setting-panel h2,
+html:root:root:has(#user-setting-panel) .user-setting-panel h3 {
+	margin:0 0 16px;
+	color:var(--nsmax-text);
+	font-size:16px;
+	font-weight:600;
+	line-height:1.4;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(label,.setting-field) {
+	display:grid;
+	gap:7px;
+	margin:0 0 14px;
+	color:var(--nsmax-muted);
+	font-size:13px;
+	line-height:1.5;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel :is(input:not([type=checkbox]),textarea,select) {
+	box-sizing:border-box;
+	width:100%;
+	min-height:36px;
+	padding:7px 10px;
+	border:1px solid var(--nsmax-stroke);
+	border-radius:8px;
+	background:var(--nsmax-panel-alt);
+	color:var(--nsmax-text);
+	font:inherit;
+	outline:0;
+	transition:border-color .18s var(--nsmax-ease-out),box-shadow .18s var(--nsmax-ease-out);
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel textarea {
+	min-height:92px;
+	resize:vertical;
+	line-height:1.6;
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel input:focus,
+html:root:root:has(#user-setting-panel) .user-setting-panel textarea:focus,
+html:root:root:has(#user-setting-panel) .user-setting-panel select:focus {
+	border-color:var(--nsmax-stroke-strong);
+	box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent);
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel .actions,
+html:root:root:has(#user-setting-panel) .user-setting-panel .setting-actions {
+	display:flex;
+	align-items:center;
+	justify-content:flex-end;
+	gap:8px;
+	margin-top:20px;
+	padding-top:16px;
+	border-top:1px solid var(--nsmax-divider);
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel button {
+	min-height:36px;
+	padding:0 16px;
+	border:1px solid var(--nsmax-ink);
+	border-radius:999px;
+	background:var(--nsmax-ink);
+	color:var(--nsmax-on-ink);
+	font:inherit;
+	font-weight:600;
+	cursor:pointer;
+	transition:transform .18s var(--nsmax-ease-out),opacity .18s var(--nsmax-ease-out);
+}
+html:root:root:has(#user-setting-panel) .user-setting-panel button:hover {
+	opacity:.86;
+	transform:translateY(-1px);
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel {
+	box-sizing:border-box;
+	max-width:900px!important;
+	margin:0 auto!important;
+	padding:0!important;
+	color:var(--nsmax-text);
+	background:transparent!important;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel>.head-container {
+	box-sizing:border-box;
+	display:flex;
+	align-items:center;
+	height:88px!important;
+	min-height:88px;
+	margin:0 0 16px!important;
+	padding:0 20px!important;
+	border:1px solid var(--nsmax-stroke);
+	border-radius:12px;
+	background:var(--nsmax-card)!important;
+	box-shadow:var(--nsmax-shadow)!important;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel>.head-container .avatar-wrapper {
+	position:relative;
+	flex:none;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel>.head-container .avatar-wrapper>.avatar {
+	width:48px!important;
+	height:48px!important;
+	border-radius:8px;
+	object-fit:cover;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel>.head-container .setting-icon {
+	right:-8px!important;
+	bottom:-8px!important;
+	width:24px!important;
+	height:24px!important;
+	padding:4px;
+	border-radius:999px;
+	background:var(--nsmax-ink);
+	color:var(--nsmax-on-ink);
+	fill:currentColor;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel>.head-container .word {
+	padding-left:14px;
+	color:var(--nsmax-text)!important;
+	font-size:14px;
+	line-height:1.3;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel>.head-container .username {
+	margin:0;
+	color:var(--nsmax-text)!important;
+	font-size:18px!important;
+	font-weight:600;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel>.selector {
+	display:grid!important;
+	grid-template-columns:168px minmax(0,1fr);
+	gap:0;
+	margin:0!important;
+	padding:0!important;
+	border:1px solid var(--nsmax-stroke)!important;
+	border-radius:12px!important;
+	background:var(--nsmax-card)!important;
+	box-shadow:var(--nsmax-shadow)!important;
+	overflow:hidden;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side {
+	display:block!important;
+	min-width:0;
+	margin:0!important;
+	padding:14px 10px;
+	border-right:1px solid var(--nsmax-divider);
+	background:var(--nsmax-panel-alt);
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .selector-item-wrapper {
+	display:flex!important;
+	flex-direction:column;
+	gap:3px;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .selector .select-item {
+	display:flex!important;
+	align-items:center;
+	min-height:36px;
+	margin:0!important;
+	padding:0 12px!important;
+	border:0!important;
+	border-radius:8px;
+	color:var(--nsmax-muted)!important;
+	font-size:13px;
+	font-weight:500;
+	text-decoration:none!important;
+	transition:background-color .18s var(--nsmax-ease-out),color .18s var(--nsmax-ease-out);
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .selector .select-item:hover {
+	background:var(--nsmax-fill);
+	color:var(--nsmax-text)!important;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .selector .select-item.selected {
+	background:var(--nsmax-ink);
+	color:var(--nsmax-on-ink)!important;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .expend-left {
+	display:none!important;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side {
+	min-width:0;
+	padding:20px 22px;
+	background:var(--nsmax-card);
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info {
+	padding:0!important;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info fieldset {
+	min-width:0;
+	margin:0;
+	padding:0 0 18px;
+	border:0;
+	border-bottom:1px solid var(--nsmax-divider);
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info fieldset+fieldset {
+	padding-top:18px;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info fieldset>h2 {
+	margin:0 0 8px;
+	color:var(--nsmax-text)!important;
+	font-size:15px;
+	font-weight:600;
+	line-height:1.4;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info :is(input[type=text],textarea) {
+	box-sizing:border-box;
+	width:100%;
+	max-width:none!important;
+	min-height:36px;
+	padding:7px 10px;
+	border:1px solid var(--nsmax-stroke);
+	border-radius:8px;
+	background:var(--nsmax-panel-alt);
+	color:var(--nsmax-text);
+	font:inherit;
+	outline:0;
+	transition:border-color .18s var(--nsmax-ease-out),box-shadow .18s var(--nsmax-ease-out);
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info textarea {
+	min-height:112px;
+	resize:vertical;
+	line-height:1.6;
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info input:focus,
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info textarea:focus {
+	border-color:var(--nsmax-stroke-strong);
+	box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 10%,transparent);
+}
+html:root:root:has(#user-setting-panel) #user-setting-panel .personal-info>.btn {
+	min-height:36px;
+	margin:18px 0 0;
+	padding:0 18px;
+	border:1px solid var(--nsmax-ink);
+	border-radius:999px;
+	background:var(--nsmax-ink)!important;
+	color:var(--nsmax-on-ink)!important;
+	font-weight:600;
+}
 @media (max-width:700px) {
-	html:root:root:root .nsk-notification {
+	html:root:root:has(.nsk-notification) .nsk-notification {
 		padding-inline:12px!important;
 	}
-	html:root:root:root .nsk-notification .app-title {
+	html:root:root:has(.nsk-notification) .nsk-notification .app-title {
 		padding-inline:10px;
 		font-size:13px;
 	}
-	html:root:root:root .nsk-notification .reply-item {
+	html:root:root:has(.nsk-notification) .nsk-notification .reply-item {
 		grid-template-columns:32px minmax(0,1fr);
 		gap:10px;
 		padding:10px 12px;
 	}
-	html:root:root:root .nsk-notification .reply-item>.avatar {
+	html:root:root:has(.nsk-notification) .nsk-notification .reply-item>.avatar {
 		width:32px!important;
 		height:32px!important;
+	}
+	html:root:root:has(#user-setting-panel) #nsk-frame>.nsk-container>.selector>.card-block {
+		grid-template-columns:1fr;
+		padding:12px;
+	}
+	html:root:root:has(#user-setting-panel) .user-setting-panel {
+		grid-template-columns:1fr;
+		gap:12px;
+		margin-inline:12px;
+		padding:14px;
+	}
+	html:root:root:has(#user-setting-panel) .user-setting-panel .setting-user-head,
+	html:root:root:has(#user-setting-panel) .user-setting-panel .user-head {
+		padding-bottom:12px;
+	}
+	html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) {
+		flex-direction:row;
+		overflow-x:auto;
+		padding-bottom:2px;
+	}
+	html:root:root:has(#user-setting-panel) .user-setting-panel :is(.setting-nav,.setting-sidebar,nav) a {
+		white-space:nowrap;
+		flex:none;
+	}
+	html:root:root:has(#user-setting-panel) #user-setting-panel {
+		margin-inline:12px!important;
+	}
+	html:root:root:has(#user-setting-panel) #user-setting-panel>.head-container {
+		height:72px!important;
+		min-height:72px;
+		margin-bottom:12px!important;
+		padding-inline:14px!important;
+	}
+	html:root:root:has(#user-setting-panel) #user-setting-panel>.selector {
+		display:block!important;
+		border-radius:12px!important;
+	}
+	html:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side {
+		border-right:0;
+		border-bottom:1px solid var(--nsmax-divider);
+		padding:8px 10px;
+	}
+	html:root:root:has(#user-setting-panel) #user-setting-panel .selector-item-wrapper {
+		flex-direction:row;
+		overflow-x:auto;
+		padding-bottom:1px;
+	}
+	html:root:root:has(#user-setting-panel) #user-setting-panel .selector .select-item {
+		flex:none;
+		white-space:nowrap;
+	}
+	html:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side {
+		padding:16px 14px;
 	}
 }
 html:root:root:root:root:root:root,
@@ -5520,10 +6015,14 @@ html:root:root:root:root #user-setting-panel .selector-right-side td {
 	border-bottom:1px solid var(--line-soft);
 	color:var(--text);
 }
-html:root:root:root:root:root #nsk-body {
+html:root:root:root:root:has(.nsk-notification) #nsk-body,
+html:root:root:root:root:has(#user-setting-panel) #nsk-body,
+html:root:root:root:root:has(.new-discussion) #nsk-body {
 	display:block!important;
 }
-html:root:root:root:root:root #nsk-body > #nsk-right-panel-container {
+html:root:root:root:root:has(.nsk-notification) #nsk-body > #nsk-right-panel-container,
+html:root:root:root:root:has(#user-setting-panel) #nsk-body > #nsk-right-panel-container,
+html:root:root:root:root:has(.new-discussion) #nsk-body > #nsk-right-panel-container {
 	display:none!important;
 }
 @media (max-width:860px) {
@@ -5548,8 +6047,8 @@ html:root:root:root:root:root #nsk-body > #nsk-right-panel-container {
 	html:root:root:root:root #nsk-head .site-title .title-text {
 		font-size:15px!important;
 	}
-	html:root:root:root:root #nsk-head .nav-menu {
-		display:none!important;
+	html:root:root:root:root #nsk-head {
+		gap:8px!important;
 	}
 	html:root:root:root:root #nsk-frame {
 		padding:12px 0 32px!important;

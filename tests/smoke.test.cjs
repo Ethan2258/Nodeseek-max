@@ -255,6 +255,36 @@ test("手机：页面无横向溢出、回复输入可用、页脚链接组隐�
 	}
 });
 
+test("独立 CSS：页面条件不会隐藏首页侧栏或原生回复框", async () => {
+	const fs=require('node:fs'),path=require('node:path');
+	const css=fs.readFileSync(path.join(__dirname,'../theme/nodeseek-max.css'),'utf8');
+	for (const [url,render] of [["/",listPage],["/post-1000-1",postPage],["/setting",settingPage]]) {
+		const {context,page,errors}=await open(browser,`https://www.nodeseek.com${url}`,{html:render(),script:false,css,viewport:{width:1440,height:900}});
+		try {
+			await wait(page,100);
+			assert.equal(await page.locator('body>footer').isVisible(),false);
+			if(url==='/') assert.equal(await page.locator('#nsk-right-panel-container .user-card').isVisible(),true);
+			if(url.includes('post-')) assert.equal(await page.locator('.md-editor').isVisible(),true);
+			if(url==='/setting') assert.equal(await page.locator('#nsk-right-panel-container').isVisible(),false);
+			assert.deepEqual(errors,[]);
+		} finally {await context.close();}
+	}
+});
+
+test("手机版块导航：菜单保留真实链接并支持 Escape 关闭", async () => {
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:390,height:844}});
+	try {
+		const button=page.getByRole('button',{name:'所有版块',exact:true});
+		await button.click();
+		assert.equal(await page.locator('dialog.nsmax-mobile-nav').isVisible(),true);
+		assert.ok(await page.locator('.nsmax-mobile-nav a[href*="/categories/"]').count()>=7);
+		await page.keyboard.press('Escape');
+		assert.equal(await page.locator('dialog.nsmax-mobile-nav').isVisible(),false);
+		assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+		assert.deepEqual(errors,[]);
+	} finally {await context.close();}
+});
+
 test("版本和生成产物同步", () => {
 	const fs = require("node:fs");
 	const path = require("node:path");
