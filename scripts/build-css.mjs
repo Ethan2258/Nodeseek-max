@@ -11,7 +11,8 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import vm from "node:vm";
 
 const root = new URL("..", import.meta.url);
-const source = readFileSync(new URL("nodeseek-max.user.js", root), "utf8");
+// Windows 工作树通常是 CRLF，而 Linux CI checkout 是 LF；先统一换行，保证生成产物跨平台完全一致。
+const source = readFileSync(new URL("nodeseek-max.user.js", root), "utf8").replace(/\r\n?/g, "\n");
 const version = source.match(/^\/\/ @version\s+(\S+)\s*$/m)?.[1];
 if (!version) throw new Error("未找到 @version");
 
@@ -185,7 +186,7 @@ const fontFaces = fonts.map((font) => `@font-face {
 const banner = (kind) => `/*
  * NodeSeek Max 主题 v${version}（${kind}）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
- * 主题源码在脚本的 modern_theme_default 中。默认设置：简洁风格、黑白强调色、分隔行布局、Inter 字体。
+	 * 主题源码在脚本的 modern_theme_default 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
  * https://github.com/Ethan2258/Nodeseek-max · GPL-3.0-only
  */`;
@@ -195,7 +196,7 @@ const userCss = `/* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
 @version        ${version}
-@description    NodeSeek / DeepFlood 现代化主题：黑白灰配色、大圆角卡片、Inter + JetBrains Mono 字体、优化排版。
+@description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
 @homepageURL    https://github.com/Ethan2258/Nodeseek-max
