@@ -5593,6 +5593,7 @@
 		--nsmax-link:var(--link);
 		--nsmax-brand-soft:var(--brand-soft);
 		--nsmax-pin-bg:var(--mark-soft);
+		--nsmax-icon-star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke-linejoin='round' stroke-width='4' stroke='%23000' d='m23.999 5-6.113 12.478L4 19.49l10.059 9.834L11.654 43 24 36.42 36.345 43 33.96 29.325 44 19.491l-13.809-2.013L24 5Z'/%3E%3C/svg%3E");
 		--nsmax-seg-bg:var(--panel-alt);
 		--nsmax-seg-thumb:var(--panel);
 		--nsmax-code-bg:var(--panel-alt);
@@ -5878,14 +5879,8 @@
 	html:root:root:root:root #nsk-body-left .comment-menu [title="收藏"] {
 		--nsmax-action-icon:var(--nsmax-icon-star);
 	}
-	html:root:root:root:root #nsk-body-left .comment-menu [title="收藏"]::before {
-		display:none!important;
-	}
 	html:root:root:root:root #nsk-body-left .comment-menu [title="收藏"] > svg {
-		display:block!important;
-		width:16px!important;
-		height:16px!important;
-		color:inherit!important;
+		display:none!important;
 	}
 	html:root:root:root:root #nsk-body-left ul.comments .menu-item[title="引用"]::after,
 	html:root:root:root:root #nsk-body-left ul.comments .menu-item[title="回复"]::after {

@@ -10,6 +10,8 @@ html[data-nsmax-theme][data-nsmax-palette=claude][data-nsmax-style=flat] body {
   --nsmax-accent:var(--brand); --nsmax-on-accent:var(--action-text);
   --nsmax-brand:var(--mark); --nsmax-on-brand:var(--mark-text); --nsmax-link:var(--link);
   --nsmax-brand-soft:var(--brand-soft); --nsmax-pin-bg:var(--mark-soft);
+  /* IconPark star from the real NodeSeek sprite. */
+  --nsmax-icon-star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke-linejoin='round' stroke-width='4' stroke='%23000' d='m23.999 5-6.113 12.478L4 19.49l10.059 9.834L11.654 43 24 36.42 36.345 43 33.96 29.325 44 19.491l-13.809-2.013L24 5Z'/%3E%3C/svg%3E");
   --nsmax-seg-bg:var(--panel-alt); --nsmax-seg-thumb:var(--panel); --nsmax-code-bg:var(--panel-alt);
   --nsmax-bubble:var(--panel-hover); --nsmax-on-bubble:var(--text);
   --nsmax-r-chip:var(--r-sm); --nsmax-r-control:var(--r-input); --nsmax-r-card:var(--r); --nsmax-r-frame:var(--r);
@@ -73,8 +75,7 @@ html[data-nsmax-theme] #nsk-body-left .comment-menu [title="反对"] {--nsmax-ac
 html[data-nsmax-theme] #nsk-body-left .comment-menu [title="引用"] {--nsmax-action-icon:var(--nsmax-icon-quote);}
 html[data-nsmax-theme] #nsk-body-left .comment-menu [title="回复"] {--nsmax-action-icon:var(--nsmax-icon-reply);}
 html[data-nsmax-theme] #nsk-body-left .comment-menu [title="收藏"] {--nsmax-action-icon:var(--nsmax-icon-star);}
-html[data-nsmax-theme] #nsk-body-left .comment-menu [title="收藏"]::before {display:none!important;}
-html[data-nsmax-theme] #nsk-body-left .comment-menu [title="收藏"] > svg {display:block!important;width:16px!important;height:16px!important;color:inherit!important;}
+html[data-nsmax-theme] #nsk-body-left .comment-menu [title="收藏"] > svg {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments .menu-item[title="引用"]::after,html[data-nsmax-theme] #nsk-body-left ul.comments .menu-item[title="回复"]::after {content:attr(title)!important;}
 html[data-nsmax-theme] #nsk-body-left article.post-content blockquote {border-left-color:var(--brand)!important;background:var(--panel-alt)!important;}
 html[data-nsmax-theme] #nsk-body-left article.post-content pre {position:relative;}
