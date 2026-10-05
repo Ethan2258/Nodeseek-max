@@ -6776,13 +6776,14 @@ html:root:root:root:root #nsk-body-left .content-item .author-info .role-tag {
 }
 @media(min-width:861px) {
 	html:root:root:root:root #nsk-body>#nsk-right-panel-container {
-		position:static!important;
+		position:sticky!important;
+		top:76px!important;
 		align-self:start!important;
 		max-height:none!important;
 		overflow:visible!important;
 		overscroll-behavior:initial;
-		scrollbar-width:auto;
-		scrollbar-color:auto;
+		scrollbar-width:none;
+		scrollbar-color:transparent transparent;
 		gap:16px!important;
 	}
 	html:root:root:root:root #nsk-body>#nsk-right-panel-container>* {

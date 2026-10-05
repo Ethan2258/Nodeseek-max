@@ -788,8 +788,8 @@ test("搜索侧栏：热榜最近浏览恢复、随页面滚动与统计链接�
 		const side=page.locator('#nsk-right-panel-container'),main=page.locator('#nsk-body-left');
 		assert.ok(Math.abs((await side.boundingBox()).y-(await main.boundingBox()).y)<=1);
 		await page.evaluate(()=>window.scrollTo(0,800));await page.waitForTimeout(50);
-		assert.ok((await side.boundingBox()).y<=(await main.boundingBox()).y+1);
-		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'static');
+		assert.ok(Math.abs((await side.boundingBox()).y-76)<=2);
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'sticky');
 		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'visible');
 		for(const [label,href]of[['鸡腿','/credit'],['星辰','/stardust/list'],['主题帖','/space/1#/discussions'],['评论数','/space/1#/comments']])assert.equal(await page.locator('.nsmax-account-stat').filter({has:page.locator('dt').filter({hasText:label})}).getAttribute('href'),href);
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'个人设置',exact:true}).getAttribute('href'),'/setting');
