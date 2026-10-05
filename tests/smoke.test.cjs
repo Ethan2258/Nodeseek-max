@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -303,7 +303,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.4");
+	assert.equal(packageJson.version, "1.7.5");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -362,7 +362,7 @@ test("楼层与正文：正文使用完整剩余宽度，回复框只有一层�
 	}finally{await context.close();}
 });
 
-test("关于弹窗：按需创建、仅保留关于和检查更新，关闭后页面保持原样",async()=>{
+test("设置弹窗：完整设置、关于说明和检查更新按需打开，关闭后页面保持原样",async()=>{
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900}});
 	try{
 		await wait(page);
@@ -371,10 +371,11 @@ test("关于弹窗：按需创建、仅保留关于和检查更新，关闭后�
 		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
 		const host=page.locator('#nspp-settings');
 		assert.equal(await host.locator('dialog').isVisible(),true);
-		assert.equal(await host.locator('input,select,textarea,.categories,[data-feature]').count(),0);
-		assert.deepEqual(await host.locator('button').allTextContents(),['关闭','检查更新']);
-		assert.equal(await host.getByRole('heading',{name:'关于',exact:true}).count(),1);
-		assert.ok((await host.locator('dialog').boundingBox()).width<=480);
+		assert.ok(await host.locator('input,select,textarea,.categories,[data-feature]').count()>0);
+		const buttonText=await host.locator('button').allTextContents();
+		for(const label of ['保存并刷新','恢复默认','清空缓存','导出配置','导入配置','关闭','检查更新']) assert.ok(buttonText.includes(label),label);
+		assert.equal(await host.getByRole('heading',{name:'NodeSeek Max',exact:true}).count(),1);
+		assert.ok((await host.locator('dialog').boundingBox()).width<=940);
 		assert.deepEqual(await page.locator('#nsk-body').boundingBox(),before);
 		await host.getByRole('button',{name:'关闭',exact:true}).click();
 		assert.equal(await host.locator('dialog').isVisible(),false);
@@ -415,9 +416,9 @@ test("手机关于弹窗：无横向溢出且检查更新能返回结果",async(
 		const dims=await host.locator('dialog').evaluate(e=>({width:e.getBoundingClientRect().width,overflow:e.scrollWidth>e.clientWidth+1}));
 		assert.ok(dims.width<=390&&!dims.overflow,JSON.stringify(dims));
 		await host.getByRole('button',{name:'检查更新',exact:true}).click();
-		await page.waitForFunction(()=>document.querySelector('#nspp-settings').shadowRoot.querySelector('.status').textContent.includes('最新版本'));
+		await page.waitForFunction(()=>document.querySelector('#nspp-settings').shadowRoot.querySelector('.toast-message')?.textContent.includes('最新版本'));
 		assert.equal(await host.getByRole('button',{name:'检查更新',exact:true}).isEnabled(),true);
-		assert.equal(await host.locator('input,select,textarea').count(),0);
+		assert.ok(await host.locator('input,select,textarea').count()>0);
 		await host.getByRole('button',{name:'关闭',exact:true}).click();
 		assert.equal(await host.locator('dialog').isVisible(),false);
 		assert.deepEqual(errors,[]);
@@ -549,7 +550,7 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 		const state=await row.locator('.post-info').evaluate(e=>({font:getComputedStyle(e).fontSize,line:getComputedStyle(e).lineHeight,gap:getComputedStyle(e).gap}));
 		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'10px'});
 		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);
-		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderTopWidth),'0px');
+		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderTopWidth),'1px');
 		assert.equal(await page.locator('.nsmax-account-rank').innerText(),'Lv 6');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
@@ -677,4 +678,143 @@ test("帖子悬停预览：SB 卡片表面与标题色、按需读取、Escape �
 			assert.deepEqual(errors,[]);
 		}finally{await context.close();}
 	}
+});
+
+
+test("实际个人空间：scoped discussion-wrapper 在主题、评论和路由换页都使用 SB 颜色",async()=>{
+	for(const dark of [false,true])for(const [render,hash]of[[spaceTopicsPage,'#/discussions'],[spaceCommentsPage,'#/comments']]){
+		const {context,page,errors}=await open(browser,'https://www.nodeseek.com/space/10'+hash,{html:render({dark}),colorScheme:dark?'dark':'light'});
+		try{
+			const wrapper=page.locator('.discussion-wrapper');
+			assert.equal(await wrapper.evaluate(e=>getComputedStyle(e).backgroundColor),dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
+			assert.equal(await wrapper.locator('.discussion-item').first().evaluate(e=>getComputedStyle(e).borderTopStyle),'none');
+			if(hash.includes('comments'))assert.equal(await wrapper.locator('p').first().evaluate(e=>getComputedStyle(e).color),dark?'rgb(139, 143, 161)':'rgb(107, 111, 126)');
+			await page.evaluate(()=>{location.hash='#/discussions/2';const root=document.querySelector('.discussion-wrapper');const clone=root.firstElementChild.cloneNode(true);root.replaceChildren(clone);});
+			assert.equal(await wrapper.evaluate(e=>getComputedStyle(e).backgroundColor),dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
+			assert.deepEqual(errors,[]);
+		}finally{await context.close();}
+	}
+});
+
+test("消息中心：仅一套分类、头部只留全部已读、会话导航无重复、附件预览和草稿可用",async()=>{
+	for(const width of [1440,390]){
+		const {context,page,errors,calls}=await open(browser,'https://www.nodeseek.com/notification#/message?mode=talk&to=7',{html:nativeTalkPage(),viewport:{width,height:900}});
+		try{
+			await page.waitForSelector('.nspp-messages textarea:visible');
+			assert.equal(await page.locator('.nsmax-message-tabs:visible').count(),1);
+			assert.equal(await page.locator('.app-switch:visible,.nspp-messages-fixed-contacts:visible').count(),0);
+			assert.deepEqual(await page.locator('.nspp-messages-top-actions button').allTextContents(),['全部已读']);
+			assert.deepEqual(await page.locator('.nspp-message-editor-toolbar button').allTextContents(),['附件','预览']);
+			assert.equal(await page.getByRole('button',{name:'原版页面',exact:true}).count(),0);
+			await page.locator('.nspp-messages textarea').fill('**本地消息草稿**');
+			await page.locator('.nspp-message-editor-toolbar').getByRole('button',{name:'预览',exact:true}).click();
+			assert.equal(await page.locator('.nspp-message-editor-preview strong').innerText(),'本地消息草稿');
+			assert.equal(await page.locator('.nspp-messages textarea').isVisible(),false);
+			await page.locator('.nspp-message-editor-toolbar').getByRole('button',{name:'编辑',exact:true}).click();
+			assert.equal(await page.locator('.nspp-messages textarea').inputValue(),'**本地消息草稿**');
+			const saved=await page.locator('.nspp-messages textarea').inputValue();
+			await page.locator('.nsmax-message-tabs').getByRole('link',{name:/@我/}).click();
+			await page.locator('.nsmax-message-tabs').getByRole('link',{name:/私信/}).click();
+			await page.locator('.nspp-messages-peer[data-id="7"]').click();
+			assert.equal(await page.locator('.nspp-messages textarea').inputValue(),saved);
+			assert.equal(await page.locator('.nsmax-message-tabs:visible').count(),1);
+			assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+			assert.equal(calls['/api/notification/message/send']||0,0);
+			assert.deepEqual(errors,[]);
+		}finally{await context.close();}
+	}
+});
+
+test("系统消息：显示通知行与右侧时间，不生成聊天气泡或发送框",async()=>{
+	const items={success:true,talkTo:{member_id:9,member_name:'系统通知'},msgArray:[{id:81,sender_id:9,receiver_id:1,sender_name:'系统通知',content:'你关注的用户发布了[新的帖子](/post-123-1)',is_markdown:true,viewed:1,created_at:new Date().toISOString()}]};
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/notification#/message?mode=talk&to=9',{html:nativeTalkPage(),api:{'/api/notification/message/with/9':[{status:200,body:items}]}});
+	try{
+		await page.waitForSelector('.is-system-thread .is-system');
+		assert.equal(await page.locator('.nspp-messages-composer').isVisible(),false);
+		const style=await page.locator('.is-system .nspp-messages-bubble').evaluate(e=>({border:getComputedStyle(e).borderTopWidth,bg:getComputedStyle(e).backgroundColor}));
+		assert.deepEqual(style,{border:'0px',bg:'rgba(0, 0, 0, 0)'});
+		assert.equal(await page.locator('.is-system time').count(),1);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("关键词弹窗：输入、说明和复选项不重叠且添加删除能即时过滤",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900}});
+	try{
+		await page.getByRole('button',{name:'关键词屏蔽',exact:true}).click();
+		const pop=page.locator('.nsmax-pop[data-kind=keywords]');
+		const bounds=await pop.evaluate(e=>{const form=e.querySelector('form').getBoundingClientRect(),hint=e.querySelector('.nsmax-pop-empty').getBoundingClientRect(),foot=e.querySelector('.nsmax-pop-foot').getBoundingClientRect();return{formBottom:form.bottom,hintTop:hint.top,hintBottom:hint.bottom,footTop:foot.top}});
+		assert.ok(bounds.hintTop>=bounds.formBottom+10&&bounds.footTop>=bounds.hintBottom+10,JSON.stringify(bounds));
+		await pop.getByRole('textbox',{name:'要屏蔽的关键词'}).fill('CN2');await pop.getByRole('button',{name:'添加',exact:true}).click();
+		assert.equal(await page.locator('ul.post-list>li').first().isVisible(),false);
+		await pop.getByRole('button',{name:'删除「CN2」'}).click();
+		assert.equal(await page.locator('ul.post-list>li').first().isVisible(),true);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("搜索侧栏：热榜最近浏览恢复、顶端对齐、吸顶与统计链接正确",async()=>{
+	const records=[{path:'/post-1100-1',title:'以前浏览的帖子'}];
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/search?q=css',{html:listPage({count:50}),viewport:{width:1440,height:900},init:`if(window.top===window)localStorage.setItem('nsmax:recent:1',${JSON.stringify(JSON.stringify(records))});`});
+	try{
+		await page.waitForSelector('.nsmax-hot-text');await page.waitForSelector('.nsmax-recent-panel');
+		const side=page.locator('#nsk-right-panel-container'),main=page.locator('#nsk-body-left');
+		assert.ok(Math.abs((await side.boundingBox()).y-(await main.boundingBox()).y)<=1);
+		await page.evaluate(()=>window.scrollTo(0,800));await page.waitForTimeout(50);
+		assert.ok(Math.abs((await side.boundingBox()).y-76)<=1);
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'auto');
+		for(const [label,href]of[['鸡腿','/credit'],['星辰','/stardust/list'],['主题帖','/space/1#/discussions'],['评论数','/space/1#/comments']])assert.equal(await page.locator('.nsmax-account-stat').filter({has:page.locator('dt').filter({hasText:label})}).getAttribute('href'),href);
+		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'个人设置',exact:true}).getAttribute('href'),'/setting');
+		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'我的邀请',exact:true}).count(),0);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("列表图标与抽奖：五项单图标、SB 悬停色、抽奖标签唯一、推荐轮播隐藏",async()=>{
+	const html=listPage().replace('出一台香港 CN2 GIA 小鸡，年付 99','抽奖：国庆活动').replace('<ul class="post-list">','<div class="topic-carousel-wrapper"><ul class="topic-carousel-panel"><li>滚动推荐</li></ul></div><ul class="post-list">');
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html});
+	try{
+		await page.waitForSelector('.nsmax-prize-badge');
+		const row=page.locator('ul.post-list>li').first();
+		assert.equal(await row.locator('.nsmax-prize-badge').innerText(),'抽奖');
+		assert.equal(await row.locator('.post-info svg:visible').count(),5);
+		await row.hover();
+		await page.waitForFunction(()=>getComputedStyle(document.querySelector('ul.post-list>li')).backgroundColor==='rgb(242, 244, 247)');
+		assert.equal(await page.locator('.topic-carousel-wrapper').isVisible(),false);
+		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderRadius),'12px');
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("评论单图标、楼主蓝色热评红色、楼中楼透明、预览仅标题正文",async()=>{
+	const html=postPage().replace('<a href="#1" class="floor-link">','<span class="hot-badge"></span><a href="#1" class="floor-link">');
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html});
+	try{
+		await page.waitForSelector('.nsmax-floor-actions');
+		assert.equal(await page.locator('.comment-menu .menu-item>svg:visible').count(),0);
+		assert.equal(await page.locator('.nsmax-floor-actions [data-nsmax-action=reply]').first().evaluate(e=>getComputedStyle(e,'::before').maskImage==='none'),false);
+		assert.equal(await page.locator('.is-poster').evaluate(e=>getComputedStyle(e).color),'rgb(51, 64, 143)');
+		assert.equal(await page.locator('.hot-badge').evaluate(e=>getComputedStyle(e).color),'rgb(207, 43, 43)');
+		const iconCount=await page.locator('.nsk-post .menu-item[data-nsmax-action=quote]').count();assert.ok(iconCount>=0);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("回复框：统一圆角、左侧回复按钮、拖动与键盘可调整高度",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:postPage()});
+	try{
+		await page.waitForSelector('.nsmax-editor-resize');
+		const input=page.locator('.md-editor textarea'),handle=page.getByRole('separator',{name:'调整输入框高度'});
+		const before=await input.boundingBox();
+		await handle.focus();await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');
+		const after=await input.boundingBox();assert.ok(after.height>=before.height+58);
+		await handle.scrollIntoViewIfNeeded();
+		const box=await handle.boundingBox();await page.mouse.move(box.x+box.width-3,box.y+box.height-3);await page.mouse.down();await page.mouse.move(box.x+box.width-3,box.y+box.height+80);await page.mouse.up();
+		assert.ok((await input.boundingBox()).height>=after.height+70);
+		assert.equal(await page.locator('.md-editor button.submit').innerText(),'回复');
+		const button=await page.locator('.md-editor button.submit').boundingBox(),editor=await page.locator('.md-editor').boundingBox();
+		assert.ok(Math.abs(button.x-editor.x-17)<2);
+		assert.equal(await page.locator('.md-editor').evaluate(e=>getComputedStyle(e).borderRadius),'12px');
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
 });

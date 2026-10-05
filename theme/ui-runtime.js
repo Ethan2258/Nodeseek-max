@@ -3,10 +3,36 @@
 		for (const item of document.querySelectorAll(".card-block > .card-item")) item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
 		for (const readme of document.querySelectorAll(".readme")) readme.toggleAttribute("data-nsmax-empty-readme", /^(没有找到readme|暂无简介|暂无介绍)/i.test(readme.textContent.trim()));
 	}
+	function nsmaxCleanPostActions() {
+		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"] };
+		for (const action of document.querySelectorAll(".comment-menu .menu-item")) {
+			const href = action.querySelector("svg use")?.getAttribute("href")?.slice(1);
+			const label = action.title || Array.from(action.querySelectorAll("span")).map(span=>span.textContent.trim()).find(text=>/^(点赞|加鸡腿|反对|收藏|引用|回复)$/.test(text)) || names[href]?.[0];
+			const icon = ({ "点赞":"thumbup","加鸡腿":"drumstick","反对":"thumbdown","收藏":"star","引用":"quote","回复":"reply" })[label];
+			if (!icon) continue;
+			action.dataset.nsmaxAction = icon;
+			if (!action.title) action.title = label;
+			if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label",label);
+			for (const svg of action.querySelectorAll(":scope > svg")) { svg.setAttribute("data-nsmax-action-original",""); svg.style.setProperty("display","none","important"); }
+		}
+	}
+	function nsmaxPrizeBadges() {
+		for (const title of document.querySelectorAll(".post-list-item .post-title,.nsk-post>.post-title h1")) {
+			const link = title.querySelector("a");
+			if (!link) continue;
+			const giveaway = /抽奖/.test(link.textContent);
+			let badge = title.querySelector(":scope > .nsmax-prize-badge");
+			if (giveaway && !badge) { badge = document.createElement("span"); badge.className = "nsmax-prize-badge"; badge.textContent = "抽奖"; link.before(badge); }
+			else if (!giveaway && badge) badge.remove();
+		}
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
+		const images = new WeakSet();
 		const scan = () => {
+			nsmaxPrizeBadges();
+			nsmaxCleanPostActions();
 			const controller = document.querySelector(".post-list-controler");
 			if (controller && !controller.querySelector(".nsmax-nq-entry")) {
 				const link = document.createElement("a");
@@ -42,19 +68,34 @@
 				}
 			}
 			for (const row of document.querySelectorAll("ul.post-list:not(.topic-carousel-panel)>li.post-list-item")) {
+				const icons = [[".info-author","user"],[".nsmax-inline-category","board"],[".info-views","eye"],[".info-comments-count","comment"],[".info-last-commenter","user"]];
+				for (const [selector,name] of icons) {
+					const item = row.querySelector(selector); if (!item) continue;
+					for (const svg of item.querySelectorAll("svg:not(.nsmax-meta-icon)")) { svg.setAttribute("data-nsmax-meta-original",""); svg.style.setProperty("display","none","important"); }
+					if (!item.querySelector(".nsmax-meta-icon")) { const icon = toolIcon(name); icon.classList.add("nsmax-meta-icon"); item.prepend(icon); }
+				}
 				if (row.hasAttribute("data-nsmax-meta-ordered")) continue;
 				const info = row.querySelector(".post-info");
 				if (!info) continue;
 				const author = info.querySelector(".info-author"), time = info.querySelector(".info-last-comment-time"), views = info.querySelector(".info-views"), count = info.querySelector(".info-comments-count"), last = info.querySelector(".info-last-commenter");
 				const category = info.querySelector(".post-category");
 				const inline = category?.cloneNode(true);
-				if (inline) { inline.className = "nsmax-inline-category"; inline.prepend(toolIcon("folder")); }
+				if (inline) { inline.className = "nsmax-inline-category"; const categoryIcon = toolIcon("board"); categoryIcon.classList.add("nsmax-meta-icon"); inline.prepend(categoryIcon); }
 				for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
 				row.setAttribute("data-nsmax-meta-ordered", "");
 			}
 			nsmaxPrepareSpace();
 			const isPost = /^\/post-\d+/.test(location.pathname);
 			if (!isPost && !/^\/(?:new|edit)-discussion/.test(location.pathname)) return;
+			for (const image of document.querySelectorAll(".nsk-post article.post-content img,ul.comments article.post-content img")) {
+				if (images.has(image)) continue; images.add(image);
+				const classify = () => {
+					const emoji = /emoji|smoji|expression|emoticon|yct\d|xhj\d|表情/i.test(image.className+" "+image.alt+" "+image.src);
+					const standalone = image.parentElement?.matches("p,a") && !image.parentElement.textContent.trim();
+					if (!emoji && standalone && image.naturalWidth>96 && image.naturalHeight>96) { image.classList.add("nsmax-post-image"); image.closest("p")?.classList.add("nsmax-image-paragraph"); }
+				};
+				if (image.complete) classify(); else image.addEventListener("load",classify,{once:true,signal:ctx.signal});
+			}
 			if (isPost) for (const item of document.querySelectorAll("ul.comments li.content-item")) {
 				const menu = item.querySelector(":scope > .comment-menu");
 				const floor = item.querySelector(":scope > .nsk-content-meta-info > .floor-link-wrapper");
@@ -131,6 +172,21 @@
 				while (pane.parentElement && pane.parentElement !== body && pane.parentElement !== editor) pane = pane.parentElement;
 				if (pane !== body && pane !== editor) { pane.setAttribute("data-nsmax-editor-pane", ""); pane.before(surface); surface.append(pane, preview); }
 				else { body.append(surface); surface.append(preview); }
+				const resize = document.createElement("div");
+				resize.className = "nsmax-editor-resize"; resize.tabIndex = 0;
+				resize.setAttribute("role","separator"); resize.setAttribute("aria-label","调整输入框高度"); resize.setAttribute("aria-orientation","horizontal");
+				let drag;
+				const setHeight = height => { const value = Math.max(150,Math.min(1000,height)); editor.style.setProperty("--nsmax-editor-height",value+"px"); resize.setAttribute("aria-valuenow",String(Math.round(value))); cm?.refresh(); };
+				const beginDrag = event => { if (event.button !== 0) return; event.preventDefault(); drag={ y:event.clientY,height:surface.getBoundingClientRect().height }; resize.setPointerCapture?.(event.pointerId); };
+				const moveDrag = event => { if (drag) { event.preventDefault(); setHeight(drag.height+event.clientY-drag.y); } };
+				const endDrag = () => { drag=undefined; };
+				resize.addEventListener("pointerdown", beginDrag, { signal:ctx.signal });
+				resize.addEventListener("pointermove", moveDrag, { signal:ctx.signal });
+				resize.addEventListener("mousedown", beginDrag, { signal:ctx.signal });
+				for (const type of ["pointermove","mousemove"]) document.addEventListener(type, moveDrag, { signal:ctx.signal, passive:false });
+				for (const type of ["pointerup","pointercancel","mouseup","lostpointercapture"]) document.addEventListener(type,endDrag,{signal:ctx.signal});
+				resize.addEventListener("keydown",event=>{ if (["ArrowDown","ArrowUp"].includes(event.key)) { event.preventDefault(); setHeight(surface.getBoundingClientRect().height+(event.key==="ArrowDown"?30:-30)); } },{signal:ctx.signal});
+				surface.append(resize);
 				const previewButton = controls.lastElementChild;
 				previewButton.addEventListener("click", () => contentButton.setAttribute("aria-pressed",String(!previewing)), { signal:ctx.signal });
 				const contentButton = document.createElement("button"); contentButton.type = "button"; contentButton.setAttribute("aria-pressed","true"); contentButton.textContent = "内容"; contentButton.setAttribute("aria-label", "内容");
@@ -139,6 +195,7 @@
 				surface.before(controls);
 				body.prepend(head);
 				const submit = editor.querySelector(".topic-select,.submit-row");
+				if (isPost) { const button = editor.querySelector("button.submit,button[type=submit]"); if (button) button.textContent="回复"; }
 				if (!submit) { const footer = document.createElement("div"); footer.className = "submit-row"; editor.append(footer); }
 				if (cm) cm.on("change", render);
 				else input.addEventListener("input", render, { signal: ctx.signal });

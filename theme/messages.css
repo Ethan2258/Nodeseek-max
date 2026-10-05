@@ -1,4 +1,4 @@
-html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=new]>:not(.nspp-messages),html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=native]>.nspp-messages {display:none!important;}
+html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=new]>:not(.nspp-messages):not(.nsmax-message-tabs),html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=native]>.nspp-messages {display:none!important;}
 html[data-nsmax-theme]:root:root:root .nspp-messages {display:flex;flex-direction:column;height:min(760px,calc(100dvh - 110px));min-height:450px;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font:13px/1.6 var(--font-sans);}
 html[data-nsmax-theme] .nspp-messages [hidden],html[data-nsmax-theme] .nspp-messages[hidden] {display:none!important;}
 html[data-nsmax-theme] .nspp-messages * {box-sizing:border-box;min-width:0;}
@@ -79,4 +79,48 @@ html[data-nsmax-theme] .nspp-message-native-toolbar {padding:8px;}
  html[data-nsmax-theme] .nspp-messages-compose-actions small {display:none;}
  html[data-nsmax-theme] .nspp-messages-heading {order:3;flex-basis:100%;}
  html[data-nsmax-theme] .nspp-messages-thread {padding:12px;}
+}
+
+/* One category bar outside the workspace; top actions only mark-all. */
+html[data-nsmax-theme]:root:root:root .nspp-messages-container>.nsmax-message-tabs {display:flex!important;align-items:center!important;gap:8px!important;padding:0!important;margin:0 0 14px!important;min-height:34px!important;}
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs>a {display:inline-flex!important;align-items:center!important;gap:5px!important;padding:5px 12px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel)!important;color:var(--text-muted)!important;font:13px/22px var(--font-sans)!important;}
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs>a[aria-current=page] {background:var(--action)!important;border-color:var(--action)!important;color:var(--action-text)!important;}
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs .nspp-messages-count {font:11px/16px var(--font-sans)!important;min-width:16px;border-radius:999px;background:var(--mark);color:var(--mark-text);padding:0 4px;text-align:center;}
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs [hidden] {display:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages-top .nsmax-message-tabs,html[data-nsmax-theme]:root:root:root .nspp-messages-fixed-contacts {display:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages-container[data-nspp-message-view=new]>.app-switch {display:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages {height:min(780px,calc(100dvh - 150px))!important;min-height:420px!important;border:1px solid var(--line)!important;border-radius:12px!important;box-shadow:var(--shadow-base)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-workspace {grid-template-columns:280px minmax(0,1fr)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-sidebar {background:var(--panel)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-chat-profile {display:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-peer {padding:12px 10px!important;margin:2px 0!important;border:0!important;border-radius:8px!important;gap:10px!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-peer-title strong {font:500 13px/20px var(--font-sans)!important;color:var(--text)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-snippet {line-height:20px!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-peer[aria-pressed=true] {background:var(--brand-soft)!important;box-shadow:inset 2px 0 var(--brand)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-thread {padding:18px 20px!important;background:var(--panel-alt)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-message {gap:9px!important;margin:10px 0!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-bubble {padding:9px 12px!important;max-width:min(78%,600px)!important;line-height:1.65!important;background:var(--panel)!important;border:1px solid var(--line)!important;box-shadow:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .is-mine .nspp-messages-bubble {background:var(--brand-soft)!important;border-color:var(--brand-border)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .is-system-thread {background:var(--panel)!important;padding:0 20px!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-message.is-system {display:grid!important;grid-template-columns:24px minmax(0,1fr) auto!important;align-items:start!important;gap:12px!important;margin:0!important;padding:15px 0!important;border-bottom:1px solid var(--line-soft)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .is-system .nspp-messages-avatar {width:20px!important;height:20px!important;margin-top:2px;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .is-system .nspp-messages-bubble {max-width:none!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-system-time {margin:0!important;white-space:nowrap;text-align:right;font:11px/22px var(--font-sans)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-composer {padding:12px 16px!important;background:var(--panel)!important;border-top:1px solid var(--line)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-body {border:1px solid var(--line)!important;border-radius:8px!important;overflow:hidden;background:var(--panel-alt)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-composer textarea {min-height:80px!important;max-height:160px!important;resize:vertical!important;padding:10px 12px!important;background:transparent!important;outline:none!important;font:14px/1.65 var(--font-sans)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-preview {min-height:80px!important;max-height:210px!important;padding:10px 12px!important;font:14px/1.65 var(--font-sans)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages-composer [hidden] {display:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-compose-actions {display:flex!important;flex-wrap:nowrap!important;gap:8px!important;padding:10px 0 0!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-toolbar {display:flex!important;flex:1!important;width:auto!important;align-items:center!important;gap:6px!important;padding:0!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-toolbar button {display:inline-flex!important;align-items:center!important;gap:5px!important;border:1px solid var(--line)!important;border-radius:999px!important;padding:4px 10px!important;background:var(--panel)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-toolbar svg {width:14px!important;height:14px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.7!important;stroke-linecap:round;stroke-linejoin:round;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-compose-actions small {font:11px/20px var(--font-sans)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-send {margin:0 0 0 auto!important;height:32px!important;padding:0 16px!important;}
+@media(max-width:700px){
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-workspace {grid-template-columns:minmax(0,1fr)!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-compose-actions small {display:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-thread {padding:12px!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-message.is-system {grid-template-columns:20px minmax(0,1fr)!important;gap:8px!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-system-time {grid-column:2!important;text-align:left!important;}
 }

@@ -118,7 +118,11 @@ ${editor.replace("说点什么…", "正文，支持 Markdown").replace("发布�
 
 const nativeSpacePage = (options={}) => shell("Steve 的主页 - NodeSeek", `<div class="nsk-container"><div class="head-container"><img src="${AVATAR}" alt="Steve"><div><h1>Steve</h1><p>一句话介绍自己</p></div><a class="btn" href="/notification#/message?mode=talk&to=10">私信</a></div><div class="selector"><a class="select-item active" href="#/info">概况</a><a class="select-item" href="#/posts">主题帖</a><a class="select-item" href="#/comments">评论</a><div class="selector-right-side"><div class="card-block">${[["加入天数",659],["等级",3],["鸡腿数目",1257],["主题帖数",100],["评论数目",873]].map(([label,count])=>`<div class="card-item"><div>${label}</div><div>${count}</div></div>`).join('')}<div class="card-item"></div></div><div class="readme">没有找到readme 🙄</div><div class="comments-list" style="background-color:rgb(48,48,48);color:white">${Array.from({length:4},(_,i)=>`<div><a href="/post-${4000+i}-1">测试主题 ${i+1}</a><p style="color:rgb(144,144,144)">测试评论摘要，保持真实链接</p></div>`).join('')}</div></div></div></div>`,{...options,standalone:true});
 
+const spaceTopicsPage = (options={}) => nativeSpacePage(options).replace(/<div class="comments-list"[\s\S]*?<\/div><\/div><\/div><\/div><\/div>/, `<div class="discussion-wrapper" data-v-18f8c01b>${Array.from({length:6},(_,i)=>`<div class="discussion-item" data-v-18f8c01b><a href="/post-${4000+i}-1" data-v-18f8c01b><span data-v-18f8c01b>真实结构主题 ${i+1}</span><span style="color:rgb(255,152,152)" data-v-18f8c01b><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span></a><span></span></div>`).join('')}</div></div></div></div>`);
+const spaceCommentsPage = (options={}) => spaceTopicsPage(options).replace(/<div class="discussion-item" data-v-18f8c01b><a href="(.*?)" data-v-18f8c01b>(.*?)<\/a><span><\/span><\/div>/g, '<a href="$1" class="discussion-item" data-v-18f8c01b>$2<span></span></a><a href="$1#1" data-v-18f8c01b><p data-v-18f8c01b>真实评论摘要</p></a>');
+
 module.exports = {
+	spaceTopicsPage,spaceCommentsPage,
 	nativeSpacePage,
 	newPostPage,
 	listPage,
