@@ -153,7 +153,9 @@
 				if (processed.has(item)) continue;
 				const paragraph = item.querySelector("article.post-content > p:first-child");
 				if (!paragraph || !/^\s*@/.test(paragraph.textContent)) continue;
-				const link = paragraph.querySelector("a[href]");
+				const link = Array.from(paragraph.querySelectorAll("a[href]")).find(anchor => {
+					try { const url = new URL(anchor.href, location.href); return url.origin === location.origin && /^\/post-\d+-\d+$/.test(url.pathname) && /^#\d+$/.test(url.hash); } catch { return false; }
+				});
 				if (!link) continue;
 				const url = new URL(link.href, location.href);
 				const parentId = url.hash.slice(1);

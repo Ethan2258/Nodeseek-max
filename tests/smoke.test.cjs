@@ -198,7 +198,7 @@ test("回复编辑器：真实嵌套结构可输入、引用和点击原生提�
 		assert.equal(await page.evaluate(() => window.__nativeSubmit), 1);
 		assert.equal(await page.locator(".md-editor textarea").inputValue(), "本地回归测试，不发送到论坛");
 		const masks = await page.locator('.comment-menu [title="点赞"],.comment-menu [title="引用"],.comment-menu [title="回复"]').evaluateAll(es => es.map(e => getComputedStyle(e,"::before").content));
-		assert.ok(masks.every(mask => mask === '""' || mask === "none"));
+		assert.ok(masks.every(mask => mask === '""'));
 		assert.equal(await page.locator('.nsmax-floor-actions .menu-item[data-nsmax-compact-action]').count(),15);
 		assert.equal(Object.keys(calls).some(key => key.startsWith("/api/account/getInfo/")), false);
 		assert.deepEqual(errors, []);
@@ -447,7 +447,7 @@ test("加载阶段：回复和过滤先就绪，下方慢资源不阻塞第一�
 
 test("评论追加：默认按需加载、去重、安全清理、楼中楼、操作入口和底部分页",async()=>{
 	const first=postPage().replaceAll('/page-2','/post-1000-2');
-	const second=postPage().replace('id="1"','id="4"').replace('id="2"','id="5"').replace('id="3"','id="6"').replace('收了，私信你','@buyer <a href="/post-1000-1#1">#1</a> 本地楼中楼').replaceAll('class="pager-pos pager-cur">1','class="pager-pos pager-cur">2').replaceAll('class="pager-next"','class="pager-end"').replace('价格不错，帮顶','<img src="/avatar/test" onerror="window.__unsafe=1">价格不错，帮顶');
+	const second=postPage().replace('id="1"','id="4"').replace('id="2"','id="5"').replace('id="3"','id="6"').replace('收了，私信你','<a href="/space/11">@buyer</a> <a href="/post-1000-1#1">#1</a> 本地楼中楼').replaceAll('class="pager-pos pager-cur">1','class="pager-pos pager-cur">2').replaceAll('class="pager-next"','class="pager-end"').replace('价格不错，帮顶','<img src="/avatar/test" onerror="window.__unsafe=1">价格不错，帮顶');
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:first,pages:{'/post-1000-2':second}});
 	try{
 		await page.waitForSelector('button.nspp-action');

@@ -6553,4 +6553,17 @@
 	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item:has(.post-title svg.pined):hover {
 		background:color-mix(in srgb,var(--mark-soft) 60%,var(--panel))!important;
 	}
+	html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item::before {
+		content:""!important;
+		display:block!important;
+		grid-area:icon!important;
+		justify-self:center!important;
+		width:16px!important;
+		height:16px!important;
+		background:currentColor!important;
+		mask:var(--nsmax-action-icon) center/contain no-repeat!important;
+	}
+	html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item>svg {
+		display:none!important;
+	}
 }
