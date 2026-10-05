@@ -115,6 +115,27 @@ test("深色模式：套件表面、文字和操作色同步切换", async () =>
 	await context.close();
 });
 
+test("跟随系统：不受站点 dark-layout 干扰，并随系统媒体查询切换", async () => {
+	const seed = { "nspp:settings:www.nodeseek.com": { "modern-theme": { colorMode: "system" } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ dark: true }), seed, colorScheme: "light" });
+	try {
+		await wait(page);
+		const light = await page.evaluate(() => ({
+			mode: document.documentElement.dataset.nsmaxColorMode,
+			dark: document.documentElement.hasAttribute("data-nsmax-dark"),
+			bodyDark: document.body.classList.contains("dark-layout")
+		}));
+		assert.deepEqual(light, { mode: "system", dark: false, bodyDark: false });
+		await page.evaluate(() => document.body.classList.add("dark-layout"));
+		await page.waitForTimeout(30);
+		assert.equal(await page.locator("html").evaluate(e => e.hasAttribute("data-nsmax-dark")), false);
+		await page.emulateMedia({ colorScheme: "dark" });
+		await page.waitForFunction(() => document.documentElement.hasAttribute("data-nsmax-dark"));
+		assert.equal(await page.locator("body").evaluate(e => e.classList.contains("dark-layout")), true);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
 test("通知页：按需加载 SB 消息中心，原站列表隐藏且不请求用户资料", async () => {
 	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/notification#", { html: notificationPage() });
 	await page.waitForSelector(".nsk-notification");
@@ -303,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.5");
+	assert.equal(packageJson.version, "1.7.6");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -476,7 +497,7 @@ test("回复预览与粘贴图片：保留草稿、返回输入和本地上传�
 		assert.equal(await page.locator('.md-editor .mde-toolbar').isVisible(),false);
 		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'Markdown',exact:true}).click();
 		assert.equal(await page.locator('.md-editor .mde-toolbar').isVisible(),true);
-		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'Markdown',exact:true}).click();
+		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'切换到纯文本',exact:true}).click();
 		await page.locator('.md-editor textarea').fill('**草稿测试**');
 		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
 		assert.equal(await page.locator('.nsmax-editor-preview strong').innerText(),'草稿测试');
@@ -548,7 +569,7 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 		assert.equal(ordered[2],'nsmax-inline-category');
 		assert.ok(ordered[3].includes('info-views'));
 		const state=await row.locator('.post-info').evaluate(e=>({font:getComputedStyle(e).fontSize,line:getComputedStyle(e).lineHeight,gap:getComputedStyle(e).gap}));
-		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'10px'});
+		assert.deepEqual(state,{font:'12px',line:'18px',gap:'8px'});
 		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);
 		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderTopWidth),'1px');
 		assert.equal(await page.locator('.nsmax-account-rank').innerText(),'Lv 6');
@@ -637,6 +658,8 @@ test("个人空间：去除黑底、注册天数、空统计和空介绍，主�
 			await page.waitForSelector('[data-nsmax-obsolete-stat]',{state:'attached'});
 			assert.equal(await page.locator('.card-block>.card-item:visible').count(),4);
 			assert.equal(await page.locator('.readme').isVisible(),false);
+			assert.equal(await page.locator('.nsmax-space-progress').count(),1);
+			assert.equal(await page.locator('.nsmax-space-progress>i>b').count(),1);
 			const color=await page.locator('.comments-list').evaluate(e=>getComputedStyle(e).backgroundColor);
 			assert.equal(color,dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
 			assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
@@ -652,8 +675,12 @@ test("发帖页：同一套编辑器、标题焦点、原生分类和深色提�
 		await page.locator('.post-title-input').fill('本地测试标题，不发布');
 		await page.locator('.category-select').selectOption('tech');
 		await page.locator('.md-editor textarea').fill('测试正文');
+		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'抽奖',exact:true}).click();
+		assert.match(await page.locator('.post-title-input').inputValue(),/^抽奖：/);
+		assert.match(await page.locator('.md-editor textarea').inputValue(),/开奖链接/);
 		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
-		assert.equal(await page.locator('.nsmax-editor-preview').innerText(),'测试正文');
+		assert.match(await page.locator('.nsmax-editor-preview').innerText(),/测试正文/);
+		assert.match(await page.locator('.nsmax-editor-preview').innerText(),/开奖链接/);
 		assert.equal(await page.locator('.category-select').inputValue(),'tech');
 		await page.waitForFunction(()=>getComputedStyle(document.querySelector('.md-editor button.submit')).backgroundColor==='rgb(28, 28, 30)');
 		assert.equal(await page.locator('.md-editor button.submit').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(28, 28, 30)');
@@ -753,7 +780,7 @@ test("关键词弹窗：输入、说明和复选项不重叠且添加删除能�
 	}finally{await context.close();}
 });
 
-test("搜索侧栏：热榜最近浏览恢复、顶端对齐、吸顶与统计链接正确",async()=>{
+test("搜索侧栏：热榜最近浏览恢复、随页面滚动与统计链接正确",async()=>{
 	const records=[{path:'/post-1100-1',title:'以前浏览的帖子'}];
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/search?q=css',{html:listPage({count:50}),viewport:{width:1440,height:900},init:`if(window.top===window)localStorage.setItem('nsmax:recent:1',${JSON.stringify(JSON.stringify(records))});`});
 	try{
@@ -761,13 +788,30 @@ test("搜索侧栏：热榜最近浏览恢复、顶端对齐、吸顶与统计�
 		const side=page.locator('#nsk-right-panel-container'),main=page.locator('#nsk-body-left');
 		assert.ok(Math.abs((await side.boundingBox()).y-(await main.boundingBox()).y)<=1);
 		await page.evaluate(()=>window.scrollTo(0,800));await page.waitForTimeout(50);
-		assert.ok(Math.abs((await side.boundingBox()).y-76)<=1);
-		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'auto');
+		assert.ok((await side.boundingBox()).y<=(await main.boundingBox()).y+1);
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'static');
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'visible');
 		for(const [label,href]of[['鸡腿','/credit'],['星辰','/stardust/list'],['主题帖','/space/1#/discussions'],['评论数','/space/1#/comments']])assert.equal(await page.locator('.nsmax-account-stat').filter({has:page.locator('dt').filter({hasText:label})}).getAttribute('href'),href);
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'个人设置',exact:true}).getAttribute('href'),'/setting');
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'我的邀请',exact:true}).count(),0);
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
+});
+
+test("搜索入口：不显示 Google，搜索弹层保留帖子和用户入口", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	try {
+		await page.evaluate(() => {
+			const overlay = document.createElement("div");
+			overlay.className = "search-overlay";
+			overlay.innerHTML = '<div class="glass-tabs"><button class="tab-btn">帖子</button><button class="tab-btn">用户</button><button class="tab-btn googleSearch">谷歌</button></div>';
+			document.body.append(overlay);
+		});
+		await page.waitForTimeout(80);
+		assert.equal(await page.locator(".search-overlay .googleSearch:visible").count(), 0);
+		assert.deepEqual(await page.locator(".search-overlay .tab-btn:visible").allTextContents(), ["帖子", "用户"]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });
 
 test("列表图标与抽奖：五项单图标、SB 悬停色、抽奖标签唯一、推荐轮播隐藏",async()=>{

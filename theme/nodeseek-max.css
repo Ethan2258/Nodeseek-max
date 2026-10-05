@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.5（纯 CSS）
+ * NodeSeek Max 主题 v1.7.6（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -2324,9 +2324,16 @@ html:root:root .search-overlay .glass-card {
 html:root:root .search-overlay .dynamic-glow {
 	display:none!important;
 }
+html:root:root .search-overlay .googleSearch,
+html:root:root .search-overlay [data-tab=google],
+html:root:root .search-overlay [data-type=google],
+html:root:root .search-overlay .tab-btn:is([data-tab=google],[data-type=google]) {
+	display:none!important;
+}
 html:root:root .search-overlay .glass-tabs {
-	gap:20px!important;
-	padding:0 16px!important;
+	gap:14px!important;
+	padding:0 18px!important;
+	border-bottom:1px solid var(--nsmax-divider)!important;
 }
 html:root:root .search-overlay .tab-btn {
 	padding:14px 2px!important;
@@ -2350,7 +2357,7 @@ html:root:root .search-overlay .glass-close svg {
 	height:18px!important;
 }
 html:root:root .search-overlay .glass-content {
-	padding:18px 18px 20px!important;
+	padding:16px 18px 20px!important;
 }
 html:root:root .search-overlay .sub-nav {
 	gap:6px!important;
@@ -6014,6 +6021,9 @@ html:root:root:root:root:has(.new-discussion) #nsk-body > #nsk-right-panel-conta
 		scroll-behavior:auto!important;
 	}
 }
+html:root:root:root:root .post-list-controler {
+	align-items:center!important;
+}
 html:root:root:root:root .post-list-controler .pager-top,
 html:root:root:root:root .post-top-pager {
 	display:none!important;
@@ -6686,6 +6696,53 @@ html:root:root:root:root #nsk-body-left .post-list-item .post-info {
 	font:400 12.5px/20px var(--font-sans)!important;
 	column-gap:10px!important;
 }
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item {
+	grid-template-columns:28px minmax(0,1fr)!important;
+	align-items:center!important;
+	min-height:60px!important;
+	padding:10px 72px 10px 14px!important;
+	column-gap:10px!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item>a:first-child {
+	display:block!important;
+	width:28px!important;
+	height:28px!important;
+	align-self:start!important;
+	margin-top:2px!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item>a:first-child img {
+	display:block!important;
+	width:28px!important;
+	height:28px!important;
+	border-radius:7px!important;
+	object-fit:cover!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-list-content {
+	min-width:0!important;
+	align-self:center!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title {
+	min-width:0!important;
+	line-height:20px!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title a {
+	display:block!important;
+	overflow:hidden!important;
+	text-overflow:ellipsis!important;
+	white-space:nowrap!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info {
+	min-width:0!important;
+	overflow:hidden!important;
+	white-space:nowrap!important;
+	gap:8px!important;
+	margin-top:2px!important;
+	font-size:12px!important;
+	line-height:18px!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>* {
+	min-width:0!important;
+}
 html:root:root:root:root #nsk-body-left .content-item .nsk-content-meta-info .content-info,
 html:root:root:root:root #nsk-body-left .content-item .nsk-content-meta-info .content-info :is(time,.date-created,.date-updated) {
 	display:inline-flex!important;
@@ -6719,15 +6776,13 @@ html:root:root:root:root #nsk-body-left .content-item .author-info .role-tag {
 }
 @media(min-width:861px) {
 	html:root:root:root:root #nsk-body>#nsk-right-panel-container {
-		position:sticky!important;
-		top:76px!important;
+		position:static!important;
 		align-self:start!important;
-		max-height:calc(100dvh - 92px)!important;
-		overflow-y:auto!important;
-		overflow-x:hidden!important;
-		overscroll-behavior-y:contain;
-		scrollbar-width:thin;
-		scrollbar-color:var(--line-strong) transparent;
+		max-height:none!important;
+		overflow:visible!important;
+		overscroll-behavior:initial;
+		scrollbar-width:auto;
+		scrollbar-color:auto;
 		gap:16px!important;
 	}
 	html:root:root:root:root #nsk-body>#nsk-right-panel-container>* {
@@ -6764,4 +6819,127 @@ html:root:root:root:root #nsk-body-left .content-item .role-tag.is-poster {
 	background:var(--brand-soft)!important;
 	color:var(--brand)!important;
 	font:11px/18px var(--font-sans)!important;
+}
+html:root:root:root:root dialog.nspp-post-preview {
+	width:min(384px,calc(100vw - 24px))!important;
+	max-height:min(360px,calc(100dvh - 24px))!important;
+	margin:0!important;
+	border-radius:12px!important;
+	overflow:hidden!important;
+}
+html:root:root:root:root dialog.nspp-post-preview>header {
+	display:flex!important;
+	align-items:center!important;
+	min-height:44px!important;
+	padding:10px 14px!important;
+	gap:8px!important;
+}
+html:root:root:root:root dialog.nspp-post-preview>header>a {
+	display:block!important;
+	min-width:0!important;
+	overflow:hidden!important;
+	text-overflow:ellipsis!important;
+	white-space:nowrap!important;
+	font:600 14px/22px var(--font-sans)!important;
+}
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-meta {
+	margin:0!important;
+	padding:0 14px!important;
+	font:12px/18px var(--font-sans)!important;
+	white-space:nowrap!important;
+	overflow:hidden!important;
+	text-overflow:ellipsis!important;
+}
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content {
+	box-sizing:border-box!important;
+	max-height:184px!important;
+	overflow:hidden!important;
+	padding:8px 14px 12px!important;
+	font:13px/21px var(--font-sans)!important;
+}
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content>article {
+	display:-webkit-box!important;
+	-webkit-box-orient:vertical!important;
+	-webkit-line-clamp:5!important;
+	overflow:hidden!important;
+	margin:0!important;
+	font:13px/21px var(--font-sans)!important;
+}
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content p,
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content ul,
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content ol,
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content blockquote,
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content pre {
+	margin:0 0 6px!important;
+}
+html:root:root:root:root dialog.nspp-post-preview>footer {
+	min-height:38px!important;
+	padding:7px 14px!important;
+	gap:6px 10px!important;
+}
+@media(max-width:700px) {
+	html:root:root:root:root dialog.nspp-post-preview {
+		width:min(344px,calc(100vw - 20px))!important;
+		max-height:min(320px,calc(100dvh - 20px))!important;
+	}
+	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content {
+		max-height:150px!important;
+	}
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .head-container {
+	margin-bottom:0!important;
+	border-radius:16px 16px 0 0!important;
+	padding:24px 28px 18px!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .head-container :is(.username,h1) {
+	font:600 20px/28px var(--font-sans)!important;
+	color:var(--text-strong)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .head-container p {
+	font:13px/20px var(--font-sans)!important;
+	color:var(--text-muted)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .selector {
+	border-radius:0 0 16px 16px!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block {
+	margin:20px 28px!important;
+	border-radius:10px!important;
+	background:var(--panel)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block>.card-item {
+	min-height:92px!important;
+	padding:16px!important;
+	border-right:1px solid var(--line-soft)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block>.card-item>div:first-child {
+	font:12px/20px var(--font-sans)!important;
+	color:var(--text-muted)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block>.card-item>div:last-child {
+	font:600 22px/30px var(--font-sans)!important;
+	color:var(--text-strong)!important;
+	font-variant-numeric:tabular-nums!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper {
+	margin:0 0 18px!important;
+	border-radius:0 0 16px 16px!important;
+	overflow:hidden!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item {
+	min-height:56px!important;
+	padding:11px 18px!important;
+	border-bottom:1px solid var(--line-soft)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item>a {
+	font:500 15px/22px var(--font-sans)!important;
+}
+@media(max-width:700px) {
+	html:root:root:root:root:has(.head-container) #nsk-frame .head-container {
+		padding:18px 16px 14px!important;
+	}
+	html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block {
+		margin:14px 16px!important;
+		grid-template-columns:repeat(2,minmax(0,1fr))!important;
+	}
 }

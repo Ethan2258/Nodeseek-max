@@ -2,18 +2,43 @@
 		if (!/^\/space\/\d+/.test(location.pathname)) return;
 		for (const item of document.querySelectorAll(".card-block > .card-item")) item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
 		for (const readme of document.querySelectorAll(".readme")) readme.toggleAttribute("data-nsmax-empty-readme", /^(没有找到readme|暂无简介|暂无介绍)/i.test(readme.textContent.trim()));
+		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
+		if (!head || !stats || head.querySelector(":scope > .nsmax-space-progress")) return;
+		const levelText = Array.from(stats.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent))?.textContent.match(/\d+/)?.[0];
+		if (!levelText) return;
+		const level = Number(levelText), percent = Math.max(0, Math.min(100, (level % 10) * 10));
+		const progress = document.createElement("div");
+		progress.className = "nsmax-space-progress";
+		progress.innerHTML = '<span class="nsmax-space-progress-level"></span><strong class="nsmax-space-progress-percent"></strong><span class="nsmax-space-progress-next"></span><i><b></b></i>';
+		progress.querySelector(".nsmax-space-progress-level").textContent = `Lv ${level} 当前等级`;
+		progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
+		progress.querySelector(".nsmax-space-progress-next").textContent = `Lv ${level + 1} 下一等级`;
+		progress.querySelector("b").style.width = `${percent}%`;
+		head.append(progress);
 	}
 	function nsmaxCleanPostActions() {
 		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"] };
-		for (const action of document.querySelectorAll(".comment-menu .menu-item")) {
+		for (const menu of document.querySelectorAll(".comment-menu")) {
+			const seen = new Set();
+			for (const action of Array.from(menu.querySelectorAll(":scope > .menu-item"))) {
 			const href = action.querySelector("svg use")?.getAttribute("href")?.slice(1);
 			const label = action.title || Array.from(action.querySelectorAll("span")).map(span=>span.textContent.trim()).find(text=>/^(点赞|加鸡腿|反对|收藏|引用|回复)$/.test(text)) || names[href]?.[0];
 			const icon = ({ "点赞":"thumbup","加鸡腿":"drumstick","反对":"thumbdown","收藏":"star","引用":"quote","回复":"reply" })[label];
 			if (!icon) continue;
+			if (seen.has(icon)) { action.remove(); continue; }
+			seen.add(icon);
 			action.dataset.nsmaxAction = icon;
 			if (!action.title) action.title = label;
 			if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label",label);
 			for (const svg of action.querySelectorAll(":scope > svg")) { svg.setAttribute("data-nsmax-action-original",""); svg.style.setProperty("display","none","important"); }
+			for (const span of action.querySelectorAll(":scope > span")) {
+				const text = span.textContent.trim();
+				if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) {
+					span.setAttribute("data-nsmax-action-count", "");
+					span.toggleAttribute("hidden", /^0+(?:\.0+)?$/.test(text.replace(/[kKwW万千]/gi, "")));
+				} else span.setAttribute("data-nsmax-action-label", "");
+			}
+			}
 		}
 	}
 	function nsmaxPrizeBadges() {
@@ -26,12 +51,17 @@
 			else if (!giveaway && badge) badge.remove();
 		}
 	}
+	function nsmaxCleanSearchOverlay() {
+		for (const link of document.querySelectorAll(".search-overlay .googleSearch,.search-overlay [data-tab=google],.search-overlay [data-type=google]")) link.remove();
+		for (const element of document.querySelectorAll(".search-overlay .tab-btn")) if (/谷歌|google/i.test(element.textContent.trim())) element.remove();
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
 		const images = new WeakSet();
 		const scan = () => {
 			nsmaxPrizeBadges();
+			nsmaxCleanSearchOverlay();
 			nsmaxCleanPostActions();
 			const controller = document.querySelector(".post-list-controler");
 			if (controller && !controller.querySelector(".nsmax-nq-entry")) {
@@ -143,14 +173,35 @@
 					button.title = label;
 					button.setAttribute("aria-label", label);
 					button.setAttribute("aria-pressed", "false");
-					button.append(toolIcon(icon), document.createTextNode(label === "Markdown" ? "使用 Markdown 编辑器" : label === "附件" ? "上传附件" : label));
+					const text = document.createElement("span"); text.className = "nsmax-action-label"; text.textContent = label === "Markdown" ? "使用 Markdown 编辑器" : label === "附件" ? "上传附件" : label;
+					button.append(toolIcon(icon), text);
 					button.addEventListener("click", () => callback(button), { signal: ctx.signal });
 					controls.append(button);
+				};
+				const setEditorValue = value => {
+					if (cm) { cm.setValue(value); cm.refresh(); return; }
+					if (!input) return;
+					const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+					setter?.call(input, value);
+					input.dispatchEvent(new Event("input", { bubbles: true }));
 				};
 				action("Markdown", "code", button => {
 					const on = editor.classList.toggle("nsmax-editor-tools");
 					button.setAttribute("aria-pressed", String(on));
+					button.title = on ? "切换到纯文本" : "使用 Markdown 编辑器";
+					button.setAttribute("aria-label", button.title);
+					button.querySelector(".nsmax-action-label").textContent = button.title;
 					cm?.refresh();
+				});
+				if (!isPost && /^\/new-discussion$/.test(location.pathname)) action("抽奖", "gift", () => {
+					const titleInput = document.querySelector(".post-title-input,[name=title],input[placeholder*='标题']");
+					if (titleInput && !/抽奖/.test(titleInput.value)) {
+						const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+						setter?.call(titleInput, `抽奖：${titleInput.value.trim() || "奖品名称"}`);
+						titleInput.dispatchEvent(new Event("input", { bubbles: true }));
+					}
+					const current = cm ? cm.getValue() : input?.value || "";
+					if (!/开奖链接/.test(current)) setEditorValue(`${current.trim()}${current.trim() ? "\\n\\n" : ""}抽奖规则：\\n- 奖品：\\n- 开奖时间：\\n- 参与方式：\\n- 开奖链接：请在发布后替换为本帖链接\\n`);
 				});
 				action("附件", "image", () => (editor.querySelector(".nspp-upload-choose") || editor.querySelector('.mde-toolbar [title="图片"],.mde-toolbar [title="上传图片"]'))?.click());
 				action("表情", "smile", button => {
@@ -275,7 +326,7 @@
 	var personHoverFeature = { id: "sb-person-hover", defaults: { enabled: true }, mount(ctx) {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
 		const matches = target => {
-			const link = target instanceof Element ? target.closest('a[href*="/space/"]:has(img),.avatar-wrapper a') : null;
+			const link = target instanceof Element ? target.closest('a[href*="/space/"]:has(img),.avatar-wrapper a,.info-author a[href*="/space/"],.info-last-commenter a[href*="/space/"],.author-name[href*="/space/"],.post-author[href*="/space/"]') : null;
 			if (!link) return null;
 			try { const url = new URL(link.href,location.href); return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) ? link : null; } catch { return null; }
 		};
