@@ -1,0 +1,82 @@
+html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=new]>:not(.nspp-messages),html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=native]>.nspp-messages {display:none!important;}
+html[data-nsmax-theme]:root:root:root .nspp-messages {display:flex;flex-direction:column;height:min(760px,calc(100dvh - 110px));min-height:450px;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font:13px/1.6 var(--font-sans);}
+html[data-nsmax-theme] .nspp-messages [hidden],html[data-nsmax-theme] .nspp-messages[hidden] {display:none!important;}
+html[data-nsmax-theme] .nspp-messages * {box-sizing:border-box;min-width:0;}
+html[data-nsmax-theme] .nspp-messages button {cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:30px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text-muted);font:12px/20px var(--font-sans);}
+html[data-nsmax-theme] .nspp-messages button:hover {background:var(--panel-hover);color:var(--text);}
+html[data-nsmax-theme] .nspp-messages button:disabled {opacity:.5;cursor:default;}
+html[data-nsmax-theme] .nspp-messages svg {width:16px;height:16px;}
+html[data-nsmax-theme] .nspp-messages a {color:var(--link);text-decoration:none;}
+html[data-nsmax-theme] .nspp-messages-top {display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 14px;border-bottom:1px solid var(--line-soft);flex:none;background:var(--panel);}
+html[data-nsmax-theme] .nspp-messages-heading {display:flex;align-items:center;gap:8px;flex:1;}
+html[data-nsmax-theme] .nspp-messages-heading strong {font-weight:600;font-size:14px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+html[data-nsmax-theme] .nspp-messages-top-actions {display:flex;gap:6px;margin-left:auto;flex:none;}
+html[data-nsmax-theme] .nspp-messages-workspace {display:grid;grid-template-columns:260px minmax(0,1fr);min-height:0;flex:1;overflow:hidden;}
+html[data-nsmax-theme] .nspp-messages-sidebar {display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line-soft);background:var(--panel-alt);}
+html[data-nsmax-theme] .nspp-messages-search {display:flex;align-items:center;gap:6px;padding:12px;flex:none;}
+html[data-nsmax-theme] .nspp-messages-search input {width:100%;min-width:0;height:34px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:12px/20px var(--font-sans);}
+html[data-nsmax-theme] .nspp-messages-contact-list {overflow:auto;overscroll-behavior:contain;flex:1;min-height:0;padding:0 8px 10px;}
+html[data-nsmax-theme] .nspp-messages-peer {display:flex;align-items:center;gap:10px;padding:11px 8px;border-radius:8px;color:var(--text)!important;border:0;border-bottom:1px solid var(--line-soft);cursor:pointer;}
+html[data-nsmax-theme] .nspp-messages-peer:hover,html[data-nsmax-theme] .nspp-messages-peer[aria-current],html[data-nsmax-theme] .nspp-messages-peer[aria-pressed=true] {background:var(--panel-hover);}
+html[data-nsmax-theme] .nspp-messages-avatar {display:block;width:32px;height:32px;border-radius:6px;object-fit:cover;flex:none;}
+html[data-nsmax-theme] .nspp-messages-peer-details {display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden;}
+html[data-nsmax-theme] .nspp-messages-peer-details strong {font-size:13px;font-weight:500;}
+html[data-nsmax-theme] .nspp-messages-peer-title {display:flex;align-items:center;justify-content:space-between;gap:8px;}
+html[data-nsmax-theme] .nspp-messages-peer-title time {font-size:10px;color:var(--text-subtle);flex:none;}
+html[data-nsmax-theme] .nspp-messages-snippet,html[data-nsmax-theme] .nspp-notice-subject,html[data-nsmax-theme] .nspp-notice-excerpt {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-subtle);font-size:12px;}
+html[data-nsmax-theme] .nspp-messages-count,html[data-nsmax-theme] .nspp-messages-unread {display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:999px;padding:0 4px;background:var(--danger);color:var(--on-danger);font:10px/1 var(--font-sans);flex:none;}
+html[data-nsmax-theme] .nspp-messages-chat {display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+html[data-nsmax-theme] .nspp-messages-thread {flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px;overflow-wrap:anywhere;}
+html[data-nsmax-theme] .nspp-chat-profile {padding:10px 16px;border-bottom:1px solid var(--line-soft);}
+html[data-nsmax-theme] .nspp-chat-profile>a {display:flex;align-items:center;gap:10px;color:var(--text)!important;font-weight:500;}
+html[data-nsmax-theme] .nspp-messages-message {display:flex;align-items:flex-start;gap:10px;margin:12px 0;}
+html[data-nsmax-theme] .nspp-messages-message.is-mine {flex-direction:row-reverse;}
+html[data-nsmax-theme] .nspp-messages-bubble {max-width:78%;padding:9px 12px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-alt);overflow-wrap:anywhere;white-space:pre-wrap;}
+html[data-nsmax-theme] .nspp-messages-message.is-mine .nspp-messages-bubble {background:var(--brand-soft);border-color:var(--brand-border);}
+html[data-nsmax-theme] .nspp-messages-bubble.is-markdown {white-space:normal;}
+html[data-nsmax-theme] .nspp-messages-bubble p {margin:0 0 6px;}
+html[data-nsmax-theme] .nspp-messages-bubble p:last-child {margin-bottom:0;}
+html[data-nsmax-theme] .nspp-messages-thread :is(img,video) {max-width:100%;height:auto;}
+html[data-nsmax-theme] .nspp-messages-thread pre {max-width:100%;overflow:auto;}
+html[data-nsmax-theme] .nspp-messages-stamp,html[data-nsmax-theme] .nspp-messages-system-time {display:block;margin:14px 0 6px;text-align:center;color:var(--text-subtle);font-size:11px;}
+html[data-nsmax-theme] .nspp-messages-empty {display:grid;place-items:center;min-height:180px;color:var(--text-subtle);}
+html[data-nsmax-theme] .nspp-messages-composer {margin:0;border-top:1px solid var(--line-soft);padding:0;background:var(--panel);}
+html[data-nsmax-theme] .nspp-messages-composer textarea {display:block;width:100%;min-height:90px;max-height:210px;resize:vertical;padding:12px 14px;border:0;border-radius:0;background:var(--panel);color:var(--text);font:14px/1.7 var(--font-sans);}
+html[data-nsmax-theme] .nspp-messages-compose-actions {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px;}
+html[data-nsmax-theme] .nspp-messages-compose-actions label {display:flex;align-items:center;gap:4px;color:var(--text-subtle);font-size:12px;}
+html[data-nsmax-theme] .nspp-messages-compose-actions small {font-size:11px;color:var(--text-subtle);}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-send {margin-left:auto;background:var(--action);color:var(--action-text);border-color:var(--action);}
+html[data-nsmax-theme] .nspp-message-editor-toolbar {display:flex;flex-wrap:wrap;gap:4px;width:100%;padding:0 0 4px;}
+html[data-nsmax-theme] .nspp-message-editor-toolbar button {border:0;border-radius:6px;min-height:26px;padding:3px 6px;background:transparent;}
+html[data-nsmax-theme] .nspp-message-editor-toolbar button[aria-pressed=true] {background:var(--panel-hover);}
+html[data-nsmax-theme] .nspp-message-editor-preview {padding:12px 14px;min-height:90px;max-height:210px;overflow:auto;}
+html[data-nsmax-theme] .nspp-message-editor-preview img {max-width:100%;height:auto;}
+html[data-nsmax-theme] .nspp-messages-status,html[data-nsmax-theme] .nspp-messages-list-status,html[data-nsmax-theme] .nspp-message-editor-status {margin:0;padding:4px 12px;color:var(--text-subtle);font-size:12px;}
+html[data-nsmax-theme] .nspp-messages-status:empty,html[data-nsmax-theme] .nspp-message-editor-status:empty {display:none;}
+html[data-nsmax-theme] .nspp-messages-sync-status {display:flex;align-items:center;}
+html[data-nsmax-theme] .nspp-messages-more {margin:8px auto;display:flex;}
+html[data-nsmax-theme] .nspp-notice-workspace {grid-column:2;grid-template-columns:240px minmax(0,1fr);}
+html[data-nsmax-theme] .nspp-messages-workspace:has(>.nspp-notice-workspace:not([hidden])) {grid-template-columns:1fr;}
+html[data-nsmax-theme] .nspp-messages-workspace:has(>.nspp-notice-workspace:not([hidden]))>.nspp-messages-sidebar {display:none;}
+html[data-nsmax-theme] .nspp-messages-workspace>.nspp-notice-workspace:not([hidden]) {grid-column:1;grid-template-columns:300px minmax(0,1fr);}
+html[data-nsmax-theme] .nsmax-message-tabs {display:flex;align-items:center;gap:12px;}
+html[data-nsmax-theme] .nsmax-message-tabs a {color:var(--text-muted);}
+html[data-nsmax-theme] .nsmax-message-tabs a[aria-current] {color:var(--text);font-weight:500;}
+html[data-nsmax-theme] .nspp-notice-summary {padding:12px 0;border-bottom:1px solid var(--line-soft);margin-bottom:12px;color:var(--text-subtle);}
+html[data-nsmax-theme] .nspp-notice-body {overflow-wrap:anywhere;line-height:1.8;}
+html[data-nsmax-theme] .nspp-notice-hint {color:var(--text-subtle);font-size:12px;}
+html[data-nsmax-theme] .nspp-message-native-toolbar {padding:8px;}
+@media(max-width:700px) {
+ html[data-nsmax-theme]:root:root:root .nspp-messages {min-height:420px;height:calc(100dvh - 100px);}
+ html[data-nsmax-theme] .nspp-messages-workspace,html[data-nsmax-theme] .nspp-messages-workspace>.nspp-notice-workspace:not([hidden]) {grid-template-columns:minmax(0,1fr);}
+ html[data-nsmax-theme] .nspp-messages:not(.has-conversation)>.nspp-messages-workspace>.nspp-messages-chat,
+ html[data-nsmax-theme] .nspp-messages.has-conversation>.nspp-messages-workspace>.nspp-messages-sidebar,
+ html[data-nsmax-theme] .nspp-notice-workspace:not(.has-detail)>.nspp-messages-chat,
+ html[data-nsmax-theme] .nspp-notice-workspace.has-detail>.nspp-messages-sidebar {display:none;}
+ html[data-nsmax-theme] .nspp-messages-top {flex-wrap:wrap;padding:8px 10px;gap:6px;}
+ html[data-nsmax-theme] .nspp-messages-top-actions {margin-left:auto;}
+ html[data-nsmax-theme] .nspp-messages-top-actions button {padding:3px 7px;font-size:11px;}
+ html[data-nsmax-theme] .nspp-messages-compose-actions small {display:none;}
+ html[data-nsmax-theme] .nspp-messages-heading {order:3;flex-basis:100%;}
+ html[data-nsmax-theme] .nspp-messages-thread {padding:12px;}
+}

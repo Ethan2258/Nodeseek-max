@@ -7,6 +7,13 @@ const root = new URL("../", import.meta.url);
 const scriptPath = new URL("nodeseek-max.user.js", root);
 let source = readFileSync(scriptPath, "utf8").replace(/\r\n?/g, "\n");
 const original = source;
+const runtime = readFileSync(new URL("theme/ui-runtime.js", root), "utf8").replace(/\r\n?/g, "\n").trimEnd();
+const runtimeBlock = "\t// SB_RUNTIME_START\n" + runtime + "\n\t// SB_RUNTIME_END\n";
+if (source.includes("\t// SB_RUNTIME_START")) source = source.replace(/\t\/\/ SB_RUNTIME_START[\s\S]*?\t\/\/ SB_RUNTIME_END\n/, runtimeBlock);
+else source = source.replace("\tfunction main() {", runtimeBlock + "\tfunction main() {");
+const messageCss = readFileSync(new URL("theme/messages.css", root), "utf8").replace(/\r\n?/g, "\n");
+source = source.replace(/\tvar nsmax_messages_sb = .*;\n/, "");
+source = source.replace("\tfunction mountChat(ctx, account) {", "\tvar nsmax_messages_sb = " + JSON.stringify(messageCss) + ";\n\tfunction mountChat(ctx, account) {");
 const settingsCss = readFileSync(new URL("theme/settings.css", root), "utf8").replace(/\r\n?/g, "\n");
 source = source.replace(/\tvar settings_sb_default = .*;\n/, "");
 source = source.replace("\tvar style_default$1 = ", "\tvar settings_sb_default = " + JSON.stringify(settingsCss) + ";\n\tvar style_default$1 = ");
@@ -84,6 +91,8 @@ ast.walkRules(rule => {
     const bindings = /(?:comment-menu|nsk-pager|data-nsmax-pg|data-nsmax-sort|data-nsmax-md-hint|data-nsmax-ed|data-nsmax-icon|\.nsmax-icon|data-nsmax-header-hide|data-nsmax-own-hide|data-nsmax-hidden|data-nsmax-dup|nspp-confirm)/.test(rule.selector);
     if (!variables && !bindings) { rule.remove(); return; }
   }
+  // Adapter rules explicitly bind live or retired native surfaces; preserve their hide/replace rules.
+  if (rule.selector.includes("html[data-nsmax-theme]:root:root:root")) return;
   const selectors = selectorParser().astSync(rule.selector);
   selectors.each(selector => {
     let unused = false;

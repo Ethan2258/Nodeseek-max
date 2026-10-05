@@ -50,7 +50,7 @@ test("列表页：SB Theme UI 套件生效且首屏结构稳定", async () => {
 	await context.close();
 });
 
-test("列表页：资料卡和热榜恢复，不创建信用分或 NQ", async () => {
+test("列表页：资料卡和热榜恢复，删除信用分并在控制区保留 NQ", async () => {
 const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	await wait(page);
 	const state = await page.evaluate(() => ({
@@ -64,7 +64,10 @@ const { context, page, errors, calls } = await open(browser, "https://www.nodese
 	assert.equal(state.card, "block");
 	assert.equal(state.quick, "none");
 	assert.equal(state.hot, true);
-	assert.equal(state.nq, false);
+	assert.equal(state.nq, true);
+	assert.equal(await page.locator(".post-list-controler .nsmax-nq-entry").count(),1);
+	assert.equal(await page.locator(".pager-top").isVisible(),false);
+	assert.equal(await page.locator(".pager-bottom").isVisible(),true);
 	assert.equal(await page.locator(".nspp-trust").count(), 0);
 	assert.equal(Object.keys(calls).filter(key => key.startsWith("/api/account/getInfo/")).length, 0);
 	assert.deepEqual(errors, []);
@@ -112,8 +115,8 @@ test("深色模式：套件表面、文字和操作色同步切换", async () =>
 	await context.close();
 });
 
-test("通知页：使用 SB Theme UI 列表，不加载旧消息中心或工具条", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#", { html: notificationPage() });
+test("通知页：按需加载 SB 消息中心，原站列表隐藏且不请求用户资料", async () => {
+	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/notification#", { html: notificationPage() });
 	await page.waitForSelector(".nsk-notification");
 	await wait(page);
 	const state = await page.evaluate(() => ({
@@ -122,7 +125,7 @@ test("通知页：使用 SB Theme UI 列表，不加载旧消息中心或工具�
 		rows: document.querySelectorAll(".reply-item").length,
 		rowRadius: getComputedStyle(document.querySelector(".reply-container")).borderRadius,
 		tools: document.querySelector("#nspp-tools"),
-		messages: document.querySelector(".nspp-messages"),
+		messages: !!document.querySelector(".nspp-messages"),
 		editor: document.querySelector(".md-editor")
 	}));
 	assert.equal(state.page, "notification");
@@ -130,7 +133,11 @@ test("通知页：使用 SB Theme UI 列表，不加载旧消息中心或工具�
 	assert.equal(state.rows, 2);
 	assert.equal(state.rowRadius, "12px");
 	assert.equal(state.tools, null);
-	assert.equal(state.messages, null);
+	assert.equal(state.messages, true);
+	assert.equal(await page.locator(".nspp-messages").isVisible(),true);
+	assert.equal(await page.locator(".reply-container").isVisible(),false);
+	assert.equal(Object.keys(calls).some(key=>key.startsWith("/api/account/getInfo/")),false);
+	assert.equal(calls["/api/notification/message/list"] || 0,0);
 	assert.equal(state.editor, null);
 	assert.deepEqual(errors, []);
 	await context.close();
@@ -190,8 +197,9 @@ test("回复编辑器：真实嵌套结构可输入、引用和点击原生提�
 		await page.locator(".md-editor button.submit").click();
 		assert.equal(await page.evaluate(() => window.__nativeSubmit), 1);
 		assert.equal(await page.locator(".md-editor textarea").inputValue(), "本地回归测试，不发送到论坛");
-		const masks = await page.locator('.comment-menu [title="点赞"],.comment-menu [title="引用"],.comment-menu [title="回复"]').evaluateAll(es => es.map(e => getComputedStyle(e,"::before").maskImage));
-		assert.ok(masks.every(mask => mask !== "none"));
+		const masks = await page.locator('.comment-menu [title="点赞"],.comment-menu [title="引用"],.comment-menu [title="回复"]').evaluateAll(es => es.map(e => getComputedStyle(e,"::before").content));
+		assert.ok(masks.every(mask => mask === "none"));
+		assert.ok(await page.locator('.comment-menu .menu-item svg:visible').count()>=6);
 		assert.equal(Object.keys(calls).some(key => key.startsWith("/api/account/getInfo/")), false);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
@@ -295,11 +303,11 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.2");
+	assert.equal(packageJson.version, "1.7.3");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
-	for(const [render,hash] of [[nativeMessagePage,'#/message?mode=list'],[nativeTalkPage,'#/message?mode=talk&to=10']]) {
+	for(const [render,hash] of [[nativeMessagePage,'#/message?mode=list&native=1'],[nativeTalkPage,'#/message?mode=talk&to=10&native=1']]) {
 		for(const width of [1440,390]){
 			const {context,page,errors}=await open(browser,'https://www.nodeseek.com/notification'+hash,{html:render({dark:true}),viewport:{width,height:900},colorScheme:'dark'});
 			try{
@@ -331,7 +339,7 @@ test("SB 个人卡：四列统计、两列菜单和卡片内的发帖入口",asy
 	try{
 		await page.waitForSelector('.nsmax-sb-account');
 		assert.equal(await page.locator('.nsmax-account-numbers dd').count(),4);
-		assert.equal(await page.locator('.nsmax-account-menu a').count(),12);
+		assert.equal(await page.locator('.nsmax-account-menu a').count(),8);
 		assert.equal(await page.locator('.nsmax-sb-account a[href="/new-discussion"]').isVisible(),true);
 		assert.equal(await page.locator('.user-card>.user-head').isVisible(),false);
 		await page.evaluate(()=>document.querySelector('.user-card>.user-stat').append(document.createTextNode('鸡腿 4161')));
@@ -354,31 +362,27 @@ test("楼层与正文：正文使用完整剩余宽度，回复框只有一层�
 	}finally{await context.close();}
 });
 
-test("脚本设置：延迟挂载、切分类、搜索、开关和保存均可用",async()=>{
-	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900},seed:{'nspp:settings:www.nodeseek.com':{'compose':{enabled:true,ctrlEnter:true}}}});
+test("关于弹窗：按需创建、仅保留关于和检查更新，关闭后页面保持原样",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900}});
 	try{
 		await wait(page);
 		assert.equal(await page.locator('#nspp-settings').count(),0);
+		const before=await page.locator('#nsk-body').boundingBox();
 		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
 		const host=page.locator('#nspp-settings');
 		assert.equal(await host.locator('dialog').isVisible(),true);
-		assert.equal(await host.locator('.content section:not([hidden])').count(),1);
-		const links=await host.locator('.categories a').all();
-		for(const link of links){await link.click();assert.equal(await host.locator('.content section:not([hidden])').count(),1);}
-		assert.equal(await host.getByLabel('信用分').count(),0);
-		await host.getByLabel('搜索功能').fill('接口请求');
-		await wait(page,180);
-		const concurrent=host.getByLabel('最大并发请求数', {exact:true});
-		await concurrent.fill('3');
-		await host.getByLabel('接口请求并发与延迟',{exact:true}).uncheck();
-		await page.waitForTimeout(100);
-		const navigation=page.waitForNavigation({waitUntil:'domcontentloaded'});
-		await host.getByRole('button',{name:'保存并刷新',exact:true}).click();
-		await navigation;
-		const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('__gm__:nspp:settings:www.nodeseek.com')));
-		assert.equal(saved['request-settings'].maxConcurrent,3);
-		assert.equal(saved['request-settings'].enabled,false);
-		assert.equal(saved.compose.ctrlEnter,true);
+		assert.equal(await host.locator('input,select,textarea,.categories,[data-feature]').count(),0);
+		assert.deepEqual(await host.locator('button').allTextContents(),['关闭','检查更新']);
+		assert.equal(await host.getByRole('heading',{name:'关于',exact:true}).count(),1);
+		assert.ok((await host.locator('dialog').boundingBox()).width<=480);
+		assert.deepEqual(await page.locator('#nsk-body').boundingBox(),before);
+		await host.getByRole('button',{name:'关闭',exact:true}).click();
+		assert.equal(await host.locator('dialog').isVisible(),false);
+		assert.deepEqual(await page.locator('#nsk-body').boundingBox(),before);
+		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
+		assert.equal(await page.locator('#nspp-settings').count(),1);
+		await page.keyboard.press('Escape');
+		assert.equal(await host.locator('dialog').isVisible(),false);
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });
@@ -403,69 +407,126 @@ test("编辑期间：CodeMirror 重绘不触发全页作者/图标扫描",async(
 	}finally{await context.close();}
 });
 
-test("手机脚本设置：所有分类、控件和保存按钮没有横向溢出",async()=>{
+test("手机关于弹窗：无横向溢出且检查更新能返回结果",async()=>{
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/notification',{html:notificationPage(),viewport:{width:390,height:844}});
 	try{
 		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
 		const host=page.locator('#nspp-settings');
-		for(const link of await host.locator('.categories a').all()){
-			await link.click();
-			const dims=await host.locator('dialog').evaluate(e=>({width:e.getBoundingClientRect().width,overflow:e.scrollWidth>e.clientWidth+1}));
-			assert.ok(dims.width<=390&&!dims.overflow,JSON.stringify(dims));
-		}
-		await host.getByLabel('搜索功能').fill('深浅色');await wait(page,180);
-		const select=host.locator('select');assert.equal(await select.count(),1);
-		await select.selectOption('light');
-		assert.equal(await select.inputValue(),'light');
+		const dims=await host.locator('dialog').evaluate(e=>({width:e.getBoundingClientRect().width,overflow:e.scrollWidth>e.clientWidth+1}));
+		assert.ok(dims.width<=390&&!dims.overflow,JSON.stringify(dims));
+		await host.getByRole('button',{name:'检查更新',exact:true}).click();
+		await page.waitForFunction(()=>document.querySelector('#nspp-settings').shadowRoot.querySelector('.status').textContent.includes('最新版本'));
+		assert.equal(await host.getByRole('button',{name:'检查更新',exact:true}).isEnabled(),true);
+		assert.equal(await host.locator('input,select,textarea').count(),0);
 		await host.getByRole('button',{name:'关闭',exact:true}).click();
 		assert.equal(await host.locator('dialog').isVisible(),false);
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });
 
-test("脚本设置：导入、导出、恢复默认、清空缓存和检查更新可用",async()=>{
-	const snapshot={fetched:Date.now(),posts:[]};
-	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),seed:{'nspp:state:www.nodeseek.com:hot-rankings':{'snapshot:daily':snapshot}}});
+
+test("加载阶段：回复和过滤先就绪，下方慢资源不阻塞第一页，不自动抓下一页",async()=>{
+	const html=postPage().replace('</body>','<img src="/slow-offscreen.svg" style="position:absolute;top:10000px" alt="下方资源"></body>');
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html,beforeNavigate:async page=>{
+		await page.route('**/slow-offscreen.svg',async route=>{await new Promise(resolve=>setTimeout(resolve,650));await route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg"/>'});});
+	}});
 	try{
-		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
-		const host=page.locator('#nspp-settings');
-		await host.locator('input[type=file]').setInputFiles({name:'test-config.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'nodeseek-plus-plus',schema:1,settings:{'request-settings':{enabled:true,maxConcurrent:3,requestInterval:90}}}))});
-		await page.waitForFunction(()=>document.querySelector('#nspp-settings').shadowRoot.querySelector('.toast-message')?.textContent.includes('已导入'));
-		assert.equal(await host.getByLabel('最大并发请求数',{exact:true}).inputValue(),'3');
-		const download=page.waitForEvent('download');
-		await host.getByRole('button',{name:'导出配置',exact:true}).click();
-		const data=JSON.parse(require('node:fs').readFileSync(await(await download).path(),'utf8'));
-		assert.equal(data.settings['request-settings'].requestInterval,90);
-		await host.getByRole('button',{name:'恢复默认',exact:true}).click();
-		assert.equal(await host.getByLabel('最大并发请求数',{exact:true}).inputValue(),'8');
-		await host.getByRole('button',{name:'检查更新',exact:true}).click();
-		await page.waitForFunction(()=>document.querySelector('#nspp-settings').shadowRoot.querySelector('.toast-message')?.textContent.includes('最新版本'));
-		const navigation=page.waitForNavigation({waitUntil:'domcontentloaded'});
-		await host.getByRole('button',{name:'清空缓存',exact:true}).click();await navigation;
-		const cleared=await page.evaluate(()=>JSON.parse(localStorage.getItem('__gm__:nspp:state:www.nodeseek.com:hot-rankings')));
-		assert.equal(cleared['snapshot:daily'],undefined);
+		await page.waitForSelector('.nsmax-editor-controls');
+		await page.waitForFunction(()=>performance.getEntriesByName('nsmax:deferred-start').length>0);
+		await page.waitForLoadState('load');
+		const timings=await page.evaluate(()=>({primary:performance.getEntriesByName('nsmax:primary-ready')[0].startTime,deferred:performance.getEntriesByName('nsmax:deferred-start')[0].startTime,load:performance.getEntriesByType('navigation')[0].loadEventStart,extra:performance.getEntriesByType('resource').filter(e=>/\/page-2/.test(e.name)).length}));
+		assert.ok(timings.primary<timings.deferred,JSON.stringify(timings));
+		assert.ok(timings.deferred<timings.load,JSON.stringify(timings));
+		assert.equal(timings.extra,0);
+		assert.equal(await page.locator('.md-editor textarea').isVisible(),true);
+		assert.equal(await page.locator('.post-top-pager').isVisible(),false);
+		assert.equal(await page.locator('.post-bottom-pager').isVisible(),true);
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });
 
-test("设置控件绑定：全部可见分类的每个控件都能更新草稿",async()=>{
-	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage()});
+test("评论追加：默认按需加载、去重、安全清理、楼中楼、操作入口和底部分页",async()=>{
+	const first=postPage().replaceAll('/page-2','/post-1000-2');
+	const second=postPage().replace('id="1"','id="4"').replace('id="2"','id="5"').replace('id="3"','id="6"').replace('收了，私信你','@buyer <a href="/post-1000-1#1">#1</a> 本地楼中楼').replaceAll('class="pager-pos pager-cur">1','class="pager-pos pager-cur">2').replaceAll('class="pager-next"','class="pager-end"').replace('价格不错，帮顶','<img src="/avatar/test" onerror="window.__unsafe=1">价格不错，帮顶');
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:first,pages:{'/post-1000-2':second}});
 	try{
-		await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
-		const expected=await page.evaluate(()=>{
-			const root=document.querySelector('#nspp-settings').shadowRoot;
-			return [...root.querySelectorAll('[data-feature][data-key]')].map(e=>{
-				if(e.type==='checkbox')e.checked=!e.checked;
-				else if(e.tagName==='SELECT'&&e.options.length>1)e.selectedIndex=(e.selectedIndex+1)%e.options.length;
-				else if(e.type==='number'){const n=Number(e.value);e.value=String(n===0?1:Math.max(1,n-1));}
-				e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));
-				return{feature:e.dataset.feature,key:e.dataset.key,value:e.type==='checkbox'?e.checked:e.type==='number'?Number(e.value):e.value};
-			});
-		});
-		const download=page.waitForEvent('download');await page.locator('#nspp-settings').getByRole('button',{name:'导出配置',exact:true}).click();
-		const exported=JSON.parse(require('node:fs').readFileSync(await(await download).path(),'utf8')).settings;
-		assert.ok(expected.length>20);
-		for(const field of expected)assert.deepEqual(exported[field.feature][field.key],field.value,`${field.feature}.${field.key}`);
+		await page.waitForSelector('button.nspp-action');
+		assert.equal(await page.locator('ul.comments li.content-item').count(),3);
+		await page.locator('button.nspp-action').filter({hasText:'加载下一页'}).click();
+		await page.waitForSelector('li[id="4"]');
+		await page.waitForSelector('li[id="1"]>.nsmax-nested-replies>li[id="4"]');
+		assert.equal(await page.locator('ul.comments li.content-item').count(),6);
+		assert.equal(await page.locator('.post-bottom-pager .pager-cur').innerText(),'2');
+		const actions=page.locator('li[id="4"]>.comment-menu .menu-item');
+		assert.equal(await actions.count(),5);
+		assert.equal(await actions.filter({hasText:'加鸡腿'}).getAttribute('href'),'/post-1000-2#4');
+		assert.equal(await page.locator('ul.comments [onerror]').count(),0);
+		assert.equal(await page.evaluate(()=>window.__unsafe),undefined);
+		assert.equal(await page.locator('button.nspp-action').filter({hasText:'已加载全部内容'}).isDisabled(),true);
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
+});
+
+test("回复预览与粘贴图片：保留草稿、返回输入和本地上传绑定",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:postPage()});
+	try{
+		await page.waitForSelector('.nsmax-editor-controls');
+		assert.equal(await page.locator('.md-editor .tab-select').isVisible(),false);
+		assert.equal(await page.locator('.md-editor .mde-toolbar').isVisible(),false);
+		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'Markdown',exact:true}).click();
+		assert.equal(await page.locator('.md-editor .mde-toolbar').isVisible(),true);
+		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'Markdown',exact:true}).click();
+		await page.locator('.md-editor textarea').fill('**草稿测试**');
+		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'预览',exact:true}).click();
+		assert.equal(await page.locator('.nsmax-editor-preview strong').innerText(),'草稿测试');
+		assert.equal(await page.locator('.md-editor textarea').isVisible(),false);
+		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'预览',exact:true}).click();
+		assert.equal(await page.locator('.md-editor textarea').inputValue(),'**草稿测试**');
+		await page.locator('.md-editor textarea').evaluate(input=>{
+			const data=new DataTransfer();
+			data.items.add(new File([new Uint8Array([137,80,78,71])],'local.png',{type:'image/png'}));
+			input.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:data}));
+		});
+		await page.waitForFunction(()=>window.__uploads?.length===1);
+		await page.waitForFunction(()=>document.querySelector('.md-editor textarea').value.includes('abc123.png'));
+		assert.ok((await page.locator('.md-editor textarea').inputValue()).includes('草稿测试'));
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("SB 字体与动效：正文、编辑器、弹窗一致且不下载旧字体，原生资料卡唯一可见",async()=>{
+	const html=postPage().replace('</body>','<div class="hover-user-card">原生资料卡</div><div class="nspp-user-hover">旧资料卡</div></body>');
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html,seed:{'nspp:settings:www.nodeseek.com':{'modern-theme':{enabled:true,font:'claude'}}}});
+	try{
+		await wait(page);
+		const fonts=await page.locator('body,article.post-content,.md-editor textarea').evaluateAll(es=>es.map(e=>getComputedStyle(e).fontFamily));
+		assert.ok(fonts.every(font=>font===fonts[0]&&font.includes('system-ui')),JSON.stringify(fonts));
+		assert.equal(await page.evaluate(()=>window.__gmRequests.some(url=>url.includes('fontsource'))),false);
+		assert.equal(await page.locator('.hover-user-card').isVisible(),true);
+		assert.equal(await page.locator('.nspp-user-hover:visible').count(),0);
+		assert.equal(await page.locator('section.nspp-user-hover').count(),0);
+		const transition=await page.locator('ul.comments .menu-item').first().evaluate(e=>({props:getComputedStyle(e).transitionProperty,times:getComputedStyle(e).transitionDuration,ease:getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim()}));
+		assert.equal(transition.ease,'cubic-bezier(0.23, 1, 0.32, 1)');
+		assert.ok(transition.times.includes('0.12s'));
+		assert.ok(!transition.props.includes('all'));
+		await page.emulateMedia({reducedMotion:'reduce'});
+		assert.equal(await page.locator('ul.comments .menu-item').first().evaluate(e=>getComputedStyle(e).transitionDuration),'0s');
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("私信首屏：一轮会话请求、输入预览可用、无批量资料请求及页面溢出",async()=>{
+	for(const width of [1440,390]){
+		const {context,page,errors,calls}=await open(browser,'https://www.nodeseek.com/notification#/message?mode=talk&to=10',{html:nativeTalkPage(),viewport:{width,height:900}});
+		try{
+			await page.waitForSelector('.nspp-messages textarea:visible');
+			await wait(page);
+			assert.equal(calls['/api/notification/message/list'],1);
+			assert.equal(Object.keys(calls).some(key=>key.startsWith('/api/account/getInfo/')),false);
+			await page.locator('.nspp-messages textarea').fill('私信本地草稿，不发送');
+			assert.equal(await page.locator('.nspp-messages textarea').inputValue(),'私信本地草稿，不发送');
+			assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+			assert.deepEqual(errors,[]);
+		}finally{await context.close();}
+	}
 });
