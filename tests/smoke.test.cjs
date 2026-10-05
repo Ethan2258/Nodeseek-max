@@ -654,6 +654,7 @@ test("发帖页：同一套编辑器、标题焦点、原生分类和深色提�
 		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
 		assert.equal(await page.locator('.nsmax-editor-preview').innerText(),'测试正文');
 		assert.equal(await page.locator('.category-select').inputValue(),'tech');
+		await page.waitForFunction(()=>getComputedStyle(document.querySelector('.md-editor button.submit')).backgroundColor==='rgb(28, 28, 30)');
 		assert.equal(await page.locator('.md-editor button.submit').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(28, 28, 30)');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
