@@ -1,6 +1,6 @@
 {
   "name": "nodeseek-max",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "private": true,
   "description": "NodeSeek 全能增强用户脚本：融合 NodeSeek++、外链跳转、黑名单通知屏蔽、侧栏热榜与现代化主题",
   "license": "GPL-3.0-only",

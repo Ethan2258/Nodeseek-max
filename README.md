@@ -1,57 +1,46 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 `1.7.2`。采用 [SB Theme UI](https://sb.sb/) 套件，并适配 NodeSeek 的原生页面和交互。
+NodeSeek / DeepFlood 用户脚本，当前版本 **1.7.3**。使用 [SB Theme UI](https://sb.sb/) 的配色、系统字体、布局和短时过渡，保留论坛原生编辑与提交。
 
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey。
-2. 安装最新版：[nodeseek-max.user.js](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)。
-3. 停用旧的 NodeSeek 增强脚本，避免重复注入。
+2. [安装最新版脚本](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)。
+3. 停用其他 NodeSeek 增强脚本，避免重复注入。
 
-只需要样式时，可用 [Stylus](https://add0n.com/stylus.html) 安装 [独立 CSS](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css)。完整版本和历史文件见 [Releases](https://github.com/Ethan2258/Nodeseek-max/releases)。
+[版本与安装文件](https://github.com/Ethan2258/Nodeseek-max/releases) · [独立 Stylus 样式](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css)
 
-## 当前界面
+## 当前功能
 
-- 顶栏、搜索、版块导航、分页、按钮、输入框和图标统一使用套件组件规则。
-- 首页使用 1200px 内容容器、260px 侧栏、20px 间距、12px 卡片、分隔行帖子列表和胶囊控件。
-- 帖子页保留原生回复输入框、内容/预览切换、引用与提交，主楼和回复使用同一套排版与线条图标。
-- `/notification` 使用套件标签、消息列表和私信布局；`/setting` 使用真实 `#user-setting-panel` 的分组表单布局。
-- 浅色和深色都使用 SB Theme UI 官方 Token；默认系统字体，不联网下载字体。
-- 统一使用套件的短时长过渡、抽屉/弹窗进入和减少动画支持，按页面类型尽早启动必要逻辑。
+- 全站 SB 样式，统一浅色、深色、字体、按钮、输入框、图标和弹窗。
+- 首先呈现当前页主题、过滤和编辑器，再启动热榜与其他增强；输入时不重复扫描整页。
+- 桌面个人卡、八个快捷入口、今日热门日榜和列表控制区 NQ 入口。
+- 帖子列表不自动翻页；评论默认按需追加，更新底部页码，当前页明确引用整理为楼中楼。
+- 回复保留 Markdown、附件、表情、预览与快捷粘贴图片，提交仍由原站处理。
+- 追加评论优先复用兼容的原生互动组件；不兼容时，互动入口打开该评论原页。
+- 通知与私信使用统一消息中心，列表先加载一页，通知正文按点击加载。
+- 保留外链直达、关键词过滤、黑名单通知过滤与代码复制。顶栏支持关键词及深浅色切换。
+- 脚本面板只保留“关于”和“检查更新”，按需创建。
 
-## 保留功能
-
-- 外链中转页直达和 NodeSeek `/jump` 跳转。
-- 关键词、用户和等级过滤。
-- 黑名单通知过滤。
-- 帖子自动翻页、正文排版、代码复制、图片预览和编辑器增强。
-- SB 桌面个人卡：四项真实统计、两列功能链接和卡片内发帖入口；今日热门为单行十条日榜，按需请求并复用缓存。
-- 通知、原生私信列表与会话、主题切换和搜索面板适配。脚本设置按需打开，仅显示当前分类，保存时保留其他页面设置。
-
-信用分及作者资料批量请求已移除。阅读历史、帖子监控、回帖足迹、NQ 快捷入口、旧工具条、手机悬浮回复和旧消息中心编辑器不启动；底部相关网站/站内导航/商业推广等链接组隐藏。
+移除信用分、信任分、注册天数、阅读历史、帖子监控、回帖足迹、重复资料卡及旧工具条；不提供配置导入导出。默认使用本机系统字体，不下载网页字体。
 
 ## 开发
 
 ```bash
 npm install --no-package-lock
-npm run check     # 语法、meta、独立 CSS
-npm test          # 功能与手机布局回归
-npm run sb        # 编译套件、适配层和运行时主题
-npm run screenshots # 浅色/深色/手机截图及加载指标
-npm run performance # 同一 fixture 对比 v1.7.1 与当前脚本，三次中位数
-npm run meta      # 生成 nodeseek-max.meta.js
-npm run css       # 生成 theme/ 下的独立 CSS
-```
-
-测试需要 Chromium。已有 Chrome 时可指定：
-
-```powershell
-$env:NSMAX_CHROMIUM="C:\Path\To\chrome.exe"
+npm run sb           # 编译套件、适配样式和界面桥接
+npm run css
+npm run meta
+npm run check
 npm test
+npm run screenshots  # 桌面浅色、深色与手机布局
+npm run performance  # 与 v1.7.2 比较本地 fixture，三次中位数
 ```
 
-套件快照在 `theme/sb-suite.css`，站点适配在 `theme/sb-adapter.css`，设置面板在 `theme/settings.css`，桥接源在 `theme/source.js`。构建时裁剪无用规则并优化选择器。输入期间不触发全页增强扫描；默认系统字体，不加载演示内容或重复编辑器库。原生接口、验证码及权限检查由站点处理。
+测试需要 Chromium；可通过 `NSMAX_CHROMIUM` 指向已有 Chrome。套件快照在 `theme/sb-suite.css`，适配在 `theme/sb-adapter.css`，回复与分页桥接在 `theme/ui-runtime.js`，消息与关于弹窗样式在 `theme/messages.css`、`theme/settings.css`。
+
+浏览器回归使用真实结构的本地模拟页面；耗时数据不能代表论坛服务器或用户网络速度。原生接口、验证码和权限由站点处理。
 
 ## 许可证
 
-GPL-3.0-only，见 [LICENSE](LICENSE)。项目基于 NodeSeek++，并整合外链跳转、黑名单通知过滤等开源组件；第三方许可证声明保留在脚本头部。
+GPL-3.0-only，见 [LICENSE](LICENSE)。基于 NodeSeek++ 等开源组件，第三方许可证声明保留在脚本头部。
