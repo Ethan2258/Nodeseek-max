@@ -116,7 +116,10 @@ const newPostPage = (options) => shell("发帖 - NodeSeek", `<div id="nsk-body-l
 ${editor.replace("说点什么…", "正文，支持 Markdown").replace("发布评论", "发布帖子")}
 </div></div>${sidebar}`, options);
 
+const nativeSpacePage = (options={}) => shell("Steve 的主页 - NodeSeek", `<div class="nsk-container"><div class="head-container"><img src="${AVATAR}" alt="Steve"><div><h1>Steve</h1><p>一句话介绍自己</p></div><a class="btn" href="/notification#/message?mode=talk&to=10">私信</a></div><div class="selector"><a class="select-item active" href="#/info">概况</a><a class="select-item" href="#/posts">主题帖</a><a class="select-item" href="#/comments">评论</a><div class="selector-right-side"><div class="card-block">${[["加入天数",659],["等级",3],["鸡腿数目",1257],["主题帖数",100],["评论数目",873]].map(([label,count])=>`<div class="card-item"><div>${label}</div><div>${count}</div></div>`).join('')}<div class="card-item"></div></div><div class="readme">没有找到readme 🙄</div><div class="comments-list" style="background-color:rgb(48,48,48);color:white">${Array.from({length:4},(_,i)=>`<div><a href="/post-${4000+i}-1">测试主题 ${i+1}</a><p style="color:rgb(144,144,144)">测试评论摘要，保持真实链接</p></div>`).join('')}</div></div></div></div>`,{...options,standalone:true});
+
 module.exports = {
+	nativeSpacePage,
 	newPostPage,
 	listPage,
 	postPage,

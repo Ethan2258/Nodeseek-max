@@ -1,3 +1,8 @@
+	function nsmaxPrepareSpace() {
+		if (!/^\/space\/\d+/.test(location.pathname)) return;
+		for (const item of document.querySelectorAll(".card-block > .card-item")) item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
+		for (const readme of document.querySelectorAll(".readme")) readme.toggleAttribute("data-nsmax-empty-readme", /^(没有找到readme|暂无简介|暂无介绍)/i.test(readme.textContent.trim()));
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
@@ -10,10 +15,66 @@
 				link.target = "_blank";
 				link.rel = "noopener noreferrer";
 				link.title = "NodeQuality 测机";
-				link.append(toolIcon("gauge"), document.createTextNode("NQ"));
+				link.textContent = "NQ";
 				controller.append(link);
 			}
-			if (!/^\/post-\d+/.test(location.pathname)) return;
+			for (const pager of document.querySelectorAll(".nsk-pager")) {
+				const current = Number(pager.querySelector(".pager-cur,[aria-current=page]:not(a)")?.textContent) || 1;
+				const pages = Array.from(pager.querySelectorAll(".pager-pos"));
+				const number = element => Number(element.textContent.match(/(\d+)\s*$/)?.[1]);
+				const last = Math.max(...pages.map(number).filter(Number.isFinite));
+				let previous;
+				const seenPages = new Set();
+				for (const page of pages) {
+					const n = number(page);
+					const keep = !seenPages.has(n) && (n === 1 || n === last || (current <= 2 ? n <= 3 : Math.abs(n - current) <= 1));
+					seenPages.add(n);
+					page.toggleAttribute("data-nsmax-page-skip", !keep);
+					for (const ellipsis of page.querySelectorAll(".ellipsis")) ellipsis.hidden = true;
+					if (keep && previous && n - previous > 1 && !page.previousElementSibling?.matches(".nsmax-pager-ellipsis")) {
+						const dots = document.createElement("span"); dots.className = "nsmax-pager-ellipsis"; dots.textContent = "…"; page.before(dots);
+					}
+					if (keep) previous = n;
+				}
+				for (const [selector, label] of [["a.pager-next", "下一页"], ["a.pager-prev", "上一页"]]) {
+					const link = pager.querySelector(selector);
+					if (link && link.textContent !== label) link.textContent = label;
+				}
+			}
+			for (const row of document.querySelectorAll("ul.post-list:not(.topic-carousel-panel)>li.post-list-item")) {
+				if (row.hasAttribute("data-nsmax-meta-ordered")) continue;
+				const info = row.querySelector(".post-info");
+				if (!info) continue;
+				const author = info.querySelector(".info-author"), time = info.querySelector(".info-last-comment-time"), views = info.querySelector(".info-views"), count = info.querySelector(".info-comments-count"), last = info.querySelector(".info-last-commenter");
+				const category = info.querySelector(".post-category");
+				const inline = category?.cloneNode(true);
+				if (inline) { inline.className = "nsmax-inline-category"; inline.prepend(toolIcon("folder")); }
+				for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
+				row.setAttribute("data-nsmax-meta-ordered", "");
+			}
+			nsmaxPrepareSpace();
+			const isPost = /^\/post-\d+/.test(location.pathname);
+			if (!isPost && !/^\/(?:new|edit)-discussion/.test(location.pathname)) return;
+			if (isPost) for (const item of document.querySelectorAll("ul.comments li.content-item")) {
+				const menu = item.querySelector(":scope > .comment-menu");
+				const floor = item.querySelector(":scope > .nsk-content-meta-info > .floor-link-wrapper");
+				let actions = item.querySelector(":scope > .nsmax-floor-actions");
+				if (!actions && menu && floor) {
+					actions = document.createElement("div"); actions.className = "nsmax-floor-actions";
+					item.append(actions); actions.append(menu, floor);
+				}
+				if (!actions) continue;
+				for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
+					const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报)$/.test(text));
+					if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
+					for (const span of action.querySelectorAll(":scope > span")) {
+						const text = span.textContent.trim();
+						if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) span.setAttribute("data-nsmax-action-count", "");
+						else span.setAttribute("data-nsmax-action-label", "");
+					}
+					action.setAttribute("data-nsmax-compact-action", "");
+				}
+			}
 			for (const editor of document.querySelectorAll(".md-editor")) {
 				if (editors.has(editor)) continue;
 				const body = editor.querySelector("#editor-body") || editor;
@@ -23,9 +84,10 @@
 				editor.classList.add("nsmax-compact-reply");
 				const heading = document.createElement("h2");
 				heading.className = "nsmax-editor-heading";
-				heading.textContent = "发表回复";
+				heading.textContent = isPost ? "发表回复" : "编辑正文";
 				const controls = document.createElement("div");
 				controls.className = "nsmax-editor-controls";
+				const head = document.createElement("div"); head.className = "nsmax-editor-head"; head.append(heading);
 				const preview = document.createElement("div");
 				preview.className = "nsmax-editor-preview post-content";
 				preview.hidden = true;
@@ -40,7 +102,7 @@
 					button.title = label;
 					button.setAttribute("aria-label", label);
 					button.setAttribute("aria-pressed", "false");
-					button.append(toolIcon(icon), document.createTextNode(label));
+					button.append(toolIcon(icon), document.createTextNode(label === "Markdown" ? "使用 Markdown 编辑器" : label === "附件" ? "上传附件" : label));
 					button.addEventListener("click", () => callback(button), { signal: ctx.signal });
 					controls.append(button);
 				};
@@ -50,7 +112,7 @@
 					cm?.refresh();
 				});
 				action("附件", "image", () => (editor.querySelector(".nspp-upload-choose") || editor.querySelector('.mde-toolbar [title="图片"],.mde-toolbar [title="上传图片"]'))?.click());
-				action("表情", "comment", button => {
+				action("表情", "smile", button => {
 					const on = editor.classList.toggle("nsmax-editor-emoji");
 					button.setAttribute("aria-pressed", String(on));
 				});
@@ -62,25 +124,38 @@
 					render();
 					if (!previewing) { cm?.refresh(); (cm || input).focus(); }
 				});
-				body.prepend(heading);
-				body.append(preview);
+				const surface = document.createElement("div");
+				surface.className = "nsmax-editor-surface";
+				const nativeInput = editor.querySelector(".CodeMirror") || input;
+				let pane = nativeInput;
+				while (pane.parentElement && pane.parentElement !== body && pane.parentElement !== editor) pane = pane.parentElement;
+				if (pane !== body && pane !== editor) { pane.setAttribute("data-nsmax-editor-pane", ""); pane.before(surface); surface.append(pane, preview); }
+				else { body.append(surface); surface.append(preview); }
+				const previewButton = controls.lastElementChild;
+				previewButton.addEventListener("click", () => contentButton.setAttribute("aria-pressed",String(!previewing)), { signal:ctx.signal });
+				const contentButton = document.createElement("button"); contentButton.type = "button"; contentButton.setAttribute("aria-pressed","true"); contentButton.textContent = "内容"; contentButton.setAttribute("aria-label", "内容");
+				contentButton.addEventListener("click", () => { if (previewing) previewButton.click(); }, { signal: ctx.signal });
+				head.append(contentButton, previewButton);
+				surface.before(controls);
+				body.prepend(head);
 				const submit = editor.querySelector(".topic-select,.submit-row");
-				if (submit) submit.prepend(controls);
-				else editor.append(controls);
+				if (!submit) { const footer = document.createElement("div"); footer.className = "submit-row"; editor.append(footer); }
 				if (cm) cm.on("change", render);
 				else input.addEventListener("input", render, { signal: ctx.signal });
-				editors.set(editor, () => { cm?.off("change", render); heading.remove(); controls.remove(); preview.remove(); });
+				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); preview.remove(); });
 			}
 			// Only group explicit replies to an earlier floor already present on this page.
 			// Moving the existing node preserves native actions, anchors and drafts.
 			const list = document.querySelector("ul.comments");
-			if (!list) return;
+			if (!list || !isPost) return;
 			const floors = new Map(Array.from(list.querySelectorAll("li.content-item[id]"), item => [item.id, item]));
 			for (const [id, item] of floors) {
 				if (processed.has(item)) continue;
 				const paragraph = item.querySelector("article.post-content > p:first-child");
 				if (!paragraph || !/^\s*@/.test(paragraph.textContent)) continue;
-				const link = paragraph.querySelector("a[href]");
+				const link = Array.from(paragraph.querySelectorAll("a[href]")).find(anchor => {
+					try { const url = new URL(anchor.href, location.href); return url.origin === location.origin && /^\/post-\d+-\d+$/.test(url.pathname) && /^#\d+$/.test(url.hash); } catch { return false; }
+				});
 				if (!link) continue;
 				const url = new URL(link.href, location.href);
 				const parentId = url.hash.slice(1);
@@ -103,3 +178,83 @@
 		return () => { stop(); for (const dispose of editors.values()) dispose(); editors.clear(); };
 	}
 	var leanUiFeature = { id: "sb-page-controls", defaults: { enabled: true }, mount: mountLeanUi };
+
+	var recentVisitsFeature = {
+		id: "sb-recent-visits", defaults: { enabled: true }, mount(ctx) {
+			const account = unsafeWindow$1.__config__?.user?.member_id || "guest";
+			const key = "nsmax:recent:" + account;
+			let records = [];
+			const read = () => {
+				try { const value = JSON.parse(localStorage.getItem(key) || "[]"); records = Array.isArray(value) ? value.filter(item => typeof item?.title === "string" && /^\/post-\d+-\d+$/.test(item.path)).slice(0,10) : []; } catch { records = []; }
+			};
+			read();
+			const match = location.pathname.match(/^\/post-(\d+)(?:-\d+)?$/);
+			const title = document.querySelector(".nsk-post .post-title-link,.nsk-post h1")?.textContent.trim();
+			if (match && title) {
+				const path = "/post-" + match[1] + "-1";
+				records = [{ path, title: title.slice(0,200) }, ...records.filter(item => item.path !== path)].slice(0,10);
+				try { localStorage.setItem(key, JSON.stringify(records)); } catch {}
+			}
+			let panel, signature;
+			const render = () => {
+				const sidebar = document.getElementById("nsk-right-panel-container");
+				if (!sidebar || !records.length) return;
+				if (!panel) { panel = document.createElement("section"); panel.className = "nsmax-recent-panel"; const head = document.createElement("h2"); head.textContent = "最近浏览"; panel.append(head,document.createElement("ul")); }
+				const hot = sidebar.querySelector(".nsmax-hot-panel");
+				if (hot && hot.nextElementSibling !== panel) hot.after(panel);
+				else if (!panel.isConnected) sidebar.append(panel);
+				const next = JSON.stringify(records);
+				if (next === signature) return;
+				signature = next;
+				const list = panel.querySelector("ul"); list.replaceChildren();
+				for (const record of records) { const item = document.createElement("li"), link = document.createElement("a"); link.href = record.path; link.textContent = record.title; link.title = record.title; item.append(link); list.append(item); }
+			};
+			const stop = ctx.watch(render);
+			window.addEventListener("storage", event => { if (event.key === key) { read(); render(); } }, { signal: ctx.signal });
+			return () => { stop(); panel?.remove(); };
+		}
+	};
+
+	var personHoverFeature = { id: "sb-person-hover", defaults: { enabled: true }, mount(ctx) {
+		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
+		const matches = target => {
+			const link = target instanceof Element ? target.closest('a[href*="/space/"]:has(img),.avatar-wrapper a') : null;
+			if (!link) return null;
+			try { const url = new URL(link.href,location.href); return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) ? link : null; } catch { return null; }
+		};
+		const hide = () => { clearTimeout(opening); clearTimeout(closing); serial++; pop?.remove(); pop = null; anchor = null; document.documentElement.removeAttribute("data-nsmax-person-open"); };
+		const closeSoon = () => { clearTimeout(opening); clearTimeout(closing); closing = setTimeout(hide,160); };
+		const place = () => { if (!pop || !anchor) return; const box = anchor.getBoundingClientRect(); pop.style.left = Math.max(8,Math.min(box.left,innerWidth-pop.offsetWidth-8))+"px"; pop.style.top = Math.max(8,Math.min(box.bottom+8,innerHeight-pop.offsetHeight-8))+"px"; };
+		const show = async link => {
+			const url = new URL(link.href,location.href), id = url.pathname.match(/^\/space\/(\d+)\/?$/)?.[1];
+			if (url.origin !== location.origin || !id) return;
+			if (anchor === link && pop) { clearTimeout(closing); return; }
+			hide(); anchor = link; const ticket = ++serial;
+			const img = link.querySelector("img"), owner = link.closest(".content-item,.post-list-item,.user-head");
+			const name = owner?.querySelector(".author-name,.info-author a,.Username")?.textContent.trim() || img?.alt || "用户 " + id;
+			pop = document.createElement("section"); pop.className = "nsmax-person-pop"; pop.setAttribute("role","dialog"); pop.setAttribute("aria-label",name+" 的资料");
+			const header = document.createElement("div"); header.className = "nsmax-person-head";
+			if (img) { const avatar = document.createElement("img"); avatar.src = img.src; avatar.alt = ""; header.append(avatar); }
+			const identity = document.createElement("div"), profile = document.createElement("a"); profile.href = "/space/"+id; profile.textContent = name; identity.append(profile); header.append(identity);
+			const numbers = document.createElement("dl"), status = document.createElement("p"); status.textContent = "正在读取资料…"; status.setAttribute("role","status");
+			const foot = document.createElement("div"); foot.className = "nsmax-person-foot";
+			for (const [label,path] of [["个人主页","/space/"+id],["私信","/notification#/message?mode=talk&to="+id]]) { const link = document.createElement("a"); link.href = path; link.textContent = label; foot.append(link); }
+			pop.append(header,numbers,status,foot); pop.addEventListener("pointerenter",()=>clearTimeout(closing),{signal:ctx.signal}); pop.addEventListener("pointerleave",closeSoon,{signal:ctx.signal}); document.body.append(pop); document.documentElement.setAttribute("data-nsmax-person-open",""); place();
+			try {
+				let entry = cache.get(id);
+				if (!entry || Date.now()-entry.at>3e5) { const promise = ctx.request("/api/account/getInfo/"+id).then(data => data?.detail || data?.data || {}); entry = { at:Date.now(), promise }; cache.set(id,entry); if (cache.size>32) cache.delete(cache.keys().next().value); }
+				const data = await entry.promise;
+				if (ticket !== serial || !pop) return;
+				profile.textContent = data.member_name || name;
+				if (data.rank !== undefined) { const level = document.createElement("span"); level.className = "nsmax-person-level"; level.textContent = "Lv " + data.rank; identity.append(level); }
+				for (const [label,key] of [["鸡腿","coin"],["主题","nPost"],["回复","nComment"],["粉丝","fans"]]) { const item = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd"); term.textContent = label; value.textContent = data[key] === undefined ? "—" : String(data[key]); item.append(term,value); numbers.append(item); }
+				status.remove(); place();
+			} catch { cache.delete(id); if (ticket === serial && pop) status.textContent = "暂时无法读取资料，可打开个人主页"; }
+		};
+		document.addEventListener("pointerover",event => { const link=matches(event.target); if (!link || pop?.contains(link) || link.contains(event.relatedTarget)) return; clearTimeout(opening); clearTimeout(closing); opening=setTimeout(()=>show(link),180); }, { signal:ctx.signal });
+		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
+		document.addEventListener("click",event => { const link=matches(event.target); if (link && !pop?.contains(link)) { event.preventDefault(); event.stopImmediatePropagation(); void show(link); } else if (pop && !pop.contains(event.target)) hide(); }, { capture:true, signal:ctx.signal });
+		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });
+		window.addEventListener("scroll",hide,{passive:true,signal:ctx.signal}); window.addEventListener("resize",place,{passive:true,signal:ctx.signal});
+		return hide;
+	} };

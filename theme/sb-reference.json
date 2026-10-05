@@ -1,0 +1,27 @@
+{
+  "url": "https://sb.sb/",
+  "stylesheet": "https://sb.sb/assets/index.acbee3dc0a.css",
+  "checked": "2026-10-05",
+  "sha256": "acbee3dc0a0fe8e722180e4d65373278855ab122a1810af2e4239b4386ed5164",
+  "metrics": {
+    "container": 1200,
+    "sidebar": 260,
+    "header": 56,
+    "title": 15,
+    "meta": 12.5,
+    "metaLineHeight": 20,
+    "rowPadding": "11px 14px",
+    "rowGap": 10,
+    "radius": 12
+  },
+  "colors": {
+    "bg": "#f7f8fa",
+    "panel": "#ffffff",
+    "line": "#e0e2e8",
+    "text": "#1c1c1e",
+    "strong": "#050038",
+    "subtle": "#6b6f7e",
+    "brand": "#33408f",
+    "mark": "#ffd02f"
+  }
+}
