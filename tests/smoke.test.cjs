@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -198,8 +198,8 @@ test("回复编辑器：真实嵌套结构可输入、引用和点击原生提�
 		assert.equal(await page.evaluate(() => window.__nativeSubmit), 1);
 		assert.equal(await page.locator(".md-editor textarea").inputValue(), "本地回归测试，不发送到论坛");
 		const masks = await page.locator('.comment-menu [title="点赞"],.comment-menu [title="引用"],.comment-menu [title="回复"]').evaluateAll(es => es.map(e => getComputedStyle(e,"::before").content));
-		assert.ok(masks.every(mask => mask === "none"));
-		assert.ok(await page.locator('.comment-menu .menu-item svg:visible').count()>=6);
+		assert.ok(masks.every(mask => mask === '""' || mask === "none"));
+		assert.equal(await page.locator('.nsmax-floor-actions .menu-item[data-nsmax-compact-action]').count(),15);
 		assert.equal(Object.keys(calls).some(key => key.startsWith("/api/account/getInfo/")), false);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
@@ -303,7 +303,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.3");
+	assert.equal(packageJson.version, "1.7.4");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -457,9 +457,9 @@ test("评论追加：默认按需加载、去重、安全清理、楼中楼、�
 		await page.waitForSelector('li[id="1"]>.nsmax-nested-replies>li[id="4"]');
 		assert.equal(await page.locator('ul.comments li.content-item').count(),6);
 		assert.equal(await page.locator('.post-bottom-pager .pager-cur').innerText(),'2');
-		const actions=page.locator('li[id="4"]>.comment-menu .menu-item');
+		const actions=page.locator('li[id="4"]>.nsmax-floor-actions .comment-menu .menu-item');
 		assert.equal(await actions.count(),5);
-		assert.equal(await actions.filter({hasText:'加鸡腿'}).getAttribute('href'),'/post-1000-2#4');
+		assert.equal(await page.locator('li[id="4"]>.nsmax-floor-actions [title="加鸡腿"]').getAttribute('href'),'/post-1000-2#4');
 		assert.equal(await page.locator('ul.comments [onerror]').count(),0);
 		assert.equal(await page.evaluate(()=>window.__unsafe),undefined);
 		assert.equal(await page.locator('button.nspp-action').filter({hasText:'已加载全部内容'}).isDisabled(),true);
@@ -477,10 +477,10 @@ test("回复预览与粘贴图片：保留草稿、返回输入和本地上传�
 		assert.equal(await page.locator('.md-editor .mde-toolbar').isVisible(),true);
 		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'Markdown',exact:true}).click();
 		await page.locator('.md-editor textarea').fill('**草稿测试**');
-		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'预览',exact:true}).click();
+		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
 		assert.equal(await page.locator('.nsmax-editor-preview strong').innerText(),'草稿测试');
 		assert.equal(await page.locator('.md-editor textarea').isVisible(),false);
-		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'预览',exact:true}).click();
+		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
 		assert.equal(await page.locator('.md-editor textarea').inputValue(),'**草稿测试**');
 		await page.locator('.md-editor textarea').evaluate(input=>{
 			const data=new DataTransfer();
@@ -526,6 +526,153 @@ test("私信首屏：一轮会话请求、输入预览可用、无批量资料�
 			await page.locator('.nspp-messages textarea').fill('私信本地草稿，不发送');
 			assert.equal(await page.locator('.nspp-messages textarea').inputValue(),'私信本地草稿，不发送');
 			assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+			assert.deepEqual(errors,[]);
+		}finally{await context.close();}
+	}
+});
+
+
+test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜比例",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900}});
+	try{
+		await page.waitForSelector('.nsmax-hot-text');
+		assert.equal(await page.locator('.nsmax-nq-entry').innerText(),'NQ');
+		assert.equal(await page.locator('.nsmax-nq-entry svg').count(),0);
+		assert.equal(await page.locator('.pager-bottom a.pager-next').innerText(),'下一页');
+		assert.equal(await page.locator('.pager-bottom .pager-prev').isVisible(),false);
+		const row=page.locator('ul.post-list:not(.topic-carousel-panel)>li').first();
+		const ordered=await row.locator('.post-info').evaluate(e=>[...e.children].filter(n=>n.matches('.info-author,.info-last-comment-time,.nsmax-inline-category,.info-views,.info-comments-count,.info-last-commenter')).map(n=>n.className));
+		assert.ok(ordered[0].includes('info-author'));
+		assert.ok(ordered[1].includes('info-last-comment-time'));
+		assert.equal(ordered[2],'nsmax-inline-category');
+		assert.ok(ordered[3].includes('info-views'));
+		const state=await row.locator('.post-info').evaluate(e=>({font:getComputedStyle(e).fontSize,line:getComputedStyle(e).lineHeight,gap:getComputedStyle(e).gap}));
+		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'10px'});
+		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);
+		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderTopWidth),'0px');
+		assert.equal(await page.locator('.nsmax-account-rank').innerText(),'Lv 6');
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("评论对齐：操作区在右上方、无文字、保留真实计数、正文与作者对齐",async()=>{
+	const html=postPage().replaceAll('title="引用"','title="引用"').replaceAll('<span></span>','<span>引用</span>');
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html,viewport:{width:1440,height:900}});
+	try{
+		await page.waitForSelector('.nsmax-floor-actions');
+		const dims=await page.locator('ul.comments li.content-item').evaluateAll(rows=>rows.map(row=>{
+			const author=row.querySelector('.author-name').getBoundingClientRect(),body=row.querySelector('article').getBoundingClientRect(),actions=row.querySelector('.nsmax-floor-actions').getBoundingClientRect();return {authorX:author.left,bodyX:body.left,authorY:author.top,actionY:actions.top,actionX:actions.left,authorRight:author.right};
+		}));
+		assert.ok(dims.every(r=>Math.abs(r.authorX-r.bodyX)<=1&&Math.abs(r.authorY-r.actionY)<=4&&r.actionX>r.authorRight),JSON.stringify(dims));
+		assert.ok(dims.every(r=>r.authorX===dims[0].authorX),JSON.stringify(dims));
+		assert.equal(await page.locator('.nsmax-floor-actions [data-nsmax-action-label]:visible').count(),0);
+		assert.equal(await page.locator('.nsmax-floor-actions [title="点赞"] [data-nsmax-action-count]').first().innerText(),'1');
+		assert.equal(await page.locator('.nsmax-floor-actions .menu-item').first().evaluate(e=>getComputedStyle(e,'::before').maskImage==='none'),false);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("真实预览容器：CodeMirror 外层收起，图片与预览顶部无空白，返回草稿",async()=>{
+	let html=postPage({editorMode:'codemirror'}).replace('<div class="vue-codemirror">','<div class="cm-wrapper" style="height:300px;min-height:300px"><div class="vue-codemirror">').replace('<div class="topic-select">','</div><div class="topic-select">');
+	html=html.replace('</body>',`<script>
+	const host=document.querySelector('.CodeMirror');let value='![本地图片](${require('./fixtures/pages.cjs').AVATAR || 'https://www.nodeseek.com/avatar/test'})';const changes=new Set();
+	host.CodeMirror={getValue:()=>value,setValue:text=>{value=text;changes.forEach(fn=>fn())},on:(event,fn)=>{if(event==='change')changes.add(fn)},off:(event,fn)=>changes.delete(fn),refresh:()=>{},focus:()=>host.querySelector('textarea').focus(),getWrapperElement:()=>host,getOption:()=>undefined};
+	</script></body>`);
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html});
+	try{
+		await page.waitForSelector('.nsmax-editor-head');
+		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
+		assert.equal(await page.locator('[data-nsmax-editor-pane]').isVisible(),false);
+		assert.equal(await page.locator('.nsmax-editor-preview img').isVisible(),true);
+		const gap=await page.locator('.nsmax-editor-preview').evaluate(e=>e.getBoundingClientRect().top-e.parentElement.getBoundingClientRect().top);
+		assert.ok(gap<=2,`预览顶部留下 ${gap}px 空白`);
+		await page.locator('.nsmax-editor-head').getByRole('button',{name:'内容',exact:true}).click();
+		assert.equal(await page.locator('.CodeMirror').isVisible(),true);
+		assert.ok(await page.locator('.CodeMirror').evaluate(e=>e.CodeMirror.getValue().includes('本地图片')));
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("最近浏览：本地去重、十条上限、安全标题、位于热榜之后，无额外请求",async()=>{
+	const seed=Array.from({length:10},(_,i)=>({path:'/post-'+(9000+i)+'-1',title:'以前浏览 '+i}));
+	const {context,page,errors,calls}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:postPage(),init:`if(window.top===window)localStorage.setItem('nsmax:recent:1',${JSON.stringify(JSON.stringify(seed))});`});
+	try{
+		await page.waitForSelector('.nsmax-recent-panel a');
+		assert.equal(await page.locator('.nsmax-recent-panel a').count(),10);
+		assert.equal(await page.locator('.nsmax-recent-panel a').first().getAttribute('href'),'/post-1000-1');
+		assert.equal(await page.locator('.nsmax-hot-panel + .nsmax-recent-panel').count(),1);
+		const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('nsmax:recent:1')));
+		assert.equal(saved.length,10);
+		assert.equal(saved.filter(r=>r.path==='/post-1000-1').length,1);
+		assert.equal(Object.keys(calls).some(path=>path.includes('/getInfo/')),false);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("头像悬停：仅一张资料卡、按需请求一次、缓存复用、Escape 关闭",async()=>{
+	const {context,page,errors,calls}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900}});
+	try{
+		await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-nsmax-mounting'));
+		assert.equal(Object.keys(calls).some(path=>path.includes('/getInfo/')),false);
+		const avatar=page.locator('ul.post-list>li>a:has(img)').first();
+		await avatar.hover();
+		await page.waitForSelector('.nsmax-person-pop dd');
+		assert.equal(await page.locator('.nsmax-person-pop:visible').count(),1);
+		assert.equal(Object.keys(calls).filter(path=>path.includes('/getInfo/')).length,1);
+		await page.keyboard.press('Escape');
+		assert.equal(await page.locator('.nsmax-person-pop').count(),0);
+		await page.mouse.move(5,5);await avatar.hover();
+		await page.waitForSelector('.nsmax-person-pop dd');
+		assert.equal(Object.values(Object.fromEntries(Object.entries(calls).filter(([key])=>key.includes('/getInfo/')))).reduce((a,b)=>a+b,0),1);
+		assert.equal(await page.locator('section.nspp-user-hover').count(),0);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+test("个人空间：去除黑底、注册天数、空统计和空介绍，主题颜色随深浅切换",async()=>{
+	for(const dark of [false,true]){
+		const {context,page,errors}=await open(browser,'https://www.nodeseek.com/space/10',{html:nativeSpacePage({dark}),colorScheme:dark?'dark':'light'});
+		try{
+			await page.waitForSelector('[data-nsmax-obsolete-stat]',{state:'attached'});
+			assert.equal(await page.locator('.card-block>.card-item:visible').count(),4);
+			assert.equal(await page.locator('.readme').isVisible(),false);
+			const color=await page.locator('.comments-list').evaluate(e=>getComputedStyle(e).backgroundColor);
+			assert.equal(color,dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
+			assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+			assert.deepEqual(errors,[]);
+		}finally{await context.close();}
+	}
+});
+
+test("发帖页：同一套编辑器、标题焦点、原生分类和深色提交按钮保持可用",async()=>{
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/new-discussion',{html:newPostPage()});
+	try{
+		await page.waitForSelector('.nsmax-editor-head');
+		await page.locator('.post-title-input').fill('本地测试标题，不发布');
+		await page.locator('.category-select').selectOption('tech');
+		await page.locator('.md-editor textarea').fill('测试正文');
+		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
+		assert.equal(await page.locator('.nsmax-editor-preview').innerText(),'测试正文');
+		assert.equal(await page.locator('.category-select').inputValue(),'tech');
+		assert.equal(await page.locator('.md-editor button.submit').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(28, 28, 30)');
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
+
+test("帖子悬停预览：SB 卡片表面与标题色、按需读取、Escape 关闭",async()=>{
+	for(const dark of [false,true]){
+		const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage({dark}),pages:{'/post-1000-1':postPage({dark})},colorScheme:dark?'dark':'light'});
+		try{
+			await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-nsmax-mounting'));
+			await page.locator('.post-list-item .post-title a').first().hover();
+			await page.waitForSelector('dialog.nspp-post-preview article');
+			const style=await page.locator('dialog.nspp-post-preview').evaluate(e=>({bg:getComputedStyle(e).backgroundColor,radius:getComputedStyle(e).borderRadius,title:getComputedStyle(e.querySelector('header>a')).color}));
+			assert.equal(style.bg,dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
+			assert.equal(style.radius,'12px');
+			assert.equal(style.title,dark?'rgb(242, 243, 248)':'rgb(5, 0, 56)');
+			await page.keyboard.press('Escape');
+			assert.equal(await page.locator('dialog.nspp-post-preview').isVisible(),false);
 			assert.deepEqual(errors,[]);
 		}finally{await context.close();}
 	}

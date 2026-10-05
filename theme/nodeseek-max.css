@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.3（纯 CSS）
+ * NodeSeek Max 主题 v1.7.4（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -6034,4 +6034,510 @@ html:root:root:root:root:root #nsk-body-left .comment-menu .menu-item {
 		transition:none!important;
 		animation:none!important;
 	}
+}
+html:root:root:root:root #nsk-head {
+	height:56px!important;
+	min-height:56px!important;
+	gap:14px!important;
+	max-width:1200px!important;
+}
+html:root:root:root:root body>header:has(>#nsk-head) {
+	height:56px!important;
+	min-height:56px!important;
+	background:var(--panel)!important;
+	border-bottom:1px solid var(--line-soft)!important;
+}
+html:root:root:root:root #nsk-frame {
+	margin-top:56px!important;
+	padding-top:0!important;
+}
+html:root:root:root:root #nsk-body {
+	margin-top:20px!important;
+}
+html:root:root:root:root #nsk-head .site-title>a {
+	display:inline-flex!important;
+	align-items:center!important;
+	gap:0!important;
+	padding:5px 10px!important;
+	border-radius:6px!important;
+	background:var(--mark)!important;
+	color:var(--mark-text)!important;
+	font:600 15px/24px var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-head .site-title img {
+	display:none!important;
+}
+html:root:root:root:root #nsk-head .site-title .title-text {
+	font:inherit!important;
+	color:inherit!important;
+}
+html:root:root:root:root #nsk-head ul.nav-menu a {
+	font:400 13.5px/24px var(--font-sans)!important;
+	padding:6px 10px!important;
+	color:var(--text-muted)!important;
+}
+html:root:root:root:root #nsk-head .search-box {
+	flex:0 1 180px!important;
+	width:180px!important;
+	max-width:180px!important;
+	min-width:80px!important;
+}
+html:root:root:root:root #nsk-head .search-box input {
+	height:36px!important;
+	border:1px solid var(--line)!important;
+	border-radius:8px!important;
+	padding:0 34px 0 10px!important;
+	background:var(--panel-alt)!important;
+	font:13.5px/36px var(--font-sans)!important;
+	color:var(--text)!important;
+}
+html:root:root:root:root #nsk-right-panel-container>div>a.new-discussion {
+	background:var(--action)!important;
+	color:var(--action-text)!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item {
+	padding:11px 72px 11px 14px!important;
+	gap:12px!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-title a {
+	font:500 15px/22px var(--font-sans)!important;
+	color:var(--text-strong)!important;
+	text-decoration:none!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info {
+	display:flex!important;
+	align-items:center!important;
+	gap:10px!important;
+	margin-top:3px!important;
+	font:400 12.5px/20px var(--font-sans)!important;
+	color:var(--text-subtle)!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info a,
+html:root:root:root:root #nsk-body-left .post-list-item .post-info span,
+html:root:root:root:root #nsk-body-left .post-list-item .post-info time {
+	font:inherit!important;
+	color:inherit!important;
+	text-decoration:none!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-item {
+	display:inline-flex!important;
+	align-items:center!important;
+	gap:3px!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info .post-category {
+	font-size:11px!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item:hover,
+html:root:root:root:root #nsk-body-left .content-item:hover {
+	background:var(--panel-hover)!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-post>.content-item {
+	padding:18px 20px!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments li.content-item {
+	padding:14px 18px!important;
+	grid-template-columns:32px minmax(0,1fr)!important;
+	grid-template-rows:auto auto!important;
+	align-items:start!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments li.content-item>.nsk-content-meta-info>div:not(.avatar-wrapper):not(.floor-link-wrapper) {
+	padding-right:0!important;
+	grid-column:2!important;
+	grid-row:1!important;
+	display:flex!important;
+	align-items:center!important;
+	gap:8px!important;
+	flex-wrap:wrap!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments .author-info {
+	margin:0!important;
+	font:400 14px/24px var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments .author-name {
+	font:400 14px/24px var(--font-sans)!important;
+	color:var(--text-strong)!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments .content-info {
+	margin:0!important;
+	font:12px/24px var(--font-sans)!important;
+	color:var(--text-subtle)!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments li.content-item>article.post-content {
+	grid-row:2!important;
+	margin:8px 0 0!important;
+	padding:0!important;
+	font:14.5px/1.68 var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-post .post-content {
+	font:14.5px/1.68 var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item {
+	width:72px!important;
+	height:52px!important;
+	border:1px solid var(--line)!important;
+	border-radius:8px!important;
+	background:var(--panel)!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-pager {
+	display:flex!important;
+	align-items:center!important;
+	gap:5px!important;
+	padding:12px 14px!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-pager [role=navigation] {
+	display:flex!important;
+	align-items:center!important;
+	gap:5px!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-pager .pager-pos,
+html:root:root:root:root #nsk-body-left .nsk-pager .pager-next,
+html:root:root:root:root #nsk-body-left .nsk-pager .pager-prev {
+	display:inline-flex!important;
+	justify-content:center!important;
+	align-items:center!important;
+	box-sizing:border-box!important;
+	min-width:32px!important;
+	height:32px!important;
+	min-height:32px!important;
+	padding:0 9px!important;
+	margin:0!important;
+	border:1px solid var(--line)!important;
+	border-radius:999px!important;
+	background:var(--panel)!important;
+	color:var(--text-subtle)!important;
+	font:13px/30px var(--font-sans)!important;
+	text-decoration:none!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-pager .pager-cur {
+	background:var(--action)!important;
+	color:var(--action-text)!important;
+	border-color:var(--action)!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-pager :is(.pager-prev:not(a),[data-nsmax-page-skip],.ellipsis[hidden]) {
+	display:none!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-pager .pager-next::before,
+html:root:root:root:root #nsk-body-left .nsk-pager .pager-prev::before {
+	content:none!important;
+	display:none!important;
+}
+html:root:root:root:root dialog.nspp-post-preview {
+	width:min(440px,calc(100vw - 24px))!important;
+	max-height:min(520px,calc(100dvh - 24px))!important;
+	padding:0!important;
+	margin:0!important;
+	position:fixed!important;
+	border:1px solid var(--line)!important;
+	border-radius:12px!important;
+	background:var(--panel)!important;
+	color:var(--text)!important;
+	box-shadow:var(--shadow-medium)!important;
+	font:13px/1.65 var(--font-sans)!important;
+	overflow:auto!important;
+}
+html:root:root:root:root dialog.nspp-post-preview[hidden] {
+	display:none!important;
+}
+html:root:root:root:root dialog.nspp-post-preview>header {
+	position:static!important;
+	padding:12px 14px!important;
+	background:var(--panel)!important;
+	border-bottom:1px solid var(--line-soft)!important;
+}
+html:root:root:root:root dialog.nspp-post-preview>header>a {
+	display:block!important;
+	color:var(--text-strong)!important;
+	font:500 14px/1.5 var(--font-sans)!important;
+	text-decoration:none!important;
+}
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content {
+	padding:12px 14px!important;
+	max-height:340px;
+	overflow:auto;
+}
+html:root:root:root:root dialog.nspp-post-preview .nspp-preview-meta {
+	margin-bottom:8px;
+	color:var(--text-subtle);
+	font:12px/18px var(--font-sans);
+}
+html:root:root:root:root dialog.nspp-post-preview article {
+	font:13px/1.65 var(--font-sans)!important;
+	color:var(--text)!important;
+}
+html:root:root:root:root dialog.nspp-post-preview img {
+	max-width:100%!important;
+	height:auto!important;
+	border:0!important;
+	box-shadow:none!important;
+}
+html:root:root:root:root dialog.nspp-post-preview>footer {
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:8px;
+	padding:10px 14px;
+	border-top:1px solid var(--line-soft);
+	background:var(--panel-alt);
+}
+html:root:root:root:root dialog.nspp-post-preview>footer a {
+	font:12px/20px var(--font-sans);
+	color:var(--text-subtle);
+	text-decoration:none;
+}
+html:root:root:root:root dialog.nspp-post-preview>p {
+	margin:0;
+	padding:8px 14px;
+	color:var(--text-subtle);
+}
+html:root:root:root:root dialog.nspp-post-preview>p:empty {
+	display:none;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .post-editor,
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .new-discussion {
+	padding:16px!important;
+	border:1px solid var(--line)!important;
+	border-radius:12px!important;
+	box-shadow:none!important;
+	background:var(--panel)!important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left :is(.post-editor,.new-discussion) .md-editor {
+	border:1px solid var(--line)!important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left input[type=text],
+html:root:root:root:root:has(.new-discussion) #nsk-body-left input:not([type]) {
+	height:42px!important;
+	padding:0 12px!important;
+	border:1px solid var(--line)!important;
+	border-radius:8px!important;
+	font:400 15px/42px var(--font-sans)!important;
+	box-shadow:none!important;
+	background:var(--panel-alt)!important;
+	color:var(--text)!important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left input[type=text]:focus,
+html:root:root:root:root:has(.new-discussion) #nsk-body-left input:not([type]):focus {
+	outline:0!important;
+	border-color:var(--line-strong)!important;
+	box-shadow:0 0 0 2px var(--brand-soft)!important;
+	background:var(--panel)!important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .title-row,
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .category-row {
+	margin-bottom:12px!important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .important-note,
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .important-reminder,
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .new-discussion-notes,
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .warning-block {
+	margin-top:16px!important;
+	padding:14px!important;
+	border:1px solid var(--line)!important;
+	border-radius:12px!important;
+	background:var(--panel-alt)!important;
+	box-shadow:none!important;
+	color:var(--text-muted)!important;
+	font:13px/1.65 var(--font-sans)!important;
+}
+html:root:root:root:root:has(.head-container) :is(.card-block,.selector-right-side .card-block) {
+	display:grid!important;
+	grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;
+	padding:0!important;
+	gap:0!important;
+	background:var(--panel)!important;
+	border:1px solid var(--line)!important;
+}
+html:root:root:root:root:has(.head-container) .card-block>.card-item {
+	border:0!important;
+	border-radius:0!important;
+	padding:14px!important;
+	background:transparent!important;
+	font-family:var(--font-sans)!important;
+	color:var(--text)!important;
+}
+html:root:root:root:root:has(.head-container) .card-item>div:last-child {
+	font:600 20px/28px var(--font-sans)!important;
+}
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) .post-list,
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) .comment-list,
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) .comments,
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) .list-container,
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) .posts-list,
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) .comments-list,
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) .content-list {
+	margin:0!important;
+	padding:0!important;
+	background:var(--panel)!important;
+	color:var(--text)!important;
+	border:0!important;
+	box-shadow:none!important;
+}
+html:root:root:root:root:has(.head-container) :is(.comment-list,.comments-list,.content-list,.list-container)>* {
+	padding:12px 16px!important;
+	border-bottom:1px solid var(--line-soft)!important;
+	background:var(--panel)!important;
+	color:var(--text)!important;
+}
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) [style*="background"] {
+	background:var(--panel)!important;
+	color:var(--text)!important;
+}
+html:root:root:root:root:has(.head-container) :is(.selector,.selector-right-side) [style*="color"] {
+	color:var(--text-muted)!important;
+}
+html:root:root:root:root:has(.head-container) .selector a,
+html:root:root:root:root:has(.head-container) .selector p,
+html:root:root:root:root:has(.head-container) .selector span {
+	font-family:var(--font-sans)!important;
+}
+html:root:root:root:root [data-nsmax-obsolete-stat],
+html:root:root:root:root [data-nsmax-empty-readme] {
+	display:none!important;
+}
+@media(max-width:700px) {
+	html:root:root:root:root #nsk-head .search-box {
+		flex-basis:90px!important;
+		width:90px!important;
+	}
+	html:root:root:root:root #nsk-head .site-title>a {
+		padding:4px 8px!important;
+		font-size:13px!important;
+	}
+	html:root:root:root:root #nsk-head {
+		gap:6px!important;
+	}
+	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item {
+		padding:10px 12px!important;
+	}
+	html:root:root:root:root #nsk-body-left .post-list-item .post-info {
+		gap:6px!important;
+		flex-wrap:wrap!important;
+		font-size:11.5px!important;
+	}
+	html:root:root:root:root #nsk-body-left ul.comments li.content-item>article.post-content {
+		grid-row:3!important;
+	}
+}
+html:root:root:root:root #nsk-body-left .nsk-pager:is(.pager-top,.post-top-pager) {
+	display:none!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments li.content-item {
+	grid-template-columns:32px minmax(0,1fr) auto!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments li.content-item>article.post-content,
+html:root:root:root:root #nsk-body-left ul.comments li.content-item>.signature,
+html:root:root:root:root #nsk-body-left ul.comments li.content-item>.topic-warning {
+	grid-column:2/-1!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments .signature {
+	padding:8px 0 0!important;
+	margin:8px 0 0!important;
+	border-top:1px dashed var(--line-soft)!important;
+	font:12px/20px var(--font-sans)!important;
+	font-weight:400!important;
+	color:var(--text-disabled)!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments .signature * {
+	font:inherit!important;
+	color:inherit!important;
+}
+@media(max-width:700px) {
+	html:root:root:root:root #nsk-body-left ul.comments li.content-item {
+		grid-template-columns:32px minmax(0,1fr)!important;
+	}
+	html:root:root:root:root #nsk-body-left ul.comments li.content-item>article.post-content {
+		grid-row:3!important;
+	}
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left :is(select,.category-select) {
+	height:34px!important;
+	padding:0 30px 0 10px!important;
+	border:1px solid var(--line)!important;
+	border-radius:8px!important;
+	background-color:var(--panel)!important;
+	color:var(--text-muted)!important;
+	font:13px/32px var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-body-left ul.comments li.content-item {
+	padding:15px 18px!important;
+	column-gap:11px!important;
+}
+html:root:root:root:root #nsk-body-left :is(.nsk-post .post-content,ul.comments li.content-item>article.post-content) {
+	font:15px/1.8 var(--font-sans)!important;
+	color:var(--text)!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-post .post-title h1 {
+	font:600 21px/1.45 var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-body-left :is(.nsk-post,ul.comments) .post-content a {
+	color:var(--link)!important;
+	text-decoration-color:color-mix(in srgb,var(--link) 50%,transparent)!important;
+}
+html:root:root:root:root #nsk-body-left :is(.nsk-post,ul.comments) .post-content blockquote {
+	border-left-color:var(--line)!important;
+	background:transparent!important;
+}
+html:root:root:root:root #nsk-body-left .nspp-action {
+	display:block!important;
+	margin:12px auto!important;
+	padding:6px 14px!important;
+	border:1px solid var(--line)!important;
+	border-radius:999px!important;
+	background:var(--panel)!important;
+	color:var(--text-subtle)!important;
+	font:12.5px/20px var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-last-commenter svg {
+	display:none!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-last-commenter::before {
+	content:"";
+	display:block;
+	width:13px;
+	height:13px;
+	flex:none;
+	background:var(--text-disabled);
+	mask:var(--nsmax-icon-user) center/contain no-repeat;
+}
+html:root:root:root:root:has(.head-container) .card-block>.card-item[data-nsmax-obsolete-stat],
+html:root:root:root:root:has(.head-container) .selector .readme[data-nsmax-empty-readme] {
+	display:none!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .card-block {
+	display:grid!important;
+	grid-template-columns:repeat(4,minmax(0,1fr))!important;
+	padding:0!important;
+	gap:0!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item {
+	border:0!important;
+	border-right:1px solid var(--line-soft)!important;
+	border-radius:0!important;
+	padding:14px!important;
+	background:var(--panel)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item[data-nsmax-obsolete-stat],
+html:root:root:root:root:has(.head-container) #nsk-frame .selector .readme[data-nsmax-empty-readme] {
+	display:none!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item>div:first-child {
+	font:12px/20px var(--font-sans)!important;
+	color:var(--text-subtle)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item>div:last-child {
+	font:600 20px/28px var(--font-sans)!important;
+	color:var(--text-strong)!important;
+}
+@media(max-width:600px) {
+	html:root:root:root:root:has(.head-container) #nsk-frame .card-block {
+		grid-template-columns:repeat(2,minmax(0,1fr))!important;
+	}
+}
+html:root:root:root:root #nsk-frame {
+	display:flow-root!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item:has(.post-title svg.pined) {
+	background:color-mix(in srgb,var(--mark-soft) 45%,var(--panel))!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item:has(.post-title svg.pined):hover {
+	background:color-mix(in srgb,var(--mark-soft) 60%,var(--panel))!important;
 }
