@@ -1,6 +1,6 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 **1.7.7**。使用 [SB Theme UI](https://sb.sb/) 的配色、系统字体、布局和短时过渡，保留论坛原生编辑与提交。
+NodeSeek / DeepFlood 用户脚本，当前版本 **1.7.8**。使用 [SB Theme UI](https://sb.sb/) 的配色、系统字体、布局和短时过渡，保留论坛原生编辑与提交。
 
 ## 安装
 

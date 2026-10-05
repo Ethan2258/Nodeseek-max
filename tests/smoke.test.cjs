@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.7");
+	assert.equal(packageJson.version, "1.7.8");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -790,9 +790,8 @@ test("搜索侧栏：热榜最近浏览恢复、随页面滚动与统计链接�
 		const side=page.locator('#nsk-right-panel-container'),main=page.locator('#nsk-body-left');
 		assert.ok(Math.abs((await side.boundingBox()).y-(await main.boundingBox()).y)<=1);
 		await page.evaluate(()=>window.scrollTo(0,800));await page.waitForTimeout(50);
-		assert.ok(Math.abs((await side.boundingBox()).y-76)<=2);
 		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'sticky');
-		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'visible');
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'auto');
 		for(const [label,href]of[['鸡腿','/credit'],['星辰','/stardust/list'],['主题帖','/space/1#/discussions'],['评论数','/space/1#/comments']])assert.equal(await page.locator('.nsmax-account-stat').filter({has:page.locator('dt').filter({hasText:label})}).getAttribute('href'),href);
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'个人设置',exact:true}).getAttribute('href'),'/setting');
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'我的邀请',exact:true}).count(),0);
@@ -881,13 +880,46 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.deepEqual(errorsList, []);
 	} finally { await ctxList.close(); }
 
-	// 2. 图二：侧栏个人卡含管理记录 (/ruling)
-	const {context: ctxCard, page: pageCard, errors: errorsCard} = await open(browser,'https://www.nodeseek.com/',{html: listPage()});
+	// 1.2 等级限制放置在标题正后方紧凑排列
+	const listHtmlLock = listPage().replace(
+		'<div role="heading" aria-level="3" class="post-title"><a href="/post-1000-1" target="">出一台香港 CN2 GIA 小鸡，年付 99</a> <!----> <!----></div>',
+		'<div role="heading" aria-level="3" class="post-title"><a href="/post-1000-1" target="">短标题</a><span class="min-grade"><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span> <!----></div>'
+	);
+	const {context: ctxLock, page: pageLock, errors: errorsLock} = await open(browser,'https://www.nodeseek.com/',{html: listHtmlLock});
+	try {
+		await pageLock.waitForSelector('ul.post-list .post-title .min-grade');
+		const link = pageLock.locator('ul.post-list .post-title a').first();
+		const lock = pageLock.locator('ul.post-list .post-title .min-grade').first();
+		const linkBox = await link.boundingBox();
+		const lockBox = await lock.boundingBox();
+		assert.ok(linkBox && lockBox, 'Link and lock bounding boxes exist');
+		assert.ok(lockBox.x > linkBox.x, 'Lock badge is after the title link');
+		const gap = lockBox.x - (linkBox.x + linkBox.width);
+		assert.ok(gap >= 0 && gap <= 10, `Lock badge directly follows title with small gap (gap: ${gap}px)`);
+		assert.ok(Math.abs(lockBox.y - linkBox.y) < 6, 'Lock badge is on the same line as title link');
+		assert.deepEqual(errorsLock, []);
+	} finally { await ctxLock.close(); }
+
+	// 2. 图二：侧栏个人卡含管理记录 (/ruling) 与每日签到 (/board) 以及侧栏独立滚动
+	const {context: ctxCard, page: pageCard, errors: errorsCard} = await open(browser,'https://www.nodeseek.com/',{html: listPage({count: 50}), viewport: { width: 1280, height: 400 }});
 	try {
 		await pageCard.waitForSelector('.nsmax-account-menu');
 		const rulingLink = pageCard.locator('.nsmax-account-menu a[href="/ruling"]');
 		assert.equal(await rulingLink.isVisible(), true);
 		assert.equal(await rulingLink.innerText(), '管理记录');
+
+		const checkinLink = pageCard.locator('.nsmax-account-menu a').filter({hasText: '每日签到'});
+		assert.equal(await checkinLink.isVisible(), true);
+		assert.equal(await checkinLink.getAttribute('href'), '/board');
+
+		const side = pageCard.locator('#nsk-right-panel-container');
+		assert.equal(await side.evaluate(e => getComputedStyle(e).overflowY), 'auto');
+		assert.equal(await side.evaluate(e => getComputedStyle(e).overscrollBehavior), 'contain');
+		const canScroll = await side.evaluate(e => {
+			e.scrollTop = 50;
+			return e.scrollTop > 0;
+		});
+		assert.equal(canScroll, true, 'Right sidebar can scroll independently');
 		assert.deepEqual(errorsCard, []);
 	} finally { await ctxCard.close(); }
 

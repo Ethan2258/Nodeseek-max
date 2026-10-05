@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.7
+@version        1.7.8
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.7（UserCSS）
+ * NodeSeek Max 主题 v1.7.8（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -6743,11 +6743,18 @@
 	}
 	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title a {
 		display:inline-block!important;
-		flex:1 1 auto!important;
+		flex:0 1 auto!important;
 		min-width:0!important;
 		overflow:hidden!important;
 		text-overflow:ellipsis!important;
 		white-space:nowrap!important;
+	}
+	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span:not(:has(>svg.pined)) {
+		flex:none!important;
+		display:inline-flex!important;
+		align-items:center!important;
+		gap:3px!important;
+		margin:0!important;
 	}
 	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info {
 		min-width:0!important;
@@ -6797,12 +6804,18 @@
 			position:sticky!important;
 			top:76px!important;
 			align-self:start!important;
-			max-height:none!important;
-			overflow:visible!important;
-			overscroll-behavior:initial;
-			scrollbar-width:none;
+			max-height:calc(100vh - 86px)!important;
+			overflow-y:auto!important;
+			overscroll-behavior:contain!important;
+			scrollbar-width:none!important;
 			scrollbar-color:transparent transparent;
 			gap:16px!important;
+			padding-bottom:16px!important;
+		}
+		html:root:root:root:root #nsk-body>#nsk-right-panel-container::-webkit-scrollbar {
+			display:none!important;
+			width:0!important;
+			height:0!important;
 		}
 		html:root:root:root:root #nsk-body>#nsk-right-panel-container>* {
 			flex-shrink:0!important;
