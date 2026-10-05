@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.6");
+	assert.equal(packageJson.version, "1.7.7");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -360,7 +360,8 @@ test("SB 个人卡：四列统计、两列菜单和卡片内的发帖入口",asy
 	try{
 		await page.waitForSelector('.nsmax-sb-account');
 		assert.equal(await page.locator('.nsmax-account-numbers dd').count(),4);
-		assert.equal(await page.locator('.nsmax-account-menu a').count(),8);
+		assert.equal(await page.locator('.nsmax-account-menu a').count(),9);
+		assert.equal(await page.locator('.nsmax-account-menu a[href="/ruling"]').isVisible(),true);
 		assert.equal(await page.locator('.nsmax-sb-account a[href="/new-discussion"]').isVisible(),true);
 		assert.equal(await page.locator('.user-card>.user-head').isVisible(),false);
 		await page.evaluate(()=>document.querySelector('.user-card>.user-stat').append(document.createTextNode('鸡腿 4161')));
@@ -604,6 +605,7 @@ test("真实预览容器：CodeMirror 外层收起，图片与预览顶部无空
 	try{
 		await page.waitForSelector('.nsmax-editor-head');
 		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
+		await page.locator('.nsmax-editor-preview img').waitFor();
 		assert.equal(await page.locator('[data-nsmax-editor-pane]').isVisible(),false);
 		assert.equal(await page.locator('.nsmax-editor-preview img').isVisible(),true);
 		const gap=await page.locator('.nsmax-editor-preview').evaluate(e=>e.getBoundingClientRect().top-e.parentElement.getBoundingClientRect().top);
@@ -861,4 +863,49 @@ test("回复框：统一圆角、左侧回复按钮、拖动与键盘可调整�
 		assert.equal(await page.locator('.md-editor').evaluate(e=>getComputedStyle(e).borderRadius),'12px');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
+});
+
+test("用户需求还原：图一抽奖同行不换行、图二管理记录、图三/四个人空间与Level6专属进度条",async()=>{
+	// 1. 图一：抽奖徽章同行不换行
+	const listHtml = listPage().replace('出一台香港 CN2 GIA 小鸡，年付 99','抽奖：大吉大利今晚吃鸡');
+	const {context: ctxList, page: pageList, errors: errorsList} = await open(browser,'https://www.nodeseek.com/',{html: listHtml});
+	try {
+		await pageList.waitForSelector('.nsmax-prize-badge');
+		const badge = pageList.locator('ul.post-list .nsmax-prize-badge').first();
+		const link = pageList.locator('ul.post-list .post-title a').first();
+		const badgeBox = await badge.boundingBox();
+		const linkBox = await link.boundingBox();
+		assert.ok(badgeBox && linkBox, 'Badge and link bounding boxes exist');
+		assert.ok(badgeBox.x < linkBox.x, 'Badge is in front of the title link');
+		assert.ok(Math.abs(badgeBox.y - linkBox.y) < 6, `Badge and link are on the same line (y diff: ${Math.abs(badgeBox.y - linkBox.y)})`);
+		assert.deepEqual(errorsList, []);
+	} finally { await ctxList.close(); }
+
+	// 2. 图二：侧栏个人卡含管理记录 (/ruling)
+	const {context: ctxCard, page: pageCard, errors: errorsCard} = await open(browser,'https://www.nodeseek.com/',{html: listPage()});
+	try {
+		await pageCard.waitForSelector('.nsmax-account-menu');
+		const rulingLink = pageCard.locator('.nsmax-account-menu a[href="/ruling"]');
+		assert.equal(await rulingLink.isVisible(), true);
+		assert.equal(await rulingLink.innerText(), '管理记录');
+		assert.deepEqual(errorsCard, []);
+	} finally { await ctxCard.close(); }
+
+	// 3. 图三与图四：个人空间布局与 Level 6 专属进度条
+	const spaceHtmlLv6 = nativeSpacePage().replace('<div>等级</div><div>3</div>', '<div>等级</div><div>6</div>');
+	const {context: ctxSpace, page: pageSpace, errors: errorsSpace} = await open(browser,'https://www.nodeseek.com/space/10',{html: spaceHtmlLv6});
+	try {
+		await pageSpace.waitForSelector('.nsmax-space-top');
+		assert.equal(await pageSpace.locator('.nsmax-space-badge').innerText(), '会员');
+		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').isVisible(), true);
+		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').innerText(), 'UID 10');
+		assert.equal(await pageSpace.locator('.head-container .card-block>.card-item:visible').count(), 4);
+		const progress = pageSpace.locator('.nsmax-space-progress');
+		assert.equal(await progress.getAttribute('data-nsmax-level-max') !== null, true);
+		assert.equal(await progress.locator('.nsmax-space-progress-level').innerText(), 'Lv.6 登峰造极');
+		assert.equal(await progress.locator('.nsmax-space-progress-percent').innerText(), 'MAX');
+		assert.equal(await progress.locator('.nsmax-space-progress-next').innerText(), '已达最高等级');
+		assert.equal(await progress.locator('b').evaluate(e => e.style.width), '100%');
+		assert.deepEqual(errorsSpace, []);
+	} finally { await ctxSpace.close(); }
 });

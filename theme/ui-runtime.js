@@ -3,18 +3,111 @@
 		for (const item of document.querySelectorAll(".card-block > .card-item")) item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
 		for (const readme of document.querySelectorAll(".readme")) readme.toggleAttribute("data-nsmax-empty-readme", /^(没有找到readme|暂无简介|暂无介绍)/i.test(readme.textContent.trim()));
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
-		if (!head || !stats || head.querySelector(":scope > .nsmax-space-progress")) return;
-		const levelText = Array.from(stats.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent))?.textContent.match(/\d+/)?.[0];
-		if (!levelText) return;
-		const level = Number(levelText), percent = Math.max(0, Math.min(100, (level % 10) * 10));
-		const progress = document.createElement("div");
-		progress.className = "nsmax-space-progress";
-		progress.innerHTML = '<span class="nsmax-space-progress-level"></span><strong class="nsmax-space-progress-percent"></strong><span class="nsmax-space-progress-next"></span><i><b></b></i>';
-		progress.querySelector(".nsmax-space-progress-level").textContent = `Lv ${level} 当前等级`;
-		progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
-		progress.querySelector(".nsmax-space-progress-next").textContent = `Lv ${level + 1} 下一等级`;
-		progress.querySelector("b").style.width = `${percent}%`;
-		head.append(progress);
+		if (!head) return;
+
+		const uid = location.pathname.match(/\/space\/(\d+)/)?.[1] || "";
+		let topRow = head.querySelector(":scope > .nsmax-space-top");
+		if (!topRow) {
+			topRow = document.createElement("div");
+			topRow.className = "nsmax-space-top";
+			const avatar = head.querySelector("img");
+			const nameEl = head.querySelector("h1, .username");
+			const descEl = head.querySelector("p");
+			const pmBtn = head.querySelector("a.btn, button.btn");
+
+			const identity = document.createElement("div");
+			identity.className = "nsmax-space-identity";
+
+			const titleRow = document.createElement("div");
+			titleRow.className = "nsmax-space-title-row";
+			if (nameEl) titleRow.append(nameEl);
+			const badge = document.createElement("span");
+			badge.className = "nsmax-space-badge";
+			badge.textContent = "会员";
+			titleRow.append(badge);
+
+			const meta = document.createElement("div");
+			meta.className = "nsmax-space-meta";
+			const online = document.createElement("span");
+			online.className = "nsmax-space-online";
+			online.innerHTML = '<i class="nsmax-online-dot"></i>在线';
+			const uidSpan = document.createElement("span");
+			uidSpan.className = "nsmax-space-uid";
+			uidSpan.textContent = `UID ${uid}`;
+			const joinSpan = document.createElement("span");
+			joinSpan.className = "nsmax-space-join";
+
+			let daysMatch;
+			if (stats) {
+				for (const item of stats.querySelectorAll(".card-item")) {
+					if (/加入|注册/.test(item.textContent)) {
+						const num = item.textContent.match(/\d+/)?.[0];
+						if (num) daysMatch = Number(num);
+					}
+				}
+			}
+			if (daysMatch) {
+				const date = new Date(Date.now() - daysMatch * 864e5);
+				joinSpan.textContent = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} 加入`;
+			} else {
+				joinSpan.textContent = "近期加入";
+			}
+			const lastActive = document.createElement("span");
+			lastActive.className = "nsmax-space-last";
+			lastActive.textContent = descEl?.textContent.trim() ? descEl.textContent.trim() : "最后在线 刚刚";
+
+			meta.append(online, uidSpan, joinSpan, lastActive);
+			identity.append(titleRow, meta);
+
+			if (avatar) topRow.append(avatar);
+			topRow.append(identity);
+			if (pmBtn) topRow.append(pmBtn);
+			if (descEl) descEl.remove();
+			head.prepend(topRow);
+		}
+
+		if (stats && stats.parentElement !== head) {
+			head.append(stats);
+		}
+
+		let progress = head.querySelector(":scope > .nsmax-space-progress");
+		if (!progress && stats) {
+			const levelText = Array.from(stats.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent))?.textContent.match(/\d+/)?.[0];
+			if (levelText) {
+				const level = Number(levelText);
+				progress = document.createElement("div");
+				progress.className = "nsmax-space-progress";
+				progress.innerHTML = '<span class="nsmax-space-progress-level"></span><strong class="nsmax-space-progress-percent"></strong><span class="nsmax-space-progress-next"></span><i><b></b></i>';
+
+				const titles = {
+					0: ["初来乍到", "初露锋芒"],
+					1: ["初露锋芒", "小有收获"],
+					2: ["小有收获", "渐入佳境"],
+					3: ["渐入佳境", "小有成就"],
+					4: ["小有成就", "经常露面"],
+					5: ["经常露面", "登峰造极"],
+					6: ["登峰造极", "已达最高等级"]
+				};
+
+				if (level >= 6) {
+					progress.setAttribute("data-nsmax-level-max", "");
+					progress.classList.add("nsmax-space-progress-max");
+					progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.6 登峰造极`;
+					progress.querySelector(".nsmax-space-progress-percent").textContent = `MAX`;
+					progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
+					progress.querySelector("b").style.width = `100%`;
+				} else {
+					const cur = titles[level]?.[0] || "当前等级";
+					const nxt = titles[level]?.[1] || "下一等级";
+					const percent = Math.max(0, Math.min(100, (level % 10) * 10 || 50));
+					progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.${level} ${cur}`;
+					progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
+					progress.querySelector(".nsmax-space-progress-next").textContent = `Lv.${level + 1} ${nxt}`;
+					progress.querySelector("b").style.width = `${percent}%`;
+				}
+				head.append(progress);
+			}
+		}
 	}
 	function nsmaxCleanPostActions() {
 		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"] };
@@ -54,6 +147,28 @@
 	function nsmaxCleanSearchOverlay() {
 		for (const link of document.querySelectorAll(".search-overlay .googleSearch,.search-overlay [data-tab=google],.search-overlay [data-type=google]")) link.remove();
 		for (const element of document.querySelectorAll(".search-overlay .tab-btn")) if (/谷歌|google/i.test(element.textContent.trim())) element.remove();
+	}
+	const nsmaxProcessedRows = new WeakSet();
+	function nsmaxProcessPostListRows() {
+		for (const row of document.querySelectorAll("ul.post-list:not(.topic-carousel-panel)>li.post-list-item")) {
+			if (nsmaxProcessedRows.has(row)) continue;
+			nsmaxProcessedRows.add(row);
+			const icons = [[".info-author","user"],[".nsmax-inline-category","board"],[".info-views","eye"],[".info-comments-count","comment"],[".info-last-commenter","user"]];
+			for (const [selector,name] of icons) {
+				const item = row.querySelector(selector); if (!item) continue;
+				for (const svg of item.querySelectorAll("svg:not(.nsmax-meta-icon)")) { svg.setAttribute("data-nsmax-meta-original",""); svg.style.setProperty("display","none","important"); }
+				if (!item.querySelector(".nsmax-meta-icon")) { const icon = toolIcon(name); icon.classList.add("nsmax-meta-icon"); item.prepend(icon); }
+			}
+			if (row.hasAttribute("data-nsmax-meta-ordered")) continue;
+			const info = row.querySelector(".post-info");
+			if (!info) continue;
+			const author = info.querySelector(".info-author"), time = info.querySelector(".info-last-comment-time"), views = info.querySelector(".info-views"), count = info.querySelector(".info-comments-count"), last = info.querySelector(".info-last-commenter");
+			const category = info.querySelector(".post-category");
+			const inline = category?.cloneNode(true);
+			if (inline) { inline.className = "nsmax-inline-category"; const categoryIcon = toolIcon("board"); categoryIcon.classList.add("nsmax-meta-icon"); inline.prepend(categoryIcon); }
+			for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
+			row.setAttribute("data-nsmax-meta-ordered", "");
+		}
 	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
@@ -97,23 +212,7 @@
 					if (link && link.textContent !== label) link.textContent = label;
 				}
 			}
-			for (const row of document.querySelectorAll("ul.post-list:not(.topic-carousel-panel)>li.post-list-item")) {
-				const icons = [[".info-author","user"],[".nsmax-inline-category","board"],[".info-views","eye"],[".info-comments-count","comment"],[".info-last-commenter","user"]];
-				for (const [selector,name] of icons) {
-					const item = row.querySelector(selector); if (!item) continue;
-					for (const svg of item.querySelectorAll("svg:not(.nsmax-meta-icon)")) { svg.setAttribute("data-nsmax-meta-original",""); svg.style.setProperty("display","none","important"); }
-					if (!item.querySelector(".nsmax-meta-icon")) { const icon = toolIcon(name); icon.classList.add("nsmax-meta-icon"); item.prepend(icon); }
-				}
-				if (row.hasAttribute("data-nsmax-meta-ordered")) continue;
-				const info = row.querySelector(".post-info");
-				if (!info) continue;
-				const author = info.querySelector(".info-author"), time = info.querySelector(".info-last-comment-time"), views = info.querySelector(".info-views"), count = info.querySelector(".info-comments-count"), last = info.querySelector(".info-last-commenter");
-				const category = info.querySelector(".post-category");
-				const inline = category?.cloneNode(true);
-				if (inline) { inline.className = "nsmax-inline-category"; const categoryIcon = toolIcon("board"); categoryIcon.classList.add("nsmax-meta-icon"); inline.prepend(categoryIcon); }
-				for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
-				row.setAttribute("data-nsmax-meta-ordered", "");
-			}
+			nsmaxProcessPostListRows();
 			nsmaxPrepareSpace();
 			const isPost = /^\/post-\d+/.test(location.pathname);
 			if (!isPost && !/^\/(?:new|edit)-discussion/.test(location.pathname)) return;

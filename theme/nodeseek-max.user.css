@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.6
+@version        1.7.7
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.6（UserCSS）
+ * NodeSeek Max 主题 v1.7.7（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -6734,11 +6734,17 @@
 		align-self:center!important;
 	}
 	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title {
+		display:flex!important;
+		align-items:center!important;
+		gap:6px!important;
 		min-width:0!important;
 		line-height:20px!important;
+		white-space:nowrap!important;
 	}
 	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title a {
-		display:block!important;
+		display:inline-block!important;
+		flex:1 1 auto!important;
+		min-width:0!important;
 		overflow:hidden!important;
 		text-overflow:ellipsis!important;
 		white-space:nowrap!important;
@@ -6900,42 +6906,64 @@
 		}
 	}
 	html:root:root:root:root:has(.head-container) #nsk-frame .head-container {
-		margin-bottom:0!important;
-		border-radius:16px 16px 0 0!important;
-		padding:24px 28px 18px!important;
+		display:block!important;
+		margin-bottom:16px!important;
+		border-radius:16px!important;
+		padding:24px 28px 20px!important;
+		background:var(--panel)!important;
+		border:1px solid var(--line-soft)!important;
 	}
 	html:root:root:root:root:has(.head-container) #nsk-frame .head-container :is(.username,h1) {
-		font:600 20px/28px var(--font-sans)!important;
+		font:600 20px/1.3 var(--font-sans)!important;
 		color:var(--text-strong)!important;
+		margin:0!important;
 	}
-	html:root:root:root:root:has(.head-container) #nsk-frame .head-container p {
-		font:13px/20px var(--font-sans)!important;
+	html:root:root:root:root:has(.head-container) #nsk-frame .head-container a.btn,
+	html:root:root:root:root:has(.head-container) #nsk-frame .head-container button.btn {
+		display:inline-flex!important;
+		align-items:center!important;
+		justify-content:center!important;
+		height:32px!important;
+		padding:0 16px!important;
+		border-radius:999px!important;
+		border:1px solid var(--line)!important;
+		background:var(--panel-alt)!important;
+		color:var(--text)!important;
+		font:500 13px var(--font-sans)!important;
+		text-decoration:none!important;
+		margin-left:auto!important;
+	}
+	html:root:root:root:root:has(.head-container) #nsk-frame :is(.head-container,.selector) .card-block>.card-item:not([data-nsmax-obsolete-stat]) {
+		display:flex!important;
+		flex-direction:column!important;
+		align-items:flex-start!important;
+		justify-content:center!important;
+		min-height:unset!important;
+		padding:0!important;
+		background:transparent!important;
+		border:0!important;
+	}
+	html:root:root:root:root:has(.head-container) #nsk-frame :is(.head-container,.selector) .card-block>.card-item[data-nsmax-obsolete-stat] {
+		display:none!important;
+	}
+	html:root:root:root:root:has(.head-container) #nsk-frame :is(.head-container,.selector) .card-block>.card-item>div:first-child {
+		font:13px/1.4 var(--font-sans)!important;
 		color:var(--text-muted)!important;
+		margin-bottom:4px!important;
 	}
-	html:root:root:root:root:has(.head-container) #nsk-frame .selector {
-		border-radius:0 0 16px 16px!important;
-	}
-	html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block {
-		margin:20px 28px!important;
-		border-radius:10px!important;
-		background:var(--panel)!important;
-	}
-	html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block>.card-item {
-		min-height:92px!important;
-		padding:16px!important;
-		border-right:1px solid var(--line-soft)!important;
-	}
-	html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block>.card-item>div:first-child {
-		font:12px/20px var(--font-sans)!important;
-		color:var(--text-muted)!important;
-	}
-	html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block>.card-item>div:last-child {
-		font:600 22px/30px var(--font-sans)!important;
+	html:root:root:root:root:has(.head-container) #nsk-frame :is(.head-container,.selector) .card-block>.card-item>div:last-child {
+		font:700 22px/1.2 var(--font-sans)!important;
 		color:var(--text-strong)!important;
 		font-variant-numeric:tabular-nums!important;
 	}
+	html:root:root:root:root:has(.head-container) #nsk-frame .selector {
+		border-radius:16px!important;
+		border:1px solid var(--line-soft)!important;
+		background:var(--panel)!important;
+		overflow:hidden!important;
+	}
 	html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper {
-		margin:0 0 18px!important;
+		margin:0!important;
 		border-radius:0 0 16px 16px!important;
 		overflow:hidden!important;
 	}
@@ -6951,8 +6979,8 @@
 		html:root:root:root:root:has(.head-container) #nsk-frame .head-container {
 			padding:18px 16px 14px!important;
 		}
-		html:root:root:root:root:has(.head-container) #nsk-frame .selector .card-block {
-			margin:14px 16px!important;
+		html:root:root:root:root:has(.head-container) #nsk-frame :is(.head-container,.selector) .card-block {
+			margin:0 0 14px!important;
 			grid-template-columns:repeat(2,minmax(0,1fr))!important;
 		}
 	}
