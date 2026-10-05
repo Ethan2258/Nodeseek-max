@@ -113,3 +113,10 @@ body.dark-layout #nsk-right-panel-container .nsk-panel{border-radius:0!important
 /* 发帖页（模拟） */
 .new-discussion .title-row, .new-discussion .category-row { margin-bottom: 12px; }
 .new-discussion .post-title-input { width: 100%; height: 36px; border: 1px solid #ddd; padding: 0 8px; }
+
+/* Captured real NodeSeek space selectors; these are stylesheet rules, not inline colors. */
+.discussion-wrapper[data-v-18f8c01b]{background-color:rgba(0,0,0,.808);margin:20px;border-radius:3px}
+.discussion-wrapper p[data-v-18f8c01b]{padding:0 20px;color:#999}
+.discussion-wrapper a[data-v-18f8c01b]{color:white}
+.discussion-wrapper .discussion-item[data-v-18f8c01b]{padding:4px 10px;font-size:14px;display:flex;align-items:center}
+.discussion-wrapper .discussion-item[data-v-18f8c01b]:nth-child(n+2){border-top:1px dashed #464646}

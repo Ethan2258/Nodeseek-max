@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.4（纯 CSS）
+ * NodeSeek Max 主题 v1.7.5（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -6553,4 +6553,215 @@ html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .m
 }
 html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item>svg {
 	display:none!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .selector .discussion-wrapper {
+	margin:0!important;
+	padding:0!important;
+	border:0!important;
+	border-radius:0!important;
+	background:var(--panel)!important;
+	color:var(--text)!important;
+	box-shadow:none!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item {
+	display:flex!important;
+	align-items:center!important;
+	gap:8px!important;
+	margin:0!important;
+	padding:12px 18px!important;
+	min-height:44px!important;
+	border:0!important;
+	border-bottom:1px solid var(--line-soft)!important;
+	background:var(--panel)!important;
+	font:400 14px/22px var(--font-sans)!important;
+	color:var(--text-strong)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper a {
+	color:var(--text-strong)!important;
+	text-decoration:none!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item>a {
+	flex:1;
+	min-width:0;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item span {
+	font-family:var(--font-sans)!important;
+	color:inherit!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item .iconpark-icon {
+	width:14px!important;
+	height:14px!important;
+	color:var(--text-subtle)!important;
+	transform:none!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item:hover {
+	background:var(--panel-hover)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper>a:has(>p) {
+	display:block!important;
+	padding:8px 18px 12px!important;
+	border-bottom:1px solid var(--line-soft)!important;
+	background:var(--panel)!important;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper p {
+	margin:0!important;
+	padding:0!important;
+	color:var(--text-subtle)!important;
+	font:13px/1.65 var(--font-sans)!important;
+	overflow-wrap:anywhere;
+}
+html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item:has(+a>p) {
+	border-bottom:0!important;
+	padding-bottom:4px!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item:hover,
+html:root:root:root:root #nsk-body-left ul.comments li.content-item:hover {
+	background:var(--panel-hover)!important;
+}
+html:root:root:root:root #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item:hover .post-list-content {
+	background:transparent!important;
+}
+html:root:root:root:root .topic-carousel-wrapper {
+	display:none!important;
+	height:0!important;
+	min-height:0!important;
+	margin:0!important;
+	padding:0!important;
+}
+html:root:root:root:root #nsk-right-panel-container .user-card:has(>.user-head):has(>.user-stat) {
+	min-height:354px!important;
+}
+html:root:root:root:root #nsk-right-panel-container>div:has(>a.new-discussion) {
+	visibility:hidden!important;
+}
+html:root:root:root:root #nsk-body {
+	align-items:start!important;
+}
+html:root:root:root:root #nsk-body-left .comment-menu .menu-item>svg[data-nsmax-action-original] {
+	display:none!important;
+	width:0!important;
+	height:0!important;
+}
+html:root:root:root:root #nsk-body-left .comment-menu [data-nsmax-action=thumbup] {
+	--nsmax-action-icon:var(--nsmax-icon-thumbup);
+}
+html:root:root:root:root #nsk-body-left .comment-menu [data-nsmax-action=drumstick] {
+	--nsmax-action-icon:var(--nsmax-icon-drumstick);
+}
+html:root:root:root:root #nsk-body-left .comment-menu [data-nsmax-action=thumbdown] {
+	--nsmax-action-icon:var(--nsmax-icon-thumbdown);
+}
+html:root:root:root:root #nsk-body-left .comment-menu [data-nsmax-action=star] {
+	--nsmax-action-icon:var(--nsmax-icon-star);
+}
+html:root:root:root:root #nsk-body-left .comment-menu [data-nsmax-action=quote] {
+	--nsmax-action-icon:var(--nsmax-icon-quote);
+}
+html:root:root:root:root #nsk-body-left .comment-menu [data-nsmax-action=reply] {
+	--nsmax-action-icon:var(--nsmax-icon-reply);
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-last-commenter::before {
+	display:none!important;
+	content:none!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info svg[data-nsmax-meta-original] {
+	display:none!important;
+	width:0!important;
+	height:0!important;
+}
+html:root:root:root:root [hidden] {
+	display:none!important;
+}
+html:root:root:root:root:root:root:root #nsk-body-left .post-list>li[hidden],
+html:root:root:root:root:root:root:root #nsk-body-left .comments>li[hidden] {
+	display:none!important;
+}
+html:root:root:root:root #nsk-body-left>button.nspp-action {
+	display:none!important;
+}
+html:root:root:root:root:root:root:root #nsk-body-left .nsk-pager :is(.pager-prev:not(a),.pager-next:not(a),a.pager-prev:not([href]),a.pager-next:not([href])) {
+	display:none!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info {
+	font:400 12.5px/20px var(--font-sans)!important;
+	column-gap:10px!important;
+}
+html:root:root:root:root #nsk-body-left .content-item .nsk-content-meta-info .content-info,
+html:root:root:root:root #nsk-body-left .content-item .nsk-content-meta-info .content-info :is(time,.date-created,.date-updated) {
+	display:inline-flex!important;
+	align-items:center!important;
+	margin:0!important;
+	padding:0!important;
+	font:400 12px/24px var(--font-sans)!important;
+	color:var(--text-subtle)!important;
+	vertical-align:middle!important;
+}
+html:root:root:root:root #nsk-body-left .content-item>.nsk-content-meta-info>div:not(.avatar-wrapper):not(.floor-link-wrapper) {
+	display:flex!important;
+	align-items:center!important;
+	gap:8px!important;
+	flex-wrap:wrap!important;
+}
+html:root:root:root:root #nsk-body-left .content-item .author-info {
+	display:inline-flex!important;
+	align-items:center!important;
+	gap:6px!important;
+	margin:0!important;
+	min-height:24px!important;
+}
+html:root:root:root:root #nsk-body-left .content-item .author-info .role-tag {
+	display:inline-flex!important;
+	align-items:center!important;
+	margin:0!important;
+	height:20px!important;
+	padding:0 6px!important;
+	font:11px/18px var(--font-sans)!important;
+}
+@media(min-width:861px) {
+	html:root:root:root:root #nsk-body>#nsk-right-panel-container {
+		position:sticky!important;
+		top:76px!important;
+		align-self:start!important;
+		max-height:calc(100dvh - 92px)!important;
+		overflow-y:auto!important;
+		overflow-x:hidden!important;
+		overscroll-behavior-y:contain;
+		scrollbar-width:thin;
+		scrollbar-color:var(--line-strong) transparent;
+		gap:16px!important;
+	}
+	html:root:root:root:root #nsk-body>#nsk-right-panel-container>* {
+		flex-shrink:0!important;
+	}
+}
+html:root:root:root:root #nsk-right-panel-container .user-card {
+	border-radius:12px!important;
+	border-color:var(--line)!important;
+	background:var(--panel)!important;
+}
+html:root:root:root:root #nsk-body-left .content-item .hot-badge {
+	display:inline-flex!important;
+	align-items:center!important;
+	height:20px!important;
+	padding:0 6px!important;
+	border:1px solid var(--danger-border)!important;
+	border-radius:999px!important;
+	background:var(--danger-soft)!important;
+	color:var(--danger)!important;
+	font:11px/18px var(--font-sans)!important;
+}
+html:root:root:root:root #nsk-body-left .content-item .hot-badge::before {
+	color:inherit!important;
+}
+html:root:root:root:root #nsk-body-left .content-item .is-poster,
+html:root:root:root:root #nsk-body-left .content-item .role-tag.is-poster {
+	display:inline-flex!important;
+	align-items:center!important;
+	height:20px!important;
+	padding:0 6px!important;
+	border:1px solid var(--brand-border)!important;
+	border-radius:999px!important;
+	background:var(--brand-soft)!important;
+	color:var(--brand)!important;
+	font:11px/18px var(--font-sans)!important;
 }
