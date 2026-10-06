@@ -1,7 +1,13 @@
 	function nsmaxPrepareSpace() {
 		if (!/^\/space\/\d+/.test(location.pathname)) return;
 		for (const item of document.querySelectorAll(".card-block > .card-item")) item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
-		for (const readme of document.querySelectorAll(".readme")) readme.toggleAttribute("data-nsmax-empty-readme", /^(没有找到readme|暂无简介|暂无介绍)/i.test(readme.textContent.trim()));
+		for (const readme of document.querySelectorAll(".readme")) {
+			const text = readme.textContent.trim();
+			const hasWatermark = !!readme.querySelector("img[src*='logo'], img[src*='nodeseek'], svg");
+			const isEmpty = !text || /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)$/i.test(text) || (hasWatermark && text.length < 20);
+			readme.toggleAttribute("data-nsmax-empty-readme", isEmpty);
+			if (isEmpty) readme.style.setProperty("display", "none", "important");
+		}
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
 		if (!head) return;
 
@@ -73,18 +79,28 @@
 		// Clean and mirror stats safely: DO NOT remove stats from Vue's original parent (.selector-right-side)
 		// to avoid breaking Vue's component teardown / router view change.
 		let headStats = head.querySelector(":scope > .card-block");
-		if (stats) {
+		const origStats = document.querySelector(".selector .card-block, .selector-right-side .card-block");
+		if (origStats) {
 			if (!headStats) {
-				headStats = stats.cloneNode(true);
+				headStats = origStats.cloneNode(true);
 				head.append(headStats);
 			}
+		}
+		for (const extraCard of document.querySelectorAll(".selector .card-block, .selector-right-side .card-block")) {
+			extraCard.style.setProperty("display", "none", "important");
+		}
+		if (headStats) {
+			headStats.removeAttribute("style");
 			for (const item of headStats.querySelectorAll(".card-item")) {
 				item.querySelectorAll("svg").forEach(s => s.remove());
 				const text = item.textContent.trim();
 				if (!text || /加入天数|注册天数|信用分|信任分/.test(text)) {
 					item.setAttribute("data-nsmax-obsolete-stat", "true");
+					item.style.setProperty("display", "none", "important");
 					continue;
 				}
+				item.removeAttribute("data-nsmax-obsolete-stat");
+				item.style.removeProperty("display");
 				const divs = Array.from(item.querySelectorAll("div, span, dt, dd")).filter(el => el.children.length === 0 && el.textContent.trim());
 				let label = "", val = "";
 				if (divs.length >= 2) {
@@ -156,34 +172,50 @@
 			}
 		}
 
-		// When entering space, auto-switch to topics (#/posts) if on overview (#/info or empty)
-		const currentHash = location.hash;
-		if (!currentHash || currentHash === "#/info" || currentHash === "#") {
-			const postsTab = document.querySelector(".selector a.select-item[href*='/posts'], .selector a.select-item[href*='/discussions']");
-			if (postsTab && !postsTab.classList.contains("active")) {
-				postsTab.click();
-			}
-		}
-
-		// Clean tab text matching Image 3: "主题", "回帖", hide "概况", add "设置" button
+		// Clean tab text matching Image 3: "主题", "回帖", "资料", reorder, add "设置" button
 		const selectorNav = document.querySelector(".selector");
 		if (selectorNav) {
-			for (const tab of selectorNav.querySelectorAll("a.select-item")) {
+			const tabs = Array.from(selectorNav.querySelectorAll("a.select-item"));
+			for (const tab of tabs) {
 				const text = tab.textContent.trim();
 				if (/概况/i.test(text)) {
-					tab.style.setProperty("display", "none", "important");
+					tab.textContent = "资料";
 				} else if (/主题/i.test(text)) {
 					tab.textContent = "主题";
 				} else if (/评论|回帖/i.test(text)) {
 					tab.textContent = "回帖";
 				}
 			}
+			const orderMap = { "主题": 1, "回帖": 2, "资料": 3, "收藏": 4 };
+			tabs.sort((a, b) => {
+				const valA = orderMap[a.textContent.trim()] || 99;
+				const valB = orderMap[b.textContent.trim()] || 99;
+				return valA - valB;
+			});
+			const rightSide = selectorNav.querySelector(".selector-right-side, .discussion-wrapper, .comments-list");
+			for (const tab of tabs) {
+				if (rightSide) selectorNav.insertBefore(tab, rightSide);
+				else selectorNav.append(tab);
+			}
 			if (!selectorNav.querySelector(".nsmax-space-setting-btn")) {
 				const settingLink = document.createElement("a");
 				settingLink.className = "nsmax-space-setting-btn";
 				settingLink.href = "/setting";
 				settingLink.textContent = "设置";
-				selectorNav.append(settingLink);
+				if (rightSide) selectorNav.insertBefore(settingLink, rightSide);
+				else selectorNav.append(settingLink);
+			}
+		}
+
+		// When entering space, auto-switch to topics (#/posts) if on overview (#/info or empty)
+		const currentHash = location.hash;
+		if (!currentHash || currentHash === "#/info" || currentHash === "#" || currentHash.includes("info") || currentHash.includes("profile")) {
+			const tabs = Array.from(document.querySelectorAll(".selector a.select-item"));
+			const postsTab = tabs.find(tab => /主题/i.test(tab.textContent) || /posts|discussions|threads/i.test(tab.getAttribute("href") || ""));
+			if (postsTab && !postsTab.classList.contains("active")) {
+				for (const tab of tabs) tab.classList.remove("active");
+				postsTab.classList.add("active");
+				postsTab.click();
 			}
 		}
 
@@ -192,14 +224,9 @@
 			if (!item.hasAttribute("data-nsmax-bound")) {
 				item.setAttribute("data-nsmax-bound", "true");
 				item.addEventListener("click", () => {
-					setTimeout(() => {
-						const hash = location.hash || "#/info";
-						for (const tab of document.querySelectorAll(".selector a.select-item")) {
-							const href = tab.getAttribute("href") || "";
-							const on = href.includes(hash) || (hash === "#/info" && (href.endsWith("/info") || href.endsWith("#")));
-							tab.classList.toggle("active", on);
-						}
-					}, 50);
+					for (const tab of document.querySelectorAll(".selector a.select-item")) {
+						tab.classList.toggle("active", tab === item);
+					}
 				});
 			}
 		}
@@ -401,6 +428,7 @@
 			const text = el.textContent?.trim() || "";
 			if (/(?:^|\b|\s)(?:Lv\.?\s*6|Level\s*6)(?:\b|\s|$)/i.test(text) || /^等级\s*6$/i.test(text.replace(/\s+/g, ""))) {
 				el.setAttribute("data-nsmax-lv6", "true");
+				el.textContent = "Lv 6";
 			}
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.13（纯 CSS）
+ * NodeSeek Max 主题 v1.7.14（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -6463,7 +6463,7 @@ html:root:root:root:root:has(.new-discussion) #nsk-body-left .warning-block {
 	color:var(--text-muted)!important;
 	font:13px/1.65 var(--font-sans)!important;
 }
-html:root:root:root:root:has(.head-container) :is(.card-block,.selector-right-side .card-block) {
+html:root:root:root:root:has(.head-container) .head-container .card-block {
 	display:grid!important;
 	grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;
 	padding:0!important;
@@ -6627,33 +6627,33 @@ html:root:root:root:root:has(.head-container) .card-block>.card-item[data-nsmax-
 html:root:root:root:root:has(.head-container) .selector .readme[data-nsmax-empty-readme] {
 	display:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .card-block {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container .card-block {
 	display:grid!important;
 	grid-template-columns:repeat(4,minmax(0,1fr))!important;
 	padding:0!important;
 	gap:0!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .card-block>.card-item {
 	border:0!important;
 	border-right:1px solid var(--line-soft)!important;
 	border-radius:0!important;
 	padding:14px!important;
 	background:var(--panel)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item[data-nsmax-obsolete-stat],
-html:root:root:root:root:has(.head-container) #nsk-frame .selector .readme[data-nsmax-empty-readme] {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .card-block>.card-item[data-nsmax-obsolete-stat],
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .readme[data-nsmax-empty-readme] {
 	display:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item>div:first-child {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .card-block>.card-item>div:first-child {
 	font:12px/20px var(--font-sans)!important;
 	color:var(--text-subtle)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .card-block>.card-item>div:last-child {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .card-block>.card-item>div:last-child {
 	font:600 20px/28px var(--font-sans)!important;
 	color:var(--text-strong)!important;
 }
 @media(max-width:600px) {
-	html:root:root:root:root:has(.head-container) #nsk-frame .card-block {
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .card-block {
 		grid-template-columns:repeat(2,minmax(0,1fr))!important;
 	}
 }
@@ -6679,7 +6679,7 @@ html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .m
 html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item>svg {
 	display:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .selector .discussion-wrapper {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .discussion-wrapper {
 	margin:0!important;
 	padding:0!important;
 	border:0!important;
@@ -6688,7 +6688,7 @@ html:root:root:root:root:has(.head-container) #nsk-frame .selector .discussion-w
 	color:var(--text)!important;
 	box-shadow:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item {
 	display:flex!important;
 	align-items:center!important;
 	gap:8px!important;
@@ -6701,41 +6701,41 @@ html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .di
 	font:400 14px/22px var(--font-sans)!important;
 	color:var(--text-strong)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper a {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper a {
 	color:var(--text-strong)!important;
 	text-decoration:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item>a {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item>a {
 	flex:1;
 	min-width:0;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item span {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item span {
 	font-family:var(--font-sans)!important;
 	color:inherit!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item .iconpark-icon {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item .iconpark-icon {
 	width:14px!important;
 	height:14px!important;
 	color:var(--text-subtle)!important;
 	transform:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item:hover {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item:hover {
 	background:var(--panel-hover)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper>a:has(>p) {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper>a:has(>p) {
 	display:block!important;
 	padding:8px 18px 12px!important;
 	border-bottom:1px solid var(--line-soft)!important;
 	background:var(--panel)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper p {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper p {
 	margin:0!important;
 	padding:0!important;
 	color:var(--text-subtle)!important;
 	font:13px/1.65 var(--font-sans)!important;
 	overflow-wrap:anywhere;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item:has(+a>p) {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item:has(+a>p) {
 	border-bottom:0!important;
 	padding-bottom:4px!important;
 }
@@ -7053,7 +7053,8 @@ html:root:root:root:root [data-nsmax-lv6]:not(.card-item) {
 	position:relative!important;
 	display:inline-flex!important;
 	align-items:center!important;
-	gap:2px!important;
+	justify-content:center!important;
+	gap:3px!important;
 	padding:0 8px 0 6px!important;
 	height:20px!important;
 	box-sizing:border-box!important;
@@ -7068,10 +7069,14 @@ html:root:root:root:root [data-nsmax-lv6]:not(.card-item) {
 	white-space:nowrap!important;
 }
 html:root:root:root:root [data-nsmax-lv6]:not(.card-item)::before {
-	content:"👑 "!important;
+	content:"👑"!important;
+	display:inline-flex!important;
+	align-items:center!important;
+	justify-content:center!important;
 	font-size:11px!important;
-	margin-right:1px!important;
 	line-height:1!important;
+	transform:translateY(-1.5px)!important;
+	margin-right:1px!important;
 	filter:drop-shadow(0 1px 1px rgba(217,119,6,.4))!important;
 }
 html:root:root:root:root:has(>body.dark-layout) [data-nsmax-lv6]:not(.card-item),
@@ -7082,7 +7087,7 @@ html:root:root:root:root.dark [data-nsmax-lv6]:not(.card-item) {
 	text-shadow:0 0 6px rgba(245,158,11,.5)!important;
 	box-shadow:0 0 10px rgba(245,158,11,.25),inset 0 1px 0 rgba(251,191,36,.25)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container {
 	display:block!important;
 	margin-bottom:16px!important;
 	border-radius:12px!important;
@@ -7091,13 +7096,13 @@ html:root:root:root:root:has(.head-container) #nsk-frame .head-container {
 	border:1px solid var(--line)!important;
 	box-shadow:var(--shadow-base)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container :is(.username,h1) {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container :is(.username,h1) {
 	font:700 18px/1.3 var(--font-sans)!important;
 	color:var(--text-strong)!important;
 	margin:0!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container a.btn,
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container button.btn {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container a.btn,
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container button.btn {
 	display:inline-flex!important;
 	align-items:center!important;
 	justify-content:center!important;
@@ -7111,7 +7116,7 @@ html:root:root:root:root:has(.head-container) #nsk-frame .head-container button.
 	text-decoration:none!important;
 	margin-left:auto!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container .card-block {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container .card-block {
 	display:grid!important;
 	grid-template-columns:repeat(4,minmax(0,1fr))!important;
 	margin:18px 0 14px!important;
@@ -7122,10 +7127,10 @@ html:root:root:root:root:has(.head-container) #nsk-frame .head-container .card-b
 	box-shadow:none!important;
 	gap:16px!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .selector-right-side > .card-block {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector-right-side > .card-block {
 	display:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container .card-block>.card-item {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container .card-block>.card-item {
 	display:flex!important;
 	flex-direction:column!important;
 	align-items:flex-start!important;
@@ -7136,13 +7141,13 @@ html:root:root:root:root:has(.head-container) #nsk-frame .head-container .card-b
 	border:0!important;
 	box-shadow:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container .card-block>.card-item svg {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container .card-block>.card-item svg {
 	display:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .head-container .card-block>.card-item[data-nsmax-obsolete-stat] {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container .card-block>.card-item[data-nsmax-obsolete-stat] {
 	display:none!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .selector {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector {
 	display:flex!important;
 	flex-wrap:wrap!important;
 	border-radius:12px!important;
@@ -7151,7 +7156,7 @@ html:root:root:root:root:has(.head-container) #nsk-frame .selector {
 	overflow:hidden!important;
 	box-shadow:var(--shadow-base)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .selector .select-item {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item {
 	display:inline-flex!important;
 	align-items:center!important;
 	min-height:44px!important;
@@ -7165,28 +7170,28 @@ html:root:root:root:root:has(.head-container) #nsk-frame .selector .select-item 
 	text-decoration:none!important;
 	cursor:pointer!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .selector .select-item:hover {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item:hover {
 	color:var(--text-strong)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .selector .select-item.active,
-html:root:root:root:root:has(.head-container) #nsk-frame .selector .select-item.router-link-active {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.active,
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.router-link-active {
 	color:var(--text-strong)!important;
 	font-weight:600!important;
 	border-bottom-color:var(--text-strong)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .selector-right-side,
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper,
-html:root:root:root:root:has(.head-container) #nsk-frame .comments-list {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector-right-side,
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper,
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .comments-list {
 	width:100%!important;
 	flex:1 1 100%!important;
 	border-top:1px solid var(--line-soft)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper {
 	margin:0!important;
 	border-radius:0!important;
 	overflow:hidden!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item {
 	display:flex!important;
 	align-items:center!important;
 	justify-content:space-between!important;
@@ -7195,23 +7200,23 @@ html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .di
 	border-bottom:1px solid var(--line-soft)!important;
 	transition:background-color .15s ease!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item:last-child {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item:last-child {
 	border-bottom:0!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item:hover {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item:hover {
 	background:var(--panel-hover)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item>a {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item>a {
 	font:500 14.5px/22px var(--font-sans)!important;
 	color:var(--text-strong)!important;
 	text-decoration:none!important;
 	flex:1!important;
 	min-width:0!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item>a:hover {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item>a:hover {
 	color:var(--brand)!important;
 }
-html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .discussion-item>span:last-child:not(:empty) {
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item>span:last-child:not(:empty) {
 	display:inline-flex!important;
 	align-items:center!important;
 	padding:2px 8px!important;
@@ -7224,11 +7229,21 @@ html:root:root:root:root:has(.head-container) #nsk-frame .discussion-wrapper .di
 	flex:none!important;
 }
 @media(max-width:700px) {
-	html:root:root:root:root:has(.head-container) #nsk-frame .head-container {
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container {
 		padding:18px 16px 14px!important;
 	}
-	html:root:root:root:root:has(.head-container) #nsk-frame :is(.head-container,.selector) .card-block {
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .head-container .card-block {
 		margin:0 0 14px!important;
 		grid-template-columns:repeat(2,minmax(0,1fr))!important;
 	}
+}
+html:root:root:root:root:has(.head-container) .selector :is(.card-block, .selector-right-side > .card-block) {
+	display:none!important;
+}
+html:root:root:root:root:has(.head-container) .selector :is(.readme, .selector-right-side > .readme)[data-nsmax-empty-readme] {
+	display:none!important;
+}
+html:root:root:root:root:has(.head-container) .selector-right-side .readme img[src*="logo"],
+html:root:root:root:root:has(.head-container) .selector-right-side .readme img[src*="nodeseek"] {
+	display:none!important;
 }

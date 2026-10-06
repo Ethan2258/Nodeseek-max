@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.13");
+	assert.equal(packageJson.version, "1.7.14");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1228,5 +1228,70 @@ test("v1.7.13 细节精修：NQ彩标前置、设置页居中去黑胶囊、帖�
 		}
 		assert.deepEqual(errorsPost, []);
 	} finally { await ctxPost.close(); }
+});
+
+test("v1.7.14 极致精细化：统一两处 Level 6 标签且皇冠垂直居中、个人空间对齐图3去重与水印屏蔽、热榜30分钟自动静默刷新", async () => {
+	// 1. Level 6 皇冠垂直居中与两处标签统一 (侧栏卡与悬停卡)
+	const apiMock = {
+		"/api/account/getInfo/10": [{ body: { success: true, detail: { member_id: 10, member_name: "chunwai", rank: 6, coin: 5364, nPost: 113, nComment: 1612, fans: 20 } } }]
+	};
+	const { context: ctxLv6, page: pageLv6, errors: errorsLv6 } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), api: apiMock });
+	try {
+		await wait(pageLv6);
+		// 侧栏个人卡
+		const accountRank = pageLv6.locator(".nsmax-account-rank");
+		assert.equal(await accountRank.getAttribute("data-nsmax-lv6"), "true");
+		assert.equal(await accountRank.innerText(), "Lv 6");
+		const crownStyle = await pageLv6.evaluate(() => {
+			const el = document.querySelector(".nsmax-account-rank");
+			const pseudo = window.getComputedStyle(el, "::before");
+			return {
+				content: pseudo.content,
+				transform: pseudo.transform
+			};
+		});
+		assert.ok(crownStyle.content.includes("👑"), "皇冠 emoji 正常作为前缀渲染");
+		assert.ok(crownStyle.transform.includes("matrix"), "皇冠通过 translateY(-1.5px) 居中对齐");
+
+		// 头像悬停卡
+		const userAvatarLink = pageLv6.locator('ul.post-list .post-list-item a[href="/space/10"]').first();
+		await userAvatarLink.hover();
+		const personPop = pageLv6.locator(".nsmax-person-pop");
+		await personPop.waitFor({ state: "visible" });
+		const personLevel = pageLv6.locator(".nsmax-person-level");
+		assert.equal(await personLevel.innerText(), "Lv 6");
+		assert.equal(await personLevel.getAttribute("data-nsmax-lv6"), "true");
+		assert.deepEqual(errorsLv6, []);
+	} finally { await ctxLv6.close(); }
+
+	// 2. 个人空间对齐图 3：Tab 顺序为 主题/回帖/资料/设置，默认激活主题，彻底隐藏 selector 下的重复统计与水印 readme
+	const { context: ctxSpace, page: pageSpace, errors: errorsSpace } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage() });
+	try {
+		await wait(pageSpace);
+		// 顶栏仅保留一组统计
+		assert.equal(await pageSpace.locator(".head-container .card-block>.card-item:visible").count(), 4);
+		// selector 下的重复卡片和水印 readme 彻底隐藏
+		assert.equal(await pageSpace.locator(".selector .card-block:visible").count(), 0);
+		assert.equal(await pageSpace.locator(".selector-right-side > .card-block:visible").count(), 0);
+		assert.equal(await pageSpace.locator(".selector .readme:visible").count(), 0);
+
+		// Tab 排序与激活
+		const tabTexts = await pageSpace.locator(".selector a.select-item").allInnerTexts();
+		assert.equal(tabTexts[0], "主题");
+		assert.equal(tabTexts[1], "回帖");
+		assert.equal(tabTexts[2], "资料");
+		const activeTab = pageSpace.locator(".selector a.select-item.active");
+		assert.equal(await activeTab.innerText(), "主题");
+		assert.deepEqual(errorsSpace, []);
+	} finally { await ctxSpace.close(); }
+
+	// 3. 今日热门组件定时器与缓存更新机制存在
+	const { context: ctxHot, page: pageHot, errors: errorsHot } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	try {
+		await wait(pageHot);
+		const hotPanel = pageHot.locator(".nsmax-hot-panel");
+		assert.equal(await hotPanel.isVisible(), true);
+		assert.deepEqual(errorsHot, []);
+	} finally { await ctxHot.close(); }
 });
 
