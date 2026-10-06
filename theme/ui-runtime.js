@@ -52,12 +52,20 @@
 			} else {
 				joinSpan.textContent = "近期加入";
 			}
+			const rawDesc = descEl?.textContent.trim() || "";
 			const lastActive = document.createElement("span");
 			lastActive.className = "nsmax-space-last";
-			lastActive.textContent = descEl?.textContent.trim() ? descEl.textContent.trim() : "最后在线 刚刚";
+			lastActive.textContent = /最后在线/.test(rawDesc) ? rawDesc : "最后在线 刚刚";
 
 			meta.append(online, uidSpan, joinSpan, lastActive);
 			identity.append(titleRow, meta);
+
+			if (rawDesc && rawDesc !== "一句话介绍自己" && !/最后在线/.test(rawDesc)) {
+				const bio = document.createElement("div");
+				bio.className = "nsmax-space-bio";
+				bio.textContent = rawDesc;
+				identity.append(bio);
+			}
 
 			if (avatar) topRow.append(avatar);
 			topRow.append(identity);
@@ -66,8 +74,16 @@
 			head.prepend(topRow);
 		}
 
-		if (stats && stats.parentElement !== head) {
-			head.append(stats);
+		if (stats) {
+			for (const item of stats.querySelectorAll(".card-item")) {
+				const first = item.querySelector(":scope > div, :scope > span");
+				if (first) {
+					first.textContent = first.textContent.replace("数目", "").replace("帖数", "");
+				}
+			}
+			if (stats.parentElement !== head) {
+				head.append(stats);
+			}
 		}
 
 		let progress = head.querySelector(":scope > .nsmax-space-progress");
@@ -96,6 +112,12 @@
 					progress.querySelector(".nsmax-space-progress-percent").textContent = `MAX`;
 					progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
 					progress.querySelector("b").style.width = `100%`;
+
+					const levelItem = Array.from(stats.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent));
+					if (levelItem) {
+						levelItem.setAttribute("data-nsmax-lv6-stat", "true");
+						levelItem.querySelector("div:last-child, span:last-child")?.setAttribute("data-nsmax-lv6", "true");
+					}
 				} else {
 					const cur = titles[level]?.[0] || "当前等级";
 					const nxt = titles[level]?.[1] || "下一等级";
@@ -170,6 +192,55 @@
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
 	}
+	function nsmaxUpdateNavEssence() {
+		const navMenus = document.querySelectorAll("ul.nav-menu");
+		for (const navMenu of navMenus) {
+			for (const item of navMenu.querySelectorAll(":scope > li")) {
+				const a = item.querySelector("a");
+				if (!a) continue;
+				if (a.textContent.includes("推广") || (a.getAttribute("href") || "").includes("/categories/promotion")) {
+					item.style.setProperty("display", "none", "important");
+					item.setAttribute("data-nsmax-own-hide", "");
+				}
+			}
+			let essenceLi = navMenu.querySelector(":scope > li.nsmax-essence-tab-item");
+			if (!essenceLi) {
+				essenceLi = document.createElement("li");
+				essenceLi.className = "nsmax-essence-tab-item";
+				const link = document.createElement("a");
+				link.href = "/award";
+				link.className = "nsmax-essence-tab";
+				link.dataset.nsmaxNav = "award";
+				const badge = document.createElement("span");
+				badge.className = "nsmax-essence-badge";
+				badge.textContent = "精";
+				const text = document.createElement("span");
+				text.textContent = "精华";
+				link.append(badge, text);
+				essenceLi.append(link);
+				navMenu.append(essenceLi);
+			}
+			if (location.pathname === "/award") {
+				essenceLi.querySelector("a")?.setAttribute("aria-current", "page");
+				essenceLi.querySelector("a")?.setAttribute("data-nsmax-header-cat-on", "");
+			}
+			if (essenceLi.nextElementSibling) {
+				navMenu.append(essenceLi);
+			}
+		}
+	}
+	function nsmaxMarkLevel6() {
+		const candidates = document.querySelectorAll(
+			".role-tag, .nspp-level, .user-badge, .badge, .author-info > span, .nsk-content-meta-info > span, .nsmax-account-rank, .hover-user-card [class*='level']"
+		);
+		for (const el of candidates) {
+			if (el.hasAttribute("data-nsmax-lv6")) continue;
+			const text = el.textContent?.trim() || "";
+			if (/(?:^|\b|\s)(?:Lv\.?\s*6|Level\s*6)(?:\b|\s|$)/i.test(text) || /^等级\s*6$/i.test(text.replace(/\s+/g, ""))) {
+				el.setAttribute("data-nsmax-lv6", "true");
+			}
+		}
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
@@ -178,6 +249,8 @@
 			nsmaxPrizeBadges();
 			nsmaxCleanSearchOverlay();
 			nsmaxCleanPostActions();
+			nsmaxUpdateNavEssence();
+			nsmaxMarkLevel6();
 			const controller = document.querySelector(".post-list-controler");
 			if (controller && !controller.querySelector(".nsmax-nq-entry")) {
 				const link = document.createElement("a");

@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.8");
+	assert.equal(packageJson.version, "1.7.9");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -941,3 +941,86 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.deepEqual(errorsSpace, []);
 	} finally { await ctxSpace.close(); }
 });
+
+test('用户新需求：个人空间对齐sb.sb、悬停预览尺寸与加速、顶栏精华替换推广并置后带标记、全站Lv6尊贵标记', async () => {
+	// 1. 个人空间对齐 sb.sb（svg 隐藏、标签精简、bio 独立排版、Lv6 标记）
+	const spaceHtml = nativeSpacePage()
+		.replace('<div class="card-item"><div>等级</div><div>3</div></div>', '<div class="card-item"><svg class="icon"><use href="#diamond"></use></svg><div>等级</div><div>6</div></div>')
+		.replace('<div class="card-item"><div>鸡腿数目</div><div>1257</div></div>', '<div class="card-item"><svg class="icon"><use href="#drumstick"></use></svg><div>鸡腿数目</div><div>4192</div></div>')
+		.replace('<p>一句话介绍自己</p>', '<p>一句话介绍自己</p>');
+	const {context: ctxSpace, page: pageSpace, errors: errorsSpace} = await open(browser,'https://www.nodeseek.com/space/50169',{html: spaceHtml});
+	try {
+		await pageSpace.waitForSelector('.nsmax-space-top');
+		// lastActive should be "最后在线 刚刚" and NOT have "一句话介绍自己"
+		const lastText = await pageSpace.locator('.nsmax-space-last').innerText();
+		assert.ok(!lastText.includes('一句话介绍自己'), 'lastActive does not contain bio placeholder');
+		assert.ok(lastText.includes('最后在线'), 'lastActive contains 最后在线');
+
+		// Stats labels are cleaned: "鸡腿" not "鸡腿数目"
+		const chickenItem = pageSpace.locator('.card-block>.card-item').filter({hasText: '4192'});
+		const chickenLabel = await chickenItem.first().locator(':scope > div').first().innerText();
+		assert.equal(chickenLabel, '鸡腿');
+
+		// All SVGs in card-block items are hidden
+		const svgs = pageSpace.locator('.head-container .card-block>.card-item svg');
+		if (await svgs.count() > 0) {
+			const svgDisplay = await svgs.first().evaluate(el => getComputedStyle(el).display);
+			assert.equal(svgDisplay, 'none');
+		}
+
+		// Lv.6 marking in stats
+		const lv6Stat = pageSpace.locator('.card-item[data-nsmax-lv6-stat]');
+		assert.equal(await lv6Stat.count() > 0, true);
+		assert.deepEqual(errorsSpace, []);
+	} finally { await ctxSpace.close(); }
+
+	// 2. 顶栏精华替换推广、置于末尾、带标记
+	const {context: ctxNav, page: pageNav, errors: errorsNav} = await open(browser,'https://www.nodeseek.com/',{html: listPage()});
+	try {
+		await pageNav.waitForSelector('.nsmax-essence-tab-item');
+		// "推广" is hidden
+		const promoItems = pageNav.locator('ul.nav-menu li').filter({hasText: '推广'});
+		const promoCount = await promoItems.count();
+		for (let i = 0; i < promoCount; i++) {
+			const promoDisplay = await promoItems.nth(i).evaluate(el => getComputedStyle(el).display);
+			assert.equal(promoDisplay, 'none');
+		}
+		// "精华" tab exists, points to /award, has badge
+		const essenceTab = pageNav.locator('ul.nav-menu .nsmax-essence-tab');
+		assert.equal(await essenceTab.isVisible(), true);
+		assert.equal(await essenceTab.getAttribute('href'), '/award');
+		assert.equal(await pageNav.locator('.nsmax-essence-badge').innerText(), '精');
+		// "精华" is the last li in ul.nav-menu
+		const isLast = await pageNav.locator('ul.nav-menu>li').last().evaluate(el => el.classList.contains('nsmax-essence-tab-item'));
+		assert.equal(isLast, true, 'Essence tab is at the end of nav-menu');
+		assert.deepEqual(errorsNav, []);
+	} finally { await ctxNav.close(); }
+
+	// 3. 全站 Level 6 尊贵标记 (crown & highlight)
+	const postWithLv6 = postPage().replace(
+		'<span class="role-tag">Lv 2</span>',
+		'<span class="role-tag">Lv 6</span>'
+	);
+	const {context: ctxPost, page: pagePost, errors: errorsPost} = await open(browser,'https://www.nodeseek.com/post-1000-1',{html: postWithLv6});
+	try {
+		await pagePost.waitForSelector('.role-tag[data-nsmax-lv6]');
+		const tag = pagePost.locator('.role-tag[data-nsmax-lv6]').first();
+		assert.equal(await tag.isVisible(), true);
+		assert.equal(await tag.getAttribute('data-nsmax-lv6'), 'true');
+		assert.deepEqual(errorsPost, []);
+	} finally { await ctxPost.close(); }
+
+	// 4. 悬停预览弹窗尺寸与比例
+	const {context: ctxPrev, page: pagePrev, errors: errorsPrev} = await open(browser,'https://www.nodeseek.com/',{html: listPage()});
+	try {
+		await pagePrev.waitForSelector('ul.post-list .post-title a');
+		await pagePrev.locator('ul.post-list .post-title a').first().hover();
+		const preview = pagePrev.locator('dialog.nspp-post-preview');
+		await preview.waitFor({ state: 'attached' });
+		// Width should be max 520px
+		const maxW = await preview.evaluate(el => getComputedStyle(el).width);
+		assert.ok(parseInt(maxW, 10) >= 480, `Preview width is enlarged: ${maxW}`);
+		assert.deepEqual(errorsPrev, []);
+	} finally { await ctxPrev.close(); }
+});
+
