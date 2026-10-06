@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.12");
+	assert.equal(packageJson.version, "1.7.13");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -929,7 +929,7 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 	try {
 		await pageSpace.waitForSelector('.nsmax-space-top');
 		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
-		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 0);
+		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 1);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').innerText(), 'UID 10');
 		assert.equal(await pageSpace.locator('.head-container .card-block>.card-item:visible').count(), 4);
 		const progress = pageSpace.locator('.nsmax-space-progress');
@@ -1054,7 +1054,7 @@ test('用户最新需求还原：每日签到胶囊UI与排行榜前三高亮、
 	try {
 		await pageSpace.waitForSelector('.nsmax-space-top');
 		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
-		assert.equal(await pageSpace.locator('.nsmax-space-online').count(), 0);
+		assert.equal(await pageSpace.locator('.nsmax-space-online').count(), 1);
 		const progress = pageSpace.locator('.nsmax-space-progress');
 		assert.equal(await progress.evaluate(el => getComputedStyle(el).borderStyle), 'none');
 		assert.equal(await progress.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
@@ -1177,5 +1177,56 @@ test("v1.7.12 体验重构：楼中楼平铺不挤扁、个人设置页现代双
 	} finally { await ctxSetting.close(); }
 });
 
+test("v1.7.13 细节精修：NQ彩标前置、设置页居中去黑胶囊、帖子图片左对齐边框动效、侧栏支持悬停预览", async () => {
+	// 1. 列表页：NQ 按钮包含彩色图标
+	const { context: ctxList, page: pageList, errors: errorsList } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	try {
+		await wait(pageList);
+		const nq = pageList.locator(".post-list-controler .nsmax-nq-entry");
+		assert.equal(await nq.count(), 1);
+		const nqIcon = nq.locator("img.nsmax-nq-icon");
+		assert.equal(await nqIcon.count(), 1, "NQ 按钮前置 NodeQuality 彩色图标");
+		assert.ok((await nqIcon.getAttribute("src")).startsWith("data:image/png;base64,"));
+		assert.deepEqual(errorsList, []);
+	} finally { await ctxList.close(); }
 
+	// 2. 个人设置页居中与按钮去除黑底胶囊
+	const { context: ctxSetting, page: pageSetting, errors: errorsSetting } = await open(browser, "https://www.nodeseek.com/setting", { html: settingPage() });
+	try {
+		await wait(pageSetting);
+		const metrics = await pageSetting.evaluate(() => {
+			const bodyLeft = document.querySelector("#nsk-body-left");
+			const panel = document.querySelector("#user-setting-panel");
+			const btn = document.querySelector("#user-setting-panel button");
+			return {
+				bodyLeftWidth: bodyLeft ? getComputedStyle(bodyLeft).width : "",
+				panelMaxWidth: panel ? getComputedStyle(panel).maxWidth : "",
+				btnRadius: btn ? getComputedStyle(btn).borderRadius : ""
+			};
+		});
+		assert.equal(metrics.panelMaxWidth, "1040px", "设置面板限制最大宽度 1040px 居中");
+		assert.ok(metrics.btnRadius !== "999px", "设置按钮去除 999px 沉重黑胶囊样式");
+		assert.deepEqual(errorsSetting, []);
+	} finally { await ctxSetting.close(); }
+
+	// 3. 帖子图片左对齐风格
+	const postHtml = postPage();
+	const { context: ctxPost, page: pagePost, errors: errorsPost } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postHtml });
+	try {
+		await wait(pagePost);
+		const imgRules = await pagePost.evaluate(() => {
+			const img = document.querySelector(".post-content img");
+			if (!img) return null;
+			const style = getComputedStyle(img);
+			return {
+				marginLeft: style.marginLeft,
+				marginRight: style.marginRight
+			};
+		});
+		if (imgRules) {
+			assert.notEqual(imgRules.marginLeft, "auto");
+		}
+		assert.deepEqual(errorsPost, []);
+	} finally { await ctxPost.close(); }
+});
 

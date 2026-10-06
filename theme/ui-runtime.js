@@ -24,6 +24,9 @@
 
 			const meta = document.createElement("div");
 			meta.className = "nsmax-space-meta";
+			const onlineSpan = document.createElement("span");
+			onlineSpan.className = "nsmax-space-online";
+			onlineSpan.innerHTML = '<span class="nsmax-online-dot"></span>在线';
 			const uidSpan = document.createElement("span");
 			uidSpan.className = "nsmax-space-uid";
 			uidSpan.textContent = `UID ${uid}`;
@@ -50,7 +53,7 @@
 			lastActive.className = "nsmax-space-last";
 			lastActive.textContent = /最后在线/.test(rawDesc) ? rawDesc : "最后在线 刚刚";
 
-			meta.append(uidSpan, joinSpan, lastActive);
+			meta.append(onlineSpan, uidSpan, joinSpan, lastActive);
 			identity.append(titleRow, meta);
 
 			if (rawDesc && rawDesc !== "一句话介绍自己" && !/最后在线/.test(rawDesc)) {
@@ -71,19 +74,35 @@
 		// to avoid breaking Vue's component teardown / router view change.
 		let headStats = head.querySelector(":scope > .card-block");
 		if (stats) {
-			for (const item of stats.querySelectorAll(".card-item")) {
-				const first = item.querySelector(":scope > div, :scope > span");
-				if (first) {
-					first.textContent = first.textContent.replace("数目", "").replace("帖数", "");
-				}
-			}
 			if (!headStats) {
 				headStats = stats.cloneNode(true);
 				head.append(headStats);
-			} else {
-				for (const item of headStats.querySelectorAll(".card-item")) {
-					const first = item.querySelector(":scope > div, :scope > span");
-					if (first) first.textContent = first.textContent.replace("数目", "").replace("帖数", "");
+			}
+			for (const item of headStats.querySelectorAll(".card-item")) {
+				item.querySelectorAll("svg").forEach(s => s.remove());
+				const text = item.textContent.trim();
+				if (!text || /加入天数|注册天数|信用分|信任分/.test(text)) {
+					item.setAttribute("data-nsmax-obsolete-stat", "true");
+					continue;
+				}
+				const divs = Array.from(item.querySelectorAll("div, span, dt, dd")).filter(el => el.children.length === 0 && el.textContent.trim());
+				let label = "", val = "";
+				if (divs.length >= 2) {
+					label = divs[0].textContent.trim();
+					val = divs[divs.length - 1].textContent.trim();
+				} else {
+					const m = text.match(/^([^\d]+)\s*[:：]?\s*(\d+.*)$/);
+					if (m) {
+						label = m[1].trim();
+						val = m[2].trim();
+					} else {
+						label = text;
+					}
+				}
+				label = label.replace("数目", "").replace("帖数", "").replace("数", "").trim();
+				item.innerHTML = `<div class="nsmax-stat-label">${label}</div><div class="nsmax-stat-val">${val}</div>`;
+				if (/等级/.test(label) && Number(val) >= 6) {
+					item.setAttribute("data-nsmax-lv6-stat", "true");
 				}
 			}
 		}
@@ -116,12 +135,13 @@
 					progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
 					progress.querySelector("b").style.width = `100%`;
 
-					for (const container of [headStats, stats].filter(Boolean)) {
-						const levelItem = Array.from(container.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent));
-						if (levelItem) {
-							levelItem.setAttribute("data-nsmax-lv6-stat", "true");
-							levelItem.querySelector("div:last-child, span:last-child")?.setAttribute("data-nsmax-lv6", "true");
-						}
+					const titleRow = head.querySelector(".nsmax-space-title-row");
+					if (titleRow && !titleRow.querySelector(".nsmax-space-vip")) {
+						const vipBadge = document.createElement("span");
+						vipBadge.className = "nsmax-space-vip";
+						vipBadge.setAttribute("data-nsmax-lv6", "true");
+						vipBadge.textContent = "Lv 6";
+						titleRow.append(vipBadge);
 					}
 				} else {
 					const cur = titles[level]?.[0] || "当前等级";
@@ -133,6 +153,37 @@
 					progress.querySelector("b").style.width = `${percent}%`;
 				}
 				head.append(progress);
+			}
+		}
+
+		// When entering space, auto-switch to topics (#/posts) if on overview (#/info or empty)
+		const currentHash = location.hash;
+		if (!currentHash || currentHash === "#/info" || currentHash === "#") {
+			const postsTab = document.querySelector(".selector a.select-item[href*='/posts'], .selector a.select-item[href*='/discussions']");
+			if (postsTab && !postsTab.classList.contains("active")) {
+				postsTab.click();
+			}
+		}
+
+		// Clean tab text matching Image 3: "主题", "回帖", hide "概况", add "设置" button
+		const selectorNav = document.querySelector(".selector");
+		if (selectorNav) {
+			for (const tab of selectorNav.querySelectorAll("a.select-item")) {
+				const text = tab.textContent.trim();
+				if (/概况/i.test(text)) {
+					tab.style.setProperty("display", "none", "important");
+				} else if (/主题/i.test(text)) {
+					tab.textContent = "主题";
+				} else if (/评论|回帖/i.test(text)) {
+					tab.textContent = "回帖";
+				}
+			}
+			if (!selectorNav.querySelector(".nsmax-space-setting-btn")) {
+				const settingLink = document.createElement("a");
+				settingLink.className = "nsmax-space-setting-btn";
+				settingLink.href = "/setting";
+				settingLink.textContent = "设置";
+				selectorNav.append(settingLink);
 			}
 		}
 
@@ -371,7 +422,7 @@
 				link.target = "_blank";
 				link.rel = "noopener noreferrer";
 				link.title = "NodeQuality 测机";
-				link.textContent = "NQ";
+				link.innerHTML = `<img class="nsmax-nq-icon" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABaFBMVEX///95v5gJiUIJi0RGh1PBJSLDCgrCDAzjjo72/PlSyYcIslRw0pz+/v5fsoMAhDkAhz0pazC1CQTBAAC/AADdc3Pv+vQ1wHMAr01fzZH+//5fsoQAhDoAiD4pbDG2CQQAr04pbTK1CQW+AADccG7+9e398ur+9vH///4AhjwxjVLRenXca2vbbm/pknfwkVDwj03yoGj98ekAhDs1n2Tv+PP3xKLtey3tey7uhkD86Ns1nmTv9/LtfC/tfDDuiEL86dz3xqTuikXo47/f883f8szw+eb97OH5za75zK7y07Kp1nCU0VOT0VHB5Jz1+++j12uRz06Qz02+45b1+u6R0E6+45fw+vT2+/Gm2XCS0E2S1ZaG2vqF2vmE2e4iunP+/v3j89LV7bza77yB1dYAr/AAsOcBsHEAsE6X3vkAsPEAsHGW3vk0nmNuupAAhTtCpW70+fad4PkCsPAAsPARtescuH1n0Jb3nMn7AAAAAWJLR0QAiAUdSAAAAAd0SU1FB+kDFxUCHTwsmtwAAADQSURBVDjLY2AAAUYmZhZWNnYOBhjg5OLm5oHzGHj5+AUEhYRFROEiYuISEpJSCAXSMrJy8qgKFAajAkUlEWUVVTV1DRwKNLW0dXT19A0MjXAoMDYxZWAwM7ewtMKlwNoGqMDWzt5hsCtwtLV1cnZxdcOpwN3D08vbx9cPpwIg8A8IDArGpyAkIDQobBAoADoyHKeCiMjQqOiY2Lh4XAoSEpOSU1JT09IzcCgAgczUrLRsfApyBkQBn4xxLj4FDHn5+QWFcF5RcUlpWYZCOZgDAFNzXYZTvYTRAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI1LTAzLTIzVDIxOjAxOjIxKzAwOjAwLt9JcQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNS0wMy0yM1QyMTowMToyMSswMDowMF+C8c0AAAAgdEVYdHNvZnR3YXJlAGh0dHBzOi8vaW1hZ2VtYWdpY2sub3JnvM8dnQAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpIZWlnaHQAMTkyQF1xVQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE3NDI3NjM2ODE9AtgpAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMjUtMDMtMjMvY2UzZTUwZjg4YjEzOGFiYTY3ODJlMjdmZjk2OTYzYjUuaWNvLnBuZ/HFgxIAAAAASUVORK5CYII="><span>NQ</span>`;
 				controller.append(link);
 			}
 			for (const pager of document.querySelectorAll(".nsk-pager")) {
@@ -407,7 +458,11 @@
 				const classify = () => {
 					const emoji = /emoji|smoji|expression|emoticon|yct\d|xhj\d|表情/i.test(image.className+" "+image.alt+" "+image.src);
 					const standalone = image.parentElement?.matches("p,a") && !image.parentElement.textContent.trim();
-					if (!emoji && standalone && image.naturalWidth>96 && image.naturalHeight>96) { image.classList.add("nsmax-post-image"); image.closest("p")?.classList.add("nsmax-image-paragraph"); }
+					if (!emoji && standalone && image.naturalWidth>96 && image.naturalHeight>96) {
+						image.classList.add("nsmax-post-image");
+						if (image.parentElement?.tagName === "A") image.parentElement.classList.add("post-image-link", "post-image-break");
+						image.closest("p")?.classList.add("nsmax-image-paragraph");
+					}
 				};
 				if (image.complete) classify(); else image.addEventListener("load",classify,{once:true,signal:ctx.signal});
 			}
