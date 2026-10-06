@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.10");
+	assert.equal(packageJson.version, "1.7.11");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1076,4 +1076,62 @@ test('用户最新需求还原：每日签到胶囊UI与排行榜前三高亮、
 		assert.deepEqual(errorsSetting, []);
 	} finally { await ctxSetting.close(); }
 });
+
+test("v1.7.11 视觉细节：顶栏板块激活态纯文本高亮无黑药丸、侧栏与悬停卡 Lv 6 位于名字下方且附带尊贵流光皇冠", async () => {
+	// 1. 顶栏内版非黑底药丸
+	const { context: ctxNav, page: pageNav, errors: errorsNav } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	try {
+		await wait(pageNav);
+		const navInside = pageNav.locator('ul.nav-menu a[href="/categories/inside"]');
+		assert.equal(await navInside.count() > 0, true);
+		// 模拟激活态
+		await navInside.evaluate(el => el.setAttribute("aria-current", "page"));
+		const insideStyle = await navInside.evaluate(el => ({
+			bg: getComputedStyle(el).backgroundColor,
+			color: getComputedStyle(el).color,
+			weight: parseInt(getComputedStyle(el).fontWeight, 10)
+		}));
+		// 背景绝不能是黑色药丸（rgb(24, 24, 27)）
+		assert.equal(insideStyle.bg, "rgba(0, 0, 0, 0)");
+		assert.ok(insideStyle.weight >= 600);
+
+		// 2. 侧栏个人卡：Lv 6 位于名字下方且附带尊贵标签
+		const accountCard = pageNav.locator(".nsmax-sb-account");
+		assert.equal(await accountCard.isVisible(), true);
+		const accountInfo = pageNav.locator(".nsmax-account-head .nsmax-account-info");
+		assert.equal(await accountInfo.evaluate(el => getComputedStyle(el).flexDirection), "column");
+		const accountRank = pageNav.locator(".nsmax-account-rank");
+		assert.equal(await accountRank.getAttribute("data-nsmax-lv6"), "true");
+		const nameBox = await pageNav.locator(".nsmax-account-name").boundingBox();
+		const rankBox = await accountRank.boundingBox();
+		assert.ok(rankBox.y >= nameBox.y + nameBox.height - 2, "Lv 6 rank badge is placed vertically under username");
+
+		assert.deepEqual(errorsNav, []);
+	} finally { await ctxNav.close(); }
+
+	// 3. 用户头像悬停卡：Lv 6 位于名字下方且附带尊贵流光皇冠
+	const apiMock = {
+		"/api/account/getInfo/10": [{ body: { success: true, detail: { member_id: 10, member_name: "chunwai", rank: 6, coin: 5364, nPost: 113, nComment: 1612, fans: 20 } } }]
+	};
+	const { context: ctxPop, page: pagePop, errors: errorsPop } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), api: apiMock });
+	try {
+		await wait(pagePop);
+		const userAvatarLink = pagePop.locator('ul.post-list .post-list-item a[href="/space/10"]').first();
+		await userAvatarLink.hover();
+		const personPop = pagePop.locator(".nsmax-person-pop");
+		await personPop.waitFor({ state: "visible" });
+		await pagePop.waitForSelector(".nsmax-person-level[data-nsmax-lv6]");
+		const personLevel = pagePop.locator(".nsmax-person-level");
+		assert.equal(await personLevel.innerText(), "Lv 6");
+		assert.equal(await personLevel.getAttribute("data-nsmax-lv6"), "true");
+
+		const popName = pagePop.locator(".nsmax-person-head a");
+		const popNameBox = await popName.boundingBox();
+		const popRankBox = await personLevel.boundingBox();
+		assert.ok(popRankBox.y >= popNameBox.y + popNameBox.height - 2, "Person hover Lv 6 badge is vertically under username");
+
+		assert.deepEqual(errorsPop, []);
+	} finally { await ctxPop.close(); }
+});
+
 

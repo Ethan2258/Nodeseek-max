@@ -343,7 +343,7 @@
 	}
 	function nsmaxMarkLevel6() {
 		const candidates = document.querySelectorAll(
-			".role-tag, .nspp-level, .user-badge, .badge, .author-info > span, .nsk-content-meta-info > span, .nsmax-account-rank, .hover-user-card [class*='level']"
+			".role-tag, .nspp-level, .user-badge, .badge, .author-info > span, .nsk-content-meta-info > span, .nsmax-account-rank, .nsmax-person-level, .hover-user-card [class*='level']"
 		);
 		for (const el of candidates) {
 			if (el.hasAttribute("data-nsmax-lv6")) continue;
@@ -639,7 +639,13 @@
 				const data = await entry.promise;
 				if (ticket !== serial || !pop) return;
 				profile.textContent = data.member_name || name;
-				if (data.rank !== undefined) { const level = document.createElement("span"); level.className = "nsmax-person-level"; level.textContent = "Lv " + data.rank; identity.append(level); }
+				if (data.rank !== undefined) {
+					const level = document.createElement("span");
+					level.className = "nsmax-person-level";
+					level.textContent = "Lv " + data.rank;
+					if (Number(data.rank) >= 6) level.setAttribute("data-nsmax-lv6", "true");
+					identity.append(level);
+				}
 				for (const [label,key] of [["鸡腿","coin"],["主题","nPost"],["回复","nComment"],["粉丝","fans"]]) { const item = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd"); term.textContent = label; value.textContent = data[key] === undefined ? "—" : String(data[key]); item.append(term,value); numbers.append(item); }
 				status.remove(); place();
 			} catch { cache.delete(id); if (ticket === serial && pop) status.textContent = "暂时无法读取资料，可打开个人主页"; }
