@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.14");
+	assert.equal(packageJson.version, "1.7.15");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1295,3 +1295,76 @@ test("v1.7.14 极致精细化：统一两处 Level 6 标签且皇冠垂直居中
 	} finally { await ctxHot.close(); }
 });
 
+test("v1.7.15 视觉与体验精修：设置面板去遮罩去灰条、字体切换全面生效、翻页无底部遮罩、零未捕获异常", async () => {
+	// 1. 设置弹窗遮罩去除与标题无灰条
+	const { context: ctxSet, page: pageSet, errors: errorsSet } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	try {
+		await wait(pageSet);
+		await pageSet.locator(".nsmax-settings-button").click();
+		const dialog = pageSet.locator("#nspp-settings dialog");
+		await dialog.waitFor({ state: "visible" });
+
+		// 检查 Shadow DOM 内部样式：content 无 mask-image，h3 无 sticky 且背景透明
+		const styles = await pageSet.evaluate(() => {
+			const host = document.querySelector("#nspp-settings");
+			const shadow = host?.shadowRoot;
+			const content = shadow?.querySelector(".content");
+			const h3 = shadow?.querySelector("h3");
+			const cStyle = content ? getComputedStyle(content) : null;
+			const hStyle = h3 ? getComputedStyle(h3) : null;
+			return {
+				maskImage: cStyle?.maskImage || cStyle?.webkitMaskImage || "none",
+				h3Position: hStyle?.position || "",
+				h3Bg: hStyle?.backgroundColor || ""
+			};
+		});
+		assert.ok(styles.maskImage === "none" || styles.maskImage === "", "content 不应含有遮罩 mask-image");
+		assert.notEqual(styles.h3Position, "sticky", "h3 不应为 sticky 悬浮条");
+		assert.deepEqual(errorsSet, []);
+	} finally { await ctxSet.close(); }
+
+	// 2. 字体切换生效验证（Claude / Inter / System）
+	const { context: ctxFont, page: pageFont, errors: errorsFont } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+		html: postPage(),
+		seed: {
+			"nsmax:migrate:font-system": true,
+			"nspp:settings:www.nodeseek.com": {
+				"modern-theme": {
+					enabled: true,
+					font: "claude"
+				}
+			}
+		}
+	});
+	try {
+		await wait(pageFont);
+		const fontState = await pageFont.evaluate(() => {
+			const html = document.documentElement;
+			const post = document.querySelector("article.post-content, .post-content, h1");
+			return {
+				htmlFontAttr: html.getAttribute("data-nsmax-font"),
+				postFont: post ? getComputedStyle(post).fontFamily : ""
+			};
+		});
+		assert.equal(fontState.htmlFontAttr, "claude", "HTML 应当具有 data-nsmax-font=claude 属性");
+		assert.ok(/serif/i.test(fontState.postFont), "Claude 模式下正文应当应用衬线体: " + fontState.postFont);
+		assert.deepEqual(errorsFont, []);
+	} finally { await ctxFont.close(); }
+
+	// 3. 翻页区域去遮罩与页脚完全隐藏
+	const { context: ctxPager, page: pagePager, errors: errorsPager } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	try {
+		await wait(pagePager);
+		const pagerState = await pagePager.evaluate(() => {
+			const pager = document.querySelector(".nsk-pager.pager-bottom, .post-bottom-pager, .nsk-pager:not(.pager-top)");
+			const footer = document.querySelector("footer, .footer, body > footer");
+			return {
+				pagerVisible: pager ? getComputedStyle(pager).display !== "none" : false,
+				footerHidden: !footer || getComputedStyle(footer).display === "none"
+			};
+		});
+		assert.equal(pagerState.pagerVisible, true);
+		assert.equal(pagerState.footerHidden, true, "页脚应当彻底隐藏，不应在翻页处形成遮罩");
+		assert.deepEqual(errorsPager, []);
+	} finally { await ctxPager.close(); }
+});
