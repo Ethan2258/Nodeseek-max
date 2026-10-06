@@ -413,6 +413,8 @@ html[data-nsmax-theme] #nsk-body-left .post-list-item .post-title a {font:500 15
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info {display:flex!important;align-items:center!important;gap:10px!important;margin-top:3px!important;font:400 12.5px/20px var(--font-sans)!important;color:var(--text-subtle)!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info :is(a,span,time) {font:inherit!important;color:inherit!important;text-decoration:none!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info :is(.info-item,.nsmax-inline-category) {display:inline-flex!important;align-items:center!important;gap:3px!important;}
+html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info :is(.info-item,.nsmax-inline-category)::before {content:none!important;display:none!important;}
+html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info :is(svg:not(.nsmax-meta-icon),.iconpark-icon:not(.nsmax-meta-icon)) {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info :is(svg,.nsmax-icon) {width:13px!important;height:13px!important;flex:none;color:var(--text-disabled)!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info .post-category {font-size:11px!important;}
 html[data-nsmax-theme] #nsk-body-left :is(.post-list-item,.content-item):hover {background:var(--panel-hover)!important;}
@@ -806,3 +808,29 @@ html[data-nsmax-theme] .nsmax-board-row:not([data-rank="1"]):not([data-rank="2"]
 html[data-nsmax-theme] .nsmax-board-avatar {border-radius:8px!important;object-fit:cover!important;}
 html[data-nsmax-theme] .nsmax-board-username {color:#3b82f6!important;font-weight:500!important;text-decoration:none!important;}
 html[data-nsmax-theme] .nsmax-board-username:hover {text-decoration:underline!important;}
+/* Lucky Giveaway Modal & Trigger on /new-discussion */
+html[data-nsmax-theme] .nsmax-lucky-trigger {display:inline-flex!important;align-items:center!important;gap:6px!important;height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel-alt)!important;color:var(--text)!important;font:500 13px/32px var(--font-sans)!important;cursor:pointer!important;transition:all .15s ease!important;}
+html[data-nsmax-theme] .nsmax-lucky-trigger:hover {border-color:var(--brand)!important;color:var(--brand)!important;background:var(--panel)!important;}
+html[data-nsmax-theme] dialog.nsmax-lucky-modal {position:fixed!important;inset:0!important;margin:auto!important;width:min(500px,calc(100vw - 32px))!important;max-height:min(88dvh,620px)!important;padding:0!important;border:1px solid var(--line)!important;border-radius:16px!important;background:var(--panel)!important;color:var(--text)!important;box-shadow:var(--shadow-medium)!important;display:none;flex-direction:column;z-index:99999!important;overflow:hidden!important;}
+html[data-nsmax-theme] dialog.nsmax-lucky-modal[open] {display:flex!important;}
+html[data-nsmax-theme] dialog.nsmax-lucky-modal::backdrop {background:rgba(15,23,42,.45)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;}
+html[data-nsmax-theme] .nsmax-lucky-head {display:flex!important;align-items:center!important;justify-content:space-between!important;padding:14px 20px!important;border-bottom:1px solid var(--line-soft)!important;background:var(--panel)!important;}
+html[data-nsmax-theme] .nsmax-lucky-head h3 {margin:0!important;font-size:15px!important;font-weight:700!important;color:var(--text)!important;border:0!important;padding:0!important;}
+html[data-nsmax-theme] .nsmax-lucky-close {display:grid!important;place-items:center!important;width:28px!important;height:28px!important;border:0!important;border-radius:50%!important;background:transparent!important;color:var(--muted)!important;font-size:18px!important;cursor:pointer!important;}
+html[data-nsmax-theme] .nsmax-lucky-close:hover {background:var(--panel-alt)!important;color:var(--text)!important;}
+html[data-nsmax-theme] .nsmax-lucky-body {display:flex!important;flex-direction:column!important;gap:12px!important;padding:18px 20px!important;overflow-y:auto!important;}
+html[data-nsmax-theme] .nsmax-lucky-row {display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important;}
+html[data-nsmax-theme] .nsmax-lucky-field {display:flex!important;flex-direction:column!important;gap:5px!important;font-size:12.5px!important;color:var(--text-subtle)!important;}
+html[data-nsmax-theme] .nsmax-lucky-field span {font-weight:600!important;color:var(--text)!important;}
+html[data-nsmax-theme] .nsmax-lucky-field :is(input,select) {height:34px!important;padding:6px 10px!important;border:1px solid var(--line)!important;border-radius:8px!important;background:var(--panel-alt)!important;color:var(--text)!important;font:inherit!important;outline:none!important;}
+html[data-nsmax-theme] .nsmax-lucky-field :is(input,select):focus {border-color:var(--brand)!important;}
+html[data-nsmax-theme] .nsmax-lucky-presets {display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:6px!important;margin-top:-4px!important;}
+html[data-nsmax-theme] .nsmax-lucky-presets span {font-size:11.5px!important;color:var(--muted)!important;}
+html[data-nsmax-theme] .nsmax-lucky-presets button {min-height:24px!important;padding:2px 8px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel-alt)!important;color:var(--text-subtle)!important;font-size:11.5px!important;cursor:pointer!important;}
+html[data-nsmax-theme] .nsmax-lucky-presets button:hover {border-color:var(--brand)!important;color:var(--brand)!important;}
+html[data-nsmax-theme] .nsmax-lucky-preview {max-height:110px!important;margin:0!important;padding:8px 10px!important;border:1px solid var(--line)!important;border-radius:8px!important;background:var(--panel-alt)!important;color:var(--muted)!important;font:11.5px/1.55 var(--font-mono)!important;white-space:pre-wrap!important;overflow:auto!important;}
+html[data-nsmax-theme] .nsmax-lucky-foot {display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;padding:12px 20px!important;border-top:1px solid var(--line-soft)!important;background:var(--panel)!important;}
+html[data-nsmax-theme] .nsmax-lucky-foot button {min-height:34px!important;padding:6px 16px!important;border-radius:999px!important;font-size:12.5px!important;font-weight:500!important;cursor:pointer!important;}
+html[data-nsmax-theme] .nsmax-lucky-foot .nsmax-lucky-cancel {border:1px solid var(--line)!important;background:var(--panel)!important;color:var(--muted)!important;}
+html[data-nsmax-theme] .nsmax-lucky-foot .nsmax-lucky-confirm {border:0!important;background:var(--action)!important;color:var(--action-text)!important;font-weight:600!important;}
+

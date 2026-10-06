@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.16（纯 CSS）
+ * NodeSeek Max 主题 v1.7.17（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -1200,29 +1200,9 @@ html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-it
 	color:inherit!important;
 	white-space:nowrap!important;
 }
-html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use:is([href="#user"],[href="#eyes"],[href="#comments"],[href="#lightning"]))>svg.iconpark-icon {
+html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info .info-item::before {
+	content:none!important;
 	display:none!important;
-}
-html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use:is([href="#user"],[href="#eyes"],[href="#comments"],[href="#lightning"]))::before {
-	content:""!important;
-	flex:none!important;
-	width:13px!important;
-	height:13px!important;
-	background:var(--nsmax-faint)!important;
-	-webkit-mask:var(--nsmax-meta-icon) center/13px 13px no-repeat!important;
-	mask:var(--nsmax-meta-icon) center/13px 13px no-repeat!important;
-}
-html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#user"]) {
-	--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12%2011.5a3.75%203.75%200%201%200%200-7.5%203.75%203.75%200%200%200%200%207.5ZM5%2020c0-3.6%203.1-6%207-6s7%202.4%207%206'/%3E%3C/svg%3E");
-}
-html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#eyes"]) {
-	--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.75%2012S6.25%205.75%2012%205.75%2021.25%2012%2021.25%2012%2017.75%2018.25%2012%2018.25%202.75%2012%202.75%2012ZM12%2014.5a2.5%202.5%200%201%200%200-5%202.5%202.5%200%200%200%200%205Z'/%3E%3C/svg%3E");
-}
-html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#comments"]) {
-	--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4%206a1.5%201.5%200%200%201%201.5-1.5h13A1.5%201.5%200%200%201%2020%206v9a1.5%201.5%200%200%201-1.5%201.5h-9l-4%203.5v-3.5A1.5%201.5%200%200%201%204%2015Z'/%3E%3C/svg%3E");
-}
-html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item:has(>svg.iconpark-icon>use[href="#lightning"]) {
-	--nsmax-meta-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5%208.5%205%2013l4.5%204.5M5%2013h9a5%205%200%200%200%205-5V6.5'/%3E%3C/svg%3E");
 }
 html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>.info-item a,
 html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-info>a.info-item:not(.post-category) {
@@ -18293,6 +18273,10 @@ html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-item {
 	display:inline-flex!important;
 	align-items:center!important;
 	gap:3px!important;
+}
+html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-item::before {
+	content:none!important;
+	display:none!important;
 }
 html:root:root:root:root #nsk-body-left .post-list-item .post-info .post-category {
 	font-size:11px!important;

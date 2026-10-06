@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.16");
+	assert.equal(packageJson.version, "1.7.17");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1399,3 +1399,72 @@ test("v1.7.16 极致体验：不在新标签页打开帖子生效、丝滑过渡
 	} finally { await ctxTab.close(); }
 });
 
+test("v1.7.17 深度优化与功能完成：列表双重图标彻底杜绝、发帖一键抽奖弹窗配置并写入", async () => {
+	// 1. 列表双重图标彻底杜绝
+	const { context: ctxList, page: pageList, errors: errorsList } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(),
+		viewport: { width: 1440, height: 900 }
+	});
+	try {
+		await wait(pageList);
+		const iconCheck = await pageList.evaluate(() => {
+			const rows = Array.from(document.querySelectorAll("#nsk-body-left .post-list-item .post-info"));
+			let doubleSvgFound = false;
+			let maskIconFound = false;
+			for (const row of rows) {
+				const items = row.querySelectorAll(".info-author, .info-views, .info-comments-count, .info-last-commenter");
+				for (const item of items) {
+					const svgs = Array.from(item.querySelectorAll("svg")).filter(s => getComputedStyle(s).display !== "none");
+					if (svgs.length > 1) doubleSvgFound = true;
+					const beforeContent = getComputedStyle(item, "::before").content;
+					if (beforeContent && beforeContent !== "none" && beforeContent !== '""') {
+						maskIconFound = true;
+					}
+				}
+			}
+			return { rowsCount: rows.length, doubleSvgFound, maskIconFound };
+		});
+		assert.ok(iconCheck.rowsCount > 0, "列表页应当存在列表行");
+		assert.equal(iconCheck.doubleSvgFound, false, "列表项中不应出现两个可见 svg 图标");
+		assert.equal(iconCheck.maskIconFound, false, "列表项不应通过 ::before 绘制冗余伪元素图标");
+		assert.deepEqual(errorsList, []);
+	} finally { await ctxList.close(); }
+
+	// 2. 发帖页一键抽奖交互配置弹窗并回写
+	const { context: ctxPost, page: pagePost, errors: errorsPost } = await open(browser, "https://www.nodeseek.com/new-discussion", {
+		html: newPostPage()
+	});
+	try {
+		await pagePost.waitForSelector(".nsmax-lucky-trigger");
+		const trigger = pagePost.locator(".nsmax-lucky-trigger");
+		assert.equal(await trigger.isVisible(), true, "发布按钮旁的一键抽奖按钮应当可见");
+
+		// 点击唤起弹窗
+		await trigger.click();
+		await pagePost.waitForSelector("dialog.nsmax-lucky-modal[open]");
+		const modal = pagePost.locator("dialog.nsmax-lucky-modal");
+		assert.equal(await modal.isVisible(), true, "抽奖配置弹窗应当打开");
+
+		// 修改配置项
+		await pagePost.locator(".nsmax-lucky-prize").fill("搬瓦工 VPS 1台");
+		await pagePost.locator(".nsmax-lucky-count").fill("3");
+		// 点击快捷时间按钮
+		await pagePost.locator(".nsmax-lucky-presets button").first().click();
+
+		// 确认插入
+		await pagePost.locator("button.nsmax-lucky-confirm").click();
+		await wait(pagePost, 100);
+
+		// 验证弹窗已关闭且正文与标题均已更新
+		assert.equal(await modal.isVisible(), false, "插入后抽奖弹窗应当关闭");
+		const titleVal = await pagePost.locator(".post-title-input").inputValue();
+		const bodyVal = await pagePost.locator(".md-editor textarea").inputValue();
+
+		assert.ok(titleVal.includes("抽奖："), "发帖标题应当带有抽奖前缀");
+		assert.ok(bodyVal.includes("搬瓦工 VPS 1台"), "正文应当包含奖品名称");
+		assert.ok(bodyVal.includes("3 份"), "正文应当包含中奖人数份数");
+		assert.ok(bodyVal.includes("开奖链接"), "正文应当包含开奖说明");
+
+		assert.deepEqual(errorsPost, []);
+	} finally { await ctxPost.close(); }
+});

@@ -281,6 +281,7 @@
 				for (const svg of item.querySelectorAll("svg:not(.nsmax-meta-icon), .iconpark-icon:not(.nsmax-meta-icon)")) {
 					svg.setAttribute("data-nsmax-meta-original","");
 					svg.style.setProperty("display","none","important");
+					svg.remove();
 				}
 				const existing = item.querySelectorAll(".nsmax-meta-icon");
 				if (existing.length > 1) {
@@ -295,7 +296,11 @@
 			const author = info.querySelector(".info-author"), time = info.querySelector(".info-last-comment-time"), views = info.querySelector(".info-views"), count = info.querySelector(".info-comments-count"), last = info.querySelector(".info-last-commenter");
 			const category = info.querySelector(".post-category");
 			const inline = category?.cloneNode(true);
-			if (inline) { inline.className = "nsmax-inline-category"; const categoryIcon = toolIcon("board"); categoryIcon.classList.add("nsmax-meta-icon"); inline.prepend(categoryIcon); }
+			if (inline) {
+				inline.className = "nsmax-inline-category";
+				inline.querySelectorAll("svg, .iconpark-icon").forEach(s => s.remove());
+				const categoryIcon = toolIcon("board"); categoryIcon.classList.add("nsmax-meta-icon"); inline.prepend(categoryIcon);
+			}
 			for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
@@ -561,6 +566,119 @@
 					button.querySelector(".nsmax-action-label").textContent = button.title;
 					cm?.refresh();
 				});
+				function nsmaxOpenLuckyModal(titleEl, setValueFn, cmInst, inputEl) {
+					let dialog = document.querySelector("dialog.nsmax-lucky-modal");
+					if (!dialog) {
+						dialog = document.createElement("dialog");
+						dialog.className = "nsmax-lucky-modal";
+						dialog.innerHTML = `
+							<div class="nsmax-lucky-head">
+								<h3>🎁 快捷抽奖配置</h3>
+								<button type="button" class="nsmax-lucky-close" aria-label="关闭">&times;</button>
+							</div>
+							<div class="nsmax-lucky-body">
+								<label class="nsmax-lucky-field">
+									<span>奖品名称</span>
+									<input type="text" class="nsmax-lucky-prize" placeholder="例如：50 鸡腿 / 香港轻量云 / 专属兑换码" value="50 鸡腿">
+								</label>
+								<div class="nsmax-lucky-row">
+									<label class="nsmax-lucky-field">
+										<span>中奖人数 (份)</span>
+										<input type="number" class="nsmax-lucky-count" min="1" max="100" value="1">
+									</label>
+									<label class="nsmax-lucky-field">
+										<span>开奖时间</span>
+										<input type="text" class="nsmax-lucky-time" value="24 小时后自动开奖">
+									</label>
+								</div>
+								<div class="nsmax-lucky-presets">
+									<span>快捷时间：</span>
+									<button type="button" data-preset="24 小时后">24小时后</button>
+									<button type="button" data-preset="48 小时后">48小时后</button>
+									<button type="button" data-preset="今晚 20:00">今晚20:00</button>
+									<button type="button" data-preset="手动开奖">手动开奖</button>
+								</div>
+								<label class="nsmax-lucky-field">
+									<span>参与方式</span>
+									<select class="nsmax-lucky-rule">
+										<option value="任意回复即可参与">任意回复即可参与</option>
+										<option value="回复指定关键词参与">回复指定关键词参与</option>
+										<option value="点赞或加鸡腿参与">点赞或加鸡腿参与</option>
+									</select>
+								</label>
+								<div class="nsmax-lucky-field">
+									<span>Markdown 正文预览</span>
+									<pre class="nsmax-lucky-preview"></pre>
+								</div>
+							</div>
+							<div class="nsmax-lucky-foot">
+								<button type="button" class="nsmax-lucky-cancel">取消</button>
+								<button type="button" class="nsmax-lucky-confirm primary">确认插入抽奖信息</button>
+							</div>
+						`;
+						document.body.append(dialog);
+
+						const prizeInput = dialog.querySelector(".nsmax-lucky-prize");
+						const countInput = dialog.querySelector(".nsmax-lucky-count");
+						const timeInput = dialog.querySelector(".nsmax-lucky-time");
+						const ruleSelect = dialog.querySelector(".nsmax-lucky-rule");
+						const previewEl = dialog.querySelector(".nsmax-lucky-preview");
+
+						const updatePreview = () => {
+							const prize = prizeInput.value.trim() || "奖品名称";
+							const count = countInput.value.trim() || "1";
+							const time = timeInput.value.trim() || "24 小时后";
+							const rule = ruleSelect.value;
+							const md = `# 🎁 抽奖信息\\n\\n- **奖品**：${prize} × ${count} 份\\n- **参与方式**：${rule}\\n- **开奖时间**：${time}\\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\\n\\n---\\n`;
+							previewEl.textContent = md.replace(/\\\\n/g, "\\n");
+							return { prize, count, time, rule, md };
+						};
+
+						dialog.querySelectorAll(".nsmax-lucky-presets button").forEach(btn => {
+							btn.addEventListener("click", () => {
+								timeInput.value = btn.dataset.preset;
+								updatePreview();
+							});
+						});
+
+						[prizeInput, countInput, timeInput, ruleSelect].forEach(el => {
+							el.addEventListener("input", updatePreview);
+							el.addEventListener("change", updatePreview);
+						});
+
+						const close = () => {
+							if (typeof dialog.close === "function") dialog.close();
+							else dialog.removeAttribute("open");
+						};
+
+						dialog.querySelector(".nsmax-lucky-close").addEventListener("click", close);
+						dialog.querySelector(".nsmax-lucky-cancel").addEventListener("click", close);
+
+						dialog.querySelector(".nsmax-lucky-confirm").addEventListener("click", () => {
+							const { prize, md } = updatePreview();
+							const activeTitle = titleEl || document.querySelector(".post-title-input,[name=title],input[placeholder*='标题']");
+							if (activeTitle && !/抽奖/.test(activeTitle.value)) {
+								const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+								setter?.call(activeTitle, `抽奖：${activeTitle.value.trim() || prize}`);
+								activeTitle.dispatchEvent(new Event("input", { bubbles: true }));
+							}
+							const current = cmInst ? cmInst.getValue() : inputEl?.value || "";
+							if (!/开奖链接/.test(current)) {
+								setValueFn(`${md.replace(/\\\\n/g, "\\n")}\\n${current.trim()}`);
+							}
+							close();
+						});
+
+						dialog.addEventListener("keydown", e => {
+							if (e.key === "Escape") close();
+						});
+						dialog._updatePreview = updatePreview;
+					}
+
+					dialog._updatePreview();
+					if (typeof dialog.showModal === "function") dialog.showModal();
+					else dialog.setAttribute("open", "");
+				}
 				if (!isPost && /^\/new-discussion$/.test(location.pathname)) action("抽奖", "gift", () => {
 					const titleInput = document.querySelector(".post-title-input,[name=title],input[placeholder*='标题']");
 					if (titleInput && !/抽奖/.test(titleInput.value)) {
@@ -569,7 +687,7 @@
 						titleInput.dispatchEvent(new Event("input", { bubbles: true }));
 					}
 					const current = cm ? cm.getValue() : input?.value || "";
-					if (!/开奖链接/.test(current)) setEditorValue(`${current.trim()}${current.trim() ? "\\n\\n" : ""}抽奖规则：\\n- 奖品：\\n- 开奖时间：\\n- 参与方式：\\n- 开奖链接：请在发布后替换为本帖链接\\n`);
+					if (!/开奖链接/.test(current)) setEditorValue(`${current.trim()}${current.trim() ? "\n\n" : ""}# 🎁 抽奖信息\n\n- **奖品**：奖品名称 × 1 份\n- **参与方式**：任意回复即可参与\n- **开奖时间**：24 小时后\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\n\n---\n`);
 				});
 				action("附件", "image", () => (editor.querySelector(".nspp-upload-choose") || editor.querySelector('.mde-toolbar [title="图片"],.mde-toolbar [title="上传图片"]'))?.click());
 				action("表情", "smile", button => {
@@ -616,6 +734,18 @@
 				const submit = editor.querySelector(".topic-select,.submit-row");
 				if (isPost) { const button = editor.querySelector("button.submit,button[type=submit]"); if (button) button.textContent="回复"; }
 				if (!submit) { const footer = document.createElement("div"); footer.className = "submit-row"; editor.append(footer); }
+				const submitBtn = editor.querySelector("button.submit,button[type=submit]");
+				if (!isPost && /^\/new-discussion$/.test(location.pathname) && submitBtn && !editor.querySelector(".nsmax-lucky-trigger")) {
+					const luckyBtn = document.createElement("button");
+					luckyBtn.type = "button";
+					luckyBtn.className = "nsmax-lucky-trigger";
+					luckyBtn.innerHTML = `<span>🎁</span><b>一键抽奖</b>`;
+					luckyBtn.addEventListener("click", () => {
+						const titleInput = document.querySelector(".post-title-input,[name=title],input[placeholder*='标题']");
+						nsmaxOpenLuckyModal(titleInput, setEditorValue, cm, input);
+					});
+					submitBtn.before(luckyBtn);
+				}
 				if (cm) cm.on("change", render);
 				else input.addEventListener("input", render, { signal: ctx.signal });
 				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); preview.remove(); });
