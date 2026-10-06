@@ -360,7 +360,8 @@ test("SB 个人卡：四列统计、两列菜单和卡片内的发帖入口",asy
 	try{
 		await page.waitForSelector('.nsmax-sb-account');
 		assert.equal(await page.locator('.nsmax-account-numbers dd').count(),4);
-		assert.equal(await page.locator('.nsmax-account-menu a').count(),9);
+		assert.equal(await page.locator('.nsmax-account-menu a').count(),10);
+		assert.equal(await page.locator('.nsmax-account-menu a[href="/fans?type=fans"]').isVisible(),true);
 		assert.equal(await page.locator('.nsmax-account-menu a[href="/ruling"]').isVisible(),true);
 		assert.equal(await page.locator('.nsmax-sb-account a[href="/new-discussion"]').isVisible(),true);
 		assert.equal(await page.locator('.user-card>.user-head').isVisible(),false);
@@ -795,6 +796,7 @@ test("搜索侧栏：热榜最近浏览恢复、随页面滚动与统计链接�
 		for(const [label,href]of[['鸡腿','/credit'],['星辰','/stardust/list'],['主题帖','/space/1#/discussions'],['评论数','/space/1#/comments']])assert.equal(await page.locator('.nsmax-account-stat').filter({has:page.locator('dt').filter({hasText:label})}).getAttribute('href'),href);
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'个人设置',exact:true}).getAttribute('href'),'/setting');
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'我的邀请',exact:true}).count(),0);
+		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'我的粉丝',exact:true}).getAttribute('href'),'/fans?type=fans');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });

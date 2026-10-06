@@ -27016,7 +27016,7 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 		const profile = name.getAttribute("href").split("#")[0];
 		const checkinNative = head.querySelector('a[href*="/board"], [title*="签到"]');
 		const checkinHref = checkinNative?.getAttribute("href") || "/board";
-		const entries = [["我的主页",profile,"user"],["我的主题",profile+"#/discussions","document"],["我的回帖",profile+"#/comments","comment"],["我的收藏",profile+"#/collections","award"],["我的通知","/notification#/atMe","bell"],["我的私信","/notification#/message?mode=list","messages"],["每日签到",checkinHref,"attendance"],["管理记录","/ruling","balance"],["个人设置","/setting","gear"]];
+		const entries = [["我的主页",profile,"user"],["我的主题",profile+"#/discussions","document"],["我的回帖",profile+"#/comments","comment"],["我的收藏",profile+"#/collections","award"],["我的粉丝","/fans?type=fans","users"],["我的通知","/notification#/atMe","bell"],["我的私信","/notification#/message?mode=list","messages"],["每日签到",checkinHref,"attendance"],["管理记录","/ruling","balance"],["个人设置","/setting","gear"]];
 		for (const [label,href,icon] of entries) {
 			const link = document.createElement("a");
 			link.href = href;
