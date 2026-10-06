@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.19");
+	assert.equal(packageJson.version, "1.7.20");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -476,7 +476,7 @@ test("评论追加：默认按需加载、去重、安全清理、楼中楼、�
 	try{
 		await page.waitForSelector('button.nspp-action');
 		assert.equal(await page.locator('ul.comments li.content-item').count(),3);
-		await page.locator('button.nspp-action').filter({hasText:'加载下一页'}).click();
+		await page.locator('button.nspp-action').filter({hasText:'加载下一页'}).click({ force: true });
 		await page.waitForSelector('li[id="4"]');
 		await page.waitForSelector('li[id="1"]>.nsmax-nested-replies>li[id="4"]');
 		assert.equal(await page.locator('ul.comments li.content-item').count(),6);
@@ -678,7 +678,10 @@ test("发帖页：同一套编辑器、标题焦点、原生分类和深色提�
 		await page.locator('.post-title-input').fill('本地测试标题，不发布');
 		await page.locator('.category-select').selectOption('tech');
 		await page.locator('.md-editor textarea').fill('测试正文');
-		await page.locator('.nsmax-editor-controls').getByRole('button',{name:'抽奖',exact:true}).click();
+		assert.equal(await page.locator('.nsmax-editor-controls').getByRole('button',{name:'抽奖',exact:true}).count(), 0);
+		await page.locator('.nsmax-lucky-trigger').click();
+		await page.waitForSelector('dialog.nsmax-lucky-modal[open]');
+		await page.locator('button.nsmax-lucky-confirm').click();
 		assert.match(await page.locator('.post-title-input').inputValue(),/^抽奖：/);
 		assert.match(await page.locator('.md-editor textarea').inputValue(),/开奖链接/);
 		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
@@ -1555,6 +1558,25 @@ test("v1.7.19 极致细节复刻：主帖无#0楼号、标题栏双统计、OP�
 		});
 		assert.ok(editorVal.includes("@admin"), "点击举报应当在编辑器中自动填入 @admin");
 
+		// F. 验证 Markdown 工具栏交互
+		await pagePost.locator(".nsmax-editor-controls button[title*='Markdown'], .nsmax-editor-controls button[aria-label*='Markdown']").click();
+		const mdeVisible = await pagePost.locator(".nsmax-custom-mde-toolbar").isVisible();
+		assert.equal(mdeVisible, true, "点击使用 Markdown 编辑器后工具栏应可见");
+		await pagePost.locator(".nsmax-custom-mde-toolbar button[title='粗体']").click();
+		const boldVal = await pagePost.evaluate(() => document.querySelector(".md-editor textarea")?.value || "");
+		assert.ok(boldVal.includes("**"), "点击粗体按钮应插入 Markdown 粗体标记");
+
+		// G. 验证底部分页无黑色遮罩/多余 padding
+		const pagerCheck = await pagePost.evaluate(() => {
+			const pager = document.querySelector(".nsk-pager");
+			const bodyLeft = document.querySelector("#nsk-body-left");
+			return {
+				pagerBg: pager ? getComputedStyle(pager).backgroundColor : "",
+				bodyLeftPad: bodyLeft ? getComputedStyle(bodyLeft).paddingBottom : ""
+			};
+		});
+		assert.notEqual(pagerCheck.bodyLeftPad, "60px", "body-left 底部内边距不应为 60px 造成空黑遮罩");
+
 		assert.deepEqual(errorsPost, []);
 	} finally { await ctxPost.close(); }
 
@@ -1563,6 +1585,8 @@ test("v1.7.19 极致细节复刻：主帖无#0楼号、标题栏双统计、OP�
 		html: listPage()
 	});
 	try {
+		await pageList.waitForSelector("html[data-nsmax-theme]");
+		await wait(pageList);
 		await pageList.waitForSelector(".post-list-controler");
 		const controlerStyle = await pageList.evaluate(() => {
 			const ctrl = document.querySelector(".post-list-controler");

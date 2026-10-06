@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.19（纯 CSS）
+ * NodeSeek Max 主题 v1.7.20（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -18464,9 +18464,23 @@ html:root:root:root:root dialog.nspp-post-preview>p {
 html:root:root:root:root dialog.nspp-post-preview>p:empty {
 	display:none;
 }
+html:root:root:root:root .md-editor .CodeMirror-hscrollbar,
+html:root:root:root:root .md-editor .CodeMirror-scrollbar-filler {
+	display:none!important;
+	visibility:hidden!important;
+	width:0!important;
+	height:0!important;
+	opacity:0!important;
+	pointer-events:none!important;
+}
+html:root:root:root:root .md-editor .CodeMirror-scroll {
+	overflow-x:hidden!important;
+	margin-bottom:0!important;
+	padding-bottom:0!important;
+}
 html:root:root:root:root:has(.new-discussion) #nsk-body-left .post-editor,
 html:root:root:root:root:has(.new-discussion) #nsk-body-left .new-discussion {
-	padding:16px!important;
+	padding:20px 24px!important;
 	border:1px solid var(--line)!important;
 	border-radius:12px!important;
 	box-shadow:none!important;
@@ -18475,40 +18489,72 @@ html:root:root:root:root:has(.new-discussion) #nsk-body-left .new-discussion {
 html:root:root:root:root:has(.new-discussion) #nsk-body-left :is(.post-editor,.new-discussion) .md-editor {
 	border:1px solid var(--line)!important;
 }
-html:root:root:root:root:has(.new-discussion) #nsk-body-left input[type=text],
-html:root:root:root:root:has(.new-discussion) #nsk-body-left input:not([type]) {
-	height:42px!important;
-	padding:0 12px!important;
+html:root:root:root:root:has(.new-discussion) #nsk-body-left :is(.post-title-input,input[type=text],input:not([type])) {
+	height:44px!important;
+	padding:0 14px!important;
 	border:1px solid var(--line)!important;
 	border-radius:8px!important;
-	font:400 15px/42px var(--font-sans)!important;
+	font:500 15px/44px var(--font-sans)!important;
 	box-shadow:none!important;
 	background:var(--panel-alt)!important;
-	color:var(--text)!important;
+	color:var(--text-strong)!important;
+	transition:border-color .15s ease,box-shadow .15s ease!important;
 }
-html:root:root:root:root:has(.new-discussion) #nsk-body-left input[type=text]:focus,
-html:root:root:root:root:has(.new-discussion) #nsk-body-left input:not([type]):focus {
+html:root:root:root:root:has(.new-discussion) #nsk-body-left :is(.post-title-input,input[type=text],input:not([type])):focus {
 	outline:0!important;
-	border-color:var(--line-strong)!important;
+	border-color:var(--brand)!important;
 	box-shadow:0 0 0 2px var(--brand-soft)!important;
 	background:var(--panel)!important;
 }
 html:root:root:root:root:has(.new-discussion) #nsk-body-left .title-row,
 html:root:root:root:root:has(.new-discussion) #nsk-body-left .category-row {
-	margin-bottom:12px!important;
+	margin-bottom:14px!important;
 }
-html:root:root:root:root:has(.new-discussion) #nsk-body-left .important-note,
-html:root:root:root:root:has(.new-discussion) #nsk-body-left .important-reminder,
-html:root:root:root:root:has(.new-discussion) #nsk-body-left .new-discussion-notes,
-html:root:root:root:root:has(.new-discussion) #nsk-body-left .warning-block {
+html:root:root:root:root:has(.new-discussion) #nsk-body-left :is(.category-row,select,.category-select) {
+	height:38px!important;
+	padding:0 12px!important;
+	border:1px solid var(--line)!important;
+	border-radius:8px!important;
+	background:var(--panel-alt)!important;
+	color:var(--text-strong)!important;
+	font:400 13px/38px var(--font-sans)!important;
+}
+html:root:root:root:root .topic-warning,
+html:root:root:root:root .important-note,
+html:root:root:root:root .important-reminder,
+html:root:root:root:root .new-discussion-notes,
+html:root:root:root:root .warning-block {
 	margin-top:16px!important;
-	padding:14px!important;
+	padding:14px 18px!important;
 	border:1px solid var(--line)!important;
 	border-radius:12px!important;
 	background:var(--panel-alt)!important;
 	box-shadow:none!important;
 	color:var(--text-muted)!important;
 	font:13px/1.65 var(--font-sans)!important;
+}
+html:root:root:root:root :is(.topic-warning,.important-note,.important-reminder,.new-discussion-notes,.warning-block) :is(h2,h3,h4,.title,b,strong,span:first-child) {
+	display:block!important;
+	font:600 13.5px/1.4 var(--font-sans)!important;
+	color:var(--text-strong)!important;
+	margin:0 0 8px 0!important;
+}
+html:root:root:root:root :is(.topic-warning,.important-note,.important-reminder,.new-discussion-notes,.warning-block) ul,
+html:root:root:root:root :is(.topic-warning,.important-note,.important-reminder,.new-discussion-notes,.warning-block) ol {
+	margin:0 0 6px 0!important;
+	padding-left:20px!important;
+	color:var(--text-subtle)!important;
+}
+html:root:root:root:root :is(.topic-warning,.important-note,.important-reminder,.new-discussion-notes,.warning-block) li {
+	margin:3px 0!important;
+	font-size:12.5px!important;
+	line-height:1.6!important;
+	color:var(--text-subtle)!important;
+}
+html:root:root:root:root :is(.topic-warning,.important-note,.important-reminder,.new-discussion-notes,.warning-block) p {
+	margin:4px 0 0 0!important;
+	font-size:12px!important;
+	color:var(--text-disabled)!important;
 }
 html:root:root:root:root:has(.head-container) .head-container .card-block {
 	display:grid!important;
@@ -19185,11 +19231,11 @@ html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .s
 	flex-wrap:wrap!important;
 	align-items:center!important;
 	justify-content:flex-start!important;
-	padding:0 16px!important;
+	padding:0!important;
 	border-radius:12px!important;
 	border:1px solid var(--line)!important;
 	background:var(--panel)!important;
-	overflow:hidden!important;
+	overflow:visible!important;
 	box-shadow:var(--shadow-base)!important;
 }
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item {
@@ -19199,8 +19245,8 @@ html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .s
 	justify-content:center!important;
 	min-height:48px!important;
 	height:48px!important;
-	padding:0 12px!important;
-	margin:0 8px 0 0!important;
+	padding:0 16px!important;
+	margin:0 4px 0 0!important;
 	border:0!important;
 	border-radius:0!important;
 	border-bottom:2px solid transparent!important;
@@ -19212,6 +19258,9 @@ html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .s
 	box-shadow:none!important;
 	transition:color .15s ease!important;
 }
+html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item:first-child {
+	margin-left:16px!important;
+}
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item:hover {
 	color:var(--text)!important;
 	background:transparent!important;
@@ -19219,7 +19268,7 @@ html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .s
 }
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.active,
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.router-link-active {
-	color:var(--text)!important;
+	color:var(--text-strong)!important;
 	font-weight:600!important;
 	background:transparent!important;
 	border-bottom-color:transparent!important;
@@ -19229,8 +19278,8 @@ html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .s
 	content:""!important;
 	position:absolute!important;
 	bottom:0!important;
-	left:8px!important;
-	right:8px!important;
+	left:12px!important;
+	right:12px!important;
 	height:2px!important;
 	border-radius:1px!important;
 	background:var(--action)!important;
@@ -19238,10 +19287,12 @@ html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .s
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector-right-side,
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper,
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .comments-list {
-	width:calc(100% + 32px)!important;
+	width:100%!important;
+	box-sizing:border-box!important;
 	flex:1 1 100%!important;
 	border-top:1px solid var(--line-soft)!important;
-	margin:0 -16px!important;
+	margin:0!important;
+	padding:0!important;
 }
 html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper {
 	margin:0!important;
@@ -19307,14 +19358,24 @@ html:root:root:root:root:has(.head-container) .selector-right-side .readme img[s
 html:root:root:root:root #fast-nav-button-group,
 html:root:root:root:root .fast-nav-button-group,
 html:root:root:root:root .nsk-footer,
-html:root:root:root:root body > footer {
-	display:none!important;
-}
 html:root:root:root:root #nsk-body-left {
-	padding-bottom:60px!important;
+	padding-bottom:24px!important;
 }
-html:root:root:root:root #nsk-body-left .nsk-pager {
-	margin-bottom:24px!important;
+html:root:root:root:root #nsk-body-left .nsk-pager:not(.post-list-controler *) {
+	margin:16px 0 0!important;
+	padding:0!important;
+}
+html:root:root:root:root #nsk-body-left :is(.nsk-pager:not(.post-list-controler *), div:not(.post-list-controler):has(>.nsk-pager), .post-top-pager, .post-bottom-pager, .pager-bottom) {
+	background:transparent!important;
+	border:0!important;
+	box-shadow:none!important;
+	backdrop-filter:none!important;
+	-webkit-backdrop-filter:none!important;
+}
+html:root:root:root:root #nsk-body-left :is(.nsk-pager:not(.post-list-controler *), div:not(.post-list-controler):has(>.nsk-pager), .post-top-pager, .post-bottom-pager, .pager-bottom)::before,
+html:root:root:root:root #nsk-body-left :is(.nsk-pager:not(.post-list-controler *), div:not(.post-list-controler):has(>.nsk-pager), .post-top-pager, .post-bottom-pager, .pager-bottom)::after {
+	content:none!important;
+	display:none!important;
 }
 html:root:root:root:root :is(body > header, #nsk-head, #nsk-head, header, .top) {
 	position: sticky!important;
@@ -19422,6 +19483,18 @@ html:root:root:root:root .nsk-post :is(.floor-link-wrapper, a.floor-link, [href=
 }
 html:root:root:root:root .nsk-post .comment-menu .menu-item:is([title="引用"], [title="回复"], [aria-label="引用"], [aria-label="回复"]) {
 	display: none!important;
+}
+html:root:root:root:root #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	width: 100% !important;
+	gap: 12px !important;
+	margin-bottom: 14px !important;
+	flex-wrap: nowrap !important;
+}
+html:root:root:root:root #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .avatar-wrapper {
+	flex: none !important;
 }
 html:root:root:root:root .nsk-post .post-title {
 	display: flex!important;

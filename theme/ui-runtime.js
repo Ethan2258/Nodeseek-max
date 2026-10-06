@@ -216,6 +216,13 @@
 			for (const tab of hiddenTabs) {
 				selectorNav.append(tab);
 			}
+			selectorNav.scrollLeft = 0;
+			if (!selectorNav.hasAttribute("data-nsmax-scroll-bound")) {
+				selectorNav.setAttribute("data-nsmax-scroll-bound", "true");
+				selectorNav.addEventListener("scroll", () => {
+					if (selectorNav.scrollLeft !== 0) selectorNav.scrollLeft = 0;
+				}, { passive: true });
+			}
 		}
 
 		// When entering space, auto-switch to topics (#/posts) if on overview (#/info or empty)
@@ -226,7 +233,12 @@
 			if (postsTab && !postsTab.classList.contains("active")) {
 				for (const tab of document.querySelectorAll(".selector a.select-item")) tab.classList.remove("active");
 				postsTab.classList.add("active");
+				const targetHref = postsTab.getAttribute("href");
+				if (targetHref && targetHref.startsWith("#") && location.hash !== targetHref) {
+					location.hash = targetHref;
+				}
 				postsTab.click();
+				if (selectorNav) selectorNav.scrollLeft = 0;
 			}
 		}
 
@@ -238,6 +250,7 @@
 					for (const tab of document.querySelectorAll(".selector a.select-item")) {
 						tab.classList.toggle("active", tab === item);
 					}
+					if (selectorNav) selectorNav.scrollLeft = 0;
 				});
 			}
 		}
@@ -577,6 +590,8 @@
 					const reportText = "@admin ";
 					if (cm) {
 						cm.setValue(reportText);
+						cm.focus();
+						cm.setCursor(cm.lineCount(), 0);
 						cm.refresh();
 					} else if (input) {
 						const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
@@ -584,9 +599,10 @@
 						input.value = reportText;
 						input.dispatchEvent(new Event("input", { bubbles: true }));
 						input.dispatchEvent(new Event("change", { bubbles: true }));
+						input.focus();
 					}
 					setTimeout(() => {
-						const btn = editor.querySelector("button.submit, button[type=submit], .submit-row button, .topic-select button") || submit;
+						const btn = editor.querySelector("button.submit, button[type=submit], .submit-row button, .topic-select button") || submit || Array.from(document.querySelectorAll("button")).find(b => /发布|回复/.test(b.textContent));
 						btn?.click();
 					}, 50);
 				}
@@ -734,12 +750,88 @@
 					setter?.call(input, value);
 					input.dispatchEvent(new Event("input", { bubbles: true }));
 				};
+				const insertMarkdown = (prefix, suffix = "", defaultText = "") => {
+					if (cm) {
+						const selection = cm.getSelection();
+						if (selection) {
+							cm.replaceSelection(`${prefix}${selection}${suffix}`);
+						} else {
+							const cursor = cm.getCursor();
+							cm.replaceRange(`${prefix}${defaultText}${suffix}`, cursor);
+							if (defaultText) {
+								cm.setSelection(
+									{ line: cursor.line, ch: cursor.ch + prefix.length },
+									{ line: cursor.line, ch: cursor.ch + prefix.length + defaultText.length }
+								);
+							}
+						}
+						cm.focus();
+					} else if (input) {
+						const start = input.selectionStart || 0;
+						const end = input.selectionEnd || 0;
+						const text = input.value || "";
+						const selection = text.slice(start, end);
+						const replacement = selection ? `${prefix}${selection}${suffix}` : `${prefix}${defaultText}${suffix}`;
+						const newText = text.slice(0, start) + replacement + text.slice(end);
+						const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+						setter?.call(input, newText);
+						input.dispatchEvent(new Event("input", { bubbles: true }));
+						input.focus();
+						if (selection) {
+							input.setSelectionRange(start + prefix.length, end + prefix.length);
+						} else if (defaultText) {
+							input.setSelectionRange(start + prefix.length, start + prefix.length + defaultText.length);
+						} else {
+							input.setSelectionRange(start + replacement.length, start + replacement.length);
+						}
+					}
+				};
+
+				const mdeToolbar = document.createElement("div");
+				mdeToolbar.className = "nsmax-custom-mde-toolbar";
+				mdeToolbar.hidden = true;
+
+				const addMdeTool = (label, title, onClick) => {
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.className = "nsmax-mde-btn";
+					btn.title = title;
+					btn.setAttribute("aria-label", title);
+					btn.textContent = label;
+					btn.addEventListener("click", e => {
+						e.preventDefault();
+						onClick();
+					}, { signal: ctx.signal });
+					mdeToolbar.append(btn);
+				};
+				const addMdeSep = () => {
+					const sep = document.createElement("span");
+					sep.className = "nsmax-mde-sep";
+					mdeToolbar.append(sep);
+				};
+
+				addMdeTool("B", "粗体", () => insertMarkdown("**", "**", "粗体文本"));
+				addMdeTool("I", "斜体", () => insertMarkdown("*", "*", "斜体文本"));
+				addMdeTool("H", "标题", () => insertMarkdown("### ", "", "标题"));
+				addMdeSep();
+				addMdeTool("”", "引用", () => insertMarkdown("> ", "", "引用内容"));
+				addMdeTool("<>", "代码", () => insertMarkdown("`", "`", "代码"));
+				addMdeSep();
+				addMdeTool("🔗", "链接", () => insertMarkdown("[", "](https://)", "链接文本"));
+				addMdeTool("🖼️", "图片", () => insertMarkdown("![", "](https://)", "图片描述"));
+				addMdeSep();
+				addMdeTool("•", "无序列表", () => insertMarkdown("- ", "", "列表项"));
+				addMdeTool("1.", "有序列表", () => insertMarkdown("1. ", "", "列表项"));
+				addMdeTool("⊞", "表格", () => insertMarkdown("\n| 表头 1 | 表头 2 |\n| :--- | :--- |\n| 内容 1 | 内容 2 |\n", "", ""));
+				addMdeTool("—", "分割线", () => insertMarkdown("\n\n---\n\n", "", ""));
+
 				action("Markdown", "code", button => {
 					const on = editor.classList.toggle("nsmax-editor-tools");
 					button.setAttribute("aria-pressed", String(on));
 					button.title = on ? "切换到纯文本" : "使用 Markdown 编辑器";
 					button.setAttribute("aria-label", button.title);
 					button.querySelector(".nsmax-action-label").textContent = button.title;
+					mdeToolbar.hidden = !on;
 					cm?.refresh();
 				});
 				function nsmaxOpenLuckyModal(titleEl, setValueFn, cmInst, inputEl) {
@@ -856,19 +948,6 @@
 					if (typeof dialog.showModal === "function") dialog.showModal();
 					else dialog.setAttribute("open", "");
 				}
-				if (!isPost && /^\/new-discussion$/.test(location.pathname)) action("抽奖", "gift", () => {
-					const titleInput = document.querySelector(".post-title-input,[name=title],input[placeholder*='标题']");
-					if (titleInput && !/抽奖/.test(titleInput.value)) {
-						const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-						setter?.call(titleInput, `抽奖：${titleInput.value.trim() || "奖品名称"}`);
-						titleInput.dispatchEvent(new Event("input", { bubbles: true }));
-					}
-					const current = cm ? cm.getValue() : input?.value || "";
-					if (!/开奖链接/.test(current)) {
-						const defaultMd = `# 🎁 抽奖信息\n\n- **奖品**：奖品名称 × 1 份\n- **参与方式**：任意回复即可参与\n- **开奖时间**：24 小时后\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\n\n---\n`;
-						setEditorValue(current.trim() ? `${defaultMd}\n${current.trim()}` : defaultMd);
-					}
-				});
 				action("附件", "image", () => (editor.querySelector(".nspp-upload-choose") || editor.querySelector('.mde-toolbar [title="图片"],.mde-toolbar [title="上传图片"]'))?.click());
 				action("表情", "smile", button => {
 					const on = editor.classList.toggle("nsmax-editor-emoji");
@@ -909,7 +988,7 @@
 				const contentButton = document.createElement("button"); contentButton.type = "button"; contentButton.setAttribute("aria-pressed","true"); contentButton.textContent = "内容"; contentButton.setAttribute("aria-label", "内容");
 				contentButton.addEventListener("click", () => { if (previewing) previewButton.click(); }, { signal: ctx.signal });
 				head.append(contentButton, previewButton);
-				surface.before(controls);
+				surface.before(controls, mdeToolbar);
 				body.prepend(head);
 				const submit = editor.querySelector(".topic-select,.submit-row");
 				if (isPost) { const button = editor.querySelector("button.submit,button[type=submit]"); if (button) button.textContent="回复"; }
@@ -928,7 +1007,7 @@
 				}
 				if (cm) cm.on("change", render);
 				else input.addEventListener("input", render, { signal: ctx.signal });
-				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); preview.remove(); });
+				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); mdeToolbar.remove(); preview.remove(); });
 			}
 			// Only group explicit replies to an earlier floor already present on this page.
 			// Moving the existing node preserves native actions, anchors and drafts.
