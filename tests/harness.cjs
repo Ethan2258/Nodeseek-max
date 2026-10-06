@@ -91,8 +91,12 @@ const apiResponses = {
 
 async function launch() {
 	// NSMAX_CHROMIUM：本地没有 Playwright 自带的 Chromium 时，指向已安装的 Chrome / Edge 可执行文件
-	const defaultChrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-	const executablePath = process.env.NSMAX_CHROMIUM || (fs.existsSync(defaultChrome) ? defaultChrome : undefined);
+	const candidates = [
+		"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+		path.join(process.env.LOCALAPPDATA || "", "Google\\Chrome SxS\\Application\\chrome.exe")
+	];
+	const defaultChrome = candidates.find(p => fs.existsSync(p));
+	const executablePath = process.env.NSMAX_CHROMIUM || defaultChrome;
 	return chromium.launch({ executablePath, args: ["--disable-gpu"] });
 }
 

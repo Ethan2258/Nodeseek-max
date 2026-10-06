@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.20");
+	assert.equal(packageJson.version, "1.7.21");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1616,3 +1616,88 @@ test("v1.7.19 极致细节复刻：主帖无#0楼号、标题栏双统计、OP�
 		assert.deepEqual(errorsList, []);
 	} finally { await ctxList.close(); }
 });
+
+test("v1.7.21 深度定制：Markdown 选项卡点击原地切换不重载、跑分终端与表格美化、消息中心双栏防折字无死黑", async () => {
+	const markdownTabsHtml = `
+		<div class="tabs">
+			<ul class="tab-list">
+				<li class="tab-item active"><a href="#tab-1" data-tab="tab-1">HKT 测速</a></li>
+				<li class="tab-item"><a href="#tab-2" data-tab="tab-2">HiNet 测速</a></li>
+			</ul>
+			<div class="tab-panels">
+				<div id="tab-1" class="tab-panel active"><pre><code>HKT 1000Mbps Ping 5ms</code></pre></div>
+				<div id="tab-2" class="tab-panel" style="display:none"><pre><code>HiNet 500Mbps Ping 12ms</code></pre></div>
+			</div>
+		</div>
+	`;
+	const html = postPage().replace("<h2>配置说明</h2>", markdownTabsHtml + "<h2>配置说明</h2>");
+	const { context: ctxPost, page: pagePost, errors: errorsPost } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html });
+	try {
+		await pagePost.waitForSelector(".tabs .tab-item");
+		await wait(pagePost);
+
+		// 1. 验证选项卡初始状态
+		assert.equal(await pagePost.locator(".tabs .tab-item").first().evaluate(e => e.classList.contains("active")), true);
+		assert.equal(await pagePost.locator("#tab-1").isVisible(), true);
+		assert.equal(await pagePost.locator("#tab-2").isVisible(), false);
+
+		// 2. 点击切换选项卡，验证原地切换且不发生重定向或页面崩溃
+		await pagePost.locator('.tabs .tab-item a[href="#tab-2"]').click();
+		await wait(pagePost, 100);
+		assert.equal(await pagePost.evaluate(() => location.pathname), "/post-1000-1");
+		assert.equal(await pagePost.locator("#tab-2").isVisible(), true);
+		assert.equal(await pagePost.locator("#tab-1").isVisible(), false);
+		assert.equal(await pagePost.locator(".tabs .tab-item").nth(1).evaluate(e => e.classList.contains("active")), true);
+
+		// 3. 验证 Markdown 表格与代码块的 sb.sb 样式
+		const styles = await pagePost.evaluate(() => {
+			const table = document.querySelector(".post-content table");
+			const th = document.querySelector(".post-content th");
+			const pre = document.querySelector(".post-content pre");
+			return {
+				thBg: th ? getComputedStyle(th).backgroundColor : "",
+				preRadius: pre ? getComputedStyle(pre).borderRadius : "",
+				preFont: pre ? getComputedStyle(pre).fontFamily : ""
+			};
+		});
+		assert.notEqual(styles.thBg, "rgba(0, 0, 0, 0)");
+		assert.ok(styles.preFont.includes("mono"));
+
+		assert.deepEqual(errorsPost, []);
+	} finally { await ctxPost.close(); }
+
+	// 4. 验证通知与私信双栏无折字、无死黑
+	const { context: ctxMsg, page: pageMsg, errors: errorsMsg } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", {
+		html: nativeTalkPage(),
+		viewport: { width: 1440, height: 900 }
+	});
+	try {
+		await pageMsg.waitForSelector(".nspp-messages textarea:visible");
+		await wait(pageMsg);
+
+		const msgLayout = await pageMsg.evaluate(() => {
+			const root = document.querySelector(".nspp-messages");
+			const sidebar = document.querySelector(".nspp-messages-sidebar");
+			const noticeNav = document.querySelector(".nsmax-notice-nav");
+			const searchBtn = document.querySelector(".nspp-messages-search button");
+			const composer = document.querySelector(".nspp-messages-composer");
+			return {
+				rootBg: root ? getComputedStyle(root).backgroundColor : "",
+				hasNoticeNav: !!noticeNav,
+				atMeLink: !!noticeNav?.querySelector('a[href*="atMe"]'),
+				replyLink: !!noticeNav?.querySelector('a[href*="reply"]'),
+				searchBtnWhite: searchBtn ? getComputedStyle(searchBtn).whiteSpace : "",
+				composerVisible: composer ? getComputedStyle(composer).display !== "none" : false
+			};
+		});
+		assert.notEqual(msgLayout.rootBg, "rgb(0, 0, 0)");
+		assert.equal(msgLayout.hasNoticeNav, true);
+		assert.equal(msgLayout.atMeLink, true);
+		assert.equal(msgLayout.replyLink, true);
+		assert.equal(msgLayout.searchBtnWhite, "nowrap");
+		assert.equal(msgLayout.composerVisible, true);
+
+		assert.deepEqual(errorsMsg, []);
+	} finally { await ctxMsg.close(); }
+});
+

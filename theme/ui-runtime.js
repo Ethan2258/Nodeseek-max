@@ -620,6 +620,87 @@
 			}
 		}
 	}
+	function nsmaxSetupMarkdownTabs() {
+		const postContainers = document.querySelectorAll(".post-content, .markdown-body, .comment-content, article");
+		if (!postContainers.length) return;
+
+		for (const container of postContainers) {
+			const tabGroups = container.querySelectorAll(".tabs, .tabset, .markdown-tabs, .tab-container, .tabs-container, [class*='tab-set'], [class*='tabs-component'], div:has(> .tab-item), div:has(> [class*='tab-nav']), div:has(> ul.nav-tabs)");
+			for (const group of tabGroups) {
+				if (group.hasAttribute("data-nsmax-tabs-ready")) continue;
+				group.setAttribute("data-nsmax-tabs-ready", "true");
+				group.classList.add("nsmax-tabs-container");
+
+				let tabHeaders = Array.from(group.querySelectorAll(":scope > .tabs-nav > *, :scope > .tab-nav > *, :scope > .tab-list > *, :scope > .tabs-header > *, :scope > ul > li, :scope > .nav-tabs > li, :scope > div:first-child > .tab-item, :scope > div:first-child > button, :scope > div:first-child > [role='tab']"));
+				if (!tabHeaders.length) {
+					const firstChild = group.firstElementChild;
+					if (firstChild && firstChild.childElementCount > 1) {
+						tabHeaders = Array.from(firstChild.children).filter(el => /tab/i.test(el.className) || el.tagName === "BUTTON" || el.tagName === "A" || el.tagName === "LI" || el.getAttribute("role") === "tab");
+					}
+				}
+				if (!tabHeaders.length) {
+					tabHeaders = Array.from(group.querySelectorAll("[role='tab'], .tab-item, .tab-btn, .tab-button, [data-tab]")).filter(el => el.closest(".tabs, .tabset, .nsmax-tabs-container") === group);
+				}
+				if (!tabHeaders.length) continue;
+
+				const headerContainer = tabHeaders[0].parentElement;
+				if (headerContainer && headerContainer !== group) {
+					headerContainer.classList.add("nsmax-tabs-nav");
+				}
+
+				let panels = Array.from(group.querySelectorAll(":scope > .tab-content > *, :scope > .tabs-content > *, :scope > .tab-panels > *, :scope > .tab-pane, :scope > .tab-panel, :scope > [role='tabpanel']"));
+				if (!panels.length) {
+					panels = Array.from(group.children).filter(el => el !== headerContainer && !el.contains(tabHeaders[0]));
+				}
+				if (!panels.length) continue;
+
+				let activeIndex = tabHeaders.findIndex(t => t.classList.contains("active") || t.classList.contains("is-active") || t.getAttribute("aria-selected") === "true");
+				if (activeIndex < 0) activeIndex = 0;
+
+				const activateTab = (index) => {
+					tabHeaders.forEach((tab, i) => {
+						const isActive = i === index;
+						tab.classList.toggle("active", isActive);
+						tab.classList.toggle("is-active", isActive);
+						tab.setAttribute("aria-selected", String(isActive));
+						if (tab.tagName === "BUTTON" || tab.tagName === "A") {
+							tab.setAttribute("tabindex", isActive ? "0" : "-1");
+						}
+					});
+
+					panels.forEach((panel, i) => {
+						const isActive = i === index;
+						panel.classList.toggle("active", isActive);
+						panel.classList.toggle("is-active", isActive);
+						if (isActive) {
+							panel.removeAttribute("hidden");
+							panel.style.removeProperty("display");
+						} else {
+							panel.setAttribute("hidden", "");
+							panel.style.setProperty("display", "none", "important");
+						}
+					});
+				};
+
+				activateTab(activeIndex);
+
+				(headerContainer || group).addEventListener("click", (e) => {
+					if (!(e.target instanceof Element)) return;
+					let clickedIndex = tabHeaders.findIndex(tab => tab === e.target || tab.contains(e.target));
+					if (clickedIndex < 0) {
+						const anchor = e.target.closest("a, button, [data-tab]");
+						const panelId = anchor?.getAttribute("data-tab") || anchor?.getAttribute("href")?.replace(/^#/, "");
+						if (panelId) clickedIndex = panels.findIndex(p => p.id === panelId);
+					}
+					if (clickedIndex >= 0) {
+						e.preventDefault();
+						e.stopPropagation();
+						activateTab(clickedIndex);
+					}
+				});
+			}
+		}
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
@@ -630,6 +711,7 @@
 			nsmaxCleanPostActions();
 			nsmaxUpdateNavEssence();
 			nsmaxMarkLevel6();
+			nsmaxSetupMarkdownTabs();
 			const controller = document.querySelector(".post-list-controler");
 			if (controller) {
 				const hasNativeNq = Array.from(controller.querySelectorAll("a:not(.nsmax-nq-entry)")).some(a => /nodequality/i.test(a.href) || /^N$/i.test(a.textContent.trim()));

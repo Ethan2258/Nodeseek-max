@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.20（纯 CSS）
+ * NodeSeek Max 主题 v1.7.21（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -19507,4 +19507,96 @@ html:root:root:root:root .nsk-post .post-title h1 {
 	flex: 1 1 auto!important;
 	min-width: 0!important;
 	margin: 0!important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) .tabs,
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) .tabset,
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) [class*='tab-set'] {
+	display: block !important;
+	margin: 16px 0 !important;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+	border-radius: 10px !important;
+	background: var(--panel, #18191c) !important;
+	overflow: hidden !important;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) pre {
+	position: relative !important;
+	margin: 14px 0 !important;
+	padding: 14px 16px !important;
+	border-radius: 8px !important;
+	background: #121316 !important;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+	color: #e2e8f0 !important;
+	font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace) !important;
+	font-size: 13px !important;
+	line-height: 1.65 !important;
+	overflow-x: auto !important;
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) pre code {
+	padding: 0 !important;
+	background: transparent !important;
+	border: 0 !important;
+	color: inherit !important;
+	font-family: inherit !important;
+	font-size: inherit !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) :not(pre) > code {
+	box-sizing: border-box !important;
+	padding: 2px 6px !important;
+	margin: 0 3px !important;
+	border-radius: 4px !important;
+	background: var(--panel-alt, rgba(255, 255, 255, 0.06)) !important;
+	border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.08)) !important;
+	color: var(--brand-text, #93c5fd) !important;
+	font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace) !important;
+	font-size: 0.88em !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) table {
+	width: 100% !important;
+	margin: 16px 0 !important;
+	border-collapse: separate !important;
+	border-spacing: 0 !important;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+	border-radius: 8px !important;
+	background: var(--panel, #18191c) !important;
+	overflow: hidden !important;
+	font-size: 13px !important;
+	line-height: 1.6 !important;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12) !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) table thead th {
+	padding: 10px 14px !important;
+	background: var(--panel-alt, #1f2127) !important;
+	border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+	border-right: 1px solid var(--line-soft, rgba(255, 255, 255, 0.04)) !important;
+	color: var(--text, #fff) !important;
+	font-weight: 600 !important;
+	text-align: left !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) table thead th:last-child {
+	border-right: 0 !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) table tbody td {
+	padding: 9px 14px !important;
+	border-bottom: 1px solid var(--line-soft, rgba(255, 255, 255, 0.05)) !important;
+	border-right: 1px solid var(--line-soft, rgba(255, 255, 255, 0.04)) !important;
+	color: var(--text-muted, rgba(255, 255, 255, 0.85)) !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) table tbody td:last-child {
+	border-right: 0 !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) table tbody tr:last-child td {
+	border-bottom: 0 !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) table tbody tr:hover td {
+	background: var(--panel-hover, rgba(255, 255, 255, 0.04)) !important;
+}
+html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) blockquote {
+	margin: 14px 0 !important;
+	padding: 10px 16px !important;
+	background: var(--panel-alt, rgba(255, 255, 255, 0.04)) !important;
+	border-left: 3px solid var(--brand, #3b82f6) !important;
+	border-radius: 0 6px 6px 0 !important;
+	color: var(--text-muted, rgba(255, 255, 255, 0.75)) !important;
 }

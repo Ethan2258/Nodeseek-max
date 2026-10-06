@@ -1,126 +1,623 @@
-html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=new]>:not(.nspp-messages):not(.nsmax-message-tabs),html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=native]>.nspp-messages {display:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages {display:flex;flex-direction:column;height:min(760px,calc(100dvh - 110px));min-height:450px;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font:13px/1.6 var(--font-sans);}
-html[data-nsmax-theme] .nspp-messages [hidden],html[data-nsmax-theme] .nspp-messages[hidden] {display:none!important;}
-html[data-nsmax-theme] .nspp-messages * {box-sizing:border-box;min-width:0;}
-html[data-nsmax-theme] .nspp-messages button {cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:30px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text-muted);font:12px/20px var(--font-sans);}
-html[data-nsmax-theme] .nspp-messages button:hover {background:var(--panel-hover);color:var(--text);}
-html[data-nsmax-theme] .nspp-messages button:disabled {opacity:.5;cursor:default;}
-html[data-nsmax-theme] .nspp-messages svg {width:16px;height:16px;}
-html[data-nsmax-theme] .nspp-messages a {color:var(--link);text-decoration:none;}
-html[data-nsmax-theme] .nspp-messages-top {display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 14px;border-bottom:1px solid var(--line-soft);flex:none;background:var(--panel);}
-html[data-nsmax-theme] .nspp-messages-heading {display:flex;align-items:center;gap:8px;flex:1;}
-html[data-nsmax-theme] .nspp-messages-heading strong {font-weight:600;font-size:14px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-html[data-nsmax-theme] .nspp-messages-top-actions {display:flex;gap:6px;margin-left:auto;flex:none;}
-html[data-nsmax-theme] .nspp-messages-workspace {display:grid;grid-template-columns:260px minmax(0,1fr);min-height:0;flex:1;overflow:hidden;}
-html[data-nsmax-theme] .nspp-messages-sidebar {display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line-soft);background:var(--panel-alt);}
-html[data-nsmax-theme] .nspp-messages-search {display:flex;align-items:center;gap:6px;padding:12px;flex:none;}
-html[data-nsmax-theme] .nspp-messages-search input {width:100%;min-width:0;height:34px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:12px/20px var(--font-sans);}
-html[data-nsmax-theme] .nspp-messages-contact-list {overflow:auto;overscroll-behavior:contain;flex:1;min-height:0;padding:0 8px 10px;}
-html[data-nsmax-theme] .nspp-messages-peer {display:flex;align-items:center;gap:10px;padding:11px 8px;border-radius:8px;color:var(--text)!important;border:0;border-bottom:1px solid var(--line-soft);cursor:pointer;}
-html[data-nsmax-theme] .nspp-messages-peer:hover,html[data-nsmax-theme] .nspp-messages-peer[aria-current],html[data-nsmax-theme] .nspp-messages-peer[aria-pressed=true] {background:var(--panel-hover);}
-html[data-nsmax-theme] .nspp-messages-avatar {display:block;width:32px;height:32px;border-radius:6px;object-fit:cover;flex:none;}
-html[data-nsmax-theme] .nspp-messages-peer-details {display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden;}
-html[data-nsmax-theme] .nspp-messages-peer-details strong {font-size:13px;font-weight:500;}
-html[data-nsmax-theme] .nspp-messages-peer-title {display:flex;align-items:center;justify-content:space-between;gap:8px;}
-html[data-nsmax-theme] .nspp-messages-peer-title time {font-size:10px;color:var(--text-subtle);flex:none;}
-html[data-nsmax-theme] .nspp-messages-snippet,html[data-nsmax-theme] .nspp-notice-subject,html[data-nsmax-theme] .nspp-notice-excerpt {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-subtle);font-size:12px;}
-html[data-nsmax-theme] .nspp-messages-count,html[data-nsmax-theme] .nspp-messages-unread {display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:999px;padding:0 4px;background:var(--danger);color:var(--on-danger);font:10px/1 var(--font-sans);flex:none;}
-html[data-nsmax-theme] .nspp-messages-chat {display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-html[data-nsmax-theme] .nspp-messages-thread {flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px;overflow-wrap:anywhere;}
-html[data-nsmax-theme] .nspp-chat-profile {padding:10px 16px;border-bottom:1px solid var(--line-soft);}
-html[data-nsmax-theme] .nspp-chat-profile>a {display:flex;align-items:center;gap:10px;color:var(--text)!important;font-weight:500;}
-html[data-nsmax-theme] .nspp-messages-message {display:flex;align-items:flex-start;gap:10px;margin:12px 0;}
-html[data-nsmax-theme] .nspp-messages-message.is-mine {flex-direction:row-reverse;}
-html[data-nsmax-theme] .nspp-messages-bubble {max-width:78%;padding:9px 12px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-alt);overflow-wrap:anywhere;white-space:pre-wrap;}
-html[data-nsmax-theme] .nspp-messages-message.is-mine .nspp-messages-bubble {background:var(--brand-soft);border-color:var(--brand-border);}
-html[data-nsmax-theme] .nspp-messages-bubble.is-markdown {white-space:normal;}
-html[data-nsmax-theme] .nspp-messages-bubble p {margin:0 0 6px;}
-html[data-nsmax-theme] .nspp-messages-bubble p:last-child {margin-bottom:0;}
-html[data-nsmax-theme] .nspp-messages-thread :is(img,video) {max-width:100%;height:auto;}
-html[data-nsmax-theme] .nspp-messages-thread pre {max-width:100%;overflow:auto;}
-html[data-nsmax-theme] .nspp-messages-stamp,html[data-nsmax-theme] .nspp-messages-system-time {display:block;margin:14px 0 6px;text-align:center;color:var(--text-subtle);font-size:11px;}
-html[data-nsmax-theme] .nspp-messages-empty {display:grid;place-items:center;min-height:180px;color:var(--text-subtle);}
-html[data-nsmax-theme] .nspp-messages-composer {margin:0;border-top:1px solid var(--line-soft);padding:0;background:var(--panel);}
-html[data-nsmax-theme] .nspp-messages-composer textarea {display:block;width:100%;min-height:90px;max-height:210px;resize:vertical;padding:12px 14px;border:0;border-radius:0;background:var(--panel);color:var(--text);font:14px/1.7 var(--font-sans);}
-html[data-nsmax-theme] .nspp-messages-compose-actions {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px;}
-html[data-nsmax-theme] .nspp-messages-compose-actions label {display:flex;align-items:center;gap:4px;color:var(--text-subtle);font-size:12px;}
-html[data-nsmax-theme] .nspp-messages-compose-actions small {font-size:11px;color:var(--text-subtle);}
-html[data-nsmax-theme] .nspp-messages .nspp-messages-send {margin-left:auto;background:var(--action);color:var(--action-text);border-color:var(--action);}
-html[data-nsmax-theme] .nspp-message-editor-toolbar {display:flex;flex-wrap:wrap;gap:4px;width:100%;padding:0 0 4px;}
-html[data-nsmax-theme] .nspp-message-editor-toolbar button {border:0;border-radius:6px;min-height:26px;padding:3px 6px;background:transparent;}
-html[data-nsmax-theme] .nspp-message-editor-toolbar button[aria-pressed=true] {background:var(--panel-hover);}
-html[data-nsmax-theme] .nspp-message-editor-preview {padding:12px 14px;min-height:90px;max-height:210px;overflow:auto;}
-html[data-nsmax-theme] .nspp-message-editor-preview img {max-width:100%;height:auto;}
-html[data-nsmax-theme] .nspp-messages-status,html[data-nsmax-theme] .nspp-messages-list-status,html[data-nsmax-theme] .nspp-message-editor-status {margin:0;padding:4px 12px;color:var(--text-subtle);font-size:12px;}
-html[data-nsmax-theme] .nspp-messages-status:empty,html[data-nsmax-theme] .nspp-message-editor-status:empty {display:none;}
-html[data-nsmax-theme] .nspp-messages-sync-status {display:flex;align-items:center;}
-html[data-nsmax-theme] .nspp-messages-more {margin:8px auto;display:flex;}
-html[data-nsmax-theme] .nspp-notice-workspace {grid-column:2;grid-template-columns:240px minmax(0,1fr);}
-html[data-nsmax-theme] .nspp-messages-workspace:has(>.nspp-notice-workspace:not([hidden])) {grid-template-columns:1fr;}
-html[data-nsmax-theme] .nspp-messages-workspace:has(>.nspp-notice-workspace:not([hidden]))>.nspp-messages-sidebar {display:none;}
-html[data-nsmax-theme] .nspp-messages-workspace>.nspp-notice-workspace:not([hidden]) {grid-column:1;grid-template-columns:300px minmax(0,1fr);}
-html[data-nsmax-theme] .nsmax-message-tabs {display:flex;align-items:center;gap:12px;}
-html[data-nsmax-theme] .nsmax-message-tabs a {color:var(--text-muted);}
-html[data-nsmax-theme] .nsmax-message-tabs a[aria-current] {color:var(--text);font-weight:500;}
-html[data-nsmax-theme] .nspp-notice-summary {padding:12px 0;border-bottom:1px solid var(--line-soft);margin-bottom:12px;color:var(--text-subtle);}
-html[data-nsmax-theme] .nspp-notice-body {overflow-wrap:anywhere;line-height:1.8;}
-html[data-nsmax-theme] .nspp-notice-hint {color:var(--text-subtle);font-size:12px;}
-html[data-nsmax-theme] .nspp-message-native-toolbar {padding:8px;}
-@media(max-width:700px) {
- html[data-nsmax-theme]:root:root:root .nspp-messages {min-height:420px;height:calc(100dvh - 100px);}
- html[data-nsmax-theme] .nspp-messages-workspace,html[data-nsmax-theme] .nspp-messages-workspace>.nspp-notice-workspace:not([hidden]) {grid-template-columns:minmax(0,1fr);}
- html[data-nsmax-theme] .nspp-messages:not(.has-conversation)>.nspp-messages-workspace>.nspp-messages-chat,
- html[data-nsmax-theme] .nspp-messages.has-conversation>.nspp-messages-workspace>.nspp-messages-sidebar,
- html[data-nsmax-theme] .nspp-notice-workspace:not(.has-detail)>.nspp-messages-chat,
- html[data-nsmax-theme] .nspp-notice-workspace.has-detail>.nspp-messages-sidebar {display:none;}
- html[data-nsmax-theme] .nspp-messages-top {flex-wrap:wrap;padding:8px 10px;gap:6px;}
- html[data-nsmax-theme] .nspp-messages-top-actions {margin-left:auto;}
- html[data-nsmax-theme] .nspp-messages-top-actions button {padding:3px 7px;font-size:11px;}
- html[data-nsmax-theme] .nspp-messages-compose-actions small {display:none;}
- html[data-nsmax-theme] .nspp-messages-heading {order:3;flex-basis:100%;}
- html[data-nsmax-theme] .nspp-messages-thread {padding:12px;}
+/* ==========================================================================
+   NodeSeek Max 消息与通知中心（对齐 sb.sb 风格 & 1:1 复刻图四双栏架构）
+   ========================================================================== */
+
+/* 1. 宿主容器控制：隐藏原生容器与外部多余的浮空切页胶囊 */
+html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=new] > :not(.nspp-messages, .nsmax-message-tabs),
+html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=native] > .nspp-messages,
+html[data-nsmax-theme]:root:root:root .nspp-messages-container > .app-switch {
+  display: none !important;
 }
 
-/* One category bar outside the workspace; top actions only mark-all. */
-html[data-nsmax-theme]:root:root:root .nspp-messages-container>.nsmax-message-tabs {display:flex!important;align-items:center!important;gap:8px!important;padding:0!important;margin:0 0 14px!important;min-height:34px!important;}
-html[data-nsmax-theme]:root:root:root .nsmax-message-tabs>a {display:inline-flex!important;align-items:center!important;gap:5px!important;padding:5px 12px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel)!important;color:var(--text-muted)!important;font:13px/22px var(--font-sans)!important;}
-html[data-nsmax-theme]:root:root:root .nsmax-message-tabs>a[aria-current=page] {background:var(--action)!important;border-color:var(--action)!important;color:var(--action-text)!important;}
-html[data-nsmax-theme]:root:root:root .nsmax-message-tabs .nspp-messages-count {font:11px/16px var(--font-sans)!important;min-width:16px;border-radius:999px;background:var(--mark);color:var(--mark-text);padding:0 4px;text-align:center;}
-html[data-nsmax-theme]:root:root:root .nsmax-message-tabs [hidden] {display:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages-top .nsmax-message-tabs,html[data-nsmax-theme]:root:root:root .nspp-messages-fixed-contacts {display:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages-container[data-nspp-message-view=new]>.app-switch {display:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages {height:min(780px,calc(100dvh - 150px))!important;min-height:420px!important;border:1px solid var(--line)!important;border-radius:12px!important;box-shadow:var(--shadow-base)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-workspace {grid-template-columns:280px minmax(0,1fr)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-sidebar {background:var(--panel)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-chat-profile {display:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-peer {padding:12px 10px!important;margin:2px 0!important;border:0!important;border-radius:8px!important;gap:10px!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-peer-title strong {font:500 13px/20px var(--font-sans)!important;color:var(--text)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-snippet {line-height:20px!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-peer[aria-pressed=true] {background:var(--brand-soft)!important;box-shadow:inset 2px 0 var(--brand)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-thread {padding:18px 20px!important;background:var(--panel-alt)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-message {gap:9px!important;margin:10px 0!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-bubble {padding:9px 12px!important;max-width:min(78%,600px)!important;line-height:1.65!important;background:var(--panel)!important;border:1px solid var(--line)!important;box-shadow:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .is-mine .nspp-messages-bubble {background:var(--brand-soft)!important;border-color:var(--brand-border)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .is-system-thread {background:var(--panel)!important;padding:0 20px!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-message.is-system {display:grid!important;grid-template-columns:24px minmax(0,1fr) auto!important;align-items:start!important;gap:12px!important;margin:0!important;padding:15px 0!important;border-bottom:1px solid var(--line-soft)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .is-system .nspp-messages-avatar {width:20px!important;height:20px!important;margin-top:2px;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .is-system .nspp-messages-bubble {max-width:none!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-system-time {margin:0!important;white-space:nowrap;text-align:right;font:11px/22px var(--font-sans)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-composer {padding:12px 16px!important;background:var(--panel)!important;border-top:1px solid var(--line)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-body {border:1px solid var(--line)!important;border-radius:8px!important;overflow:hidden;background:var(--panel-alt)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-composer textarea {min-height:80px!important;max-height:160px!important;resize:vertical!important;padding:10px 12px!important;background:transparent!important;outline:none!important;font:14px/1.65 var(--font-sans)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-preview {min-height:80px!important;max-height:210px!important;padding:10px 12px!important;font:14px/1.65 var(--font-sans)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages-composer [hidden] {display:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-compose-actions {display:flex!important;flex-wrap:nowrap!important;gap:8px!important;padding:10px 0 0!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-toolbar {display:flex!important;flex:1!important;width:auto!important;align-items:center!important;gap:6px!important;padding:0!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-toolbar button {display:inline-flex!important;align-items:center!important;gap:5px!important;border:1px solid var(--line)!important;border-radius:999px!important;padding:4px 10px!important;background:var(--panel)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-message-editor-toolbar svg {width:14px!important;height:14px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.7!important;stroke-linecap:round;stroke-linejoin:round;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-compose-actions small {font:11px/20px var(--font-sans)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-send {margin:0 0 0 auto!important;height:32px!important;padding:0 16px!important;}
-@media(max-width:700px){
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-workspace {grid-template-columns:minmax(0,1fr)!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-compose-actions small {display:none!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-thread {padding:12px!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-message.is-system {grid-template-columns:20px minmax(0,1fr)!important;gap:8px!important;}
-html[data-nsmax-theme]:root:root:root .nspp-messages .nspp-messages-system-time {grid-column:2!important;text-align:left!important;}
+/* 顶部消息中心外层分类栏（单套分类栏，sb.sb 胶囊风格） */
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px !important;
+  margin-bottom: 12px !important;
+  border-radius: 999px !important;
+  background: var(--panel, #18191c) !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs a {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 14px !important;
+  border-radius: 999px !important;
+  color: var(--text-muted, rgba(255, 255, 255, 0.7)) !important;
+  font: 500 13px/1.4 var(--font-sans, system-ui, sans-serif) !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs a:hover {
+  color: var(--text, #fff) !important;
+  background: var(--panel-hover, rgba(255, 255, 255, 0.06)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-message-tabs a[aria-current="page"] {
+  color: #fff !important;
+  background: var(--brand, #3b82f6) !important;
+}
+
+
+/* 2. 消息中心主卡片容器：sb.sb 优雅深色面板 */
+html[data-nsmax-theme]:root:root:root .nspp-messages {
+  display: flex !important;
+  flex-direction: column !important;
+  height: min(780px, calc(100dvh - 120px)) !important;
+  min-height: 480px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+  border-radius: 12px !important;
+  background: var(--panel, #18191c) !important;
+  color: var(--text, #fff) !important;
+  font: 13px/1.6 var(--font-sans, system-ui, sans-serif) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages [hidden],
+html[data-nsmax-theme]:root:root:root .nspp-messages[hidden],
+html[data-nsmax-theme]:root:root:root .nspp-messages textarea[hidden],
+html[data-nsmax-theme]:root:root:root .nspp-messages [hidden] textarea {
+  display: none !important;
+}
+
+html[data-nsmax-theme] .nspp-messages * {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+}
+
+/* 基础按钮样式：圆角胶囊、防折字、sb.sb 质感 */
+html[data-nsmax-theme] .nspp-messages button {
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  min-height: 30px !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+  border-radius: 999px !important;
+  background: var(--panel, #18191c) !important;
+  color: var(--text-muted, rgba(255, 255, 255, 0.7)) !important;
+  font: 500 12px/20px var(--font-sans, system-ui, sans-serif) !important;
+  white-space: nowrap !important;
+  flex: none !important;
+  min-width: max-content !important;
+  transition: all 0.15s ease !important;
+}
+
+html[data-nsmax-theme] .nspp-messages button:hover {
+  background: var(--panel-hover, rgba(255, 255, 255, 0.06)) !important;
+  color: var(--text, #fff) !important;
+  border-color: var(--line, rgba(255, 255, 255, 0.15)) !important;
+}
+
+html[data-nsmax-theme] .nspp-messages button:disabled {
+  opacity: 0.5 !important;
+  cursor: default !important;
+}
+
+html[data-nsmax-theme] .nspp-messages svg {
+  width: 15px !important;
+  height: 15px !important;
+  flex: none !important;
+}
+
+html[data-nsmax-theme] .nspp-messages a {
+  color: var(--link, #60a5fa) !important;
+  text-decoration: none !important;
+}
+
+/* 3. 顶部 Header 栏 */
+html[data-nsmax-theme] .nspp-messages-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-height: 52px !important;
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--line-soft, rgba(255, 255, 255, 0.06)) !important;
+  flex: none !important;
+  background: var(--panel, #18191c) !important;
+}
+
+html[data-nsmax-theme] .nspp-messages-heading {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 1 1 auto !important;
+}
+
+html[data-nsmax-theme] .nspp-messages-heading strong {
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  color: var(--text, #fff) !important;
+}
+
+html[data-nsmax-theme] .nspp-messages-top-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+  flex: none !important;
+}
+
+/* 4. 工作区双栏布局（左 300px，右 1fr 自适应） */
+html[data-nsmax-theme]:root:root:root .nspp-messages-workspace {
+  display: grid !important;
+  grid-template-columns: 300px minmax(0, 1fr) !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+}
+
+/* 5. 左侧边栏（永驻综合导航） */
+html[data-nsmax-theme]:root:root:root .nspp-messages-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  border-right: 1px solid var(--line-soft, rgba(255, 255, 255, 0.06)) !important;
+  background: var(--panel-alt, #1e2026) !important;
+  overflow: hidden !important;
+}
+
+/* 搜索栏 */
+html[data-nsmax-theme]:root:root:root .nspp-messages-search {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 12px 14px 10px !important;
+  flex: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-search input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  padding: 6px 10px !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+  border-radius: 8px !important;
+  background: var(--panel, #18191c) !important;
+  color: var(--text, #fff) !important;
+  font: 12px/20px var(--font-sans) !important;
+  outline: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-search input:focus {
+  border-color: var(--brand, #3b82f6) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-search button {
+  height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: 8px !important;
+}
+
+/* 图四左侧快捷通知分类项导航 */
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  padding: 4px 10px 8px !important;
+  border-bottom: 1px solid var(--line-soft, rgba(255, 255, 255, 0.06)) !important;
+  flex: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  color: var(--text, #fff) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-item:hover {
+  background: var(--panel-hover, rgba(255, 255, 255, 0.06)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-item[aria-current="page"],
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-item.active {
+  background: var(--panel, #18191c) !important;
+  box-shadow: inset 0 0 0 1px var(--line, rgba(255, 255, 255, 0.12)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: var(--panel-hover, rgba(255, 255, 255, 0.06)) !important;
+  color: var(--text, #fff) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  flex: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-text {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-text strong {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  color: var(--text, #fff) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-text span {
+  font-size: 11px !important;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.45)) !important;
+  line-height: 1.2 !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-divider {
+  padding: 10px 14px 4px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.45)) !important;
+  flex: none !important;
+}
+
+/* 联系人列表 */
+html[data-nsmax-theme]:root:root:root .nspp-messages-contact-list {
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 4px 8px 10px !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 10px !important;
+  margin: 2px 0 !important;
+  border-radius: 8px !important;
+  color: var(--text, #fff) !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer:hover {
+  background: var(--panel-hover, rgba(255, 255, 255, 0.06)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer[aria-pressed=true],
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer[aria-current] {
+  background: var(--brand-soft, rgba(59, 130, 246, 0.12)) !important;
+  box-shadow: inset 3px 0 var(--brand, #3b82f6) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-avatar {
+  display: block !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 8px !important;
+  object-fit: cover !important;
+  flex: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer-details {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer-title strong {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--text, #fff) !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-peer-title time {
+  font-size: 11px !important;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.45)) !important;
+  flex: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-snippet,
+html[data-nsmax-theme]:root:root:root .nspp-notice-subject,
+html[data-nsmax-theme]:root:root:root .nspp-notice-excerpt {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.5)) !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+/* 未读徽标：sb.sb 优雅醒目红色胶囊 */
+html[data-nsmax-theme]:root:root:root .nspp-messages-count,
+html[data-nsmax-theme]:root:root:root .nspp-messages-unread {
+  display: inline-grid !important;
+  place-items: center !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  border-radius: 999px !important;
+  padding: 0 5px !important;
+  background: var(--danger, #ef4444) !important;
+  color: #fff !important;
+  font: 600 11px/1 var(--font-sans) !important;
+  flex: none !important;
+}
+
+/* 6. 右侧主工作区：通知工作区（inbox）与聊天工作区（chat）协同展示 */
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace {
+  grid-column: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+  background: var(--panel, #18191c) !important;
+}
+
+/* 在主工作区中的通知列表视图 */
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace > .nspp-messages-sidebar {
+  border-right: 0 !important;
+  background: transparent !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+/* 隐藏内层由于外部嵌套遗留的“联系人”返回按钮（杜绝竖排折字！） */
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-messages-back {
+  display: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-messages-search {
+  padding: 12px 16px 8px !important;
+  border-bottom: 1px solid var(--line-soft, rgba(255, 255, 255, 0.05)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-messages-contact-list {
+  padding: 12px 16px !important;
+}
+
+/* 宽屏通知卡片：sb.sb 精美大卡片 */
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-messages-peer {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 14px !important;
+  padding: 14px 16px !important;
+  margin-bottom: 10px !important;
+  border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.06)) !important;
+  border-radius: 8px !important;
+  background: var(--panel-alt, #1e2026) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-messages-peer:hover {
+  background: var(--panel-hover, rgba(255, 255, 255, 0.08)) !important;
+  border-color: var(--line, rgba(255, 255, 255, 0.12)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-notice-action {
+  font-size: 12px !important;
+  color: var(--text-muted, rgba(255, 255, 255, 0.65)) !important;
+  font-weight: 400 !important;
+  margin-left: 6px !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-notice-subject {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--link, #60a5fa) !important;
+  margin-top: 4px !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace .nspp-notice-excerpt {
+  margin-top: 4px !important;
+  line-height: 1.5 !important;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.6)) !important;
+}
+
+/* 状态切换：有详情 vs 无详情（绝不死黑！） */
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace.has-detail > .nspp-messages-sidebar {
+  display: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace:not(.has-detail) > .nspp-messages-chat {
+  display: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-workspace.has-detail > .nspp-messages-chat {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  background: var(--panel, #18191c) !important;
+}
+
+/* 通知详情卡片 */
+html[data-nsmax-theme]:root:root:root .nspp-notice-detail {
+  padding: 24px 32px !important;
+  max-width: 860px !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-summary {
+  padding: 0 0 16px !important;
+  margin-bottom: 16px !important;
+  border-bottom: 1px solid var(--line-soft, rgba(255, 255, 255, 0.08)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-summary h3 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  margin: 0 0 8px !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-summary p {
+  color: var(--text-subtle, rgba(255, 255, 255, 0.5)) !important;
+  font-size: 12px !important;
+  margin: 0 !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-notice-body {
+  font-size: 14px !important;
+  line-height: 1.75 !important;
+  color: var(--text, #fff) !important;
+}
+
+/* 7. 私信聊天面板（chat） */
+html[data-nsmax-theme]:root:root:root .nspp-messages-chat {
+  grid-column: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: var(--panel, #18191c) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-thread {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding: 20px 24px !important;
+  background: var(--panel-alt, #1b1c21) !important;
+}
+
+/* 对话气泡：他人与自己 */
+html[data-nsmax-theme]:root:root:root .nspp-messages-message {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  margin: 12px 0 !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-message.is-mine {
+  flex-direction: row-reverse !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-bubble {
+  max-width: min(78%, 620px) !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.06)) !important;
+  border-radius: 12px !important;
+  background: var(--panel, #18191c) !important;
+  color: var(--text, #fff) !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  overflow-wrap: anywhere !important;
+  white-space: pre-wrap !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-message.is-mine .nspp-messages-bubble {
+  background: var(--brand-soft, rgba(59, 130, 246, 0.16)) !important;
+  border-color: var(--brand-border, rgba(59, 130, 246, 0.3)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-message.is-system .nspp-messages-bubble {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 4px 0 !important;
+  max-width: 100% !important;
+}
+
+/* 空状态居中提示（未选会话时绝不死黑） */
+html[data-nsmax-theme]:root:root:root .nspp-messages-empty {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 240px !important;
+  height: 100% !important;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.45)) !important;
+  font-size: 14px !important;
+  gap: 12px !important;
+}
+
+/* 底部编辑器 */
+html[data-nsmax-theme]:root:root:root .nspp-messages-composer {
+  padding: 12px 16px !important;
+  background: var(--panel, #18191c) !important;
+  border-top: 1px solid var(--line-soft, rgba(255, 255, 255, 0.08)) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-composer textarea {
+  display: block !important;
+  width: 100% !important;
+  min-height: 80px !important;
+  max-height: 160px !important;
+  resize: vertical !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+  border-radius: 8px !important;
+  background: var(--panel-alt, #1f2127) !important;
+  color: var(--text, #fff) !important;
+  font: 14px/1.6 var(--font-sans) !important;
+  outline: none !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-composer textarea:focus {
+  border-color: var(--brand, #3b82f6) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-compose-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-top: 8px !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-send {
+  margin-left: auto !important;
+  height: 32px !important;
+  padding: 0 18px !important;
+  background: var(--brand, #3b82f6) !important;
+  color: #fff !important;
+  border-color: var(--brand, #3b82f6) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-send:hover {
+  background: #2563eb !important;
+}
+
+/* 移动端适配 (<=700px) */
+@media (max-width: 700px) {
+  html[data-nsmax-theme]:root:root:root .nspp-messages {
+    min-height: 420px !important;
+    height: calc(100dvh - 100px) !important;
+  }
+  html[data-nsmax-theme]:root:root:root .nspp-messages-workspace {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  html[data-nsmax-theme]:root:root:root .nspp-messages:not(.has-conversation) > .nspp-messages-workspace > :is(.nspp-messages-chat, .nspp-notice-workspace) {
+    display: none !important;
+  }
+  html[data-nsmax-theme]:root:root:root .nspp-messages.has-conversation > .nspp-messages-workspace > .nspp-messages-sidebar {
+    display: none !important;
+  }
 }
