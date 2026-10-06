@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.15");
+	assert.equal(packageJson.version, "1.7.16");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1370,3 +1370,32 @@ test("v1.7.15 视觉与体验精修：设置面板去遮罩去灰条、字体切
 		assert.deepEqual(errorsPager, []);
 	} finally { await ctxPager.close(); }
 });
+
+test("v1.7.16 极致体验：不在新标签页打开帖子生效、丝滑过渡与极速预渲染", async () => {
+	// 1. 关闭“新标签页打开”时，帖子链接 target 强制设为 _self 且不新开标签
+	const { context: ctxTab, page: pageTab, errors: errorsTab } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(),
+		seed: {
+			"nspp:settings:www.nodeseek.com": {
+				"reading-content": {
+					enabled: true,
+					newTab: false
+				}
+			}
+		}
+	});
+	try {
+		await wait(pageTab);
+		const targetState = await pageTab.evaluate(() => {
+			const links = Array.from(document.querySelectorAll(".post-list-item .post-title a, .post-title a, a[href*='/post-']"));
+			return {
+				count: links.length,
+				allSelfOrNone: links.every(a => !a.target || a.target === "_self")
+			};
+		});
+		assert.ok(targetState.count > 0, "列表页应当存在帖子链接");
+		assert.equal(targetState.allSelfOrNone, true, "关闭 newTab 后所有帖子链接都不应在新标签页打开");
+		assert.deepEqual(errorsTab, []);
+	} finally { await ctxTab.close(); }
+});
+

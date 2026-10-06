@@ -27,6 +27,7 @@ html[data-nsmax-theme][data-nsmax-palette=claude][data-nsmax-style=flat] body {
   --text-color:var(--text)!important; --text-color-secondary:var(--text-subtle)!important;
   --nsmax-blur:none; --nsmax-card-blur:none; --nsmax-highlight:transparent; --nsmax-sheen:transparent;
 }
+html[data-nsmax-theme] { scroll-behavior: smooth; }
 html[data-nsmax-theme] body { background:var(--bg)!important; color:var(--text)!important; }
 html[data-nsmax-theme] body,html[data-nsmax-theme] button,html[data-nsmax-theme] input,html[data-nsmax-theme] textarea,html[data-nsmax-theme] select,html[data-nsmax-theme] a,html[data-nsmax-theme] p,html[data-nsmax-theme] span,html[data-nsmax-theme] div {font-family:var(--font-sans)!important;letter-spacing:0!important;}
 html[data-nsmax-theme] {--font-sans:-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;--font-serif:"Source Serif 4","Charter","Bitstream Charter","Sitka Text",Georgia,Cambria,"Songti SC","SimSun",serif;}
@@ -36,10 +37,9 @@ html[data-nsmax-theme][data-nsmax-font="site"] {--font-sans:-apple-system,BlinkM
 html[data-nsmax-theme][data-nsmax-font="claude"] {--font-sans:"Inter Variable","Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;}
 html[data-nsmax-theme][data-nsmax-font="claude"] :is(.post-content, .comment-content, .markdown-body, .nsk-post-content, .post-entry .post-body, .comment-item .comment-body, article:not(.post-list-item) p, .post-title, h1, h2) {font-family:var(--font-serif)!important;}
 html[data-nsmax-theme] body > footer {display:none!important;}
-html[data-nsmax-theme] footer,html[data-nsmax-theme] .footer,html[data-nsmax-theme] .nsk-footer,html[data-nsmax-theme] #nsk-footer {display:none!important;}
-html[data-nsmax-theme] #nsk-frame {overflow:visible!important;width:100%!important;min-height:calc(100dvh - 56px);}
+html[data-nsmax-theme] #nsk-frame {overflow:visible!important;width:100%!important;min-height:0!important;}
 html[data-nsmax-theme] #nsk-body {display:grid!important;grid-template-columns:minmax(0,1fr) 260px;gap:20px;width:100%!important;max-width:1200px!important;margin:20px auto!important;padding:0 16px!important;background:transparent!important;box-shadow:none!important;border:0!important;}
-html[data-nsmax-theme] #nsk-body > #nsk-body-left {min-width:0!important;max-width:100%!important;padding:0!important;}
+html[data-nsmax-theme] #nsk-body > #nsk-body-left {min-width:0!important;max-width:100%!important;padding:0!important;height:fit-content!important;align-self:start!important;}
 html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {display:flex!important;flex-direction:column;gap:16px;min-width:0;width:260px!important;padding:0!important;margin:0!important;}
 html[data-nsmax-theme] #nsk-right-panel-container > .user-card {display:block!important;box-sizing:border-box;padding:16px!important;margin:0!important;border:1px solid var(--line)!important;border-radius:12px!important;background:var(--panel)!important;color:var(--text)!important;box-shadow:var(--shadow-base)!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .user-head {display:flex!important;align-items:center;gap:12px;padding:0 0 12px!important;margin:0!important;}
@@ -416,14 +416,15 @@ html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info :is(.info-item,
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info :is(svg,.nsmax-icon) {width:13px!important;height:13px!important;flex:none;color:var(--text-disabled)!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info .post-category {font-size:11px!important;}
 html[data-nsmax-theme] #nsk-body-left :is(.post-list-item,.content-item):hover {background:var(--panel-hover)!important;}
-html[data-nsmax-theme] #nsk-body-left .nsk-post>.content-item {padding:18px 20px!important;}
+html[data-nsmax-theme] #nsk-body-left .nsk-post {display:block!important;width:100%!important;}
+html[data-nsmax-theme] #nsk-body-left .nsk-post>.content-item {display:block!important;padding:18px 20px!important;width:100%!important;box-sizing:border-box!important;}
+html[data-nsmax-theme] #nsk-body-left .nsk-post .post-content {display:block!important;width:100%!important;font:14.5px/1.68 var(--font-sans)!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments li.content-item {padding:14px 18px!important;grid-template-columns:32px minmax(0,1fr)!important;grid-template-rows:auto auto!important;align-items:start!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments li.content-item>.nsk-content-meta-info>div:not(.avatar-wrapper):not(.floor-link-wrapper) {padding-right:0!important;grid-column:2!important;grid-row:1!important;display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments .author-info {margin:0!important;font:400 14px/24px var(--font-sans)!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments .author-name {font:400 14px/24px var(--font-sans)!important;color:var(--text-strong)!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments .content-info {margin:0!important;font:12px/24px var(--font-sans)!important;color:var(--text-subtle)!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments li.content-item>article.post-content {grid-row:2!important;margin:8px 0 0!important;padding:0!important;font:14.5px/1.68 var(--font-sans)!important;}
-html[data-nsmax-theme] #nsk-body-left .nsk-post .post-content {font:14.5px/1.68 var(--font-sans)!important;}
 html[data-nsmax-theme] #nsk-body-left .nsmax-floor-actions {display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;grid-column:2!important;grid-row:1!important;position:relative;z-index:1;margin-left:auto;padding-left:8px;min-height:24px;background:inherit;}
 html[data-nsmax-theme] #nsk-body-left .nsmax-floor-actions .comment-menu {display:flex!important;align-items:center!important;gap:6px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;}
 html[data-nsmax-theme] #nsk-body-left .nsmax-floor-actions .floor-link-wrapper {position:static!important;height:24px!important;margin:0!important;}
@@ -436,7 +437,9 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-actions .comment-menu .menu-i
 html[data-nsmax-theme] #nsk-body-left .nsmax-floor-actions .menu-item:hover {color:var(--brand)!important;background:var(--panel-alt)!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item {width:72px!important;height:52px!important;border:1px solid var(--line)!important;border-radius:8px!important;background:var(--panel)!important;}
 /* Pagination from SB: circles, ink current, text next button, no disabled arrow. */
-html[data-nsmax-theme] #nsk-body-left .nsk-pager {display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;padding:16px 14px 36px!important;margin:0 0 24px!important;}
+html[data-nsmax-theme] #nsk-body-left .nsk-pager {display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;padding:14px 14px 18px!important;margin:0!important;}
+html[data-nsmax-theme] #nsk-body-left > :has(>.nsk-pager) {margin:0!important;padding:0!important;}
+html[data-nsmax-theme] #nsk-body-left > #nsk-body-left-block {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager [role=navigation] {display:flex!important;align-items:center!important;gap:5px!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager :is(.pager-pos,.pager-next,.pager-prev) {display:inline-flex!important;justify-content:center!important;align-items:center!important;box-sizing:border-box!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0 9px!important;margin:0!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel)!important;color:var(--text-subtle)!important;font:13px/30px var(--font-sans)!important;text-decoration:none!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager .pager-cur {background:var(--action)!important;color:var(--action-text)!important;border-color:var(--action)!important;}
