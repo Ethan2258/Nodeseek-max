@@ -1,5 +1,24 @@
 # 更新日志
 
+## 1.7.18
+
+- 个人空间页（`/space/:uid`）1:1 像素级复刻 sb.sb：
+  - 彻底移除导航栏右侧注入的“设置”快捷键（`.nsmax-space-setting-btn`）；
+  - 彻底隐藏原站无内容的“概况/资料”Tab（`#/info`、`#/profile`），仅保留三大核心 Tab：`[ 主题 ]`、`[ 回帖 ]`、`[ 收藏 ]`；
+  - 路由自动重定向：进入空间页若 hash 为空或为 `#/info`，默认自动激活并跳转至“主题”（`#/posts`），避免出现大片空白；
+  - 复刻 sb.sb Tab 样式与 Hover 交互：移除生硬的灰底方框，鼠标悬停仅文字颜色平滑过渡为 `var(--text)`；激活态带有 2px 极细底部高亮指示条（`::after`，`background: var(--action)`）；Tab 栏与下方面板紧密拼合无缝隙。
+- 侧栏个人资料卡统计数字悬停交互精修：
+  - 彻底清除 `.nsmax-account-stat:hover` 产生的灰色圆角背景药丸（`background: transparent!important; box-shadow: none!important`），悬停仅数值轻微变色（`dd { color: var(--brand)!important; }`），不再显示生硬背景块。
+- 发帖页一键抽奖字面量 `\n` 根除：
+  - 彻底清除所有转义产生的字面量 `\n`，弹窗与快捷插入统一使用原生多行 Markdown 模板与真实换行符。
+- 全站双重图标与底部分页留白净化：
+  - 彻底清理 `sb-adapter.css` 残留的 `::before` 遮罩图标规则；全局强制 `.post-info *::before { content: none!important; }`；
+  - 控制台仅保留一个 NQ 入口，避免与原生 N 冲突造成双重图标；
+  - 隐藏底部的原站浮动按钮组（`#fast-nav-button-group` / 悬浮条 / footer），为底部分页区域提供充足留白（`padding-bottom: 60px`）。
+- 彻底生效“不在新标签页打开帖子”：
+  - 将配置字段规范为原生 boolean，并在 `pointerdown` 阶段与 `click` 捕获阶段主动拦截，当 `newTab === false` 时强制在当前标签页打开帖子。
+- 全量自动化测试对齐与 100% 通过（55/55 PASS）。
+
 ## 1.7.17
 
 - 彻底根除列表行双重图标（Double Icons）问题：

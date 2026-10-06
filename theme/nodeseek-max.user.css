@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.17
+@version        1.7.18
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.17（UserCSS）
+ * NodeSeek Max 主题 v1.7.18（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -18660,27 +18660,13 @@
 		border-left-color:var(--line)!important;
 		background:transparent!important;
 	}
-	html:root:root:root:root #nsk-body-left .nspp-action {
-		display:block!important;
-		margin:12px auto!important;
-		padding:6px 14px!important;
-		border:1px solid var(--line)!important;
-		border-radius:999px!important;
-		background:var(--panel)!important;
-		color:var(--text-subtle)!important;
-		font:12.5px/20px var(--font-sans)!important;
-	}
-	html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-last-commenter svg {
+	html:root:root:root:root #nsk-body-left .post-list-item .post-info *::before {
+		content:none!important;
 		display:none!important;
 	}
-	html:root:root:root:root #nsk-body-left .post-list-item .post-info .info-last-commenter::before {
-		content:"";
-		display:block;
-		width:13px;
-		height:13px;
-		flex:none;
-		background:var(--text-disabled);
-		mask:var(--nsmax-icon-user) center/contain no-repeat;
+	html:root:root:root:root #nsk-body-left .post-list-item .post-info *::after {
+		content:none!important;
+		display:none!important;
 	}
 	html:root:root:root:root:has(.head-container) .card-block>.card-item[data-nsmax-obsolete-stat],
 	html:root:root:root:root:has(.head-container) .selector .readme[data-nsmax-empty-readme] {
@@ -19209,6 +19195,9 @@
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector {
 		display:flex!important;
 		flex-wrap:wrap!important;
+		align-items:center!important;
+		justify-content:flex-start!important;
+		padding:0 16px!important;
 		border-radius:12px!important;
 		border:1px solid var(--line)!important;
 		background:var(--panel)!important;
@@ -19216,34 +19205,55 @@
 		box-shadow:var(--shadow-base)!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item {
+		position:relative!important;
 		display:inline-flex!important;
 		align-items:center!important;
-		min-height:44px!important;
-		height:44px!important;
-		padding:0 18px!important;
+		justify-content:center!important;
+		min-height:48px!important;
+		height:48px!important;
+		padding:0 12px!important;
+		margin:0 8px 0 0!important;
 		border:0!important;
+		border-radius:0!important;
 		border-bottom:2px solid transparent!important;
 		color:var(--text-muted)!important;
 		background:transparent!important;
-		font:500 14px/44px var(--font-sans)!important;
+		font:500 14px/48px var(--font-sans)!important;
 		text-decoration:none!important;
 		cursor:pointer!important;
+		box-shadow:none!important;
+		transition:color .15s ease!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item:hover {
-		color:var(--text-strong)!important;
+		color:var(--text)!important;
+		background:transparent!important;
+		box-shadow:none!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.active,
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.router-link-active {
-		color:var(--text-strong)!important;
+		color:var(--text)!important;
 		font-weight:600!important;
-		border-bottom-color:var(--text-strong)!important;
+		background:transparent!important;
+		border-bottom-color:transparent!important;
+	}
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.active::after,
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item.router-link-active::after {
+		content:""!important;
+		position:absolute!important;
+		bottom:0!important;
+		left:8px!important;
+		right:8px!important;
+		height:2px!important;
+		border-radius:1px!important;
+		background:var(--action)!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector-right-side,
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper,
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .comments-list {
-		width:100%!important;
+		width:calc(100% + 32px)!important;
 		flex:1 1 100%!important;
 		border-top:1px solid var(--line-soft)!important;
+		margin:0 -16px!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper {
 		margin:0!important;
@@ -19305,5 +19315,17 @@
 	html:root:root:root:root:has(.head-container) .selector-right-side .readme img[src*="logo"],
 	html:root:root:root:root:has(.head-container) .selector-right-side .readme img[src*="nodeseek"] {
 		display:none!important;
+	}
+	html:root:root:root:root #fast-nav-button-group,
+	html:root:root:root:root .fast-nav-button-group,
+	html:root:root:root:root .nsk-footer,
+	html:root:root:root:root body > footer {
+		display:none!important;
+	}
+	html:root:root:root:root #nsk-body-left {
+		padding-bottom:60px!important;
+	}
+	html:root:root:root:root #nsk-body-left .nsk-pager {
+		margin-bottom:24px!important;
 	}
 }

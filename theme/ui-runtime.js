@@ -172,48 +172,59 @@
 			}
 		}
 
-		// Clean tab text matching Image 3: "主题", "回帖", "资料", reorder, add "设置" button
+		// Align tabs with sb.sb: only keep "主题", "回帖", "收藏", hide "概况/资料", remove "设置" button
 		const selectorNav = document.querySelector(".selector");
 		if (selectorNav) {
+			const settingBtn = selectorNav.querySelector(".nsmax-space-setting-btn");
+			if (settingBtn) settingBtn.remove();
+
 			const tabs = Array.from(selectorNav.querySelectorAll("a.select-item"));
+			const visibleTabs = [];
+			const hiddenTabs = [];
 			for (const tab of tabs) {
 				const text = tab.textContent.trim();
-				if (/概况/i.test(text)) {
-					tab.textContent = "资料";
-				} else if (/主题/i.test(text)) {
-					tab.textContent = "主题";
-				} else if (/评论|回帖/i.test(text)) {
-					tab.textContent = "回帖";
+				const href = tab.getAttribute("href") || "";
+				if (/概况|资料/i.test(text) || /#\/(?:info|profile)/i.test(href)) {
+					tab.style.setProperty("display", "none", "important");
+					tab.setAttribute("hidden", "");
+					tab.classList.remove("active");
+					hiddenTabs.push(tab);
+					continue;
 				}
+				tab.removeAttribute("hidden");
+				tab.style.removeProperty("display");
+				if (/主题/i.test(text)) {
+					tab.textContent = "主题";
+				} else if (/评论|回帖|回复/i.test(text)) {
+					tab.textContent = "回帖";
+				} else if (/收藏/i.test(text)) {
+					tab.textContent = "收藏";
+				}
+				visibleTabs.push(tab);
 			}
-			const orderMap = { "主题": 1, "回帖": 2, "资料": 3, "收藏": 4 };
-			tabs.sort((a, b) => {
+			const orderMap = { "主题": 1, "回帖": 2, "收藏": 3 };
+			visibleTabs.sort((a, b) => {
 				const valA = orderMap[a.textContent.trim()] || 99;
 				const valB = orderMap[b.textContent.trim()] || 99;
 				return valA - valB;
 			});
 			const rightSide = selectorNav.querySelector(".selector-right-side, .discussion-wrapper, .comments-list");
-			for (const tab of tabs) {
+			for (const tab of visibleTabs) {
 				if (rightSide) selectorNav.insertBefore(tab, rightSide);
 				else selectorNav.append(tab);
 			}
-			if (!selectorNav.querySelector(".nsmax-space-setting-btn")) {
-				const settingLink = document.createElement("a");
-				settingLink.className = "nsmax-space-setting-btn";
-				settingLink.href = "/setting";
-				settingLink.textContent = "设置";
-				if (rightSide) selectorNav.insertBefore(settingLink, rightSide);
-				else selectorNav.append(settingLink);
+			for (const tab of hiddenTabs) {
+				selectorNav.append(tab);
 			}
 		}
 
 		// When entering space, auto-switch to topics (#/posts) if on overview (#/info or empty)
 		const currentHash = location.hash;
 		if (!currentHash || currentHash === "#/info" || currentHash === "#" || currentHash.includes("info") || currentHash.includes("profile")) {
-			const tabs = Array.from(document.querySelectorAll(".selector a.select-item"));
-			const postsTab = tabs.find(tab => /主题/i.test(tab.textContent) || /posts|discussions|threads/i.test(tab.getAttribute("href") || ""));
+			const visibleTabs = Array.from(document.querySelectorAll(".selector a.select-item")).filter(tab => !tab.hidden && tab.style.display !== "none");
+			const postsTab = visibleTabs.find(tab => /主题/i.test(tab.textContent) || /posts|discussions|threads/i.test(tab.getAttribute("href") || ""));
 			if (postsTab && !postsTab.classList.contains("active")) {
-				for (const tab of tabs) tab.classList.remove("active");
+				for (const tab of document.querySelectorAll(".selector a.select-item")) tab.classList.remove("active");
 				postsTab.classList.add("active");
 				postsTab.click();
 			}
@@ -448,15 +459,21 @@
 			nsmaxUpdateNavEssence();
 			nsmaxMarkLevel6();
 			const controller = document.querySelector(".post-list-controler");
-			if (controller && !controller.querySelector(".nsmax-nq-entry")) {
-				const link = document.createElement("a");
-				link.className = "nsmax-nq-entry";
-				link.href = "https://nodequality.com";
-				link.target = "_blank";
-				link.rel = "noopener noreferrer";
-				link.title = "NodeQuality 测机";
-				link.innerHTML = `<img class="nsmax-nq-icon" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABaFBMVEX///95v5gJiUIJi0RGh1PBJSLDCgrCDAzjjo72/PlSyYcIslRw0pz+/v5fsoMAhDkAhz0pazC1CQTBAAC/AADdc3Pv+vQ1wHMAr01fzZH+//5fsoQAhDoAiD4pbDG2CQQAr04pbTK1CQW+AADccG7+9e398ur+9vH///4AhjwxjVLRenXca2vbbm/pknfwkVDwj03yoGj98ekAhDs1n2Tv+PP3xKLtey3tey7uhkD86Ns1nmTv9/LtfC/tfDDuiEL86dz3xqTuikXo47/f883f8szw+eb97OH5za75zK7y07Kp1nCU0VOT0VHB5Jz1+++j12uRz06Qz02+45b1+u6R0E6+45fw+vT2+/Gm2XCS0E2S1ZaG2vqF2vmE2e4iunP+/v3j89LV7bza77yB1dYAr/AAsOcBsHEAsE6X3vkAsPEAsHGW3vk0nmNuupAAhTtCpW70+fad4PkCsPAAsPARtescuH1n0Jb3nMn7AAAAAWJLR0QAiAUdSAAAAAd0SU1FB+kDFxUCHTwsmtwAAADQSURBVDjLY2AAAUYmZhZWNnYOBhjg5OLm5oHzGHj5+AUEhYRFROEiYuISEpJSCAXSMrJy8qgKFAajAkUlEWUVVTV1DRwKNLW0dXT19A0MjXAoMDYxZWAwM7ewtMKlwNoGqMDWzt5hsCtwtLV1cnZxdcOpwN3D08vbx9cPpwIg8A8IDArGpyAkIDQobBAoADoyHKeCiMjQqOiY2Lh4XAoSEpOSU1JT09IzcCgAgczUrLRsfApyBkQBn4xxLj4FDHn5+QWFcF5RcUlpWYZCOZgDAFNzXYZTvYTRAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI1LTAzLTIzVDIxOjAxOjIxKzAwOjAwLt9JcQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNS0wMy0yM1QyMTowMToyMSswMDowMF+C8c0AAAAgdEVYdHNvZnR3YXJlAGh0dHBzOi8vaW1hZ2VtYWdpY2sub3JnvM8dnQAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpIZWlnaHQAMTkyQF1xVQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE3NDI3NjM2ODE9AtgpAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMjUtMDMtMjMvY2UzZTUwZjg4YjEzOGFiYTY3ODJlMjdmZjk2OTYzYjUuaWNvLnBuZ/HFgxIAAAAASUVORK5CYII="><span>NQ</span>`;
-				controller.append(link);
+			if (controller) {
+				const hasNativeNq = Array.from(controller.querySelectorAll("a:not(.nsmax-nq-entry)")).some(a => /nodequality/i.test(a.href) || /^N$/i.test(a.textContent.trim()));
+				const customNq = controller.querySelector(".nsmax-nq-entry");
+				if (hasNativeNq) {
+					if (customNq) customNq.remove();
+				} else if (!customNq) {
+					const link = document.createElement("a");
+					link.className = "nsmax-nq-entry";
+					link.href = "https://nodequality.com";
+					link.target = "_blank";
+					link.rel = "noopener noreferrer";
+					link.title = "NodeQuality 测机";
+					link.innerHTML = `<img class="nsmax-nq-icon" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABaFBMVEX///95v5gJiUIJi0RGh1PBJSLDCgrCDAzjjo72/PlSyYcIslRw0pz+/v5fsoMAhDkAhz0pazC1CQTBAAC/AADdc3Pv+vQ1wHMAr01fzZH+//5fsoQAhDoAiD4pbDG2CQQAr04pbTK1CQW+AADccG7+9e398ur+9vH///4AhjwxjVLRenXca2vbbm/pknfwkVDwj03yoGj98ekAhDs1n2Tv+PP3xKLtey3tey7uhkD86Ns1nmTv9/LtfC/tfDDuiEL86dz3xqTuikXo47/f883f8szw+eb97OH5za75zK7y07Kp1nCU0VOT0VHB5Jz1+++j12uRz06Qz02+45b1+u6R0E6+45fw+vT2+/Gm2XCS0E2S1ZaG2vqF2vmE2e4iunP+/v3j89LV7bza77yB1dYAr/AAsOcBsHEAsE6X3vkAsPEAsHGW3vk0nmNuupAAhTtCpW70+fad4PkCsPAAsPARtescuH1n0Jb3nMn7AAAAAWJLR0QAiAUdSAAAAAd0SU1FB+kDFxUCHTwsmtwAAADQSURBVDjLY2AAAUYmZhZWNnYOBhjg5OLm5oHzGHj5+AUEhYRFROEiYuISEpJSCAXSMrJy8qgKFAajAkUlEWUVVTV1DRwKNLW0dXT19A0MjXAoMDYxZWAwM7ewtMKlwNoGqMDWzt5hsCtwtLV1cnZxdcOpwN3D08vbx9cPpwIg8A8IDArGpyAkIDQobBAoADoyHKeCiMjQqOiY2Lh4XAoSEpOSU1JT09IzcCgAgczUrLRsfApyBkQBn4xxLj4FDHn5+QWFcF5RcUlpWYZCOZgDAFNzXYZTvYTRAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI1LTAzLTIzVDIxOjAxOjIxKzAwOjAwLt9JcQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNS0wMy0yM1QyMTowMToyMSswMDowMF+C8c0AAAAgdEVYdHNvZnR3YXJlAGh0dHBzOi8vaW1hZ2VtYWdpY2sub3JnvM8dnQAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpIZWlnaHQAMTkyQF1xVQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE3NDI3NjM2ODE9AtgpAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMjUtMDMtMjMvY2UzZTUwZjg4YjEzOGFiYTY3ODJlMjdmZjk2OTYzYjUuaWNvLnBuZ/HFgxIAAAAASUVORK5CYII="><span>NQ</span>`;
+					controller.append(link);
+				}
 			}
 			for (const pager of document.querySelectorAll(".nsk-pager")) {
 				const current = Number(pager.querySelector(".pager-cur,[aria-current=page]:not(a)")?.textContent) || 1;
@@ -629,8 +646,8 @@
 							const count = countInput.value.trim() || "1";
 							const time = timeInput.value.trim() || "24 小时后";
 							const rule = ruleSelect.value;
-							const md = `# 🎁 抽奖信息\\n\\n- **奖品**：${prize} × ${count} 份\\n- **参与方式**：${rule}\\n- **开奖时间**：${time}\\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\\n\\n---\\n`;
-							previewEl.textContent = md.replace(/\\\\n/g, "\\n");
+							const md = `# 🎁 抽奖信息\n\n- **奖品**：${prize} × ${count} 份\n- **参与方式**：${rule}\n- **开奖时间**：${time}\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\n\n---\n`;
+							previewEl.textContent = md;
 							return { prize, count, time, rule, md };
 						};
 
@@ -664,7 +681,8 @@
 							}
 							const current = cmInst ? cmInst.getValue() : inputEl?.value || "";
 							if (!/开奖链接/.test(current)) {
-								setValueFn(`${md.replace(/\\\\n/g, "\\n")}\\n${current.trim()}`);
+								const combined = current.trim() ? `${md}\n${current.trim()}` : md;
+								setValueFn(combined);
 							}
 							close();
 						});
@@ -687,7 +705,10 @@
 						titleInput.dispatchEvent(new Event("input", { bubbles: true }));
 					}
 					const current = cm ? cm.getValue() : input?.value || "";
-					if (!/开奖链接/.test(current)) setEditorValue(`${current.trim()}${current.trim() ? "\n\n" : ""}# 🎁 抽奖信息\n\n- **奖品**：奖品名称 × 1 份\n- **参与方式**：任意回复即可参与\n- **开奖时间**：24 小时后\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\n\n---\n`);
+					if (!/开奖链接/.test(current)) {
+						const defaultMd = `# 🎁 抽奖信息\n\n- **奖品**：奖品名称 × 1 份\n- **参与方式**：任意回复即可参与\n- **开奖时间**：24 小时后\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\n\n---\n`;
+						setEditorValue(current.trim() ? `${defaultMd}\n${current.trim()}` : defaultMd);
+					}
 				});
 				action("附件", "image", () => (editor.querySelector(".nspp-upload-choose") || editor.querySelector('.mde-toolbar [title="图片"],.mde-toolbar [title="上传图片"]'))?.click());
 				action("表情", "smile", button => {
