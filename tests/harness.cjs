@@ -55,9 +55,12 @@ const gmShim = (seed, fontFiles) => `(() => {
 				details.onload?.({ status: 200, response: bytes.buffer });
 			}
 			else if (details.url.includes("raw.githubusercontent.com")) details.onload?.({ status: 200, responseText: "// ==UserScript==\\n// @version      1.0.0\\n// ==/UserScript==\\n" });
-			else if (details.url.startsWith("https://image.110726.com/")) {
+			else if (details.url.startsWith("https://api.nodeimage.com/api/user/api-key")) {
+				details.onload?.({ status: 200, response: { api_key: "mock-key" } });
+			}
+			else if (details.url.startsWith("https://api.nodeimage.com/api/upload") || details.url.startsWith("https://image.110726.com/")) {
 				window.__uploads = (window.__uploads || []).concat({ url: details.url, headers: details.headers, anonymous: details.anonymous });
-				details.onload?.({ status: 201, response: { duplicate: false, image: { name: "shot.png", originalUrl: "/api/i/abc123.png" } } });
+				details.onload?.({ status: 200, response: { success: true, links: { direct: "https://api.nodeimage.com/api/i/abc123.png" }, duplicate: false, image: { name: "shot.png", originalUrl: "/api/i/abc123.png" } } });
 			}
 			else details.onerror?.({});
 		}, 30);

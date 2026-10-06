@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.9");
+	assert.equal(packageJson.version, "1.7.10");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -928,8 +928,8 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 	const {context: ctxSpace, page: pageSpace, errors: errorsSpace} = await open(browser,'https://www.nodeseek.com/space/10',{html: spaceHtmlLv6});
 	try {
 		await pageSpace.waitForSelector('.nsmax-space-top');
-		assert.equal(await pageSpace.locator('.nsmax-space-badge').innerText(), '会员');
-		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').isVisible(), true);
+		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
+		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').innerText(), 'UID 10');
 		assert.equal(await pageSpace.locator('.head-container .card-block>.card-item:visible').count(), 4);
 		const progress = pageSpace.locator('.nsmax-space-progress');
@@ -1022,5 +1022,58 @@ test('用户新需求：个人空间对齐sb.sb、悬停预览尺寸与加速、
 		assert.ok(parseInt(maxW, 10) >= 480, `Preview width is enlarged: ${maxW}`);
 		assert.deepEqual(errorsPrev, []);
 	} finally { await ctxPrev.close(); }
+});
+
+test('用户最新需求还原：每日签到胶囊UI与排行榜前三高亮、个人空间无围框与Vue切Tab不崩溃、设置弹窗不含欧记图床', async () => {
+	// 1. 签到页 UI 与排行榜
+	const {context: ctxBoard, page: pageBoard, errors: errorsBoard} = await open(browser, 'https://www.nodeseek.com/board', {html: boardPage()});
+	try {
+		await pageBoard.waitForSelector('.nsmax-board-banner');
+		const bannerText = await pageBoard.locator('.nsmax-board-banner-text').innerText();
+		assert.ok(bannerText.includes('今日还未签到'));
+		const btns = pageBoard.locator('.nsmax-board-btn');
+		assert.equal(await btns.count(), 2);
+		assert.equal(await btns.first().innerText(), '鸡腿 x 5');
+		assert.equal(await btns.last().innerText(), '试试手气');
+
+		const title = pageBoard.locator('.nsmax-board-title');
+		assert.equal(await title.isVisible(), true);
+		assert.ok((await title.innerText()).includes('今日签到鸡腿排行榜'));
+
+		const rank1 = pageBoard.locator('.nsmax-board-row[data-rank="1"] .nsmax-board-rank');
+		const rank2 = pageBoard.locator('.nsmax-board-row[data-rank="2"] .nsmax-board-rank');
+		const rank3 = pageBoard.locator('.nsmax-board-row[data-rank="3"] .nsmax-board-rank');
+		assert.equal(await rank1.evaluate(el => getComputedStyle(el).color), 'rgb(239, 68, 68)');
+		assert.equal(await rank2.evaluate(el => getComputedStyle(el).color), 'rgb(249, 115, 22)');
+		assert.equal(await rank3.evaluate(el => getComputedStyle(el).color), 'rgb(234, 179, 8)');
+		assert.deepEqual(errorsBoard, []);
+	} finally { await ctxBoard.close(); }
+
+	// 2. 个人空间无围框、会员/在线已移除、MAX 居中居行
+	const {context: ctxSpace, page: pageSpace, errors: errorsSpace} = await open(browser, 'https://www.nodeseek.com/space/10', {html: nativeSpacePage()});
+	try {
+		await pageSpace.waitForSelector('.nsmax-space-top');
+		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
+		assert.equal(await pageSpace.locator('.nsmax-space-online').count(), 0);
+		const progress = pageSpace.locator('.nsmax-space-progress');
+		assert.equal(await progress.evaluate(el => getComputedStyle(el).borderStyle), 'none');
+		assert.equal(await progress.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+		// Click tabs to verify no removeChild / unmount errors
+		await pageSpace.locator('.selector a.select-item').nth(1).click();
+		await pageSpace.waitForTimeout(60);
+		await pageSpace.locator('.selector a.select-item').nth(2).click();
+		await pageSpace.waitForTimeout(60);
+		assert.deepEqual(errorsSpace, []);
+	} finally { await ctxSpace.close(); }
+
+	// 3. 设置页面不含欧记图床
+	const {context: ctxSetting, page: pageSetting, errors: errorsSetting} = await open(browser, 'https://www.nodeseek.com/setting', {html: settingPage()});
+	try {
+		await wait(pageSetting);
+		const html = await pageSetting.content();
+		assert.ok(!html.includes('欧记图床'));
+		assert.ok(!html.includes('image.110726.com'));
+		assert.deepEqual(errorsSetting, []);
+	} finally { await ctxSetting.close(); }
 });
 

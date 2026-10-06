@@ -21,16 +21,9 @@
 			const titleRow = document.createElement("div");
 			titleRow.className = "nsmax-space-title-row";
 			if (nameEl) titleRow.append(nameEl);
-			const badge = document.createElement("span");
-			badge.className = "nsmax-space-badge";
-			badge.textContent = "会员";
-			titleRow.append(badge);
 
 			const meta = document.createElement("div");
 			meta.className = "nsmax-space-meta";
-			const online = document.createElement("span");
-			online.className = "nsmax-space-online";
-			online.innerHTML = '<i class="nsmax-online-dot"></i>在线';
 			const uidSpan = document.createElement("span");
 			uidSpan.className = "nsmax-space-uid";
 			uidSpan.textContent = `UID ${uid}`;
@@ -57,7 +50,7 @@
 			lastActive.className = "nsmax-space-last";
 			lastActive.textContent = /最后在线/.test(rawDesc) ? rawDesc : "最后在线 刚刚";
 
-			meta.append(online, uidSpan, joinSpan, lastActive);
+			meta.append(uidSpan, joinSpan, lastActive);
 			identity.append(titleRow, meta);
 
 			if (rawDesc && rawDesc !== "一句话介绍自己" && !/最后在线/.test(rawDesc)) {
@@ -74,6 +67,9 @@
 			head.prepend(topRow);
 		}
 
+		// Clean and mirror stats safely: DO NOT remove stats from Vue's original parent (.selector-right-side)
+		// to avoid breaking Vue's component teardown / router view change.
+		let headStats = head.querySelector(":scope > .card-block");
 		if (stats) {
 			for (const item of stats.querySelectorAll(".card-item")) {
 				const first = item.querySelector(":scope > div, :scope > span");
@@ -81,14 +77,21 @@
 					first.textContent = first.textContent.replace("数目", "").replace("帖数", "");
 				}
 			}
-			if (stats.parentElement !== head) {
-				head.append(stats);
+			if (!headStats) {
+				headStats = stats.cloneNode(true);
+				head.append(headStats);
+			} else {
+				for (const item of headStats.querySelectorAll(".card-item")) {
+					const first = item.querySelector(":scope > div, :scope > span");
+					if (first) first.textContent = first.textContent.replace("数目", "").replace("帖数", "");
+				}
 			}
 		}
 
 		let progress = head.querySelector(":scope > .nsmax-space-progress");
-		if (!progress && stats) {
-			const levelText = Array.from(stats.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent))?.textContent.match(/\d+/)?.[0];
+		const statsSource = headStats || stats;
+		if (!progress && statsSource) {
+			const levelText = Array.from(statsSource.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent))?.textContent.match(/\d+/)?.[0];
 			if (levelText) {
 				const level = Number(levelText);
 				progress = document.createElement("div");
@@ -113,10 +116,12 @@
 					progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
 					progress.querySelector("b").style.width = `100%`;
 
-					const levelItem = Array.from(stats.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent));
-					if (levelItem) {
-						levelItem.setAttribute("data-nsmax-lv6-stat", "true");
-						levelItem.querySelector("div:last-child, span:last-child")?.setAttribute("data-nsmax-lv6", "true");
+					for (const container of [headStats, stats].filter(Boolean)) {
+						const levelItem = Array.from(container.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent));
+						if (levelItem) {
+							levelItem.setAttribute("data-nsmax-lv6-stat", "true");
+							levelItem.querySelector("div:last-child, span:last-child")?.setAttribute("data-nsmax-lv6", "true");
+						}
 					}
 				} else {
 					const cur = titles[level]?.[0] || "当前等级";
@@ -128,6 +133,23 @@
 					progress.querySelector("b").style.width = `${percent}%`;
 				}
 				head.append(progress);
+			}
+		}
+
+		// Ensure space tabs remain responsive and do not get blocked
+		for (const item of document.querySelectorAll(".selector a.select-item")) {
+			if (!item.hasAttribute("data-nsmax-bound")) {
+				item.setAttribute("data-nsmax-bound", "true");
+				item.addEventListener("click", () => {
+					setTimeout(() => {
+						const hash = location.hash || "#/info";
+						for (const tab of document.querySelectorAll(".selector a.select-item")) {
+							const href = tab.getAttribute("href") || "";
+							const on = href.includes(hash) || (hash === "#/info" && (href.endsWith("/info") || href.endsWith("#")));
+							tab.classList.toggle("active", on);
+						}
+					}, 50);
+				});
 			}
 		}
 	}
@@ -178,8 +200,16 @@
 			const icons = [[".info-author","user"],[".nsmax-inline-category","board"],[".info-views","eye"],[".info-comments-count","comment"],[".info-last-commenter","user"]];
 			for (const [selector,name] of icons) {
 				const item = row.querySelector(selector); if (!item) continue;
-				for (const svg of item.querySelectorAll("svg:not(.nsmax-meta-icon)")) { svg.setAttribute("data-nsmax-meta-original",""); svg.style.setProperty("display","none","important"); }
-				if (!item.querySelector(".nsmax-meta-icon")) { const icon = toolIcon(name); icon.classList.add("nsmax-meta-icon"); item.prepend(icon); }
+				for (const svg of item.querySelectorAll("svg:not(.nsmax-meta-icon), .iconpark-icon:not(.nsmax-meta-icon)")) {
+					svg.setAttribute("data-nsmax-meta-original","");
+					svg.style.setProperty("display","none","important");
+				}
+				const existing = item.querySelectorAll(".nsmax-meta-icon");
+				if (existing.length > 1) {
+					for (let i = 1; i < existing.length; i++) existing[i].remove();
+				} else if (existing.length === 0) {
+					const icon = toolIcon(name); icon.classList.add("nsmax-meta-icon"); item.prepend(icon);
+				}
 			}
 			if (row.hasAttribute("data-nsmax-meta-ordered")) continue;
 			const info = row.querySelector(".post-info");
@@ -191,6 +221,88 @@
 			for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
+	}
+	function nsmaxPrepareBoard() {
+		if (!/^\/board(?:\/|$)/.test(location.pathname)) return;
+		const container = document.querySelector("#nsk-body, .board-container, section#nsk-frame");
+		if (!container) return;
+
+		// 1. Checkin top banner (Yellow bar matching Image 1)
+		let banner = document.querySelector(".nsmax-board-banner");
+		if (!banner) {
+			banner = document.createElement("div");
+			banner.className = "nsmax-board-banner";
+			banner.innerHTML = `
+				<div class="nsmax-board-banner-content">
+					<span class="nsmax-board-banner-text">今日还未签到，</span>
+					<div class="nsmax-board-banner-actions">
+						<button type="button" class="nsmax-board-btn nsmax-board-btn-fixed" data-mode="fixed">鸡腿 x 5</button>
+						<span class="nsmax-board-sep">/</span>
+						<button type="button" class="nsmax-board-btn nsmax-board-btn-random" data-mode="random">试试手气</button>
+					</div>
+				</div>
+			`;
+			const firstChild = container.firstElementChild;
+			if (firstChild) firstChild.before(banner);
+			else container.prepend(banner);
+
+			const doCheckin = async (random) => {
+				const btns = banner.querySelectorAll("button");
+				btns.forEach(b => { b.disabled = true; b.style.opacity = "0.6"; });
+				try {
+					const res = await fetch(`/api/attendance?random=${random}`, { method: "POST" });
+					const data = await res.json();
+					if (data && data.success) {
+						banner.querySelector(".nsmax-board-banner-text").textContent = "今日已签到，";
+						banner.querySelector(".nsmax-board-banner-actions").innerHTML = `<span class="nsmax-board-badge-done">获得 ${data.gain ?? 5} 鸡腿</span>`;
+					} else {
+						banner.querySelector(".nsmax-board-banner-text").textContent = (data && data.message) || "今日已签到";
+						banner.querySelector(".nsmax-board-banner-actions").innerHTML = `<span class="nsmax-board-badge-done">今日已完成签到</span>`;
+					}
+				} catch {
+					banner.querySelector(".nsmax-board-banner-text").textContent = "已尝试签到";
+					banner.querySelector(".nsmax-board-banner-actions").innerHTML = `<span class="nsmax-board-badge-done">请刷新页面查看</span>`;
+				}
+			};
+
+			banner.querySelector(".nsmax-board-btn-fixed")?.addEventListener("click", () => doCheckin(false));
+			banner.querySelector(".nsmax-board-btn-random")?.addEventListener("click", () => doCheckin(true));
+		}
+
+		// Check if user already signed in according to page content
+		const alreadySigned = Array.from(document.querySelectorAll("body *")).some(el => !el.closest(".nsmax-board-banner") && /^(?:[✓✔]\s*)?(?:今日已完成签到|今日已签到|已签到)/.test(el.textContent?.trim() || ""));
+		if (alreadySigned && banner) {
+			banner.querySelector(".nsmax-board-banner-text").textContent = "今日已签到，祝您好运！";
+			const actions = banner.querySelector(".nsmax-board-banner-actions");
+			if (actions && !actions.querySelector(".nsmax-board-badge-done")) {
+				actions.innerHTML = `<span class="nsmax-board-badge-done">今日已完成签到</span>`;
+			}
+		}
+
+		// 2. Leaderboard Title
+		const titleEl = Array.from(document.querySelectorAll("h1, h2, h3, .title, strong")).find(el => !el.closest(".nsmax-board-banner") && /今日签到|签到排行榜|鸡腿排行榜/.test(el.textContent));
+		if (titleEl) {
+			titleEl.classList.add("nsmax-board-title");
+			if (!titleEl.querySelector(".nsmax-board-title-text")) {
+				titleEl.innerHTML = `<span class="nsmax-board-title-bar">|</span> <span class="nsmax-board-title-text">今日签到鸡腿排行榜</span>`;
+			}
+		}
+
+		// 3. Leaderboard list / table rows styling & ranks
+		const rows = document.querySelectorAll(".board-list > li, table tbody tr, .board-item, .table-row");
+		rows.forEach((row, index) => {
+			row.classList.add("nsmax-board-row");
+			const rank = index + 1;
+			row.setAttribute("data-rank", String(rank));
+			const rankCol = row.querySelector("td:first-child, .rank, .index, span:first-child");
+			if (rankCol && !rankCol.classList.contains("nsmax-board-rank")) {
+				rankCol.classList.add("nsmax-board-rank");
+			}
+			const img = row.querySelector("img");
+			if (img) img.classList.add("nsmax-board-avatar");
+			const userLink = row.querySelector("a[href^='/space/'], .username a, td a");
+			if (userLink) userLink.classList.add("nsmax-board-username");
+		});
 	}
 	function nsmaxUpdateNavEssence() {
 		const navMenus = document.querySelectorAll("ul.nav-menu");
@@ -287,6 +399,7 @@
 			}
 			nsmaxProcessPostListRows();
 			nsmaxPrepareSpace();
+			nsmaxPrepareBoard();
 			const isPost = /^\/post-\d+/.test(location.pathname);
 			if (!isPost && !/^\/(?:new|edit)-discussion/.test(location.pathname)) return;
 			for (const image of document.querySelectorAll(".nsk-post article.post-content img,ul.comments article.post-content img")) {

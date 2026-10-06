@@ -121,7 +121,10 @@ const nativeSpacePage = (options={}) => shell("Steve 的主页 - NodeSeek", `<di
 const spaceTopicsPage = (options={}) => nativeSpacePage(options).replace(/<div class="comments-list"[\s\S]*?<\/div><\/div><\/div><\/div><\/div>/, `<div class="discussion-wrapper" data-v-18f8c01b>${Array.from({length:6},(_,i)=>`<div class="discussion-item" data-v-18f8c01b><a href="/post-${4000+i}-1" data-v-18f8c01b><span data-v-18f8c01b>真实结构主题 ${i+1}</span><span style="color:rgb(255,152,152)" data-v-18f8c01b><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span></a><span></span></div>`).join('')}</div></div></div></div>`);
 const spaceCommentsPage = (options={}) => spaceTopicsPage(options).replace(/<div class="discussion-item" data-v-18f8c01b><a href="(.*?)" data-v-18f8c01b>(.*?)<\/a><span><\/span><\/div>/g, '<a href="$1" class="discussion-item" data-v-18f8c01b>$2<span></span></a><a href="$1#1" data-v-18f8c01b><p data-v-18f8c01b>真实评论摘要</p></a>');
 
+const boardPage = (options = {}) => shell("每日签到 - NodeSeek", `<div id="nsk-body-left"><div class="board-container"><div class="title">今日签到</div><ul class="board-list">${Array.from({length: 10}, (_, i) => `<li class="board-item"><span class="rank">${i + 1}</span><img class="avatar" src="${AVATAR}"><a href="/space/${i + 1}">用户${i + 1}</a><span class="count">${16 - i}</span></li>`).join("")}</ul></div></div>${sidebar}`, options);
+
 module.exports = {
+	boardPage,
 	spaceTopicsPage,spaceCommentsPage,
 	nativeSpacePage,
 	newPostPage,
