@@ -556,12 +556,20 @@
 				if (url.origin !== location.origin || !url.pathname.startsWith("/post-" + post?.[1] + "-") || !/^\d+$/.test(parentId) || Number(parentId) >= Number(id)) continue;
 				const parent = floors.get(parentId);
 				if (!parent || parent === item || item.contains(parent)) continue;
-				let replies = parent.querySelector(":scope > .nsmax-nested-replies");
+				// 将多轮回复平铺在所属主楼层下（深度上限为 1），彻底杜绝多次对话后层层缩进导致内容被挤成极窄条的问题
+				let rootFloor = parent;
+				while (rootFloor && rootFloor.parentElement && rootFloor.parentElement !== list) {
+					const ancestor = rootFloor.parentElement.closest("li.content-item");
+					if (ancestor) rootFloor = ancestor;
+					else break;
+				}
+				if (!rootFloor || rootFloor === item || item.contains(rootFloor)) continue;
+				let replies = rootFloor.querySelector(":scope > .nsmax-nested-replies");
 				if (!replies) {
 					replies = document.createElement("ul");
 					replies.className = "nsmax-nested-replies";
 					replies.setAttribute("aria-label", "楼中楼回复");
-					parent.append(replies);
+					rootFloor.append(replies);
 				}
 				replies.append(item);
 				processed.add(item);

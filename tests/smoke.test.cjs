@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.11");
+	assert.equal(packageJson.version, "1.7.12");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1017,9 +1017,9 @@ test('用户新需求：个人空间对齐sb.sb、悬停预览尺寸与加速、
 		await pagePrev.locator('ul.post-list .post-title a').first().hover();
 		const preview = pagePrev.locator('dialog.nspp-post-preview');
 		await preview.waitFor({ state: 'attached' });
-		// Width should be max 520px
+		// Width should be compact (<= 400px)
 		const maxW = await preview.evaluate(el => getComputedStyle(el).width);
-		assert.ok(parseInt(maxW, 10) >= 480, `Preview width is enlarged: ${maxW}`);
+		assert.ok(parseInt(maxW, 10) <= 400 && parseInt(maxW, 10) >= 350, `Preview width is compact: ${maxW}`);
 		assert.deepEqual(errorsPrev, []);
 	} finally { await ctxPrev.close(); }
 });
@@ -1133,5 +1133,49 @@ test("v1.7.11 视觉细节：顶栏板块激活态纯文本高亮无黑药丸、
 		assert.deepEqual(errorsPop, []);
 	} finally { await ctxPop.close(); }
 });
+
+test("v1.7.12 体验重构：楼中楼平铺不挤扁、个人设置页现代双栏卡片、帖子悬停预览紧凑尺寸", async () => {
+	// 1. 楼中楼多级回复平铺测试（避免逐级缩进成狭窄细条）
+	const multiLevelPost = postPage().replace(
+		'<ul class="comments">',
+		`<ul class="comments">
+		<li class="content-item" id="10"><div class="nsk-content-meta-info"><div><div class="author-info"><span class="author-name">userA</span></div></div></div><article class="post-content"><p>根楼层讨论</p></article></li>
+		<li class="content-item" id="11"><div class="nsk-content-meta-info"><div><div class="author-info"><span class="author-name">userB</span></div></div></div><article class="post-content"><p><a href="/post-1000-1#10">@userA #10</a> 第一轮回复</p></article></li>
+		<li class="content-item" id="12"><div class="nsk-content-meta-info"><div><div class="author-info"><span class="author-name">userA</span></div></div></div><article class="post-content"><p><a href="/post-1000-1#11">@userB #11</a> 第二轮回复（回复上一条子回复）</p></article></li>
+		<li class="content-item" id="13"><div class="nsk-content-meta-info"><div><div class="author-info"><span class="author-name">userB</span></div></div></div><article class="post-content"><p><a href="/post-1000-1#12">@userA #12</a> 第三轮回复（再次连续回复）</p></article></li>`
+	);
+	const { context: ctxPost, page: pagePost, errors: errorsPost } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: multiLevelPost });
+	try {
+		await wait(pagePost);
+		// 校验根楼层 #10 下存在 .nsmax-nested-replies
+		const nestedList = pagePost.locator('[id="10"] > .nsmax-nested-replies');
+		assert.equal(await nestedList.count(), 1);
+		// 所有子回复 #11, #12, #13 都平铺在根楼层的 .nsmax-nested-replies 下（而不是多层递归嵌套）
+		const directChildren = nestedList.locator("> li.content-item");
+		assert.equal(await directChildren.count(), 3, "所有连续多轮回复都平铺在根楼层下，避免深层递归阶梯");
+		// 校验子元素内部不存在再嵌套的 .nsmax-nested-replies
+		const deepNested = nestedList.locator(".nsmax-nested-replies");
+		assert.equal(await deepNested.count(), 0, "深度上限严格为 1，杜绝多层嵌套");
+		assert.deepEqual(errorsPost, []);
+	} finally { await ctxPost.close(); }
+
+	// 2. 个人设置页 #user-setting-panel 现代布局
+	const { context: ctxSetting, page: pageSetting, errors: errorsSetting } = await open(browser, "https://www.nodeseek.com/setting", { html: settingPage() });
+	try {
+		await wait(pageSetting);
+		const panel = pageSetting.locator("#user-setting-panel");
+		assert.equal(await panel.isVisible(), true);
+		const panelDisplay = await panel.evaluate(el => getComputedStyle(el).display);
+		assert.equal(panelDisplay, "flex");
+		const selectorGrid = await pageSetting.locator("#user-setting-panel .selector").evaluate(el => ({
+			display: getComputedStyle(el).display,
+			cols: getComputedStyle(el).gridTemplateColumns
+		}));
+		assert.equal(selectorGrid.display, "grid");
+		assert.ok(selectorGrid.cols.includes("190px"), "设置区为 190px 双栏布局");
+		assert.deepEqual(errorsSetting, []);
+	} finally { await ctxSetting.close(); }
+});
+
 
 

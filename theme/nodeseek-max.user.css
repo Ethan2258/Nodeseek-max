@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.11
+@version        1.7.12
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.11（UserCSS）
+ * NodeSeek Max 主题 v1.7.12（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -5806,88 +5806,186 @@
 		color:var(--text)!important;
 	}
 	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel {
-		display:grid!important;
-		grid-template-columns:180px minmax(0,1fr)!important;
-		gap:0!important;
+		display:flex!important;
+		flex-direction:column!important;
+		background:var(--panel)!important;
+		border:1px solid var(--line)!important;
+		border-radius:16px!important;
 		overflow:hidden!important;
+		box-shadow:var(--shadow-base)!important;
+		margin:0 0 24px 0!important;
+		padding:0!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .head-container {
+		display:flex!important;
+		align-items:center!important;
+		gap:16px!important;
+		padding:20px 24px!important;
+		border-bottom:1px solid var(--line-soft)!important;
+		background:var(--panel)!important;
+		backdrop-filter:none!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .head-container .avatar-wrapper {
+		position:relative!important;
+		width:52px!important;
+		height:52px!important;
+		flex:none!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .head-container img.avatar {
+		width:52px!important;
+		height:52px!important;
+		border-radius:10px!important;
+		object-fit:cover!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .head-container .word {
+		min-width:0!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .head-container h1.username {
+		font:700 18px/1.3 var(--font-sans)!important;
+		color:var(--text-strong)!important;
+		margin:0!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector {
+		display:grid!important;
+		grid-template-columns:190px minmax(0,1fr)!important;
+		min-height:540px!important;
+		background:var(--panel)!important;
+		border:0!important;
+		border-radius:12px!important;
+		box-shadow:none!important;
+		padding:0!important;
+		margin:0!important;
 	}
 	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side {
-		padding:12px!important;
+		padding:16px 12px!important;
 		background:var(--panel-alt)!important;
 		border-right:1px solid var(--line-soft)!important;
+		overflow-y:auto!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .selector-item-wrapper {
+		display:flex!important;
+		flex-direction:column!important;
+		gap:3px!important;
 	}
 	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .select-item {
-		display:block!important;
-		margin:2px 0!important;
-		padding:9px 12px!important;
+		display:flex!important;
+		align-items:center!important;
+		height:38px!important;
+		min-height:38px!important;
+		padding:0 14px!important;
+		margin:0!important;
+		border:0!important;
 		border-radius:8px!important;
 		color:var(--text-muted)!important;
 		background:transparent!important;
+		font:500 13.5px/38px var(--font-sans)!important;
+		text-decoration:none!important;
+		transition:all .15s ease!important;
+		cursor:pointer!important;
+		white-space:nowrap!important;
 	}
-	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .select-item.active {
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .select-item:hover {
+		background:color-mix(in srgb,var(--text) 6%,transparent)!important;
+		color:var(--text-strong)!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .select-item.selected,
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .select-item.active,
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .select-item.router-link-active {
 		background:var(--action)!important;
 		color:var(--action-text)!important;
+		font-weight:600!important;
+		box-shadow:0 2px 8px color-mix(in srgb,var(--action) 20%,transparent)!important;
 	}
 	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side {
 		min-width:0!important;
-		padding:24px!important;
+		padding:28px 36px!important;
 		background:var(--panel)!important;
+		overflow-y:auto!important;
 	}
-	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel input,
-	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel select,
-	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel textarea {
-		min-height:36px!important;
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side fieldset {
+		margin:0 0 22px 0!important;
+		padding:0 0 20px 0!important;
+		border:0!important;
+		border-bottom:1px solid var(--line-soft)!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side fieldset:last-of-type {
+		border-bottom:0!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side h1,
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side h2,
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side h3 {
+		font:600 14.5px/1.4 var(--font-sans)!important;
+		color:var(--text-strong)!important;
+		margin:0 0 10px 0!important;
+		letter-spacing:-.1px!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side :is(input:not([type=checkbox]):not([type=file]),select,textarea) {
+		display:block!important;
+		box-sizing:border-box!important;
+		width:100%!important;
+		max-width:100%!important;
+		height:38px!important;
+		padding:8px 14px!important;
 		border:1px solid var(--line)!important;
 		border-radius:8px!important;
 		background:var(--panel-alt)!important;
 		color:var(--text)!important;
-		box-shadow:none!important;
+		font:13.5px/1.5 var(--font-sans)!important;
+		transition:border-color .15s ease,box-shadow .15s ease!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side textarea {
+		height:auto!important;
+		min-height:90px!important;
+		line-height:1.6!important;
+		resize:vertical!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side input:focus,
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side select:focus,
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-right-side textarea:focus {
+		outline:none!important;
+		border-color:var(--brand)!important;
+		box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .set-avatar {
+		display:flex!important;
+		align-items:center!important;
+		gap:16px!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .set-avatar img.avatar {
+		width:56px!important;
+		height:56px!important;
+		border-radius:10px!important;
+		object-fit:cover!important;
 	}
 	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .switch,
 	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .el-switch,
 	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .vue-js-switch {
 		border-radius:999px!important;
 	}
-	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel :is(button,.pure-button) {
-		min-height:34px!important;
-		border-radius:999px!important;
-		background:var(--action)!important;
-		color:var(--action-text)!important;
-		border:0!important;
-	}
-	html:root:root:root:root:has(.new-discussion) .md-editor {
-		border:1px solid var(--line)!important;
-		border-radius:12px!important;
-		background:var(--panel)!important;
-		overflow:hidden!important;
-	}
-	html:root:root:root:root:has(.new-discussion) .post-title input,
-	html:root:root:root:root:has(.new-discussion) input[name=title] {
-		height:42px!important;
-		padding:0 12px!important;
-		border:1px solid var(--line)!important;
-		border-radius:8px!important;
-		background:var(--panel-alt)!important;
-		color:var(--text)!important;
-	}
-	html:root:root:root:root:has(.new-discussion) .post-editor .topic-select {
-		display:flex!important;
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel :is(button.btn,.pure-button,.btn) {
+		display:inline-flex!important;
 		align-items:center!important;
-		justify-content:flex-end!important;
-		gap:8px!important;
-		padding:10px 14px!important;
-		border-top:1px solid var(--line-soft)!important;
-		background:var(--panel)!important;
-	}
-	html:root:root:root:root:has(.new-discussion) .post-editor button[type=submit] {
-		min-height:36px!important;
-		border:0!important;
+		justify-content:center!important;
+		height:36px!important;
+		padding:0 22px!important;
 		border-radius:999px!important;
 		background:var(--action)!important;
 		color:var(--action-text)!important;
+		border:0!important;
+		font:600 13px/1 var(--font-sans)!important;
+		cursor:pointer!important;
+		box-shadow:0 2px 8px color-mix(in srgb,var(--action) 20%,transparent)!important;
+		transition:opacity .15s ease,transform .15s ease!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel :is(button.btn,.pure-button,.btn):hover {
+		opacity:.9!important;
+		transform:translateY(-1px)!important;
+	}
+	html:root:root:root:root:has(#user-setting-panel) #user-setting-panel :is(button.btn,.pure-button,.btn):active {
+		transform:translateY(0)!important;
 	}
 	@media(max-width:700px) {
-		html:root:root:root:root:has(#user-setting-panel) #user-setting-panel {
+		html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector {
 			display:block!important;
 		}
 		html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side {
@@ -5896,6 +5994,9 @@
 			overflow:auto!important;
 			border-right:0!important;
 			border-bottom:1px solid var(--line-soft)!important;
+		}
+		html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .selector-item-wrapper {
+			flex-direction:row!important;
 		}
 		html:root:root:root:root:has(#user-setting-panel) #user-setting-panel .selector-left-side .select-item {
 			white-space:nowrap!important;
@@ -6857,13 +6958,13 @@
 		font:11px/18px var(--font-sans)!important;
 	}
 	html:root:root:root:root dialog.nspp-post-preview {
-		width:min(520px,calc(100vw - 28px))!important;
-		max-height:min(440px,calc(100dvh - 32px))!important;
+		width:min(390px,calc(100vw - 28px))!important;
+		max-height:min(360px,calc(100dvh - 32px))!important;
 		margin:0!important;
 		border-radius:12px!important;
 		border:1px solid var(--line)!important;
 		background:var(--panel)!important;
-		box-shadow:0 18px 42px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06)!important;
+		box-shadow:0 18px 42px rgba(0,0,0,0.36),0 0 0 1px rgba(255,255,255,0.06)!important;
 		-webkit-backdrop-filter:blur(16px)!important;
 		backdrop-filter:blur(16px)!important;
 		overflow:hidden!important;
@@ -6871,9 +6972,9 @@
 	html:root:root:root:root dialog.nspp-post-preview>header {
 		display:flex!important;
 		align-items:center!important;
-		min-height:46px!important;
-		padding:12px 18px!important;
-		gap:10px!important;
+		min-height:40px!important;
+		padding:10px 14px!important;
+		gap:8px!important;
 		background:var(--panel-alt)!important;
 		border-bottom:1px solid var(--line-soft)!important;
 	}
@@ -6883,7 +6984,7 @@
 		-webkit-line-clamp:2!important;
 		overflow:hidden!important;
 		min-width:0!important;
-		font:600 15px/1.45 var(--font-sans)!important;
+		font:600 14px/1.4 var(--font-sans)!important;
 		color:var(--text-strong)!important;
 		word-break:break-word!important;
 		text-decoration:none!important;
@@ -6894,8 +6995,8 @@
 	}
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-meta {
 		margin:0!important;
-		padding:8px 18px 0!important;
-		font:12px/18px var(--font-sans)!important;
+		padding:6px 14px 0!important;
+		font:11.5px/16px var(--font-sans)!important;
 		color:var(--text-subtle)!important;
 		white-space:nowrap!important;
 		overflow:hidden!important;
@@ -6903,18 +7004,18 @@
 	}
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content {
 		box-sizing:border-box!important;
-		max-height:280px!important;
+		max-height:220px!important;
 		overflow-y:auto!important;
 		overscroll-behavior:contain!important;
-		padding:12px 18px 16px!important;
-		font:13.5px/1.65 var(--font-sans)!important;
+		padding:10px 14px 14px!important;
+		font:13px/1.6 var(--font-sans)!important;
 		color:var(--text)!important;
 		scrollbar-width:thin;
 	}
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content>article {
 		display:block!important;
 		margin:0!important;
-		font:13.5px/1.65 var(--font-sans)!important;
+		font:13px/1.6 var(--font-sans)!important;
 		word-break:break-word!important;
 	}
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content p,
@@ -6922,7 +7023,7 @@
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content ol,
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content blockquote,
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content pre {
-		margin:0 0 8px!important;
+		margin:0 0 6px!important;
 	}
 	html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content a {
 		color:var(--brand)!important;
@@ -6931,19 +7032,19 @@
 		text-underline-offset:2px!important;
 	}
 	html:root:root:root:root dialog.nspp-post-preview>footer {
-		min-height:38px!important;
-		padding:8px 18px!important;
+		min-height:34px!important;
+		padding:6px 14px!important;
 		gap:6px 10px!important;
 		border-top:1px solid var(--line-soft)!important;
 		background:var(--panel-alt)!important;
 	}
 	@media(max-width:700px) {
 		html:root:root:root:root dialog.nspp-post-preview {
-			width:min(360px,calc(100vw - 20px))!important;
-			max-height:min(340px,calc(100dvh - 20px))!important;
+			width:min(340px,calc(100vw - 20px))!important;
+			max-height:min(320px,calc(100dvh - 20px))!important;
 		}
 		html:root:root:root:root dialog.nspp-post-preview .nspp-preview-content {
-			max-height:180px!important;
+			max-height:160px!important;
 		}
 	}
 	html:root:root:root:root #nsk-head ul.nav-menu>li:has(a[href*="/categories/promotion"]),
