@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.18");
+	assert.equal(packageJson.version, "1.7.19");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1471,4 +1471,124 @@ test("v1.7.17 深度优化与功能完成：列表双重图标彻底杜绝、发
 
 		assert.deepEqual(errorsPost, []);
 	} finally { await ctxPost.close(); }
+});
+
+test("v1.7.19 极致细节复刻：主帖无#0楼号、标题栏双统计、OP小字引用回复举报、一键@admin评论、控制栏纯色咬合去遮罩", async () => {
+	// 1. 帖子详情页 OP 楼层与标题栏
+	const { context: ctxPost, page: pagePost, errors: errorsPost } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+		html: postPage()
+	});
+	try {
+		await pagePost.waitForSelector(".nsk-post");
+		await pagePost.waitForSelector(".nsmax-post-stat-item");
+		await wait(pagePost);
+
+		// A. 验证主帖 #0 楼号彻底隐藏
+		const opFloorVisible = await pagePost.evaluate(() => {
+			const op = document.querySelector(".nsk-post");
+			if (!op) return false;
+			const floorLinks = Array.from(op.querySelectorAll(".floor-link-wrapper, a.floor-link, [href='#0']"));
+			return floorLinks.some(el => {
+				const style = window.getComputedStyle(el);
+				return style.display !== "none" && style.visibility !== "hidden" && !el.hasAttribute("hidden");
+			});
+		});
+		assert.equal(opFloorVisible, false, "主帖 OP 不应显示 #0 楼号");
+
+		// B. 验证标题栏包含浏览量与回复数两组统计
+		const statsCheck = await pagePost.evaluate(() => {
+			const stats = document.querySelector(".nsk-post .nsmax-post-stats");
+			if (!stats) return { found: false };
+			const items = stats.querySelectorAll(".nsmax-post-stat-item");
+			return {
+				found: true,
+				count: items.length,
+				views: items[0]?.textContent.trim(),
+				replies: items[1]?.textContent.trim()
+			};
+		});
+		assert.equal(statsCheck.found, true, "标题栏右侧应当存在统计区域");
+		assert.equal(statsCheck.count, 2, "应当同时展示浏览量与回复数");
+		assert.ok(Number(statsCheck.views) > 0, "浏览量应当大于0");
+		assert.ok(Number(statsCheck.replies) > 0, "回复数应当大于0");
+
+		// C. 验证主帖包含小字 引用、回复、举报
+		const actionsCheck = await pagePost.evaluate(() => {
+			const op = document.querySelector(".nsk-post");
+			const actions = op?.querySelector(".nsmax-op-actions");
+			if (!actions) return { found: false };
+			const links = Array.from(actions.querySelectorAll(".nsmax-op-action")).map(a => a.textContent.trim());
+			return {
+				found: true,
+				links
+			};
+		});
+		assert.equal(actionsCheck.found, true, "OP 楼主右侧应当存在小字操作区域");
+		assert.deepEqual(actionsCheck.links, ["引用", "回复", "举报"], "操作区应包含引用、回复、举报");
+
+		// D. 验证主帖底部不含多余的大按钮“引用”和“回复”
+		const bottomMenuCheck = await pagePost.evaluate(() => {
+			const menu = document.querySelector(".nsk-post .comment-menu");
+			if (!menu) return { hasExtra: false };
+			const texts = Array.from(menu.querySelectorAll(".menu-item")).map(m => m.textContent + " " + (m.title || ""));
+			return {
+				hasExtra: texts.some(t => /引用|回复/.test(t))
+			};
+		});
+		assert.equal(bottomMenuCheck.hasExtra, false, "主帖底部卡片不应包含冗余的引用和回复按钮");
+
+		// E. 验证举报功能自动写入 @admin 并提交发布
+		let submitTriggered = false;
+		await pagePost.exposeFunction("__testReportSubmitted", () => {
+			submitTriggered = true;
+		});
+		await pagePost.evaluate(() => {
+			const btn = document.querySelector(".md-editor button.submit");
+			if (btn) btn.addEventListener("click", () => window.__testReportSubmitted());
+		});
+		await pagePost.locator(".nsmax-op-actions .nsmax-op-report").click();
+		await wait(pagePost, 150);
+
+		const editorVal = await pagePost.evaluate(() => {
+			const input = document.querySelector(".md-editor textarea");
+			return input ? input.value : "";
+		});
+		assert.ok(editorVal.includes("@admin"), "点击举报应当在编辑器中自动填入 @admin");
+
+		assert.deepEqual(errorsPost, []);
+	} finally { await ctxPost.close(); }
+
+	// 2. 首页控制栏与顶栏复刻
+	const { context: ctxList, page: pageList, errors: errorsList } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage()
+	});
+	try {
+		await pageList.waitForSelector(".post-list-controler");
+		const controlerStyle = await pageList.evaluate(() => {
+			const ctrl = document.querySelector(".post-list-controler");
+			if (!ctrl) return null;
+			const style = window.getComputedStyle(ctrl);
+			return {
+				display: style.display,
+				height: style.height,
+				borderRadius: style.borderTopLeftRadius,
+				backgroundColor: style.backgroundColor
+			};
+		});
+		assert.equal(controlerStyle.display, "flex");
+		assert.equal(controlerStyle.height, "48px");
+		assert.equal(controlerStyle.borderRadius, "12px");
+		assert.notEqual(controlerStyle.backgroundColor, "rgba(0, 0, 0, 0)");
+
+		// 验证没有遮罩
+		const maskCheck = await pageList.evaluate(() => {
+			const header = document.querySelector("body > header, #nsk-head");
+			if (!header) return true;
+			const before = window.getComputedStyle(header, "::before");
+			return before.content === "none" || before.display === "none";
+		});
+		assert.equal(maskCheck, true, "顶栏不应有伪元素遮罩");
+
+		assert.deepEqual(errorsList, []);
+	} finally { await ctxList.close(); }
 });

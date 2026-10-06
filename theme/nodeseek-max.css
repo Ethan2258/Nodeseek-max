@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.18（纯 CSS）
+ * NodeSeek Max 主题 v1.7.19（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -19315,4 +19315,123 @@ html:root:root:root:root #nsk-body-left {
 }
 html:root:root:root:root #nsk-body-left .nsk-pager {
 	margin-bottom:24px!important;
+}
+html:root:root:root:root :is(body > header, #nsk-head, #nsk-head, header, .top) {
+	position: sticky!important;
+	top: 0!important;
+	z-index: 30!important;
+	background: var(--panel)!important;
+	border-bottom: 1px solid var(--line)!important;
+	backdrop-filter: none!important;
+	-webkit-backdrop-filter: none!important;
+	box-shadow: none!important;
+}
+html:root:root:root:root :is(body > header, #nsk-head, #nsk-head, header, .top)::before,
+html:root:root:root:root :is(body > header, #nsk-head, #nsk-head, header, .top)::after {
+	content: none!important;
+	display: none!important;
+	backdrop-filter: none!important;
+	-webkit-backdrop-filter: none!important;
+}
+html:root:root:root:root :is(section#nsk-frame, #nsk-frame) {
+	margin-top: 0!important;
+}
+html:root:root:root:root #nsk-body-left {
+	background: transparent!important;
+	border: 0!important;
+	box-shadow: none!important;
+}
+html:root:root:root:root .post-list-controler,
+html:root:root:root:root #nsk-body-left > .post-list-controler {
+	display: flex!important;
+	align-items: center!important;
+	justify-content: space-between!important;
+	gap: 12px!important;
+	padding: 0 14px!important;
+	min-height: 48px!important;
+	height: 48px!important;
+	border: 1px solid var(--line)!important;
+	border-bottom: 1px solid var(--line-soft)!important;
+	border-radius: 12px 12px 0 0!important;
+	background: var(--panel)!important;
+	box-sizing: border-box!important;
+	margin: 0!important;
+}
+html:root:root:root:root .post-list-controler .sorter,
+html:root:root:root:root #nsk-body-left .post-list-controler .sorter {
+	display: flex!important;
+	align-items: center!important;
+	gap: 16px!important;
+	height: 100%!important;
+	min-height: 0!important;
+	margin: 0!important;
+	padding: 0!important;
+	border: 0!important;
+	background: transparent!important;
+}
+html:root:root:root:root .post-list-controler .sorter a,
+html:root:root:root:root #nsk-body-left .post-list-controler .sorter a {
+	position: relative!important;
+	display: inline-flex!important;
+	align-items: center!important;
+	height: 100%!important;
+	min-height: 0!important;
+	padding: 0 4px!important;
+	margin: 0!important;
+	border: 0!important;
+	background: transparent!important;
+	color: var(--text-muted)!important;
+	font: 500 14px/1 var(--font-sans)!important;
+	text-decoration: none!important;
+	cursor: pointer!important;
+	transition: color .15s ease!important;
+}
+html:root:root:root:root .post-list-controler .sorter a:hover {
+	color: var(--text)!important;
+	background: transparent!important;
+}
+html:root:root:root:root .post-list-controler .sorter a:is(.selected, .active) {
+	color: var(--text)!important;
+	font-weight: 600!important;
+	background: transparent!important;
+}
+html:root:root:root:root .post-list-controler .sorter a:is(.selected, .active)::after {
+	content: ""!important;
+	position: absolute!important;
+	left: 0!important;
+	right: 0!important;
+	bottom: 0!important;
+	height: 2px!important;
+	border-radius: 1px!important;
+	background: var(--action)!important;
+}
+html:root:root:root:root .post-list-controler + .post-list,
+html:root:root:root:root #nsk-body-left > .post-list {
+	background: var(--panel)!important;
+	border: 1px solid var(--line)!important;
+	border-top: 0!important;
+	border-radius: 0 0 12px 12px!important;
+	overflow: hidden!important;
+}
+html:root:root:root:root .topic-pinned,
+html:root:root:root:root #nsk-body-left ul.post-list > li.post-list-item:has(.pined) {
+	background: color-mix(in srgb, var(--mark-soft) 40%, transparent)!important;
+}
+html:root:root:root:root .nsk-post :is(.floor-link-wrapper, a.floor-link, [href="#0"], [href*="#0"]) {
+	display: none!important;
+}
+html:root:root:root:root .nsk-post .comment-menu .menu-item:is([title="引用"], [title="回复"], [aria-label="引用"], [aria-label="回复"]) {
+	display: none!important;
+}
+html:root:root:root:root .nsk-post .post-title {
+	display: flex!important;
+	align-items: flex-start!important;
+	justify-content: space-between!important;
+	gap: 16px!important;
+	flex-wrap: wrap!important;
+}
+html:root:root:root:root .nsk-post .post-title h1 {
+	flex: 1 1 auto!important;
+	min-width: 0!important;
+	margin: 0!important;
 }

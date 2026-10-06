@@ -848,3 +848,204 @@ html[data-nsmax-theme] #nsk-body-left .nsk-pager {margin-bottom:24px!important;}
 html[data-nsmax-theme] .post-list-controler a:has(+ .nsmax-nq-entry)[href*="nodequality"] {display:none!important;}
 html[data-nsmax-theme] .post-list-controler a[href*="nodequality"] ~ .nsmax-nq-entry {display:none!important;}
 
+/* ==================== 顶栏彻底复刻 sb.sb .top，彻底消除遮罩与毛玻璃投影 ==================== */
+html[data-nsmax-theme] :is(body > header, #nsk-head, [data-nsmax-header], header, .top) {
+  position: sticky!important;
+  top: 0!important;
+  z-index: 30!important;
+  background: var(--panel)!important;
+  border-bottom: 1px solid var(--line)!important;
+  backdrop-filter: none!important;
+  -webkit-backdrop-filter: none!important;
+  box-shadow: none!important;
+}
+html[data-nsmax-theme] :is(body > header, #nsk-head, [data-nsmax-header], header, .top)::before,
+html[data-nsmax-theme] :is(body > header, #nsk-head, [data-nsmax-header], header, .top)::after {
+  content: none!important;
+  display: none!important;
+  backdrop-filter: none!important;
+  -webkit-backdrop-filter: none!important;
+}
+html[data-nsmax-theme] :is(section#nsk-frame, #nsk-frame) {
+  margin-top: 0!important;
+}
+
+/* ==================== 列表控制栏彻底复刻 sb.sb .topic-toolbar 与 .post-list ==================== */
+html[data-nsmax-theme] #nsk-body-left {
+  background: transparent!important;
+  border: 0!important;
+  box-shadow: none!important;
+}
+html[data-nsmax-theme] .post-list-controler,
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler {
+  display: flex!important;
+  align-items: center!important;
+  justify-content: space-between!important;
+  gap: 12px!important;
+  padding: 0 14px!important;
+  min-height: 48px!important;
+  height: 48px!important;
+  border: 1px solid var(--line)!important;
+  border-bottom: 1px solid var(--line-soft)!important;
+  border-radius: 12px 12px 0 0!important;
+  background: var(--panel)!important;
+  box-sizing: border-box!important;
+  margin: 0!important;
+}
+html[data-nsmax-theme] .post-list-controler .sorter,
+html[data-nsmax-theme] #nsk-body-left .post-list-controler .sorter {
+  display: flex!important;
+  align-items: center!important;
+  gap: 16px!important;
+  height: 100%!important;
+  min-height: 0!important;
+  margin: 0!important;
+  padding: 0!important;
+  border: 0!important;
+  background: transparent!important;
+}
+html[data-nsmax-theme] .post-list-controler .sorter a,
+html[data-nsmax-theme] #nsk-body-left .post-list-controler .sorter a {
+  position: relative!important;
+  display: inline-flex!important;
+  align-items: center!important;
+  height: 100%!important;
+  min-height: 0!important;
+  padding: 0 4px!important;
+  margin: 0!important;
+  border: 0!important;
+  background: transparent!important;
+  color: var(--text-muted)!important;
+  font: 500 14px/1 var(--font-sans)!important;
+  text-decoration: none!important;
+  cursor: pointer!important;
+  transition: color .15s ease!important;
+}
+html[data-nsmax-theme] .post-list-controler .sorter a:hover {
+  color: var(--text)!important;
+  background: transparent!important;
+}
+html[data-nsmax-theme] .post-list-controler .sorter a:is(.selected, .active) {
+  color: var(--text)!important;
+  font-weight: 600!important;
+  background: transparent!important;
+}
+html[data-nsmax-theme] .post-list-controler .sorter a:is(.selected, .active)::after {
+  content: ""!important;
+  position: absolute!important;
+  left: 0!important;
+  right: 0!important;
+  bottom: 0!important;
+  height: 2px!important;
+  border-radius: 1px!important;
+  background: var(--action)!important;
+}
+html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry {
+  display: inline-flex!important;
+  align-items: center!important;
+  justify-content: center!important;
+  gap: 5px!important;
+  box-sizing: border-box!important;
+  height: 28px!important;
+  min-height: 28px!important;
+  padding: 0 10px!important;
+  margin: 0 0 0 auto!important;
+  border: 1px solid var(--line)!important;
+  border-radius: 999px!important;
+  background: var(--panel)!important;
+  color: var(--text-muted)!important;
+  font: 500 12px/1 var(--font-sans)!important;
+  text-decoration: none!important;
+  transition: all .15s ease!important;
+}
+html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry:hover {
+  background: var(--panel-hover)!important;
+  color: var(--text)!important;
+  border-color: var(--line-strong)!important;
+}
+html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry img {
+  width: 14px!important;
+  height: 14px!important;
+  display: inline-block!important;
+  vertical-align: middle!important;
+}
+html[data-nsmax-theme] .post-list-controler + .post-list,
+html[data-nsmax-theme] #nsk-body-left > .post-list {
+  background: var(--panel)!important;
+  border: 1px solid var(--line)!important;
+  border-top: 0!important;
+  border-radius: 0 0 12px 12px!important;
+  overflow: hidden!important;
+}
+html[data-nsmax-theme] .topic-pinned,
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item:has(.pined) {
+  background: color-mix(in srgb, var(--mark-soft) 40%, transparent)!important;
+}
+
+/* ==================== 帖子详情页 OP 楼层与标题栏像素级复刻 sb.sb ==================== */
+html[data-nsmax-theme] .nsk-post :is(.floor-link-wrapper, a.floor-link, [href="#0"], [href*="#0"]) {
+  display: none!important;
+}
+html[data-nsmax-theme] .nsk-post .comment-menu .menu-item:is([title="引用"], [title="回复"], [aria-label="引用"], [aria-label="回复"]) {
+  display: none!important;
+}
+html[data-nsmax-theme] .nsk-post .nsmax-op-actions {
+  grid-column: 3!important;
+  grid-row: 1!important;
+  display: inline-flex!important;
+  align-items: center!important;
+  gap: 12px!important;
+  margin-left: auto!important;
+}
+html[data-nsmax-theme] .nsk-post .nsmax-op-action {
+  display: inline-block!important;
+  font: 400 13px/1.5 var(--font-sans)!important;
+  color: var(--text-muted)!important;
+  text-decoration: none!important;
+  cursor: pointer!important;
+  transition: color .15s ease!important;
+}
+html[data-nsmax-theme] .nsk-post .nsmax-op-action:hover {
+  color: var(--brand)!important;
+}
+html[data-nsmax-theme] .nsk-post .nsmax-op-action.nsmax-op-report:hover {
+  color: var(--danger)!important;
+}
+html[data-nsmax-theme] .nsk-post .post-title {
+  display: flex!important;
+  align-items: flex-start!important;
+  justify-content: space-between!important;
+  gap: 16px!important;
+  flex-wrap: wrap!important;
+}
+html[data-nsmax-theme] .nsk-post .post-title h1 {
+  flex: 1 1 auto!important;
+  min-width: 0!important;
+  margin: 0!important;
+}
+html[data-nsmax-theme] .nsk-post .post-title > *:not(h1, h2, .nsmax-post-stats) {
+  display: none!important;
+}
+html[data-nsmax-theme] .nsk-post .nsmax-post-stats {
+  display: inline-flex!important;
+  align-items: center!important;
+  gap: 14px!important;
+  font: 400 13px/1.5 var(--font-sans)!important;
+  color: var(--text-subtle)!important;
+  margin-left: auto!important;
+  padding-top: 4px!important;
+  flex: none!important;
+}
+html[data-nsmax-theme] .nsk-post .nsmax-post-stat-item {
+  display: inline-flex!important;
+  align-items: center!important;
+  gap: 5px!important;
+  color: var(--text-subtle)!important;
+}
+html[data-nsmax-theme] .nsk-post .nsmax-post-stat-item svg {
+  width: 14px!important;
+  height: 14px!important;
+  flex: none!important;
+  color: var(--text-disabled)!important;
+}
+

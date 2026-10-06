@@ -448,6 +448,162 @@
 			}
 		}
 	}
+	function nsmaxDecoratePostDetail() {
+		if (!/^\/post-\d+/.test(location.pathname)) return;
+		const opPost = document.querySelector(".nsk-post") || document.querySelector("#nsk-body-left .content-item#0") || document.querySelector(".content-item#0");
+		if (!opPost) return;
+
+		// 1. 彻底隐藏 OP 主帖 #0 楼号
+		for (const floor of opPost.querySelectorAll(".floor-link-wrapper, a.floor-link, [href='#0'], [href*='#0']")) {
+			if (!floor.hasAttribute("hidden")) {
+				floor.style.setProperty("display", "none", "important");
+				floor.setAttribute("hidden", "");
+			}
+		}
+
+		// 2. 标题栏右侧浏览量与回复数统计 (👁️ 浏览量  💬 回复数)，对齐 sb.sb
+		const postTitle = opPost.querySelector(".post-title") || document.querySelector(".nsk-post .post-title");
+		if (postTitle) {
+			let stats = postTitle.querySelector(".nsmax-post-stats");
+			if (!stats || !stats.querySelector(".nsmax-post-stat-item")) {
+				if (!stats) {
+					stats = document.createElement("div");
+					stats.className = "nsmax-post-stats";
+					postTitle.append(stats);
+				}
+				let views = "";
+				const viewsEl = postTitle.querySelector(".views, [title*='views'], [title*='浏览']") || document.querySelector(".info-views");
+				if (viewsEl) views = viewsEl.textContent.replace(/[^\d.,kKwW万千]/g, "").trim();
+				if (!views && typeof window !== "undefined" && window.postData?.views) {
+					views = String(window.postData.views);
+				}
+				if (!views) {
+					const m = document.body.textContent.match(/(\d+)\s*(?:次)?浏览/);
+					if (m) views = m[1];
+				}
+				if (!views) views = "1";
+
+				let replies = "";
+				const headText = document.querySelector(".comment-head, .comment-container")?.textContent || "";
+				const repliesMatch = headText.match(/(\d+)\s*条回复/);
+				if (repliesMatch) {
+					replies = repliesMatch[1];
+				} else {
+					replies = String(document.querySelectorAll("ul.comments li.content-item").length);
+				}
+
+				stats.innerHTML = `
+				<span class="nsmax-post-stat-item" title="浏览量">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+					<span>${views}</span>
+				</span>
+				<span class="nsmax-post-stat-item" title="回复数">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+					<span>${replies}</span>
+				</span>
+			`;
+				for (const oldViews of postTitle.querySelectorAll(".views, [title*='views'], [title*='浏览'], span:has(>svg:not(.meta-icon)):not(.nsmax-post-stats *)")) {
+					oldViews.style.setProperty("display", "none", "important");
+				}
+				if (stats.parentElement !== postTitle) postTitle.append(stats);
+			} else {
+				const replySpan = stats.querySelector(".nsmax-post-stat-item:last-child span");
+				if (replySpan) {
+					const headText = document.querySelector(".comment-head, .comment-container")?.textContent || "";
+					const repliesMatch = headText.match(/(\d+)\s*条回复/);
+					const currentCount = repliesMatch ? repliesMatch[1] : String(document.querySelectorAll("ul.comments li.content-item").length);
+					if (currentCount && currentCount !== "0" && replySpan.textContent.trim() !== currentCount.trim()) {
+						replySpan.textContent = currentCount;
+					}
+				}
+			}
+		}
+
+		// 3. 在 OP 楼主信息右侧添加小字操作栏（引用、回复、举报）
+		const metaInfo = opPost.querySelector(".nsk-content-meta-info") || opPost.querySelector(".author-info")?.parentElement;
+		if (metaInfo && !metaInfo.querySelector(".nsmax-op-actions")) {
+			const actions = document.createElement("div");
+			actions.className = "nsmax-op-actions";
+			actions.innerHTML = `
+				<a class="nsmax-op-action nsmax-op-quote" role="button" title="引用正文">引用</a>
+				<a class="nsmax-op-action nsmax-op-reply" role="button" title="回复本帖">回复</a>
+				<a class="nsmax-op-action nsmax-op-report" role="button" title="举报本帖">举报</a>
+			`;
+
+			const getEditor = () => {
+				const editor = document.querySelector(".md-editor");
+				const cm = editor?.querySelector(".CodeMirror")?.CodeMirror;
+				const input = editor?.querySelector("textarea:not(.CodeMirror textarea)");
+				const submit = editor?.querySelector("button.submit, button[type=submit], .submit-row button, .topic-select button");
+				return { editor, cm, input, submit };
+			};
+
+			actions.querySelector(".nsmax-op-quote").addEventListener("click", () => {
+				const nativeQuote = opPost.querySelector(".comment-menu [title='引用'], .comment-menu [data-nsmax-compact-action][title='引用']");
+				if (nativeQuote) {
+					nativeQuote.click();
+				} else {
+					const postBody = opPost.querySelector("article.post-content, .post-content")?.textContent?.trim() || "";
+					const quoteText = postBody ? `> ${postBody.slice(0, 300).split("\n").join("\n> ")}\n\n` : "";
+					const { editor, cm, input } = getEditor();
+					if (cm) {
+						const cur = cm.getValue();
+						cm.setValue(cur ? `${cur}\n\n${quoteText}` : quoteText);
+						cm.refresh();
+					} else if (input) {
+						const cur = input.value || "";
+						input.value = cur ? `${cur}\n\n${quoteText}` : quoteText;
+						input.dispatchEvent(new Event("input", { bubbles: true }));
+					}
+				}
+				const { editor, cm, input } = getEditor();
+				if (editor) {
+					editor.scrollIntoView({ behavior: "smooth" });
+					(cm || input)?.focus();
+				}
+			});
+
+			actions.querySelector(".nsmax-op-reply").addEventListener("click", () => {
+				const { editor, cm, input } = getEditor();
+				if (editor) {
+					editor.scrollIntoView({ behavior: "smooth" });
+					(cm || input)?.focus();
+				}
+			});
+
+			actions.querySelector(".nsmax-op-report").addEventListener("click", () => {
+				const { editor, cm, input, submit } = getEditor();
+				if (editor) {
+					const reportText = "@admin ";
+					if (cm) {
+						cm.setValue(reportText);
+						cm.refresh();
+					} else if (input) {
+						const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+						setter?.call(input, reportText);
+						input.value = reportText;
+						input.dispatchEvent(new Event("input", { bubbles: true }));
+						input.dispatchEvent(new Event("change", { bubbles: true }));
+					}
+					setTimeout(() => {
+						const btn = editor.querySelector("button.submit, button[type=submit], .submit-row button, .topic-select button") || submit;
+						btn?.click();
+					}, 50);
+				}
+			});
+
+			metaInfo.append(actions);
+		}
+
+		// 4. 清理主帖底部 comment-menu 内的“引用”和“回复”
+		const opMenu = opPost.querySelector(".comment-menu");
+		if (opMenu) {
+			for (const item of opMenu.querySelectorAll(".menu-item")) {
+				const text = item.title || item.getAttribute("aria-label") || item.textContent || "";
+				if (/引用|回复/.test(text)) item.remove();
+			}
+		}
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
@@ -502,6 +658,9 @@
 			nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
 			const isPost = /^\/post-\d+/.test(location.pathname);
+			if (isPost) {
+				nsmaxDecoratePostDetail();
+			}
 			if (!isPost && !/^\/(?:new|edit)-discussion/.test(location.pathname)) return;
 			for (const image of document.querySelectorAll(".nsk-post article.post-content img,ul.comments article.post-content img")) {
 				if (images.has(image)) continue; images.add(image);
