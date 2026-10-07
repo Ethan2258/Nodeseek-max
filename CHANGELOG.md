@@ -1,5 +1,24 @@
 # 更新日志
 
+## 1.7.28
+
+- **解除侧栏资料卡与全局个人主页点击拦截**：
+  - 彻底移除 `personHoverFeature` 在捕获阶段对 `click` 事件调用的 `preventDefault()` 与 `stopImmediatePropagation()`，恢复鼠标点击链接正常跳转个人空间页；
+  - 排除选择器扩充：将 `#nsk-right-panel-container`、`.nsmax-sb-account`、`.user-card`、`.nspp-user-card` 与 `.head-container` 全面加入悬浮卡排除名单，杜绝在侧栏资料卡点击“我的主页”、“我的主题”、“我的回帖”、“我的收藏”时误触弹窗；
+  - 右侧栏资料卡增加智能同页面平滑切换：在空间页内部点击主题/回帖/收藏哈希锚点时无刷新同步哈希与视图。
+- **个人空间页（`/space/:uid`）恢复“主题”Tab 与修复死白空卡片**：
+  - 移除对单次标记 `data-nsmax-tabs-ready` 的脆弱依赖，保证 Vue 二次渲染后仍能持续补全与维系“主题”、“回帖”、“收藏”三大核心 Tab；
+  - 修正底层路由路径：将非法路由 `#/posts` 纠正为 NodeSeek 官方 Vue 路由 `#/discussions`，收藏路由校准为 `#/collections`；
+  - 路由自动纠偏：当访问空间页缺少 Hash 或默认定位至 `#/general` / `#/info` 概况页时，自动重定向至 `#/discussions`，并提供空状态提示，杜绝下方面板整片死白。
+- **顶栏“🔥 精华”标签与板块分类紧贴排版**：
+  - 修复顶栏 `ul.nav-menu` 容器弹性伸缩属性，将 `flex: 1 1 auto` 调整为 `flex: 0 1 auto !important; justify-content: flex-start !important; gap: 2px !important;`；
+  - 强制清除 `ul.nav-menu > li` 及末尾项的外部边距（`margin-left: 0 !important;`），杜绝“精华”标签脱节飘移至最右侧搜索框边缘。
+- **消息中心页（`/notification`）彻底清除残留 `.app-switch` 蓝色标签条**：
+  - 移除适配器中针对通知页 `.app-switch` 的 `display: flex !important` 规则，采用最高优先级复合选择器在 CSS 与 JS 运行时双重彻底隐藏，还原本站与 SB 纯净消息视图。
+- **关注与粉丝页（`/fans`）与签到排行榜（`/board`）现代 SB 质感重构**：
+  - `/fans` 关注与粉丝页：顶部分段胶囊重构，卡片网格自适应响应式排列，彻底剔除刺眼的鹅黄色背景块，重构转账/关注/取关/私信胶囊按钮组；
+  - `/board` 每日签到与排行榜：去除原先刺眼的鹅黄色 Banner，重构为现代磨砂面板卡片，金银铜徽章高亮前三甲，数据徽标精致对齐。
+
 ## 1.7.27
 
 - **彻底修复右侧栏发帖按钮坍塌成黑色死半圆/死穹顶**：

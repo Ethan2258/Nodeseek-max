@@ -174,71 +174,67 @@
 
 		// Align tabs with sb.sb: ensure "主题", "回帖", "收藏", hide "概况/资料", remove "设置" button
 		const selectorNav = document.querySelector(".selector");
-		if (selectorNav && !selectorNav.hasAttribute("data-nsmax-tabs-ready")) {
-			selectorNav.setAttribute("data-nsmax-tabs-ready", "true");
+		if (selectorNav) {
 			const settingBtn = selectorNav.querySelector(".nsmax-space-setting-btn");
 			if (settingBtn) settingBtn.remove();
 
-			let tabs = Array.from(selectorNav.querySelectorAll("a.select-item"));
-			const visibleTabs = [];
-			const hiddenTabs = [];
+			// 隐藏概况/资料 Tab
+			for (const tab of selectorNav.querySelectorAll("a.select-item")) {
+				const text = tab.textContent.trim();
+				const href = tab.getAttribute("href") || "";
+				if (/概况|资料/i.test(text) || href.includes("general") || href.includes("info") || href.includes("profile")) {
+					tab.style.setProperty("display", "none", "important");
+					tab.setAttribute("hidden", "");
+					tab.classList.remove("active", "router-link-active");
+				}
+			}
 
 			// 检查是否已包含主题/讨论相关 tab，若原生未提供则自动补齐
-			let topicTab = tabs.find(tab => /主题|讨论|帖子|discussions|posts|topics/i.test(tab.textContent) || /#\/(?:discussions|posts|topics)/i.test(tab.getAttribute("href") || ""));
+			let topicTab = Array.from(selectorNav.querySelectorAll("a.select-item")).find(tab => /主题|讨论|帖子|discussions/i.test(tab.textContent) || (tab.getAttribute("href") || "").includes("discussions"));
 			if (!topicTab) {
 				topicTab = document.createElement("a");
 				topicTab.className = "select-item";
-				topicTab.href = "#/posts";
+				topicTab.href = "#/discussions";
 				topicTab.textContent = "主题";
-				tabs.unshift(topicTab);
+				selectorNav.prepend(topicTab);
+			} else {
+				topicTab.textContent = "主题";
+				topicTab.setAttribute("href", "#/discussions");
+				topicTab.removeAttribute("hidden");
+				topicTab.style.removeProperty("display");
 			}
 
-			for (const tab of tabs) {
+			for (const tab of selectorNav.querySelectorAll("a.select-item")) {
 				const text = tab.textContent.trim();
 				const href = tab.getAttribute("href") || "";
-				if (/概况|资料/i.test(text) || /#\/(?:info|profile)$/i.test(href)) {
-					tab.style.setProperty("display", "none", "important");
-					tab.setAttribute("hidden", "");
-					tab.classList.remove("active");
-					hiddenTabs.push(tab);
-					continue;
-				}
-				tab.removeAttribute("hidden");
-				tab.style.removeProperty("display");
-				if (/主题|讨论|帖子|discussions|posts|topics/i.test(text) || /#\/(?:discussions|posts|topics)/i.test(href)) {
-					tab.textContent = "主题";
-					tab.setAttribute("href", "#/posts");
-				} else if (/评论|回帖|回复|comments/i.test(text) || /#\/comments/i.test(href)) {
+				if (/评论|回帖|回复/i.test(text) || href.includes("comments")) {
 					tab.textContent = "回帖";
 					tab.setAttribute("href", "#/comments");
-				} else if (/收藏|fav|collections/i.test(text) || /#\/(?:collections|fav)/i.test(href)) {
+					tab.removeAttribute("hidden");
+					tab.style.removeProperty("display");
+				} else if (/收藏/i.test(text) || href.includes("collections") || href.includes("fav")) {
 					tab.textContent = "收藏";
-					tab.setAttribute("href", "#/fav");
+					tab.setAttribute("href", "#/collections");
+					tab.removeAttribute("hidden");
+					tab.style.removeProperty("display");
 				}
-				visibleTabs.push(tab);
 			}
 
 			const orderMap = { "主题": 1, "回帖": 2, "收藏": 3 };
-			visibleTabs.sort((a, b) => {
-				const valA = orderMap[a.textContent.trim()] || 99;
-				const valB = orderMap[b.textContent.trim()] || 99;
-				return valA - valB;
-			});
+			const visibleTabs = Array.from(selectorNav.querySelectorAll("a.select-item:not([hidden])")).filter(t => !/概况|资料/i.test(t.textContent));
+			visibleTabs.sort((a, b) => (orderMap[a.textContent.trim()] || 99) - (orderMap[b.textContent.trim()] || 99));
 
 			const rightSide = selectorNav.querySelector(".selector-right-side, .discussion-wrapper, .comments-list");
 			for (const tab of visibleTabs) {
 				if (rightSide) selectorNav.insertBefore(tab, rightSide);
 				else selectorNav.append(tab);
 			}
-			for (const tab of hiddenTabs) {
-				selectorNav.append(tab);
-			}
 			selectorNav.scrollLeft = 0;
 		}
 
 		// 同步当前激活状态，避免反复 click 导致无限闪烁
 		const syncActiveTabs = () => {
-			const hash = location.hash || "#/posts";
+			const hash = location.hash || "#/discussions";
 			for (const tab of document.querySelectorAll(".selector a.select-item")) {
 				const href = tab.getAttribute("href") || "";
 				const isActive = ((hash.includes("posts") || hash.includes("discussions")) && (href.includes("posts") || href.includes("discussions"))) ||
@@ -249,24 +245,29 @@
 			}
 		};
 
-		// 首次进入空间时，如果是概况则平滑切换至主题
-		if (!window.__nsmax_space_switched) {
-			const currentHash = location.hash;
-			if (!currentHash || currentHash === "#/info" || currentHash === "#" || currentHash.includes("info") || currentHash.includes("profile")) {
-				window.__nsmax_space_switched = true;
-				location.hash = "#/posts";
-			}
+		// 首次进入空间时，如果是概况/空hash则平滑切换至主题
+		const currentHash = location.hash;
+		if (!currentHash || currentHash === "#" || currentHash === "#/general" || currentHash.startsWith("#/general") || currentHash.includes("info") || currentHash.includes("profile")) {
+			location.hash = "#/discussions";
 		}
 		syncActiveTabs();
 
-		// 为 tab 绑定点击时同步状态
+		// 为 tab 绑定点击时平滑同步路由与状态
 		for (const item of document.querySelectorAll(".selector a.select-item")) {
 			if (!item.hasAttribute("data-nsmax-bound")) {
 				item.setAttribute("data-nsmax-bound", "true");
 				item.addEventListener("click", () => {
-					setTimeout(syncActiveTabs, 50);
+					const h = item.getAttribute("href");
+					if (h && h.startsWith("#")) {
+						if (location.hash !== h) location.hash = h;
+						setTimeout(syncActiveTabs, 30);
+					}
 				});
 			}
+		}
+		if (!window.__nsmax_space_hash_bound) {
+			window.__nsmax_space_hash_bound = true;
+			window.addEventListener("hashchange", syncActiveTabs);
 		}
 	}
 	function nsmaxCleanPostActions() {
@@ -756,12 +757,41 @@
 			}
 		}
 	}
+	function nsmaxPrepareFans() {
+		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
+		for (const sw of document.querySelectorAll(".app-switch, .fans-switch, div:has(> a[href*='type=follow']), div:has(> a[href*='type=fans'])")) {
+			sw.classList.add("nsmax-fans-switch");
+		}
+		const cards = document.querySelectorAll("#nsk-body :is(.user-card, .card-item, .member-card, .fans-card), #nsk-body-left > div > div:has(img.avatar, img.avatar-normal, .avatar-wrapper), .nsk-container :is(.fans-item, .user-card-item)");
+		for (const card of cards) {
+			card.classList.add("nsmax-fan-card");
+			for (const block of card.querySelectorAll("div[style*='background'], div[style*='yellow'], div[style*='rgb(255']")) {
+				block.style.removeProperty("background");
+				block.style.removeProperty("background-color");
+				block.classList.add("nsmax-fan-stats");
+			}
+			for (const child of card.children) {
+				if (!child.classList.contains("nsmax-fan-stats") && child.querySelector("svg, use, .iconpark-icon") && /等级|鸡腿|星辰|主题|评论|粉丝/i.test(child.textContent)) {
+					child.classList.add("nsmax-fan-stats");
+				}
+				if (/转账|关注|取关|私信/.test(child.textContent)) {
+					child.classList.add("nsmax-fan-actions");
+				}
+			}
+		}
+	}
+	function nsmaxCleanNotifications() {
+		if (location.pathname !== "/notification") return;
+		for (const sw of document.querySelectorAll(".nsk-notification .app-switch, .app-switch")) {
+			sw.style.setProperty("display", "none", "important");
+		}
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
 		const images = new WeakSet();
 		const scan = () => {
-			const currentPage = /^\/post-\d+/.test(location.pathname) ? "post" : location.pathname === "/notification" ? "notification" : /^\/space\//.test(location.pathname) ? "space" : /^\/setting(?:\/|$)/.test(location.pathname) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(location.pathname) ? "new" : /^\/board(?:\/|$)/.test(location.pathname) ? "board" : "list";
+			const currentPage = /^\/post-\d+/.test(location.pathname) ? "post" : location.pathname === "/notification" ? "notification" : /^\/space\//.test(location.pathname) ? "space" : /^\/setting(?:\/|$)/.test(location.pathname) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(location.pathname) ? "new" : /^\/board(?:\/|$)/.test(location.pathname) ? "board" : /^\/fans(?:\/|$)/.test(location.pathname) ? "fans" : "list";
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
 				document.documentElement.dataset.nsmaxPage = currentPage;
 			}
@@ -817,6 +847,8 @@
 			nsmaxProcessPostListRows();
 			nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
+			nsmaxPrepareFans();
+			nsmaxCleanNotifications();
 			nsmaxCleanBadgesAndNotifications();
 			const isPost = /^\/post-\d+/.test(location.pathname);
 			if (isPost) {
@@ -1314,7 +1346,7 @@
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
 		const matches = target => {
 			const link = target instanceof Element ? target.closest('a[href*="/space/"]:not(.nsmax-person-head a):not(.nsmax-person-foot a):not(#fast-nav-button-group a),.avatar-wrapper a,.info-author a[href*="/space/"],.info-last-commenter a[href*="/space/"],.author-name[href*="/space/"],.post-author[href*="/space/"]') : null;
-			if (!link || link.closest(".nsmax-person-pop, .hover-user-card, #fast-nav-button-group")) return null;
+			if (!link || link.closest(".nsmax-person-pop, .hover-user-card, #fast-nav-button-group, .nsmax-sb-account, #nsk-right-panel-container, .user-card, .nspp-user-card, .head-container")) return null;
 			try { const url = new URL(link.href,location.href); return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) ? link : null; } catch { return null; }
 		};
 		const hide = () => { clearTimeout(opening); clearTimeout(closing); serial++; pop?.remove(); pop = null; anchor = null; document.documentElement.removeAttribute("data-nsmax-person-open"); };
@@ -1389,7 +1421,7 @@
 		};
 		document.addEventListener("pointerover",event => { const link=matches(event.target); if (!link || pop?.contains(link) || link.contains(event.relatedTarget)) return; clearTimeout(opening); clearTimeout(closing); opening=setTimeout(()=>show(link),180); }, { signal:ctx.signal });
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
-		document.addEventListener("click",event => { const link=matches(event.target); if (link && !pop?.contains(link)) { event.preventDefault(); event.stopImmediatePropagation(); void show(link); } else if (pop && !pop.contains(event.target)) hide(); }, { capture:true, signal:ctx.signal });
+		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
 		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });
 		window.addEventListener("scroll",hide,{passive:true,signal:ctx.signal}); window.addEventListener("resize",place,{passive:true,signal:ctx.signal});
 		return hide;
