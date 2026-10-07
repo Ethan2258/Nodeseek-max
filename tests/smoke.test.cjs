@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.29");
+	assert.equal(packageJson.version, "1.7.30");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -939,7 +939,7 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 	try {
 		await pageSpace.waitForSelector('.nsmax-space-top');
 		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
-		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 1);
+		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').innerText(), 'UID 10');
 		assert.equal(await pageSpace.locator('.head-container .card-block>.card-item:visible').count(), 4);
 		const progress = pageSpace.locator('.nsmax-space-progress');
@@ -961,10 +961,9 @@ test('用户新需求：个人空间对齐sb.sb、悬停预览尺寸与加速、
 	const {context: ctxSpace, page: pageSpace, errors: errorsSpace} = await open(browser,'https://www.nodeseek.com/space/50169',{html: spaceHtml});
 	try {
 		await pageSpace.waitForSelector('.nsmax-space-top');
-		// lastActive should be "最后在线 刚刚" and NOT have "一句话介绍自己"
-		const lastText = await pageSpace.locator('.nsmax-space-last').innerText();
-		assert.ok(!lastText.includes('一句话介绍自己'), 'lastActive does not contain bio placeholder');
-		assert.ok(lastText.includes('最后在线'), 'lastActive contains 最后在线');
+		// lastActive and online are completely removed per user demand
+		assert.equal(await pageSpace.locator('.nsmax-space-last').count(), 0);
+		assert.equal(await pageSpace.locator('.nsmax-space-online').count(), 0);
 
 		// Stats labels are cleaned: "鸡腿" not "鸡腿数目"
 		const chickenItem = pageSpace.locator('.card-block>.card-item').filter({hasText: '4192'});
@@ -1064,7 +1063,7 @@ test('用户最新需求还原：每日签到胶囊UI与排行榜前三高亮、
 	try {
 		await pageSpace.waitForSelector('.nsmax-space-top');
 		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
-		assert.equal(await pageSpace.locator('.nsmax-space-online').count(), 1);
+		assert.equal(await pageSpace.locator('.nsmax-space-online').count(), 0);
 		const progress = pageSpace.locator('.nsmax-space-progress');
 		assert.equal(await progress.evaluate(el => getComputedStyle(el).borderStyle), 'none');
 		assert.equal(await progress.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
@@ -1288,11 +1287,12 @@ test("v1.7.14 极致精细化：统一两处 Level 6 标签且皇冠垂直居中
 		assert.equal(await pageSpace.locator(".selector-right-side > .card-block:visible").count(), 0);
 		assert.equal(await pageSpace.locator(".selector .readme:visible").count(), 0);
 
-		// Tab 排序与激活：移除资料与设置，仅保留可见的主题与回帖
+		// Tab 排序与激活：移除资料与设置，固定保留【主题】、【回帖】、【收藏】三项
 		const tabTexts = await pageSpace.locator(".selector a.select-item:visible").allInnerTexts();
 		assert.equal(tabTexts[0], "主题");
 		assert.equal(tabTexts[1], "回帖");
-		assert.equal(tabTexts.length, 2);
+		assert.equal(tabTexts[2], "收藏");
+		assert.equal(tabTexts.length, 3);
 		assert.equal(await pageSpace.locator(".nsmax-space-setting-btn").count(), 0);
 		const activeTab = pageSpace.locator(".selector a.select-item.active:visible");
 		assert.equal(await activeTab.innerText(), "主题");

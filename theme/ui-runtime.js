@@ -11,6 +11,9 @@
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
 		if (!head) return;
 
+		// 彻底清除任何在线或最后在线状态元素
+		for (const bad of head.querySelectorAll(".nsmax-space-online, .nsmax-space-last, .nsmax-online-dot")) bad.remove();
+
 		const uid = location.pathname.match(/\/space\/(\d+)/)?.[1] || "";
 		let topRow = head.querySelector(":scope > .nsmax-space-top");
 		if (!topRow) {
@@ -30,9 +33,6 @@
 
 			const meta = document.createElement("div");
 			meta.className = "nsmax-space-meta";
-			const onlineSpan = document.createElement("span");
-			onlineSpan.className = "nsmax-space-online";
-			onlineSpan.innerHTML = '<span class="nsmax-online-dot"></span>在线';
 			const uidSpan = document.createElement("span");
 			uidSpan.className = "nsmax-space-uid";
 			uidSpan.textContent = `UID ${uid}`;
@@ -54,14 +54,12 @@
 			} else {
 				joinSpan.textContent = "近期加入";
 			}
-			const rawDesc = descEl?.textContent.trim() || "";
-			const lastActive = document.createElement("span");
-			lastActive.className = "nsmax-space-last";
-			lastActive.textContent = /最后在线/.test(rawDesc) ? rawDesc : "最后在线 刚刚";
 
-			meta.append(onlineSpan, uidSpan, joinSpan, lastActive);
+			// 严格仅展示 UID 与加入时间，绝不显示在线或最后在线状态
+			meta.append(uidSpan, joinSpan);
 			identity.append(titleRow, meta);
 
+			const rawDesc = descEl?.textContent.trim() || "";
 			if (rawDesc && rawDesc !== "一句话介绍自己" && !/最后在线/.test(rawDesc)) {
 				const bio = document.createElement("div");
 				bio.className = "nsmax-space-bio";
@@ -76,103 +74,157 @@
 			head.prepend(topRow);
 		}
 
-		// Clean and mirror stats safely: DO NOT remove stats from Vue's original parent (.selector-right-side)
-		// to avoid breaking Vue's component teardown / router view change.
+		// 确保顶栏中拥有固定的 card-block 统计容器
 		let headStats = head.querySelector(":scope > .card-block");
 		const origStats = document.querySelector(".selector .card-block, .selector-right-side .card-block");
-		if (origStats) {
-			if (!headStats) {
-				headStats = origStats.cloneNode(true);
-				head.append(headStats);
-			}
+		if (origStats && !headStats) {
+			headStats = origStats.cloneNode(true);
+			head.append(headStats);
+		}
+		if (!headStats) {
+			headStats = document.createElement("div");
+			headStats.className = "card-block";
+			head.append(headStats);
 		}
 		for (const extraCard of document.querySelectorAll(".selector .card-block, .selector-right-side .card-block")) {
 			extraCard.style.setProperty("display", "none", "important");
 		}
-		if (headStats) {
+
+		const renderStatsAndProgress = (lvl, coin, nPost, nComment) => {
+			if (!headStats) return;
 			headStats.removeAttribute("style");
-			for (const item of headStats.querySelectorAll(".card-item")) {
-				item.querySelectorAll("svg").forEach(s => s.remove());
-				const text = item.textContent.trim();
-				if (!text || /加入天数|注册天数|信用分|信任分/.test(text)) {
-					item.setAttribute("data-nsmax-obsolete-stat", "true");
-					item.style.setProperty("display", "none", "important");
-					continue;
+			const levelVal = lvl !== undefined ? Number(lvl) : 1;
+			const statItems = [
+				["等级", lvl !== undefined ? String(lvl) : "—", levelVal >= 6],
+				["鸡腿", coin !== undefined ? String(coin) : "—", false],
+				["主题", nPost !== undefined ? String(nPost) : "—", false],
+				["回帖", nComment !== undefined ? String(nComment) : "—", false]
+			];
+			let existingItems = Array.from(headStats.querySelectorAll(":scope > .card-item"));
+			if (existingItems.length < 4) {
+				headStats.innerHTML = "";
+				for (let i = 0; i < 4; i++) {
+					const item = document.createElement("div");
+					item.className = "card-item";
+					headStats.append(item);
 				}
+				existingItems = Array.from(headStats.querySelectorAll(":scope > .card-item"));
+			}
+			for (let i = 0; i < 4; i++) {
+				const item = existingItems[i];
+				const [label, val, isLv6] = statItems[i];
+				item.innerHTML = `<div class="nsmax-stat-label">${label}</div><div class="nsmax-stat-val">${val}</div>`;
+				item.toggleAttribute("data-nsmax-lv6-stat", isLv6);
 				item.removeAttribute("data-nsmax-obsolete-stat");
 				item.style.removeProperty("display");
-				const divs = Array.from(item.querySelectorAll("div, span, dt, dd")).filter(el => el.children.length === 0 && el.textContent.trim());
-				let label = "", val = "";
-				if (divs.length >= 2) {
-					label = divs[0].textContent.trim();
-					val = divs[divs.length - 1].textContent.trim();
-				} else {
-					const m = text.match(/^([^\d]+)\s*[:：]?\s*(\d+.*)$/);
-					if (m) {
-						label = m[1].trim();
-						val = m[2].trim();
-					} else {
-						label = text;
-					}
-				}
-				label = label.replace("数目", "").replace("帖数", "").replace("数", "").trim();
-				item.innerHTML = `<div class="nsmax-stat-label">${label}</div><div class="nsmax-stat-val">${val}</div>`;
-				if (/等级/.test(label) && Number(val) >= 6) {
-					item.setAttribute("data-nsmax-lv6-stat", "true");
-				}
 			}
-		}
+			for (let i = 4; i < existingItems.length; i++) {
+				existingItems[i].setAttribute("data-nsmax-obsolete-stat", "true");
+				existingItems[i].style.setProperty("display", "none", "important");
+			}
 
-		let progress = head.querySelector(":scope > .nsmax-space-progress");
-		const statsSource = headStats || stats;
-		if (!progress && statsSource) {
-			const levelText = Array.from(statsSource.querySelectorAll(".card-item")).find(item => /等级/.test(item.textContent))?.textContent.match(/\d+/)?.[0];
-			if (levelText) {
-				const level = Number(levelText);
+			// 渲染等级进度条
+			let progress = head.querySelector(":scope > .nsmax-space-progress");
+			if (!progress) {
 				progress = document.createElement("div");
 				progress.className = "nsmax-space-progress";
 				progress.innerHTML = '<span class="nsmax-space-progress-level"></span><strong class="nsmax-space-progress-percent"></strong><span class="nsmax-space-progress-next"></span><i><b></b></i>';
-
-				const titles = {
-					0: ["初来乍到", "初露锋芒"],
-					1: ["初露锋芒", "小有收获"],
-					2: ["小有收获", "渐入佳境"],
-					3: ["渐入佳境", "小有成就"],
-					4: ["小有成就", "经常露面"],
-					5: ["经常露面", "登峰造极"],
-					6: ["登峰造极", "已达最高等级"]
-				};
-
-				if (level >= 6) {
-					progress.setAttribute("data-nsmax-level-max", "");
-					progress.classList.add("nsmax-space-progress-max");
-					progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.6 登峰造极`;
-					progress.querySelector(".nsmax-space-progress-percent").textContent = `MAX`;
-					progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
-					progress.querySelector("b").style.width = `100%`;
-
-					const titleRow = head.querySelector(".nsmax-space-title-row");
-					if (titleRow && !titleRow.querySelector(".nsmax-space-vip")) {
-						const vipBadge = document.createElement("span");
-						vipBadge.className = "nsmax-space-vip";
-						vipBadge.setAttribute("data-nsmax-lv6", "true");
-						vipBadge.textContent = "Lv 6";
-						titleRow.append(vipBadge);
-					}
-				} else {
-					const cur = titles[level]?.[0] || "当前等级";
-					const nxt = titles[level]?.[1] || "下一等级";
-					const percent = Math.max(0, Math.min(100, (level % 10) * 10 || 50));
-					progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.${level} ${cur}`;
-					progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
-					progress.querySelector(".nsmax-space-progress-next").textContent = `Lv.${level + 1} ${nxt}`;
-					progress.querySelector("b").style.width = `${percent}%`;
-				}
 				head.append(progress);
 			}
+			const titles = {
+				0: ["初来乍到", "初露锋芒"],
+				1: ["初露锋芒", "小有收获"],
+				2: ["小有收获", "渐入佳境"],
+				3: ["渐入佳境", "小有成就"],
+				4: ["小有成就", "经常露面"],
+				5: ["经常露面", "登峰造极"],
+				6: ["登峰造极", "已达最高等级"]
+			};
+			if (levelVal >= 6) {
+				progress.setAttribute("data-nsmax-level-max", "");
+				progress.classList.add("nsmax-space-progress-max");
+				progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.6 登峰造极`;
+				progress.querySelector(".nsmax-space-progress-percent").textContent = `MAX`;
+				progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
+				progress.querySelector("b").style.width = `100%`;
+
+				const titleRow = head.querySelector(".nsmax-space-title-row");
+				if (titleRow && !titleRow.querySelector(".nsmax-space-vip")) {
+					const vipBadge = document.createElement("span");
+					vipBadge.className = "nsmax-space-vip";
+					vipBadge.setAttribute("data-nsmax-lv6", "true");
+					vipBadge.textContent = "Lv 6";
+					titleRow.append(vipBadge);
+				}
+			} else {
+				progress.removeAttribute("data-nsmax-level-max");
+				progress.classList.remove("nsmax-space-progress-max");
+				const cur = titles[levelVal]?.[0] || "当前等级";
+				const nxt = titles[levelVal]?.[1] || "下一等级";
+				const percent = Math.max(10, Math.min(100, (levelVal % 10) * 10 || 50));
+				progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.${levelVal} ${cur}`;
+				progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
+				progress.querySelector(".nsmax-space-progress-next").textContent = `Lv.${levelVal + 1} ${nxt}`;
+				progress.querySelector("b").style.width = `${percent}%`;
+			}
+		};
+
+		// 1. 从已有 DOM 中读取统计数字
+		let parsedLevel, parsedCoin, parsedPost, parsedComment;
+		const parseSource = headStats || origStats || stats;
+		if (parseSource) {
+			for (const item of parseSource.querySelectorAll(".card-item")) {
+				const t = item.textContent.trim();
+				if (/等级/.test(t)) {
+					const m = t.match(/\d+/);
+					if (m) parsedLevel = Number(m[0]);
+				} else if (/鸡腿/.test(t)) {
+					const m = t.match(/\d+/);
+					if (m) parsedCoin = Number(m[0]);
+				} else if (/主题/.test(t)) {
+					const m = t.match(/\d+/);
+					if (m) parsedPost = Number(m[0]);
+				} else if (/评论|回帖/.test(t)) {
+					const m = t.match(/\d+/);
+					if (m) parsedComment = Number(m[0]);
+				}
+			}
+		}
+		if (parsedLevel !== undefined) {
+			renderStatsAndProgress(parsedLevel, parsedCoin, parsedPost, parsedComment);
 		}
 
-		// Align tabs with sb.sb: ensure "主题", "回帖", "收藏", hide "概况/资料", remove "设置" button
+		// 2. 通过 API 保证异步获取完整数据（支持直达非概况页面）
+		if (uid && (parsedLevel === undefined || !head.querySelector(".nsmax-space-progress"))) {
+			if (!window.__nsmax_space_api_cache) window.__nsmax_space_api_cache = new Map();
+			let reqPromise = window.__nsmax_space_api_cache.get(uid);
+			if (!reqPromise) {
+				reqPromise = fetch("/api/account/getInfo/" + uid, { headers: { "Accept": "application/json" } })
+					.then(res => res.json())
+					.then(data => data?.detail || data?.data || {})
+					.catch(() => ({}));
+				window.__nsmax_space_api_cache.set(uid, reqPromise);
+			}
+			reqPromise.then(info => {
+				if (!info || typeof info !== "object") return;
+				const l = info.rank !== undefined ? Number(info.rank) : (parsedLevel || 1);
+				const c = info.coin !== undefined ? Number(info.coin) : (parsedCoin || 0);
+				const p = info.nPost !== undefined ? Number(info.nPost) : (parsedPost || 0);
+				const cm = info.nComment !== undefined ? Number(info.nComment) : (parsedComment || 0);
+				renderStatsAndProgress(l, c, p, cm);
+				if (info.created_at) {
+					try {
+						const d = new Date(info.created_at);
+						const jEl = head.querySelector(".nsmax-space-join");
+						if (jEl && !/加入/.test(jEl.textContent)) {
+							jEl.textContent = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} 加入`;
+						}
+					} catch {}
+				}
+			});
+		}
+
+		// 对齐空间页 Tab：固定【主题】、【回帖】、【收藏】三项，置于卡片顶部，隐藏概况/资料/设置
 		const selectorNav = document.querySelector(".selector");
 		if (selectorNav) {
 			const settingBtn = selectorNav.querySelector(".nsmax-space-setting-btn");
@@ -189,85 +241,85 @@
 				}
 			}
 
-			// 检查是否已包含主题/讨论相关 tab，若原生未提供则自动补齐
-			let topicTab = Array.from(selectorNav.querySelectorAll("a.select-item")).find(tab => /主题|讨论|帖子|discussions/i.test(tab.textContent) || (tab.getAttribute("href") || "").includes("discussions"));
-			if (!topicTab) {
-				topicTab = document.createElement("a");
-				topicTab.className = "select-item";
-				topicTab.href = "#/discussions";
-				topicTab.textContent = "主题";
-				selectorNav.prepend(topicTab);
-			} else {
-				topicTab.textContent = "主题";
-				topicTab.setAttribute("href", "#/discussions");
-				topicTab.removeAttribute("hidden");
-				topicTab.style.removeProperty("display");
+			const tabDefs = [
+				{ key: "discussions", text: "主题", href: "#/discussions", match: /主题|讨论|帖子|discussions/i },
+				{ key: "comments", text: "回帖", href: "#/comments", match: /评论|回帖|回复|comments/i },
+				{ key: "collections", text: "收藏", href: "#/collections", match: /收藏|collections|fav/i }
+			];
+
+			const orderedTabs = [];
+			for (const def of tabDefs) {
+				let tab = Array.from(selectorNav.querySelectorAll("a.select-item")).find(t => 
+					t.getAttribute("data-nsmax-tab") === def.key || 
+					def.match.test(t.textContent.trim()) || 
+					(t.getAttribute("href") || "").includes(def.key)
+				);
+				if (!tab) {
+					tab = document.createElement("a");
+					tab.className = "select-item";
+					selectorNav.append(tab);
+				}
+				tab.textContent = def.text;
+				tab.setAttribute("href", def.href);
+				tab.setAttribute("data-nsmax-tab", def.key);
+				tab.removeAttribute("hidden");
+				tab.style.removeProperty("display");
+				orderedTabs.push(tab);
 			}
 
-			for (const tab of selectorNav.querySelectorAll("a.select-item")) {
-				const text = tab.textContent.trim();
-				const href = tab.getAttribute("href") || "";
-				if (/评论|回帖|回复/i.test(text) || href.includes("comments")) {
-					tab.textContent = "回帖";
-					tab.setAttribute("href", "#/comments");
-					tab.removeAttribute("hidden");
-					tab.style.removeProperty("display");
-				} else if (/收藏/i.test(text) || href.includes("collections") || href.includes("fav")) {
-					tab.textContent = "收藏";
-					tab.setAttribute("href", "#/collections");
-					tab.removeAttribute("hidden");
-					tab.style.removeProperty("display");
+			// 将 3 个 Tab 固定排在 selector 最前部，绝不混入列表项之中
+			const firstNonTab = Array.from(selectorNav.children).find(c => !c.matches("a.select-item"));
+			for (const tab of orderedTabs) {
+				if (firstNonTab) selectorNav.insertBefore(tab, firstNonTab);
+				else selectorNav.append(tab);
+			}
+
+			const syncActiveTabs = () => {
+				const hash = location.hash || "#/discussions";
+				for (const tab of orderedTabs) {
+					const key = tab.getAttribute("data-nsmax-tab");
+					let isActive = false;
+					if (key === "discussions" && (/discussions|posts/.test(hash) || !hash || hash === "#" || hash.includes("general") || hash.includes("info"))) {
+						isActive = true;
+					} else if (key === "comments" && /comments/.test(hash)) {
+						isActive = true;
+					} else if (key === "collections" && /collections|fav/.test(hash)) {
+						isActive = true;
+					}
+					tab.classList.toggle("active", isActive);
+					tab.classList.toggle("router-link-active", isActive);
+				}
+			};
+
+			for (const tab of orderedTabs) {
+				if (!tab.hasAttribute("data-nsmax-bound")) {
+					tab.setAttribute("data-nsmax-bound", "true");
+					tab.addEventListener("click", () => {
+						const h = tab.getAttribute("href");
+						if (h && h.startsWith("#")) {
+							if (location.hash !== h) location.hash = h;
+							setTimeout(() => {
+								syncActiveTabs();
+								nsmaxPrepareSpace();
+							}, 30);
+						}
+					});
 				}
 			}
 
-			const orderMap = { "主题": 1, "回帖": 2, "收藏": 3 };
-			const visibleTabs = Array.from(selectorNav.querySelectorAll("a.select-item:not([hidden])")).filter(t => !/概况|资料/i.test(t.textContent));
-			visibleTabs.sort((a, b) => (orderMap[a.textContent.trim()] || 99) - (orderMap[b.textContent.trim()] || 99));
-
-			const rightSide = selectorNav.querySelector(".selector-right-side, .discussion-wrapper, .comments-list");
-			for (const tab of visibleTabs) {
-				if (rightSide) selectorNav.insertBefore(tab, rightSide);
-				else selectorNav.append(tab);
+			// 首次进入空间时，如果是概况/空hash则平滑切换至主题
+			const currentHash = location.hash;
+			if (!currentHash || currentHash === "#" || currentHash === "#/general" || currentHash.startsWith("#/general") || currentHash.includes("info") || currentHash.includes("profile")) {
+				location.hash = "#/discussions";
 			}
-			selectorNav.scrollLeft = 0;
+			syncActiveTabs();
 		}
 
-		// 同步当前激活状态，避免反复 click 导致无限闪烁
-		const syncActiveTabs = () => {
-			const hash = location.hash || "#/discussions";
-			for (const tab of document.querySelectorAll(".selector a.select-item")) {
-				const href = tab.getAttribute("href") || "";
-				const isActive = ((hash.includes("posts") || hash.includes("discussions")) && (href.includes("posts") || href.includes("discussions"))) ||
-					(hash.includes("comments") && href.includes("comments")) ||
-					((hash.includes("collections") || hash.includes("fav")) && (href.includes("collections") || href.includes("fav")));
-				tab.classList.toggle("active", isActive);
-				tab.classList.toggle("router-link-active", isActive);
-			}
-		};
-
-		// 首次进入空间时，如果是概况/空hash则平滑切换至主题
-		const currentHash = location.hash;
-		if (!currentHash || currentHash === "#" || currentHash === "#/general" || currentHash.startsWith("#/general") || currentHash.includes("info") || currentHash.includes("profile")) {
-			location.hash = "#/discussions";
-		}
-		syncActiveTabs();
-
-		// 为 tab 绑定点击时平滑同步路由与状态
-		for (const item of document.querySelectorAll(".selector a.select-item")) {
-			if (!item.hasAttribute("data-nsmax-bound")) {
-				item.setAttribute("data-nsmax-bound", "true");
-				item.addEventListener("click", () => {
-					const h = item.getAttribute("href");
-					if (h && h.startsWith("#")) {
-						if (location.hash !== h) location.hash = h;
-						setTimeout(syncActiveTabs, 30);
-					}
-				});
-			}
-		}
 		if (!window.__nsmax_space_hash_bound) {
 			window.__nsmax_space_hash_bound = true;
-			window.addEventListener("hashchange", syncActiveTabs);
+			window.addEventListener("hashchange", () => {
+				nsmaxPrepareSpace();
+			});
 		}
 	}
 	function nsmaxCleanPostActions() {
@@ -759,31 +811,110 @@
 	}
 	function nsmaxPrepareFans() {
 		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
-		for (const sw of document.querySelectorAll(".app-switch, .fans-switch, div:has(> a[href*='type=follow']), div:has(> a[href*='type=fans'])")) {
+		for (const sw of document.querySelectorAll("#nsk-body :is(.app-switch, .fans-switch), div:has(> a[href*='type=follow']), div:has(> a[href*='type=fans'])")) {
 			sw.classList.add("nsmax-fans-switch");
 		}
 		const cards = document.querySelectorAll("#nsk-body :is(.user-card, .card-item, .member-card, .fans-card), #nsk-body-left > div > div:has(img.avatar, img.avatar-normal, .avatar-wrapper), .nsk-container :is(.fans-item, .user-card-item)");
+		if (cards.length > 0) {
+			const parent = cards[0].parentElement;
+			if (parent) parent.classList.add("nsmax-fans-grid");
+		}
 		for (const card of cards) {
+			if (card.hasAttribute("data-nsmax-fan-rebuilt")) continue;
+			const avatar = card.querySelector("img.avatar, img.avatar-normal, .avatar-wrapper img, img");
+			const userLink = card.querySelector("a[href*='/space/']");
+			const username = userLink ? userLink.textContent.trim() : "";
+			const userHref = userLink ? userLink.getAttribute("href") : "#";
+
+			const rawText = card.textContent;
+			let subText = "";
+			const joinedMatch = rawText.match(/Joined\s+\d+\s*days?\s*ago/i) || rawText.match(/加入\s*\d+\s*天/);
+			if (joinedMatch) {
+				subText = joinedMatch[0];
+			} else {
+				const p = card.querySelector("p, .bio, .motto, .signature");
+				if (p && p.textContent.trim()) {
+					subText = p.textContent.trim();
+				} else {
+					const textNodes = Array.from(card.querySelectorAll("div, span"))
+						.map(el => el.textContent.trim())
+						.filter(t => t && !/^(等级|鸡腿|星辰|主题|评论|粉丝|私信|回复|@|转账|关注|取关)/.test(t) && t !== username);
+					if (textNodes.length > 0) subText = textNodes[0];
+				}
+			}
+
+			const levelMatch = rawText.match(/等级\s*(?:Lv\.?\s*)?(\d+)/i);
+			const drumMatch = rawText.match(/鸡腿\s*(\d+)/);
+			const topicMatch = rawText.match(/(?:主题帖|主题)\s*(\d+)/);
+			const commentMatch = rawText.match(/(?:评论数|评论)\s*(\d+)/);
+			const fansMatch = rawText.match(/粉丝\s*(\d+)/);
+			const starMatch = rawText.match(/星辰\s*(\d+)/);
+
+			const level = levelMatch ? `Lv ${levelMatch[1]}` : "Lv 1";
+			const drum = drumMatch ? drumMatch[1] : "0";
+			const topic = topicMatch ? topicMatch[1] : "0";
+			const comment = commentMatch ? commentMatch[1] : "0";
+			const fans = fansMatch ? fansMatch[1] : "0";
+			const star = starMatch ? starMatch[1] : "0";
+
+			const buttons = Array.from(card.querySelectorAll("button, a.btn, a:not([href*='/space/'])"))
+				.filter(btn => /转账|关注|取关|私信/.test(btn.textContent));
+
+			card.setAttribute("data-nsmax-fan-rebuilt", "true");
 			card.classList.add("nsmax-fan-card");
-			for (const block of card.querySelectorAll("div[style*='background'], div[style*='yellow'], div[style*='rgb(255']")) {
-				block.style.removeProperty("background");
-				block.style.removeProperty("background-color");
-				block.classList.add("nsmax-fan-stats");
+			card.innerHTML = "";
+
+			const headRow = document.createElement("div");
+			headRow.className = "nsmax-fan-header";
+			if (avatar) {
+				avatar.className = "avatar";
+				headRow.append(avatar);
 			}
-			for (const child of card.children) {
-				if (!child.classList.contains("nsmax-fan-stats") && child.querySelector("svg, use, .iconpark-icon") && /等级|鸡腿|星辰|主题|评论|粉丝/i.test(child.textContent)) {
-					child.classList.add("nsmax-fan-stats");
-				}
-				if (/转账|关注|取关|私信/.test(child.textContent)) {
-					child.classList.add("nsmax-fan-actions");
-				}
+			const userInfo = document.createElement("div");
+			userInfo.className = "nsmax-fan-info";
+			const nameA = document.createElement("a");
+			nameA.className = "nsmax-fan-name";
+			nameA.href = userHref;
+			nameA.textContent = username;
+			const subDiv = document.createElement("div");
+			subDiv.className = "nsmax-fan-sub";
+			subDiv.textContent = subText || "NodeSeek 会员";
+			userInfo.append(nameA, subDiv);
+			headRow.append(userInfo);
+
+			const statsGrid = document.createElement("div");
+			statsGrid.className = "nsmax-fan-stats-grid";
+			const statsList = [
+				["等级", level],
+				["鸡腿", drum],
+				["主题", topic],
+				["评论", comment],
+				["粉丝", fans],
+				["星辰", star]
+			];
+			for (const [k, v] of statsList) {
+				const cell = document.createElement("div");
+				cell.className = "nsmax-fan-stat-cell";
+				cell.innerHTML = `<span class="nsmax-fan-stat-k">${k}</span><span class="nsmax-fan-stat-v">${v}</span>`;
+				statsGrid.append(cell);
 			}
+
+			const actionRow = document.createElement("div");
+			actionRow.className = "nsmax-fan-actions";
+			for (const btn of buttons) {
+				actionRow.append(btn);
+			}
+
+			card.append(headRow, statsGrid, actionRow);
 		}
 	}
 	function nsmaxCleanNotifications() {
-		if (location.pathname !== "/notification") return;
-		for (const sw of document.querySelectorAll(".nsk-notification .app-switch, .app-switch")) {
-			sw.style.setProperty("display", "none", "important");
+		if (!/^\/notifications?(?:\/|$)/.test(location.pathname)) return;
+		const hasMessages = !!document.querySelector(".nspp-messages, #nspp-messages");
+		if (hasMessages) {
+			for (const sw of document.querySelectorAll(".nsk-notification > .app-switch, #nsk-body-left > .nsk-notification > .app-switch, .app-switch:has(a[href*='#/atMe'])")) {
+				sw.style.setProperty("display", "none", "important");
+			}
 		}
 	}
 	function mountLeanUi(ctx) {
@@ -791,7 +922,7 @@
 		const processed = new WeakSet();
 		const images = new WeakSet();
 		const scan = () => {
-			const currentPage = /^\/post-\d+/.test(location.pathname) ? "post" : location.pathname === "/notification" ? "notification" : /^\/space\//.test(location.pathname) ? "space" : /^\/setting(?:\/|$)/.test(location.pathname) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(location.pathname) ? "new" : /^\/board(?:\/|$)/.test(location.pathname) ? "board" : /^\/fans(?:\/|$)/.test(location.pathname) ? "fans" : "list";
+			const currentPage = /^\/post-\d+/.test(location.pathname) ? "post" : /^\/notifications?(?:\/|$)/.test(location.pathname) ? "notification" : /^\/space\//.test(location.pathname) ? "space" : /^\/setting(?:\/|$)/.test(location.pathname) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(location.pathname) ? "new" : /^\/board(?:\/|$)/.test(location.pathname) ? "board" : /^\/fans(?:\/|$)/.test(location.pathname) ? "fans" : "list";
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
 				document.documentElement.dataset.nsmaxPage = currentPage;
 			}

@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.29
+@version        1.7.30
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.29（UserCSS）
+ * NodeSeek Max 主题 v1.7.30（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -16265,7 +16265,7 @@
 		margin:0 auto!important;
 		padding:0 16px!important;
 	}
-	html:root:root:has(.nsk-notification) .nsk-notification .app-switch {
+	html:root:root:has(.nsk-notification) .nsk-notification:not(:has(.nspp-messages)) .app-switch {
 		display:flex;
 		align-items:center;
 		gap:4px;
@@ -19219,24 +19219,25 @@
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector {
 		display:flex!important;
 		flex-wrap:wrap!important;
-		align-items:center!important;
+		align-items:flex-start!important;
 		justify-content:flex-start!important;
 		padding:0!important;
 		border-radius:12px!important;
 		border:1px solid var(--line)!important;
 		background:var(--panel)!important;
-		overflow:visible!important;
+		overflow:hidden!important;
 		box-shadow:var(--shadow-base)!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item {
+		order:-1!important;
 		position:relative!important;
 		display:inline-flex!important;
 		align-items:center!important;
 		justify-content:center!important;
 		min-height:48px!important;
 		height:48px!important;
-		padding:0 16px!important;
-		margin:0 4px 0 0!important;
+		padding:0 20px!important;
+		margin:0!important;
 		border:0!important;
 		border-radius:0!important;
 		border-bottom:2px solid transparent!important;
@@ -19247,9 +19248,6 @@
 		cursor:pointer!important;
 		box-shadow:none!important;
 		transition:color .15s ease!important;
-	}
-	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item:first-child {
-		margin-left:16px!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector .select-item:hover {
 		color:var(--text)!important;
@@ -19268,21 +19266,34 @@
 		content:""!important;
 		position:absolute!important;
 		bottom:0!important;
-		left:12px!important;
-		right:12px!important;
+		left:16px!important;
+		right:16px!important;
 		height:2px!important;
 		border-radius:1px!important;
 		background:var(--action)!important;
 	}
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector::after {
+		content:""!important;
+		order:0!important;
+		width:100%!important;
+		height:1px!important;
+		background:var(--line-soft)!important;
+		display:block!important;
+		margin:0!important;
+		padding:0!important;
+	}
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector > :not(.select-item):not(::after),
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .selector-right-side,
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper,
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .comments-list {
+		order:1!important;
 		width:100%!important;
 		box-sizing:border-box!important;
 		flex:1 1 100%!important;
-		border-top:1px solid var(--line-soft)!important;
+		border-top:0!important;
 		margin:0!important;
 		padding:0!important;
+		clear:both!important;
 	}
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper {
 		margin:0!important;
@@ -19417,10 +19428,37 @@
 		background:var(--panel-alt)!important;
 		margin-left:auto!important;
 	}
-	html:root:root:root:root[data-nsmax-page="fans"] #nsk-body,
-	html:root:root:root:root :is(.fans-container, [data-nsmax-page="fans"] #nsk-body-left) {
-		width:100%!important;
-		max-width:1200px!important;
+	html:root:root:root:root:root:root:root[data-nsmax-page="fans"] #nsk-body,
+	html:root:root:root:root:root:root:root[data-nsmax-page="fans"] section#nsk-frame > #nsk-body.nsk-container {
+		width: 100% !important;
+		max-width: 1200px !important;
+		margin-left: auto !important;
+		margin-right: auto !important;
+		padding: 0 16px !important;
+		box-sizing: border-box !important;
+		display: block !important;
+	}
+	html:root:root:root:root:root:root:root[data-nsmax-page="fans"] #nsk-body-left {
+		width: 100% !important;
+		max-width: 100% !important;
+		float: none !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+	html:root:root:root:root:root:root:root[data-nsmax-page="fans"] #nsk-right-panel-container {
+		display: none !important;
+	}
+	html:root:root:root:root[data-nsmax-page="fans"] .fans-switch,
+	html:root:root:root:root[data-nsmax-page="fans"] .app-switch {
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		padding: 4px !important;
+		margin: 0 auto 20px !important;
+		border-radius: 999px !important;
+		border: 1px solid var(--line) !important;
+		background: var(--panel) !important;
+		box-shadow: var(--shadow-base) !important;
 	}
 	html:root:root:root:root #fast-nav-button-group,
 	html:root:root:root:root .fast-nav-button-group,
@@ -20100,14 +20138,23 @@
 		line-height: 1 !important;
 		vertical-align: middle !important;
 	}
-	html:root:root:root:root:root:root:root :is(.app-switch, .nsk-notification > .app-switch, .nsk-notification .app-switch, [data-nsmax-page="notification"] .app-switch) {
+	html:root:root:root:root:root:root:root :is(
+	  .nsk-notification:has(.nspp-messages) > .app-switch,
+	  .nsk-notification:has(.nspp-messages) .app-switch,
+	  .nsk-notification > div:has(~ .nspp-messages) > .app-switch,
+	  [data-nsmax-page="notification"]:has(.nspp-messages) .app-switch,
+	  #nsk-body:has(.nspp-messages) .app-switch,
+	  [data-nsmax-page="notification"]:has(.nspp-messages) .app-title
+	) {
 		display: none !important;
 		visibility: hidden !important;
+		opacity: 0 !important;
 		height: 0 !important;
 		min-height: 0 !important;
 		margin: 0 !important;
 		padding: 0 !important;
 		overflow: hidden !important;
+		pointer-events: none !important;
 	}
 	html:root:root:root:root #nsk-body > #nsk-right-panel-container {
 		width: 260px !important;

@@ -769,6 +769,7 @@ html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .h
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .head-container .nsmax-online-dot {display:inline-block!important;width:7px!important;height:7px!important;border-radius:50%!important;background:#22c55e!important;box-shadow:0 0 6px rgba(34,197,94,.6)!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .head-container .nsmax-space-uid {display:inline-flex!important;align-items:center!important;padding:1px 6px!important;border-radius:4px!important;background:var(--panel-alt)!important;color:var(--text-muted)!important;font-size:11.5px!important;font-weight:500!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .head-container :is(a.btn,button.btn) {display:inline-flex!important;align-items:center!important;justify-content:center!important;height:32px!important;padding:0 16px!important;border-radius:999px!important;border:1px solid var(--line)!important;background:var(--panel-alt)!important;color:var(--text)!important;font:500 13px var(--font-sans)!important;text-decoration:none!important;margin-left:auto!important;}
+html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .head-container :is(.nsmax-space-online, .nsmax-online-dot, .nsmax-space-last) {display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .head-container .card-block {display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin:18px 0 14px!important;padding:16px 0 0!important;border:0!important;border-top:1px solid var(--line-soft)!important;background:transparent!important;box-shadow:none!important;gap:16px!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector-right-side > .card-block {display:none!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .head-container .card-block>.card-item {display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;min-height:unset!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;}
@@ -789,16 +790,17 @@ html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .n
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .nsmax-space-progress[data-nsmax-level-max] .nsmax-space-progress-next {color:var(--text-muted)!important;font-weight:500!important;font-size:12.5px!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .nsmax-space-progress[data-nsmax-level-max]>i {height:6px!important;background:var(--line-soft)!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .nsmax-space-progress[data-nsmax-level-max]>i>b {width:100%!important;background:var(--brand)!important;box-shadow:none!important;}
-html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector {display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important;padding:0!important;border-radius:12px!important;border:1px solid var(--line)!important;background:var(--panel)!important;overflow:visible!important;box-shadow:var(--shadow-base)!important;}
-html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item {position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:48px!important;height:48px!important;padding:0 16px!important;margin:0 4px 0 0!important;border:0!important;border-radius:0!important;border-bottom:2px solid transparent!important;color:var(--text-muted)!important;background:transparent!important;font:500 14px/48px var(--font-sans)!important;text-decoration:none!important;cursor:pointer!important;box-shadow:none!important;transition:color .15s ease!important;}
-html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item:first-child {margin-left:16px!important;}
+html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector {display:flex!important;flex-wrap:wrap!important;align-items:flex-start!important;justify-content:flex-start!important;padding:0!important;border-radius:12px!important;border:1px solid var(--line)!important;background:var(--panel)!important;overflow:hidden!important;box-shadow:var(--shadow-base)!important;}
+html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item {order:-1!important;position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:48px!important;height:48px!important;padding:0 20px!important;margin:0!important;border:0!important;border-radius:0!important;border-bottom:2px solid transparent!important;color:var(--text-muted)!important;background:transparent!important;font:500 14px/48px var(--font-sans)!important;text-decoration:none!important;cursor:pointer!important;box-shadow:none!important;transition:color .15s ease!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item:hover {color:var(--text)!important;background:transparent!important;box-shadow:none!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item.active,
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item.router-link-active {color:var(--text-strong)!important;font-weight:600!important;background:transparent!important;border-bottom-color:transparent!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item.active::after,
-html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item.router-link-active::after {content:""!important;position:absolute!important;bottom:0!important;left:12px!important;right:12px!important;height:2px!important;border-radius:1px!important;background:var(--action)!important;}
+html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector .select-item.router-link-active::after {content:""!important;position:absolute!important;bottom:0!important;left:16px!important;right:16px!important;height:2px!important;border-radius:1px!important;background:var(--action)!important;}
+html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector::after {content:""!important;order:0!important;width:100%!important;height:1px!important;background:var(--line-soft)!important;display:block!important;margin:0!important;padding:0!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .nsmax-space-setting-btn {display:none!important;}
-html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) :is(.selector-right-side, .discussion-wrapper, .comments-list) {width:100%!important;box-sizing:border-box!important;flex:1 1 100%!important;border-top:1px solid var(--line-soft)!important;margin:0!important;padding:0!important;}
+html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .selector > :not(.select-item):not(::after),
+html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) :is(.selector-right-side, .discussion-wrapper, .comments-list) {order:1!important;width:100%!important;box-sizing:border-box!important;flex:1 1 100%!important;border-top:0!important;margin:0!important;padding:0!important;clear:both!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .discussion-wrapper {margin:0!important;border-radius:0!important;overflow:hidden!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item {display:flex!important;align-items:center!important;justify-content:space-between!important;min-height:52px!important;padding:12px 20px!important;border-bottom:1px solid var(--line-soft)!important;transition:background-color .15s ease!important;}
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item:last-child {border-bottom:0!important;}
@@ -852,27 +854,232 @@ html[data-nsmax-theme] .nsmax-board-row .count,
 html[data-nsmax-theme] .nsmax-board-row td:last-child {font:600 13px var(--font-mono)!important;color:var(--text-muted)!important;padding:3px 8px!important;border-radius:6px!important;background:var(--panel-alt)!important;margin-left:auto!important;}
 
 /* ==================== 关注与粉丝页 (/fans) 现代卡片与按钮重构 ==================== */
-html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-body,
-html[data-nsmax-theme] :is(.fans-container, [data-nsmax-page="fans"] #nsk-body-left) {width:100%!important;max-width:1200px!important;}
-html[data-nsmax-theme] :is(.nsmax-fans-switch, .fans-switch, [data-nsmax-page="fans"] .app-switch) {display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:4px!important;margin:0 auto 20px!important;border-radius:999px!important;border:1px solid var(--line)!important;background:var(--panel)!important;box-shadow:var(--shadow-base)!important;}
-html[data-nsmax-theme] :is(.nsmax-fans-switch, .fans-switch, [data-nsmax-page="fans"] .app-switch) > a {display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;min-height:32px!important;height:32px!important;padding:0 18px!important;border-radius:999px!important;font:500 13.5px var(--font-sans)!important;color:var(--text-muted)!important;text-decoration:none!important;transition:all .15s ease!important;}
-html[data-nsmax-theme] :is(.nsmax-fans-switch, .fans-switch, [data-nsmax-page="fans"] .app-switch) > a:hover {color:var(--text)!important;background:var(--panel-hover)!important;}
-html[data-nsmax-theme] :is(.nsmax-fans-switch, .fans-switch, [data-nsmax-page="fans"] .app-switch) > a:is(.active,.router-link-active,[aria-current="page"]) {background:var(--action)!important;color:var(--action-text)!important;font-weight:600!important;box-shadow:0 1px 3px rgba(0,0,0,.1)!important;}
-html[data-nsmax-theme][data-nsmax-page="fans"] :is(#nsk-body-left > div:not(.app-switch):not(.nsmax-fans-switch), .fans-list, .member-grid) {display:grid!important;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important;gap:16px!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card, [data-nsmax-page="fans"] .member-card) {display:flex!important;flex-direction:column!important;padding:16px!important;border-radius:12px!important;border:1px solid var(--line)!important;background:var(--panel)!important;box-shadow:var(--shadow-base)!important;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card, [data-nsmax-page="fans"] .member-card):hover {transform:translateY(-2px)!important;box-shadow:var(--shadow-medium)!important;border-color:var(--line-strong)!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card) :is(.avatar,.avatar-normal,img:first-child) {width:44px!important;height:44px!important;border-radius:10px!important;object-fit:cover!important;border:1px solid var(--line-soft)!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card) a[href*="/space/"] {font:600 15px/1.3 var(--font-sans)!important;color:var(--text-strong)!important;text-decoration:none!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card) a[href*="/space/"]:hover {color:var(--brand)!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-stats, [data-nsmax-page="fans"] .user-card > div:nth-child(2), [data-nsmax-page="fans"] div[style*="background"], [data-nsmax-page="fans"] div[style*="yellow"], [data-nsmax-page="fans"] div[style*="rgb(255"]) {background:var(--panel-alt)!important;background-color:var(--panel-alt)!important;border:1px solid var(--line-soft)!important;border-radius:8px!important;padding:10px 12px!important;margin:12px 0!important;color:var(--text)!important;font:12.5px/1.7 var(--font-sans)!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-stats, [data-nsmax-page="fans"] .user-card > div:nth-child(2)) :is(svg,.iconpark-icon) {color:var(--text-subtle)!important;vertical-align:-2px!important;margin-right:4px!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-actions, [data-nsmax-page="fans"] .user-card > div:last-child) {display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;margin-top:auto!important;padding-top:4px!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-actions, [data-nsmax-page="fans"] .user-card) :is(button,a.btn,a:not([href*="/space/"])) {display:inline-flex!important;align-items:center!important;justify-content:center!important;height:28px!important;min-height:28px!important;padding:0 12px!important;border-radius:999px!important;font:500 12px/1 var(--font-sans)!important;border:1px solid var(--line)!important;background:var(--panel-alt)!important;color:var(--text)!important;text-decoration:none!important;cursor:pointer!important;transition:all .15s ease!important;box-shadow:none!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-actions, [data-nsmax-page="fans"] .user-card) :is(button,a.btn,a):hover {background:var(--panel-hover)!important;border-color:var(--line-strong)!important;}
-html[data-nsmax-theme] :is(.nsmax-fan-actions, [data-nsmax-page="fans"] .user-card) :is(button,a):is([data-action="follow"],.btn-primary),
-html[data-nsmax-theme] :is(.nsmax-fan-actions, [data-nsmax-page="fans"] .user-card) :is(button,a):has(span:contains("关注")),
-html[data-nsmax-theme] :is(.nsmax-fan-actions, [data-nsmax-page="fans"] .user-card) :is(button,a)[style*="rgb(0, 122, 255)"],
-html[data-nsmax-theme] :is(.nsmax-fan-actions, [data-nsmax-page="fans"] .user-card) :is(button,a)[style*="#007aff"] {background:var(--brand)!important;color:#ffffff!important;border-color:var(--brand)!important;}
+html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] #nsk-body,
+html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] section#nsk-frame > #nsk-body.nsk-container {
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 0 16px !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] #nsk-body-left {
+  width: 100% !important;
+  max-width: 100% !important;
+  float: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] #nsk-right-panel-container {
+  display: none !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="fans"] :is(.nsmax-fans-switch, .fans-switch, .app-switch) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  margin: 0 auto 20px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-base) !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="fans"] :is(.nsmax-fans-switch, .fans-switch, .app-switch) > a {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  font: 500 13.5px var(--font-sans) !important;
+  color: var(--text-muted) !important;
+  text-decoration: none !important;
+  transition: all .15s ease !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="fans"] :is(.nsmax-fans-switch, .fans-switch, .app-switch) > a:hover {
+  color: var(--text) !important;
+  background: var(--panel-hover) !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="fans"] :is(.nsmax-fans-switch, .fans-switch, .app-switch) > a:is(.active,.router-link-active,[aria-current="page"]) {
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1) !important;
+}
+
+/* 4-column cards grid spanning 1200px container */
+html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] :is(#nsk-body-left > div:not(.app-switch):not(.nsmax-fans-switch), .fans-list, .member-grid, .nsmax-fans-grid) {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1100px) {
+  html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] :is(#nsk-body-left > div:not(.app-switch):not(.nsmax-fans-switch), .fans-list, .member-grid, .nsmax-fans-grid) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] :is(#nsk-body-left > div:not(.app-switch):not(.nsmax-fans-switch), .fans-list, .member-grid, .nsmax-fans-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] :is(#nsk-body-left > div:not(.app-switch):not(.nsmax-fans-switch), .fans-list, .member-grid, .nsmax-fans-grid) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card, [data-nsmax-page="fans"] .member-card) {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 20px !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-base) !important;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+  box-sizing: border-box !important;
+  height: 100% !important;
+}
+
+html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card, [data-nsmax-page="fans"] .member-card):hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-medium) !important;
+  border-color: var(--line-strong) !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+html[data-nsmax-theme] :is(.nsmax-fan-header .avatar, .nsmax-fan-card .avatar, [data-nsmax-page="fans"] .user-card .avatar) {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 10px !important;
+  object-fit: cover !important;
+  border: 1px solid var(--line-soft) !important;
+  flex: none !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-info {
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-name {
+  display: block !important;
+  font: 600 15px/1.3 var(--font-sans) !important;
+  color: var(--text-strong) !important;
+  text-decoration: none !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-name:hover {
+  color: var(--brand) !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-sub {
+  font: 12px/1.4 var(--font-sans) !important;
+  color: var(--text-muted) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  margin-top: 2px !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 8px 12px !important;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  background: var(--panel-alt) !important;
+  border: 1px solid var(--line-soft) !important;
+  margin-bottom: 16px !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-stat-cell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-stat-k {
+  color: var(--text-muted) !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-stat-v {
+  font-weight: 600 !important;
+  color: var(--text-strong) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-top: auto !important;
+  padding-top: 4px !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-actions :is(button, a.btn, a) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 14px !important;
+  border-radius: 999px !important;
+  font: 500 12px/1 var(--font-sans) !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all .15s ease !important;
+  box-shadow: none !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-actions :is(button, a.btn, a):hover {
+  background: var(--panel-hover) !important;
+  border-color: var(--line-strong) !important;
+}
+
+html[data-nsmax-theme] .nsmax-fan-actions :is(button, a):is([data-action="follow"], .btn-primary),
+html[data-nsmax-theme] .nsmax-fan-actions :is(button, a):has(span:contains("关注")),
+html[data-nsmax-theme] .nsmax-fan-actions :is(button, a)[style*="rgb(0, 122, 255)"],
+html[data-nsmax-theme] .nsmax-fan-actions :is(button, a)[style*="#007aff"] {
+  background: var(--brand) !important;
+  color: #ffffff !important;
+  border-color: var(--brand) !important;
+}
 /* Lucky Giveaway Modal & Trigger on /new-discussion */
 html[data-nsmax-theme] .nsmax-lucky-trigger {display:inline-flex!important;align-items:center!important;gap:6px!important;height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel-alt)!important;color:var(--text)!important;font:500 13px/32px var(--font-sans)!important;cursor:pointer!important;transition:all .15s ease!important;}
 html[data-nsmax-theme] .nsmax-lucky-trigger:hover {border-color:var(--brand)!important;color:var(--brand)!important;background:var(--panel)!important;}
@@ -1923,14 +2130,23 @@ html[data-nsmax-theme] :is(
   margin: 16px 0 !important;
 }
 
-html[data-nsmax-theme]:root:root:root :is(.app-switch, .nsk-notification > .app-switch, .nsk-notification .app-switch, [data-nsmax-page="notification"] .app-switch) {
+html[data-nsmax-theme]:root:root:root :is(
+  .nsk-notification:has(.nspp-messages) > .app-switch,
+  .nsk-notification:has(.nspp-messages) .app-switch,
+  .nsk-notification > div:has(~ .nspp-messages) > .app-switch,
+  [data-nsmax-page="notification"]:has(.nspp-messages) .app-switch,
+  #nsk-body:has(.nspp-messages) .app-switch,
+  [data-nsmax-page="notification"]:has(.nspp-messages) .app-title
+) {
   display: none !important;
   visibility: hidden !important;
+  opacity: 0 !important;
   height: 0 !important;
   min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
+  pointer-events: none !important;
 }
 
 /* 9. 侧栏资料卡与右侧面板全面加固：防止 1024px 及各类尺寸下宽度挤压与文字脱节 */
