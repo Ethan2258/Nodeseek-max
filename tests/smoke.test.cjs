@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.26");
+	assert.equal(packageJson.version, "1.7.27");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1779,4 +1779,53 @@ test("v1.7.26 签到页往返防崩溃与中等屏顶栏防遮挡、右侧栏260
 		await context.close();
 	}
 });
+
+test("v1.7.27 发帖按钮全宽胶囊与文字完整性、顶栏精华跟随分类、中等屏两栏对齐与无死白", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(),
+		viewport: { width: 1024, height: 613 }
+	});
+	try {
+		await page.waitForSelector(".nsmax-account-compose");
+		const layout = await page.evaluate(() => {
+			const compose = document.querySelector(".nsmax-account-compose");
+			const essence = document.querySelector("ul.nav-menu > li.nsmax-essence-tab-item");
+			const head = document.querySelector("#nsk-head");
+			const body = document.querySelector("#nsk-body");
+			const logo = document.querySelector("#nsk-head .site-title");
+			const left = document.querySelector("#nsk-body-left");
+			const right = document.querySelector("#nsk-right-panel-container");
+			const search = document.querySelector("#nsk-head .search-box");
+			const nav = document.querySelector("#nsk-head ul.nav-menu");
+
+			return {
+				composeText: compose ? compose.textContent.trim() : "",
+				composeWidth: compose ? Math.round(compose.getBoundingClientRect().width) : 0,
+				composeHeight: compose ? Math.round(compose.getBoundingClientRect().height) : 0,
+				essenceMarginLeft: essence ? getComputedStyle(essence).marginLeft : "",
+				essenceFollows: essence && nav ? essence.parentElement === nav : false,
+				logoX: logo ? Math.round(logo.getBoundingClientRect().x) : 0,
+				leftX: left ? Math.round(left.getBoundingClientRect().x) : 0,
+				rightRight: right ? Math.round(right.getBoundingClientRect().right) : 0,
+				searchX: search ? Math.round(search.getBoundingClientRect().x) : 0,
+				navRight: nav ? Math.round(nav.getBoundingClientRect().right) : 0,
+				headWidth: head ? Math.round(head.getBoundingClientRect().width) : 0,
+				bodyWidth: body ? Math.round(body.getBoundingClientRect().width) : 0
+			};
+		});
+
+		assert.equal(layout.composeText, "+ 发帖", "发帖按钮必须含有明确的 '+ 发帖' 文本");
+		assert.ok(layout.composeWidth >= 200, `发帖按钮宽度必须撑满资料卡内容区 (实际 ${layout.composeWidth}px)`);
+		assert.ok(layout.composeHeight >= 34, `发帖按钮高度必须达到胶囊标准高度 (实际 ${layout.composeHeight}px)`);
+		assert.notEqual(layout.essenceMarginLeft, "auto", "精华标签严禁设置 margin-left: auto 导致脱节");
+		assert.equal(layout.essenceFollows, true, "精华标签应作为导航分类的平级末尾项");
+		assert.equal(layout.logoX, layout.leftX, `Logo 起始坐标 (${layout.logoX}px) 必须与帖子列表卡片起始坐标 (${layout.leftX}px) 垂直绝对对齐`);
+		assert.ok(layout.searchX >= layout.navRight, `搜索框 (${layout.searchX}px) 严禁遮挡分类菜单 (${layout.navRight}px)`);
+		assert.ok(layout.rightRight >= 1000, `右侧面板必须铺展至视口右边缘 (实际 ${layout.rightRight}px)，杜绝死白右侧空隙`);
+		assert.deepEqual(errors, []);
+	} finally {
+		await context.close();
+	}
+});
+
 

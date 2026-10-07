@@ -1,5 +1,21 @@
 # 更新日志
 
+## 1.7.27
+
+- **彻底修复右侧栏发帖按钮坍塌成黑色死半圆/死穹顶**：
+  - 根因排查：在资料卡重建流程中，原生 `a[href="/new-discussion"]` 若无显式文字且 SVG 图标被适配器样式隐藏时，按钮失去内部尺寸；同时缺少强制 `width: 100% !important;` 并在卡片容器 `overflow: hidden` 下被切断下半部分，缩窄为一个 18px 黑色半圆残影；
+  - 核心重构：在 `nsmaxBuildAccountCard()` 中保证即使原生节点丢失也安全创建发帖锚点，显式注入 `<span class="nsmax-compose-text">+ 发帖</span>`；
+  - 样式加固：在 `sb-adapter.css` 中将 `.nsmax-account-compose` 声明为 `display: flex !important; width: 100% !important; height: 36px !important; border-radius: 999px !important;` 完整药丸胶囊按钮，并解除 `.user-card` 垂直方向截断（`overflow: visible !important; height: auto !important;`），保证黑底白字高圆角全宽呈现。
+- **顶栏“精 精华”标签脱节与搜索框遮挡修复**：
+  - 移除 `ul.nav-menu>li.nsmax-essence-tab-item` 上的 `margin-left: auto !important`，让精华板块自然紧随所有版块分类（如“拼车”、“曝光”后顺畅排列），禁止独立孤悬在搜索框右侧；
+  - 顶栏分类容器 `ul.nav-menu` 增加右外边距 `margin-right: 12px !important;`，搜索框设置 `z-index: 5 !important; margin-left: auto !important; flex: 0 0 160px !important;`，彻底杜绝分类文字被搜索框遮挡切断。
+- **1024px 中等屏幕整站双栏水平偏移与右侧死白空隙彻底修复**：
+  - 针对中屏/笔记本下原生 `#nsk-frame-block` 占位导致版心缩至 740px 并留下 284px 死白空白的问题，强制隐藏 `#nsk-frame-block` 与 `#nsk-left-panel-container`；
+  - 统一 `#nsk-head` 与 `#nsk-body` 的流式宽度：在所有 `>=861px` 屏幕下强制声明 `width: 100% !important; max-width: 1200px !important; margin: 0 auto !important; padding: 0 16px !important;`；
+  - 双栏网格对齐：帖子列表卡片左边缘与顶栏 Logo 垂直对齐于 x: 16px，右侧面板 260px 贴紧右边缘 x: 1008px，彻底铺满屏幕。
+- **全量自动化测试（59/59 PASS）**：
+  - 增加对发帖按钮文字内容、尺寸胶囊、精华板块对齐与 1024 视口双栏垂直对齐的专项验证，59 项冒烟测试全部通过。
+
 ## 1.7.26
 
 - **签到页（`/board`）路由往返与双列 Grid 彻底防崩塌**：

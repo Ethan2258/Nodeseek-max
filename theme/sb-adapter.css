@@ -86,7 +86,9 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-menu a {display
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-menu svg {width:13px;height:13px;flex:none;color:var(--text-subtle);}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-unread {display:inline-grid;place-items:center;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--danger);color:var(--on-danger);font:10px/1 var(--font-sans);}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-menu a:hover {color:var(--text-strong)!important;}
-html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account a.nsmax-account-compose {display:flex!important;align-items:center;justify-content:center;gap:6px;width:100%;height:34px!important;margin:0!important;border:1px solid var(--action)!important;border-radius:999px!important;background:var(--action)!important;color:var(--action-text)!important;font:500 13px/1 var(--font-sans)!important;}
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account a.nsmax-account-compose {box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:100%!important;max-width:100%!important;height:36px!important;min-height:36px!important;margin:12px 0 0 0!important;padding:0 16px!important;border:1px solid var(--action)!important;border-radius:999px!important;background:var(--action)!important;color:var(--action-text,#fff)!important;font:600 13.5px/1 var(--font-sans)!important;text-decoration:none!important;overflow:hidden!important;cursor:pointer!important;}
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account a.nsmax-account-compose:hover {opacity:0.9!important;}
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account a.nsmax-account-compose .nsmax-compose-text {color:var(--action-text,#fff)!important;font:inherit!important;line-height:1!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account a.nsmax-account-compose svg {display:none!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account a.nsmax-account-compose::before {display:none!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-icon {color:var(--brand);}
@@ -726,7 +728,7 @@ html[data-nsmax-theme] dialog.nspp-post-preview>footer {min-height:34px!importan
 /* Top nav essence tab & badge, hide promotion */
 html[data-nsmax-theme] #nsk-head ul.nav-menu>li:has(a[href*="/categories/promotion"]),
 html[data-nsmax-theme] #nsk-head ul.nav-menu>li[data-nsmax-own-hide] {display:none!important;}
-html[data-nsmax-theme] #nsk-head ul.nav-menu>li.nsmax-essence-tab-item {display:inline-flex!important;margin-left:auto!important;}
+html[data-nsmax-theme] #nsk-head ul.nav-menu>li.nsmax-essence-tab-item {display:inline-flex!important;margin:0!important;flex-shrink:0!important;}
 html[data-nsmax-theme] #nsk-head :is(ul.nav-menu>li>a.nsmax-essence-tab,a.nsmax-essence-tab) {display:inline-flex!important;align-items:center!important;gap:5px!important;color:#f59e0b!important;font-weight:600!important;}
 html[data-nsmax-theme] #nsk-head :is(ul.nav-menu>li>a.nsmax-essence-tab,a.nsmax-essence-tab):hover {background:color-mix(in srgb,#f59e0b 14%,transparent)!important;color:#fbbf24!important;}
 html[data-nsmax-theme] #nsk-head :is(ul.nav-menu>li>a.nsmax-essence-tab[aria-current=page],ul.nav-menu>li>a.nsmax-essence-tab[data-nsmax-header-cat-on]) {background:linear-gradient(135deg,#f59e0b,#ec4899)!important;color:#fff!important;box-shadow:0 0 12px rgba(245,158,11,.4)!important;}
@@ -1074,14 +1076,24 @@ html[data-nsmax-theme] :is(body > header, #nsk-head, [data-nsmax-header], header
   backdrop-filter: none!important;
   -webkit-backdrop-filter: none!important;
 }
+html[data-nsmax-theme] #nsk-left-panel-container,
+html[data-nsmax-theme] #nsk-frame-block {
+  display: none !important;
+  width: 0 !important;
+}
 html[data-nsmax-theme] :is(section#nsk-frame, #nsk-frame) {
-  margin-top: 0!important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
 }
 html[data-nsmax-theme] #nsk-head,
-html[data-nsmax-theme] #nsk-body {
+html[data-nsmax-theme] #nsk-body,
+html[data-nsmax-theme] section#nsk-frame > #nsk-body.nsk-container {
   box-sizing: border-box !important;
+  width: 100% !important;
   max-width: 1200px !important;
   margin-left: auto !important;
   margin-right: auto !important;
@@ -1637,7 +1649,7 @@ html[data-nsmax-theme] #nsk-head ul.nav-menu {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
   white-space: nowrap !important;
-  margin: 0 !important;
+  margin: 0 12px 0 0 !important;
   padding: 0 !important;
 }
 
@@ -1652,12 +1664,14 @@ html[data-nsmax-theme] #nsk-head ul.nav-menu > li {
 }
 
 html[data-nsmax-theme] #nsk-head .search-box {
+  position: relative !important;
   margin-left: auto !important;
   flex-shrink: 0 !important;
   flex: 0 0 160px !important;
   width: 160px !important;
   max-width: 180px !important;
   min-width: 90px !important;
+  z-index: 5 !important;
 }
 
 /* 2. 主帖头部操作栏“引用 回复 举报”完全靠右对齐 */
@@ -1861,7 +1875,9 @@ html[data-nsmax-theme] #nsk-right-panel-container .user-card {
   min-width: 100% !important;
   box-sizing: border-box !important;
   display: block !important;
-  overflow: hidden !important;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: auto !important;
 }
 
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account {
@@ -1904,10 +1920,16 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-stat {
 }
 
 @media (min-width: 861px) {
-  html[data-nsmax-theme] #nsk-body {
+  html[data-nsmax-theme] #nsk-body,
+  html[data-nsmax-theme] section#nsk-frame > #nsk-body.nsk-container {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) 260px !important;
     gap: 20px !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
   }
 }
 

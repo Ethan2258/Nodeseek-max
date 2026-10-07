@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.26（纯 CSS）
+ * NodeSeek Max 主题 v1.7.27（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -19566,14 +19566,24 @@ html:root:root:root:root :is(body > header, #nsk-head, #nsk-head, header, .top):
 	backdrop-filter: none!important;
 	-webkit-backdrop-filter: none!important;
 }
+html:root:root:root:root #nsk-left-panel-container,
+html:root:root:root:root #nsk-frame-block {
+	display: none !important;
+	width: 0 !important;
+}
 html:root:root:root:root :is(section#nsk-frame, #nsk-frame) {
-	margin-top: 0!important;
-	padding-left: 0 !important;
-	padding-right: 0 !important;
+	display: block !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	overflow: visible !important;
 }
 html:root:root:root:root #nsk-head,
-html:root:root:root:root #nsk-body {
+html:root:root:root:root #nsk-body,
+html:root:root:root:root section#nsk-frame > #nsk-body.nsk-container {
 	box-sizing: border-box !important;
+	width: 100% !important;
 	max-width: 1200px !important;
 	margin-left: auto !important;
 	margin-right: auto !important;
@@ -19915,7 +19925,7 @@ html:root:root:root:root #nsk-head ul.nav-menu {
 	scrollbar-width: none !important;
 	-ms-overflow-style: none !important;
 	white-space: nowrap !important;
-	margin: 0 !important;
+	margin: 0 12px 0 0 !important;
 	padding: 0 !important;
 }
 html:root:root:root:root #nsk-head ul.nav-menu::-webkit-scrollbar {
@@ -19927,12 +19937,14 @@ html:root:root:root:root #nsk-head ul.nav-menu > li {
 	flex-shrink: 0 !important;
 }
 html:root:root:root:root #nsk-head .search-box {
+	position: relative !important;
 	margin-left: auto !important;
 	flex-shrink: 0 !important;
 	flex: 0 0 160px !important;
 	width: 160px !important;
 	max-width: 180px !important;
 	min-width: 90px !important;
+	z-index: 5 !important;
 }
 html:root:root:root:root #nsk-body-left .nsk-post .floor-actions {
 	grid-column: 3 / -1 !important;
@@ -20039,12 +20051,20 @@ html:root:root:root:root #nsk-right-panel-container .user-card {
 	min-width: 100% !important;
 	box-sizing: border-box !important;
 	display: block !important;
-	overflow: hidden !important;
+	overflow: visible !important;
+	height: auto !important;
+	min-height: auto !important;
 }
 @media (min-width: 861px) {
-	html:root:root:root:root #nsk-body {
+	html:root:root:root:root #nsk-body,
+	html:root:root:root:root section#nsk-frame > #nsk-body.nsk-container {
 		display: grid !important;
 		grid-template-columns: minmax(0, 1fr) 260px !important;
 		gap: 20px !important;
+		width: 100% !important;
+		max-width: 1200px !important;
+		margin-left: auto !important;
+		margin-right: auto !important;
+		box-sizing: border-box !important;
 	}
 }
