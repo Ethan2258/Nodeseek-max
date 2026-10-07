@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.21
+@version        1.7.22
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.21（UserCSS）
+ * NodeSeek Max 主题 v1.7.22（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -18357,13 +18357,17 @@
 		display:flex!important;
 		align-items:center!important;
 		justify-content:center!important;
-		gap:5px!important;
-		padding:14px 14px 18px!important;
-		margin:0!important;
+		gap:6px!important;
+		padding:0!important;
+		margin:16px 0 0!important;
+		background:transparent!important;
+		border:0!important;
 	}
-	html:root:root:root:root #nsk-body-left > :has(>.nsk-pager) {
+	html:root:root:root:root #nsk-body-left > :not(.post-list-controler):has(>.nsk-pager) {
 		margin:0!important;
 		padding:0!important;
+		background:transparent!important;
+		border:0!important;
 	}
 	html:root:root:root:root #nsk-body-left > #nsk-body-left-block {
 		display:none!important;
@@ -18371,7 +18375,8 @@
 	html:root:root:root:root #nsk-body-left .nsk-pager [role=navigation] {
 		display:flex!important;
 		align-items:center!important;
-		gap:5px!important;
+		gap:6px!important;
+		background:transparent!important;
 	}
 	html:root:root:root:root #nsk-body-left .nsk-pager .pager-pos,
 	html:root:root:root:root #nsk-body-left .nsk-pager .pager-next,
@@ -18388,8 +18393,8 @@
 		border:1px solid var(--line)!important;
 		border-radius:999px!important;
 		background:var(--panel)!important;
-		color:var(--text-subtle)!important;
-		font:13px/30px var(--font-sans)!important;
+		color:var(--text-muted)!important;
+		font:500 13px/30px var(--font-sans)!important;
 		text-decoration:none!important;
 	}
 	html:root:root:root:root #nsk-body-left .nsk-pager .pager-cur {
@@ -19369,25 +19374,152 @@
 	}
 	html:root:root:root:root #fast-nav-button-group,
 	html:root:root:root:root .fast-nav-button-group,
-	html:root:root:root:root .nsk-footer,
+	html:root:root:root:root .nsk-footer {
+		display: none !important;
+	}
 	html:root:root:root:root #nsk-body-left {
-		padding-bottom:24px!important;
+		padding-bottom: 0 !important;
 	}
-	html:root:root:root:root #nsk-body-left .nsk-pager:not(.post-list-controler *) {
-		margin:16px 0 0!important;
-		padding:0!important;
+	html:root:root:root:root :is(.nspp-action, button.nspp-action)[hidden],
+	html:root:root:root:root :is(.nspp-action, button.nspp-action)[data-nsmax-all-loaded] {
+		display: none !important;
 	}
-	html:root:root:root:root #nsk-body-left :is(.nsk-pager:not(.post-list-controler *), div:not(.post-list-controler):has(>.nsk-pager), .post-top-pager, .post-bottom-pager, .pager-bottom) {
-		background:transparent!important;
-		border:0!important;
-		box-shadow:none!important;
-		backdrop-filter:none!important;
-		-webkit-backdrop-filter:none!important;
+	html:root:root:root:root :is(.pager-top, .post-top-pager, .post-list-controler .nsk-pager) {
+		display: none !important;
 	}
-	html:root:root:root:root #nsk-body-left :is(.nsk-pager:not(.post-list-controler *), div:not(.post-list-controler):has(>.nsk-pager), .post-top-pager, .post-bottom-pager, .pager-bottom)::before,
-	html:root:root:root:root #nsk-body-left :is(.nsk-pager:not(.post-list-controler *), div:not(.post-list-controler):has(>.nsk-pager), .post-top-pager, .post-bottom-pager, .pager-bottom)::after {
-		content:none!important;
-		display:none!important;
+	html:root:root:root:root :is(.pager-bottom, .post-bottom-pager, #nsk-body-left .nsk-pager:not(.pager-top):not(.post-top-pager), #nsk-body-left > div:not(.post-list-controler):has(>.pager-bottom), .comment-container .post-bottom-pager) {
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		gap: 6px !important;
+		margin: 16px 0 0 !important;
+		padding: 0 !important;
+		background: transparent !important;
+		border: 0 !important;
+		border-top: 0 !important;
+		box-shadow: none !important;
+		backdrop-filter: none !important;
+		-webkit-backdrop-filter: none !important;
+	}
+	html:root:root:root:root .pager-bottom::before,
+	html:root:root:root:root .post-bottom-pager::before,
+	html:root:root:root:root .pager-bottom::after,
+	html:root:root:root:root .post-bottom-pager::after,
+	html:root:root:root:root #nsk-body-left .post-bottom-pager::before,
+	html:root:root:root:root #nsk-body-left .pager-bottom::before,
+	html:root:root:root:root #nsk-body-left .post-bottom-pager::after,
+	html:root:root:root:root #nsk-body-left .pager-bottom::after {
+		content: none !important;
+		display: none !important;
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is([role="navigation"], > div) {
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		gap: 6px !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		background: transparent !important;
+		border: 0 !important;
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-pos, a.pager-pos) {
+		box-sizing: border-box !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		width: 32px !important;
+		min-width: 32px !important;
+		height: 32px !important;
+		min-height: 32px !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		border: 1px solid var(--line) !important;
+		border-radius: 9999px !important;
+		background: var(--panel) !important;
+		color: var(--text-muted) !important;
+		font: 500 13px/30px var(--font-sans) !important;
+		font-variant-numeric: tabular-nums !important;
+		text-decoration: none !important;
+		cursor: pointer !important;
+		transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) a.pager-pos:hover {
+		background: var(--panel-hover) !important;
+		border-color: var(--line-strong) !important;
+		color: var(--text) !important;
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-prev, .pager-next, a.pager-prev, a.pager-next) {
+		box-sizing: border-box !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		min-width: 60px !important;
+		width: auto !important;
+		height: 32px !important;
+		min-height: 32px !important;
+		padding: 0 14px !important;
+		margin: 0 !important;
+		border: 1px solid var(--line) !important;
+		border-radius: 9999px !important;
+		background: var(--panel) !important;
+		color: var(--text-muted) !important;
+		font: 500 13px/30px var(--font-sans) !important;
+		text-decoration: none !important;
+		cursor: pointer !important;
+		transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) a.pager-prev:hover,
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) a.pager-next:hover {
+		background: var(--panel-hover) !important;
+		border-color: var(--line-strong) !important;
+		color: var(--text) !important;
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) .pager-prev::before,
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) .pager-next::before,
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-prev, .pager-next)>.triangle-left,
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-prev, .pager-next)>.triangle-right {
+		content: none !important;
+		display: none !important;
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
+		background: var(--action, #292524) !important;
+		color: var(--action-text, #ffffff) !important;
+		border-color: var(--action, #292524) !important;
+		font-weight: 600 !important;
+		box-shadow: 0 2px 8px rgb(12 10 9 / 0.12) !important;
+		cursor: default !important;
+	}
+	html:root:root:root:root:has(>body.dark-layout) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
+	html:root:root:root:root:has(>body.dark-layout) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
+		background: #ffffff !important;
+		color: #0c0a09 !important;
+		border-color: #ffffff !important;
+		box-shadow: 0 2px 10px rgb(0 0 0 / 0.35) !important;
+	}
+	@media (prefers-color-scheme: dark) {
+		html:root:root:root:root:not(:not([data-nsmax-dark])) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
+		html:root:root:root:root:not(:not([data-nsmax-dark])) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
+			background: #ffffff !important;
+			color: #0c0a09 !important;
+			border-color: #ffffff !important;
+			box-shadow: 0 2px 10px rgb(0 0 0 / 0.35) !important;
+		}
+	}
+	html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) .ellipsis {
+		box-sizing: border-box !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		width: 24px !important;
+		height: 32px !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		border: 0 !important;
+		background: transparent !important;
+		color: var(--text-subtle) !important;
+		font: 12px/32px var(--font-sans) !important;
+		letter-spacing: 0.05em !important;
 	}
 	html:root:root:root:root :is(body > header, #nsk-head, #nsk-head, header, .top) {
 		position: sticky!important;
@@ -19609,7 +19741,111 @@
 		padding: 10px 16px !important;
 		background: var(--panel-alt, rgba(255, 255, 255, 0.04)) !important;
 		border-left: 3px solid var(--brand, #3b82f6) !important;
-		border-radius: 0 6px 6px 0 !important;
+		border-radius: 0 8px 8px 0 !important;
 		color: var(--text-muted, rgba(255, 255, 255, 0.75)) !important;
+	}
+	html:root:root:root:root {
+		--r-card: 12px;
+		--r-panel: 12px;
+		--r-control: 8px;
+		--r-chip: 6px;
+		--r-pill: 9999px;
+		--r-sm: 6px;
+		--r-input: 8px;
+		--shadow-base: 0 2px 8px rgb(12 10 9 / 0.04);
+		--shadow-medium: 0 4px 16px rgb(12 10 9 / 0.06);
+		--shadow-lg: 0 8px 32px rgb(12 10 9 / 0.08);
+		--shadow-xl: 0 16px 48px rgb(12 10 9 / 0.10);
+		--font-mono: "Berkeley Mono", "Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Noto Sans CJK SC", monospace;
+		--code-bg: #171412;
+		--code-text: #d5c4a1;
+	}
+	html:root:root:root:root .post-list-controler,
+	html:root:root:root:root #nsk-body-left > .post-list-controler {
+		border-radius: 12px 12px 0 0 !important;
+	}
+	html:root:root:root:root .post-list-controler + .post-list,
+	html:root:root:root:root #nsk-body-left > .post-list {
+		border-radius: 0 0 12px 12px !important;
+	}
+	html:root:root:root:root .breadcrumb {
+		border-radius: 12px 12px 0 0 !important;
+	}
+	html:root:root:root:root .topic-post-list {
+		border-radius: 0 0 12px 12px !important;
+	}
+	html:root:root:root:root :is(.md-editor, .settings-section, .nav-apps-menu, .node-mute-pop, .pin-menu-pop, table) {
+		border-radius: 12px !important;
+	}
+	html:root:root:root:root .btn,
+	html:root:root:root:root .forum-link,
+	html:root:root:root:root .tab-post,
+	html:root:root:root:root .new-discussion,
+	html:root:root:root:root .topic-badge,
+	html:root:root:root:root .post-user-group,
+	html:root:root:root:root .verify-badge,
+	html:root:root:root:root .post-tag {
+		border-radius: 9999px !important;
+	}
+	html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) pre {
+		position: relative !important;
+		margin: 16px 0 !important;
+		padding: 38px 16px 16px !important;
+		border-radius: 8px !important;
+		background: var(--code-bg, #171412) !important;
+		border: 1px solid var(--line) !important;
+		color: var(--code-text, #d5c4a1) !important;
+		font-family: var(--font-mono) !important;
+		font-size: 13.5px !important;
+		line-height: 1.65 !important;
+		overflow-x: auto !important;
+		box-shadow: var(--shadow-base) !important;
+	}
+	html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) pre::before {
+		content: "" !important;
+		position: absolute !important;
+		top: 14px !important;
+		left: 14px !important;
+		width: 10px !important;
+		height: 10px !important;
+		border-radius: 50% !important;
+		background: #ff5f57 !important;
+		box-shadow: 16px 0 0 #febc2e, 32px 0 0 #28c840 !important;
+		pointer-events: none !important;
+	}
+	html:root:root:root:root :is(.post-content, .markdown-body, article, .nsk-content) :not(pre) > code {
+		box-sizing: border-box !important;
+		padding: 2px 6px !important;
+		margin: 0 3px !important;
+		border-radius: 6px !important;
+		font-family: var(--font-mono) !important;
+		font-size: 0.88em !important;
+		background: #fbf1c7 !important;
+		border: 1px solid #e7e5e4 !important;
+		color: #504945 !important;
+	}
+	@media (prefers-color-scheme: dark) {
+		html:root:root:root:root:not(:not([data-nsmax-dark])) a:hover {
+			color: #ffcc00 !important;
+		}
+		html:root:root:root:root:not(:not([data-nsmax-dark])) :is(.post-content, .markdown-body, article, .nsk-content) :not(pre) > code {
+			background: #3b2e19 !important;
+			border: 1px solid #55411f !important;
+			color: #f0d9a5 !important;
+		}
+		html:root:root:root:root:not(:not([data-nsmax-dark])) :is(.post-content, .markdown-body, article, .nsk-content) blockquote {
+			border-left-color: #ffcc00 !important;
+		}
+	}
+	html:root:root:root:root:has(>body.dark-layout) a:hover {
+		color: #ffcc00 !important;
+	}
+	html:root:root:root:root:has(>body.dark-layout) :is(.post-content, .markdown-body, article, .nsk-content) :not(pre) > code {
+		background: #3b2e19 !important;
+		border: 1px solid #55411f !important;
+		color: #f0d9a5 !important;
+	}
+	html:root:root:root:root:has(>body.dark-layout) :is(.post-content, .markdown-body, article, .nsk-content) blockquote {
+		border-left-color: #ffcc00 !important;
 	}
 }
