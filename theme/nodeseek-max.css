@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.23（纯 CSS）
+ * NodeSeek Max 主题 v1.7.24（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -19375,28 +19375,47 @@ html:root:root:root:root :is(.nspp-action, button.nspp-action)[data-nsmax-all-lo
 html:root:root:root:root :is(.pager-top, .post-top-pager, .post-list-controler .nsk-pager) {
 	display: none !important;
 }
-html:root:root:root:root :is(.pager-bottom, .post-bottom-pager, #nsk-body-left .nsk-pager:not(.pager-top):not(.post-top-pager), #nsk-body-left > div:not(.post-list-controler):has(>.pager-bottom), .comment-container .post-bottom-pager) {
+html:root:root:root:root :is(
+  .pager-bottom,
+  .post-bottom-pager,
+  #nsk-body-left .nsk-pager:not(.pager-top):not(.post-top-pager),
+  #nsk-body-left > div:not(.post-list-controler):has(>.pager-bottom),
+  #nsk-body-left > div:has(>.post-bottom-pager),
+  #nsk-body-left > .nsk-post-wrapper > :is(div:has(>.post-bottom-pager), div:has(>.pager-bottom), .post-bottom-pager, .pager-bottom, .nsk-pager),
+  .comment-container > div:has(>.post-bottom-pager),
+  div:has(>.pager-bottom),
+  div:has(>.post-bottom-pager)
+) {
 	display: flex !important;
 	align-items: center !important;
 	justify-content: center !important;
 	gap: 6px !important;
-	margin: 16px 0 0 !important;
+	margin: 16px 0 !important;
 	padding: 0 !important;
 	background: transparent !important;
 	border: 0 !important;
 	border-top: 0 !important;
+	border-radius: 0 !important;
 	box-shadow: none !important;
 	backdrop-filter: none !important;
 	-webkit-backdrop-filter: none !important;
 }
-html:root:root:root:root .pager-bottom::before,
-html:root:root:root:root .post-bottom-pager::before,
-html:root:root:root:root .pager-bottom::after,
-html:root:root:root:root .post-bottom-pager::after,
-html:root:root:root:root #nsk-body-left .post-bottom-pager::before,
-html:root:root:root:root #nsk-body-left .pager-bottom::before,
-html:root:root:root:root #nsk-body-left .post-bottom-pager::after,
-html:root:root:root:root #nsk-body-left .pager-bottom::after {
+html:root:root:root:root :is(
+  .pager-bottom,
+  .post-bottom-pager,
+  #nsk-body-left :is(.post-bottom-pager, .pager-bottom),
+  #nsk-body-left > div:has(>.pager-bottom),
+  #nsk-body-left > div:has(>.post-bottom-pager),
+  .comment-container > div:has(>.post-bottom-pager)
+)::before,
+html:root:root:root:root :is(
+  .pager-bottom,
+  .post-bottom-pager,
+  #nsk-body-left :is(.post-bottom-pager, .pager-bottom),
+  #nsk-body-left > div:has(>.pager-bottom),
+  #nsk-body-left > div:has(>.post-bottom-pager),
+  .comment-container > div:has(>.post-bottom-pager)
+)::after {
 	content: none !important;
 	display: none !important;
 }
@@ -19887,8 +19906,28 @@ html:root:root:root:root #nsk-body > #nsk-right-panel-container {
 	position: sticky !important;
 	top: 68px !important;
 }
+html:root:root:root:root .md-editor .CodeMirror-vscrollbar,
+html:root:root:root:root .md-editor .CodeMirror-hscrollbar {
+	display: none !important;
+	width: 0 !important;
+	height: 0 !important;
+}
+html:root:root:root:root .md-editor textarea:not(.CodeMirror textarea) {
+	box-sizing: border-box !important;
+	padding: 14px 18px 32px !important;
+	line-height: 1.7 !important;
+	font-size: 14.5px !important;
+	overflow-y: auto !important;
+	resize: none !important;
+}
+html:root:root:root:root .md-editor .CodeMirror-lines {
+	padding-bottom: 32px !important;
+	line-height: 1.7 !important;
+}
 html:root:root:root:root .md-editor .CodeMirror-scroll {
 	max-height: none !important;
+	scrollbar-width: none !important;
+	-ms-overflow-style: none !important;
 }
 html:root:root:root:root .role-tag,
 html:root:root:root:root .nsk-badge,

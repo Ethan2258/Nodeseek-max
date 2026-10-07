@@ -634,7 +634,7 @@ test("最近浏览：本地去重、十条上限、安全标题、位于热榜�
 	}finally{await context.close();}
 });
 
-test("头像悬停：仅一张资料卡、按需请求一次、缓存复用、Escape 关闭",async()=>{
+test("头像与用户名悬停：仅一张资料卡且均含头像、按需请求一次、缓存复用、Escape 关闭",async()=>{
 	const {context,page,errors,calls}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),viewport:{width:1440,height:900}});
 	try{
 		await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-nsmax-mounting'));
@@ -643,11 +643,16 @@ test("头像悬停：仅一张资料卡、按需请求一次、缓存复用、Es
 		await avatar.hover();
 		await page.waitForSelector('.nsmax-person-pop dd');
 		assert.equal(await page.locator('.nsmax-person-pop:visible').count(),1);
+		assert.equal(await page.locator('.nsmax-person-pop .nsmax-person-head img').count(),1);
 		assert.equal(Object.keys(calls).filter(path=>path.includes('/getInfo/')).length,1);
 		await page.keyboard.press('Escape');
 		assert.equal(await page.locator('.nsmax-person-pop').count(),0);
-		await page.mouse.move(5,5);await avatar.hover();
+		await page.mouse.move(5,5);
+		const nameLink=page.locator('ul.post-list>li .info-author a').first();
+		await nameLink.hover();
 		await page.waitForSelector('.nsmax-person-pop dd');
+		assert.equal(await page.locator('.nsmax-person-pop:visible').count(),1);
+		assert.equal(await page.locator('.nsmax-person-pop .nsmax-person-head img').count(),1);
 		assert.equal(Object.values(Object.fromEntries(Object.entries(calls).filter(([key])=>key.includes('/getInfo/')))).reduce((a,b)=>a+b,0),1);
 		assert.equal(await page.locator('section.nspp-user-hover').count(),0);
 		assert.deepEqual(errors,[]);

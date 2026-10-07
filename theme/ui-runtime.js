@@ -633,6 +633,18 @@
 				if (/引用|回复/.test(text)) item.remove();
 			}
 		}
+
+		// 5. 底部分页器移出评论卡片容器，直接落在页面底色上（去除白色卡片包裹与顶部分割线，对齐 sb 规范与图二）
+		const commentContainer = document.querySelector("#nsk-body-left .comment-container");
+		if (commentContainer) {
+			const bottomPager = commentContainer.querySelector(".post-bottom-pager, .nsk-pager");
+			if (bottomPager) {
+				const pagerWrapper = bottomPager.closest(".comment-container > div") || bottomPager;
+				if (pagerWrapper.parentElement === commentContainer) {
+					commentContainer.after(pagerWrapper);
+				}
+			}
+		}
 	}
 	function nsmaxSetupMarkdownTabs() {
 		const postContainers = document.querySelectorAll(".post-content, .markdown-body, .comment-content, article");
@@ -1111,8 +1123,25 @@
 					});
 					submitBtn.before(luckyBtn);
 				}
+				const adjustInputHeight = () => {
+					if (input && !editor.style.getPropertyValue("--nsmax-editor-height")) {
+						input.style.height = "auto";
+						const scrollH = input.scrollHeight;
+						if (scrollH > 150) {
+							const h = Math.min(800, scrollH + 16);
+							input.style.height = h + "px";
+							if (surface) surface.style.height = h + "px";
+						} else {
+							input.style.height = "150px";
+							if (surface) surface.style.height = "150px";
+						}
+					}
+				};
 				if (cm) cm.on("change", render);
-				else input.addEventListener("input", render, { signal: ctx.signal });
+				else {
+					input.addEventListener("input", render, { signal: ctx.signal });
+					input.addEventListener("input", adjustInputHeight, { signal: ctx.signal });
+				}
 				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); mdeToolbar.remove(); preview.remove(); });
 			}
 			// Only group explicit replies to an earlier floor already present on this page.
@@ -1197,8 +1226,8 @@
 	var personHoverFeature = { id: "sb-person-hover", defaults: { enabled: true }, mount(ctx) {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
 		const matches = target => {
-			const link = target instanceof Element ? target.closest('a[href*="/space/"]:has(img),.avatar-wrapper a,.info-author a[href*="/space/"],.info-last-commenter a[href*="/space/"],.author-name[href*="/space/"],.post-author[href*="/space/"]') : null;
-			if (!link) return null;
+			const link = target instanceof Element ? target.closest('a[href*="/space/"]:not(.nsmax-person-head a):not(.nsmax-person-foot a):not(#fast-nav-button-group a),.avatar-wrapper a,.info-author a[href*="/space/"],.info-last-commenter a[href*="/space/"],.author-name[href*="/space/"],.post-author[href*="/space/"]') : null;
+			if (!link || link.closest(".nsmax-person-pop, .hover-user-card, #fast-nav-button-group")) return null;
 			try { const url = new URL(link.href,location.href); return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) ? link : null; } catch { return null; }
 		};
 		const hide = () => { clearTimeout(opening); clearTimeout(closing); serial++; pop?.remove(); pop = null; anchor = null; document.documentElement.removeAttribute("data-nsmax-person-open"); };
@@ -1209,15 +1238,39 @@
 			if (url.origin !== location.origin || !id) return;
 			if (anchor === link && pop) { clearTimeout(closing); return; }
 			hide(); anchor = link; const ticket = ++serial;
-			const img = link.querySelector("img"), owner = link.closest(".content-item,.post-list-item,.user-head");
-			const name = owner?.querySelector(".author-name,.info-author a,.Username")?.textContent.trim() || img?.alt || "用户 " + id;
+			const owner = link.closest(".content-item,.post-list-item,.user-head");
+			const findAvatarSrc = () => {
+				return link.querySelector("img")?.src
+					|| owner?.querySelector(`a[href*="/space/${id}"] img`)?.src
+					|| owner?.querySelector(".avatar-wrapper img, .avatar img, img.avatar")?.src
+					|| document.querySelector(`a[href*="/space/${id}"] img, a[href="/space/${id}"] img`)?.src
+					|| "";
+			};
+			let avatarSrc = findAvatarSrc();
+			const linkText = link.textContent.trim();
+			const name = (!link.querySelector("img") && linkText && !/^用户\s*\d+$/.test(linkText))
+				? linkText
+				: (owner?.querySelector(`a[href*="/space/${id}"]:not(:has(img)),.author-name,.info-author a,.Username`)?.textContent.trim()
+					|| link.querySelector("img")?.alt
+					|| "用户 " + id);
 			pop = document.createElement("section"); pop.className = "nsmax-person-pop"; pop.setAttribute("role","dialog"); pop.setAttribute("aria-label",name+" 的资料");
 			const header = document.createElement("div"); header.className = "nsmax-person-head";
-			if (img) { const avatar = document.createElement("img"); avatar.src = img.src; avatar.alt = ""; header.append(avatar); }
+			let avatar = null;
+			if (avatarSrc) {
+				avatar = document.createElement("img");
+				avatar.src = avatarSrc;
+				avatar.alt = "";
+				header.append(avatar);
+			} else {
+				const fallback = document.createElement("div");
+				fallback.className = "nsmax-person-avatar-fallback";
+				fallback.textContent = (name || "U").trim().slice(0, 1).toUpperCase();
+				header.append(fallback);
+			}
 			const identity = document.createElement("div"), profile = document.createElement("a"); profile.href = "/space/"+id; profile.textContent = name; identity.append(profile); header.append(identity);
 			const numbers = document.createElement("dl"), status = document.createElement("p"); status.textContent = "正在读取资料…"; status.setAttribute("role","status");
 			const foot = document.createElement("div"); foot.className = "nsmax-person-foot";
-			for (const [label,path] of [["个人主页","/space/"+id],["私信","/notification#/message?mode=talk&to="+id]]) { const link = document.createElement("a"); link.href = path; link.textContent = label; foot.append(link); }
+			for (const [label,path] of [["个人主页","/space/"+id],["私信","/notification#/message?mode=talk&to="+id]]) { const item = document.createElement("a"); item.href = path; item.textContent = label; foot.append(item); }
 			pop.append(header,numbers,status,foot); pop.addEventListener("pointerenter",()=>clearTimeout(closing),{signal:ctx.signal}); pop.addEventListener("pointerleave",closeSoon,{signal:ctx.signal}); document.body.append(pop); document.documentElement.setAttribute("data-nsmax-person-open",""); place();
 			try {
 				let entry = cache.get(id);
@@ -1225,6 +1278,17 @@
 				const data = await entry.promise;
 				if (ticket !== serial || !pop) return;
 				profile.textContent = data.member_name || name;
+				const liveAvatar = data.avatar || data.avatar_url || findAvatarSrc();
+				if (liveAvatar) {
+					if (!avatar || !header.contains(avatar)) {
+						avatar = document.createElement("img");
+						avatar.alt = "";
+						const fallback = header.querySelector(".nsmax-person-avatar-fallback");
+						if (fallback) fallback.replaceWith(avatar);
+						else header.prepend(avatar);
+					}
+					if (avatar.src !== liveAvatar) avatar.src = liveAvatar;
+				}
 				if (data.rank !== undefined) {
 					const level = document.createElement("span");
 					level.className = "nsmax-person-level";

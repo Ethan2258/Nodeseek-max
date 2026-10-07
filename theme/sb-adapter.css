@@ -512,8 +512,9 @@ html[data-nsmax-theme][data-nsmax-page=space] .selector :is(a,p,span) {font-fami
 html[data-nsmax-theme] [data-nsmax-obsolete-stat],html[data-nsmax-theme] [data-nsmax-empty-readme] {display:none!important;}
 html[data-nsmax-theme] .nsmax-person-pop {position:fixed;z-index:2147483645;width:min(288px,calc(100vw - 16px));padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-medium);color:var(--text);font:13px/1.6 var(--font-sans);}
 html[data-nsmax-theme] .nsmax-person-head {display:flex!important;align-items:center!important;gap:12px!important;margin-bottom:12px!important;}
-html[data-nsmax-theme] .nsmax-person-head img {width:40px!important;height:40px!important;border-radius:6px!important;object-fit:cover!important;flex:none!important;}
-html[data-nsmax-theme] .nsmax-person-head > div:not(:first-child) {display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:4px!important;min-width:0!important;}
+html[data-nsmax-theme] :is(.nsmax-person-head img, .nsmax-person-avatar-fallback) {width:40px!important;height:40px!important;border-radius:6px!important;object-fit:cover!important;flex:none!important;}
+html[data-nsmax-theme] .nsmax-person-avatar-fallback {display:flex!important;align-items:center!important;justify-content:center!important;background:var(--brand-soft, rgba(235,94,40,0.15))!important;color:var(--brand, #eb5e28)!important;font-weight:700!important;font-size:18px!important;text-transform:uppercase!important;}
+html[data-nsmax-theme] .nsmax-person-head > div:not(.nsmax-person-avatar-fallback) {display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:4px!important;min-width:0!important;}
 html[data-nsmax-theme] .nsmax-person-head a {display:block!important;font:600 14px/1.3 var(--font-sans)!important;color:var(--text-strong)!important;text-decoration:none!important;}
 html[data-nsmax-theme] .nsmax-person-level:not([data-nsmax-lv6]) {display:inline-flex!important;align-self:flex-start!important;color:var(--brand)!important;font:12px/1.4 var(--font-sans)!important;}
 html[data-nsmax-theme] .nsmax-person-pop dl {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding:12px 0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);}
@@ -871,25 +872,48 @@ html[data-nsmax-theme] :is(.pager-top, .post-top-pager, .post-list-controler .ns
   display: none !important;
 }
 
-html[data-nsmax-theme] :is(.pager-bottom, .post-bottom-pager, #nsk-body-left .nsk-pager:not(.pager-top):not(.post-top-pager), #nsk-body-left > div:not(.post-list-controler):has(>.pager-bottom), .comment-container .post-bottom-pager) {
+html[data-nsmax-theme] :is(
+  .pager-bottom,
+  .post-bottom-pager,
+  #nsk-body-left .nsk-pager:not(.pager-top):not(.post-top-pager),
+  #nsk-body-left > div:not(.post-list-controler):has(>.pager-bottom),
+  #nsk-body-left > div:has(>.post-bottom-pager),
+  #nsk-body-left > .nsk-post-wrapper > :is(div:has(>.post-bottom-pager), div:has(>.pager-bottom), .post-bottom-pager, .pager-bottom, .nsk-pager),
+  .comment-container > div:has(>.post-bottom-pager),
+  div:has(>.pager-bottom),
+  div:has(>.post-bottom-pager)
+) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 6px !important;
-  margin: 16px 0 0 !important;
+  margin: 16px 0 !important;
   padding: 0 !important;
   background: transparent !important;
   border: 0 !important;
   border-top: 0 !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-html[data-nsmax-theme] :is(.pager-bottom, .post-bottom-pager)::before,
-html[data-nsmax-theme] :is(.pager-bottom, .post-bottom-pager)::after,
-html[data-nsmax-theme] #nsk-body-left :is(.post-bottom-pager, .pager-bottom)::before,
-html[data-nsmax-theme] #nsk-body-left :is(.post-bottom-pager, .pager-bottom)::after {
+html[data-nsmax-theme] :is(
+  .pager-bottom,
+  .post-bottom-pager,
+  #nsk-body-left :is(.post-bottom-pager, .pager-bottom),
+  #nsk-body-left > div:has(>.pager-bottom),
+  #nsk-body-left > div:has(>.post-bottom-pager),
+  .comment-container > div:has(>.post-bottom-pager)
+)::before,
+html[data-nsmax-theme] :is(
+  .pager-bottom,
+  .post-bottom-pager,
+  #nsk-body-left :is(.post-bottom-pager, .pager-bottom),
+  #nsk-body-left > div:has(>.pager-bottom),
+  #nsk-body-left > div:has(>.post-bottom-pager),
+  .comment-container > div:has(>.post-bottom-pager)
+)::after {
   content: none !important;
   display: none !important;
 }
@@ -1645,13 +1669,46 @@ html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {
   top: 68px !important;
 }
 
-/* 6. 回复框高度与右下角小三角调整手柄 */
+/* 6. 回复框输入体验深度重构：彻底去除侧边滑动条、文字底部充足留白杜绝截断腰斩 */
 html[data-nsmax-theme] .md-editor :is(.nsmax-editor-surface, .nsmax-editor-preview, .CodeMirror, textarea:not(.CodeMirror textarea)) {
   height: var(--nsmax-editor-height, auto);
 }
 
+html[data-nsmax-theme] .md-editor :is(textarea, .CodeMirror, .CodeMirror-scroll, .nsmax-editor-surface) {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html[data-nsmax-theme] .md-editor :is(textarea, .CodeMirror, .CodeMirror-scroll, .nsmax-editor-surface)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html[data-nsmax-theme] .md-editor :is(.CodeMirror-vscrollbar, .CodeMirror-hscrollbar) {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html[data-nsmax-theme] .md-editor textarea:not(.CodeMirror textarea) {
+  box-sizing: border-box !important;
+  padding: 14px 18px 32px !important;
+  line-height: 1.7 !important;
+  font-size: 14.5px !important;
+  overflow-y: auto !important;
+  resize: none !important;
+}
+
+html[data-nsmax-theme] .md-editor .CodeMirror-lines {
+  padding-bottom: 32px !important;
+  line-height: 1.7 !important;
+}
+
 html[data-nsmax-theme] .md-editor .CodeMirror-scroll {
   max-height: none !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 html[data-nsmax-theme] .nsmax-editor-resize {
