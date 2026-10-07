@@ -451,7 +451,7 @@ html[data-nsmax-theme] #nsk-body-left > :not(.post-list-controler):has(>.nsk-pag
 html[data-nsmax-theme] #nsk-body-left > #nsk-body-left-block {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager [role=navigation] {display:flex!important;align-items:center!important;gap:6px!important;background:transparent!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager :is(.pager-pos,.pager-next,.pager-prev) {display:inline-flex!important;justify-content:center!important;align-items:center!important;box-sizing:border-box!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0 9px!important;margin:0!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel)!important;color:var(--text-muted)!important;font:500 13px/30px var(--font-sans)!important;text-decoration:none!important;}
-html[data-nsmax-theme] #nsk-body-left .nsk-pager .pager-cur {background:var(--action)!important;color:var(--action-text)!important;border-color:var(--action)!important;}
+html[data-nsmax-theme] #nsk-body-left .nsk-pager .pager-cur {background:transparent!important;color:var(--text-strong)!important;border:2px solid var(--text-strong)!important;font-weight:700!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager :is(.pager-prev:not(a),[data-nsmax-page-skip],.ellipsis[hidden]) {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager .nsmax-pager-ellipsis {display:inline-flex!important;align-items:center!important;justify-content:center!important;width:24px;height:32px;font:12px/32px var(--font-sans);color:var(--text-subtle);}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager :is(.pager-next,.pager-prev)::before {content:none!important;display:none!important;}
@@ -707,7 +707,8 @@ html[data-nsmax-theme][data-nsmax-page=post] #nsk-body-left .md-editor.nsmax-com
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-surface {position:relative!important;background:var(--panel)!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-surface :is(.CodeMirror,textarea:not(.CodeMirror textarea)) {height:var(--nsmax-editor-height,auto)!important;min-height:150px!important;resize:none!important;background:var(--panel)!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply [data-nsmax-editor-pane]:not(textarea) {min-height:150px!important;height:auto!important;}
-html[data-nsmax-theme] :is(.nsmax-editor-resize, #nsk-body-left .md-editor .nsmax-editor-resize) {position:absolute!important;bottom:0!important;right:0!important;width:22px!important;height:22px!important;cursor:se-resize!important;touch-action:none!important;background:repeating-linear-gradient(135deg,transparent 0 3px,var(--text-disabled) 3px 4px,transparent 4px 6px)!important;clip-path:polygon(100% 0,100% 100%,0 100%)!important;border:0!important;margin:0!important;padding:0!important;outline:none!important;z-index:10!important;}
+html[data-nsmax-theme] :is(.nsmax-editor-resize, #nsk-body-left .md-editor .nsmax-editor-resize) {position:absolute!important;bottom:2px!important;right:2px!important;width:10px!important;height:10px!important;cursor:se-resize!important;touch-action:none!important;background:repeating-linear-gradient(135deg,transparent 0 2px,var(--text-disabled, rgba(120, 120, 120, 0.4)) 2px 3px,transparent 3px 4px)!important;clip-path:polygon(100% 0,100% 100%,0 100%)!important;border:0!important;margin:0!important;padding:0!important;outline:none!important;z-index:10!important;opacity:0.35!important;transition:opacity .15s ease!important;}
+html[data-nsmax-theme] :is(.nsmax-editor-resize, #nsk-body-left .md-editor .nsmax-editor-resize):hover {opacity:0.85!important;}
 html[data-nsmax-theme] :is(.nsmax-editor-previewing, .md-editor.nsmax-editor-previewing) .nsmax-editor-resize {display:none!important;}
 
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-numbers .nsmax-account-stat {display:block!important;min-width:0;text-decoration:none!important;border-radius:0!important;padding:2px 0!important;background:transparent!important;box-shadow:none!important;cursor:pointer;transition:color .15s ease!important;}
@@ -1051,32 +1052,32 @@ html[data-nsmax-theme] :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.p
   display: none !important;
 }
 
-/* 当前激活页：高亮实心药丸（暗色下纯白高亮 #ffffff 配黑色字 #0c0a09，浅色下墨黑药丸 #292524 配白色字 #ffffff） */
+/* 当前激活页：无厚重实心色块，采用现代精致双倍边框高亮胶囊 */
 html[data-nsmax-theme] :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
 html[data-nsmax-theme] :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
-  background: var(--action, #292524) !important;
-  color: var(--action-text, #ffffff) !important;
-  border-color: var(--action, #292524) !important;
-  font-weight: 600 !important;
-  box-shadow: 0 2px 8px rgb(12 10 9 / 0.12) !important;
+  background: var(--panel-alt, rgba(0, 0, 0, 0.04)) !important;
+  color: var(--text-strong, #111827) !important;
+  border: 2px solid var(--text-strong, #111827) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
   cursor: default !important;
 }
 
 html[data-nsmax-theme][data-nsmax-dark] :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
 html[data-nsmax-theme][data-nsmax-dark] :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
-  background: #ffffff !important;
-  color: #0c0a09 !important;
-  border-color: #ffffff !important;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.35) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 @media (prefers-color-scheme: dark) {
   html[data-nsmax-theme]:not(:not([data-nsmax-dark])) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
   html[data-nsmax-theme]:not(:not([data-nsmax-dark])) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
-    background: #ffffff !important;
-    color: #0c0a09 !important;
-    border-color: #ffffff !important;
-    box-shadow: 0 2px 10px rgb(0 0 0 / 0.35) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
   }
 }
 
@@ -1725,16 +1726,23 @@ html[data-nsmax-theme] #nsk-head .search-box {
 }
 
 /* 2. 主帖头部操作栏“引用 回复 举报”完全靠右对齐 */
-html[data-nsmax-theme] #nsk-body-left .nsk-post :is(.nsmax-op-actions, .floor-actions) {
-  grid-column: 3 / -1 !important;
-  grid-row: 1 !important;
-  justify-self: end !important;
-  align-self: center !important;
+html[data-nsmax-theme]:root:root:root #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  grid-column: 1 / -1 !important;
+  box-sizing: border-box !important;
+}
+
+html[data-nsmax-theme]:root:root:root #nsk-body-left .nsk-post :is(.nsmax-op-actions, .floor-actions) {
   margin-left: auto !important;
+  margin-right: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  gap: 12px !important;
+  gap: 14px !important;
+  flex: 0 0 auto !important;
   text-align: right !important;
   white-space: nowrap !important;
 }
@@ -1827,17 +1835,21 @@ html[data-nsmax-theme] .md-editor :is(.CodeMirror-vscrollbar, .CodeMirror-hscrol
 
 html[data-nsmax-theme] .md-editor textarea:not(.CodeMirror textarea) {
   box-sizing: border-box !important;
-  padding: 14px 18px 36px !important;
+  padding: 14px 18px 16px !important;
   line-height: 1.7 !important;
   font-size: 14.5px !important;
-  overflow-y: auto !important;
+  overflow-y: hidden !important;
   resize: none !important;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
 
+html[data-nsmax-theme] .md-editor textarea:not(.CodeMirror textarea):focus {
+  overflow-y: auto !important;
+}
+
 html[data-nsmax-theme] .md-editor .CodeMirror-lines {
-  padding-bottom: 36px !important;
+  padding-bottom: 20px !important;
   line-height: 1.7 !important;
 }
 
@@ -1848,8 +1860,14 @@ html[data-nsmax-theme] .md-editor .CodeMirror-scroll {
 }
 
 html[data-nsmax-theme] .nsmax-editor-resize {
+  position: absolute !important;
+  bottom: 2px !important;
+  right: 2px !important;
+  width: 10px !important;
+  height: 10px !important;
   cursor: se-resize !important;
   touch-action: none !important;
+  opacity: 0.35 !important;
 }
 
 /* 7. 全站徽标/胶囊文字绝对水平垂直居中与行高归一，杜绝偏心飘起 */
@@ -1987,6 +2005,167 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-stat {
     margin-right: auto !important;
     box-sizing: border-box !important;
   }
+
+  /* 无右侧栏或单栏页面（发帖页、个人空间、设置页、粉丝页等）：撑满 1200px 居中对齐顶栏 Logo 与功能图标 */
+  html[data-nsmax-theme]:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) #nsk-body,
+  html[data-nsmax-theme]:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) section#nsk-frame > #nsk-body.nsk-container,
+  html[data-nsmax-theme] #nsk-body:not(:has(#nsk-right-panel-container:not(:empty))) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ==================== 发帖页面 (/new-discussion) 整体居中与现代排版重构 ==================== */
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body,
+html[data-nsmax-theme][data-nsmax-page="new"] section#nsk-frame > #nsk-body.nsk-container {
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: block !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left {
+  width: 100% !important;
+  max-width: 100% !important;
+  float: none !important;
+  margin: 0 auto !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-right-panel-container {
+  display: none !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left :is(.post-editor, .new-discussion) {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 24px 28px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-base) !important;
+  margin: 0 0 24px !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .title-row {
+  margin: 0 0 16px !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] :is(.post-title-input, input[type="text"].post-title-input, input[type="text"][placeholder*="标题"]) {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  height: 46px !important;
+  padding: 0 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  font: 500 15px/46px var(--font-sans) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-strong) !important;
+  transition: all 0.15s ease !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] :is(.post-title-input, input[type="text"].post-title-input, input[type="text"][placeholder*="标题"]):focus {
+  outline: none !important;
+  border-color: var(--brand) !important;
+  background: var(--panel) !important;
+  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor {
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  background: var(--panel) !important;
+  overflow: hidden !important;
+  margin-bottom: 20px !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor textarea:not(.CodeMirror textarea) {
+  min-height: 220px !important;
+  padding: 16px 20px !important;
+  line-height: 1.7 !important;
+  font-size: 14.5px !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .topic-select {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 12px 16px !important;
+  padding: 14px 20px !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: var(--panel-alt) !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .topic-select > :is(.category-row, .category-select, div:has(select), div:has(.category-select), div:not(:has(button))) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .topic-select select,
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .topic-select :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+  height: 36px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background: var(--panel) !important;
+  color: var(--text-strong) !important;
+  font: 500 13px/36px var(--font-sans) !important;
+  cursor: pointer !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .topic-select :is(button.submit, button[type="submit"], .nsmax-lucky-trigger) {
+  height: 36px !important;
+  padding: 0 20px !important;
+  border-radius: 999px !important;
+  font: 600 13px/36px var(--font-sans) !important;
+}
+
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .topic-select :is(button.submit, button[type="submit"]) {
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  margin-left: auto !important;
+}
+
+html[data-nsmax-theme] :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) {
+  margin: 16px 0 0 !important;
+  padding: 16px 20px !important;
+  border: 1px solid var(--line-soft) !important;
+  border-radius: 12px !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
+
+html[data-nsmax-theme] :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) :is(h2, h3, h4, .title, b, strong) {
+  font: 600 14px/1.4 var(--font-sans) !important;
+  color: var(--text-strong) !important;
+  margin: 0 0 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+html[data-nsmax-theme] :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) ul {
+  margin: 0 !important;
+  padding-left: 20px !important;
+}
+
+html[data-nsmax-theme] :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) li {
+  margin: 6px 0 !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  color: var(--text-muted) !important;
+}
+
+html[data-nsmax-theme] :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) p {
+  margin: 8px 0 0 !important;
+  font-size: 12px !important;
+  color: var(--text-subtle) !important;
 }
 
 

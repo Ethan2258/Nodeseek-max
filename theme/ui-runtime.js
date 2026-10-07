@@ -1220,18 +1220,21 @@
 				}
 				const adjustInputHeight = () => {
 					if (input && !editor.style.getPropertyValue("--nsmax-editor-height")) {
-						input.style.setProperty("height", "auto", "important");
 						const scrollH = input.scrollHeight;
-						if (scrollH > 150) {
-							const h = Math.min(800, scrollH + 36);
+						if (scrollH > 160) {
+							const h = Math.min(800, scrollH + 20);
 							input.style.setProperty("height", h + "px", "important");
+							input.style.setProperty("overflow-y", "auto", "important");
 							if (surface) surface.style.setProperty("height", h + "px", "important");
 						} else {
 							input.style.setProperty("height", "150px", "important");
+							input.style.setProperty("overflow-y", "hidden", "important");
+							input.scrollTop = 0;
 							if (surface) surface.style.setProperty("height", "150px", "important");
 						}
 					}
 				};
+				input?.addEventListener("focus", () => { if (input) input.scrollTop = 0; }, { signal: ctx.signal });
 				if (cm) cm.on("change", render);
 				else {
 					input.addEventListener("input", render, { signal: ctx.signal });
@@ -1393,7 +1396,7 @@
 			pop.append(header,numbers,status,foot); pop.addEventListener("pointerenter",()=>clearTimeout(closing),{signal:ctx.signal}); pop.addEventListener("pointerleave",closeSoon,{signal:ctx.signal}); document.body.append(pop); document.documentElement.setAttribute("data-nsmax-person-open",""); place();
 			try {
 				let entry = cache.get(id);
-				if (!entry || Date.now()-entry.at>3e5) { const promise = ctx.request("/api/account/getInfo/"+id).then(data => data?.detail || data?.data || {}); entry = { at:Date.now(), promise }; cache.set(id,entry); if (cache.size>32) cache.delete(cache.keys().next().value); }
+				if (!entry || Date.now()-entry.at>6e5) { const promise = ctx.request("/api/account/getInfo/"+id).then(data => data?.detail || data?.data || {}); entry = { at:Date.now(), promise }; cache.set(id,entry); if (cache.size>256) cache.delete(cache.keys().next().value); }
 				const data = await entry.promise;
 				if (ticket !== serial || !pop) return;
 				profile.textContent = data.member_name || name;
@@ -1419,7 +1422,22 @@
 				status.remove(); place();
 			} catch { cache.delete(id); if (ticket === serial && pop) status.textContent = "暂时无法读取资料，可打开个人主页"; }
 		};
-		document.addEventListener("pointerover",event => { const link=matches(event.target); if (!link || pop?.contains(link) || link.contains(event.relatedTarget)) return; clearTimeout(opening); clearTimeout(closing); opening=setTimeout(()=>show(link),180); }, { signal:ctx.signal });
+		document.addEventListener("pointerover",event => {
+			const link=matches(event.target);
+			if (!link || pop?.contains(link) || link.contains(event.relatedTarget)) return;
+			clearTimeout(opening);
+			clearTimeout(closing);
+			const match = link.href.match(/\/space\/(\d+)/);
+			if (match) {
+				const id = match[1];
+				if (!cache.has(id)) {
+					const promise = ctx.request("/api/account/getInfo/"+id).then(data => data?.detail || data?.data || {}).catch(() => ({}));
+					cache.set(id, { at: Date.now(), promise });
+					if (cache.size > 256) cache.delete(cache.keys().next().value);
+				}
+			}
+			opening=setTimeout(()=>show(link),90);
+		}, { signal:ctx.signal });
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
 		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });

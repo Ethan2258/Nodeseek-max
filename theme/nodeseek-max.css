@@ -1,5 +1,5 @@
 /*
- * NodeSeek Max 主题 v1.7.28（纯 CSS）
+ * NodeSeek Max 主题 v1.7.29（纯 CSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -18356,9 +18356,10 @@ html:root:root:root:root #nsk-body-left .nsk-pager .pager-prev {
 	text-decoration:none!important;
 }
 html:root:root:root:root #nsk-body-left .nsk-pager .pager-cur {
-	background:var(--action)!important;
-	color:var(--action-text)!important;
-	border-color:var(--action)!important;
+	background:transparent!important;
+	color:var(--text-strong)!important;
+	border:2px solid var(--text-strong)!important;
+	font-weight:700!important;
 }
 html:root:root:root:root #nsk-body-left .nsk-pager :is(.pager-prev:not(a),[data-nsmax-page-skip],.ellipsis[hidden]) {
 	display:none!important;
@@ -19549,27 +19550,27 @@ html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(
 }
 html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
 html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
-	background: var(--action, #292524) !important;
-	color: var(--action-text, #ffffff) !important;
-	border-color: var(--action, #292524) !important;
-	font-weight: 600 !important;
-	box-shadow: 0 2px 8px rgb(12 10 9 / 0.12) !important;
+	background: var(--panel-alt, rgba(0, 0, 0, 0.04)) !important;
+	color: var(--text-strong, #111827) !important;
+	border: 2px solid var(--text-strong, #111827) !important;
+	font-weight: 700 !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 	cursor: default !important;
 }
 html:root:root:root:root:has(>body.dark-layout) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
 html:root:root:root:root:has(>body.dark-layout) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
-	background: #ffffff !important;
-	color: #0c0a09 !important;
-	border-color: #ffffff !important;
-	box-shadow: 0 2px 10px rgb(0 0 0 / 0.35) !important;
+	background: rgba(255, 255, 255, 0.08) !important;
+	color: #ffffff !important;
+	border: 2px solid #ffffff !important;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
 }
 @media (prefers-color-scheme: dark) {
 	html:root:root:root:root:not(:not([data-nsmax-dark])) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)),
 	html:root:root:root:root:not(:not([data-nsmax-dark])) :is(.nsk-pager, .pager-bottom, .post-bottom-pager) :is(.pager-cur, [data-nsmax-pg-cur], [aria-current="page"]:not(a)):hover {
-		background: #ffffff !important;
-		color: #0c0a09 !important;
-		border-color: #ffffff !important;
-		box-shadow: 0 2px 10px rgb(0 0 0 / 0.35) !important;
+		background: rgba(255, 255, 255, 0.08) !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
 	}
 }
 html:root:root:root:root :is(.nsk-pager, .pager-bottom, .post-bottom-pager) .ellipsis {
@@ -19990,16 +19991,22 @@ html:root:root:root:root #nsk-head .search-box {
 	min-width: 90px !important;
 	z-index: 5 !important;
 }
-html:root:root:root:root #nsk-body-left .nsk-post .floor-actions {
-	grid-column: 3 / -1 !important;
-	grid-row: 1 !important;
-	justify-self: end !important;
-	align-self: center !important;
+html:root:root:root:root:root:root:root #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	width: 100% !important;
+	grid-column: 1 / -1 !important;
+	box-sizing: border-box !important;
+}
+html:root:root:root:root:root:root:root #nsk-body-left .nsk-post .floor-actions {
 	margin-left: auto !important;
+	margin-right: 0 !important;
 	display: inline-flex !important;
 	align-items: center !important;
 	justify-content: flex-end !important;
-	gap: 12px !important;
+	gap: 14px !important;
+	flex: 0 0 auto !important;
 	text-align: right !important;
 	white-space: nowrap !important;
 }
@@ -20038,16 +20045,19 @@ html:root:root:root:root .md-editor .CodeMirror-hscrollbar {
 }
 html:root:root:root:root .md-editor textarea:not(.CodeMirror textarea) {
 	box-sizing: border-box !important;
-	padding: 14px 18px 36px !important;
+	padding: 14px 18px 16px !important;
 	line-height: 1.7 !important;
 	font-size: 14.5px !important;
-	overflow-y: auto !important;
+	overflow-y: hidden !important;
 	resize: none !important;
 	scrollbar-width: none !important;
 	-ms-overflow-style: none !important;
 }
+html:root:root:root:root .md-editor textarea:not(.CodeMirror textarea):focus {
+	overflow-y: auto !important;
+}
 html:root:root:root:root .md-editor .CodeMirror-lines {
-	padding-bottom: 36px !important;
+	padding-bottom: 20px !important;
 	line-height: 1.7 !important;
 }
 html:root:root:root:root .md-editor .CodeMirror-scroll {
@@ -20117,4 +20127,143 @@ html:root:root:root:root #nsk-right-panel-container .user-card {
 		margin-right: auto !important;
 		box-sizing: border-box !important;
 	}
+	html:root:root:root:root:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) #nsk-body,
+	html:root:root:root:root:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) section#nsk-frame > #nsk-body.nsk-container,
+	html:root:root:root:root #nsk-body:not(:has(#nsk-right-panel-container:not(:empty))) {
+		grid-template-columns: 1fr !important;
+	}
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body,
+html:root:root:root:root:has(.new-discussion) section#nsk-frame > #nsk-body.nsk-container {
+	width: 100% !important;
+	max-width: 1200px !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+	display: block !important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left {
+	width: 100% !important;
+	max-width: 100% !important;
+	float: none !important;
+	margin: 0 auto !important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-right-panel-container {
+	display: none !important;
+}
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .post-editor,
+html:root:root:root:root:has(.new-discussion) #nsk-body-left .new-discussion {
+	width: 100% !important;
+	box-sizing: border-box !important;
+	padding: 24px 28px !important;
+	border: 1px solid var(--line) !important;
+	border-radius: 16px !important;
+	background: var(--panel) !important;
+	box-shadow: var(--shadow-base) !important;
+	margin: 0 0 24px !important;
+}
+html:root:root:root:root:has(.new-discussion) .title-row {
+	margin: 0 0 16px !important;
+}
+html:root:root:root:root:has(.new-discussion) :is(.post-title-input, input[type="text"].post-title-input, input[type="text"][placeholder*="标题"]) {
+	width: 100% !important;
+	box-sizing: border-box !important;
+	height: 46px !important;
+	padding: 0 16px !important;
+	border: 1px solid var(--line) !important;
+	border-radius: 10px !important;
+	font: 500 15px/46px var(--font-sans) !important;
+	background: var(--panel-alt) !important;
+	color: var(--text-strong) !important;
+	transition: all 0.15s ease !important;
+}
+html:root:root:root:root:has(.new-discussion) :is(.post-title-input, input[type="text"].post-title-input, input[type="text"][placeholder*="标题"]):focus {
+	outline: none !important;
+	border-color: var(--brand) !important;
+	background: var(--panel) !important;
+	box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+html:root:root:root:root:has(.new-discussion) .md-editor {
+	border: 1px solid var(--line) !important;
+	border-radius: 12px !important;
+	background: var(--panel) !important;
+	overflow: hidden !important;
+	margin-bottom: 20px !important;
+}
+html:root:root:root:root:has(.new-discussion) .md-editor textarea:not(.CodeMirror textarea) {
+	min-height: 220px !important;
+	padding: 16px 20px !important;
+	line-height: 1.7 !important;
+	font-size: 14.5px !important;
+	background: var(--panel) !important;
+	color: var(--text) !important;
+}
+html:root:root:root:root:has(.new-discussion) .md-editor .topic-select {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	flex-wrap: wrap !important;
+	gap: 12px 16px !important;
+	padding: 14px 20px !important;
+	border-top: 1px solid var(--line-soft) !important;
+	background: var(--panel-alt) !important;
+}
+html:root:root:root:root:has(.new-discussion) .md-editor .topic-select > :is(.category-row, .category-select, div:has(select), div:has(.category-select), div:not(:has(button))) {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	margin: 0 !important;
+}
+html:root:root:root:root:has(.new-discussion) .md-editor .topic-select select,
+html:root:root:root:root:has(.new-discussion) .md-editor .topic-select :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+	height: 36px !important;
+	padding: 0 12px !important;
+	border: 1px solid var(--line) !important;
+	border-radius: 8px !important;
+	background: var(--panel) !important;
+	color: var(--text-strong) !important;
+	font: 500 13px/36px var(--font-sans) !important;
+	cursor: pointer !important;
+}
+html:root:root:root:root:has(.new-discussion) .md-editor .topic-select button.submit,
+html:root:root:root:root:has(.new-discussion) .md-editor .topic-select button[type="submit"] {
+	background: var(--action) !important;
+	color: var(--action-text) !important;
+	border: 0 !important;
+	cursor: pointer !important;
+	margin-left: auto !important;
+}
+html:root:root:root:root .topic-warning,
+html:root:root:root:root .important-note,
+html:root:root:root:root .important-reminder,
+html:root:root:root:root .new-discussion-notes,
+html:root:root:root:root .warning-block {
+	margin: 16px 0 0 !important;
+	padding: 16px 20px !important;
+	border: 1px solid var(--line-soft) !important;
+	border-radius: 12px !important;
+	background: var(--panel-alt) !important;
+	color: var(--text-muted) !important;
+}
+html:root:root:root:root :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) :is(h2, h3, h4, .title, b, strong) {
+	font: 600 14px/1.4 var(--font-sans) !important;
+	color: var(--text-strong) !important;
+	margin: 0 0 10px !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 6px !important;
+}
+html:root:root:root:root :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) ul {
+	margin: 0 !important;
+	padding-left: 20px !important;
+}
+html:root:root:root:root :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) li {
+	margin: 6px 0 !important;
+	font-size: 13px !important;
+	line-height: 1.6 !important;
+	color: var(--text-muted) !important;
+}
+html:root:root:root:root :is(.topic-warning, .important-note, .important-reminder, .new-discussion-notes, .warning-block) p {
+	margin: 8px 0 0 !important;
+	font-size: 12px !important;
+	color: var(--text-subtle) !important;
 }
