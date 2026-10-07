@@ -324,7 +324,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.25");
+	assert.equal(packageJson.version, "1.7.26");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1704,5 +1704,79 @@ test("v1.7.21 深度定制：Markdown 选项卡点击原地切换不重载、跑
 
 		assert.deepEqual(errorsMsg, []);
 	} finally { await ctxMsg.close(); }
+});
+
+test("v1.7.26 签到页往返防崩溃与中等屏顶栏防遮挡、右侧栏260px锁定", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1024, height: 768 } });
+	try {
+		await page.waitForSelector("html[data-nsmax-theme]");
+		await wait(page);
+
+		// 1. 验证 1024px 视口下顶栏分类与搜索框无重叠
+		const headerState = await page.evaluate(() => {
+			const nav = document.querySelector("#nsk-head ul.nav-menu");
+			const search = document.querySelector("#nsk-head .search-box");
+			if (!nav || !search) return { overlap: false };
+			const nr = nav.getBoundingClientRect();
+			const sr = search.getBoundingClientRect();
+			return {
+				navRight: nr.right,
+				searchLeft: sr.left,
+				overlap: nr.right > sr.left
+			};
+		});
+		assert.equal(headerState.overlap, false, "分类栏不得与搜索框发生重叠遮挡");
+
+		// 2. 模拟前端导航至 /board
+		await page.evaluate(() => {
+			window.history.pushState({}, "", "/board");
+			window.dispatchEvent(new Event("popstate"));
+		});
+		await wait(page, 400);
+
+		const boardState = await page.evaluate(() => {
+			const banner = document.querySelector(".nsmax-board-banner");
+			const bodyChildren = Array.from(document.querySelector("#nsk-body")?.children || []).map(c => c.id || c.className);
+			return {
+				page: document.documentElement.dataset.nsmaxPage,
+				bannerExists: !!banner,
+				bannerInBodyDirect: banner?.parentElement?.id === "nsk-body",
+				bodyChildren
+			};
+		});
+		assert.equal(boardState.page, "board");
+		assert.equal(boardState.bannerExists, true);
+		assert.equal(boardState.bannerInBodyDirect, false, "Banner 严禁作为 #nsk-body 的直接子节点");
+
+		// 3. 模拟前端导航返回首页 /
+		await page.evaluate(() => {
+			window.history.pushState({}, "", "/");
+			window.dispatchEvent(new Event("popstate"));
+		});
+		await wait(page, 400);
+
+		const returnState = await page.evaluate(() => {
+			const banner = document.querySelector(".nsmax-board-banner");
+			const card = document.querySelector("#nsk-right-panel-container .user-card");
+			const acc = document.querySelector("#nsk-right-panel-container .nsmax-sb-account");
+			const rightPanel = document.querySelector("#nsk-body > #nsk-right-panel-container");
+			return {
+				page: document.documentElement.dataset.nsmaxPage,
+				bannerExists: !!banner,
+				rightPanelWidth: rightPanel ? Math.round(rightPanel.getBoundingClientRect().width) : 0,
+				cardWidth: card ? Math.round(card.getBoundingClientRect().width) : 0,
+				accInsideCard: card && acc ? card.contains(acc) : false
+			};
+		});
+		assert.equal(returnState.page, "list");
+		assert.equal(returnState.bannerExists, false, "离开 /board 后必须完全清理 Banner 残留");
+		assert.equal(returnState.rightPanelWidth, 260, "右侧面板必须稳定维持 260px 宽度");
+		assert.equal(returnState.cardWidth, 260, "个人资料卡必须撑满右侧栏 260px");
+		assert.equal(returnState.accInsideCard, true, "个人账号信息组件必须被安全包裹在资料卡内部");
+
+		assert.deepEqual(errors, []);
+	} finally {
+		await context.close();
+	}
 });
 

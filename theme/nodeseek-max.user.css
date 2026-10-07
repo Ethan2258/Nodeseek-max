@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.25
+@version        1.7.26
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.25（UserCSS）
+ * NodeSeek Max 主题 v1.7.26（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -19900,18 +19900,51 @@
 		border-left-color: #ffcc00 !important;
 	}
 	html:root:root:root:root #nsk-head {
+		display: flex !important;
+		align-items: center !important;
+		gap: 8px !important;
 		box-sizing: border-box !important;
 		width: 100% !important;
 		max-width: 1200px !important;
 		margin: 0 auto !important;
 		padding: 0 16px !important;
+		overflow: visible !important;
 	}
 	html:root:root:root:root #nsk-head .site-title {
+		flex-shrink: 0 !important;
 		margin-left: 0 !important;
 		padding-left: 0 !important;
 	}
 	html:root:root:root:root #nsk-head .site-title > a {
 		margin-left: 0 !important;
+	}
+	html:root:root:root:root #nsk-head ul.nav-menu {
+		display: flex !important;
+		align-items: center !important;
+		min-width: 0 !important;
+		flex: 1 1 auto !important;
+		overflow-x: auto !important;
+		scrollbar-width: none !important;
+		-ms-overflow-style: none !important;
+		white-space: nowrap !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+	html:root:root:root:root #nsk-head ul.nav-menu::-webkit-scrollbar {
+		display: none !important;
+		width: 0 !important;
+		height: 0 !important;
+	}
+	html:root:root:root:root #nsk-head ul.nav-menu > li {
+		flex-shrink: 0 !important;
+	}
+	html:root:root:root:root #nsk-head .search-box {
+		margin-left: auto !important;
+		flex-shrink: 0 !important;
+		flex: 0 0 160px !important;
+		width: 160px !important;
+		max-width: 180px !important;
+		min-width: 90px !important;
 	}
 	html:root:root:root:root #nsk-body-left .nsk-post .floor-actions {
 		grid-column: 3 / -1 !important;
@@ -20003,5 +20036,28 @@
 	}
 	html:root:root:root:root :is(.app-switch, .nsk-notification > .app-switch) {
 		display: none !important;
+	}
+	html:root:root:root:root #nsk-body > #nsk-right-panel-container {
+		width: 260px !important;
+		min-width: 260px !important;
+		max-width: 260px !important;
+		flex: 0 0 260px !important;
+		box-sizing: border-box !important;
+	}
+	html:root:root:root:root #nsk-right-panel-container .user-card {
+		position: relative !important;
+		width: 100% !important;
+		max-width: 100% !important;
+		min-width: 100% !important;
+		box-sizing: border-box !important;
+		display: block !important;
+		overflow: hidden !important;
+	}
+	@media (min-width: 861px) {
+		html:root:root:root:root #nsk-body {
+			display: grid !important;
+			grid-template-columns: minmax(0, 1fr) 260px !important;
+			gap: 20px !important;
+		}
 	}
 }

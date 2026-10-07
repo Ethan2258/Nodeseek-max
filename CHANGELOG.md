@@ -1,6 +1,27 @@
 # 更新日志
 
-## 1.7.24
+## 1.7.26
+
+- **签到页（`/board`）路由往返与双列 Grid 彻底防崩塌**：
+  - 彻底根除进出签到页导致首页 `#nsk-body` 网格容器列结构坍塌的致命 Bug；
+  - 修正 Banner 挂载逻辑，严禁作为 `#nsk-body` 的直接子节点污染网格容器，仅在 `.board-container, #nsk-body-left` 内容区内部挂载；
+  - SPA 路由监听与退出防护：离开 `/board` 时立即全量清理 DOM 中的 `.nsmax-board-banner`，杜绝残余元素破坏后续路由渲染；
+  - 原生注入 `history.pushState` / `replaceState` 与 `popstate` / `hashchange` 事件劫持，实现 SPA 页面无感切换时秒级同步 `data-nsmax-page` 与 UI 状态。
+- **1024px 中等屏幕顶栏分类与搜索框响应式弹性自适应**：
+  - 针对中等屏幕/笔记本尺寸下分类过长叠压在搜索框下方的问题，顶栏 `#nsk-head` 改为弹性盒布局；
+  - `ul.nav-menu` 启用 `min-width: 0 !important; flex: 1 1 auto !important; overflow-x: auto !important;` 并在不显示滚动条的前提下自适应收缩，搜索框右对齐固定锁定，杜绝任何文字穿透与遮挡。
+- **侧栏个人资料卡 260px 宽度严格锁定与卡片内层排版防脱节**：
+  - `#nsk-body > #nsk-right-panel-container` 强制锁定 `width: 260px !important; flex: 0 0 260px !important;`；
+  - `.user-card` 与 `.nsmax-sb-account` 设定标准相对定位与流式布局，四列数据与两列菜单网格严格包含在卡片内部，杜绝在任何分辨率下发生文字被挤压成纵列或与背景卡片脱离。
+- **全量自动化测试（58/58 PASS）**：
+  - 新增 1024px 视口下首页与签到页往返路由状态校验、Banner 清理与资料卡尺寸锁定的全量冒烟测试，58 项测试 100% 稳定全绿通过。
+
+## 1.7.25
+
+- **多页分页器残留白底与悬浮清理**：
+  - 强化 `:is(.nsmax-detached-pager, [data-nsmax-detached-pager])` 样式权重，彻底清除评论底部与多页切换时的残留白色底板；
+  - 修复回复框拖拽手柄与底部 36px 缓冲区域，彻底消除输入多行时字形下半部分截断；
+  - 修复顶栏 Logo 与主帖卡片左侧边框绝对垂直对齐；修复消息中心会话导航在极端尺寸下的文字换行折叠。
 
 - **底部分页器去白色卡片块与纯净悬浮（对齐图二）**：
   - 将帖子详情底部分页器容器（`.post-bottom-pager`）从评论卡片容器（`.comment-container`）内部脱离移至其后，让评论卡片自然闭合保留完整圆角；

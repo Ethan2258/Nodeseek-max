@@ -356,8 +356,11 @@
 		}
 	}
 	function nsmaxPrepareBoard() {
-		if (!/^\/board(?:\/|$)/.test(location.pathname)) return;
-		const container = document.querySelector("#nsk-body, .board-container, section#nsk-frame");
+		if (!/^\/board(?:\/|$)/.test(location.pathname)) {
+			document.querySelectorAll(".nsmax-board-banner").forEach(el => el.remove());
+			return;
+		}
+		const container = document.querySelector(".board-container, #nsk-body-left");
 		if (!container) return;
 
 		// 1. Checkin top banner (Yellow bar matching Image 1)
@@ -400,6 +403,10 @@
 
 			banner.querySelector(".nsmax-board-btn-fixed")?.addEventListener("click", () => doCheckin(false));
 			banner.querySelector(".nsmax-board-btn-random")?.addEventListener("click", () => doCheckin(true));
+		} else if (banner.parentElement !== container) {
+			const firstChild = container.firstElementChild;
+			if (firstChild && firstChild !== banner) firstChild.before(banner);
+			else container.prepend(banner);
 		}
 
 		// Check if user already signed in according to page content
@@ -754,6 +761,13 @@
 		const processed = new WeakSet();
 		const images = new WeakSet();
 		const scan = () => {
+			const currentPage = /^\/post-\d+/.test(location.pathname) ? "post" : location.pathname === "/notification" ? "notification" : /^\/space\//.test(location.pathname) ? "space" : /^\/setting(?:\/|$)/.test(location.pathname) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(location.pathname) ? "new" : /^\/board(?:\/|$)/.test(location.pathname) ? "board" : "list";
+			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
+				document.documentElement.dataset.nsmaxPage = currentPage;
+			}
+			if (typeof nsmaxBuildAccountCard === "function") {
+				nsmaxBuildAccountCard();
+			}
 			nsmaxPrizeBadges();
 			nsmaxCleanSearchOverlay();
 			nsmaxCleanPostActions();
@@ -1233,7 +1247,30 @@
 			}
 		};
 		const stop = ctx.watch(scan);
-		return () => { stop(); for (const dispose of editors.values()) dispose(); editors.clear(); };
+		window.addEventListener("popstate", scan, { signal: ctx.signal });
+		window.addEventListener("hashchange", scan, { signal: ctx.signal });
+		let origPush, origReplace;
+		if (typeof history !== "undefined") {
+			origPush = history.pushState;
+			origReplace = history.replaceState;
+			history.pushState = function() {
+				const res = origPush.apply(this, arguments);
+				try { scan(); } catch(e) {}
+				return res;
+			};
+			history.replaceState = function() {
+				const res = origReplace.apply(this, arguments);
+				try { scan(); } catch(e) {}
+				return res;
+			};
+		}
+		return () => {
+			stop();
+			if (origPush) history.pushState = origPush;
+			if (origReplace) history.replaceState = origReplace;
+			for (const dispose of editors.values()) dispose();
+			editors.clear();
+		};
 	}
 	var leanUiFeature = { id: "sb-page-controls", defaults: { enabled: true }, mount: mountLeanUi };
 

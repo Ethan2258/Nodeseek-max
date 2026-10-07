@@ -1605,22 +1605,59 @@ html[data-nsmax-theme][data-nsmax-dark] :is(.post-content, .markdown-body, artic
    7. 全站徽标/胶囊文字绝对居中对齐，杜绝错位飘起
    ========================================================================== */
 
-/* 1. 论坛 Logo 与主帖/列表卡片左边框绝对垂直对齐 */
+/* 1. 论坛 Logo 与主帖/列表卡片左边框绝对垂直对齐，顶栏分类弹性自适应杜绝遮挡搜索框 */
 html[data-nsmax-theme] #nsk-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
   box-sizing: border-box !important;
   width: 100% !important;
   max-width: 1200px !important;
   margin: 0 auto !important;
   padding: 0 16px !important;
+  overflow: visible !important;
 }
 
 html[data-nsmax-theme] #nsk-head .site-title {
+  flex-shrink: 0 !important;
   margin-left: 0 !important;
   padding-left: 0 !important;
 }
 
 html[data-nsmax-theme] #nsk-head .site-title > a {
   margin-left: 0 !important;
+}
+
+html[data-nsmax-theme] #nsk-head ul.nav-menu {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html[data-nsmax-theme] #nsk-head ul.nav-menu::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html[data-nsmax-theme] #nsk-head ul.nav-menu > li {
+  flex-shrink: 0 !important;
+}
+
+html[data-nsmax-theme] #nsk-head .search-box {
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+  flex: 0 0 160px !important;
+  width: 160px !important;
+  max-width: 180px !important;
+  min-width: 90px !important;
 }
 
 /* 2. 主帖头部操作栏“引用 回复 举报”完全靠右对齐 */
@@ -1807,5 +1844,72 @@ html[data-nsmax-theme] :is(
 html[data-nsmax-theme] :is(.app-switch, .nsk-notification > .app-switch) {
   display: none !important;
 }
+
+/* 9. 侧栏资料卡与右侧面板全面加固：防止 1024px 及各类尺寸下宽度挤压与文字脱节 */
+html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+  flex: 0 0 260px !important;
+  box-sizing: border-box !important;
+}
+
+html[data-nsmax-theme] #nsk-right-panel-container .user-card {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
+  overflow: hidden !important;
+}
+
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-sb-account {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
+  margin: 0 !important;
+  float: none !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+}
+
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-numbers {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+}
+
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-menu {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 2px 8px !important;
+}
+
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-stat {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: center !important;
+}
+
+@media (min-width: 861px) {
+  html[data-nsmax-theme] #nsk-body {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 260px !important;
+    gap: 20px !important;
+  }
+}
+
 
 
