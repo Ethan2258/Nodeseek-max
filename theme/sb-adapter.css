@@ -93,7 +93,8 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-icon {color:var(--b
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank {color:var(--text-subtle);}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank[data-rank="1"],html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank[data-rank="2"],html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank[data-rank="3"] {color:var(--brand);}
 html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper {background:transparent!important;}
-html[data-nsmax-theme] #nsk-body:has(.nsk-post) > #nsk-body-left {border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;}
+html[data-nsmax-theme] #nsk-body:is(:has(.nsk-post), :has(.comment-container), :has(.nsk-post-wrapper)) > #nsk-body-left,
+html[data-nsmax-theme][data-nsmax-page=post] #nsk-body-left {border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > div:has(>.md-editor) {margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
 html[data-nsmax-theme] #nsk-body-left .content-item {position:relative;display:grid!important;grid-template-columns:32px minmax(0,1fr)!important;column-gap:12px!important;}
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info {display:contents!important;}
@@ -111,8 +112,9 @@ html[data-nsmax-theme] #nsk-body-left .md-editor .mde-toolbar {display:flex;alig
 html[data-nsmax-theme] #nsk-body-left .md-editor .expression {border-top:1px solid var(--line-soft)!important;background:var(--panel)!important;padding:6px 10px!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor .exp-item {padding:4px 8px;border-radius:6px;font-size:12px;color:var(--text-subtle)!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor .exp-item:hover {background:var(--panel-hover);color:var(--text)!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor textarea:not(.CodeMirror textarea) {display:block;box-sizing:border-box;width:100%!important;min-height:160px;border:0!important;padding:14px!important;border-radius:0!important;background:var(--panel)!important;color:var(--text)!important;font:14px/1.7 var(--font-sans)!important;resize:vertical;}
-html[data-nsmax-theme] #nsk-body-left .md-editor .CodeMirror {height:auto;min-height:160px;background:var(--panel)!important;color:var(--text)!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor textarea:not(.CodeMirror textarea) {display:block;box-sizing:border-box;width:100%!important;min-height:150px;height:var(--nsmax-editor-height, auto)!important;border:0!important;padding:14px 18px 36px!important;border-radius:0!important;background:var(--panel)!important;color:var(--text)!important;font:14px/1.7 var(--font-sans)!important;resize:none!important;scrollbar-width:none!important;-ms-overflow-style:none!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor textarea:not(.CodeMirror textarea)::-webkit-scrollbar {display:none!important;width:0!important;height:0!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor .CodeMirror {height:auto;min-height:150px;background:var(--panel)!important;color:var(--text)!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor .CodeMirror-gutters {background:var(--panel-alt)!important;border-color:var(--line)!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor .CodeMirror-cursor {border-left-color:var(--text)!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor .CodeMirror-selected {background:var(--selection)!important;}
@@ -341,8 +343,8 @@ html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply:not(.nsmax-
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply:not(.nsmax-editor-emoji) :is(.expression,.exp-container) {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror {height:150px!important;min-height:150px!important;border:0!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror-gutters {display:none!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror-lines {padding:12px 14px!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply textarea:not(.CodeMirror textarea) {min-height:150px!important;height:150px;padding:12px 14px!important;border:0!important;border-radius:0!important;resize:vertical;background:var(--panel)!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror-lines {padding:14px 18px 36px!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply textarea:not(.CodeMirror textarea) {min-height:150px!important;height:var(--nsmax-editor-height, auto)!important;padding:14px 18px 36px!important;border:0!important;border-radius:0!important;background:var(--panel)!important;scrollbar-width:none!important;-ms-overflow-style:none!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-preview {min-height:150px;margin:0!important;padding:12px 14px!important;background:var(--panel);}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply.nsmax-editor-previewing :is(.vue-codemirror,.CodeMirror,textarea:not(.CodeMirror textarea)) {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-preview[hidden] {display:none!important;}
@@ -469,13 +471,13 @@ html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-edit
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-head button {display:inline-flex;align-items:center;gap:4px;min-height:28px;padding:3px 8px;border:0;border-radius:6px;background:transparent;color:var(--text-subtle);font:12px/20px var(--font-sans);cursor:pointer;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-head button svg {display:none;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-head button[aria-pressed=true] {background:var(--panel-hover);color:var(--text);}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-surface {display:block!important;min-height:140px!important;margin:12px 18px 16px!important;border:1px solid var(--line)!important;border-radius:8px!important;background:var(--panel-alt)!important;overflow:hidden!important;position:relative!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply [data-nsmax-editor-pane] {height:auto!important;min-height:140px!important;background:transparent!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror {height:140px!important;min-height:140px!important;background:transparent!important;color:var(--text)!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror-lines {padding:12px!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply textarea:not(.CodeMirror textarea) {height:140px!important;min-height:140px!important;margin:0!important;padding:12px!important;border:0!important;box-shadow:none!important;background:transparent!important;font:14px/1.6 var(--font-sans)!important;color:var(--text)!important;}
-html[data-nsmax-theme] .md-editor :is(.CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler) {display:none!important;visibility:hidden!important;width:0!important;height:0!important;opacity:0!important;pointer-events:none!important;}
-html[data-nsmax-theme] .md-editor .CodeMirror-scroll {overflow-x:hidden!important;margin-bottom:0!important;padding-bottom:0!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-surface {display:block!important;min-height:150px!important;height:var(--nsmax-editor-height, auto)!important;margin:12px 18px 16px!important;border:1px solid var(--line)!important;border-radius:8px!important;background:var(--panel-alt)!important;overflow:hidden!important;position:relative!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply [data-nsmax-editor-pane] {height:auto!important;min-height:150px!important;background:transparent!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror {height:var(--nsmax-editor-height, 150px)!important;min-height:150px!important;background:transparent!important;color:var(--text)!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .CodeMirror-lines {padding:14px 18px 36px!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply textarea:not(.CodeMirror textarea) {height:var(--nsmax-editor-height, auto)!important;min-height:150px!important;margin:0!important;padding:14px 18px 36px!important;border:0!important;box-shadow:none!important;background:transparent!important;font:14px/1.6 var(--font-sans)!important;color:var(--text)!important;scrollbar-width:none!important;-ms-overflow-style:none!important;}
+html[data-nsmax-theme] .md-editor :is(.CodeMirror-hscrollbar, .CodeMirror-vscrollbar, .CodeMirror-scrollbar-filler) {display:none!important;visibility:hidden!important;width:0!important;height:0!important;opacity:0!important;pointer-events:none!important;}
+html[data-nsmax-theme] .md-editor .CodeMirror-scroll {overflow-x:hidden!important;margin-bottom:0!important;padding-bottom:0!important;scrollbar-width:none!important;}
 html[data-nsmax-theme] .nsmax-custom-mde-toolbar {display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px!important;padding:6px 14px!important;background:var(--panel-alt)!important;border:1px solid var(--line)!important;border-bottom:0!important;border-radius:8px 8px 0 0!important;margin:12px 18px 0!important;}
 html[data-nsmax-theme] .nsmax-custom-mde-toolbar[hidden] {display:none!important;}
 html[data-nsmax-theme] .nsmax-custom-mde-toolbar .nsmax-mde-btn {display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:28px!important;height:28px!important;padding:0 6px!important;border:0!important;border-radius:6px!important;background:transparent!important;color:var(--text-subtle)!important;font:600 13px/28px var(--font-sans)!important;cursor:pointer!important;user-select:none!important;transition:background .12s ease,color .12s ease!important;}
@@ -698,9 +700,9 @@ html[data-nsmax-theme][data-nsmax-page=post] #nsk-body-left .md-editor.nsmax-com
 html[data-nsmax-theme][data-nsmax-page=post] #nsk-body-left .md-editor.nsmax-compact-reply :is(.topic-select,.submit-row) {justify-content:flex-start!important;min-height:50px!important;height:auto!important;align-items:center!important;padding:8px 16px 16px!important;}
 html[data-nsmax-theme][data-nsmax-page=post] #nsk-body-left .md-editor.nsmax-compact-reply :is(button.submit,button[type=submit]) {order:-1!important;height:36px!important;margin:0 8px 0 0!important;align-self:center!important;padding:0 16px!important;line-height:36px!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-surface {position:relative!important;background:var(--panel)!important;}
-html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-surface :is(.CodeMirror,textarea:not(.CodeMirror textarea)) {height:var(--nsmax-editor-height,150px)!important;min-height:150px!important;resize:none!important;background:var(--panel)!important;}
+html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-surface :is(.CodeMirror,textarea:not(.CodeMirror textarea)) {height:var(--nsmax-editor-height,auto)!important;min-height:150px!important;resize:none!important;background:var(--panel)!important;}
 html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply [data-nsmax-editor-pane]:not(textarea) {min-height:150px!important;height:auto!important;}
-html[data-nsmax-theme] :is(.nsmax-editor-resize, #nsk-body-left .md-editor .nsmax-editor-resize) {position:absolute!important;bottom:3px!important;right:3px!important;width:14px!important;height:14px!important;cursor:se-resize!important;touch-action:none!important;background:repeating-linear-gradient(135deg,transparent 0 3px,var(--text-disabled) 3px 4px,transparent 4px 6px)!important;clip-path:polygon(100% 0,100% 100%,0 100%)!important;border:0!important;margin:0!important;padding:0!important;outline:none!important;z-index:2!important;}
+html[data-nsmax-theme] :is(.nsmax-editor-resize, #nsk-body-left .md-editor .nsmax-editor-resize) {position:absolute!important;bottom:0!important;right:0!important;width:22px!important;height:22px!important;cursor:se-resize!important;touch-action:none!important;background:repeating-linear-gradient(135deg,transparent 0 3px,var(--text-disabled) 3px 4px,transparent 4px 6px)!important;clip-path:polygon(100% 0,100% 100%,0 100%)!important;border:0!important;margin:0!important;padding:0!important;outline:none!important;z-index:10!important;}
 html[data-nsmax-theme] :is(.nsmax-editor-previewing, .md-editor.nsmax-editor-previewing) .nsmax-editor-resize {display:none!important;}
 
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-numbers .nsmax-account-stat {display:block!important;min-width:0;text-decoration:none!important;border-radius:0!important;padding:2px 0!important;background:transparent!important;box-shadow:none!important;cursor:pointer;transition:color .15s ease!important;}
@@ -898,6 +900,17 @@ html[data-nsmax-theme] :is(
   -webkit-backdrop-filter: none !important;
 }
 
+html[data-nsmax-theme] .comment-container:has(> div > .post-bottom-pager, > .post-bottom-pager) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .comment-container:has(> div > .post-bottom-pager, > .post-bottom-pager) > :is(.comment-head, ul.comments) {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+}
+
 html[data-nsmax-theme] :is(
   .pager-bottom,
   .post-bottom-pager,
@@ -1063,6 +1076,17 @@ html[data-nsmax-theme] :is(body > header, #nsk-head, [data-nsmax-header], header
 }
 html[data-nsmax-theme] :is(section#nsk-frame, #nsk-frame) {
   margin-top: 0!important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html[data-nsmax-theme] #nsk-head,
+html[data-nsmax-theme] #nsk-body {
+  box-sizing: border-box !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
 }
 
 /* ==================== 列表控制栏彻底复刻 sb.sb .topic-toolbar 与 .post-list ==================== */
@@ -1637,21 +1661,27 @@ html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper > div:empty {
   display: none !important;
 }
 
-/* 4. 楼中楼（Nested Replies）对齐 sb.sb：去除糊在一起的生硬横线，采用柔和单导线 */
+/* 4. 楼中楼（Nested Replies）对齐 sb.sb：去除糊在一起的生硬横线，采用柔和单导线与自适应间距 */
 html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies {
-  margin: 10px 0 6px 42px !important;
-  padding: 4px 0 4px 14px !important;
+  margin: 10px 0 6px 44px !important;
+  padding: 4px 0 4px 16px !important;
   border-left: 2px solid var(--line-soft, rgba(255, 255, 255, 0.08)) !important;
   background: transparent !important;
   list-style: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
 }
 
 html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > .content-item {
-  padding: 8px 0 !important;
+  padding: 4px 0 !important;
   margin: 0 !important;
-  border-top: 1px solid var(--line-soft, rgba(255, 255, 255, 0.04)) !important;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
+  box-shadow: none !important;
 }
 
 html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > .content-item:first-child {
@@ -1663,10 +1693,13 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > .content-item:hove
 }
 
 /* 5. 固定右侧栏粘性定位，彻底杜绝表情展开撑开时侧栏下坠 */
+html[data-nsmax-theme] #nsk-body {
+  align-items: start !important;
+}
 html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {
   align-self: start !important;
   position: sticky !important;
-  top: 68px !important;
+  top: 76px !important;
 }
 
 /* 6. 回复框输入体验深度重构：彻底去除侧边滑动条、文字底部充足留白杜绝截断腰斩 */
@@ -1693,15 +1726,17 @@ html[data-nsmax-theme] .md-editor :is(.CodeMirror-vscrollbar, .CodeMirror-hscrol
 
 html[data-nsmax-theme] .md-editor textarea:not(.CodeMirror textarea) {
   box-sizing: border-box !important;
-  padding: 14px 18px 32px !important;
+  padding: 14px 18px 36px !important;
   line-height: 1.7 !important;
   font-size: 14.5px !important;
   overflow-y: auto !important;
   resize: none !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 html[data-nsmax-theme] .md-editor .CodeMirror-lines {
-  padding-bottom: 32px !important;
+  padding-bottom: 36px !important;
   line-height: 1.7 !important;
 }
 
@@ -1712,12 +1747,26 @@ html[data-nsmax-theme] .md-editor .CodeMirror-scroll {
 }
 
 html[data-nsmax-theme] .nsmax-editor-resize {
-  cursor: ns-resize !important;
+  cursor: se-resize !important;
   touch-action: none !important;
 }
 
 /* 7. 全站徽标/胶囊文字绝对水平垂直居中与行高归一，杜绝偏心飘起 */
-html[data-nsmax-theme] :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category, .topic-badge, .verify-badge) {
+html[data-nsmax-theme] :is(
+  .role-tag,
+  .nsk-badge,
+  .badge,
+  .nspp-user-badges > *,
+  .post-category,
+  .topic-badge,
+  .verify-badge,
+  .hot-badge,
+  .nsmax-account-rank,
+  .nsmax-person-level,
+  .pager-pos,
+  .pager-prev,
+  .pager-next
+) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1730,6 +1779,33 @@ html[data-nsmax-theme] :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *,
 html[data-nsmax-theme] :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category) > * {
   line-height: 1 !important;
   vertical-align: middle !important;
+}
+
+html[data-nsmax-theme] :is(.nsk-content-meta-info, .post-info, .content-meta, .post-list-item .post-info, .head-container h1, .nsmax-post-meta) {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+/* 8. 独立分页器纯净透明（去除残留白色块）与消息中心多余标签隐藏 */
+html[data-nsmax-theme] :is(
+  .nsmax-detached-pager,
+  [data-nsmax-detached-pager],
+  #nsk-body-left > .nsk-post-wrapper > .nsmax-detached-pager,
+  #nsk-body-left > .nsk-post-wrapper > div:has(>.post-bottom-pager)
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 16px 0 !important;
+}
+
+html[data-nsmax-theme] :is(.app-switch, .nsk-notification > .app-switch) {
+  display: none !important;
 }
 
 

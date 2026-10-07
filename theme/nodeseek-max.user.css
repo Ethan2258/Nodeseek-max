@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.24
+@version        1.7.25
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.24（UserCSS）
+ * NodeSeek Max 主题 v1.7.25（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -17039,7 +17039,8 @@
 	html:root:root:root:root #nsk-body-left > .nsk-post-wrapper {
 		background:transparent!important;
 	}
-	html:root:root:root:root #nsk-body:has(.nsk-post) > #nsk-body-left {
+	html:root:root:root:root #nsk-body:is(:has(.nsk-post), :has(.comment-container), :has(.nsk-post-wrapper)) > #nsk-body-left,
+	html:root:root:root:root:has(.nsk-post) #nsk-body-left {
 		border:0!important;
 		background:transparent!important;
 		box-shadow:none!important;
@@ -17146,18 +17147,26 @@
 		display:block;
 		box-sizing:border-box;
 		width:100%!important;
-		min-height:160px;
+		min-height:150px;
+		height:var(--nsmax-editor-height, auto)!important;
 		border:0!important;
-		padding:14px!important;
+		padding:14px 18px 36px!important;
 		border-radius:0!important;
 		background:var(--panel)!important;
 		color:var(--text)!important;
 		font:14px/1.7 var(--font-sans)!important;
-		resize:vertical;
+		resize:none!important;
+		scrollbar-width:none!important;
+		-ms-overflow-style:none!important;
+	}
+	html:root:root:root:root #nsk-body-left .md-editor textarea:not(.CodeMirror textarea)::-webkit-scrollbar {
+		display:none!important;
+		width:0!important;
+		height:0!important;
 	}
 	html:root:root:root:root #nsk-body-left .md-editor .CodeMirror {
 		height:auto;
-		min-height:160px;
+		min-height:150px;
 		background:var(--panel)!important;
 		color:var(--text)!important;
 	}
@@ -18482,6 +18491,7 @@
 		display:none;
 	}
 	html:root:root:root:root .md-editor .CodeMirror-hscrollbar,
+	html:root:root:root:root .md-editor .CodeMirror-vscrollbar,
 	html:root:root:root:root .md-editor .CodeMirror-scrollbar-filler {
 		display:none!important;
 		visibility:hidden!important;
@@ -18494,6 +18504,7 @@
 		overflow-x:hidden!important;
 		margin-bottom:0!important;
 		padding-bottom:0!important;
+		scrollbar-width:none!important;
 	}
 	html:root:root:root:root:has(.new-discussion) #nsk-body-left .post-editor,
 	html:root:root:root:root:has(.new-discussion) #nsk-body-left .new-discussion {
@@ -19412,6 +19423,16 @@
 		backdrop-filter: none !important;
 		-webkit-backdrop-filter: none !important;
 	}
+	html:root:root:root:root .comment-container:has(> div > .post-bottom-pager, > .post-bottom-pager) {
+		background: transparent !important;
+		border: 0 !important;
+		box-shadow: none !important;
+	}
+	html:root:root:root:root .comment-container:has(> div > .post-bottom-pager, > .post-bottom-pager) > :is(.comment-head, ul.comments) {
+		background: var(--panel) !important;
+		border: 1px solid var(--line) !important;
+		border-radius: 12px !important;
+	}
 	html:root:root:root:root :is(
 	  .pager-bottom,
 	  .post-bottom-pager,
@@ -19559,6 +19580,17 @@
 	}
 	html:root:root:root:root :is(section#nsk-frame, #nsk-frame) {
 		margin-top: 0!important;
+		padding-left: 0 !important;
+		padding-right: 0 !important;
+	}
+	html:root:root:root:root #nsk-head,
+	html:root:root:root:root #nsk-body {
+		box-sizing: border-box !important;
+		max-width: 1200px !important;
+		margin-left: auto !important;
+		margin-right: auto !important;
+		padding-left: 16px !important;
+		padding-right: 16px !important;
 	}
 	html:root:root:root:root #nsk-body-left {
 		background: transparent!important;
@@ -19913,10 +19945,13 @@
 	html:root:root:root:root #nsk-body-left > .nsk-post-wrapper > div:empty {
 		display: none !important;
 	}
+	html:root:root:root:root #nsk-body {
+		align-items: start !important;
+	}
 	html:root:root:root:root #nsk-body > #nsk-right-panel-container {
 		align-self: start !important;
 		position: sticky !important;
-		top: 68px !important;
+		top: 76px !important;
 	}
 	html:root:root:root:root .md-editor .CodeMirror-vscrollbar,
 	html:root:root:root:root .md-editor .CodeMirror-hscrollbar {
@@ -19926,14 +19961,16 @@
 	}
 	html:root:root:root:root .md-editor textarea:not(.CodeMirror textarea) {
 		box-sizing: border-box !important;
-		padding: 14px 18px 32px !important;
+		padding: 14px 18px 36px !important;
 		line-height: 1.7 !important;
 		font-size: 14.5px !important;
 		overflow-y: auto !important;
 		resize: none !important;
+		scrollbar-width: none !important;
+		-ms-overflow-style: none !important;
 	}
 	html:root:root:root:root .md-editor .CodeMirror-lines {
-		padding-bottom: 32px !important;
+		padding-bottom: 36px !important;
 		line-height: 1.7 !important;
 	}
 	html:root:root:root:root .md-editor .CodeMirror-scroll {
@@ -19947,7 +19984,11 @@
 	html:root:root:root:root .nspp-user-badges > *,
 	html:root:root:root:root .post-category,
 	html:root:root:root:root .topic-badge,
-	html:root:root:root:root .verify-badge {
+	html:root:root:root:root .verify-badge,
+	html:root:root:root:root .hot-badge,
+	html:root:root:root:root .pager-pos,
+	html:root:root:root:root .pager-prev,
+	html:root:root:root:root .pager-next {
 		display: inline-flex !important;
 		align-items: center !important;
 		justify-content: center !important;
@@ -19959,5 +20000,8 @@
 	html:root:root:root:root :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category) > * {
 		line-height: 1 !important;
 		vertical-align: middle !important;
+	}
+	html:root:root:root:root :is(.app-switch, .nsk-notification > .app-switch) {
+		display: none !important;
 	}
 }

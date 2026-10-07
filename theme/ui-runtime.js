@@ -188,7 +188,7 @@
 			if (!topicTab) {
 				topicTab = document.createElement("a");
 				topicTab.className = "select-item";
-				topicTab.href = "#/discussions";
+				topicTab.href = "#/posts";
 				topicTab.textContent = "主题";
 				tabs.unshift(topicTab);
 			}
@@ -207,13 +207,13 @@
 				tab.style.removeProperty("display");
 				if (/主题|讨论|帖子|discussions|posts|topics/i.test(text) || /#\/(?:discussions|posts|topics)/i.test(href)) {
 					tab.textContent = "主题";
-					tab.setAttribute("href", "#/discussions");
+					tab.setAttribute("href", "#/posts");
 				} else if (/评论|回帖|回复|comments/i.test(text) || /#\/comments/i.test(href)) {
 					tab.textContent = "回帖";
 					tab.setAttribute("href", "#/comments");
 				} else if (/收藏|fav|collections/i.test(text) || /#\/(?:collections|fav)/i.test(href)) {
 					tab.textContent = "收藏";
-					tab.setAttribute("href", "#/collections");
+					tab.setAttribute("href", "#/fav");
 				}
 				visibleTabs.push(tab);
 			}
@@ -238,12 +238,12 @@
 
 		// 同步当前激活状态，避免反复 click 导致无限闪烁
 		const syncActiveTabs = () => {
-			const hash = location.hash || "#/discussions";
+			const hash = location.hash || "#/posts";
 			for (const tab of document.querySelectorAll(".selector a.select-item")) {
 				const href = tab.getAttribute("href") || "";
-				const isActive = (hash.includes("discussions") && href.includes("discussions")) ||
+				const isActive = ((hash.includes("posts") || hash.includes("discussions")) && (href.includes("posts") || href.includes("discussions"))) ||
 					(hash.includes("comments") && href.includes("comments")) ||
-					(hash.includes("collections") && href.includes("collections"));
+					((hash.includes("collections") || hash.includes("fav")) && (href.includes("collections") || href.includes("fav")));
 				tab.classList.toggle("active", isActive);
 				tab.classList.toggle("router-link-active", isActive);
 			}
@@ -254,7 +254,7 @@
 			const currentHash = location.hash;
 			if (!currentHash || currentHash === "#/info" || currentHash === "#" || currentHash.includes("info") || currentHash.includes("profile")) {
 				window.__nsmax_space_switched = true;
-				location.hash = "#/discussions";
+				location.hash = "#/posts";
 			}
 		}
 		syncActiveTabs();
@@ -302,6 +302,18 @@
 			let badge = title.querySelector(":scope > .nsmax-prize-badge");
 			if (giveaway && !badge) { badge = document.createElement("span"); badge.className = "nsmax-prize-badge"; badge.textContent = "抽奖"; link.before(badge); }
 			else if (!giveaway && badge) badge.remove();
+		}
+	}
+	function nsmaxCleanBadgesAndNotifications() {
+		for (const el of document.querySelectorAll(".notify-count, .unread-count, .nspp-messages-count, .nspp-messages-unread")) {
+			const text = (el.textContent || "").trim();
+			if (!text || text === "0") {
+				el.setAttribute("data-empty", "true");
+				el.style.setProperty("display", "none", "important");
+			} else {
+				el.removeAttribute("data-empty");
+				el.style.removeProperty("display");
+			}
 		}
 	}
 	function nsmaxCleanSearchOverlay() {
@@ -477,6 +489,28 @@
 	}
 	function nsmaxDecoratePostDetail() {
 		if (!/^\/post-\d+/.test(location.pathname)) return;
+
+		// 0. 底部分页器移出评论卡片容器，直接落在页面底色上（所有页数均生效，即使没有 OP 主帖）
+		const commentContainer = document.querySelector("#nsk-body-left .comment-container, .comment-container");
+		if (commentContainer) {
+			const bottomPager = commentContainer.querySelector(".post-bottom-pager, .nsk-pager:not(.post-top-pager):not(.pager-top)");
+			if (bottomPager) {
+				const pagerWrapper = bottomPager.closest(".comment-container > div") || bottomPager;
+				pagerWrapper.classList.add("nsmax-detached-pager");
+				pagerWrapper.style.setProperty("background", "transparent", "important");
+				pagerWrapper.style.setProperty("border", "none", "important");
+				pagerWrapper.style.setProperty("box-shadow", "none", "important");
+				if (pagerWrapper.parentElement === commentContainer) {
+					commentContainer.after(pagerWrapper);
+				}
+			}
+		}
+		for (const detached of document.querySelectorAll(".nsmax-detached-pager, .post-bottom-pager, div:has(>.post-bottom-pager)")) {
+			detached.style.setProperty("background", "transparent", "important");
+			detached.style.setProperty("border", "none", "important");
+			detached.style.setProperty("box-shadow", "none", "important");
+		}
+
 		const opPost = document.querySelector(".nsk-post") || document.querySelector("#nsk-body-left .content-item#0") || document.querySelector(".content-item#0");
 		if (!opPost) return;
 
@@ -633,18 +667,6 @@
 				if (/引用|回复/.test(text)) item.remove();
 			}
 		}
-
-		// 5. 底部分页器移出评论卡片容器，直接落在页面底色上（去除白色卡片包裹与顶部分割线，对齐 sb 规范与图二）
-		const commentContainer = document.querySelector("#nsk-body-left .comment-container");
-		if (commentContainer) {
-			const bottomPager = commentContainer.querySelector(".post-bottom-pager, .nsk-pager");
-			if (bottomPager) {
-				const pagerWrapper = bottomPager.closest(".comment-container > div") || bottomPager;
-				if (pagerWrapper.parentElement === commentContainer) {
-					commentContainer.after(pagerWrapper);
-				}
-			}
-		}
 	}
 	function nsmaxSetupMarkdownTabs() {
 		const postContainers = document.querySelectorAll(".post-content, .markdown-body, .comment-content, article");
@@ -781,6 +803,7 @@
 			nsmaxProcessPostListRows();
 			nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
+			nsmaxCleanBadgesAndNotifications();
 			const isPost = /^\/post-\d+/.test(location.pathname);
 			if (isPost) {
 				nsmaxDecoratePostDetail();
@@ -1083,22 +1106,48 @@
 				const setHeight = height => {
 					const value = Math.max(120, Math.min(1200, height));
 					editor.style.setProperty("--nsmax-editor-height", value + "px");
-					if (surface) surface.style.height = value + "px";
+					if (surface) surface.style.setProperty("height", value + "px", "important");
 					const cmWrap = cm?.getWrapperElement?.() || editor.querySelector(".CodeMirror");
-					if (cmWrap) cmWrap.style.height = value + "px";
-					if (input) input.style.height = value + "px";
-					if (preview) preview.style.height = value + "px";
+					if (cmWrap) cmWrap.style.setProperty("height", value + "px", "important");
+					if (input) input.style.setProperty("height", value + "px", "important");
+					if (preview) preview.style.setProperty("height", value + "px", "important");
 					resize.setAttribute("aria-valuenow", String(Math.round(value)));
 					cm?.refresh();
 				};
-				const beginDrag = event => { if (event.button !== 0) return; event.preventDefault(); drag={ y:event.clientY,height:surface.getBoundingClientRect().height }; resize.setPointerCapture?.(event.pointerId); };
-				const moveDrag = event => { if (drag) { event.preventDefault(); setHeight(drag.height+event.clientY-drag.y); } };
-				const endDrag = () => { drag=undefined; };
-				resize.addEventListener("pointerdown", beginDrag, { signal:ctx.signal });
-				resize.addEventListener("pointermove", moveDrag, { signal:ctx.signal });
-				resize.addEventListener("mousedown", beginDrag, { signal:ctx.signal });
-				for (const type of ["pointermove","mousemove"]) document.addEventListener(type, moveDrag, { signal:ctx.signal, passive:false });
-				for (const type of ["pointerup","pointercancel","mouseup","lostpointercapture"]) document.addEventListener(type,endDrag,{signal:ctx.signal});
+				const beginDrag = event => {
+					if (event.button !== undefined && event.button !== 0) return;
+					event.preventDefault();
+					event.stopPropagation();
+					drag = { y: event.clientY ?? event.touches?.[0]?.clientY ?? 0, height: surface.getBoundingClientRect().height };
+					if (event.pointerId !== undefined && typeof resize.setPointerCapture === "function") {
+						try { resize.setPointerCapture(event.pointerId); } catch(e) {}
+					}
+				};
+				const moveDrag = event => {
+					if (drag) {
+						event.preventDefault();
+						const cy = event.clientY ?? event.touches?.[0]?.clientY;
+						if (cy !== undefined) setHeight(drag.height + cy - drag.y);
+					}
+				};
+				const endDrag = event => {
+					if (drag) {
+						if (event?.pointerId !== undefined && typeof resize.releasePointerCapture === "function") {
+							try { resize.releasePointerCapture(event.pointerId); } catch(e) {}
+						}
+						drag = undefined;
+					}
+				};
+				resize.addEventListener("pointerdown", beginDrag, { signal: ctx.signal });
+				resize.addEventListener("mousedown", beginDrag, { signal: ctx.signal });
+				resize.addEventListener("touchstart", beginDrag, { signal: ctx.signal, passive: false });
+				for (const type of ["pointermove", "mousemove", "touchmove"]) {
+					window.addEventListener(type, moveDrag, { signal: ctx.signal, passive: false });
+				}
+				for (const type of ["pointerup", "pointercancel", "mouseup", "touchend", "touchcancel"]) {
+					window.addEventListener(type, endDrag, { signal: ctx.signal });
+				}
+				resize.addEventListener("lostpointercapture", endDrag, { signal: ctx.signal });
 				resize.addEventListener("keydown",event=>{ if (["ArrowDown","ArrowUp"].includes(event.key)) { event.preventDefault(); setHeight(surface.getBoundingClientRect().height+(event.key==="ArrowDown"?30:-30)); } },{signal:ctx.signal});
 				surface.append(resize);
 				const previewButton = controls.lastElementChild;
@@ -1125,15 +1174,15 @@
 				}
 				const adjustInputHeight = () => {
 					if (input && !editor.style.getPropertyValue("--nsmax-editor-height")) {
-						input.style.height = "auto";
+						input.style.setProperty("height", "auto", "important");
 						const scrollH = input.scrollHeight;
 						if (scrollH > 150) {
-							const h = Math.min(800, scrollH + 16);
-							input.style.height = h + "px";
-							if (surface) surface.style.height = h + "px";
+							const h = Math.min(800, scrollH + 36);
+							input.style.setProperty("height", h + "px", "important");
+							if (surface) surface.style.setProperty("height", h + "px", "important");
 						} else {
-							input.style.height = "150px";
-							if (surface) surface.style.height = "150px";
+							input.style.setProperty("height", "150px", "important");
+							if (surface) surface.style.setProperty("height", "150px", "important");
 						}
 					}
 				};
@@ -1141,6 +1190,7 @@
 				else {
 					input.addEventListener("input", render, { signal: ctx.signal });
 					input.addEventListener("input", adjustInputHeight, { signal: ctx.signal });
+					setTimeout(adjustInputHeight, 0);
 				}
 				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); mdeToolbar.remove(); preview.remove(); });
 			}

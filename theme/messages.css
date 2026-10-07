@@ -11,7 +11,7 @@ html[data-nsmax-theme]:root:root:root .app-switch {
   display: none !important;
 }
 
-/* 顶部消息中心外层分类栏（单套分类栏，sb.sb 胶囊风格） */
+/* 顶部消息中心外层分类栏（单套优雅分类栏，sb.sb 胶囊风格） */
 html[data-nsmax-theme]:root:root:root .nsmax-message-tabs {
   display: inline-flex !important;
   align-items: center !important;
@@ -175,7 +175,7 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-sidebar {
 html[data-nsmax-theme]:root:root:root .nspp-messages-search {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 8px !important;
   padding: 12px 14px 10px !important;
   flex: none !important;
 }
@@ -184,7 +184,7 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-search input {
   flex: 1 1 auto !important;
   min-width: 0 !important;
   height: 34px !important;
-  padding: 6px 10px !important;
+  padding: 6px 12px !important;
   border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
   border-radius: 8px !important;
   background: var(--panel, #18191c) !important;
@@ -197,10 +197,16 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-search input:focus {
   border-color: var(--brand, #3b82f6) !important;
 }
 
-html[data-nsmax-theme]:root:root:root .nspp-messages-search button {
+html[data-nsmax-theme]:root:root:root .nspp-messages-search button,
+html[data-nsmax-theme]:root:root:root .nspp-messages-search .nspp-messages-back {
   height: 34px !important;
-  padding: 0 10px !important;
+  padding: 0 12px !important;
   border-radius: 8px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  writing-mode: horizontal-tb !important;
+  min-width: max-content !important;
+  flex: none !important;
 }
 
 /* 图四左侧快捷通知分类项导航 */
@@ -362,17 +368,8 @@ html[data-nsmax-theme]:root:root:root .nspp-notice-excerpt {
 }
 
 /* 未读徽标：空内容为精致小红点，带数字时为居中胶囊，彻底告别“大红圈中间没有数字” */
-html[data-nsmax-theme]:root:root:root .nspp-messages-unread:empty,
-html[data-nsmax-theme]:root:root:root .notify-count:empty {
-  display: inline-block !important;
-  width: 7px !important;
-  height: 7px !important;
-  min-width: 7px !important;
-  padding: 0 !important;
-  border-radius: 999px !important;
-  background: var(--danger, #ef4444) !important;
-  flex: none !important;
-  vertical-align: middle !important;
+html[data-nsmax-theme]:root:root:root :is(.nspp-messages-unread, .notify-count, .unread-count):is(:empty, [data-empty="true"], [data-count="0"]) {
+  display: none !important;
 }
 
 html[data-nsmax-theme]:root:root:root .nspp-messages-count,
