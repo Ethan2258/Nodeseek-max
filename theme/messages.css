@@ -2,10 +2,12 @@
    NodeSeek Max 消息与通知中心（对齐 sb.sb 风格 & 1:1 复刻图四双栏架构）
    ========================================================================== */
 
-/* 1. 宿主容器控制：隐藏原生容器与外部多余的浮空切页胶囊 */
+/* 1. 宿主容器控制：隐藏原生重复容器与原生切页胶囊，保留单套优雅胶囊分类栏 */
 html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=new] > :not(.nspp-messages, .nsmax-message-tabs),
 html[data-nsmax-theme] .nspp-messages-container[data-nspp-message-view=native] > .nspp-messages,
-html[data-nsmax-theme]:root:root:root .nspp-messages-container > .app-switch {
+html[data-nsmax-theme]:root:root:root .nspp-messages-container > .app-switch,
+html[data-nsmax-theme]:root:root:root .nsk-notification .app-switch,
+html[data-nsmax-theme]:root:root:root .app-switch {
   display: none !important;
 }
 
@@ -359,19 +361,37 @@ html[data-nsmax-theme]:root:root:root .nspp-notice-excerpt {
   line-height: 1.4 !important;
 }
 
-/* 未读徽标：sb.sb 优雅醒目红色胶囊 */
+/* 未读徽标：空内容为精致小红点，带数字时为居中胶囊，彻底告别“大红圈中间没有数字” */
+html[data-nsmax-theme]:root:root:root .nspp-messages-unread:empty,
+html[data-nsmax-theme]:root:root:root .notify-count:empty {
+  display: inline-block !important;
+  width: 7px !important;
+  height: 7px !important;
+  min-width: 7px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: var(--danger, #ef4444) !important;
+  flex: none !important;
+  vertical-align: middle !important;
+}
+
 html[data-nsmax-theme]:root:root:root .nspp-messages-count,
-html[data-nsmax-theme]:root:root:root .nspp-messages-unread {
-  display: inline-grid !important;
-  place-items: center !important;
+html[data-nsmax-theme]:root:root:root .nspp-messages-unread:not(:empty),
+html[data-nsmax-theme]:root:root:root .notify-count:not(:empty) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   min-width: 18px !important;
   height: 18px !important;
   border-radius: 999px !important;
   padding: 0 5px !important;
   background: var(--danger, #ef4444) !important;
   color: #fff !important;
-  font: 600 11px/1 var(--font-sans) !important;
+  font: 600 11px/1 var(--font-sans, system-ui, sans-serif) !important;
+  line-height: 1 !important;
+  text-align: center !important;
   flex: none !important;
+  vertical-align: middle !important;
 }
 
 /* 6. 右侧主工作区：通知工作区（inbox）与聊天工作区（chat）协同展示 */
@@ -559,9 +579,9 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-empty {
   gap: 12px !important;
 }
 
-/* 底部编辑器 */
+/* 底部编辑器：现代化一体式对齐卡片输入框 */
 html[data-nsmax-theme]:root:root:root .nspp-messages-composer {
-  padding: 12px 16px !important;
+  padding: 14px 18px 16px !important;
   background: var(--panel, #18191c) !important;
   border-top: 1px solid var(--line-soft, rgba(255, 255, 255, 0.08)) !important;
 }
@@ -569,16 +589,22 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-composer {
 html[data-nsmax-theme]:root:root:root .nspp-messages-composer textarea {
   display: block !important;
   width: 100% !important;
-  min-height: 80px !important;
+  min-height: 72px !important;
   max-height: 160px !important;
-  resize: vertical !important;
-  padding: 10px 12px !important;
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
-  border-radius: 8px !important;
-  background: var(--panel-alt, #1f2127) !important;
+  resize: none !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1)) !important;
+  border-bottom: 0 !important;
+  border-top-left-radius: 10px !important;
+  border-top-right-radius: 10px !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  background: var(--panel-alt, #1d1f25) !important;
   color: var(--text, #fff) !important;
-  font: 14px/1.6 var(--font-sans) !important;
+  font: 13.5px/1.6 var(--font-sans, system-ui, sans-serif) !important;
   outline: none !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s ease !important;
 }
 
 html[data-nsmax-theme]:root:root:root .nspp-messages-composer textarea:focus {
@@ -588,21 +614,38 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-composer textarea:focus {
 html[data-nsmax-theme]:root:root:root .nspp-messages-compose-actions {
   display: flex !important;
   align-items: center !important;
+  justify-content: space-between !important;
   gap: 10px !important;
-  padding-top: 8px !important;
+  padding: 8px 12px !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1)) !important;
+  border-top: 1px solid var(--line-soft, rgba(255, 255, 255, 0.05)) !important;
+  border-bottom-left-radius: 10px !important;
+  border-bottom-right-radius: 10px !important;
+  background: var(--panel-alt, #1d1f25) !important;
+  box-sizing: border-box !important;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.5)) !important;
+  font-size: 12px !important;
 }
 
 html[data-nsmax-theme]:root:root:root .nspp-messages-send {
   margin-left: auto !important;
-  height: 32px !important;
-  padding: 0 18px !important;
+  height: 30px !important;
+  padding: 0 16px !important;
   background: var(--brand, #3b82f6) !important;
   color: #fff !important;
-  border-color: var(--brand, #3b82f6) !important;
+  border-radius: 999px !important;
+  border: 0 !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
 }
 
 html[data-nsmax-theme]:root:root:root .nspp-messages-send:hover {
-  background: #2563eb !important;
+  background: var(--brand-hover, #2563eb) !important;
 }
 
 /* 移动端适配 (<=700px) */

@@ -172,19 +172,31 @@
 			}
 		}
 
-		// Align tabs with sb.sb: only keep "主题", "回帖", "收藏", hide "概况/资料", remove "设置" button
+		// Align tabs with sb.sb: ensure "主题", "回帖", "收藏", hide "概况/资料", remove "设置" button
 		const selectorNav = document.querySelector(".selector");
-		if (selectorNav) {
+		if (selectorNav && !selectorNav.hasAttribute("data-nsmax-tabs-ready")) {
+			selectorNav.setAttribute("data-nsmax-tabs-ready", "true");
 			const settingBtn = selectorNav.querySelector(".nsmax-space-setting-btn");
 			if (settingBtn) settingBtn.remove();
 
-			const tabs = Array.from(selectorNav.querySelectorAll("a.select-item"));
+			let tabs = Array.from(selectorNav.querySelectorAll("a.select-item"));
 			const visibleTabs = [];
 			const hiddenTabs = [];
+
+			// 检查是否已包含主题/讨论相关 tab，若原生未提供则自动补齐
+			let topicTab = tabs.find(tab => /主题|讨论|帖子|discussions|posts|topics/i.test(tab.textContent) || /#\/(?:discussions|posts|topics)/i.test(tab.getAttribute("href") || ""));
+			if (!topicTab) {
+				topicTab = document.createElement("a");
+				topicTab.className = "select-item";
+				topicTab.href = "#/discussions";
+				topicTab.textContent = "主题";
+				tabs.unshift(topicTab);
+			}
+
 			for (const tab of tabs) {
 				const text = tab.textContent.trim();
 				const href = tab.getAttribute("href") || "";
-				if (/概况|资料/i.test(text) || /#\/(?:info|profile)/i.test(href)) {
+				if (/概况|资料/i.test(text) || /#\/(?:info|profile)$/i.test(href)) {
 					tab.style.setProperty("display", "none", "important");
 					tab.setAttribute("hidden", "");
 					tab.classList.remove("active");
@@ -193,21 +205,26 @@
 				}
 				tab.removeAttribute("hidden");
 				tab.style.removeProperty("display");
-				if (/主题/i.test(text)) {
+				if (/主题|讨论|帖子|discussions|posts|topics/i.test(text) || /#\/(?:discussions|posts|topics)/i.test(href)) {
 					tab.textContent = "主题";
-				} else if (/评论|回帖|回复/i.test(text)) {
+					tab.setAttribute("href", "#/discussions");
+				} else if (/评论|回帖|回复|comments/i.test(text) || /#\/comments/i.test(href)) {
 					tab.textContent = "回帖";
-				} else if (/收藏/i.test(text)) {
+					tab.setAttribute("href", "#/comments");
+				} else if (/收藏|fav|collections/i.test(text) || /#\/(?:collections|fav)/i.test(href)) {
 					tab.textContent = "收藏";
+					tab.setAttribute("href", "#/collections");
 				}
 				visibleTabs.push(tab);
 			}
+
 			const orderMap = { "主题": 1, "回帖": 2, "收藏": 3 };
 			visibleTabs.sort((a, b) => {
 				const valA = orderMap[a.textContent.trim()] || 99;
 				const valB = orderMap[b.textContent.trim()] || 99;
 				return valA - valB;
 			});
+
 			const rightSide = selectorNav.querySelector(".selector-right-side, .discussion-wrapper, .comments-list");
 			for (const tab of visibleTabs) {
 				if (rightSide) selectorNav.insertBefore(tab, rightSide);
@@ -217,40 +234,37 @@
 				selectorNav.append(tab);
 			}
 			selectorNav.scrollLeft = 0;
-			if (!selectorNav.hasAttribute("data-nsmax-scroll-bound")) {
-				selectorNav.setAttribute("data-nsmax-scroll-bound", "true");
-				selectorNav.addEventListener("scroll", () => {
-					if (selectorNav.scrollLeft !== 0) selectorNav.scrollLeft = 0;
-				}, { passive: true });
-			}
 		}
 
-		// When entering space, auto-switch to topics (#/posts) if on overview (#/info or empty)
-		const currentHash = location.hash;
-		if (!currentHash || currentHash === "#/info" || currentHash === "#" || currentHash.includes("info") || currentHash.includes("profile")) {
-			const visibleTabs = Array.from(document.querySelectorAll(".selector a.select-item")).filter(tab => !tab.hidden && tab.style.display !== "none");
-			const postsTab = visibleTabs.find(tab => /主题/i.test(tab.textContent) || /posts|discussions|threads/i.test(tab.getAttribute("href") || ""));
-			if (postsTab && !postsTab.classList.contains("active")) {
-				for (const tab of document.querySelectorAll(".selector a.select-item")) tab.classList.remove("active");
-				postsTab.classList.add("active");
-				const targetHref = postsTab.getAttribute("href");
-				if (targetHref && targetHref.startsWith("#") && location.hash !== targetHref) {
-					location.hash = targetHref;
-				}
-				postsTab.click();
-				if (selectorNav) selectorNav.scrollLeft = 0;
+		// 同步当前激活状态，避免反复 click 导致无限闪烁
+		const syncActiveTabs = () => {
+			const hash = location.hash || "#/discussions";
+			for (const tab of document.querySelectorAll(".selector a.select-item")) {
+				const href = tab.getAttribute("href") || "";
+				const isActive = (hash.includes("discussions") && href.includes("discussions")) ||
+					(hash.includes("comments") && href.includes("comments")) ||
+					(hash.includes("collections") && href.includes("collections"));
+				tab.classList.toggle("active", isActive);
+				tab.classList.toggle("router-link-active", isActive);
+			}
+		};
+
+		// 首次进入空间时，如果是概况则平滑切换至主题
+		if (!window.__nsmax_space_switched) {
+			const currentHash = location.hash;
+			if (!currentHash || currentHash === "#/info" || currentHash === "#" || currentHash.includes("info") || currentHash.includes("profile")) {
+				window.__nsmax_space_switched = true;
+				location.hash = "#/discussions";
 			}
 		}
+		syncActiveTabs();
 
-		// Ensure space tabs remain responsive and do not get blocked
+		// 为 tab 绑定点击时同步状态
 		for (const item of document.querySelectorAll(".selector a.select-item")) {
 			if (!item.hasAttribute("data-nsmax-bound")) {
 				item.setAttribute("data-nsmax-bound", "true");
 				item.addEventListener("click", () => {
-					for (const tab of document.querySelectorAll(".selector a.select-item")) {
-						tab.classList.toggle("active", tab === item);
-					}
-					if (selectorNav) selectorNav.scrollLeft = 0;
+					setTimeout(syncActiveTabs, 50);
 				});
 			}
 		}
@@ -1054,7 +1068,17 @@
 				resize.className = "nsmax-editor-resize"; resize.tabIndex = 0;
 				resize.setAttribute("role","separator"); resize.setAttribute("aria-label","调整输入框高度"); resize.setAttribute("aria-orientation","horizontal");
 				let drag;
-				const setHeight = height => { const value = Math.max(150,Math.min(1000,height)); editor.style.setProperty("--nsmax-editor-height",value+"px"); resize.setAttribute("aria-valuenow",String(Math.round(value))); cm?.refresh(); };
+				const setHeight = height => {
+					const value = Math.max(120, Math.min(1200, height));
+					editor.style.setProperty("--nsmax-editor-height", value + "px");
+					if (surface) surface.style.height = value + "px";
+					const cmWrap = cm?.getWrapperElement?.() || editor.querySelector(".CodeMirror");
+					if (cmWrap) cmWrap.style.height = value + "px";
+					if (input) input.style.height = value + "px";
+					if (preview) preview.style.height = value + "px";
+					resize.setAttribute("aria-valuenow", String(Math.round(value)));
+					cm?.refresh();
+				};
 				const beginDrag = event => { if (event.button !== 0) return; event.preventDefault(); drag={ y:event.clientY,height:surface.getBoundingClientRect().height }; resize.setPointerCapture?.(event.pointerId); };
 				const moveDrag = event => { if (drag) { event.preventDefault(); setHeight(drag.height+event.clientY-drag.y); } };
 				const endDrag = () => { drag=undefined; };

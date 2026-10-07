@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           NodeSeek Max 主题
 @namespace      github.com/Ethan2258/Nodeseek-max
-@version        1.7.22
+@version        1.7.23
 @description    NodeSeek / DeepFlood SB Theme UI：统一颜色、布局、圆角、图标、动效和排版。
 @author         Ethan
 @license        GPL-3.0-only
@@ -10,7 +10,7 @@
 @updateURL      https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css
 ==/UserStyle== */
 /*
- * NodeSeek Max 主题 v1.7.22（UserCSS）
+ * NodeSeek Max 主题 v1.7.23（UserCSS）
  * 由 scripts/build-css.mjs 从 nodeseek-max.user.js 自动生成，请勿手动修改；
  * 主题源码在 theme/source.js 和 theme/sb-adapter.css 中。默认设置：SB Theme UI、分隔行布局、系统字体。
  * 已安装 NodeSeek Max 脚本时无需再加载本文件（脚本内已包含同一套主题，并可在设置里调整）。
@@ -19847,5 +19847,78 @@
 	}
 	html:root:root:root:root:has(>body.dark-layout) :is(.post-content, .markdown-body, article, .nsk-content) blockquote {
 		border-left-color: #ffcc00 !important;
+	}
+	html:root:root:root:root #nsk-head {
+		box-sizing: border-box !important;
+		width: 100% !important;
+		max-width: 1200px !important;
+		margin: 0 auto !important;
+		padding: 0 16px !important;
+	}
+	html:root:root:root:root #nsk-head .site-title {
+		margin-left: 0 !important;
+		padding-left: 0 !important;
+	}
+	html:root:root:root:root #nsk-head .site-title > a {
+		margin-left: 0 !important;
+	}
+	html:root:root:root:root #nsk-body-left .nsk-post .floor-actions {
+		grid-column: 3 / -1 !important;
+		grid-row: 1 !important;
+		justify-self: end !important;
+		align-self: center !important;
+		margin-left: auto !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: flex-end !important;
+		gap: 12px !important;
+		text-align: right !important;
+		white-space: nowrap !important;
+	}
+	html:root:root:root:root #nsk-body-left .nsk-post,
+	html:root:root:root:root #nsk-body-left .nsk-post > .content-item,
+	html:root:root:root:root #nsk-body-left .nsk-post:hover,
+	html:root:root:root:root #nsk-body-left .nsk-post > .content-item:hover {
+		background: var(--panel, #18191c) !important;
+	}
+	html:root:root:root:root #nsk-body-left .nsk-post,
+	html:root:root:root:root #nsk-body-left .comment-container {
+		border-radius: 12px !important;
+		overflow: hidden !important;
+		border: 1px solid var(--line) !important;
+	}
+	html:root:root:root:root #nsk-body-left .nsk-post > .content-item {
+		border-radius: 12px !important;
+		overflow: hidden !important;
+	}
+	html:root:root:root:root #nsk-body-left > .nsk-post-wrapper > div:empty {
+		display: none !important;
+	}
+	html:root:root:root:root #nsk-body > #nsk-right-panel-container {
+		align-self: start !important;
+		position: sticky !important;
+		top: 68px !important;
+	}
+	html:root:root:root:root .md-editor .CodeMirror-scroll {
+		max-height: none !important;
+	}
+	html:root:root:root:root .role-tag,
+	html:root:root:root:root .nsk-badge,
+	html:root:root:root:root .badge,
+	html:root:root:root:root .nspp-user-badges > *,
+	html:root:root:root:root .post-category,
+	html:root:root:root:root .topic-badge,
+	html:root:root:root:root .verify-badge {
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		vertical-align: middle !important;
+		line-height: 1 !important;
+		box-sizing: border-box !important;
+		text-align: center !important;
+	}
+	html:root:root:root:root :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category) > * {
+		line-height: 1 !important;
+		vertical-align: middle !important;
 	}
 }

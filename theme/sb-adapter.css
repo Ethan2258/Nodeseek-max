@@ -1546,4 +1546,133 @@ html[data-nsmax-theme][data-nsmax-dark] :is(.post-content, .markdown-body, artic
   border-left-color: #ffcc00 !important;
 }
 
+/* ==========================================================================
+   sb.sb 视觉与交互专项深度调优：
+   1. 论坛 Logo 与主帖/列表卡片左边框严格对齐
+   2. 主帖操作栏“引用 回复 举报”完全靠右对齐
+   3. 修复鼠标 hover 时主帖与卡片底部的黑色缺角、裂隙与直角溢出
+   4. 楼中楼（Nested Replies）线条与排版对齐 sb.sb 干净利落风格
+   5. 固定右侧栏粘性定位，杜绝表情展开撑开时侧栏下移
+   6. 回复框右下角小三角调整高度与尺寸支持
+   7. 全站徽标/胶囊文字绝对居中对齐，杜绝错位飘起
+   ========================================================================== */
+
+/* 1. 论坛 Logo 与主帖/列表卡片左边框绝对垂直对齐 */
+html[data-nsmax-theme] #nsk-head {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 16px !important;
+}
+
+html[data-nsmax-theme] #nsk-head .site-title {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+html[data-nsmax-theme] #nsk-head .site-title > a {
+  margin-left: 0 !important;
+}
+
+/* 2. 主帖头部操作栏“引用 回复 举报”完全靠右对齐 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post :is(.nsmax-op-actions, .floor-actions) {
+  grid-column: 3 / -1 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  align-self: center !important;
+  margin-left: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+/* 3. 彻底修复鼠标 hover 时主帖变色、底部黑条缝隙与圆角损坏缺角 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post,
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item,
+html[data-nsmax-theme] #nsk-body-left .nsk-post:hover,
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item:hover {
+  background: var(--panel, #18191c) !important;
+}
+
+html[data-nsmax-theme] #nsk-body-left :is(.nsk-post, .comment-container) {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+}
+
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper > div:empty {
+  display: none !important;
+}
+
+/* 4. 楼中楼（Nested Replies）对齐 sb.sb：去除糊在一起的生硬横线，采用柔和单导线 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies {
+  margin: 10px 0 6px 42px !important;
+  padding: 4px 0 4px 14px !important;
+  border-left: 2px solid var(--line-soft, rgba(255, 255, 255, 0.08)) !important;
+  background: transparent !important;
+  list-style: none !important;
+}
+
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > .content-item {
+  padding: 8px 0 !important;
+  margin: 0 !important;
+  border-top: 1px solid var(--line-soft, rgba(255, 255, 255, 0.04)) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > .content-item:first-child {
+  border-top: 0 !important;
+}
+
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > .content-item:hover {
+  background: transparent !important;
+}
+
+/* 5. 固定右侧栏粘性定位，彻底杜绝表情展开撑开时侧栏下坠 */
+html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {
+  align-self: start !important;
+  position: sticky !important;
+  top: 68px !important;
+}
+
+/* 6. 回复框高度与右下角小三角调整手柄 */
+html[data-nsmax-theme] .md-editor :is(.nsmax-editor-surface, .nsmax-editor-preview, .CodeMirror, textarea:not(.CodeMirror textarea)) {
+  height: var(--nsmax-editor-height, auto);
+}
+
+html[data-nsmax-theme] .md-editor .CodeMirror-scroll {
+  max-height: none !important;
+}
+
+html[data-nsmax-theme] .nsmax-editor-resize {
+  cursor: ns-resize !important;
+  touch-action: none !important;
+}
+
+/* 7. 全站徽标/胶囊文字绝对水平垂直居中与行高归一，杜绝偏心飘起 */
+html[data-nsmax-theme] :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category, .topic-badge, .verify-badge) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+html[data-nsmax-theme] :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category) > * {
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
 
