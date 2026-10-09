@@ -106,6 +106,16 @@ ast.walkRules(rule => {
   if (!selectors.nodes.length) rule.remove();
   else rule.selector = selectors.toString();
 });
+// 加载性能守卫：:has() 挂在整页级容器（html、body、#nsk-body / .forum-layout、#nsk-frame / .wrap）上并且参数是后代选择时，
+// 页面上任何一处增删节点浏览器都要重扫整个容器、往往还要整页重算样式（实测列表页加载时样式重算从 0.6 秒涨到 2.8 秒）。
+// sb.sb 个人页布局（.forum-layout:has([data-profile-head])）在 NodeSeek 上永远不成立，直接去掉；其余出现即报错，改用脚本设置的属性 / 类名。
+const pageContainer = /(?:^|[\s>+~(,])(?:html|body|:root|#nsk-body|\.forum-layout|#nsk-frame|\.wrap|\[data-nsmax-page(?:=[^\]]*)?\])(?:[.#\[:][^\s>+~]*)?:has\((?!\s*[>+~])/;
+ast.walkRules(rule => {
+  if (!rule.selector.includes(":has(")) return;
+  const kept = rule.selectors.filter(selector => !/\.forum-layout:has\(/.test(selector));
+  if (!kept.length) { rule.remove(); return; }
+  if (kept.length !== rule.selectors.length) rule.selectors = kept;
+});
 ast.walkComments(comment => comment.remove());
 const optimize = {};
 vm.runInNewContext(source.slice(source.indexOf("\tfunction nsmaxSplitTop"), source.indexOf("\tvar __create")), optimize);
@@ -114,6 +124,12 @@ ast.walkRules(rule => {
   rule.selector = optimize.nsmaxSplitTop(rule.selector, c=>c===",").flatMap(part=>optimize.nsmaxExpandSelector(part.trim()) || [part.trim()]).join(",");
 });
 const compiled = ast.toString();
+const expensiveHas = [];
+ast.walkRules(rule => {
+  if (!rule.selector.includes(":has(")) return;
+  for (const selector of rule.selectors) if (pageContainer.test(selector.replace(/^html\[data-nsmax-theme\](?::root)*(?:\[[^\]]*\])*/, ""))) expensiveHas.push(selector);
+});
+if (expensiveHas.length) throw new Error("整页级容器上的 :has() 会让每次增删节点都整页重算样式，请改用脚本设置的属性：\n" + expensiveHas.join("\n"));
 source = source.replace(/\tvar modern_theme_compiled = .*;\n/, "");
 source = source.replace("\tvar hot_sidebar_default = `", "\tvar modern_theme_compiled = " + JSON.stringify(compiled) + ";\n\tvar hot_sidebar_default = `");
 source = source.replace("_css(modern_theme_default);", "_css(modern_theme_compiled, true);");

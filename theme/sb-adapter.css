@@ -71,8 +71,8 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-list > li > a {disp
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-text {display:block!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;font:13px/22px var(--font-sans);-webkit-line-clamp:unset!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-count {padding:0!important;min-width:22px;text-align:right;color:var(--text-subtle);font:11px/22px ui-monospace,Consolas,monospace;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank {width:16px;font-size:11px;}
-html[data-nsmax-theme] #nsk-right-panel-container .user-card:has(>.nsmax-sb-account) > :not(.nsmax-sb-account) {display:none!important;}
-html[data-nsmax-theme] #nsk-right-panel-container .user-card:has(>.nsmax-sb-account) {padding:14px!important;}
+html[data-nsmax-theme] #nsk-right-panel-container .user-card.nsmax-sb-account-host > :not(.nsmax-sb-account) {display:none!important;}
+html[data-nsmax-theme] #nsk-right-panel-container .user-card.nsmax-sb-account-host {padding:14px!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-head {display:flex!important;gap:12px!important;align-items:center!important;margin-bottom:12px!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-head img {display:block!important;width:40px!important;height:40px!important;object-fit:cover!important;border-radius:6px!important;flex:none!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-head > :is(.nsmax-account-info,div:not(:first-child)) {display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:4px!important;min-width:0!important;}
@@ -95,7 +95,6 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-icon {color:var(--b
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank {color:var(--text-subtle);}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank[data-rank="1"],html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank[data-rank="2"],html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-rank[data-rank="3"] {color:var(--brand);}
 html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper {background:transparent!important;}
-html[data-nsmax-theme] #nsk-body:is(:has(.nsk-post), :has(.comment-container), :has(.nsk-post-wrapper)) > #nsk-body-left,
 html[data-nsmax-theme][data-nsmax-page=post] #nsk-body-left {border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > div:has(>.md-editor) {margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
 html[data-nsmax-theme] #nsk-body-left .content-item {position:relative;display:grid!important;grid-template-columns:32px minmax(0,1fr)!important;column-gap:12px!important;}
@@ -400,7 +399,7 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-numbers {paddin
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-numbers dd {font:600 14px/22px var(--font-sans)!important;color:var(--text-strong)!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-numbers dt {font:12px/18px var(--font-sans)!important;color:var(--text-subtle)!important;}
 /* Never paint the retired two-column native identity while waiting for site data. */
-html[data-nsmax-theme] #nsk-right-panel-container .user-card:not(:has(>.nsmax-sb-account)) .user-stat {display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;border:0!important;box-shadow:none!important;background:var(--panel)!important;}
+html[data-nsmax-theme] #nsk-right-panel-container .user-card:not(.nsmax-sb-account-host) .user-stat {display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;border:0!important;box-shadow:none!important;background:var(--panel)!important;}
 html[data-nsmax-theme] #nsk-right-panel-container [data-nsmax-cta],html[data-nsmax-theme] #nsk-right-panel-container>div>a.new-discussion {background:var(--action)!important;color:var(--action-text)!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-panel {padding:12px 14px!important;min-height:0!important;background:var(--panel)!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-head {margin-bottom:8px!important;min-height:20px!important;}
@@ -447,7 +446,7 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-actions .menu-item:hover {col
 html[data-nsmax-theme] #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item {width:72px!important;height:52px!important;border:1px solid var(--line)!important;border-radius:8px!important;background:var(--panel)!important;}
 /* Pagination from SB: circles, ink current, text next button, no disabled arrow. */
 html[data-nsmax-theme] #nsk-body-left .nsk-pager {display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;padding:0!important;margin:16px 0 0!important;background:transparent!important;border:0!important;}
-html[data-nsmax-theme] #nsk-body-left > :not(.post-list-controler):has(>.nsk-pager) {margin:0!important;padding:0!important;background:transparent!important;border:0!important;}
+html[data-nsmax-theme] #nsk-body-left > div:not(.post-list-controler):has(>.nsk-pager) {margin:0!important;padding:0!important;background:transparent!important;border:0!important;}
 html[data-nsmax-theme] #nsk-body-left > #nsk-body-left-block {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager [role=navigation] {display:flex!important;align-items:center!important;gap:6px!important;background:transparent!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager :is(.pager-pos,.pager-next,.pager-prev) {display:inline-flex!important;justify-content:center!important;align-items:center!important;box-sizing:border-box!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0 9px!important;margin:0!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel)!important;color:var(--text-muted)!important;font:500 13px/30px var(--font-sans)!important;text-decoration:none!important;}
@@ -596,8 +595,8 @@ html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .c
 html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .card-block>.card-item>div:last-child {font:600 20px/28px var(--font-sans)!important;color:var(--text-strong)!important;}
 @media(max-width:600px){html[data-nsmax-theme][data-nsmax-page=space] :is(#nsk-frame, .nsk-container) .card-block{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
 html[data-nsmax-theme] #nsk-frame {display:flow-root!important;}
-html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item:has(.post-title svg.pined) {background:color-mix(in srgb,var(--mark-soft) 45%,var(--panel))!important;}
-html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item:has(.post-title svg.pined):hover {background:color-mix(in srgb,var(--mark-soft) 60%,var(--panel))!important;}
+html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item.topic-pinned {background:color-mix(in srgb,var(--mark-soft) 45%,var(--panel))!important;}
+html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item.topic-pinned:hover {background:color-mix(in srgb,var(--mark-soft) 60%,var(--panel))!important;}
 
 html[data-nsmax-theme] #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item::before {content:""!important;display:block!important;grid-area:icon!important;justify-self:center!important;width:16px!important;height:16px!important;background:currentColor!important;mask:var(--nsmax-action-icon) center/contain no-repeat!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item>svg {display:none!important;}
@@ -636,7 +635,7 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-prize-badge {display:inline-flex!im
 html[data-nsmax-theme] .topic-carousel-wrapper {display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;}
 /* Prepare a final-sized card before its first visible frame, not a native-card flash. */
 html[data-nsmax-theme] #nsk-right-panel-container .user-card:has(>.user-head):has(>.user-stat) {min-height:354px!important;}
-html[data-nsmax-theme] #nsk-right-panel-container .user-card:has(>.user-head):has(>.user-stat):not(:has(>.nsmax-sb-account))>* {visibility:hidden!important;}
+html[data-nsmax-theme] #nsk-right-panel-container .user-card:has(>.user-head):has(>.user-stat):not(.nsmax-sb-account-host)>* {visibility:hidden!important;}
 html[data-nsmax-theme] #nsk-right-panel-container>div:has(>a.new-discussion) {visibility:hidden!important;}
 html[data-nsmax-theme] #nsk-body {align-items:start!important;}
 
@@ -1460,7 +1459,7 @@ html[data-nsmax-theme] #nsk-body-left > .post-list {
   overflow: hidden!important;
 }
 html[data-nsmax-theme] .topic-pinned,
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item:has(.pined) {
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item.topic-pinned {
   background: color-mix(in srgb, var(--mark-soft) 40%, transparent)!important;
 }
 
@@ -2134,9 +2133,8 @@ html[data-nsmax-theme]:root:root:root :is(
   .nsk-notification:has(.nspp-messages) > .app-switch,
   .nsk-notification:has(.nspp-messages) .app-switch,
   .nsk-notification > div:has(~ .nspp-messages) > .app-switch,
-  [data-nsmax-page="notification"]:has(.nspp-messages) .app-switch,
-  #nsk-body:has(.nspp-messages) .app-switch,
-  [data-nsmax-page="notification"]:has(.nspp-messages) .app-title
+  [data-nspp-messages-new] .app-switch,
+  [data-nspp-messages-new] .app-title
 ) {
   display: none !important;
   visibility: hidden !important;
@@ -2225,7 +2223,7 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-stat {
   /* 无右侧栏或单栏页面（发帖页、个人空间、设置页、粉丝页等）：撑满 1200px 居中对齐顶栏 Logo 与功能图标 */
   html[data-nsmax-theme]:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) #nsk-body,
   html[data-nsmax-theme]:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) section#nsk-frame > #nsk-body.nsk-container,
-  html[data-nsmax-theme] #nsk-body:not(:has(#nsk-right-panel-container:not(:empty))) {
+  html[data-nsmax-theme] #nsk-body:not(:has(>#nsk-right-panel-container:not(:empty))) {
     grid-template-columns: 1fr !important;
   }
 }

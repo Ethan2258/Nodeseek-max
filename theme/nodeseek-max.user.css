@@ -454,6 +454,9 @@
 	@keyframes nsmax-claude-in {from{opacity:0;scale:.97}}
 	@keyframes nsmax-fade {from{opacity:0}}
 	@keyframes nsmax-pop-in {from{opacity:0;translate:0 4px}}
+	html:root .user-card a[data-nsmax-icon-host=card]:first-child {
+		margin-left:-5.5px!important;
+	}
 	html:root:root:has(.nsk-post) ul.comments .comment-menu .menu-item {
 		gap:5px;
 		min-height:28px;
@@ -520,6 +523,31 @@
 	html:root:root :is(input:not([type]),input[type=text],input[type=search],input[type=password],input[type=email],input[type=url],input[type=number],textarea,select):not(.CodeMirror *):focus {
 		border-color:var(--nsmax-composer-line-focus);
 		box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent);
+	}
+	html:root .user-card a:is([data-nsmax-icon-host=card],:has(>svg:only-child)) {
+		color:var(--nsmax-text-2)!important;
+		transition:color .2s ease,opacity .2s ease,background-color .15s ease;
+	}
+	html:root .user-card a:is([data-nsmax-icon-host=card],:has(>svg:only-child)):hover {
+		color:var(--nsmax-text)!important;
+		opacity:.7;
+	}
+	html:root .user-card a[data-nsmax-icon-host=card] {
+		display:inline-flex!important;
+		align-items:center;
+		justify-content:center;
+		box-sizing:border-box;
+		width:28px;
+		height:28px;
+		margin:0!important;
+		padding:0!important;
+		border-radius:var(--nsmax-r-control,min(var(--nsmax-pill,8px),8px));
+		line-height:0;
+		vertical-align:middle;
+	}
+	html:root .user-card a[data-nsmax-icon-host=card]:hover {
+		background:var(--nsmax-fill);
+		opacity:1;
 	}
 	html:root:has(.nsk-post) ul.comments>li.content-item .comment-menu {
 		margin-top:2px;
@@ -835,7 +863,7 @@
 		border-radius:var(--nsmax-r-card,16px)!important;
 		box-shadow:none!important;
 	}
-	html:root:root #nsk-body>#nsk-body-left:not(:has(>:not(#nsk-body-left-block,script,style):not(:empty)),:has(#nsk-body-left-block>*)) {
+	html:root:root #nsk-body>#nsk-body-left:not(:has(>:not(#nsk-body-left-block,script,style):not(:empty)),:has(>#nsk-body-left-block>*)) {
 		display:none!important;
 	}
 	html:root:root #nsk-body>#nsk-body-left>#nsk-body-left-block:empty {
@@ -1159,13 +1187,13 @@
 		line-height:1!important;
 		vertical-align:2px!important;
 	}
-	html:root:root #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item:has(.post-title svg.pined) {
+	html:root:root #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item.topic-pinned {
 		background:var(--nsmax-pin-bg)!important;
 	}
-	html:root:root #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item:has(.post-title svg.pined):hover {
+	html:root:root #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item.topic-pinned:hover {
 		background:var(--nsmax-pin-bg-hover)!important;
 	}
-	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title:has(svg.pined) {
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item.topic-pinned .post-title {
 		display:flex!important;
 		flex-wrap:wrap!important;
 		align-items:center!important;
@@ -1455,7 +1483,7 @@
 		padding:0!important;
 		overflow:visible;
 	}
-	html:root:root #nsk-body-left>.nsk-post-wrapper>.comment-container:not(:has(li.content-item)) {
+	html:root:root #nsk-body-left>.nsk-post-wrapper>.comment-container:not(:has(>ul.comments>li.content-item)) {
 		display:none!important;
 	}
 	html:root:root #nsk-body-left .nsk-post>.post-title {
@@ -1969,20 +1997,6 @@
 		text-decoration:underline!important;
 		text-underline-offset:3px!important;
 		text-decoration-color:color-mix(in srgb,var(--nsmax-text) 30%,transparent)!important;
-	}
-	html:root:root #nsk-body:has(#login-panel,#register-panel) {
-		justify-content:center!important;
-	}
-	html:root:root #nsk-body:has(#login-panel,#register-panel)>#nsk-right-panel-container,
-	html:root:root #nsk-body:has(#login-panel,#register-panel)>#nsk-left-panel-container {
-		display:none!important;
-	}
-	html:root:root #nsk-body:has(#login-panel,#register-panel)>#nsk-body-left {
-		flex:0 1 440px!important;
-		max-width:440px!important;
-		background:transparent!important;
-		border:0!important;
-		box-shadow:none!important;
 	}
 	html:root:root #login-panel,
 	html:root:root #register-panel {
@@ -6484,15 +6498,6 @@
 			width:100%;
 			margin-left:0;
 			flex-wrap:wrap;
-		}
-	}
-	@media(min-width:761px) {
-		html:root .forum-layout:has([data-profile-head]) .sidebar {
-			position:sticky;
-			top:calc(var(--profile-sticky-top,60px) + var(--gap));
-			max-height:calc(100vh - var(--profile-sticky-top,60px) - var(--gap) * 2);
-			overflow-y:auto;
-			scrollbar-width:thin;
 		}
 	}
 	html:root .user-online::before,
@@ -17039,7 +17044,6 @@
 	html:root:root:root:root #nsk-body-left > .nsk-post-wrapper {
 		background:transparent!important;
 	}
-	html:root:root:root:root #nsk-body:is(:has(.nsk-post), :has(.comment-container), :has(.nsk-post-wrapper)) > #nsk-body-left,
 	html:root:root:root:root:has(.nsk-post) #nsk-body-left {
 		border:0!important;
 		background:transparent!important;
@@ -18333,7 +18337,7 @@
 		background:transparent!important;
 		border:0!important;
 	}
-	html:root:root:root:root #nsk-body-left > :not(.post-list-controler):has(>.nsk-pager) {
+	html:root:root:root:root #nsk-body-left > div:not(.post-list-controler):has(>.nsk-pager) {
 		margin:0!important;
 		padding:0!important;
 		background:transparent!important;
@@ -18729,10 +18733,10 @@
 	html:root:root:root:root #nsk-frame {
 		display:flow-root!important;
 	}
-	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item:has(.post-title svg.pined) {
+	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item.topic-pinned {
 		background:color-mix(in srgb,var(--mark-soft) 45%,var(--panel))!important;
 	}
-	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item:has(.post-title svg.pined):hover {
+	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item.topic-pinned:hover {
 		background:color-mix(in srgb,var(--mark-soft) 60%,var(--panel))!important;
 	}
 	html:root:root:root:root #nsk-body-left .nsk-post>.content-item>.comment-menu .menu-item::before {
@@ -19757,7 +19761,7 @@
 		overflow: hidden!important;
 	}
 	html:root:root:root:root .topic-pinned,
-	html:root:root:root:root #nsk-body-left ul.post-list > li.post-list-item:has(.pined) {
+	html:root:root:root:root #nsk-body-left ul.post-list > li.post-list-item.topic-pinned {
 		background: color-mix(in srgb, var(--mark-soft) 40%, transparent)!important;
 	}
 	html:root:root:root:root .nsk-post :is(.floor-link-wrapper, a.floor-link, [href="#0"], [href*="#0"]) {
@@ -20142,9 +20146,8 @@
 	  .nsk-notification:has(.nspp-messages) > .app-switch,
 	  .nsk-notification:has(.nspp-messages) .app-switch,
 	  .nsk-notification > div:has(~ .nspp-messages) > .app-switch,
-	  [data-nsmax-page="notification"]:has(.nspp-messages) .app-switch,
-	  #nsk-body:has(.nspp-messages) .app-switch,
-	  [data-nsmax-page="notification"]:has(.nspp-messages) .app-title
+	  [data-nspp-messages-new] .app-switch,
+	  [data-nspp-messages-new] .app-title
 	) {
 		display: none !important;
 		visibility: hidden !important;
@@ -20188,7 +20191,7 @@
 		}
 		html:root:root:root:root:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) #nsk-body,
 		html:root:root:root:root:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) section#nsk-frame > #nsk-body.nsk-container,
-		html:root:root:root:root #nsk-body:not(:has(#nsk-right-panel-container:not(:empty))) {
+		html:root:root:root:root #nsk-body:not(:has(>#nsk-right-panel-container:not(:empty))) {
 			grid-template-columns: 1fr !important;
 		}
 	}
