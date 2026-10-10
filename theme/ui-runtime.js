@@ -359,6 +359,15 @@
 	}
 	function nsmaxCleanBadgesAndNotifications() {
 		for (const el of document.querySelectorAll(".notify-count, .unread-count, .nspp-messages-count, .nspp-messages-unread")) {
+			// 消息中心自己的未读数由它自己用 hidden 管理（拿到数字后才显示）。这里要是在数字到之前把它写死成隐藏，
+			// 之后数字到了也不会再整理（消息中心内部的变化不触发重新整理），未读数就一直不显示
+			if (el.closest(".nspp-messages")) {
+				if (el.getAttribute("data-empty") === "true") {
+					el.removeAttribute("data-empty");
+					el.style.removeProperty("display");
+				}
+				continue;
+			}
 			const text = (el.textContent || "").trim();
 			if (!text || text === "0") {
 				el.setAttribute("data-empty", "true");
@@ -496,6 +505,128 @@
 			const userLink = row.querySelector("a[href^='/space/'], .username a, td a");
 			if (userLink) userLink.classList.add("nsmax-board-username");
 		});
+	}
+	// 中文时间：time / .date-created / .date-updated 的文字换成「3 小时前」这类中文相对时间（超过 30 天显示完整日期）。
+	// 不需要改时返回 null。页面解析阶段（nsmaxApplyChineseTimes）和「内容增强」模块共用。
+	function nsmaxChineseTimeText(el) {
+		const old = el.textContent;
+		const units = {
+			y: "年",
+			mo: "月",
+			d: "天",
+			h: "小时",
+			min: "分钟",
+			s: "秒"
+		};
+				const translated = (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
+		const value = forumTime(el.getAttribute("datetime") || old || "")?.text || translated;
+		return old !== value ? value : null;
+	}
+	// 页面解析阶段就把时间改成中文（设置里关掉「中文时间」或「内容增强」时不改）；原文字记在 data-nsmax-time-orig，
+	// 模块启动后据此登记还原。parsed 判断元素是否已经完整解析（文字没解析完时先不动）。
+	function nsmaxApplyChineseTimes(parsed) {
+		if (nsmaxChineseTimeEnabled == null) {
+			const all = GM_getValue$1(SETTINGS_KEY, {});
+			const reading = all?.["reading-content"];
+			nsmaxChineseTimeEnabled = reading?.enabled !== false && reading?.chineseTime !== false;
+		}
+		if (!nsmaxChineseTimeEnabled) return;
+		for (const el of document.querySelectorAll("time:not([data-nsmax-time-orig]), .date-created:not([data-nsmax-time-orig]), .date-updated:not([data-nsmax-time-orig])")) {
+			if (el.children.length || el.hasAttribute("data-nsmax-time-done") || parsed && !parsed(el)) continue;
+			el.setAttribute("data-nsmax-time-done", "");
+			const value = nsmaxChineseTimeText(el);
+			if (value === null) continue;
+			el.setAttribute("data-nsmax-time-orig", el.textContent);
+			el.textContent = value;
+		}
+	}
+	var nsmaxChineseTimeEnabled = null;
+	// 列表上方排序栏的 NQ（NodeQuality）入口：站点自己有就不加。排序栏还没解析完时先不加（不然站点后面的元素会排到它后面）。
+	function nsmaxEnsureNqEntry(parsed) {
+		const controller = document.querySelector(".post-list-controler");
+		if (controller && parsed && !parsed(controller)) return;
+		if (controller) {
+			const hasNativeNq = Array.from(controller.querySelectorAll("a:not(.nsmax-nq-entry)")).some(a => /nodequality/i.test(a.href) || /^N$/i.test(a.textContent.trim()));
+			const customNq = controller.querySelector(".nsmax-nq-entry");
+			if (hasNativeNq) {
+				if (customNq) customNq.remove();
+			} else if (!customNq) {
+				const link = document.createElement("a");
+				link.className = "nsmax-nq-entry";
+				link.href = "https://nodequality.com";
+				link.target = "_blank";
+				link.rel = "noopener noreferrer";
+				link.title = "NodeQuality 测机";
+				link.innerHTML = `<img class="nsmax-nq-icon" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABaFBMVEX///95v5gJiUIJi0RGh1PBJSLDCgrCDAzjjo72/PlSyYcIslRw0pz+/v5fsoMAhDkAhz0pazC1CQTBAAC/AADdc3Pv+vQ1wHMAr01fzZH+//5fsoQAhDoAiD4pbDG2CQQAr04pbTK1CQW+AADccG7+9e398ur+9vH///4AhjwxjVLRenXca2vbbm/pknfwkVDwj03yoGj98ekAhDs1n2Tv+PP3xKLtey3tey7uhkD86Ns1nmTv9/LtfC/tfDDuiEL86dz3xqTuikXo47/f883f8szw+eb97OH5za75zK7y07Kp1nCU0VOT0VHB5Jz1+++j12uRz06Qz02+45b1+u6R0E6+45fw+vT2+/Gm2XCS0E2S1ZaG2vqF2vmE2e4iunP+/v3j89LV7bza77yB1dYAr/AAsOcBsHEAsE6X3vkAsPEAsHGW3vk0nmNuupAAhTtCpW70+fad4PkCsPAAsPARtescuH1n0Jb3nMn7AAAAAWJLR0QAiAUdSAAAAAd0SU1FB+kDFxUCHTwsmtwAAADQSURBVDjLY2AAAUYmZhZWNnYOBhjg5OLm5oHzGHj5+AUEhYRFROEiYuISEpJSCAXSMrJy8qgKFAajAkUlEWUVVTV1DRwKNLW0dXT19A0MjXAoMDYxZWAwM7ewtMKlwNoGqMDWzt5hsCtwtLV1cnZxdcOpwN3D08vbx9cPpwIg8A8IDArGpyAkIDQobBAoADoyHKeCiMjQqOiY2Lh4XAoSEpOSU1JT09IzcCgAgczUrLRsfApyBkQBn4xxLj4FDHn5+QWFcF5RcUlpWYZCOZgDAFNzXYZTvYTRAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI1LTAzLTIzVDIxOjAxOjIxKzAwOjAwLt9JcQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNS0wMy0yM1QyMTowMToyMSswMDowMF+C8c0AAAAgdEVYdHNvZnR3YXJlAGh0dHBzOi8vaW1hZ2VtYWdpY2sub3JnvM8dnQAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpIZWlnaHQAMTkyQF1xVQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE3NDI3NjM2ODE9AtgpAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMjUtMDMtMjMvY2UzZTUwZjg4YjEzOGFiYTY3ODJlMjdmZjk2OTYzYjUuaWNvLnBuZ/HFgxIAAAAASUVORK5CYII="><span>NQ</span>`;
+				controller.append(link);
+			}
+		}
+	}
+	// 分页：只留首页、末页和当前页前后，中间用省略号；「上一页 / 下一页」写成文字。
+	function nsmaxTidyPagers() {
+		for (const pager of document.querySelectorAll(".nsk-pager")) {
+			const current = Number(pager.querySelector(".pager-cur,[aria-current=page]:not(a)")?.textContent) || 1;
+			const pages = Array.from(pager.querySelectorAll(".pager-pos"));
+			const number = element => Number(element.textContent.match(/(\d+)\s*$/)?.[1]);
+			const last = Math.max(...pages.map(number).filter(Number.isFinite));
+			let previous;
+			const seenPages = new Set();
+			for (const page of pages) {
+				const n = number(page);
+				const keep = !seenPages.has(n) && (n === 1 || n === last || (current <= 2 ? n <= 3 : Math.abs(n - current) <= 1));
+				seenPages.add(n);
+				page.toggleAttribute("data-nsmax-page-skip", !keep);
+				for (const ellipsis of page.querySelectorAll(".ellipsis")) ellipsis.hidden = true;
+				if (keep && previous && n - previous > 1 && !page.previousElementSibling?.matches(".nsmax-pager-ellipsis")) {
+					const dots = document.createElement("span"); dots.className = "nsmax-pager-ellipsis"; dots.textContent = "…"; page.before(dots);
+				}
+				if (keep) previous = n;
+			}
+			for (const [selector, label] of [["a.pager-next", "下一页"], ["a.pager-prev", "上一页"]]) {
+				const link = pager.querySelector(selector);
+				if (link && link.textContent !== label) link.textContent = label;
+			}
+		}
+	}
+	// 帖子页每层的操作（点赞、回复……）和楼号放进同一行
+	function nsmaxGroupFloorActions(parsed) {
+		for (const item of document.querySelectorAll("ul.comments li.content-item")) {
+			if (parsed && !parsed(item)) continue;
+			const menu = item.querySelector(":scope > .comment-menu");
+			const floor = item.querySelector(":scope > .nsk-content-meta-info > .floor-link-wrapper");
+			let actions = item.querySelector(":scope > .nsmax-floor-actions");
+			if (!actions && menu && floor) {
+				actions = document.createElement("div"); actions.className = "nsmax-floor-actions";
+				item.append(actions); actions.append(menu, floor);
+			}
+			if (!actions) continue;
+			for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
+				const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报)$/.test(text));
+				if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
+				for (const span of action.querySelectorAll(":scope > span")) {
+					const text = span.textContent.trim();
+					if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) span.setAttribute("data-nsmax-action-count", "");
+					else span.setAttribute("data-nsmax-action-label", "");
+				}
+				action.setAttribute("data-nsmax-compact-action", "");
+			}
+		}
+	}
+	// 首帧前就要完成的界面整理：页面解析阶段每解析出一段执行一次（parsed 判断元素是否已解析完），
+	// 之后 mountLeanUi 的 scan 也调用同一套（都可重复执行），所以首屏就是最终的样子，不会先显示原样再变。
+	function nsmaxEarlyVisuals(parsed) {
+		const nav = document.querySelector("ul.nav-menu");
+		if (nav && (!parsed || parsed(nav))) nsmaxUpdateNavEssence();
+		nsmaxEnsureNqEntry(parsed);
+		nsmaxTidyPagers();
+		nsmaxCleanPostActions();
+		nsmaxMarkLevel6();
+		nsmaxApplyChineseTimes(parsed);
+		if (!/^\/post-\d+/.test(location.pathname)) return;
+		nsmaxGroupFloorActions(parsed);
+		// 统计（浏览数、回复数）要等评论区解析完才准，不然先显示一个偏小的回复数再变
+		const comments = document.querySelector(".comment-container");
+		if (!parsed || document.readyState !== "loading" || comments && parsed(comments)) nsmaxDecoratePostDetail();
 	}
 	function nsmaxUpdateNavEssence() {
 		const navMenus = document.querySelectorAll("ul.nav-menu");
@@ -935,46 +1066,8 @@
 			nsmaxUpdateNavEssence();
 			nsmaxMarkLevel6();
 			nsmaxSetupMarkdownTabs();
-			const controller = document.querySelector(".post-list-controler");
-			if (controller) {
-				const hasNativeNq = Array.from(controller.querySelectorAll("a:not(.nsmax-nq-entry)")).some(a => /nodequality/i.test(a.href) || /^N$/i.test(a.textContent.trim()));
-				const customNq = controller.querySelector(".nsmax-nq-entry");
-				if (hasNativeNq) {
-					if (customNq) customNq.remove();
-				} else if (!customNq) {
-					const link = document.createElement("a");
-					link.className = "nsmax-nq-entry";
-					link.href = "https://nodequality.com";
-					link.target = "_blank";
-					link.rel = "noopener noreferrer";
-					link.title = "NodeQuality 测机";
-					link.innerHTML = `<img class="nsmax-nq-icon" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABaFBMVEX///95v5gJiUIJi0RGh1PBJSLDCgrCDAzjjo72/PlSyYcIslRw0pz+/v5fsoMAhDkAhz0pazC1CQTBAAC/AADdc3Pv+vQ1wHMAr01fzZH+//5fsoQAhDoAiD4pbDG2CQQAr04pbTK1CQW+AADccG7+9e398ur+9vH///4AhjwxjVLRenXca2vbbm/pknfwkVDwj03yoGj98ekAhDs1n2Tv+PP3xKLtey3tey7uhkD86Ns1nmTv9/LtfC/tfDDuiEL86dz3xqTuikXo47/f883f8szw+eb97OH5za75zK7y07Kp1nCU0VOT0VHB5Jz1+++j12uRz06Qz02+45b1+u6R0E6+45fw+vT2+/Gm2XCS0E2S1ZaG2vqF2vmE2e4iunP+/v3j89LV7bza77yB1dYAr/AAsOcBsHEAsE6X3vkAsPEAsHGW3vk0nmNuupAAhTtCpW70+fad4PkCsPAAsPARtescuH1n0Jb3nMn7AAAAAWJLR0QAiAUdSAAAAAd0SU1FB+kDFxUCHTwsmtwAAADQSURBVDjLY2AAAUYmZhZWNnYOBhjg5OLm5oHzGHj5+AUEhYRFROEiYuISEpJSCAXSMrJy8qgKFAajAkUlEWUVVTV1DRwKNLW0dXT19A0MjXAoMDYxZWAwM7ewtMKlwNoGqMDWzt5hsCtwtLV1cnZxdcOpwN3D08vbx9cPpwIg8A8IDArGpyAkIDQobBAoADoyHKeCiMjQqOiY2Lh4XAoSEpOSU1JT09IzcCgAgczUrLRsfApyBkQBn4xxLj4FDHn5+QWFcF5RcUlpWYZCOZgDAFNzXYZTvYTRAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI1LTAzLTIzVDIxOjAxOjIxKzAwOjAwLt9JcQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNS0wMy0yM1QyMTowMToyMSswMDowMF+C8c0AAAAgdEVYdHNvZnR3YXJlAGh0dHBzOi8vaW1hZ2VtYWdpY2sub3JnvM8dnQAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpIZWlnaHQAMTkyQF1xVQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE3NDI3NjM2ODE9AtgpAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMjUtMDMtMjMvY2UzZTUwZjg4YjEzOGFiYTY3ODJlMjdmZjk2OTYzYjUuaWNvLnBuZ/HFgxIAAAAASUVORK5CYII="><span>NQ</span>`;
-					controller.append(link);
-				}
-			}
-			for (const pager of document.querySelectorAll(".nsk-pager")) {
-				const current = Number(pager.querySelector(".pager-cur,[aria-current=page]:not(a)")?.textContent) || 1;
-				const pages = Array.from(pager.querySelectorAll(".pager-pos"));
-				const number = element => Number(element.textContent.match(/(\d+)\s*$/)?.[1]);
-				const last = Math.max(...pages.map(number).filter(Number.isFinite));
-				let previous;
-				const seenPages = new Set();
-				for (const page of pages) {
-					const n = number(page);
-					const keep = !seenPages.has(n) && (n === 1 || n === last || (current <= 2 ? n <= 3 : Math.abs(n - current) <= 1));
-					seenPages.add(n);
-					page.toggleAttribute("data-nsmax-page-skip", !keep);
-					for (const ellipsis of page.querySelectorAll(".ellipsis")) ellipsis.hidden = true;
-					if (keep && previous && n - previous > 1 && !page.previousElementSibling?.matches(".nsmax-pager-ellipsis")) {
-						const dots = document.createElement("span"); dots.className = "nsmax-pager-ellipsis"; dots.textContent = "…"; page.before(dots);
-					}
-					if (keep) previous = n;
-				}
-				for (const [selector, label] of [["a.pager-next", "下一页"], ["a.pager-prev", "上一页"]]) {
-					const link = pager.querySelector(selector);
-					if (link && link.textContent !== label) link.textContent = label;
-				}
-			}
+			nsmaxEnsureNqEntry();
+			nsmaxTidyPagers();
 			nsmaxProcessPostListRows();
 			nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
@@ -999,26 +1092,7 @@
 				};
 				if (image.complete) classify(); else image.addEventListener("load",classify,{once:true,signal:ctx.signal});
 			}
-			if (isPost) for (const item of document.querySelectorAll("ul.comments li.content-item")) {
-				const menu = item.querySelector(":scope > .comment-menu");
-				const floor = item.querySelector(":scope > .nsk-content-meta-info > .floor-link-wrapper");
-				let actions = item.querySelector(":scope > .nsmax-floor-actions");
-				if (!actions && menu && floor) {
-					actions = document.createElement("div"); actions.className = "nsmax-floor-actions";
-					item.append(actions); actions.append(menu, floor);
-				}
-				if (!actions) continue;
-				for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
-					const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报)$/.test(text));
-					if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
-					for (const span of action.querySelectorAll(":scope > span")) {
-						const text = span.textContent.trim();
-						if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) span.setAttribute("data-nsmax-action-count", "");
-						else span.setAttribute("data-nsmax-action-label", "");
-					}
-					action.setAttribute("data-nsmax-compact-action", "");
-				}
-			}
+			if (isPost) nsmaxGroupFloorActions();
 			for (const editor of document.querySelectorAll(".md-editor")) {
 				if (editors.has(editor)) continue;
 				const body = editor.querySelector("#editor-body") || editor;
