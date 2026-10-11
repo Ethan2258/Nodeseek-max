@@ -8,7 +8,7 @@ NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.0**。界面按 [sb.sb](h
 2. [安装最新版脚本](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)。
 3. 停用其他 NodeSeek 增强脚本，避免重复注入。
 
-[版本与安装文件](https://github.com/Ethan2258/Nodeseek-max/releases) · [独立 Stylus 样式](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/theme/nodeseek-max.user.css)
+[版本与安装文件](https://github.com/Ethan2258/Nodeseek-max/releases)
 
 ## 当前功能
 
@@ -34,7 +34,6 @@ NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.0**。界面按 [sb.sb](h
 ```bash
 npm install --no-package-lock
 npm run sb           # 编译套件、适配样式和界面桥接
-npm run css
 npm run meta
 npm run check
 npm test

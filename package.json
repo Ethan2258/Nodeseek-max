@@ -11,9 +11,8 @@
   },
   "scripts": {
     "meta": "node scripts/build-meta.mjs",
-    "check": "node --check nodeseek-max.user.js && node scripts/build-sb.mjs --check && node scripts/build-meta.mjs --check && node scripts/build-css.mjs --check",
+    "check": "node --check nodeseek-max.user.js && node scripts/build-sb.mjs --check && node scripts/build-meta.mjs --check",
     "sb": "node scripts/build-sb.mjs",
-    "css": "node scripts/build-css.mjs",
     "test": "node --test --test-concurrency=1 tests/smoke.test.cjs",
     "screenshots": "node tests/ui-audit.cjs",
     "performance": "node tests/performance.cjs",
