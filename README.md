@@ -1,6 +1,6 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 **1.7.9**。使用 [SB Theme UI](https://sb.sb/) 的配色、系统字体、布局和短时过渡，保留论坛原生编辑与提交。
+NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.0**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角与直角两种模式），保留论坛原生编辑与提交。
 
 ## 安装
 
@@ -12,7 +12,7 @@ NodeSeek / DeepFlood 用户脚本，当前版本 **1.7.9**。使用 [SB Theme UI
 
 ## 当前功能
 
-- 全站 SB 样式，统一浅色、深色、字体、按钮、输入框、图标和弹窗。
+- 全站 sb.sb 样式，浅色、深色变量与 sb.sb 样式表原值一致；默认圆角模式（卡片 12px、输入框 8px、按钮与标签胶囊），设置里可切换为直角。
 - 首先呈现当前页主题、过滤和编辑器，再启动热榜与其他增强；输入时不重复扫描整页。
 - 桌面个人卡、八个快捷入口、紧凑今日热门、本地最近浏览十条，以及纯文字 NQ 入口。
 - 个人空间使用统一的资料头部、四列统计、等级进度条和主题/评论列表分页。
@@ -27,7 +27,7 @@ NodeSeek / DeepFlood 用户脚本，当前版本 **1.7.9**。使用 [SB Theme UI
 
 头像悬停显示唯一资料卡，单个用户信息按需读取并缓存；个人空间、预览卡和搜索/主题切换均统一适配。
 
-移除信用分、信任分、注册天数、旧阅读历史模块、帖子监控、回帖足迹、重复资料卡及旧工具条；不提供配置导入导出。默认使用本机系统字体，不下载网页字体。
+移除信用分、信任分、注册天数、旧阅读历史模块、帖子监控、回帖足迹、重复资料卡及旧工具条；不提供配置导入导出。默认字体与 sb.sb 相同：系统字体 + Space Mono 数字（首次在线下载后缓存）；不想联网下载可在设置里改为「系统字体」。
 
 ## 开发
 
@@ -42,7 +42,7 @@ npm run screenshots  # 桌面浅色、深色与手机布局
 npm run performance  # 与 v1.7.2 比较本地 fixture，三次中位数
 ```
 
-测试需要 Chromium；可通过 `NSMAX_CHROMIUM` 指向已有 Chrome。实际 SB 样式核对记录在 `theme/sb-reference.json`；套件快照在 `theme/sb-suite.css`，适配在 `theme/sb-adapter.css`，回复与分页桥接在 `theme/ui-runtime.js`，消息与关于弹窗样式在 `theme/messages.css`、`theme/settings.css`。
+测试需要 Chromium；可通过 `NSMAX_CHROMIUM` 指向已有 Chrome。sb.sb 1:1 复刻层在 `theme/design.css`（最后注入、优先级最高）；`theme/sb-suite.css` 只作对照快照，不再整份注入；适配在 `theme/sb-adapter.css`，回复与分页桥接在 `theme/ui-runtime.js`，消息与关于弹窗样式在 `theme/messages.css`、`theme/settings.css`。
 
 浏览器回归使用真实结构的本地模拟页面；耗时数据不能代表论坛服务器或用户网络速度。原生接口、验证码和权限由站点处理。
 
