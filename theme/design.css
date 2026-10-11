@@ -752,21 +752,22 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a:is(:visited, .nspp-read) {
   color: var(--text-subtle) !important;
 }
-/* 等级限制（原站 .min-grade：锁 + 最低等级）：紧跟标题的弱化小字，锁图标 12px（原站图标没有尺寸，不设会撑成 300px） */
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade {
+/* 等级限制（原站在标题后放一个行内粉色 span：锁图标 + 最低等级）：紧跟标题的 12px 小字；
+   sb.sb 没有对应元素，颜色换成它的 --danger，保留「受限」的红色含义、对比度也够 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(.min-grade, span[data-nsmax-lock]) {
   display: inline-flex !important;
   align-items: center !important;
   gap: 2px !important;
   margin: 0 0 0 6px !important;
   padding: 0 !important;
   vertical-align: 2px !important;
-  color: var(--text-subtle) !important;
+  color: var(--danger) !important;
   font-size: 12px !important;
   font-weight: 400 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
 }
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade > svg {
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(.min-grade, span[data-nsmax-lock]) > svg {
   flex: none !important;
   width: 12px !important;
   height: 12px !important;
@@ -777,7 +778,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > 
 html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item.topic-pinned:hover {
   background: color-mix(in srgb, var(--mark-soft) 45%, transparent) !important;
 }
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span:has(> svg.pined) {
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-pinned] {
   display: inline-block !important;
   order: -1 !important;
   height: auto !important;
@@ -945,7 +946,7 @@ html[data-nsmax-theme] .nsk-pager :is(.pager-prev, .pager-next) > :is(.triangle-
 html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsk-pager.pager-top {
   display: none !important;
 }
-html[data-nsmax-theme] #nsk-body-left > div:has(> .nsk-pager.pager-bottom) {
+html[data-nsmax-theme] #nsk-body-left > div[data-nsmax-pagerbox="bottom"] {
   display: flex !important;
   justify-content: center !important;
   margin: var(--gap) 0 0 !important;
@@ -1224,7 +1225,7 @@ html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin {
   color: var(--text-subtle) !important;
   font-size: 12.5px !important;
 }
-html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin:has(.btn) {
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin[data-nsmax-btnrow] {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   gap: 8px !important;
@@ -1745,7 +1746,8 @@ html[data-nsmax-theme] #nsk-body-left .content-item > article.post-content {
   word-break: break-word !important;
   overflow-wrap: anywhere !important;
 }
-html[data-nsmax-theme] #nsk-body-left article.post-content *:not(code, pre, kbd, samp, svg, svg *) {
+/* NodeSeek 把 ANSI 输出渲染成 xterm 终端（测评帖），终端自己的等宽字体不能被改，不然列对不齐 */
+html[data-nsmax-theme] #nsk-body-left article.post-content *:not(code, pre, kbd, samp, svg, svg *, .xterm, .xterm *) {
   font-family: inherit !important;
 }
 html[data-nsmax-theme] #nsk-body-left article.post-content > :first-child {
@@ -1806,7 +1808,7 @@ html[data-nsmax-theme] #nsk-body-left article.post-content hr {
   background: none !important;
 }
 /* 正文链接：sb.sb——链接色 + 2px 黄色下划线（偏移 3px）；悬停去掉下划线、出现链接浅底 */
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:not(:has(img)) {
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:not([data-nsmax-imglink]) {
   padding: 0 !important;
   height: auto !important;
   min-height: 0 !important;
@@ -1820,7 +1822,7 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   text-underline-offset: 3px !important;
   text-decoration-skip-ink: none !important;
 }
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:not(:has(img)):hover {
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:not([data-nsmax-imglink]):hover {
   border-radius: var(--r-xs) !important;
   background: var(--link-soft) !important;
   box-shadow: 0 0 0 2px var(--link-soft) !important;
@@ -1829,7 +1831,7 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-html[data-nsmax-theme] #nsk-body-left article.post-content a:has(img) {
+html[data-nsmax-theme] #nsk-body-left article.post-content a[data-nsmax-imglink] {
   color: var(--text) !important;
   text-decoration: none !important;
 }
@@ -2127,7 +2129,7 @@ html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper > .comment-container {
   box-shadow: none !important;
   overflow: visible !important;
 }
-html[data-nsmax-theme] #nsk-body-left .comment-container > :is(div:has(> .nsk-pager), .nsmax-reply-head):first-child {
+html[data-nsmax-theme] #nsk-body-left .comment-container > :is(div[data-nsmax-pagerbox], .nsmax-reply-head):first-child {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -2184,7 +2186,7 @@ html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments::before {
 html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments > li.content-item:first-child {
   border-top: 0 !important;
 }
-html[data-nsmax-theme] #nsk-body-left .comment-container > div:has(> .post-bottom-pager) {
+html[data-nsmax-theme] #nsk-body-left .comment-container > div[data-nsmax-pagerbox="bottom"] {
   display: flex !important;
   justify-content: center !important;
   margin: var(--gap) 0 0 !important;
@@ -2194,7 +2196,7 @@ html[data-nsmax-theme] #nsk-body-left .comment-container > div:has(> .post-botto
   border: 0 !important;
   background: transparent !important;
 }
-html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:is(:target, :has(:target)) {
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:target {
   box-shadow: inset 2px 0 0 var(--brand) !important;
 }
 
@@ -3387,7 +3389,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discus
 }
 /* 悬停：sb.sb .post-item:hover——整行 panel-hover 浅底；回帖列表的标题行和摘要行算同一项，一起变色 */
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item:hover,
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item:is(:hover, :has(+ a:not(.discussion-item):hover)),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item:hover,
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item:hover + a:not(.discussion-item),
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.discussion-item):hover {
   background: var(--panel-hover) !important;
@@ -3440,7 +3442,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.dis
   line-height: 1.65 !important;
 }
 /* 页码：sb.sb .pagination-bar——在列表卡片外、上方 20px、居中 */
-html[data-nsmax-theme][data-nsmax-page="space"] .selector > div:has(> .nsk-pager) {
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > div[data-nsmax-pagerbox] {
   display: flex !important;
   flex: 0 0 calc(100% + 28px) !important;
   justify-content: center !important;

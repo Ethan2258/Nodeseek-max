@@ -1,12 +1,34 @@
+	// 这些整理函数在每次扫描（页面有增删节点后）都会再跑一遍：只在值真的不同时才写 DOM。
+	// 无条件写（哪怕写的是同一个值）也会产生 DOM 变动 → 观察器 → 再扫描 → 再写，形成循环：元素被反复替换，
+	// 悬停闪烁、点击落空（个人空间「主题 / 回帖 / 收藏」切不动就是这样来的）。
+	function nsmaxSetText(el, text) {
+		if (el && el.textContent !== text) el.textContent = text;
+	}
+	function nsmaxSetAttr(el, name, value = "") {
+		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
+	}
+	function nsmaxDropAttr(el, name) {
+		if (el && el.hasAttribute(name)) el.removeAttribute(name);
+	}
+	function nsmaxHideEl(el) {
+		if (el && !(el.style.getPropertyValue("display") === "none" && el.style.getPropertyPriority("display") === "important")) el.style.setProperty("display", "none", "important");
+	}
+	function nsmaxShowEl(el) {
+		if (el && el.style.getPropertyValue("display")) el.style.removeProperty("display");
+	}
 	function nsmaxPrepareSpace() {
 		if (!/^\/space\/\d+/.test(location.pathname)) return;
-		for (const item of document.querySelectorAll(".card-block > .card-item")) item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
+		// 资料卡里那一组统计由下面的 renderStatsAndProgress 管，这里只标记原站其余位置的过时统计
+		for (const item of document.querySelectorAll(".card-block > .card-item")) {
+			if (item.closest(".head-container")) continue;
+			item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
+		}
 		for (const readme of document.querySelectorAll(".readme")) {
 			const text = readme.textContent.trim();
 			const hasWatermark = !!readme.querySelector("img[src*='logo'], img[src*='nodeseek'], svg");
 			const isEmpty = !text || /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)$/i.test(text) || (hasWatermark && text.length < 20);
 			readme.toggleAttribute("data-nsmax-empty-readme", isEmpty);
-			if (isEmpty) readme.style.setProperty("display", "none", "important");
+			if (isEmpty) nsmaxHideEl(readme);
 		}
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
 		if (!head) return;
@@ -86,13 +108,11 @@
 			headStats.className = "card-block";
 			head.append(headStats);
 		}
-		for (const extraCard of document.querySelectorAll(".selector .card-block, .selector-right-side .card-block")) {
-			extraCard.style.setProperty("display", "none", "important");
-		}
+		for (const extraCard of document.querySelectorAll(".selector .card-block, .selector-right-side .card-block")) nsmaxHideEl(extraCard);
 
 		const renderStatsAndProgress = (lvl, coin, nPost, nComment) => {
 			if (!headStats) return;
-			headStats.removeAttribute("style");
+			nsmaxDropAttr(headStats, "style");
 			const levelVal = lvl !== undefined ? Number(lvl) : 1;
 			const statItems = [
 				["等级", lvl !== undefined ? String(lvl) : "—", levelVal >= 6],
@@ -113,14 +133,15 @@
 			for (let i = 0; i < 4; i++) {
 				const item = existingItems[i];
 				const [label, val, isLv6] = statItems[i];
-				item.innerHTML = `<div class="nsmax-stat-label">${label}</div><div class="nsmax-stat-val">${val}</div>`;
+				const html = `<div class="nsmax-stat-label">${label}</div><div class="nsmax-stat-val">${val}</div>`;
+				if (item.innerHTML !== html) item.innerHTML = html;
 				item.toggleAttribute("data-nsmax-lv6-stat", isLv6);
-				item.removeAttribute("data-nsmax-obsolete-stat");
-				item.style.removeProperty("display");
+				nsmaxDropAttr(item, "data-nsmax-obsolete-stat");
+				nsmaxShowEl(item);
 			}
 			for (let i = 4; i < existingItems.length; i++) {
-				existingItems[i].setAttribute("data-nsmax-obsolete-stat", "true");
-				existingItems[i].style.setProperty("display", "none", "important");
+				nsmaxSetAttr(existingItems[i], "data-nsmax-obsolete-stat", "true");
+				nsmaxHideEl(existingItems[i]);
 			}
 
 			// 渲染等级进度条
@@ -143,6 +164,7 @@
 			// sb.sb .points-progress-end：等宽的「Lv.N」+ 加粗称号
 			const setLevelLabel = (n, title) => {
 				const levelEl = progress.querySelector(".nsmax-space-progress-level");
+				if (levelEl.querySelector(".nsmax-level-n") && levelEl.textContent === `Lv.${n} ${title}`) return;
 				const num = document.createElement("span");
 				num.className = "nsmax-level-n";
 				num.textContent = `Lv.${n}`;
@@ -150,13 +172,17 @@
 				name.textContent = title;
 				levelEl.replaceChildren(num, " ", name);
 			};
+			const setBar = (width) => {
+				const bar = progress.querySelector(":scope > i > b");
+				if (bar && bar.style.width !== width) bar.style.width = width;
+			};
 			if (levelVal >= 6) {
-				progress.setAttribute("data-nsmax-level-max", "");
-				progress.classList.add("nsmax-space-progress-max");
+				nsmaxSetAttr(progress, "data-nsmax-level-max");
+				if (!progress.classList.contains("nsmax-space-progress-max")) progress.classList.add("nsmax-space-progress-max");
 				setLevelLabel(6, "登峰造极");
-				progress.querySelector(".nsmax-space-progress-percent").textContent = `MAX`;
-				progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
-				progress.querySelector(":scope > i > b").style.width = `100%`;
+				nsmaxSetText(progress.querySelector(".nsmax-space-progress-percent"), "MAX");
+				nsmaxSetText(progress.querySelector(".nsmax-space-progress-next"), "已达最高等级");
+				setBar("100%");
 
 				const titleRow = head.querySelector(".nsmax-space-title-row");
 				if (titleRow && !titleRow.querySelector(".nsmax-space-vip")) {
@@ -167,15 +193,15 @@
 					titleRow.append(vipBadge);
 				}
 			} else {
-				progress.removeAttribute("data-nsmax-level-max");
-				progress.classList.remove("nsmax-space-progress-max");
+				nsmaxDropAttr(progress, "data-nsmax-level-max");
+				if (progress.classList.contains("nsmax-space-progress-max")) progress.classList.remove("nsmax-space-progress-max");
 				const cur = titles[levelVal]?.[0] || "当前等级";
 				const nxt = titles[levelVal]?.[1] || "下一等级";
 				const percent = Math.max(10, Math.min(100, (levelVal % 10) * 10 || 50));
 				setLevelLabel(levelVal, cur);
-				progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
-				progress.querySelector(".nsmax-space-progress-next").textContent = `Lv.${levelVal + 1} ${nxt}`;
-				progress.querySelector(":scope > i > b").style.width = `${percent}%`;
+				nsmaxSetText(progress.querySelector(".nsmax-space-progress-percent"), `${percent}%`);
+				nsmaxSetText(progress.querySelector(".nsmax-space-progress-next"), `Lv.${levelVal + 1} ${nxt}`);
+				setBar(`${percent}%`);
 			}
 		};
 
@@ -245,9 +271,10 @@
 				const text = tab.textContent.trim();
 				const href = tab.getAttribute("href") || "";
 				if (/概况|资料/i.test(text) || href.includes("general") || href.includes("info") || href.includes("profile")) {
-					tab.style.setProperty("display", "none", "important");
-					tab.setAttribute("hidden", "");
-					tab.classList.remove("active", "router-link-active");
+					nsmaxHideEl(tab);
+					nsmaxSetAttr(tab, "hidden");
+					if (tab.classList.contains("active")) tab.classList.remove("active");
+					if (tab.classList.contains("router-link-active")) tab.classList.remove("router-link-active");
 				}
 			}
 
@@ -269,17 +296,19 @@
 					tab.className = "select-item";
 					selectorNav.append(tab);
 				}
-				tab.textContent = def.text;
-				tab.setAttribute("href", def.href);
-				tab.setAttribute("data-nsmax-tab", def.key);
-				tab.removeAttribute("hidden");
-				tab.style.removeProperty("display");
+				nsmaxSetText(tab, def.text);
+				nsmaxSetAttr(tab, "href", def.href);
+				nsmaxSetAttr(tab, "data-nsmax-tab", def.key);
+				nsmaxDropAttr(tab, "hidden");
+				nsmaxShowEl(tab);
 				orderedTabs.push(tab);
 			}
 
-			// 将 3 个 Tab 固定排在 selector 最前部，绝不混入列表项之中
+			// 将 3 个 Tab 固定排在 selector 最前部，绝不混入列表项之中（顺序已经对了就不动，移动节点也算 DOM 变动）
 			const firstNonTab = Array.from(selectorNav.children).find(c => !c.matches("a.select-item"));
-			for (const tab of orderedTabs) {
+			const inOrder = orderedTabs.every((tab, i) => tab.parentElement === selectorNav && (i === 0 || orderedTabs[i - 1].nextElementSibling === tab))
+				&& (!firstNonTab || orderedTabs[orderedTabs.length - 1].nextElementSibling === firstNonTab || !!(orderedTabs[orderedTabs.length - 1].compareDocumentPosition(firstNonTab) & Node.DOCUMENT_POSITION_FOLLOWING));
+			if (!inOrder) for (const tab of orderedTabs) {
 				if (firstNonTab) selectorNav.insertBefore(tab, firstNonTab);
 				else selectorNav.append(tab);
 			}
@@ -622,6 +651,101 @@
 			}
 		}
 	}
+	// 结构标记：代替主题 CSS 里的 :has()。:has() 会让页面任何一处增删节点都去重新匹配祖先元素——帖子里有 NodeSeek
+	// 渲染的 xterm 终端（测评帖的 ANSI 输出）时，终端每画一批字符就触发一次整页样式重算，页面直接卡死。
+	// 这里在页面解析阶段和之后每次扫描时给元素打上属性（只在需要变化时才写），CSS 只认这些属性。
+	function nsmaxIsEmptyEl(el) {
+		for (const node of el.childNodes) if (node.nodeType === 1 || node.nodeType === 3) return false;
+		return true;
+	}
+	function nsmaxFlag(el, name, on, value = "") {
+		if (!el) return;
+		if (on) nsmaxSetAttr(el, name, value);
+		else nsmaxDropAttr(el, name);
+	}
+	// 正文 / 预览里包着图片的链接：文字链接样式（下划线、悬停浅底）不套到图片上
+	function nsmaxTagImageLinks(root) {
+		const links = root ? root.querySelectorAll("a") : document.querySelectorAll("article.post-content a, .nspp-preview-content a, .nsmax-editor-preview a, a.post-image-link");
+		for (const a of links) {
+			const has = !!a.querySelector("img");
+			if (has !== a.hasAttribute("data-nsmax-imglink")) a.toggleAttribute("data-nsmax-imglink", has);
+		}
+	}
+	function nsmaxTagStructure() {
+		// 页码外层：列表页底部、帖子评论区上下（底部那个会被移到评论区外面）、个人空间列表下方
+		for (const pager of document.querySelectorAll(".nsk-pager")) {
+			const box = pager.parentElement;
+			if (!box || box.matches("body, #nsk-body, #nsk-body-left, .post-list-controler, .comment-container, .selector, .nsk-post-wrapper")) continue;
+			nsmaxFlag(box, "data-nsmax-pagerbox", true, pager.matches(".pager-top, .post-top-pager") ? "top" : "bottom");
+		}
+		for (const box of document.querySelectorAll("[data-nsmax-pagerbox]")) if (!box.querySelector(":scope > .nsk-pager")) nsmaxDropAttr(box, "data-nsmax-pagerbox");
+		for (const container of document.querySelectorAll(".comment-container")) {
+			nsmaxFlag(container, "data-nsmax-empty", !container.querySelector(":scope > ul.comments > li.content-item"));
+			nsmaxFlag(container, "data-nsmax-bottom-pager", !!container.querySelector(":scope > div > .post-bottom-pager, :scope > .post-bottom-pager"));
+		}
+		// 列表标题后面的小标：置顶（svg.pined）、等级锁（#lock）
+		for (const span of document.querySelectorAll(".post-list-item .post-title > span")) {
+			nsmaxFlag(span, "data-nsmax-pinned", !!span.querySelector(":scope > svg.pined"));
+			nsmaxFlag(span, "data-nsmax-lock", !!span.querySelector(':scope > svg > use[href="#lock"]'));
+		}
+		nsmaxTagImageLinks();
+		// 页面骨架：左栏是否为空、是否帖子页；右栏是否为空
+		const body = document.querySelector("#nsk-body");
+		if (body) {
+			const side = body.querySelector(":scope > #nsk-right-panel-container");
+			nsmaxFlag(body, "data-nsmax-noside", !side || nsmaxIsEmptyEl(side));
+			const left = body.querySelector(":scope > #nsk-body-left");
+			if (left) {
+				const content = [...left.children].some((child) => !child.matches("#nsk-body-left-block, script, style") && !nsmaxIsEmptyEl(child));
+				nsmaxFlag(left, "data-nsmax-empty", !content && !left.querySelector(":scope > #nsk-body-left-block > *"));
+				nsmaxFlag(left, "data-nsmax-postbody", !!left.querySelector(":scope > .nsk-post-wrapper"));
+			}
+		}
+		// 右栏：原站发帖按钮外层、带按钮的面板、原生资料卡、资料卡后紧跟发帖入口
+		const side = document.querySelector("#nsk-right-panel-container");
+		if (side) {
+			for (const box of side.querySelectorAll(":scope > div")) nsmaxFlag(box, "data-nsmax-newpost-box", !!box.querySelector(":scope > a.new-discussion"));
+			for (const row of side.querySelectorAll(":scope > .nsk-panel > .small-margin")) {
+				const has = !!row.querySelector(".btn");
+				nsmaxFlag(row, "data-nsmax-btnrow", has);
+				nsmaxFlag(row.parentElement, "data-nsmax-btnpanel", has);
+			}
+			for (const card of side.querySelectorAll(".user-card")) nsmaxFlag(card, "data-nsmax-native-card", !!card.querySelector(":scope > .user-head") && !!card.querySelector(":scope > .user-stat"));
+			for (const card of side.querySelectorAll(":scope > [data-nsmax-usercard]")) nsmaxFlag(card, "data-nsmax-before-cta", !!card.nextElementSibling?.matches("[data-nsmax-cta]"));
+		}
+		// 顶栏：脚本自己加的按钮、整组链接都被隐藏的分类
+		const head = document.querySelector("#nsk-head");
+		if (head) {
+			nsmaxFlag(head, "data-nsmax-has-settings", !!head.querySelector(".nsmax-settings-button"));
+			nsmaxFlag(head, "data-nsmax-has-mobile-menu", !!head.querySelector(".nsmax-mobile-menu"));
+			nsmaxFlag(head, "data-nsmax-own-colors", !!head.querySelector(".nsmax-header-action[data-nsmax-own-header=colors]"));
+			for (const li of head.querySelectorAll("ul.nav-menu > li")) {
+				const visible = [...li.children].some((child) => child.matches("a:not([data-nsmax-header-hide], [data-nsmax-own-hide], [hidden])"));
+				nsmaxFlag(li, "data-nsmax-li-hidden", !visible);
+			}
+		}
+		// 帖子页：主帖面包屑、回复框外层、编辑器工具条所在的那一格
+		for (const post of document.querySelectorAll(".nsk-post")) nsmaxFlag(post, "data-nsmax-crumb", !!post.querySelector(":scope > .nsmax-crumb"));
+		for (const box of document.querySelectorAll(".nsk-post-wrapper > div")) nsmaxFlag(box, "data-nsmax-editor-box", !!box.querySelector(":scope > .md-editor"));
+		for (const row of document.querySelectorAll(".md-editor [data-nsmax-ed-head]")) {
+			for (const child of row.children) nsmaxFlag(child, "data-nsmax-ed-toolwrap", !child.matches(".mde-toolbar") && !!child.querySelector(".mde-toolbar"));
+		}
+		for (const field of document.querySelectorAll(".md-editor .topic-select > div")) nsmaxFlag(field, "data-nsmax-topic-field", !!field.querySelector("select, .category-select") || !field.querySelector("button"));
+		// 通知 / 私信：消息中心已接管时原生标签栏隐藏；原生「全部已读」按钮外层
+		for (const box of document.querySelectorAll(".nsk-notification")) {
+			nsmaxFlag(box, "data-nsmax-msgcenter", !!box.querySelector(".nspp-messages"));
+			for (const row of box.querySelectorAll(":scope > div > div")) nsmaxFlag(row, "data-nsmax-readall-box", !!row.querySelector(":scope > button"));
+		}
+		// 个人空间：根容器、回帖列表的摘要行
+		for (const box of document.querySelectorAll("#nsk-frame > .nsk-container")) nsmaxFlag(box, "data-nsmax-space-root", !!box.querySelector(":scope > .head-container"));
+		for (const a of document.querySelectorAll(".discussion-wrapper > a")) nsmaxFlag(a, "data-nsmax-excerpt", !!a.querySelector(":scope > p"));
+		for (const item of document.querySelectorAll(".discussion-wrapper .discussion-item")) {
+			const next = item.nextElementSibling;
+			nsmaxFlag(item, "data-nsmax-has-excerpt", !!next && next.matches("a") && !!next.querySelector(":scope > p"));
+		}
+		// 登录 / 注册：按钮组
+		for (const box of document.querySelectorAll(":is(#login-panel, #register-panel) fieldset > div")) nsmaxFlag(box, "data-nsmax-btn-group", !!box.querySelector(":scope > button"));
+	}
 	// 首帧前就要完成的界面整理：页面解析阶段每解析出一段执行一次（parsed 判断元素是否已解析完），
 	// 之后 mountLeanUi 的 scan 也调用同一套（都可重复执行），所以首屏就是最终的样子，不会先显示原样再变。
 	function nsmaxEarlyVisuals(parsed) {
@@ -629,6 +753,7 @@
 		if (nav && (!parsed || parsed(nav))) nsmaxUpdateNavEssence();
 		nsmaxEnsureNqEntry(parsed);
 		nsmaxTidyPagers();
+		nsmaxTagStructure();
 		nsmaxCleanPostActions();
 		nsmaxMarkLevel6();
 		nsmaxApplyChineseTimes(parsed);
@@ -644,6 +769,8 @@
 	function nsmaxWrapCodeBlocks(parsed) {
 		for (const pre of document.querySelectorAll("article.post-content pre:not(.nsmax-code > pre)")) {
 			if (parsed && !parsed(pre)) continue;
+			// NodeSeek 会把 ANSI 输出（code.language-ansi）整块换成 xterm 终端，这种不包
+			if (pre.querySelector(":scope > code.language-ansi")) continue;
 			const wrap = document.createElement("div");
 			wrap.className = "nsmax-code";
 			const copy = pre.querySelector(":scope > [data-nspp-copy]");
@@ -659,8 +786,8 @@
 				const a = item.querySelector("a");
 				if (!a) continue;
 				if (a.textContent.includes("推广") || (a.getAttribute("href") || "").includes("/categories/promotion")) {
-					item.style.setProperty("display", "none", "important");
-					item.setAttribute("data-nsmax-own-hide", "");
+					nsmaxHideEl(item);
+					nsmaxSetAttr(item, "data-nsmax-own-hide");
 				}
 			}
 			let essenceLi = navMenu.querySelector(":scope > li.nsmax-essence-tab-item");
@@ -681,8 +808,8 @@
 				navMenu.append(essenceLi);
 			}
 			if (location.pathname === "/award") {
-				essenceLi.querySelector("a")?.setAttribute("aria-current", "page");
-				essenceLi.querySelector("a")?.setAttribute("data-nsmax-header-cat-on", "");
+				nsmaxSetAttr(essenceLi.querySelector("a"), "aria-current", "page");
+				nsmaxSetAttr(essenceLi.querySelector("a"), "data-nsmax-header-cat-on");
 			}
 			if (essenceLi.nextElementSibling) {
 				navMenu.append(essenceLi);
@@ -711,19 +838,12 @@
 			const bottomPager = commentContainer.querySelector(".post-bottom-pager, .nsk-pager:not(.post-top-pager):not(.pager-top)");
 			if (bottomPager) {
 				const pagerWrapper = bottomPager.closest(".comment-container > div") || bottomPager;
-				pagerWrapper.classList.add("nsmax-detached-pager");
-				pagerWrapper.style.setProperty("background", "transparent", "important");
-				pagerWrapper.style.setProperty("border", "none", "important");
-				pagerWrapper.style.setProperty("box-shadow", "none", "important");
+				// 外观（透明底、无框）由主题 CSS 的 .nsmax-detached-pager 负责，这里只打标记、只移动一次
+				if (!pagerWrapper.classList.contains("nsmax-detached-pager")) pagerWrapper.classList.add("nsmax-detached-pager");
 				if (pagerWrapper.parentElement === commentContainer) {
 					commentContainer.after(pagerWrapper);
 				}
 			}
-		}
-		for (const detached of document.querySelectorAll(".nsmax-detached-pager, .post-bottom-pager, div:has(>.post-bottom-pager)")) {
-			detached.style.setProperty("background", "transparent", "important");
-			detached.style.setProperty("border", "none", "important");
-			detached.style.setProperty("box-shadow", "none", "important");
 		}
 
 		const opPost = document.querySelector(".nsk-post") || document.querySelector("#nsk-body-left .content-item#0") || document.querySelector(".content-item#0");
@@ -888,9 +1008,12 @@
 		if (!postContainers.length) return;
 
 		for (const container of postContainers) {
-			const tabGroups = container.querySelectorAll(".tabs, .tabset, .markdown-tabs, .tab-container, .tabs-container, [class*='tab-set'], [class*='tabs-component'], div:has(> .tab-item), div:has(> [class*='tab-nav']), div:has(> ul.nav-tabs)");
+			// 不用 div:has(...)：每次扫描都要对正文里每个 div（终端一行就是一个 div）做一遍子元素匹配，太重。
+			// 先找标签头元素，再取它的父元素作为分组。NodeSeek 自己的 .nsk-magic-tabs 由站点脚本处理，不碰。
+			const tabGroups = new Set(container.querySelectorAll(".tabs, .tabset, .markdown-tabs, .tab-container, .tabs-container, [class*='tab-set'], [class*='tabs-component']"));
+			for (const head of container.querySelectorAll(".tab-item, [class*='tab-nav'], ul.nav-tabs")) if (head.parentElement?.matches("div")) tabGroups.add(head.parentElement);
 			for (const group of tabGroups) {
-				if (group.hasAttribute("data-nsmax-tabs-ready")) continue;
+				if (group.hasAttribute("data-nsmax-tabs-ready") || group.closest(".xterm, .nsk-magic-tabs")) continue;
 				group.setAttribute("data-nsmax-tabs-ready", "true");
 				group.classList.add("nsmax-tabs-container");
 
@@ -1102,6 +1225,7 @@
 			if (isPost) {
 				nsmaxDecoratePostDetail();
 			}
+			nsmaxTagStructure();
 			if (!isPost && !/^\/(?:new|edit)-discussion/.test(location.pathname)) return;
 			for (const image of document.querySelectorAll(".nsk-post article.post-content img,ul.comments article.post-content img")) {
 				if (images.has(image)) continue; images.add(image);
@@ -1139,7 +1263,10 @@
 				preview.setAttribute("aria-label", "回复预览");
 				let previewing = false;
 				const render = () => {
-					if (previewing) preview.replaceChildren(renderMessageMarkdown(cm ? cm.getValue() : input.value));
+					if (previewing) {
+						preview.replaceChildren(renderMessageMarkdown(cm ? cm.getValue() : input.value));
+						nsmaxTagImageLinks(preview);
+					}
 				};
 				const action = (label, icon, callback) => {
 					const button = document.createElement("button");

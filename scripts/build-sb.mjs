@@ -117,15 +117,61 @@ ast.walkRules(rule => {
   if (!selectors.nodes.length) rule.remove();
   else rule.selector = selectors.toString();
 });
-// 加载性能守卫：:has() 挂在整页级容器（html、body、#nsk-body / .forum-layout、#nsk-frame / .wrap）上并且参数是后代选择时，
-// 页面上任何一处增删节点浏览器都要重扫整个容器、往往还要整页重算样式（实测列表页加载时样式重算从 0.6 秒涨到 2.8 秒）。
-// sb.sb 个人页布局（.forum-layout:has([data-profile-head])）在 NodeSeek 上永远不成立，直接去掉；其余出现即报错，改用脚本设置的属性 / 类名。
-const pageContainer = /(?:^|[\s>+~(,])(?:html|body|:root|#nsk-body|\.forum-layout|#nsk-frame|\.wrap|\[data-nsmax-page(?:=[^\]]*)?\])(?:[.#\[:][^\s>+~]*)?:has\((?!\s*[>+~])/;
+// sb.sb 个人页布局（.forum-layout:has([data-profile-head])）在 NodeSeek 上永远不成立，直接去掉。
 ast.walkRules(rule => {
   if (!rule.selector.includes(":has(")) return;
   const kept = rule.selectors.filter(selector => !/\.forum-layout:has\(/.test(selector));
   if (!kept.length) { rule.remove(); return; }
   if (kept.length !== rule.selectors.length) rule.selectors = kept;
+});
+// v1.8.1：主题里不再允许任何 :has()。哪怕参数只是子元素，帖子里有 NodeSeek 的 xterm 终端（测评帖）时，终端每画一批字符，
+// 浏览器都要按 :has() 重新匹配祖先并整页重算样式，页面直接卡死（实测 300 行输出 1.2s → 0.15s）。
+// 需要的结构信息改由 ui-runtime.js 的 nsmaxTagStructure() 在页面解析阶段打成属性；旧主题里保留下来的几条按下表改写，
+// null 表示整条选择器删掉（已有别的选择器覆盖）。
+const hasRewrites = [
+  [".nsk-pager:not([data-nsmax-pager]) span:not(.pager-cur,[aria-current=page]):not(:has(*))", null],
+  [">:not(.mde-toolbar,:has(.mde-toolbar))", ">:not(.mde-toolbar,[data-nsmax-ed-toolwrap])"],
+  [">:has(.mde-toolbar)", ">[data-nsmax-ed-toolwrap]"],
+  [".menu-item:has(>svg.iconpark-icon>use:is([href=\"#good-one\"],[href=\"#bad-one\"],[href=\"#chicken-leg\"]))", ".menu-item:is([data-nsmax-action=thumbup],[data-nsmax-action=thumbdown],[data-nsmax-action=drumstick])"],
+  ["a:is([data-nsmax-icon-host=card],:has(>svg:only-child))", "a[data-nsmax-icon-host=card]"],
+  ["body>header:has(>#nsk-head)", "body>header"],
+  ["li:not(:has(>a:not([data-nsmax-header-hide],[data-nsmax-own-hide],[hidden])))", "li[data-nsmax-li-hidden]"],
+  ["#nsk-head:has(.nsmax-header-action[data-nsmax-own-header=colors])", "#nsk-head[data-nsmax-own-colors]"],
+  ["#nsk-body-left:not(:has(>:not(#nsk-body-left-block,script,style):not(:empty)),:has(>#nsk-body-left-block>*))", "#nsk-body-left[data-nsmax-empty]"],
+  ["#nsk-body-left>div:has(>.nsk-pager.pager-bottom)", "#nsk-body-left>div[data-nsmax-pagerbox=bottom]"],
+  ["span:not(:has(>svg.pined))", "span:not([data-nsmax-pinned])"],
+  ["span:has(>svg.pined)", "span[data-nsmax-pinned]"],
+  ["[data-nsmax-usercard]:has(+[data-nsmax-cta])", "[data-nsmax-usercard][data-nsmax-before-cta]"],
+  [".nsk-panel:has(>.small-margin .btn)", ".nsk-panel[data-nsmax-btnpanel]"],
+  [".small-margin:has(.btn)", ".small-margin[data-nsmax-btnrow]"],
+  ["#nsk-body-left:has(>.nsk-post-wrapper)", "#nsk-body-left[data-nsmax-postbody]"],
+  [".comment-container:not(:has(>ul.comments>li.content-item))", ".comment-container[data-nsmax-empty]"],
+  [".nsk-post:has(>.nsmax-crumb)", ".nsk-post[data-nsmax-crumb]"],
+  ["a:not(:has(img))", "a:not([data-nsmax-imglink])"],
+  ["a:has(img)", "a[data-nsmax-imglink]"],
+  ["div:has(>.post-bottom-pager)", "div[data-nsmax-pagerbox=bottom]"],
+  ["div:has(>.nsk-pager)", "div[data-nsmax-pagerbox]"],
+  ["fieldset>div:has(>button)", "fieldset>div[data-nsmax-btn-group]"],
+  [".nsk-container:has(>.head-container)", ".nsk-container[data-nsmax-space-root]"],
+  [":is(:target,:has(:target))", ":target"],
+  ["li.content-item:has(:target)", "li.content-item:target"],
+  [".nsk-notification:not(:has(.nspp-messages))", ".nsk-notification:not([data-nsmax-msgcenter])"],
+];
+ast.walkRules(rule => {
+  if (!rule.selector.includes(":has(")) return;
+  const kept = [];
+  for (const original of rule.selectors) {
+    let selector = original.replace(/\s+/g, " ").replace(/\s*([>+~,])\s*/g, "$1");
+    let dropped = false;
+    for (const [from, to] of hasRewrites) {
+      if (!selector.includes(from)) continue;
+      if (to === null) { dropped = true; break; }
+      selector = selector.split(from).join(to);
+    }
+    if (!dropped) kept.push(selector);
+  }
+  if (!kept.length) rule.remove();
+  else rule.selectors = kept;
 });
 ast.walkComments(comment => comment.remove());
 const optimize = {};
@@ -135,12 +181,11 @@ ast.walkRules(rule => {
   rule.selector = optimize.nsmaxSplitTop(rule.selector, c=>c===",").flatMap(part=>optimize.nsmaxExpandSelector(part.trim()) || [part.trim()]).join(",");
 });
 const compiled = ast.toString();
-const expensiveHas = [];
+const leftoverHas = [];
 ast.walkRules(rule => {
-  if (!rule.selector.includes(":has(")) return;
-  for (const selector of rule.selectors) if (pageContainer.test(selector.replace(/^html\[data-nsmax-theme\](?::root)*(?:\[[^\]]*\])*/, ""))) expensiveHas.push(selector);
+  if (rule.selector.includes(":has(")) leftoverHas.push(...rule.selectors.filter(selector => selector.includes(":has(")));
 });
-if (expensiveHas.length) throw new Error("整页级容器上的 :has() 会让每次增删节点都整页重算样式，请改用脚本设置的属性：\n" + expensiveHas.join("\n"));
+if (leftoverHas.length) throw new Error("主题里不能再有 :has()（会让 NodeSeek 的终端渲染卡死整页），请在 nsmaxTagStructure() 里打属性，或加进 hasRewrites：\n" + leftoverHas.join("\n"));
 source = source.replace(/\tvar modern_theme_compiled = .*;\n/, "");
 source = source.replace("\tvar hot_sidebar_default = `", "\tvar modern_theme_compiled = " + JSON.stringify(compiled) + ";\n\tvar hot_sidebar_default = `");
 source = source.replace("_css(modern_theme_default);", "_css(modern_theme_compiled, true);");

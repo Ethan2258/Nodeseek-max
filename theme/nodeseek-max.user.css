@@ -101,7 +101,6 @@
 	html:root .nsk-pager [data-nsmax-pg-wrap] {
 		display:contents!important;
 	}
-	html:root .nsk-pager:not([data-nsmax-pager]) span:not(.pager-cur,[aria-current=page]):not(:has(*)),
 	html:root .nsk-pager [data-nsmax-pg=gap] {
 		border-color:transparent!important;
 		background-color:transparent;
@@ -285,13 +284,13 @@
 		background:transparent!important;
 		box-shadow:none!important;
 	}
-	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>:has(.mde-toolbar),
+	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>[data-nsmax-ed-toolwrap],
 	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>.mde-toolbar {
 		order:1;
 		flex:1 1 0;
 		min-width:0;
 	}
-	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>:not(.mde-toolbar,:has(.mde-toolbar)) {
+	html:root .md-editor:not(.nspp-floating-reply)>[data-nsmax-ed-head]>:not(.mde-toolbar,[data-nsmax-ed-toolwrap]) {
 		order:2;
 		flex:0 0 auto;
 		padding:0 8px!important;
@@ -502,7 +501,7 @@
 	html:root:root .comment-menu .menu-item[title=回复] {
 		--nsmax-icon-menu:var(--nsmax-icon-reply);
 	}
-	html:root:root .nsk-post>.comment-menu .menu-item:has(>svg.iconpark-icon>use:is([href="#good-one"],[href="#bad-one"],[href="#chicken-leg"]))::before {
+	html:root:root .nsk-post>.comment-menu .menu-item:is([data-nsmax-action=thumbup],[data-nsmax-action=thumbdown],[data-nsmax-action=drumstick])::before {
 		width:17px;
 		height:17px;
 	}
@@ -540,11 +539,11 @@
 		border-color:var(--nsmax-composer-line-focus);
 		box-shadow:0 0 0 3px color-mix(in srgb,var(--nsmax-ink) 7%,transparent);
 	}
-	html:root .user-card a:is([data-nsmax-icon-host=card],:has(>svg:only-child)) {
+	html:root .user-card a[data-nsmax-icon-host=card] {
 		color:var(--nsmax-text-2)!important;
 		transition:color .2s ease,opacity .2s ease,background-color .15s ease;
 	}
-	html:root .user-card a:is([data-nsmax-icon-host=card],:has(>svg:only-child)):hover {
+	html:root .user-card a[data-nsmax-icon-host=card]:hover {
 		color:var(--nsmax-text)!important;
 		opacity:.7;
 	}
@@ -638,7 +637,7 @@
 		--nsmax-meta-link:color-mix(in srgb,var(--nsmax-text-2) 55%,var(--nsmax-muted));
 	}
 	@media (min-width:501px) {
-		html:root:root body>header:has(>#nsk-head) {
+		html:root:root body>header {
 			position:fixed!important;
 			top:0!important;
 			left:0!important;
@@ -656,8 +655,8 @@
 			-webkit-backdrop-filter:none!important;
 			backdrop-filter:none!important;
 		}
-		html:root:root body>header:has(>#nsk-head)::before,
-		html:root:root body>header:has(>#nsk-head)::after {
+		html:root:root body>header::before,
+		html:root:root body>header::after {
 			content:none!important;
 			display:none!important;
 		}
@@ -732,6 +731,9 @@
 		padding:0!important;
 		border:0!important;
 		background:none!important;
+	}
+	html:root:root #nsk-head ul.nav-menu>li[data-nsmax-li-hidden] {
+		display:none!important;
 	}
 	html:root:root #nsk-head a[data-nsmax-own-header=shortcut][data-nsmax-own-header] {
 		padding:0 11px 0 9px!important;
@@ -837,6 +839,9 @@
 		border-color:var(--nsmax-stroke-strong)!important;
 		color:var(--nsmax-text)!important;
 	}
+	html:root:root #nsk-head[data-nsmax-own-colors] .color-theme-switcher {
+		display:none!important;
+	}
 	@media (min-width:801px) {
 		html:root:root #nsk-body {
 			box-sizing:border-box!important;
@@ -879,7 +884,7 @@
 		border-radius:var(--nsmax-r-card,16px)!important;
 		box-shadow:none!important;
 	}
-	html:root:root #nsk-body>#nsk-body-left:not(:has(>:not(#nsk-body-left-block,script,style):not(:empty)),:has(>#nsk-body-left-block>*)) {
+	html:root:root #nsk-body>#nsk-body-left[data-nsmax-empty] {
 		display:none!important;
 	}
 	html:root:root #nsk-body>#nsk-body-left>#nsk-body-left-block:empty {
@@ -1042,7 +1047,7 @@
 	html:root:root #nsk-body-left>.post-list-controler .nsk-pager .pager-next {
 		font-size:13px!important;
 	}
-	html:root:root #nsk-body-left>div:has(>.nsk-pager.pager-bottom) {
+	html:root:root #nsk-body-left>div[data-nsmax-pagerbox=bottom] {
 		display:flex!important;
 		justify-content:center!important;
 		margin:0!important;
@@ -1194,7 +1199,7 @@
 	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span {
 		margin-left:4px;
 	}
-	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span:not(:has(>svg.pined)):not(:empty) {
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span:not([data-nsmax-pinned]):not(:empty) {
 		display:inline-flex!important;
 		align-items:center!important;
 		box-sizing:border-box!important;
@@ -1215,7 +1220,7 @@
 		align-items:center!important;
 		column-gap:6px!important;
 	}
-	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span:has(>svg.pined) {
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span[data-nsmax-pinned] {
 		order:-1!important;
 		display:inline-flex!important;
 		align-items:center!important;
@@ -1229,7 +1234,7 @@
 		font-weight:500!important;
 		line-height:1!important;
 	}
-	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span:has(>svg.pined)::before {
+	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span[data-nsmax-pinned]::before {
 		content:"置顶";
 	}
 	html:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title svg.pined {
@@ -1312,6 +1317,13 @@
 		box-shadow:none!important;
 		color:var(--nsmax-text-2)!important;
 	}
+	html:root:root #nsk-right-panel-container>.user-card[data-nsmax-before-cta] {
+		margin-bottom:0!important;
+		padding-bottom:12px!important;
+		border-bottom:0!important;
+		border-bottom-left-radius:0!important;
+		border-bottom-right-radius:0!important;
+	}
 	html:root:root #nsk-right-panel-container>.nsk-panel h4 {
 		display:flex!important;
 		align-items:center!important;
@@ -1330,7 +1342,7 @@
 	html:root:root #nsk-right-panel-container>.nsk-panel h4:not(:first-child) {
 		margin-top:14px!important;
 	}
-	html:root:root #nsk-right-panel-container>.nsk-panel:has(>.small-margin .btn)>h4 {
+	html:root:root #nsk-right-panel-container>.nsk-panel[data-nsmax-btnpanel]>h4 {
 		margin:0 0 4px!important;
 		color:var(--nsmax-text)!important;
 		font-size:15px!important;
@@ -1343,7 +1355,7 @@
 		font-size:13px!important;
 		line-height:1.65!important;
 	}
-	html:root:root #nsk-right-panel-container>.nsk-panel>.small-margin:has(.btn) {
+	html:root:root #nsk-right-panel-container>.nsk-panel>.small-margin[data-nsmax-btnrow] {
 		display:grid!important;
 		grid-template-columns:1fr 1fr!important;
 		gap:8px!important;
@@ -1465,7 +1477,7 @@
 		--nsmax-pin-bg:color-mix(in srgb,var(--nsmax-brand) 6%,var(--nsmax-card));
 		--nsmax-pin-bg-hover:color-mix(in srgb,var(--nsmax-brand) 9%,var(--nsmax-card));
 	}
-	html:root:root #nsk-body>#nsk-body-left:has(>.nsk-post-wrapper) {
+	html:root:root #nsk-body>#nsk-body-left[data-nsmax-postbody] {
 		background:transparent!important;
 		border:0!important;
 		border-radius:0!important;
@@ -1499,7 +1511,7 @@
 		padding:0!important;
 		overflow:visible;
 	}
-	html:root:root #nsk-body-left>.nsk-post-wrapper>.comment-container:not(:has(>ul.comments>li.content-item)) {
+	html:root:root #nsk-body-left>.nsk-post-wrapper>.comment-container[data-nsmax-empty] {
 		display:none!important;
 	}
 	html:root:root #nsk-body-left .nsk-post>.post-title {
@@ -1533,6 +1545,9 @@
 	}
 	html:root:root #nsk-body-left .nsk-post>.post-title h1 a:hover {
 		color:var(--nsmax-brand)!important;
+	}
+	html:root:root #nsk-body-left .nsk-post[data-nsmax-crumb] .content-info>.content-category {
+		display:none!important;
 	}
 	html:root:root #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item) {
 		box-sizing:border-box!important;
@@ -1726,7 +1741,7 @@
 		word-break:break-word;
 		overflow-wrap:anywhere;
 	}
-	html:root:root #nsk-body-left .content-item>article.post-content *:not(code,pre,kbd,samp,svg,svg *) {
+	html:root:root #nsk-body-left .content-item>article.post-content *:not(code,pre,kbd,samp,svg,svg *,.xterm,.xterm *) {
 		font-family:inherit!important;
 	}
 	html:root:root #nsk-body-left article.post-content>:first-child {
@@ -1828,7 +1843,7 @@
 		background:var(--nsmax-panel-alt)!important;
 		font-weight:500!important;
 	}
-	html:root:root #nsk-body-left article.post-content a:not(:has(img)) {
+	html:root:root #nsk-body-left article.post-content a:not([data-nsmax-imglink]) {
 		color:var(--nsmax-link)!important;
 		text-decoration:underline!important;
 		text-decoration-color:color-mix(in srgb,var(--nsmax-link) 35%,transparent)!important;
@@ -1838,13 +1853,13 @@
 		-webkit-box-decoration-break:clone;
 		box-decoration-break:clone;
 	}
-	html:root:root #nsk-body-left article.post-content a:not(:has(img)):hover {
+	html:root:root #nsk-body-left article.post-content a:not([data-nsmax-imglink]):hover {
 		color:var(--nsmax-link-hover)!important;
 		text-decoration-color:currentColor!important;
 		background:var(--nsmax-link-soft)!important;
 		box-shadow:0 0 0 2px var(--nsmax-link-soft)!important;
 	}
-	html:root:root #nsk-body-left article.post-content a:has(img) {
+	html:root:root #nsk-body-left article.post-content a[data-nsmax-imglink] {
 		color:var(--nsmax-text)!important;
 		text-decoration:none!important;
 	}
@@ -1962,7 +1977,7 @@
 	html:root:root #nsk-body-left .comment-container>:first-child {
 		border-bottom:1px solid var(--nsmax-divider)!important;
 	}
-	html:root:root #nsk-body-left .comment-container>div:has(>.post-bottom-pager) {
+	html:root:root #nsk-body-left .comment-container>div[data-nsmax-pagerbox=bottom] {
 		justify-content:center!important;
 		padding:14px 16px!important;
 		border-top:1px solid var(--nsmax-divider)!important;
@@ -1987,9 +2002,9 @@
 	html:root:root #nsk-body-left .comment-container .nsk-pager .pager-next {
 		font-size:13px!important;
 	}
-	html:root:root #nsk-body-left .comment-container>div:has(>.post-bottom-pager) .nsk-pager .pager-pos,
-	html:root:root #nsk-body-left .comment-container>div:has(>.post-bottom-pager) .nsk-pager .pager-prev,
-	html:root:root #nsk-body-left .comment-container>div:has(>.post-bottom-pager) .nsk-pager .pager-next {
+	html:root:root #nsk-body-left .comment-container>div[data-nsmax-pagerbox=bottom] .nsk-pager .pager-pos,
+	html:root:root #nsk-body-left .comment-container>div[data-nsmax-pagerbox=bottom] .nsk-pager .pager-prev,
+	html:root:root #nsk-body-left .comment-container>div[data-nsmax-pagerbox=bottom] .nsk-pager .pager-next {
 		min-width:32px!important;
 		height:32px!important;
 		padding:0 9px!important;
@@ -2087,7 +2102,7 @@
 		color:var(--nsmax-faint)!important;
 	}
 	html:root:root :is(#login-panel,#register-panel) .login-btn-group,
-	html:root:root :is(#login-panel,#register-panel) fieldset>div:has(>button) {
+	html:root:root :is(#login-panel,#register-panel) fieldset>div[data-nsmax-btn-group] {
 		display:flex!important;
 		flex-direction:column!important;
 		align-items:stretch!important;
@@ -2133,7 +2148,7 @@
 		text-decoration:underline!important;
 		text-underline-offset:3px;
 	}
-	html:root:root #nsk-frame>.nsk-container:has(>.head-container) {
+	html:root:root #nsk-frame>.nsk-container[data-nsmax-space-root] {
 		box-sizing:border-box!important;
 		width:calc(100% - 32px)!important;
 		max-width:calc(var(--nsmax-wrap) - 32px)!important;
@@ -2485,7 +2500,7 @@
 		font-size:11px!important;
 		opacity:1!important;
 	}
-	html:root:root #nsk-body-left ul.comments>li.content-item:is(:target,:has(:target)) {
+	html:root:root #nsk-body-left ul.comments>li.content-item:target {
 		box-shadow:inset 2px 0 0 var(--nsmax-brand)!important;
 	}
 	html:root:root .nsk-pager a:is(.pager-pos,.pager-prev,.pager-next):hover {
@@ -2628,7 +2643,7 @@
 		margin:0 auto!important;
 		padding:0 16px!important;
 	}
-	html:root:root:has(.nsk-notification) .nsk-notification:not(:has(.nspp-messages)) .app-switch {
+	html:root:root:has(.nsk-notification) .nsk-notification:not([data-nsmax-msgcenter]) .app-switch {
 		display:flex;
 		align-items:center;
 		gap:4px;
@@ -3234,12 +3249,12 @@
 	html:root:root:root:root body,
 	html:root:root:root:root button,
 	html:root:root:root:root input,
-	html:root:root:root:root textarea,
+	html:root:root:root:root textarea:not(.xterm-helper-textarea),
 	html:root:root:root:root select,
-	html:root:root:root:root a,
-	html:root:root:root:root p,
-	html:root:root:root:root span,
-	html:root:root:root:root div {
+	html:root:root:root:root a:not(.xterm,:is(pre,code,kbd,samp,.xterm,.CodeMirror) *),
+	html:root:root:root:root p:not(.xterm,:is(pre,code,kbd,samp,.xterm,.CodeMirror) *),
+	html:root:root:root:root span:not(.xterm,:is(pre,code,kbd,samp,.xterm,.CodeMirror) *),
+	html:root:root:root:root div:not(.xterm,:is(pre,code,kbd,samp,.xterm,.CodeMirror) *) {
 		font-family:var(--font-sans)!important;
 		letter-spacing:0!important;
 	}
@@ -3373,7 +3388,7 @@
 		width:14px!important;
 		height:14px!important;
 	}
-	html:root:root:root:root #nsk-right-panel-container > div:has(>a.new-discussion) {
+	html:root:root:root:root #nsk-right-panel-container > div[data-nsmax-newpost-box] {
 		padding:0;
 		margin:-1px 0 0!important;
 	}
@@ -3405,7 +3420,7 @@
 		box-shadow:none!important;
 		overflow:visible!important;
 	}
-	html:root:root:root:root #nsk-body-left .nsk-post-wrapper > div:has(>.md-editor) {
+	html:root:root:root:root #nsk-body-left .nsk-post-wrapper > div[data-nsmax-editor-box] {
 		margin:0!important;
 		padding:0!important;
 		background:transparent!important;
@@ -3766,7 +3781,7 @@
 		border:0!important;
 		box-shadow:none!important;
 	}
-	html:root:root:root:root .nsk-notification > div > div:has(>button) {
+	html:root:root:root:root .nsk-notification > div > div[data-nsmax-readall-box] {
 		position:static!important;
 		display:flex;
 		justify-content:flex-end;
@@ -4416,12 +4431,19 @@
 			flex:0 0 100px!important;
 			max-width:100px!important;
 		}
+		html:root:root:root:root #nsk-head[data-nsmax-has-settings] .search-box {
+			flex-basis:80px!important;
+			max-width:80px!important;
+		}
 		html:root:root:root:root #nsk-head .site-title {
 			margin:0!important;
 			flex:none;
 		}
 		html:root:root:root:root #nsk-head .site-title .title-text {
 			font-size:15px!important;
+		}
+		html:root:root:root:root #nsk-head[data-nsmax-has-mobile-menu] .nav-menu {
+			display:none!important;
 		}
 		html:root:root:root:root #nsk-head {
 			gap:8px!important;
@@ -4532,7 +4554,7 @@
 		gap:14px!important;
 		max-width:1200px!important;
 	}
-	html:root:root:root:root body>header:has(>#nsk-head) {
+	html:root:root:root:root body>header {
 		height:56px!important;
 		min-height:56px!important;
 		background:var(--panel)!important;
@@ -4692,7 +4714,7 @@
 		background:transparent!important;
 		border:0!important;
 	}
-	html:root:root:root:root #nsk-body-left > div:not(.post-list-controler):has(>.nsk-pager) {
+	html:root:root:root:root #nsk-body-left > div[data-nsmax-pagerbox] {
 		margin:0!important;
 		padding:0!important;
 		background:transparent!important;
@@ -5150,7 +5172,7 @@
 	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item:hover {
 		background:var(--panel-hover)!important;
 	}
-	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper>a:has(>p) {
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper>a[data-nsmax-excerpt] {
 		display:block!important;
 		padding:8px 18px 12px!important;
 		border-bottom:1px solid var(--line-soft)!important;
@@ -5163,7 +5185,7 @@
 		font:13px/1.65 var(--font-sans)!important;
 		overflow-wrap:anywhere;
 	}
-	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item:has(+a>p) {
+	html:root:root:root:root:has(.head-container) :is(#nsk-frame, .nsk-container) .discussion-wrapper .discussion-item[data-nsmax-has-excerpt] {
 		border-bottom:0!important;
 		padding-bottom:4px!important;
 	}
@@ -5181,10 +5203,10 @@
 		margin:0!important;
 		padding:0!important;
 	}
-	html:root:root:root:root #nsk-right-panel-container .user-card:has(>.user-head):has(>.user-stat) {
+	html:root:root:root:root #nsk-right-panel-container .user-card[data-nsmax-native-card] {
 		min-height:354px!important;
 	}
-	html:root:root:root:root #nsk-right-panel-container>div:has(>a.new-discussion) {
+	html:root:root:root:root #nsk-right-panel-container>div[data-nsmax-newpost-box] {
 		visibility:hidden!important;
 	}
 	html:root:root:root:root #nsk-body {
@@ -5280,7 +5302,7 @@
 		text-overflow:ellipsis!important;
 		white-space:nowrap!important;
 	}
-	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span:not(:has(>svg.pined)) {
+	html:root:root:root:root #nsk-body-left ul.post-list>li.post-list-item .post-title>span:not([data-nsmax-pinned]) {
 		flex:none!important;
 		display:inline-flex!important;
 		align-items:center!important;
@@ -5329,6 +5351,31 @@
 		height:20px!important;
 		padding:0 6px!important;
 		font:11px/18px var(--font-sans)!important;
+	}
+	html:root:root:root:root #nsk-body-left article.post-content .post-image-link {
+		display:block!important;
+		width:fit-content!important;
+		max-width:min(var(--post-image-max,720px),100%)!important;
+		margin:6px 0!important;
+		border-radius:var(--r-input,8px)!important;
+		overflow:hidden!important;
+		line-height:0!important;
+		vertical-align:top!important;
+		cursor:zoom-in!important;
+		transition:outline .15s ease!important;
+	}
+	html:root:root:root:root #nsk-body-left article.post-content .post-image-link:hover {
+		outline:2px solid var(--line-strong)!important;
+		outline-offset:1px!important;
+	}
+	html:root:root:root:root #nsk-body-left article.post-content .post-image-link img {
+		display:block!important;
+		max-width:100%!important;
+		height:auto!important;
+		margin:0!important;
+		border-radius:0!important;
+		cursor:zoom-in!important;
+		outline:none!important;
 	}
 	@media(min-width:861px) {
 		html:root:root:root:root #nsk-body>#nsk-right-panel-container {
@@ -5473,7 +5520,6 @@
 			max-height:160px!important;
 		}
 	}
-	html:root:root:root:root #nsk-head ul.nav-menu>li:has(a[href*="/categories/promotion"]),
 	html:root:root:root:root #nsk-head ul.nav-menu>li[data-nsmax-own-hide] {
 		display:none!important;
 	}
@@ -5838,12 +5884,10 @@
 	  .pager-bottom,
 	  .post-bottom-pager,
 	  #nsk-body-left .nsk-pager:not(.pager-top):not(.post-top-pager),
-	  #nsk-body-left > div:not(.post-list-controler):has(>.pager-bottom),
-	  #nsk-body-left > div:has(>.post-bottom-pager),
-	  #nsk-body-left > .nsk-post-wrapper > :is(div:has(>.post-bottom-pager), div:has(>.pager-bottom), .post-bottom-pager, .pager-bottom, .nsk-pager),
-	  .comment-container > div:has(>.post-bottom-pager),
-	  div:has(>.pager-bottom),
-	  div:has(>.post-bottom-pager)
+	  #nsk-body-left > div[data-nsmax-pagerbox="bottom"],
+	  #nsk-body-left > .nsk-post-wrapper > :is(div[data-nsmax-pagerbox="bottom"], .post-bottom-pager, .pager-bottom, .nsk-pager),
+	  .comment-container > div[data-nsmax-pagerbox="bottom"],
+	  div[data-nsmax-pagerbox="bottom"]
 	) {
 		display: flex !important;
 		align-items: center !important;
@@ -5859,12 +5903,12 @@
 		backdrop-filter: none !important;
 		-webkit-backdrop-filter: none !important;
 	}
-	html:root:root:root:root .comment-container:has(> div > .post-bottom-pager, > .post-bottom-pager) {
+	html:root:root:root:root .comment-container[data-nsmax-bottom-pager] {
 		background: transparent !important;
 		border: 0 !important;
 		box-shadow: none !important;
 	}
-	html:root:root:root:root .comment-container:has(> div > .post-bottom-pager, > .post-bottom-pager) > :is(.comment-head, ul.comments) {
+	html:root:root:root:root .comment-container[data-nsmax-bottom-pager] > :is(.comment-head, ul.comments) {
 		background: var(--panel) !important;
 		border: 1px solid var(--line) !important;
 		border-radius: 12px !important;
@@ -5873,17 +5917,17 @@
 	  .pager-bottom,
 	  .post-bottom-pager,
 	  #nsk-body-left :is(.post-bottom-pager, .pager-bottom),
-	  #nsk-body-left > div:has(>.pager-bottom),
-	  #nsk-body-left > div:has(>.post-bottom-pager),
-	  .comment-container > div:has(>.post-bottom-pager)
+	  #nsk-body-left > div[data-nsmax-pagerbox="bottom"],
+	  #nsk-body-left > div[data-nsmax-pagerbox="bottom"],
+	  .comment-container > div[data-nsmax-pagerbox="bottom"]
 	)::before,
 	html:root:root:root:root :is(
 	  .pager-bottom,
 	  .post-bottom-pager,
 	  #nsk-body-left :is(.post-bottom-pager, .pager-bottom),
-	  #nsk-body-left > div:has(>.pager-bottom),
-	  #nsk-body-left > div:has(>.post-bottom-pager),
-	  .comment-container > div:has(>.post-bottom-pager)
+	  #nsk-body-left > div[data-nsmax-pagerbox="bottom"],
+	  #nsk-body-left > div[data-nsmax-pagerbox="bottom"],
+	  .comment-container > div[data-nsmax-pagerbox="bottom"]
 	)::after {
 		content: none !important;
 		display: none !important;
@@ -6498,9 +6542,7 @@
 		vertical-align: middle !important;
 	}
 	html:root:root:root:root:root:root:root :is(
-	  .nsk-notification:has(.nspp-messages) > .app-switch,
-	  .nsk-notification:has(.nspp-messages) .app-switch,
-	  .nsk-notification > div:has(~ .nspp-messages) > .app-switch,
+	  .nsk-notification[data-nsmax-msgcenter] .app-switch,
 	  [data-nspp-messages-new] .app-switch,
 	  [data-nspp-messages-new] .app-title
 	) {
@@ -6546,7 +6588,7 @@
 		}
 		html:root:root:root:root:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) #nsk-body,
 		html:root:root:root:root:is([data-nsmax-page="new"], [data-nsmax-page="space"], [data-nsmax-page="setting"], [data-nsmax-page="fans"]) section#nsk-frame > #nsk-body.nsk-container,
-		html:root:root:root:root #nsk-body:not(:has(>#nsk-right-panel-container:not(:empty))) {
+		html:root:root:root:root #nsk-body[data-nsmax-noside] {
 			grid-template-columns: 1fr !important;
 		}
 	}
@@ -6624,7 +6666,7 @@
 		border-top: 1px solid var(--line-soft) !important;
 		background: var(--panel-alt) !important;
 	}
-	html:root:root:root:root:has(.new-discussion) .md-editor .topic-select > :is(.category-row, .category-select, div:has(select), div:has(.category-select), div:not(:has(button))) {
+	html:root:root:root:root:has(.new-discussion) .md-editor .topic-select > :is(.category-row, .category-select, div[data-nsmax-topic-field]) {
 		display: inline-flex !important;
 		align-items: center !important;
 		gap: 8px !important;
@@ -7325,20 +7367,20 @@
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title > a:is(:visited, .nspp-read) {
 		color: var(--text-subtle) !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(.min-grade, span[data-nsmax-lock]) {
 		display: inline-flex !important;
 		align-items: center !important;
 		gap: 2px !important;
 		margin: 0 0 0 6px !important;
 		padding: 0 !important;
 		vertical-align: 2px !important;
-		color: var(--text-subtle) !important;
+		color: var(--danger) !important;
 		font-size: 12px !important;
 		font-weight: 400 !important;
 		line-height: 1 !important;
 		white-space: nowrap !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade > svg {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(.min-grade, span[data-nsmax-lock]) > svg {
 		flex: none !important;
 		width: 12px !important;
 		height: 12px !important;
@@ -7348,7 +7390,7 @@
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item.topic-pinned:hover {
 		background: color-mix(in srgb, var(--mark-soft) 45%, transparent) !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title > span:has(> svg.pined) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-pinned] {
 		display: inline-block !important;
 		order: -1 !important;
 		height: auto !important;
@@ -7505,7 +7547,7 @@
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left > .post-list-controler > .nsk-pager.pager-top {
 		display: none !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left > div:has(> .nsk-pager.pager-bottom) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left > div[data-nsmax-pagerbox="bottom"] {
 		display: flex !important;
 		justify-content: center !important;
 		margin: var(--gap) 0 0 !important;
@@ -7553,7 +7595,7 @@
 		color: var(--text-subtle) !important;
 		font-size: 12.5px !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-right-panel-container > .nsk-panel > .small-margin:has(.btn) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-right-panel-container > .nsk-panel > .small-margin[data-nsmax-btnrow] {
 		display: grid !important;
 		grid-template-columns: 1fr 1fr !important;
 		gap: 8px !important;
@@ -7867,7 +7909,7 @@
 		word-break: break-word !important;
 		overflow-wrap: anywhere !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left article.post-content *:not(code, pre, kbd, samp, svg, svg *) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left article.post-content *:not(code, pre, kbd, samp, svg, svg *, .xterm, .xterm *) {
 		font-family: inherit !important;
 	}
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left article.post-content > :first-child {
@@ -7933,7 +7975,7 @@
 		border-top: 1px solid var(--line) !important;
 		background: none !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left article.post-content a:has(img) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left article.post-content a[data-nsmax-imglink] {
 		color: var(--text) !important;
 		text-decoration: none !important;
 	}
@@ -8190,7 +8232,7 @@
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .comment-container > ul.comments > li.content-item:first-child {
 		border-top: 0 !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .comment-container > div:has(> .post-bottom-pager) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .comment-container > div[data-nsmax-pagerbox="bottom"] {
 		display: flex !important;
 		justify-content: center !important;
 		margin: var(--gap) 0 0 !important;
@@ -8200,7 +8242,7 @@
 		border: 0 !important;
 		background: transparent !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.comments > li.content-item:is(:target, :has(:target)) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.comments > li.content-item:target {
 		box-shadow: inset 2px 0 0 var(--brand) !important;
 	}
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .nsk-post-wrapper > :is(#editor, .md-editor),
@@ -8746,7 +8788,7 @@
 		font-size: 12.5px !important;
 	}
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > div.discussion-item:hover,
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a.discussion-item:is(:hover, :has(+ a:not(.discussion-item):hover)),
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a.discussion-item:hover,
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a.discussion-item:hover + a:not(.discussion-item),
 	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a:not(.discussion-item):hover {
 		background: var(--panel-hover) !important;
@@ -8797,7 +8839,7 @@
 		font-size: 13.5px !important;
 		line-height: 1.65 !important;
 	}
-	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .selector > div:has(> .nsk-pager) {
+	html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .selector > div[data-nsmax-pagerbox] {
 		display: flex !important;
 		flex: 0 0 calc(100% + 28px) !important;
 		justify-content: center !important;

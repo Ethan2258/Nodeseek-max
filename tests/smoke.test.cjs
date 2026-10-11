@@ -899,13 +899,13 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 	// 1.2 等级限制放置在标题正后方紧凑排列
 	const listHtmlLock = listPage().replace(
 		'<div role="heading" aria-level="3" class="post-title"><a href="/post-1000-1" target="">出一台香港 CN2 GIA 小鸡，年付 99</a> <!----> <!----></div>',
-		'<div role="heading" aria-level="3" class="post-title"><a href="/post-1000-1" target="">短标题</a><span class="min-grade"><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span> <!----></div>'
+		'<div role="heading" aria-level="3" class="post-title"><a href="/post-1000-1" target="">短标题</a><span style="color: rgb(255, 152, 152);"><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span> <!----></div>'
 	);
 	const {context: ctxLock, page: pageLock, errors: errorsLock} = await open(browser,'https://www.nodeseek.com/',{html: listHtmlLock});
 	try {
-		await pageLock.waitForSelector('ul.post-list .post-title .min-grade');
+		await pageLock.waitForSelector('ul.post-list .post-title > span:has(use[href="#lock"])');
 		const link = pageLock.locator('ul.post-list .post-title a').first();
-		const lock = pageLock.locator('ul.post-list .post-title .min-grade').first();
+		const lock = pageLock.locator('ul.post-list .post-title > span:has(use[href="#lock"])').first();
 		const linkBox = await link.boundingBox();
 		const lockBox = await lock.boundingBox();
 		assert.ok(linkBox && lockBox, 'Link and lock bounding boxes exist');
@@ -913,6 +913,7 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		const gap = lockBox.x - (linkBox.x + linkBox.width);
 		assert.ok(gap >= 0 && gap <= 10, `Lock badge directly follows title with small gap (gap: ${gap}px)`);
 		assert.ok(Math.abs(lockBox.y - linkBox.y) < 6, 'Lock badge is on the same line as title link');
+		assert.equal(await lock.evaluate(e => getComputedStyle(e).color), 'rgb(207, 43, 43)', '等级锁用 sb.sb 的 --danger');
 		assert.deepEqual(errorsLock, []);
 	} finally { await ctxLock.close(); }
 
@@ -1832,3 +1833,25 @@ test("v1.7.27 发帖按钮全宽胶囊与文字完整性、顶栏精华跟随分
 });
 
 
+
+test("v1.8.1 防卡死：主题里没有 :has()，个人空间静止时不再反复改 DOM", async () => {
+	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8");
+	const line = source.slice(source.indexOf("var modern_theme_compiled = "), source.indexOf("\n", source.indexOf("var modern_theme_compiled = ")));
+	assert.equal(line.includes(":has("), false, "主题 CSS 里的 :has() 会让帖子里的终端渲染卡死整页");
+	for (const [render, hash] of [[spaceTopicsPage, "#/discussions"], [spaceCommentsPage, "#/comments"]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10" + hash, { html: render() });
+		try {
+			await page.waitForTimeout(1500);
+			const churn = await page.evaluate(() => new Promise((resolve) => {
+				let count = 0;
+				const observer = new MutationObserver((records) => { count += records.length; });
+				observer.observe(document, { childList: true, subtree: true, characterData: true });
+				setTimeout(() => { observer.disconnect(); resolve(count); }, 1500);
+			}));
+			assert.equal(churn, 0, "个人空间静止时仍在改 DOM（整理函数要只在值变化时才写）");
+			await page.locator(".selector a.select-item[data-nsmax-tab=comments]").click();
+			assert.equal(await page.evaluate(() => location.hash), "#/comments");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
