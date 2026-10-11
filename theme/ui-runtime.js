@@ -140,10 +140,20 @@
 				5: ["经常露面", "登峰造极"],
 				6: ["登峰造极", "已达最高等级"]
 			};
+			// sb.sb .points-progress-end：等宽的「Lv.N」+ 加粗称号
+			const setLevelLabel = (n, title) => {
+				const levelEl = progress.querySelector(".nsmax-space-progress-level");
+				const num = document.createElement("span");
+				num.className = "nsmax-level-n";
+				num.textContent = `Lv.${n}`;
+				const name = document.createElement("b");
+				name.textContent = title;
+				levelEl.replaceChildren(num, name);
+			};
 			if (levelVal >= 6) {
 				progress.setAttribute("data-nsmax-level-max", "");
 				progress.classList.add("nsmax-space-progress-max");
-				progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.6 登峰造极`;
+				setLevelLabel(6, "登峰造极");
 				progress.querySelector(".nsmax-space-progress-percent").textContent = `MAX`;
 				progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
 				progress.querySelector("b").style.width = `100%`;
@@ -162,7 +172,7 @@
 				const cur = titles[levelVal]?.[0] || "当前等级";
 				const nxt = titles[levelVal]?.[1] || "下一等级";
 				const percent = Math.max(10, Math.min(100, (levelVal % 10) * 10 || 50));
-				progress.querySelector(".nsmax-space-progress-level").textContent = `Lv.${levelVal} ${cur}`;
+				setLevelLabel(levelVal, cur);
 				progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
 				progress.querySelector(".nsmax-space-progress-next").textContent = `Lv.${levelVal + 1} ${nxt}`;
 				progress.querySelector("b").style.width = `${percent}%`;

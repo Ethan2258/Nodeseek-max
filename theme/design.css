@@ -82,8 +82,9 @@ html[data-nsmax-theme] body {
   --code-name: #e45649;
   /* 主色上的文字：浅色主色是墨色 → 白字；深色主色是黄色 → 墨字（sb.sb 没有这个变量，按它的用法补上） */
   --on-brand: #ffffff;
-  /* 形状与尺寸：sb.sb 现在 --r-scale 为 0，所有圆角都是直角 */
-  --r-scale: 0;
+  /* 形状与尺寸：sb.sb 有圆角 / 直角两种模式，就是 --r-scale 取 1 或 0。默认圆角（卡片 12px、输入框 8px、小部件 6px、
+     按钮与标签胶囊），设置里选「直角」时为 0 */
+  --r-scale: 1;
   --nav-ctl: 34px;
   --r-xs: calc(4px * var(--r-scale));
   --r-sm: calc(6px * var(--r-scale));
@@ -168,6 +169,10 @@ html[data-nsmax-theme] body {
   --bg-sub-color: var(--panel) !important;
   --text-color: var(--text) !important;
   --text-color-secondary: var(--text-subtle) !important;
+}
+html[data-nsmax-theme][data-nsmax-radius="square"],
+html[data-nsmax-theme][data-nsmax-radius="square"] body {
+  --r-scale: 0;
 }
 html[data-nsmax-theme][data-nsmax-size="large"],
 html[data-nsmax-theme][data-nsmax-size="large"] body {
@@ -668,6 +673,12 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item {
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item:first-child {
   border-top: 0 !important;
+  border-top-left-radius: inherit !important;
+  border-top-right-radius: inherit !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item:last-child {
+  border-bottom-left-radius: inherit !important;
+  border-bottom-right-radius: inherit !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:hover {
   background: transparent !important;
@@ -2730,16 +2741,10 @@ html[data-nsmax-theme] .nsmax-nq-entry img {
   border-radius: 0 !important;
 }
 
-/* ---------- 16. 全站直角：sb.sb 的 --r-scale 是 0，所有组件（包括头像、圆点、按钮、卡片）都是直角 ---------- */
-html[data-nsmax-theme] body *,
-html[data-nsmax-theme] body *::before,
-html[data-nsmax-theme] body *::after {
-  border-radius: 0 !important;
-}
-
 /* ---------- 17. 消息中心（NodeSeek++ 消息页，对应 sb.sb 的 /messages/ 与通知列表） ---------- */
 /* 顶部「@我 / 回复主题 / 私信」：sb.sb .topic-toolbar + .tab（下划线标签） */
 html[data-nsmax-theme] .nsmax-message-tabs {
+  border-radius: var(--r) !important;
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
@@ -2792,6 +2797,7 @@ html[data-nsmax-theme] .nsmax-message-tabs > a:is([aria-current="page"], [aria-c
 }
 /* 未读数：sb.sb .dm-unread——#f5c518 底、深色字、11px/700、18px 高 */
 html[data-nsmax-theme] :is(.nsmax-message-tabs, .nspp-messages) .nspp-messages-count {
+  border-radius: calc(9px * var(--r-scale)) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2812,6 +2818,8 @@ html[data-nsmax-theme] :is(.nsmax-message-tabs, .nspp-messages) .nspp-messages-c
 }
 /* 消息区整体：sb.sb .dm-list / .dm-pane——面板底、细线框，无投影 */
 html[data-nsmax-theme] .nspp-messages {
+  border-radius: calc(16px * var(--r-scale)) !important;
+  overflow: hidden !important;
   border: 1px solid var(--line) !important;
   background: var(--panel) !important;
   box-shadow: none !important;
@@ -2826,6 +2834,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-sidebar {
 }
 /* 搜索框：sb.sb .dm-search input——34px 高、line-soft 细线、次底色、13px */
 html[data-nsmax-theme] .nspp-messages .nspp-messages-search input {
+  border-radius: calc(9px * var(--r-scale)) !important;
   height: 34px !important;
   padding: 0 10px !important;
   border: 1px solid var(--line-soft) !important;
@@ -2836,6 +2845,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-search input {
 }
 /* 会话 / 通知分类：sb.sb .dm-conv——10px 11px，悬停次底色，当前项品牌浅底 + 左侧 3px 黄线 */
 html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer) {
+  border-radius: calc(12px * var(--r-scale)) !important;
   margin: 0 0 2px !important;
   padding: 10px 11px !important;
   height: auto !important;
@@ -2853,6 +2863,7 @@ html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages
   box-shadow: inset 3px 0 0 #f5c518 !important;
 }
 html[data-nsmax-theme] .nspp-messages .nsmax-notice-nav-icon {
+  border-radius: calc(11px * var(--r-scale)) !important;
   border: 1px solid var(--line) !important;
   background: var(--panel-alt) !important;
   color: var(--text-muted) !important;
@@ -2879,6 +2890,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-thread :is(.nspp-notice-ite
 }
 /* 按钮：sb.sb 次要按钮（细线框、面板底）与主要按钮（实底） */
 html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-more, .nspp-messages-refresh, .nspp-messages-sync-retry, .nspp-messages-top-actions button, .nspp-messages-search button, .nspp-messages-back) {
+  border-radius: var(--r-pill) !important;
   height: auto !important;
   min-height: 0 !important;
   padding: 4px 12px !important;
@@ -2895,6 +2907,7 @@ html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-more, .nspp-messages-re
   color: var(--text) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-send {
+  border-radius: var(--r-pill) !important;
   border: 1px solid var(--action-border) !important;
   background: var(--action) !important;
   box-shadow: none !important;
@@ -2905,6 +2918,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-send:hover {
   background: var(--action-hover) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-composer textarea {
+  border-radius: var(--r-input) !important;
   border: 1px solid var(--line-strong) !important;
   background: var(--panel) !important;
   box-shadow: none !important;
@@ -2937,6 +2951,7 @@ html[data-nsmax-theme] #nsk-body-left article.post-content img {
   box-shadow: none !important;
 }
 html[data-nsmax-theme] #nsk-body-left article.post-content img.nsmax-post-image {
+  border-radius: 0 !important;
   display: block !important;
   max-width: min(var(--post-image-max), 100%) !important;
   height: auto !important;
@@ -2964,32 +2979,264 @@ html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container {
   background: transparent !important;
   box-shadow: none !important;
 }
-/* 资料卡：14px 内边距、面板底、细线框；与下方标签栏间距 20px */
+/* 资料卡：sb.sb .form-panel.profile-head——18px 内边距、面板底、细线框、卡片圆角；与下方标签栏间距 14px */
 html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container > .head-container {
   box-sizing: border-box !important;
-  margin: 0 0 var(--gap) !important;
-  padding: 14px !important;
   height: auto !important;
   min-height: 0 !important;
+  margin: 0 0 14px !important;
+  padding: 18px !important;
   border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
   background: var(--panel) !important;
   box-shadow: none !important;
 }
-/* 标签栏 + 列表：.selector 原本是一行弹性布局（标签、分隔线、列表、页码挤在一行），改成可换行：
-   标签一行，分隔线与内容各占整行；整体是 sb.sb 的工具条 + 列表卡片 */
+/* 头像 + 名字：sb.sb .user-header-info——64px 头像（小圆角）、间距 10px；名字 20px/600，名字行 gap 4px 8px，下面一行元信息 */
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-top {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-top > img {
+  flex: none !important;
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-identity {
+  display: flex !important;
+  flex: 1 1 0% !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-title-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px 8px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-title-row :is(.username, h1) {
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text-strong) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px 10px !important;
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 20px !important;
+}
+/* UID：sb.sb .post-user-uid——浅底细框胶囊、等宽数字 11px */
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-uid {
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  height: auto !important;
+  padding: 1px 8px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-join {
+  color: inherit !important;
+  font: inherit !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-bio {
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+/* 统计：sb.sb .user-stats——上细线、12px 0 2px、四列、gap 10px 6px；标签 12px 弱化字，数字 15px/600 等宽 */
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px 6px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 16px 0 0 !important;
+  padding: 12px 0 2px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item > .nsmax-stat-label {
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item > .nsmax-stat-val {
+  margin: 0 !important;
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  font-variant-numeric: normal !important;
+}
+/* 等级进度：sb.sb .points-level-block——上方 14px；一行「Lv.6 称号 · 百分比 · 下一级」，下面 7px 胶囊进度条（品牌色填充） */
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-progress {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  grid-template-rows: auto auto !important;
+  align-items: center !important;
+  gap: 8px 10px !important;
+  height: auto !important;
+  margin: 14px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-progress > .nsmax-space-progress-level {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  justify-self: start !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-progress-level > .nsmax-level-n {
+  margin-right: 6px !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-progress-level > b {
+  color: var(--text-strong) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-progress > .nsmax-space-progress-percent {
+  display: block !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-self: center !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--brand) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.75 !important;
+  text-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-progress > .nsmax-space-progress-next {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  text-align: right !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-progress > i {
+  display: block !important;
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  height: 7px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-progress > i > b {
+  display: block !important;
+  height: 100% !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--brand) !important;
+  box-shadow: none !important;
+}
+/* 标签 + 内容：.selector 原本是一行弹性布局（标签、分隔线、列表、页码挤在一行）。这里改成可换行：
+   标签一行（下面用伪元素画出 sb.sb .profile-toolbar 的上圆角工具条），列表 / 自我介绍是下圆角卡片，页码在卡片外 */
 html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container > .selector {
+  position: relative !important;
+  z-index: 0 !important;
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
   gap: 0 !important;
   box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 0 14px !important;
   height: auto !important;
   min-height: 0 !important;
-  border: 1px solid var(--line) !important;
-  background: var(--panel) !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container > .selector::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  height: 49.5px !important;
+  box-sizing: border-box !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: 0 !important;
+  border-radius: var(--r) var(--r) 0 0 !important;
+  background: var(--panel) !important;
+  pointer-events: none !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item {
   position: relative !important;
@@ -3000,6 +3247,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item {
   margin: 0 !important;
   padding: 12px 4px !important;
   border: 0 !important;
+  border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--text-muted) !important;
@@ -3030,22 +3278,28 @@ html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item:is(.ro
   right: 0 !important;
   bottom: -1px !important;
   left: 0 !important;
+  z-index: 1 !important;
   height: 2px !important;
+  border-radius: calc(1px * var(--r-scale)) !important;
   background: var(--action) !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > .hr {
-  flex: 0 0 calc(100% + 28px) !important;
-  height: 1px !important;
-  margin: 0 -14px !important;
-  border: 0 !important;
-  background: var(--line) !important;
+  display: none !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .selector > :not(a.select-item, .hr) {
+/* 列表 / 自我介绍：sb.sb .post-list——细线框、下圆角，接在工具条下面（工具条底边就是它的上边框） */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > :is(.discussion-wrapper, .readme) {
   flex: 0 0 calc(100% + 28px) !important;
   box-sizing: border-box !important;
   min-width: 0 !important;
   max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
   margin: 0 -14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 0 var(--r) var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
 }
 /* 主题列表：sb.sb .post-item——11px 14px、line-soft 分隔、标题 15px/500 */
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > .discussion-wrapper {
@@ -3053,8 +3307,6 @@ html[data-nsmax-theme][data-nsmax-page="space"] .selector > .discussion-wrapper 
   padding: 0 !important;
   height: auto !important;
   min-height: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item {
   display: flex !important;
@@ -3145,29 +3397,57 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.dis
   font-size: 13.5px !important;
   line-height: 1.65 !important;
 }
-/* 页码：sb.sb 放在列表卡片外面、距离 20px——这里用画布色盖住卡片的左右下边框，看起来就在卡片外 */
+/* 页码：sb.sb .pagination-bar——在列表卡片外、上方 20px、居中 */
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > div:has(> .nsk-pager) {
   display: flex !important;
+  flex: 0 0 calc(100% + 28px) !important;
   justify-content: center !important;
-  margin: 0 -15px -1px !important;
-  flex-basis: calc(100% + 30px) !important;
-  padding: var(--gap) 0 0 !important;
   height: auto !important;
   min-height: 0 !important;
+  margin: var(--gap) -14px 0 !important;
+  padding: 0 !important;
   border: 0 !important;
-  border-top: 1px solid var(--line) !important;
-  background: var(--bg) !important;
+  background: transparent !important;
 }
 /* 概况页的自我介绍（readme）：正文样式 */
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme {
   padding: 15px 18px !important;
   height: auto !important;
   min-height: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
   color: var(--text) !important;
   font-size: 15px !important;
   line-height: 1.8 !important;
+}
+
+/* ---------- 19b. 等级徽章：sb.sb .post-user-level——品牌浅底、品牌色字、品牌细框胶囊，11px；Lv6 不再单独加皇冠和金色渐变 ---------- */
+html[data-nsmax-theme] [data-nsmax-lv6]:not(.card-item) {
+  position: static !important;
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 0 !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 1px 8px !important;
+  border: 1px solid var(--brand-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--brand-soft) !important;
+  box-shadow: none !important;
+  color: var(--brand) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.5 !important;
+  text-shadow: none !important;
+  white-space: nowrap !important;
+  animation: none !important;
+}
+html[data-nsmax-theme] [data-nsmax-lv6]:not(.card-item)::before,
+html[data-nsmax-theme] [data-nsmax-lv6]:not(.card-item)::after {
+  content: none !important;
+  display: none !important;
 }
 
 /* ---------- 20. 消息中心铺满版心（sb.sb /messages/ 用整个版心宽度） ---------- */
@@ -3209,6 +3489,7 @@ html[data-nsmax-theme] #user-setting-panel {
 }
 /* 顶部资料：sb.sb 资料卡（14px、面板底、细线框；头像 40px、名字 15px/600） */
 html[data-nsmax-theme] #user-setting-panel > .head-container {
+  border-radius: var(--r) !important;
   grid-area: head !important;
   display: flex !important;
   align-items: center !important;
@@ -3230,6 +3511,7 @@ html[data-nsmax-theme] #user-setting-panel > .head-container .avatar-wrapper {
   margin: 0 !important;
 }
 html[data-nsmax-theme] #user-setting-panel > .head-container .avatar-wrapper img.avatar {
+  border-radius: var(--r-sm) !important;
   display: block !important;
   width: 40px !important;
   height: 40px !important;
@@ -3269,6 +3551,7 @@ html[data-nsmax-theme] #user-setting-panel > .selector {
   display: contents !important;
 }
 html[data-nsmax-theme] #user-setting-panel .selector-left-side {
+  border-radius: var(--r) !important;
   grid-area: side !important;
   position: static !important;
   display: block !important;
@@ -3335,6 +3618,7 @@ html[data-nsmax-theme] #user-setting-panel .expend-left {
 }
 /* 表单卡片：sb.sb .form-panel——18px、面板底、细线框；每个字段是 .grid（标签 13.5px/500，字段间距 14px） */
 html[data-nsmax-theme] #user-setting-panel .selector-right-side {
+  border-radius: var(--r) !important;
   grid-area: main !important;
   box-sizing: border-box !important;
   width: auto !important;
@@ -3374,6 +3658,7 @@ html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(h2, legend, 
   line-height: 1.75 !important;
 }
 html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
+  border-radius: var(--r-input) !important;
   box-sizing: border-box !important;
   width: 100% !important;
   max-width: none !important;
@@ -3409,6 +3694,7 @@ html[data-nsmax-theme] #user-setting-panel .selector-right-side .set-avatar {
   padding: 0 !important;
 }
 html[data-nsmax-theme] #user-setting-panel .selector-right-side .set-avatar img {
+  border-radius: var(--r-sm) !important;
   width: 64px !important;
   height: 64px !important;
   margin: 0 !important;
@@ -3433,6 +3719,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] section#nsk-frame > #nsk-body.nsk-
   grid-template-columns: minmax(0, 1fr) !important;
 }
 html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left #editor > .md-editor {
+  border-radius: var(--r) !important;
   box-sizing: border-box !important;
   padding: 18px !important;
   height: auto !important;
@@ -3467,6 +3754,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input::before 
   font-weight: 500 !important;
 }
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input input {
+  border-radius: var(--r-input) !important;
   box-sizing: border-box !important;
   width: 100% !important;
   height: auto !important;
@@ -3531,6 +3819,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select label {
   font-weight: 500 !important;
 }
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select select {
+  border-radius: var(--r-input) !important;
   height: auto !important;
   min-height: 0 !important;
   min-width: 120px !important;
@@ -3547,6 +3836,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > :is(b
 }
 /* 发帖须知：sb.sb 提示面板（次底色、细线框、14px 16px） */
 html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left > .post-content {
+  border-radius: var(--r) !important;
   margin: var(--gap) 0 0 !important;
   padding: 14px 16px !important;
   height: auto !important;
@@ -3574,6 +3864,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left > .post-content :is
 
 /* ---------- 24. 签到排行（sb.sb 排行榜 .top-board / .top-row：名次等宽、前三名金色加粗、头像 26px、分数等宽靠右） ---------- */
 html[data-nsmax-theme] section#nsk-frame > .board {
+  border-radius: var(--r) !important;
   box-sizing: border-box !important;
   width: 100% !important;
   max-width: var(--container) !important;
@@ -3586,6 +3877,7 @@ html[data-nsmax-theme] section#nsk-frame > .board {
   box-shadow: none !important;
 }
 html[data-nsmax-theme] .board > .head-info {
+  border-radius: var(--r-input) !important;
   margin: 0 0 16px !important;
   padding: 10px 14px !important;
   height: auto !important;
@@ -3640,6 +3932,7 @@ html[data-nsmax-theme] .board .rank-row:nth-of-type(-n + 3) > div:first-child {
   font-weight: 700 !important;
 }
 html[data-nsmax-theme] .board .rank-row > img.avatar {
+  border-radius: var(--r-pill) !important;
   width: 26px !important;
   height: 26px !important;
   margin: 0 !important;
