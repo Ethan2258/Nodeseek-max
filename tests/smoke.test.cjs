@@ -562,7 +562,7 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'0px 10px'});
 		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);
 		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderTopWidth),'1px');
-		assert.equal(await page.locator('.nsmax-account-rank').innerText(),'Lv 6');
+		assert.equal(await page.locator('.nsmax-account-rank').innerText(),'Lv.6');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });
@@ -668,19 +668,19 @@ test("发帖页：同一套编辑器、标题焦点、原生分类和深色提�
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/new-discussion',{html:newPostPage()});
 	try{
 		await page.waitForSelector('.nsmax-editor-head');
-		await page.locator('.post-title-input').fill('本地测试标题，不发布');
-		await page.locator('.category-select').selectOption('tech');
+		await page.locator('#mde-title').fill('本地测试标题，不发布');
+		await page.locator('#category').selectOption('tech');
 		await page.locator('.md-editor textarea').fill('测试正文');
 		assert.equal(await page.locator('.nsmax-editor-controls').getByRole('button',{name:'抽奖',exact:true}).count(), 0);
 		await page.locator('.nsmax-lucky-trigger').click();
 		await page.waitForSelector('dialog.nsmax-lucky-modal[open]');
 		await page.locator('button.nsmax-lucky-confirm').click();
-		assert.match(await page.locator('.post-title-input').inputValue(),/^抽奖：/);
+		assert.match(await page.locator('#mde-title').inputValue(),/^抽奖：/);
 		assert.match(await page.locator('.md-editor textarea').inputValue(),/开奖链接/);
 		await page.locator('.nsmax-editor-head').getByRole('button',{name:'预览',exact:true}).click();
 		assert.match(await page.locator('.nsmax-editor-preview').innerText(),/测试正文/);
 		assert.match(await page.locator('.nsmax-editor-preview').innerText(),/开奖链接/);
-		assert.equal(await page.locator('.category-select').inputValue(),'tech');
+		assert.equal(await page.locator('#category').inputValue(),'tech');
 		await page.waitForFunction(()=>getComputedStyle(document.querySelector('.md-editor button.submit')).backgroundColor==='rgb(28, 28, 30)');
 		assert.equal(await page.locator('.md-editor button.submit').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(28, 28, 30)');
 		assert.deepEqual(errors,[]);
@@ -1127,7 +1127,7 @@ test("v1.7.11 视觉细节（v1.8.0 起按 sb.sb）：顶栏当前板块墨色�
 		await personPop.waitFor({ state: "visible" });
 		await pagePop.waitForSelector(".nsmax-person-level[data-nsmax-lv6]");
 		const personLevel = pagePop.locator(".nsmax-person-level");
-		assert.equal(await personLevel.innerText(), "Lv 6");
+		assert.equal(await personLevel.innerText(), "Lv.6");
 		assert.equal(await personLevel.getAttribute("data-nsmax-lv6"), "true");
 
 		const popName = pagePop.locator(".nsmax-person-head a");
@@ -1241,17 +1241,20 @@ test("v1.7.14 极致精细化：统一两处 Level 6 标签且皇冠垂直居中
 		// 侧栏个人卡
 		const accountRank = pageLv6.locator(".nsmax-account-rank");
 		assert.equal(await accountRank.getAttribute("data-nsmax-lv6"), "true");
-		assert.equal(await accountRank.innerText(), "Lv 6");
+		assert.equal(await accountRank.innerText(), "Lv.6");
 		const crownStyle = await pageLv6.evaluate(() => {
 			const el = document.querySelector(".nsmax-account-rank");
 			const pseudo = window.getComputedStyle(el, "::before");
 			return {
 				content: pseudo.content,
-				transform: pseudo.transform
+				emblem: pseudo.backgroundImage
 			};
 		});
-		assert.equal(crownStyle.content, "none", "v1.8.0 起按 sb.sb .post-user-level：不再加皇冠");
-		assert.equal(await accountRank.evaluate(el => getComputedStyle(el).backgroundColor), "rgb(255, 244, 196)");
+		// v1.8.1 等级徽章：每级一个徽记（::before 背景图），Lv6 是金色实底 + 王冠
+		assert.equal(await accountRank.getAttribute("data-nsmax-level"), "6");
+		assert.equal(crownStyle.content, '""');
+		assert.ok(crownStyle.emblem.includes("data:image/svg+xml"), "等级徽记应当显示");
+		assert.ok((await accountRank.evaluate(el => getComputedStyle(el).backgroundImage)).includes("linear-gradient"), "Lv6 金色实底");
 
 		// 头像悬停卡
 		const userAvatarLink = pageLv6.locator('ul.post-list .post-list-item a[href="/space/10"]').first();
@@ -1259,7 +1262,7 @@ test("v1.7.14 极致精细化：统一两处 Level 6 标签且皇冠垂直居中
 		const personPop = pageLv6.locator(".nsmax-person-pop");
 		await personPop.waitFor({ state: "visible" });
 		const personLevel = pageLv6.locator(".nsmax-person-level");
-		assert.equal(await personLevel.innerText(), "Lv 6");
+		assert.equal(await personLevel.innerText(), "Lv.6");
 		assert.equal(await personLevel.getAttribute("data-nsmax-lv6"), "true");
 		assert.deepEqual(errorsLv6, []);
 	} finally { await ctxLv6.close(); }
@@ -1457,7 +1460,7 @@ test("v1.7.17 深度优化与功能完成：列表双重图标彻底杜绝、发
 
 		// 验证弹窗已关闭且正文与标题均已更新
 		assert.equal(await modal.isVisible(), false, "插入后抽奖弹窗应当关闭");
-		const titleVal = await pagePost.locator(".post-title-input").inputValue();
+		const titleVal = await pagePost.locator("#mde-title").inputValue();
 		const bodyVal = await pagePost.locator(".md-editor textarea").inputValue();
 
 		assert.ok(titleVal.includes("抽奖："), "发帖标题应当带有抽奖前缀");

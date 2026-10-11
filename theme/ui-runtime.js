@@ -172,6 +172,17 @@
 				name.textContent = title;
 				levelEl.replaceChildren(num, " ", name);
 			};
+			// 名字后面的等级徽章（sb.sb 个人页名字后面的身份标签位置）
+			const titleRow = head.querySelector(".nsmax-space-title-row");
+			if (titleRow) {
+				let badge = titleRow.querySelector(".nsmax-space-vip");
+				if (!badge) {
+					badge = document.createElement("span");
+					badge.className = "nsmax-space-vip";
+					titleRow.append(badge);
+				}
+				nsmaxApplyLevel(badge, levelVal);
+			}
 			const setBar = (width) => {
 				const bar = progress.querySelector(":scope > i > b");
 				if (bar && bar.style.width !== width) bar.style.width = width;
@@ -184,14 +195,6 @@
 				nsmaxSetText(progress.querySelector(".nsmax-space-progress-next"), "已达最高等级");
 				setBar("100%");
 
-				const titleRow = head.querySelector(".nsmax-space-title-row");
-				if (titleRow && !titleRow.querySelector(".nsmax-space-vip")) {
-					const vipBadge = document.createElement("span");
-					vipBadge.className = "nsmax-space-vip";
-					vipBadge.setAttribute("data-nsmax-lv6", "true");
-					vipBadge.textContent = "Lv 6";
-					titleRow.append(vipBadge);
-				}
 			} else {
 				nsmaxDropAttr(progress, "data-nsmax-level-max");
 				if (progress.classList.contains("nsmax-space-progress-max")) progress.classList.remove("nsmax-space-progress-max");
@@ -639,6 +642,10 @@
 				item.append(actions); actions.append(menu, floor);
 			}
 			if (!actions) continue;
+			// 热评标记放到名字后面（和楼主、等级标签一排）：留在右侧操作区里，有 / 没有热评的楼层操作图标就对不齐
+			const hot = actions.querySelector(".hot-badge");
+			const author = item.querySelector(":scope > .nsk-content-meta-info .author-info");
+			if (hot && author) author.append(hot);
 			for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
 				const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报)$/.test(text));
 				if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
@@ -755,7 +762,7 @@
 		nsmaxTidyPagers();
 		nsmaxTagStructure();
 		nsmaxCleanPostActions();
-		nsmaxMarkLevel6();
+		nsmaxMarkLevels();
 		nsmaxApplyChineseTimes(parsed);
 		if (!/^\/post-\d+/.test(location.pathname)) return;
 		nsmaxGroupFloorActions(parsed);
@@ -816,17 +823,24 @@
 			}
 		}
 	}
-	function nsmaxMarkLevel6() {
+	// 等级徽章：NodeSeek 只有 Lv1–Lv6。凡是只写着等级的小标签都打上 data-nsmax-level=N（主题按等级配色、配徽记），
+	// 文字统一成 sb.sb 的「Lv.N」；Lv6 另外保留 data-nsmax-lv6（旧规则与外部样式在用）
+	function nsmaxApplyLevel(el, level) {
+		const n = Math.max(1, Math.min(6, Number(level) || 1));
+		nsmaxSetAttr(el, "data-nsmax-level", String(n));
+		if (n === 6) nsmaxSetAttr(el, "data-nsmax-lv6", "true");
+		else nsmaxDropAttr(el, "data-nsmax-lv6");
+		nsmaxSetText(el, `Lv.${n}`);
+	}
+	function nsmaxMarkLevels() {
 		const candidates = document.querySelectorAll(
-			".role-tag, .nspp-level, .user-badge, .badge, .author-info > span, .nsk-content-meta-info > span, .nsmax-account-rank, .nsmax-person-level, .hover-user-card [class*='level']"
+			".role-tag, .nspp-level, .user-badge, .badge, .author-info > span, .nsk-content-meta-info > span, .nsmax-account-rank, .nsmax-person-level, .nsmax-space-vip, .hover-user-card [class*='level']"
 		);
 		for (const el of candidates) {
-			if (el.hasAttribute("data-nsmax-lv6")) continue;
-			const text = el.textContent?.trim() || "";
-			if (/(?:^|\b|\s)(?:Lv\.?\s*6|Level\s*6)(?:\b|\s|$)/i.test(text) || /^等级\s*6$/i.test(text.replace(/\s+/g, ""))) {
-				el.setAttribute("data-nsmax-lv6", "true");
-				el.textContent = "Lv 6";
-			}
+			if (el.children.length) continue;
+			const text = (el.textContent || "").replace(/\s+/g, "");
+			const match = text.match(/^(?:Lv\.?|Level|等级)(\d)$/i);
+			if (match) nsmaxApplyLevel(el, match[1]);
 		}
 	}
 	function nsmaxDecoratePostDetail() {
@@ -1211,7 +1225,7 @@
 			nsmaxCleanSearchOverlay();
 			nsmaxCleanPostActions();
 			nsmaxUpdateNavEssence();
-			nsmaxMarkLevel6();
+			nsmaxMarkLevels();
 			nsmaxSetupMarkdownTabs();
 			nsmaxEnsureNqEntry();
 			nsmaxTidyPagers();
@@ -1508,22 +1522,21 @@
 				resize.className = "nsmax-editor-resize"; resize.tabIndex = 0;
 				resize.setAttribute("role","separator"); resize.setAttribute("aria-label","调整输入框高度"); resize.setAttribute("aria-orientation","horizontal");
 				let drag;
-				const setHeight = height => {
-					const value = Math.max(120, Math.min(1200, height));
+				// 输入框高度只由 --nsmax-editor-height 决定（主题 CSS 让外框＝这个高度、里面的 CodeMirror / 文本框填满其余部分）。
+				// 以前分别给外层、CodeMirror、文本框写同一个像素高度，外框还有内边距和边框，内容比外框高出一截，底边被挤掉。
+				const heightBox = () => (pane !== body && pane !== editor ? pane : input) || surface;
+				const setHeight = (height, manual = true) => {
+					const value = Math.max(120, Math.min(1200, Math.round(height)));
+					if (manual) editor.setAttribute("data-nsmax-resized", "");
 					editor.style.setProperty("--nsmax-editor-height", value + "px");
-					if (surface) surface.style.setProperty("height", value + "px", "important");
-					const cmWrap = cm?.getWrapperElement?.() || editor.querySelector(".CodeMirror");
-					if (cmWrap) cmWrap.style.setProperty("height", value + "px", "important");
-					if (input) input.style.setProperty("height", value + "px", "important");
-					if (preview) preview.style.setProperty("height", value + "px", "important");
-					resize.setAttribute("aria-valuenow", String(Math.round(value)));
+					resize.setAttribute("aria-valuenow", String(value));
 					cm?.refresh();
 				};
 				const beginDrag = event => {
 					if (event.button !== undefined && event.button !== 0) return;
 					event.preventDefault();
 					event.stopPropagation();
-					drag = { y: event.clientY ?? event.touches?.[0]?.clientY ?? 0, height: surface.getBoundingClientRect().height };
+					drag = { y: event.clientY ?? event.touches?.[0]?.clientY ?? 0, height: heightBox().getBoundingClientRect().height };
 					if (event.pointerId !== undefined && typeof resize.setPointerCapture === "function") {
 						try { resize.setPointerCapture(event.pointerId); } catch(e) {}
 					}
@@ -1553,7 +1566,7 @@
 					window.addEventListener(type, endDrag, { signal: ctx.signal });
 				}
 				resize.addEventListener("lostpointercapture", endDrag, { signal: ctx.signal });
-				resize.addEventListener("keydown",event=>{ if (["ArrowDown","ArrowUp"].includes(event.key)) { event.preventDefault(); setHeight(surface.getBoundingClientRect().height+(event.key==="ArrowDown"?30:-30)); } },{signal:ctx.signal});
+				resize.addEventListener("keydown",event=>{ if (["ArrowDown","ArrowUp"].includes(event.key)) { event.preventDefault(); setHeight(heightBox().getBoundingClientRect().height+(event.key==="ArrowDown"?30:-30)); } },{signal:ctx.signal});
 				surface.append(resize);
 				const previewButton = controls.lastElementChild;
 				previewButton.addEventListener("click", () => contentButton.setAttribute("aria-pressed",String(!previewing)), { signal:ctx.signal });
@@ -1577,23 +1590,16 @@
 					});
 					submitBtn.before(luckyBtn);
 				}
+				// 纯文本框（没有 CodeMirror）时：内容超过默认高度就跟着长高（最多 800px），删短了再缩回；用户手动拖过就不再自动改
 				const adjustInputHeight = () => {
-					if (input && !editor.style.getPropertyValue("--nsmax-editor-height")) {
-						const scrollH = input.scrollHeight;
-						if (scrollH > 160) {
-							const h = Math.min(800, scrollH + 20);
-							input.style.setProperty("height", h + "px", "important");
-							input.style.setProperty("overflow-y", "auto", "important");
-							if (surface) surface.style.setProperty("height", h + "px", "important");
-						} else {
-							input.style.setProperty("height", "150px", "important");
-							input.style.setProperty("overflow-y", "hidden", "important");
-							input.scrollTop = 0;
-							if (surface) surface.style.setProperty("height", "150px", "important");
-						}
-					}
+					if (!input || cm || editor.hasAttribute("data-nsmax-resized")) return;
+					const box = heightBox();
+					editor.style.setProperty("--nsmax-editor-height", "150px");
+					const needed = input.scrollHeight + (box.offsetHeight - input.clientHeight);
+					if (needed > 150) setHeight(Math.min(800, needed), false);
 				};
-				input?.addEventListener("focus", () => { if (input) input.scrollTop = 0; }, { signal: ctx.signal });
+				// 只在没有内容时回到顶部（有内容时点进去还跳回第一行会很烦）
+				input?.addEventListener("focus", () => { if (input && !input.value) input.scrollTop = 0; }, { signal: ctx.signal });
 				if (cm) cm.on("change", render);
 				else {
 					input.addEventListener("input", render, { signal: ctx.signal });
@@ -1773,8 +1779,7 @@
 				if (data.rank !== undefined) {
 					const level = document.createElement("span");
 					level.className = "nsmax-person-level";
-					level.textContent = "Lv " + data.rank;
-					if (Number(data.rank) >= 6) level.setAttribute("data-nsmax-lv6", "true");
+					nsmaxApplyLevel(level, data.rank);
 					identity.append(level);
 				}
 				for (const [label,key] of [["鸡腿","coin"],["主题","nPost"],["回复","nComment"],["粉丝","fans"]]) { const item = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd"); term.textContent = label; value.textContent = data[key] === undefined ? "—" : String(data[key]); item.append(term,value); numbers.append(item); }
