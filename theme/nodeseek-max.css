@@ -7245,7 +7245,7 @@ html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-lef
 	border-bottom-right-radius: inherit !important;
 }
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:hover {
-	background: transparent !important;
+	background: var(--panel-hover) !important;
 }
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item::before,
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item::after {
@@ -7312,6 +7312,25 @@ html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-lef
 }
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title > a:is(:visited, .nspp-read) {
 	color: var(--text-subtle) !important;
+}
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 2px !important;
+	margin: 0 0 0 6px !important;
+	padding: 0 !important;
+	vertical-align: 2px !important;
+	color: var(--text-subtle) !important;
+	font-size: 12px !important;
+	font-weight: 400 !important;
+	line-height: 1 !important;
+	white-space: nowrap !important;
+}
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade > svg {
+	flex: none !important;
+	width: 12px !important;
+	height: 12px !important;
+	margin: 0 !important;
 }
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item.topic-pinned,
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item.topic-pinned:hover {
@@ -7650,6 +7669,18 @@ html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-lef
 	border-top: 1px solid var(--line-soft) !important;
 	border-radius: 0 !important;
 	background: transparent !important;
+}
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .nsk-post > .content-item:hover,
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left ul.comments > li.content-item:hover {
+	background: var(--panel-hover) !important;
+}
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .comment-container > ul.comments > li.content-item:first-child {
+	border-top-left-radius: inherit !important;
+	border-top-right-radius: inherit !important;
+}
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .comment-container > ul.comments > li.content-item:last-child {
+	border-bottom-left-radius: inherit !important;
+	border-bottom-right-radius: inherit !important;
 }
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u) #nsk-body-left .content-item > .nsk-content-meta-info {
 	display: contents !important;
@@ -8701,6 +8732,12 @@ html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-con
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > div.discussion-item > span {
 	color: var(--text-subtle) !important;
 	font-size: 12.5px !important;
+}
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > div.discussion-item:hover,
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a.discussion-item:is(:hover, :has(+ a:not(.discussion-item):hover)),
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a.discussion-item:hover + a:not(.discussion-item),
+html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a:not(.discussion-item):hover {
+	background: var(--panel-hover) !important;
 }
 html:root:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u):has(.head-container) .discussion-wrapper > a.discussion-item {
 	display: block !important;

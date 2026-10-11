@@ -680,8 +680,9 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item:last-chil
   border-bottom-left-radius: inherit !important;
   border-bottom-right-radius: inherit !important;
 }
+/* 悬停：sb.sb .post-item:hover——整行换成 panel-hover 浅底（无过渡） */
 html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:hover {
-  background: transparent !important;
+  background: var(--panel-hover) !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item::before,
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item::after {
@@ -750,6 +751,26 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a:is(:visited, .nspp-read) {
   color: var(--text-subtle) !important;
+}
+/* 等级限制（原站 .min-grade：锁 + 最低等级）：紧跟标题的弱化小字，锁图标 12px（原站图标没有尺寸，不设会撑成 300px） */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin: 0 0 0 6px !important;
+  padding: 0 !important;
+  vertical-align: 2px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title .min-grade > svg {
+  flex: none !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin: 0 !important;
 }
 /* 置顶：sb.sb .topic-pinned 行（黄色浅底 45%）+ .topic-badge.pinned 黄色小标 */
 html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item.topic-pinned,
@@ -1529,6 +1550,20 @@ html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:hover {
   border-top: 1px solid var(--line-soft) !important;
   border-radius: 0 !important;
   background: transparent !important;
+}
+/* 悬停：sb.sb .topic-opening:hover > .post-item 与 .post-item:hover——主帖、回复整块换成 panel-hover 浅底（无过渡）；
+   首尾两行跟随列表卡片的圆角，浅底不会露出直角 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item:hover,
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:hover {
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments > li.content-item:first-child {
+  border-top-left-radius: inherit !important;
+  border-top-right-radius: inherit !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments > li.content-item:last-child {
+  border-bottom-left-radius: inherit !important;
+  border-bottom-right-radius: inherit !important;
 }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info {
   display: contents !important;
@@ -3149,7 +3184,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-p
   font-weight: 400 !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-progress-level > .nsmax-level-n {
-  margin-right: 6px !important;
+  margin-right: 2px !important;
   color: var(--text-subtle) !important;
   font-family: var(--font-mono) !important;
 }
@@ -3349,6 +3384,13 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discus
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > span {
   color: var(--text-subtle) !important;
   font-size: 12.5px !important;
+}
+/* 悬停：sb.sb .post-item:hover——整行 panel-hover 浅底；回帖列表的标题行和摘要行算同一项，一起变色 */
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item:hover,
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item:is(:hover, :has(+ a:not(.discussion-item):hover)),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item:hover + a:not(.discussion-item),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.discussion-item):hover {
+  background: var(--panel-hover) !important;
 }
 /* 回帖列表：主题标题一行 + 下面一段回帖摘要（sb.sb .profile-reply-excerpt：左侧 2px 细线、13.5px 弱化字） */
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item {

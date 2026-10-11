@@ -148,7 +148,7 @@
 				num.textContent = `Lv.${n}`;
 				const name = document.createElement("b");
 				name.textContent = title;
-				levelEl.replaceChildren(num, name);
+				levelEl.replaceChildren(num, " ", name);
 			};
 			if (levelVal >= 6) {
 				progress.setAttribute("data-nsmax-level-max", "");
@@ -156,7 +156,7 @@
 				setLevelLabel(6, "登峰造极");
 				progress.querySelector(".nsmax-space-progress-percent").textContent = `MAX`;
 				progress.querySelector(".nsmax-space-progress-next").textContent = `已达最高等级`;
-				progress.querySelector("b").style.width = `100%`;
+				progress.querySelector(":scope > i > b").style.width = `100%`;
 
 				const titleRow = head.querySelector(".nsmax-space-title-row");
 				if (titleRow && !titleRow.querySelector(".nsmax-space-vip")) {
@@ -175,7 +175,7 @@
 				setLevelLabel(levelVal, cur);
 				progress.querySelector(".nsmax-space-progress-percent").textContent = `${percent}%`;
 				progress.querySelector(".nsmax-space-progress-next").textContent = `Lv.${levelVal + 1} ${nxt}`;
-				progress.querySelector("b").style.width = `${percent}%`;
+				progress.querySelector(":scope > i > b").style.width = `${percent}%`;
 			}
 		};
 

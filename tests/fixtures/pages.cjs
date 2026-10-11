@@ -103,11 +103,12 @@ const messageCenterPage = (options) => shell("通知 - NodeSeek", `<div id="nsk-
 </div></div>${sidebar}`, { ...options, leftNav: false });
 
 // 设置页：按真实 NodeSeek 当前结构模拟（.user-setting-panel、用户头部、侧边导航和表单内容）。
-const settingPage = (options = {}) => shell("设置 - NodeSeek", `<div id="nsk-body-left"><div id="user-setting-panel">
+// 设置页：与真实站点一致——独立页面，#nsk-frame > #nsk-frame-block > div > #user-setting-panel.nsk-container，没有 #nsk-body 和右栏
+const settingPage = (options = {}) => shell("设置 - NodeSeek", `<div id="nsk-frame-block"><div><div id="user-setting-panel" class="nsk-container">
 <div class="head-container"><div class="avatar-wrapper"><img class="avatar" src="${AVATAR}" alt="avatar of user"><svg class="setting-icon"></svg></div><div class="word"><h1 class="username">tester</h1></div></div>
 <div class="selector"><div class="selector-left-side"><div class="selector-item-wrapper"><a href="#introduction" class="select-item selected">个人信息</a><a href="#security" class="select-item">安全</a><a href="#2fa" class="select-item">双因素验证</a><a href="#contact" class="select-item">联系方式</a><a href="#block" class="select-item">屏蔽用户</a><a href="#preference" class="select-item">常用偏好</a><a href="#homepage" class="select-item">首页版块</a><a href="#extend" class="select-item">论坛扩展</a></div><div class="expend-left"></div></div>
-<div class="selector-right-side"><form class="personal-info"><fieldset><h2>头像</h2><div class="set-avatar"><img class="avatar" src="${AVATAR}" alt="avatar"><a class="btn">设置头像</a></div></fieldset><fieldset><h2>Bio</h2><input type="text" placeholder="请用一句话介绍自己"></fieldset><fieldset><h2>签名</h2><textarea placeholder="帖子内容下显示；支持markdown"></textarea></fieldset><fieldset><h2>Readme</h2><textarea placeholder="用户主页中显示；支持markdown"></textarea></fieldset><div style="text-align:right"><button class="btn">确定</button></div></form></div></div>
-</div></div>${sidebar}`, options);
+<div class="selector-right-side"><form class="personal-info pure-form"><fieldset><h2>头像</h2><div class="set-avatar"><img class="avatar" src="${AVATAR}" alt="avatar"><a class="btn">设置头像</a></div></fieldset><fieldset><h2>Bio</h2><input type="text" placeholder="请用一句话介绍自己"></fieldset><fieldset><h2>签名</h2><textarea placeholder="帖子内容下显示；支持markdown"></textarea></fieldset><fieldset><h2>Readme</h2><textarea placeholder="用户主页中显示；支持markdown"></textarea></fieldset><div style="text-align:right"><button class="btn">确定</button></div></form></div></div>
+</div></div></div>`, { ...options, standalone: true });
 
 // 发帖页：真实结构未知，这里用常见写法（标题输入框、分类下拉框、与评论框同一个编辑器、「发布帖子」按钮）。
 const newPostPage = (options) => shell("发帖 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-panel new-discussion">

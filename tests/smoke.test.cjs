@@ -35,7 +35,7 @@ test("列表页：SB Theme UI 套件生效且首屏结构稳定", async () => {
 		search: document.querySelector(".search-form .search-input") !== null,
 		fastNav: getComputedStyle(document.querySelector("#fast-nav-button-group")).display,
 		tools: getComputedStyle(document.querySelector("#nspp-tools")).display,
-		motion: getComputedStyle(document.querySelector(".post-item")).transitionDuration
+		padding: getComputedStyle(document.querySelector(".post-item")).padding
 	}));
 	assert.equal(state.page, "list");
 	assert.equal(state.canvas, "rgb(247, 248, 250)");
@@ -45,7 +45,7 @@ test("列表页：SB Theme UI 套件生效且首屏结构稳定", async () => {
 	assert.equal(state.search, true);
 	assert.equal(state.fastNav, "none");
 	assert.equal(state.tools, "none");
-	assert.ok(state.motion !== "0s");
+	assert.equal(state.padding, "11px 66px 11px 14px");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -104,7 +104,7 @@ test("深色模式：套件表面、文字和操作色同步切换", async () =>
 	const state = await page.evaluate(() => ({
 		dark: document.documentElement.hasAttribute("data-nsmax-dark"),
 		canvas: getComputedStyle(document.body).backgroundColor,
-		card: getComputedStyle(document.querySelector(".main-panel")).backgroundColor,
+		card: getComputedStyle(document.querySelector("ul.post-list")).backgroundColor,
 		text: getComputedStyle(document.querySelector(".post-title a")).color
 	}));
 	assert.equal(state.dark, true);
@@ -170,9 +170,11 @@ test("设置页：单栏 SB Theme UI 表单，不加载右栏和工具条", asyn
 	await wait(page);
 	const state = await page.evaluate(() => ({
 		page: document.documentElement.dataset.nsmaxPage,
-		right: getComputedStyle(document.querySelector("#nsk-right-panel-container")).display,
+		right: document.querySelector("#nsk-right-panel-container"),
 		tools: document.querySelector("#nspp-tools"),
-		panel: getComputedStyle(document.querySelector("#user-setting-panel > .selector")).borderRadius,
+		panel: getComputedStyle(document.querySelector("#user-setting-panel .selector-right-side")).borderRadius,
+		side: getComputedStyle(document.querySelector("#user-setting-panel .selector-left-side")).borderRadius,
+		order: document.querySelector("#user-setting-panel .selector-right-side").getBoundingClientRect().right <= document.querySelector("#user-setting-panel .selector-left-side").getBoundingClientRect().left,
 		input: getComputedStyle(document.querySelector("#user-setting-panel input[type=text]")).borderRadius,
 		nav: document.querySelectorAll("#user-setting-panel .select-item").length,
 		fields: document.querySelectorAll("#user-setting-panel .personal-info fieldset").length,
@@ -180,9 +182,11 @@ test("设置页：单栏 SB Theme UI 表单，不加载右栏和工具条", asyn
 		footer: document.querySelector("body > footer") ? getComputedStyle(document.querySelector("body > footer")).display : "none"
 	}));
 	assert.equal(state.page, "setting");
-	assert.equal(state.right, "none");
+	assert.equal(state.right, null);
 	assert.equal(state.tools, null);
 	assert.equal(state.panel, "12px");
+	assert.equal(state.side, "12px");
+	assert.equal(state.order, true);
 	assert.equal(state.input, "8px");
 	assert.equal(state.nav, 8);
 	assert.equal(state.fields, 4);
@@ -261,10 +265,10 @@ test("CodeMirror：保留隐藏键盘输入，真实提交区保持可用", asyn
 test("代码复制：按钮不增加正文高度，复制内容不混入按钮标签", async () => {
 	const { context,page,errors }=await open(browser,"https://www.nodeseek.com/post-1000-1",{html:postPage()});
 	try {
-		await page.waitForSelector('pre > [data-nspp-copy]');
+		await page.waitForSelector('.nsmax-code > [data-nspp-copy]');
 		await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.__copiedText=text}},configurable:true}));
-		await page.locator('.post-content pre').hover();
-		const button=page.locator('pre > [data-nspp-copy]');
+		await page.locator('.post-content .nsmax-code').hover();
+		const button=page.locator('.nsmax-code > [data-nspp-copy]');
 		assert.equal(await button.evaluate(e=>getComputedStyle(e).position),'absolute');
 		await button.click();
 		assert.equal(await page.evaluate(()=>window.__copiedText),'curl -fsSL https://example.com/install.sh | bash');
@@ -324,7 +328,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.7.30");
+	assert.equal(packageJson.version, "1.8.0");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -525,7 +529,7 @@ test("SB 字体与动效：正文、编辑器、弹窗一致且不下载旧字�
 		await wait(page);
 		const fonts=await page.locator('body,article.post-content,.md-editor textarea').evaluateAll(es=>es.map(e=>getComputedStyle(e).fontFamily));
 		assert.ok(fonts.every(font=>font===fonts[0]&&font.includes('system-ui')),JSON.stringify(fonts));
-		assert.equal(await page.evaluate(()=>window.__gmRequests.some(url=>url.includes('fontsource'))),false);
+		assert.equal(await page.evaluate(()=>window.__gmRequests.filter(url=>url.includes('fontsource')).every(url=>url.includes('/space-mono'))),true);
 		assert.equal(await page.locator('.hover-user-card').isVisible(),true);
 		assert.equal(await page.locator('.nspp-user-hover:visible').count(),0);
 		assert.equal(await page.locator('section.nspp-user-hover').count(),0);
@@ -571,7 +575,7 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 		assert.equal(ordered[2],'nsmax-inline-category');
 		assert.ok(ordered[3].includes('info-views'));
 		const state=await row.locator('.post-info').evaluate(e=>({font:getComputedStyle(e).fontSize,line:getComputedStyle(e).lineHeight,gap:getComputedStyle(e).gap}));
-		assert.deepEqual(state,{font:'12px',line:'18px',gap:'8px'});
+		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'0px 10px'});
 		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);
 		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderTopWidth),'1px');
 		assert.equal(await page.locator('.nsmax-account-rank').innerText(),'Lv 6');
@@ -710,7 +714,7 @@ test("帖子悬停预览：SB 卡片表面与标题色、按需读取、Escape �
 			const style=await page.locator('dialog.nspp-post-preview').evaluate(e=>({bg:getComputedStyle(e).backgroundColor,radius:getComputedStyle(e).borderRadius,title:getComputedStyle(e.querySelector('header>a')).color}));
 			assert.equal(style.bg,dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
 			assert.equal(style.radius,'12px');
-			assert.equal(style.title,dark?'rgb(242, 243, 248)':'rgb(5, 0, 56)');
+			assert.equal(style.title,dark?'rgb(242, 243, 248)':'rgb(28, 28, 30)');
 			await page.keyboard.press('Escape');
 			assert.equal(await page.locator('dialog.nspp-post-preview').isVisible(),false);
 			assert.deepEqual(errors,[]);
@@ -726,7 +730,7 @@ test("实际个人空间：scoped discussion-wrapper 在主题、评论和路由
 			const wrapper=page.locator('.discussion-wrapper');
 			assert.equal(await wrapper.evaluate(e=>getComputedStyle(e).backgroundColor),dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
 			assert.equal(await wrapper.locator('.discussion-item').first().evaluate(e=>getComputedStyle(e).borderTopStyle),'none');
-			if(hash.includes('comments'))assert.equal(await wrapper.locator('p').first().evaluate(e=>getComputedStyle(e).color),dark?'rgb(139, 143, 161)':'rgb(107, 111, 126)');
+			if(hash.includes('comments'))assert.equal(await wrapper.locator('p').first().evaluate(e=>getComputedStyle(e).color),dark?'rgb(168, 171, 187)':'rgb(85, 90, 106)');
 			await page.evaluate(()=>{location.hash='#/discussions/2';const root=document.querySelector('.discussion-wrapper');const clone=root.firstElementChild.cloneNode(true);root.replaceChildren(clone);});
 			assert.equal(await wrapper.evaluate(e=>getComputedStyle(e).backgroundColor),dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
 			assert.deepEqual(errors,[]);
@@ -848,8 +852,10 @@ test("评论单图标、楼主蓝色热评红色、楼中楼透明、预览仅�
 		await page.waitForSelector('.nsmax-floor-actions');
 		assert.equal(await page.locator('.comment-menu .menu-item>svg:visible').count(),0);
 		assert.equal(await page.locator('.nsmax-floor-actions [data-nsmax-action=reply]').first().evaluate(e=>getComputedStyle(e,'::before').maskImage==='none'),false);
-		assert.equal(await page.locator('.is-poster').evaluate(e=>getComputedStyle(e).color),'rgb(51, 64, 143)');
-		assert.equal(await page.locator('.hot-badge').evaluate(e=>getComputedStyle(e).color),'rgb(207, 43, 43)');
+		assert.equal(await page.locator('.is-poster').evaluate(e=>getComputedStyle(e).color),'rgb(26, 26, 26)');
+		assert.equal(await page.locator('.is-poster').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(245, 197, 24)');
+		// 热评：sb.sb 没有对应元素，沿用它的 .post-user-group--staff 小标签（红底白字）
+		assert.deepEqual(await page.locator('.hot-badge').evaluate(e=>[getComputedStyle(e).backgroundColor,getComputedStyle(e).color]),['rgb(229, 72, 77)','rgb(255, 255, 255)']);
 		const iconCount=await page.locator('.nsk-post .menu-item[data-nsmax-action=quote]').count();assert.ok(iconCount>=0);
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
@@ -945,9 +951,10 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		const progress = pageSpace.locator('.nsmax-space-progress');
 		assert.equal(await progress.getAttribute('data-nsmax-level-max') !== null, true);
 		assert.equal(await progress.locator('.nsmax-space-progress-level').innerText(), 'Lv.6 登峰造极');
+		assert.equal(await progress.locator('.nsmax-space-progress-level b').innerText(), '登峰造极');
 		assert.equal(await progress.locator('.nsmax-space-progress-percent').innerText(), 'MAX');
 		assert.equal(await progress.locator('.nsmax-space-progress-next').innerText(), '已达最高等级');
-		assert.equal(await progress.locator('b').evaluate(e => e.style.width), '100%');
+		assert.equal(await progress.locator('i > b').evaluate(e => e.style.width), '100%');
 		assert.deepEqual(errorsSpace, []);
 	} finally { await ctxSpace.close(); }
 });
@@ -1089,7 +1096,7 @@ test('用户最新需求还原：每日签到胶囊UI与排行榜前三高亮、
 	} finally { await ctxSetting.close(); }
 });
 
-test("v1.7.11 视觉细节：顶栏板块激活态纯文本高亮无黑药丸、侧栏与悬停卡 Lv 6 位于名字下方且附带尊贵流光皇冠", async () => {
+test("v1.7.11 视觉细节（v1.8.0 起按 sb.sb）：顶栏当前板块墨色胶囊、侧栏与悬停卡 Lv 6 位于名字下方", async () => {
 	// 1. 顶栏内版非黑底药丸
 	const { context: ctxNav, page: pageNav, errors: errorsNav } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
 	try {
@@ -1103,9 +1110,10 @@ test("v1.7.11 视觉细节：顶栏板块激活态纯文本高亮无黑药丸、
 			color: getComputedStyle(el).color,
 			weight: parseInt(getComputedStyle(el).fontWeight, 10)
 		}));
-		// 背景绝不能是黑色药丸（rgb(24, 24, 27)）
-		assert.equal(insideStyle.bg, "rgba(0, 0, 0, 0)");
-		assert.ok(insideStyle.weight >= 600);
+		// sb.sb .forum-link.active：墨色实底胶囊、白字、500
+		assert.equal(insideStyle.bg, "rgb(28, 28, 30)");
+		assert.equal(insideStyle.color, "rgb(255, 255, 255)");
+		assert.equal(insideStyle.weight, 500);
 
 		// 2. 侧栏个人卡：Lv 6 位于名字下方且附带尊贵标签
 		const accountCard = pageNav.locator(".nsmax-sb-account");
@@ -1177,14 +1185,9 @@ test("v1.7.12 体验重构：楼中楼平铺不挤扁、个人设置页现代双
 		await wait(pageSetting);
 		const panel = pageSetting.locator("#user-setting-panel");
 		assert.equal(await panel.isVisible(), true);
-		const panelDisplay = await panel.evaluate(el => getComputedStyle(el).display);
-		assert.equal(panelDisplay, "flex");
-		const selectorGrid = await pageSetting.locator("#user-setting-panel .selector").evaluate(el => ({
-			display: getComputedStyle(el).display,
-			cols: getComputedStyle(el).gridTemplateColumns
-		}));
-		assert.equal(selectorGrid.display, "grid");
-		assert.ok(selectorGrid.cols.includes("190px"), "设置区为 190px 双栏布局");
+		const grid = await panel.evaluate(el => ({ display: getComputedStyle(el).display, cols: getComputedStyle(el).gridTemplateColumns }));
+		assert.equal(grid.display, "grid");
+		assert.ok(grid.cols.endsWith(" 260px"), "设置区为主栏 + 右侧 260px 双栏（sb.sb 侧栏宽度）");
 		assert.deepEqual(errorsSetting, []);
 	} finally { await ctxSetting.close(); }
 });
@@ -1216,7 +1219,7 @@ test("v1.7.13 细节精修：NQ彩标前置、设置页居中去黑胶囊、帖�
 				btnRadius: btn ? getComputedStyle(btn).borderRadius : ""
 			};
 		});
-		assert.equal(metrics.panelMaxWidth, "1040px", "设置面板限制最大宽度 1040px 居中");
+		assert.equal(metrics.panelMaxWidth, "1600px", "设置页与 sb.sb 版心同宽（1600px）居中");
 		assert.ok(metrics.btnRadius !== "999px", "设置按钮去除 999px 沉重黑胶囊样式");
 		assert.deepEqual(errorsSetting, []);
 	} finally { await ctxSetting.close(); }
@@ -1262,8 +1265,8 @@ test("v1.7.14 极致精细化：统一两处 Level 6 标签且皇冠垂直居中
 				transform: pseudo.transform
 			};
 		});
-		assert.ok(crownStyle.content.includes("👑"), "皇冠 emoji 正常作为前缀渲染");
-		assert.ok(crownStyle.transform.includes("matrix"), "皇冠通过 translateY(-1.5px) 居中对齐");
+		assert.equal(crownStyle.content, "none", "v1.8.0 起按 sb.sb .post-user-level：不再加皇冠");
+		assert.equal(await accountRank.evaluate(el => getComputedStyle(el).backgroundColor), "rgb(255, 244, 196)");
 
 		// 头像悬停卡
 		const userAvatarLink = pageLv6.locator('ul.post-list .post-list-item a[href="/space/10"]').first();
@@ -1605,7 +1608,7 @@ test("v1.7.19 极致细节复刻：主帖无#0楼号、标题栏双统计、OP�
 			};
 		});
 		assert.equal(controlerStyle.display, "flex");
-		assert.equal(controlerStyle.height, "48px");
+		assert.equal(controlerStyle.height, "49.5px");
 		assert.equal(controlerStyle.borderRadius, "12px");
 		assert.notEqual(controlerStyle.backgroundColor, "rgba(0, 0, 0, 0)");
 
