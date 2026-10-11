@@ -76,6 +76,16 @@ const endMarker = "\n`;\n";
 if (!themeSource.includes(endMarker)) throw new Error("Theme end marker missing");
 themeSource = themeSource.replace("${nsmax_sb_adapter_default}\n", "");
 themeSource = themeSource.replace(endMarker, "\n${nsmax_sb_adapter_default}" + endMarker);
+// v1.8.0 设计语言层（u.sb 设计规范）：放在适配层之后，是最终外观。适配层里有带两三个 ID 的选择器（如
+// section#nsk-frame>#nsk-body.nsk-container），只叠 :root 压不过；这里给开头的 html 叠三个 :is(:root,#nsmax-u)——
+// 实际只匹配 :root，但特异度按参数里最大的 ID 计，相当于多了三个 ID。
+const design = readFileSync(new URL("theme/design.css", root), "utf8").replace(/\r\n?/g, "\n")
+  .replaceAll("html[data-nsmax-theme]", "html[data-nsmax-theme]:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u)");
+const designLine = "\tvar nsmax_design_default = " + JSON.stringify(design) + ";\n";
+themeSource = themeSource.replace(/\tvar nsmax_design_default = .*;\n/, "");
+themeSource = themeSource.replace("\tvar modern_theme_default = `", designLine + "\tvar modern_theme_default = `");
+themeSource = themeSource.replace("${nsmax_design_default}\n", "");
+themeSource = themeSource.replace(endMarker, "\n${nsmax_design_default}" + endMarker);
 // CSSOM selector optimization formerly ran during document-start. Compile it once at build time.
 const context = {};
 vm.runInNewContext(source.slice(source.indexOf("\tvar NSMAX_ACCENTS = {"), source.indexOf("\tvar modern_theme_compiled = ")) + themeSource, context);
@@ -92,7 +102,8 @@ ast.walkRules(rule => {
     if (!variables && !bindings) { rule.remove(); return; }
   }
   // Adapter rules explicitly bind live or retired native surfaces; preserve their hide/replace rules.
-  if (rule.selector.includes("html[data-nsmax-theme]:root:root:root")) return;
+  // 设计层（design.css，带 :is(:root,#nsmax-u) 加权）同样是现行规则，NodeSeek++ 消息中心等元素在这里重新定样式，不能当退役规则删掉。
+  if (rule.selector.includes("html[data-nsmax-theme]:root:root:root") || rule.selector.includes(":is(:root,#nsmax-u)")) return;
   const selectors = selectorParser().astSync(rule.selector);
   selectors.each(selector => {
     let unused = false;

@@ -1,0 +1,2751 @@
+/* ==========================================================================
+   v1.8.0 sb.sb 1:1 复刻层
+   每一条都对照 sb.sb 当前线上样式表（2026-10-10，/assets/index.d8c656aa7a.css）与实际页面量出的尺寸推导：
+   变量原值照抄（浅色 / 深色两套），组件按 sb.sb 的对应组件逐项落到 NodeSeek 的真实元素上——
+   顶栏 .top/.bar/.brand/.forum-link/.search-form、列表 .topic-toolbar/.tab/.post-list/.post-item/.post-meta/.post-forum-badge/.pagination、
+   侧栏 .sidebar-card/.user-card/.user-stats/.user-links/.btn-post/.sidebar-topic-list、帖子页 .breadcrumb/.post-topic-title/.post-entry/
+   .post-head/.post-ops/.post-content/.topic-action/.reply-head/.reply-panel/.composer-*、页脚 .footer、回到顶部 .to-top。
+   这一层放在所有旧样式之后，构建时选择器整体加权（相当于多 3 个 ID），旧规则里与 sb.sb 不一致的地方一律以这里为准。
+   不使用挂在整页容器上的 :has()；只改外观，不改页面结构。
+   ========================================================================== */
+
+/* ---------- 0. 变量：sb.sb 原值（浅色） ---------- */
+html[data-nsmax-theme],
+html[data-nsmax-theme] body {
+  color-scheme: light;
+  --bg: #f7f8fa;
+  --panel: #ffffff;
+  --panel-alt: #fafbfc;
+  --panel-hover: #f2f4f7;
+  --line: #e0e2e8;
+  --line-soft: #eef0f3;
+  --line-strong: #c7cad5;
+  --text-strong: #1c1c1e;
+  --text: #1c1c1e;
+  --text-muted: #555a6a;
+  --text-subtle: #6b6f7e;
+  --text-disabled: #8e91a0;
+  --brand: #1c1c1e;
+  --brand-hover: #000000;
+  --brand-soft: #fff4c4;
+  --brand-border: #e8c547;
+  --focus-ring: #1c1c1e;
+  --field-focus: #e0a800;
+  --field-ring: rgb(255 208 47 / 0.35);
+  --link: #1c1c1e;
+  --link-hover: #1c1c1e;
+  --link-line: #fcb900;
+  --link-soft: #ffd02f;
+  --action: #1c1c1e;
+  --action-hover: #2c2c34;
+  --action-text: #ffffff;
+  --action-border: #1c1c1e;
+  --mark: #ffd02f;
+  --mark-deep: #fcb900;
+  --mark-text: #1c1c1e;
+  --mark-soft: #fff4c4;
+  --mark-soft-text: #746019;
+  --success: #007a4e;
+  --success-soft: #e4f6ee;
+  --success-soft-text: #007a4e;
+  --danger: #cf2b2b;
+  --on-danger: #ffffff;
+  --danger-fill: #cf2b2b;
+  --on-danger-fill: #ffffff;
+  --danger-soft: #fbd4d4;
+  --danger-soft-text: #600000;
+  --danger-border: #e3c5c5;
+  --warning: #8a6500;
+  --warning-border: #f0d98a;
+  --warning-soft: #fff4c4;
+  --warning-soft-text: #746019;
+  --info: #33408f;
+  --info-soft: #eef0f8;
+  --info-soft-text: #33408f;
+  --accent-teal-soft: #c3faf5;
+  --accent-teal-text: #187574;
+  --inverse: #1c1c1e;
+  --inverse-text: #ffffff;
+  --inverse-border: #2c2c34;
+  --backdrop: rgb(5 0 56 / 0.42);
+  --selection: #ffd02f;
+  --selection-editor: #ffd02f;
+  --shadow-base: 0 1px 2px rgb(5 0 56 / 0.04);
+  --shadow-medium: 0 16px 48px -8px rgb(5 0 56 / 0.12);
+  --code-inline-bg: #fff4c4;
+  --code-inline-text: #6b5414;
+  --code-inline-border: #f0dc8c;
+  --code-keyword: #a626a4;
+  --code-string: #50a14f;
+  --code-number: #986801;
+  --code-title: #4078f2;
+  --code-name: #e45649;
+  /* 主色上的文字：浅色主色是墨色 → 白字；深色主色是黄色 → 墨字（sb.sb 没有这个变量，按它的用法补上） */
+  --on-brand: #ffffff;
+  /* 形状与尺寸：sb.sb 现在 --r-scale 为 0，所有圆角都是直角 */
+  --r-scale: 0;
+  --nav-ctl: 34px;
+  --r-xs: calc(4px * var(--r-scale));
+  --r-sm: calc(6px * var(--r-scale));
+  --r-input: calc(8px * var(--r-scale));
+  --r: calc(12px * var(--r-scale));
+  --r-pill: calc(9999px * var(--r-scale));
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --container: 1600px;
+  --sidebar-w: 260px;
+  --gap: 20px;
+  --post-image-max: 720px;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", monospace;
+  /* 列表标题字号：sb.sb 默认 15px；字号设置「大一号」（默认）与你在 sb.sb 个性设置里的 17px 一致 */
+  --sb-title: 15px;
+
+  /* 脚本自己的 --nsmax-* 变量全部指向 sb.sb 变量 */
+  --nsmax-canvas: var(--bg);
+  --nsmax-card: var(--panel);
+  --nsmax-surface: var(--panel);
+  --nsmax-popup: var(--panel);
+  --nsmax-glass: var(--panel);
+  --nsmax-fill: var(--panel-hover);
+  --nsmax-panel-alt: var(--panel-alt);
+  --nsmax-stroke: var(--line);
+  --nsmax-divider: var(--line-soft);
+  --nsmax-stroke-strong: var(--line-strong);
+  --nsmax-text: var(--text);
+  --nsmax-text-2: var(--text-muted);
+  --nsmax-muted: var(--text-subtle);
+  --nsmax-faint: var(--text-disabled);
+  --nsmax-ink: var(--action);
+  --nsmax-on-ink: var(--action-text);
+  --nsmax-accent: var(--brand);
+  --nsmax-on-accent: var(--on-brand);
+  --nsmax-brand: var(--brand);
+  --nsmax-on-brand: var(--on-brand);
+  --nsmax-link: var(--link);
+  --nsmax-link-hover: var(--link-hover);
+  --nsmax-link-soft: var(--link-soft);
+  --nsmax-brand-soft: var(--brand-soft);
+  --nsmax-pin-bg: color-mix(in srgb, var(--mark-soft) 45%, transparent);
+  --nsmax-pin-bg-hover: color-mix(in srgb, var(--mark-soft) 70%, transparent);
+  --nsmax-seg-bg: var(--panel-alt);
+  --nsmax-seg-thumb: var(--panel);
+  --nsmax-code-bg: var(--panel-alt);
+  --nsmax-bubble: var(--panel-hover);
+  --nsmax-on-bubble: var(--text);
+  --nsmax-hover: var(--panel-hover);
+  --nsmax-hover-2: var(--line-soft);
+  --nsmax-meta-link: var(--text-muted);
+  --nsmax-r-chip: var(--r-pill);
+  --nsmax-r-control: var(--r-input);
+  --nsmax-r-card: var(--r);
+  --nsmax-r-frame: var(--r);
+  --nsmax-radius: var(--r);
+  --nsmax-radius-sm: var(--r-input);
+  --nsmax-dialog-radius: var(--r);
+  --nsmax-control-radius: var(--r-input);
+  --nsmax-composer-radius: var(--r-input);
+  --nsmax-ease-out: var(--ease-out);
+  --nsmax-spring: var(--ease-out);
+  --nsmax-press: var(--ease-out);
+  --nsmax-shadow: var(--shadow-base);
+  --nsmax-shadow-pop: var(--shadow-medium);
+  --nsmax-composer-line: var(--line-strong);
+  --nsmax-composer-line-focus: var(--field-focus);
+  --nsmax-font: var(--font-sans);
+  --nsmax-mono: var(--font-mono);
+  --nsmax-wrap: var(--container);
+  --nsmax-side-w: var(--sidebar-w);
+  --nsmax-head-h: 57px;
+  --nsmax-row-x: 14px;
+  --nsmax-list-title: var(--sb-title);
+  --main-color: var(--brand) !important;
+  --primary-color: var(--brand) !important;
+  --link-color: var(--link) !important;
+  --link-hover-color: var(--link-hover) !important;
+  --bg-color: var(--panel) !important;
+  --bg-main-color: var(--bg) !important;
+  --bg-sub-color: var(--panel) !important;
+  --text-color: var(--text) !important;
+  --text-color-secondary: var(--text-subtle) !important;
+}
+html[data-nsmax-theme][data-nsmax-size="large"],
+html[data-nsmax-theme][data-nsmax-size="large"] body {
+  --sb-title: 17px;
+}
+html[data-nsmax-theme][data-nsmax-size="xlarge"],
+html[data-nsmax-theme][data-nsmax-size="xlarge"] body {
+  --sb-title: 18px;
+}
+
+/* ---------- 0. 变量：sb.sb 原值（深色） ---------- */
+html[data-nsmax-theme][data-nsmax-dark],
+html[data-nsmax-theme][data-nsmax-dark] body {
+  color-scheme: dark;
+  --bg: #0d0e14;
+  --panel: #14151c;
+  --panel-alt: #1a1b24;
+  --panel-hover: #20222c;
+  --line: #2a2c38;
+  --line-soft: #20222c;
+  --line-strong: #3a3d4c;
+  --text-strong: #f2f3f8;
+  --text: #e7e8ef;
+  --text-muted: #a8abbb;
+  --text-subtle: #8b8fa1;
+  --text-disabled: #6e7284;
+  --brand: #ffd02f;
+  --brand-hover: #ffd977;
+  --brand-soft: #2e2717;
+  --brand-border: #5c4b1a;
+  --focus-ring: #ffd02f;
+  --field-focus: #ffd02f;
+  --field-ring: rgb(255 208 47 / 0.18);
+  --link: #ffd02f;
+  --link-hover: #ffd977;
+  --link-line: #d9ae1c;
+  --link-soft: #2e2717;
+  --selection: #ffd02f;
+  --selection-editor: #5c4b1a;
+  --action: #eef0f6;
+  --action-hover: #ffffff;
+  --action-text: #14151c;
+  --action-border: #eef0f6;
+  --mark: #ffd02f;
+  --mark-deep: #fcb900;
+  --mark-text: #1c1c1e;
+  --mark-soft: #2e2717;
+  --mark-soft-text: #ffd977;
+  --success: #2fce93;
+  --success-soft: #10291f;
+  --success-soft-text: #4fdca7;
+  --danger: #ff9999;
+  --on-danger: #14151c;
+  --danger-fill: #d13b3b;
+  --on-danger-fill: #ffffff;
+  --danger-soft: #341a1a;
+  --danger-soft-text: #ffb3b3;
+  --danger-border: #5a2b2b;
+  --warning: #ffc94d;
+  --warning-border: #4a3f1e;
+  --warning-soft: #2e2717;
+  --warning-soft-text: #ffd977;
+  --info: #9aa6e8;
+  --info-soft: #20233a;
+  --info-soft-text: #b0b9ea;
+  --accent-teal-soft: #10302e;
+  --accent-teal-text: #4fd4c8;
+  --inverse: #e7e8ef;
+  --inverse-text: #0d0e14;
+  --inverse-border: #3a3d4c;
+  --backdrop: rgb(3 2 12 / 0.66);
+  --shadow-base: 0 1px 2px rgb(0 0 0 / 0.34);
+  --shadow-medium: 0 16px 48px -8px rgb(0 0 0 / 0.62);
+  --code-inline-bg: #2a2416;
+  --code-inline-text: #ffd977;
+  --code-inline-border: #4a3d18;
+  --code-keyword: #c678dd;
+  --code-string: #98c379;
+  --code-number: #d19a66;
+  --code-title: #61afef;
+  --code-name: #e06c75;
+  --on-brand: #1c1c1e;
+}
+
+/* ---------- 1. 基础（sb.sb body / a / ::selection / :focus-visible） ---------- */
+html[data-nsmax-theme] body {
+  background: var(--bg) !important;
+  background-image: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 15px !important;
+  line-height: 1.75 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+html[data-nsmax-theme] ::selection {
+  background: var(--selection);
+  color: var(--mark-text);
+}
+html[data-nsmax-theme] .CodeMirror ::selection {
+  background: var(--selection-editor);
+  color: var(--text-strong);
+}
+html[data-nsmax-theme] :focus-visible {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px !important;
+}
+html[data-nsmax-theme] :is(code, kbd, samp, pre) {
+  font-family: var(--font-mono) !important;
+}
+
+/* ---------- 2. 顶栏（sb.sb .top：面板底 + 底部细线；.bar：56px 高、1600px 宽、左右 16px、间距 14px） ---------- */
+@media (min-width: 501px) {
+  html[data-nsmax-theme] body > header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    height: var(--nsmax-head-h) !important;
+    background: var(--panel) !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html[data-nsmax-theme] #nsk-head {
+    gap: 14px !important;
+    max-width: var(--container) !important;
+    height: 56px !important;
+    padding: 0 16px !important;
+  }
+  /* 站标：sb.sb .brand——黄色块、墨色 16px/600 字，内边距 3px 10px，悬停深一级黄 */
+  html[data-nsmax-theme] #nsk-head .site-title {
+    margin: 0 !important;
+  }
+  html[data-nsmax-theme] #nsk-head .site-title > a {
+    display: inline-flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    padding: 3px 10px !important;
+    border-radius: var(--r-sm) !important;
+    background: var(--mark) !important;
+    color: var(--mark-text) !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+    transition: none !important;
+  }
+  html[data-nsmax-theme] #nsk-head .site-title > a:hover {
+    background: var(--mark-deep) !important;
+  }
+  html[data-nsmax-theme] #nsk-head .site-title :is(img, .beta-icon) {
+    display: none !important;
+  }
+  html[data-nsmax-theme] #nsk-head .site-title .title-text {
+    color: var(--mark-text) !important;
+    font-family: var(--font-sans) !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em !important;
+    line-height: 28px !important;
+  }
+  /* 版块导航：sb.sb .forum-nav / .forum-link——14px 弱化字，内边距 5px 9px，悬停浅底，当前版块是墨色（深色下是浅色）实底 */
+  html[data-nsmax-theme] #nsk-head ul.nav-menu {
+    gap: 2px !important;
+    margin: 0 0 0 10px !important;
+  }
+  html[data-nsmax-theme] #nsk-head :is(ul.nav-menu > li > a, a[data-nsmax-header-cat], [data-nsmax-header-cat] > a) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    min-width: 3.9em !important;
+    height: auto !important;
+    padding: 5px 9px !important;
+    border: 0 !important;
+    border-radius: var(--r-pill) !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: var(--text-muted) !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 24.5px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    transition: none !important;
+  }
+  html[data-nsmax-theme] #nsk-head :is(ul.nav-menu > li > a, a[data-nsmax-header-cat], [data-nsmax-header-cat] > a):hover {
+    background: var(--panel-hover) !important;
+    color: var(--text) !important;
+  }
+  html[data-nsmax-theme] #nsk-head :is(a[data-nsmax-header-cat-on], ul.nav-menu > li > a[aria-current="page"], ul.nav-menu > li > a.router-link-exact-active),
+  html[data-nsmax-theme] #nsk-head :is(a[data-nsmax-header-cat-on], ul.nav-menu > li > a[aria-current="page"], ul.nav-menu > li > a.router-link-exact-active):hover {
+    background: var(--action) !important;
+    color: var(--action-text) !important;
+    font-weight: 500 !important;
+  }
+  html[data-nsmax-theme] #nsk-head :is(ul.nav-menu > li > a, [data-nsmax-header-cat] > a)::after,
+  html[data-nsmax-theme] #nsk-head :is(ul.nav-menu > li > a, [data-nsmax-header-cat] > a)::before {
+    content: none !important;
+    display: none !important;
+  }
+  /* 精华入口：和其他版块一样的链接，前面一个 sb.sb 置顶 / 精华同款的黄色小标「精」 */
+  html[data-nsmax-theme] #nsk-head a.nsmax-essence-tab {
+    gap: 4px !important;
+  }
+  html[data-nsmax-theme] .nsmax-essence-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 0 5px !important;
+    border-radius: var(--r-pill) !important;
+    background: var(--mark) !important;
+    box-shadow: none !important;
+    color: var(--mark-text) !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    line-height: 1.6 !important;
+  }
+  /* 搜索框：sb.sb .search-form——34px 高，最宽 250px，1px 细线框、浅底，放大镜在右；聚焦时边框换成品牌边框色、底色换面板色 */
+  html[data-nsmax-theme] #nsk-head form.search-box {
+    position: relative !important;
+    display: block !important;
+    flex: 1 1 150px !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 150px !important;
+    max-width: 250px !important;
+    height: var(--nav-ctl) !important;
+    margin: 0 0 0 auto !important;
+    padding: 0 !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r-input) !important;
+    background: var(--panel-alt) !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  html[data-nsmax-theme] #nsk-head form.search-box:focus-within {
+    border-color: var(--brand-border) !important;
+    background: var(--panel) !important;
+  }
+  html[data-nsmax-theme] #nsk-head form.search-box #search-site2 {
+    box-sizing: border-box !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 34px 0 10px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--text) !important;
+    font: inherit !important;
+    font-size: 14px !important;
+    outline: none !important;
+  }
+  html[data-nsmax-theme] #nsk-head form.search-box #search-site2::placeholder {
+    color: var(--text-subtle) !important;
+    opacity: 1 !important;
+  }
+  html[data-nsmax-theme] #nsk-head form.search-box :is(.search-icon:not([data-nsmax-icon-orig]), .nsmax-icon[data-nsmax-icon-for="search"]) {
+    right: 9px !important;
+    width: 15px !important;
+    height: 15px !important;
+    color: var(--text-muted) !important;
+  }
+  html[data-nsmax-theme] #nsk-head form.search-box .search-hint {
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r) !important;
+    background: var(--panel) !important;
+    box-shadow: var(--shadow-medium) !important;
+  }
+  html[data-nsmax-theme] #nsk-head form.search-box .search-hint a {
+    border-radius: var(--r-sm) !important;
+    color: var(--text) !important;
+  }
+  html[data-nsmax-theme] #nsk-head form.search-box .search-hint a:is(:hover, .selected-search-hint) {
+    background: var(--panel-hover) !important;
+    color: var(--text) !important;
+  }
+  /* 右侧图标按钮（关键词屏蔽、深浅色、脚本设置）：sb.sb .theme-toggle——34px 方钮，1px 细线框，弱化色；悬停边框与图标换品牌色 */
+  html[data-nsmax-theme] #nsk-head :is(.nsmax-header-action, .color-theme-switcher) {
+    box-sizing: border-box !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: none !important;
+    width: var(--nav-ctl) !important;
+    min-width: var(--nav-ctl) !important;
+    height: var(--nav-ctl) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r-pill) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--text-muted) !important;
+    transition: none !important;
+  }
+  html[data-nsmax-theme] #nsk-head :is(.nsmax-header-action, .color-theme-switcher):hover {
+    border-color: var(--brand-border) !important;
+    background: transparent !important;
+    color: var(--brand) !important;
+  }
+  html[data-nsmax-theme] #nsk-head :is(.nsmax-header-action, .color-theme-switcher) svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+  /* 顶栏是 sticky（占文档流），内容区不再另加上边距 */
+  html[data-nsmax-theme] section#nsk-frame {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+}
+
+/* ---------- 3. 版心（sb.sb .wrap：最宽 1600px，内边距 20px 16px 32px；.forum-layout：主栏 + 260px 侧栏，间距 20px） ---------- */
+@media (min-width: 801px) {
+  html[data-nsmax-theme] #nsk-body,
+  html[data-nsmax-theme] section#nsk-frame > #nsk-body.nsk-container {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) var(--sidebar-w) !important;
+    align-items: start !important;
+    gap: var(--gap) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: var(--container) !important;
+    margin: 0 auto !important;
+    padding: 20px 16px 32px !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--gap) !important;
+    width: var(--sidebar-w) !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container > * {
+    margin: 0 !important;
+  }
+}
+/* 主栏本身不是卡片（sb.sb .main-panel 透明）：工具条、列表、页码各自成块 */
+html[data-nsmax-theme] #nsk-body > #nsk-body-left {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* ---------- 4. 列表工具条（sb.sb .topic-toolbar + .tab-bar/.tab：12px 4px、14px，当前项 500 字重 + 底部 2px 墨色线） ---------- */
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: 0 !important;
+  border-radius: var(--r) var(--r) 0 0 !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter {
+  display: flex !important;
+  align-items: center !important;
+  align-self: auto !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a {
+  position: relative !important;
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 12px 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 24.5px !important;
+  cursor: pointer;
+  transition: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a + a {
+  margin-left: 10px !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a:hover {
+  color: var(--text) !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a.selected {
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a::before {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a::after {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a.selected::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  top: auto !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  width: auto !important;
+  height: 2px !important;
+  border-radius: calc(1px * var(--r-scale)) !important;
+  background: var(--action) !important;
+  transform: none !important;
+}
+/* 工具条右侧（sb.sb .topic-actions）：页码、NQ 入口、发帖按钮靠右排 */
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > :not(.sorter) {
+  margin-left: auto !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > :not(.sorter) ~ :not(.sorter) {
+  margin-left: 0 !important;
+}
+
+/* ---------- 5. 帖子列表（sb.sb .post-list / .post-item：11px 14px，24px 头像，标题 15px/500，元信息 12.5px） ---------- */
+html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  list-style: none !important;
+  overflow: visible !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler ~ ul.post-list:not(.topic-carousel-panel),
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler ~ .topic-carousel-wrapper {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item {
+  position: relative !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  /* 右侧给版块标签留位：标签最宽约 42px + 与标题的间距 10px（sb.sb 里标签是行内最后一个弹性项，标题自然让开） */
+  padding: 11px 66px 11px 14px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item:first-child {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:hover {
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item::before,
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item::after {
+  content: none !important;
+  display: none !important;
+}
+/* 头像：sb.sb .post-avatar 24px、上移 2px；图片圆角 r-sm（现为直角）、面板次底色 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item > a:first-child {
+  flex: none !important;
+  display: block !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin: 2px 0 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item > a:first-child img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background-color: var(--panel-alt) !important;
+  box-shadow: none !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item > .post-list-content {
+  flex: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 标题：sb.sb .post-title——正文色、500 字重、行高 1.5，悬停 1px 下划线（偏移 3px） */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--sb-title) !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0 !important;
+  word-break: break-word !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a {
+  color: var(--text) !important;
+  font: inherit !important;
+  text-decoration: none !important;
+  vertical-align: middle;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item:hover .post-title > a {
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a:hover {
+  color: var(--text) !important;
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 3px !important;
+  text-decoration-color: currentColor !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a:is(:visited, .nspp-read) {
+  color: var(--text-subtle) !important;
+}
+/* 置顶：sb.sb .topic-pinned 行（黄色浅底 45%）+ .topic-badge.pinned 黄色小标 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item.topic-pinned,
+html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item.topic-pinned:hover {
+  background: color-mix(in srgb, var(--mark-soft) 45%, transparent) !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span:has(> svg.pined) {
+  display: inline-block !important;
+  order: -1 !important;
+  height: auto !important;
+  margin: 0 6px 0 0 !important;
+  padding: 1px 8px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--mark) !important;
+  box-shadow: none !important;
+  color: var(--mark-text) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+  vertical-align: middle !important;
+}
+/* 元信息：sb.sb .post-meta——12.5px 次要色、行高 1.6、间距 10px；链接是弱化色；图标 13px、右边距 4px */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0 10px !important;
+  margin: 3px 0 0 !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .info-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .info-item > :is(svg, .nsmax-icon) {
+  flex: none !important;
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 4px 0 0 !important;
+  color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .info-item a,
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > a.info-item:not(.post-category) {
+  max-width: 14em !important;
+  overflow: hidden !important;
+  color: var(--text-muted) !important;
+  text-decoration: none !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > a.info-item.info-last-comment-time,
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > a.info-item.info-last-comment-time time {
+  color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .info-item a:hover,
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > a.info-item:not(.post-category):hover {
+  color: var(--link-hover) !important;
+}
+/* 版块标签：sb.sb .post-forum-badge——行右侧垂直居中，2px 8px、1px 细线框、次底色、12px 弱化字 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .post-category {
+  position: absolute !important;
+  top: 50% !important;
+  right: 14px !important;
+  bottom: auto !important;
+  left: auto !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 2px 8px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+  white-space: nowrap !important;
+  transform: translateY(-50%) !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .post-category:hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+
+/* ---------- 6. 页码（sb.sb .pagination：36px 宽起、6px 12px、1px 细线框、13px 弱化字、间距 8px；当前页墨色实底） ---------- */
+html[data-nsmax-theme] .nsk-pager {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .nsk-pager > div {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme] .nsk-pager :is(.pager-pos, .pager-prev, .pager-next, .nsmax-pager-ellipsis) {
+  display: block !important;
+  box-sizing: border-box !important;
+  min-width: 36px !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 6px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 22.75px !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  transition: none !important;
+}
+html[data-nsmax-theme] .nsk-pager a:is(.pager-pos, .pager-prev, .pager-next):hover {
+  border-color: var(--brand-border) !important;
+  background: var(--panel) !important;
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] .nsk-pager .pager-pos:is(.pager-cur, [data-nsmax-pg-cur]),
+html[data-nsmax-theme] .nsk-pager .pager-pos:is(.pager-cur, [data-nsmax-pg-cur]):hover {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsk-pager .nsmax-pager-ellipsis {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: var(--text-disabled) !important;
+}
+html[data-nsmax-theme] .nsk-pager :is(.pager-prev, .pager-next)[aria-disabled="true"] {
+  display: none !important;
+}
+html[data-nsmax-theme] .nsk-pager :is(.pager-prev, .pager-next)::before,
+html[data-nsmax-theme] .nsk-pager :is(.pager-prev, .pager-next)::after {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] .nsk-pager :is(.pager-prev, .pager-next) > :is(.triangle-left, .triangle-right) {
+  display: none !important;
+}
+/* 列表页：工具条里的页码收起（sb.sb 只在列表下方放页码）；下方页码居中，距列表 20px */
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsk-pager.pager-top {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > div:has(> .nsk-pager.pager-bottom) {
+  display: flex !important;
+  justify-content: center !important;
+  margin: var(--gap) 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* ---------- 7. 侧栏卡片（sb.sb .sidebar-card：面板底、1px 细线框；卡片间距 20px） ---------- */
+html[data-nsmax-theme] #nsk-right-panel-container > :is(.nsk-panel, .nsmax-hot-panel, .nsmax-recent-panel, .user-card, [data-nsmax-usercard]) {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+/* 卡片标题：sb.sb .quick-title / .stats-title——12.5px/500 弱化字，下边距 9px */
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel h4,
+html[data-nsmax-theme] #nsk-right-panel-container :is(.nsmax-hot-title, .nsmax-recent-title) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: auto !important;
+  margin: 0 0 9px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel h4 > :is(svg, .nsmax-icon) {
+  display: none !important;
+}
+
+/* 用户卡：sb.sb .user-card——14px 内边距；头像 40px、名字 15px/600；统计 4 列（标签 12px、数值等宽 15px/600）；
+   链接两列 13px 弱化字；发帖按钮墨色实底（深色下浅色实底）、7px 0 */
+html[data-nsmax-theme] #nsk-right-panel-container .user-card.nsmax-sb-account-host {
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account {
+  box-sizing: border-box !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-head > a {
+  flex: none !important;
+  display: block !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  line-height: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-head > a img {
+  display: block !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-info {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0 !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-name {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  overflow-wrap: anywhere !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-name:hover {
+  color: var(--link-hover) !important;
+}
+/* 等级：sb.sb .post-user-level——品牌浅底、品牌色字、品牌边框，11px */
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-rank {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  height: auto !important;
+  margin: 3px 0 0 !important;
+  padding: 1px 8px !important;
+  border: 1px solid var(--brand-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--brand-soft) !important;
+  box-shadow: none !important;
+  color: var(--brand) !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-numbers {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px 6px !important;
+  margin: 12px 0 0 !important;
+  padding: 12px 0 2px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-stat {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  text-align: left !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-stat dt {
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-stat dd {
+  margin: 0 !important;
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-stat:hover dd {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1px !important;
+  margin: 12px 0 0 !important;
+  padding: 12px 0 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu > a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.75 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu > a:hover {
+  background: transparent !important;
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu > a :is(svg, .nsmax-icon) {
+  flex: none !important;
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+  color: currentColor !important;
+}
+/* 未读数：sb.sb .notify-badge——红底、等宽 10px、16px 高 */
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-unread {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  margin: 0 0 0 6px !important;
+  padding: 0 4px !important;
+  border: 0 !important;
+  border-radius: calc(999px * var(--r-scale)) !important;
+  background: var(--danger) !important;
+  color: var(--on-danger) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose {
+  position: static !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 14px 0 0 !important;
+  padding: 7px 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose::before,
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose::after {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose:hover {
+  background: var(--action-hover) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose .nsmax-compose-text {
+  color: inherit !important;
+  font: inherit !important;
+}
+
+/* 未登录卡：sb.sb 访客卡 .side-auth——两个按钮各占一半，「登录」实底、「注册」细线框 */
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin {
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin:has(.btn) {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 6px 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:hover {
+  border-color: var(--brand-border) !important;
+  background: transparent !important;
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:first-child,
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:first-child:hover {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+
+/* 热榜 / 最近浏览：sb.sb「今日热门」.sidebar-topic-list——每行 6px 0，序号等宽 12px（前三名品牌色 600），
+   标题 13px 单行省略，次数等宽 11.5px 次要色 */
+html[data-nsmax-theme] #nsk-right-panel-container > .nsmax-hot-panel {
+  padding: 14px !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 9px !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-head .nsmax-hot-title {
+  margin: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs {
+  display: flex !important;
+  gap: 10px !important;
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs::before,
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs::after {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs button {
+  position: relative !important;
+  flex: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 4px 2px 6px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs button:hover {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs button[aria-selected="true"] {
+  background: transparent !important;
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs button[aria-selected="true"]::after {
+  content: "" !important;
+  position: absolute !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  height: 2px !important;
+  background: var(--action) !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list > * {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list a {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 6px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list a > * {
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-rank {
+  flex: none !important;
+  width: 1.4em !important;
+  min-width: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  text-align: right !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list > :nth-child(-n + 3) .nsmax-hot-rank {
+  color: var(--brand) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-text {
+  flex: auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel a:hover .nsmax-hot-text {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-count {
+  flex: none !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11.5px !important;
+}
+
+/* ---------- 8. 帖子页（sb.sb：.breadcrumb + .post-topic-title + .post-entry 卡片；回复区 .reply-head + 列表 + 页码 + .reply-panel） ---------- */
+html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper > .nsk-post {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+/* 面包屑：9px 18px、13px 次要色、链接弱化色；卡片顶部 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .nsmax-crumb {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin: 0 !important;
+  padding: 9px 18px !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: 0 !important;
+  border-radius: var(--r) var(--r) 0 0 !important;
+  background: var(--panel) !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .nsmax-crumb a {
+  color: var(--text-muted) !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .nsmax-crumb a:hover {
+  color: var(--text) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+/* 标题行：14px 18px，上方 line-soft 细线；标题 21px/600、字距 -.01em、行高 1.45；统计等宽 12px 次要色 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin: 0 !important;
+  padding: 14px 18px !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: 0 !important;
+  border-radius: 0 !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .nsmax-crumb + .post-title {
+  border-top-color: var(--line-soft) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 21px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.45 !important;
+  word-break: break-word !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 a {
+  color: inherit !important;
+  font: inherit !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 a:hover {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title > .nsmax-post-stats {
+  display: flex !important;
+  flex: none !important;
+  gap: 12px !important;
+  margin: 4px 0 0 !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title > .nsmax-post-stats > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title > .nsmax-post-stats svg {
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+}
+/* 楼层：sb.sb .post-entry——32px 头像 + 内容两列（间距 4px 11px），15px 18px；主帖与回复同一套 */
+/* 主帖与回复不写进同一个 :is()：:is() 取参数里最高的特异度，会压过后面单独给主帖写的规则 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item,
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 32px minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 4px 11px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 15px 18px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+/* 主帖：sb.sb .topic-opening——接在标题行下面的一块（上方 line-soft 细线），下方圆角 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item,
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item:hover {
+  border: 1px solid var(--line) !important;
+  border-top-color: var(--line-soft) !important;
+  border-radius: 0 0 var(--r) var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item:first-child {
+  border-top-color: var(--line) !important;
+  border-radius: var(--r) !important;
+}
+/* 回复：列表里的一行，上方 line-soft 细线 */
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item,
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:hover {
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info {
+  display: contents !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info > .avatar-wrapper {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  position: static !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info > .avatar-wrapper > a {
+  display: block !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  line-height: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info > .avatar-wrapper img {
+  display: block !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  object-fit: cover !important;
+}
+/* 楼层头部一行：sb.sb .post-head——名字 14px/500，徽章与时间排一行（间距 7px），时间 12.5px 次要色 */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info > :not(.avatar-wrapper, .floor-link-wrapper) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 2px 7px !important;
+  min-width: 0 !important;
+  min-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .author-info {
+  display: contents !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .author-info > a.author-name {
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: max(14px, calc(var(--sb-title) - 1px)) !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+  overflow-wrap: anywhere !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .author-info > a.author-name:hover {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .content-info {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .content-info > * {
+  margin: 0 !important;
+  color: inherit !important;
+  font-size: inherit !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .content-info a {
+  color: var(--text-muted) !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .content-info a:hover {
+  color: var(--link-hover) !important;
+}
+/* 身份标签：sb.sb .post-user-group——楼主黄色（#f5c518 底、#1a1a1a 字），管理员红色（#e5484d 底、白字），11px、1px 8px */
+html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 1px 8px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--accent-teal-soft) !important;
+  box-shadow: none !important;
+  color: var(--accent-teal-text) !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag.is-poster {
+  background: #f5c518 !important;
+  box-shadow: none !important;
+  color: #1a1a1a !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag.role-admin {
+  background: #e5484d !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}
+/* 楼号与楼层操作：sb.sb .post-ops（靠右，间距 8px）+ .icon-action（12px 次要色，悬停品牌色）+ .post-reply-no（等宽 12px） */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsk-content-meta-info > .floor-link-wrapper {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  align-self: start !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .floor-link {
+  position: static !important;
+  top: auto !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .floor-link:hover {
+  color: var(--link-hover) !important;
+}
+/* 热评：sb.sb 没有对应元素，用它的 .post-user-group 小标签样式（红底白字） */
+html[data-nsmax-theme] #nsk-body-left .content-item .hot-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 1px 8px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: #e5484d !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  line-height: 1.6 !important;
+}
+/* 楼层内容与操作行占第二列（与名字左对齐） */
+html[data-nsmax-theme] #nsk-body-left .content-item > :not(.nsk-content-meta-info) {
+  grid-column: 2 !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .topic-warning:empty {
+  display: none !important;
+}
+
+/* 正文：sb.sb .post-content——15px、行高 1.8、正文色 */
+html[data-nsmax-theme] #nsk-body-left .content-item > article.post-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content *:not(code, pre, kbd, samp, svg, svg *) {
+  font-family: inherit !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content > :first-child {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content > :last-child {
+  margin-bottom: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content p {
+  margin: 0 0 0.8em !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.3em 0 0.5em !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text) !important;
+  font-size: 1.08em !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content :is(ul, ol) {
+  margin: 0.6em 0 !important;
+  padding-left: 1.4em !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content ul {
+  list-style: square !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content ol {
+  list-style: decimal !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content li {
+  margin: 0.25em 0 !important;
+  list-style: inherit !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content blockquote {
+  margin: 0.7em 0 !important;
+  padding: 2px 0 2px 12px !important;
+  border: 0 !important;
+  border-left: 3px solid var(--line) !important;
+  border-radius: 0 !important;
+  background: none !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content img:not(.sticker, .smoji, [class*=emoji]) {
+  max-width: 100% !important;
+  border-radius: var(--r-input) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content hr {
+  height: 0 !important;
+  margin: 1.2em 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: none !important;
+}
+/* 正文链接：sb.sb——链接色 + 2px 黄色下划线（偏移 3px）；悬停去掉下划线、出现链接浅底 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:not(:has(img)) {
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--link) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--link-line) !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+  text-decoration-skip-ink: none !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:not(:has(img)):hover {
+  border-radius: var(--r-xs) !important;
+  background: var(--link-soft) !important;
+  box-shadow: 0 0 0 2px var(--link-soft) !important;
+  color: var(--link-hover) !important;
+  text-decoration-color: transparent !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content a:has(img) {
+  color: var(--text) !important;
+  text-decoration: none !important;
+}
+/* 行内代码：sb.sb——1px 5px、代码浅黄底 + 黄边框、深黄字 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :not(pre) > code {
+  margin: 0 !important;
+  padding: 1px 5px !important;
+  border: 1px solid var(--code-inline-border) !important;
+  border-radius: var(--r-xs) !important;
+  background: var(--code-inline-bg) !important;
+  color: var(--code-inline-text) !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+}
+/* 代码块：sb.sb .code-block——次底色、1px 细线框、12px 14px；复制按钮在右上角，悬停代码块时出现 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) pre {
+  position: relative !important;
+  margin: 0.8em 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  line-height: 1.6 !important;
+  overflow-x: auto !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) pre::before,
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) pre::after {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) pre code {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: inherit !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-code {
+  position: relative !important;
+  margin: 0.8em 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-code > pre {
+  margin: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-code > [data-nspp-copy] {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 3px 9px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  cursor: pointer;
+  opacity: 0 !important;
+  transition: opacity 0.12s ease !important;
+}
+html[data-nsmax-theme] .nsmax-code:hover > [data-nspp-copy],
+html[data-nsmax-theme] .nsmax-code > [data-nspp-copy]:focus-visible {
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] .nsmax-code > [data-nspp-copy]:hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-code > [data-nspp-copy] svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+@media (hover: none) {
+  html[data-nsmax-theme] .nsmax-code > [data-nspp-copy] {
+    opacity: 0.75 !important;
+  }
+}
+html[data-nsmax-theme] :is(.hljs-comment, .hljs-quote) { color: var(--text-subtle) !important; font-style: italic; }
+html[data-nsmax-theme] :is(.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag, .hljs-name, .hljs-section, .hljs-type) { color: var(--code-keyword) !important; }
+html[data-nsmax-theme] :is(.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute) { color: var(--code-string) !important; }
+html[data-nsmax-theme] :is(.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-link, .hljs-selector-attr, .hljs-selector-pseudo) { color: var(--code-number) !important; }
+html[data-nsmax-theme] :is(.hljs-title, .hljs-built_in) { color: var(--code-title) !important; }
+/* 表格：sb.sb——整张 1px 细线框，单元格 8px 12px，表头次底色 500，偶数行次底色，悬停行带 12% 品牌色 */
+html[data-nsmax-theme] #nsk-body-left article.post-content table {
+  width: 100% !important;
+  margin: 0.8em 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content :is(th, td) {
+  padding: 8px 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-right: 1px solid var(--line) !important;
+  background: transparent;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content :is(th, td):last-child {
+  border-right: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content th {
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content tbody tr {
+  background: transparent !important;
+  transition: background 0.15s ease !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content tbody tr:nth-child(even) {
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content tbody tr:hover {
+  background: color-mix(in srgb, var(--brand) 12%, var(--panel)) !important;
+}
+/* 签名：sb.sb 没有签名，按它的次要信息样式处理：正文下方一道 line-soft 细线，12.5px 次要色 */
+html[data-nsmax-theme] #nsk-body-left .content-item > .signature {
+  margin: 10px 0 0 !important;
+  padding: 8px 0 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: none !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .signature a {
+  color: var(--text-muted) !important;
+}
+
+/* 主帖操作（点赞 / 加鸡腿 / 反对 / 收藏）：sb.sb .topic-action——72px 宽、8px 4px、图标 17px 在上、名称 12.5px、间距 10px */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  margin: 12px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item {
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: auto auto !important;
+  grid-template-areas: "icon icon" "label count" !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-items: center !important;
+  gap: 5px 3px !important;
+  width: 72px !important;
+  min-width: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px 4px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: calc(8px * var(--r-scale)) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1 !important;
+  cursor: pointer;
+  transform: none !important;
+  transition: border-color 0.12s ease, background-color 0.12s ease, color 0.12s ease !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item:hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item > :is(svg, .nsmax-icon):not([data-nsmax-icon-orig]),
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item::before {
+  grid-area: icon !important;
+  justify-self: center !important;
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item[title]::after {
+  content: attr(title) !important;
+  grid-area: label !important;
+  display: block !important;
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: inherit !important;
+  font-size: 12.5px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item > span {
+  grid-area: count !important;
+  margin: 0 !important;
+  color: inherit !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+/* 回复楼层的操作：sb.sb .icon-action——12px 次要色文字按钮，悬停品牌色 */
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-menu {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-menu > .menu-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 1.75 !important;
+  cursor: pointer;
+  transform: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-menu > .menu-item:hover {
+  background: transparent !important;
+  color: var(--brand) !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-menu > .menu-item > :is(svg, .nsmax-icon) {
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-menu > .menu-item > span {
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+}
+
+/* 回复区：sb.sb .topic-replies（上方 20px）+ .reply-head（11px 16px，标题 14px/500 弱化字）+ 列表 */
+html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper > .comment-container {
+  margin: var(--gap) 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > :is(div:has(> .nsk-pager), .nsmax-reply-head):first-child {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 11px 16px !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: 0 !important;
+  border-radius: var(--r) var(--r) 0 0 !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-reply-title {
+  margin: 0 auto 0 0 !important;
+  padding: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > :first-child .nsk-pager :is(.pager-pos, .pager-prev, .pager-next, .nsmax-pager-ellipsis) {
+  min-width: 30px !important;
+  padding: 2px 9px !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > :first-child .nsk-pager > div {
+  gap: 6px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-top-color: var(--line-soft) !important;
+  border-radius: 0 0 var(--r) var(--r) !important;
+  background: var(--panel) !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments:first-child {
+  border-top-color: var(--line) !important;
+  border-radius: var(--r) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments::before {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments > li.content-item:first-child {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > div:has(> .post-bottom-pager) {
+  display: flex !important;
+  justify-content: center !important;
+  margin: var(--gap) 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:is(:target, :has(:target)) {
+  box-shadow: inset 2px 0 0 var(--brand) !important;
+}
+
+/* 回复框：sb.sb .reply-panel——上方 20px，面板底、1px 细线框；工具按钮是 .composer-*（4px 12px、细线框、12.5px 弱化字）；
+   输入框 1px 深一级细线、聚焦时品牌黄边框 + 3px 黄色光圈；提交按钮是墨色（深色下浅色）实底 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > :is(#editor, .md-editor),
+html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > #editor > .md-editor {
+  margin-top: var(--gap) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > #editor > .md-editor {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme] .md-editor {
+  box-sizing: border-box !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .md-editor :is(textarea, .CodeMirror) {
+  border-color: var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .md-editor textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] .md-editor :is(.mde-toolbar, .nsmax-custom-mde-toolbar) :is(button, .toolbar-item, .nsmax-mde-btn) {
+  border-radius: var(--r-pill) !important;
+}
+html[data-nsmax-theme] .md-editor :is(button.submit, .submit.btn) {
+  padding: 7px 16px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .md-editor :is(button.submit, .submit.btn):hover {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+}
+
+/* ---------- 9. 全站按钮与输入框（sb.sb button/.btn 与 input/select/textarea） ---------- */
+html[data-nsmax-theme] #nsk-frame :is(.btn, .pure-button):not(.nsmax-header-action, [data-nsmax-cta], .small-margin .btn, .nsmax-account-compose, .md-editor .submit) {
+  padding: 7px 16px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] #nsk-frame :is(.btn, .pure-button):not(.nsmax-header-action, [data-nsmax-cta], .small-margin .btn, .nsmax-account-compose, .md-editor .submit):hover {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] #nsk-frame :is(input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="number"], input[type="search"], input:not([type]), select, textarea):not(.md-editor *, [class*="nspp-"], [class*="nspp-"] *, #search-site2) {
+  padding: 7px 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background-color: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+}
+html[data-nsmax-theme] #nsk-frame :is(input, select, textarea):not(.md-editor *, [class*="nspp-"], [class*="nspp-"] *, #search-site2):focus {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
+}
+
+/* ---------- 10. 页脚（sb.sb .footer：面板底、上方细线、13px 次要色；链接一行排开，版权靠右） ---------- */
+html[data-nsmax-theme] body > footer {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] body > footer .contain {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px 20px !important;
+  box-sizing: border-box !important;
+  max-width: var(--container) !important;
+  margin: 0 auto !important;
+  padding: 16px !important;
+}
+html[data-nsmax-theme] body > footer .contain > .col,
+html[data-nsmax-theme] body > footer .contain > .col > ul {
+  display: contents !important;
+}
+html[data-nsmax-theme] body > footer .group-head-link {
+  display: none !important;
+}
+html[data-nsmax-theme] body > footer .contain li {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] body > footer :is(a, li) {
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+  line-height: 1.75 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] body > footer a:hover,
+html[data-nsmax-theme] body > footer a:hover li {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] body > footer img {
+  width: 16px !important;
+  height: 16px !important;
+  vertical-align: -3px !important;
+}
+html[data-nsmax-theme] body > footer .foot {
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* ---------- 11. 回到顶部 / 底部（sb.sb .to-top：38px 方钮、细线框、面板底、柔和投影；右下角 24px） ---------- */
+html[data-nsmax-theme] #fast-nav-button-group .nav-item-btn {
+  box-sizing: border-box !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] #fast-nav-button-group .nav-item-btn:hover {
+  border-color: var(--line-strong) !important;
+  color: var(--text-strong) !important;
+}
+
+/* ---------- 12. 浮层（弹出卡片、下拉菜单、预览）：sb.sb .user-card-pop / .nav-user-menu——细线框、面板底、shadow-medium ---------- */
+html[data-nsmax-theme] :is(.nspp-post-preview, .nspp-user-hover, .nsmax-person-pop, .nsmax-pop, .search-overlay .glass-card) {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* ---------- 13. 列表里的小部件 ---------- */
+/* NQ 入口：sb.sb 工具条右侧的小按钮（.composer-toggle 同款：4px 12px、细线框、12.5px 弱化字） */
+html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry:hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry :is(svg, img) {
+  width: 14px !important;
+  height: 14px !important;
+}
+/* 抽奖等标题前的标签：sb.sb .topic-badge（1px 8px、11px/500、行高 1.6、右边距 6px）；抽奖用 .lottery-badge 的 #e0533b */
+html[data-nsmax-theme] .nsmax-prize-badge {
+  display: inline-block !important;
+  height: auto !important;
+  margin: 0 6px 0 0 !important;
+  padding: 1px 8px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: #e0533b !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+  vertical-align: middle !important;
+}
+
+/* ---------- 14. 回复楼层右侧操作（sb.sb .post-ops：靠右、间距 8px；.icon-action 12px 次要色、悬停品牌色；.post-reply-no 等宽 12px） ---------- */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  align-self: start !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 1.75 !important;
+  cursor: pointer;
+  transform: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:hover {
+  background: transparent !important;
+  color: var(--brand) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item > :is(svg, .nsmax-icon) {
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item > span {
+  color: inherit !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item > span:empty {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .floor-link-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 自动翻页「加载下一页 / 已加载全部」：列表下方一行居中的弱化文字 */
+html[data-nsmax-theme] #nsk-body-left .comment-container > button.nspp-action,
+html[data-nsmax-theme] #nsk-body-left > button.nspp-action {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 10px 0 0 !important;
+  padding: 6px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > button.nspp-action:hover,
+html[data-nsmax-theme] #nsk-body-left > button.nspp-action:hover {
+  background: transparent !important;
+  color: var(--link-hover) !important;
+}
+
+/* ---------- 15. 回复框（sb.sb .reply-panel）：标题栏 11px 16px + line-soft 细线；内容区 14px 16px 16px；
+   .composer-bar 按钮 4px 12px、细线框、12.5px/500 弱化字；输入框 7px 10px、深一级细线、最少 150px 高；
+   提交是墨色（深色下浅色）实底 7px 16px ---------- */
+html[data-nsmax-theme] .md-editor {
+  overflow: visible !important;
+}
+html[data-nsmax-theme] .md-editor > #editor-body {
+  padding: 0 16px 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 -16px 14px !important;
+  padding: 11px 16px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-heading {
+  margin: 0 auto 0 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+/* 内容 / 预览切换：sb.sb .tree-toggle 同款（12px/500、4px 11px、细线框；当前项实底） */
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 4px 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > button:hover {
+  border-color: var(--line-strong) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > button[aria-pressed="true"] {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > button :is(svg, .nsmax-icon) {
+  display: none !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > button .nsmax-action-label {
+  border-radius: 0 !important;
+  background: none !important;
+  color: inherit !important;
+}
+/* 工具按钮：sb.sb .composer-toggle / .composer-attach / .composer-smoji */
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button,
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn,
+html[data-nsmax-theme] .md-editor .nspp-upload-choose {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+  cursor: pointer;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button:hover,
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn:hover,
+html[data-nsmax-theme] .md-editor .nspp-upload-choose:hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button[aria-pressed="true"] {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button :is(svg, .nsmax-icon) {
+  display: none !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button .nsmax-action-label {
+  border-radius: 0 !important;
+  background: none !important;
+  color: inherit !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn {
+  min-width: 30px !important;
+  justify-content: center !important;
+  padding: 4px 8px !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-sep {
+  width: 1px !important;
+  height: 16px !important;
+  margin: 0 2px !important;
+  background: var(--line) !important;
+}
+/* 输入区：sb.sb textarea——深一级细线、面板底、7px 10px、14px、最少 150px；聚焦时品牌黄边框 + 3px 光圈 */
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface {
+  position: relative !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea,
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane],
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface .CodeMirror {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 150px !important;
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  outline: 0 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:focus,
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface .CodeMirror-focused {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-preview {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+}
+/* 表情分组：细线框小标签 */
+html[data-nsmax-theme] .md-editor .expression {
+  gap: 6px !important;
+  margin: 8px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .md-editor .expression > .exp-item {
+  margin: 0 !important;
+  padding: 2px 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .md-editor .expression > .exp-item:is(:hover, .current-group) {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+/* 提交行：sb.sb「回复楼主」在输入框下方左侧，上传状态排在它后面 */
+html[data-nsmax-theme] .md-editor .submit-row,
+html[data-nsmax-theme] .md-editor .topic-select {
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 14px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] .md-editor .nspp-upload-status {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+
+/* 列表 NQ 图标：直角 */
+html[data-nsmax-theme] .nsmax-nq-entry img {
+  border-radius: 0 !important;
+}
+
+/* ---------- 16. 全站直角：sb.sb 的 --r-scale 是 0，所有组件（包括头像、圆点、按钮、卡片）都是直角 ---------- */
+html[data-nsmax-theme] body *,
+html[data-nsmax-theme] body *::before,
+html[data-nsmax-theme] body *::after {
+  border-radius: 0 !important;
+}
+
+/* ---------- 17. 消息中心（NodeSeek++ 消息页，对应 sb.sb 的 /messages/ 与通知列表） ---------- */
+/* 顶部「@我 / 回复主题 / 私信」：sb.sb .topic-toolbar + .tab（下划线标签） */
+html[data-nsmax-theme] .nsmax-message-tabs {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin: 0 0 var(--gap) !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .nsmax-message-tabs > a {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 12px 4px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 24.5px !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-message-tabs > a + a {
+  margin-left: 10px !important;
+}
+html[data-nsmax-theme] .nsmax-message-tabs > a:hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-message-tabs > a:is([aria-current], .active, .is-active, .router-link-active) {
+  background: transparent !important;
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .nsmax-message-tabs > a:is([aria-current], .active, .is-active, .router-link-active)::after {
+  content: "" !important;
+  position: absolute !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  height: 2px !important;
+  background: var(--action) !important;
+}
+/* 未读数：sb.sb .dm-unread——#f5c518 底、深色字、11px/700、18px 高 */
+html[data-nsmax-theme] :is(.nsmax-message-tabs, .nspp-messages) .nspp-messages-count {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border: 0 !important;
+  background: #f5c518 !important;
+  box-shadow: none !important;
+  color: #1a1a1a !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] :is(.nsmax-message-tabs, .nspp-messages) .nspp-messages-count:empty {
+  display: none !important;
+}
+/* 消息区整体：sb.sb .dm-list / .dm-pane——面板底、细线框，无投影 */
+html[data-nsmax-theme] .nspp-messages {
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-top {
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-sidebar {
+  border-right: 1px solid var(--line-soft) !important;
+  background: var(--panel) !important;
+}
+/* 搜索框：sb.sb .dm-search input——34px 高、line-soft 细线、次底色、13px */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-search input {
+  height: 34px !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line-soft) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+}
+/* 会话 / 通知分类：sb.sb .dm-conv——10px 11px，悬停次底色，当前项品牌浅底 + 左侧 3px 黄线 */
+html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer) {
+  margin: 0 0 2px !important;
+  padding: 10px 11px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer):hover {
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer):is(.active, .is-active, [aria-current], [aria-selected="true"]) {
+  background: var(--brand-soft) !important;
+  box-shadow: inset 3px 0 0 #f5c518 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nsmax-notice-nav-icon {
+  border: 1px solid var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nsmax-notice-nav-text strong {
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nsmax-notice-nav-text span {
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nspp-messages .nsmax-notice-nav-divider {
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+}
+/* 通知 / 消息条目卡片：去掉卡片感，变成 sb.sb 列表行（上方 line-soft 细线） */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-thread :is(.nspp-notice-item, .nspp-messages-notice, article) {
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 按钮：sb.sb 次要按钮（细线框、面板底）与主要按钮（实底） */
+html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-more, .nspp-messages-refresh, .nspp-messages-sync-retry, .nspp-messages-top-actions button, .nspp-messages-search button, .nspp-messages-back) {
+  height: auto !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-more, .nspp-messages-refresh, .nspp-messages-sync-retry, .nspp-messages-top-actions button, .nspp-messages-search button, .nspp-messages-back):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-send {
+  border: 1px solid var(--action-border) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-send:hover {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-composer textarea {
+  border: 1px solid var(--line-strong) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+/* 聊天气泡：sb.sb .dm-bubble——我方实底（墨色 / 深色下浅色），对方次底色 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-mine .nspp-messages-bubble {
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message:not(.is-mine, .is-system) .nspp-messages-bubble {
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+}

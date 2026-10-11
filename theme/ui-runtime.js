@@ -624,9 +624,23 @@
 		nsmaxApplyChineseTimes(parsed);
 		if (!/^\/post-\d+/.test(location.pathname)) return;
 		nsmaxGroupFloorActions(parsed);
+		nsmaxWrapCodeBlocks(parsed);
 		// 统计（浏览数、回复数）要等评论区解析完才准，不然先显示一个偏小的回复数再变
 		const comments = document.querySelector(".comment-container");
 		if (!parsed || document.readyState !== "loading" || comments && parsed(comments)) nsmaxDecoratePostDetail();
+	}
+	// 正文代码块包进 .nsmax-code（对应 sb.sb 的 .code-block）：「内容增强」的复制按钮放在外层右上角，
+	// 代码横向滚动时按钮不跟着跑。页面解析阶段就包好，之后放进按钮不会让内容跳动。
+	function nsmaxWrapCodeBlocks(parsed) {
+		for (const pre of document.querySelectorAll("article.post-content pre:not(.nsmax-code > pre)")) {
+			if (parsed && !parsed(pre)) continue;
+			const wrap = document.createElement("div");
+			wrap.className = "nsmax-code";
+			const copy = pre.querySelector(":scope > [data-nspp-copy]");
+			pre.before(wrap);
+			wrap.append(pre);
+			if (copy) wrap.append(copy);
+		}
 	}
 	function nsmaxUpdateNavEssence() {
 		const navMenus = document.querySelectorAll("ul.nav-menu");
@@ -1092,7 +1106,10 @@
 				};
 				if (image.complete) classify(); else image.addEventListener("load",classify,{once:true,signal:ctx.signal});
 			}
-			if (isPost) nsmaxGroupFloorActions();
+			if (isPost) {
+				nsmaxGroupFloorActions();
+				nsmaxWrapCodeBlocks();
+			}
 			for (const editor of document.querySelectorAll(".md-editor")) {
 				if (editors.has(editor)) continue;
 				const body = editor.querySelector("#editor-body") || editor;
