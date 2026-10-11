@@ -309,6 +309,7 @@ html[data-nsmax-theme] :is(code, kbd, samp, pre) {
     align-items: center !important;
     box-sizing: border-box !important;
     height: auto !important;
+    min-height: 0 !important;
     padding: 3px 10px !important;
     border-radius: var(--r-sm) !important;
     background: var(--mark) !important;
@@ -343,6 +344,7 @@ html[data-nsmax-theme] :is(code, kbd, samp, pre) {
     box-sizing: border-box !important;
     min-width: 3.9em !important;
     height: auto !important;
+    min-height: 0 !important;
     padding: 5px 9px !important;
     border: 0 !important;
     border-radius: var(--r-pill) !important;
@@ -382,6 +384,7 @@ html[data-nsmax-theme] :is(code, kbd, samp, pre) {
     justify-content: center !important;
     min-width: 0 !important;
     height: auto !important;
+    min-height: 0 !important;
     padding: 0 5px !important;
     border-radius: var(--r-pill) !important;
     background: var(--mark) !important;
@@ -501,6 +504,8 @@ html[data-nsmax-theme] :is(code, kbd, samp, pre) {
     max-width: var(--container) !important;
     margin: 0 auto !important;
     padding: 20px 16px 32px !important;
+    height: auto !important;
+    min-height: 0 !important;
     background: transparent !important;
     border: 0 !important;
     border-radius: 0 !important;
@@ -514,6 +519,8 @@ html[data-nsmax-theme] :is(code, kbd, samp, pre) {
     min-width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
   }
   html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container > * {
     margin: 0 !important;
@@ -525,6 +532,8 @@ html[data-nsmax-theme] #nsk-body > #nsk-body-left {
   min-width: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -555,6 +564,8 @@ html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter {
   gap: 4px !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -623,6 +634,8 @@ html[data-nsmax-theme] #nsk-body-left > .post-list-controler > :not(.sorter) ~ :
 html[data-nsmax-theme] #nsk-body-left ul.post-list:not(.topic-carousel-panel) {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r) !important;
   background: var(--panel) !important;
@@ -690,12 +703,16 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item > .post-l
   min-width: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 /* 标题：sb.sb .post-title——正文色、500 字重、行高 1.5，悬停 1px 下划线（偏移 3px） */
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title {
   display: block !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text) !important;
   font-family: var(--font-sans) !important;
   font-size: var(--sb-title) !important;
@@ -732,6 +749,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   display: inline-block !important;
   order: -1 !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 6px 0 0 !important;
   padding: 1px 8px !important;
   border: 0 !important;
@@ -752,6 +770,8 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-inf
   gap: 0 10px !important;
   margin: 3px 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text-subtle) !important;
   font-size: 12.5px !important;
   line-height: 1.6 !important;
@@ -762,6 +782,8 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-inf
   gap: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text-subtle) !important;
   white-space: nowrap !important;
 }
@@ -799,6 +821,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-inf
   display: inline-block !important;
   box-sizing: border-box !important;
   height: auto !important;
+  min-height: 0 !important;
   max-width: none !important;
   margin: 0 !important;
   padding: 2px 8px !important;
@@ -823,6 +846,8 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-inf
 html[data-nsmax-theme] .nsk-pager {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -839,6 +864,7 @@ html[data-nsmax-theme] .nsk-pager :is(.pager-pos, .pager-prev, .pager-next, .nsm
   min-width: 36px !important;
   width: auto !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 6px 12px !important;
   border: 1px solid var(--line) !important;
@@ -892,6 +918,8 @@ html[data-nsmax-theme] #nsk-body-left > div:has(> .nsk-pager.pager-bottom) {
   justify-content: center !important;
   margin: var(--gap) 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -901,6 +929,8 @@ html[data-nsmax-theme] #nsk-right-panel-container > :is(.nsk-panel, .nsmax-hot-p
   box-sizing: border-box !important;
   margin: 0 !important;
   padding: 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r) !important;
   background: var(--panel) !important;
@@ -915,6 +945,7 @@ html[data-nsmax-theme] #nsk-right-panel-container :is(.nsmax-hot-title, .nsmax-r
   align-items: center !important;
   gap: 6px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 0 9px !important;
   padding: 0 !important;
   border: 0 !important;
@@ -932,12 +963,16 @@ html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel h4 > :is(svg, .ns
    链接两列 13px 弱化字；发帖按钮墨色实底（深色下浅色实底）、7px 0 */
 html[data-nsmax-theme] #nsk-right-panel-container .user-card.nsmax-sb-account-host {
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 html[data-nsmax-theme] .nsmax-sb-account {
   box-sizing: border-box !important;
   display: block !important;
   margin: 0 !important;
   padding: 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -948,6 +983,8 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-head {
   gap: 10px !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
 }
 html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-head > a {
@@ -996,6 +1033,7 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-rank {
   align-items: center !important;
   gap: 3px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 3px 0 0 !important;
   padding: 1px 8px !important;
   border: 1px solid var(--brand-border) !important;
@@ -1014,6 +1052,8 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-numbers {
   gap: 10px 6px !important;
   margin: 12px 0 0 !important;
   padding: 12px 0 2px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-top: 1px solid var(--line-soft) !important;
   background: transparent !important;
@@ -1026,6 +1066,8 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-stat {
   min-width: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -1056,6 +1098,8 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu {
   gap: 1px !important;
   margin: 12px 0 0 !important;
   padding: 12px 0 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-top: 1px solid var(--line-soft) !important;
 }
@@ -1110,6 +1154,7 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose {
   box-sizing: border-box !important;
   width: auto !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 14px 0 0 !important;
   padding: 7px 0 !important;
   border: 0 !important;
@@ -1142,6 +1187,8 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose .nsmax-compose-t
 html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text-subtle) !important;
   font-size: 12.5px !important;
 }
@@ -1156,6 +1203,7 @@ html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .
   display: block !important;
   width: auto !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 6px 0 !important;
   border: 1px solid var(--line) !important;
@@ -1184,6 +1232,8 @@ html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .
    标题 13px 单行省略，次数等宽 11.5px 次要色 */
 html[data-nsmax-theme] #nsk-right-panel-container > .nsmax-hot-panel {
   padding: 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-head {
   display: flex !important;
@@ -1191,15 +1241,18 @@ html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-head {
   gap: 8px !important;
   margin: 0 0 9px !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-head .nsmax-hot-title {
   margin: 0 !important;
 }
 html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs {
-  display: flex !important;
   gap: 10px !important;
   margin: 0 0 4px !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-bottom: 1px solid var(--line-soft) !important;
   background: none !important;
@@ -1214,6 +1267,7 @@ html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs button {
   position: relative !important;
   flex: none !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 4px 2px 6px !important;
   border: 0 !important;
@@ -1245,11 +1299,15 @@ html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs button[aria-selected="tr
 html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   list-style: none !important;
 }
 html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list > * {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -1277,6 +1335,7 @@ html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-rank {
   width: 1.4em !important;
   min-width: 0 !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
@@ -1317,6 +1376,8 @@ html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper {
   gap: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1324,6 +1385,8 @@ html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper {
 html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper > .nsk-post {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -1337,6 +1400,8 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post > .nsmax-crumb {
   gap: 7px !important;
   margin: 0 !important;
   padding: 9px 18px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-bottom: 0 !important;
   border-radius: var(--r) var(--r) 0 0 !important;
@@ -1362,6 +1427,8 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title {
   gap: 16px !important;
   margin: 0 !important;
   padding: 14px 18px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-bottom: 0 !important;
   border-radius: 0 !important;
@@ -1376,6 +1443,8 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 {
   min-width: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text) !important;
   font-family: var(--font-sans) !important;
   font-size: 21px !important;
@@ -1425,6 +1494,8 @@ html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item {
   box-sizing: border-box !important;
   margin: 0 !important;
   padding: 15px 18px !important;
+  height: auto !important;
+  min-height: 0 !important;
   box-shadow: none !important;
   transform: none !important;
 }
@@ -1514,6 +1585,8 @@ html[data-nsmax-theme] #nsk-body-left .content-item .content-info {
   gap: 7px !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text-subtle) !important;
   font-size: 12.5px !important;
   line-height: 1.75 !important;
@@ -1537,6 +1610,7 @@ html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag {
   flex: none !important;
   box-sizing: border-box !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 1px 8px !important;
   border: 0 !important;
@@ -1589,6 +1663,7 @@ html[data-nsmax-theme] #nsk-body-left .content-item .hot-badge {
   align-items: center !important;
   width: auto !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 1px 8px !important;
   border: 0 !important;
@@ -1615,6 +1690,8 @@ html[data-nsmax-theme] #nsk-body-left .content-item > .topic-warning:empty {
 html[data-nsmax-theme] #nsk-body-left .content-item > article.post-content {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text) !important;
   font-family: var(--font-sans) !important;
   font-size: 15px !important;
@@ -1637,6 +1714,8 @@ html[data-nsmax-theme] #nsk-body-left article.post-content p {
 html[data-nsmax-theme] #nsk-body-left article.post-content :is(h1, h2, h3, h4, h5, h6) {
   margin: 1.3em 0 0.5em !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   color: var(--text) !important;
   font-size: 1.08em !important;
@@ -1661,6 +1740,8 @@ html[data-nsmax-theme] #nsk-body-left article.post-content li {
 html[data-nsmax-theme] #nsk-body-left article.post-content blockquote {
   margin: 0.7em 0 !important;
   padding: 2px 0 2px 12px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-left: 3px solid var(--line) !important;
   border-radius: 0 !important;
@@ -1681,6 +1762,8 @@ html[data-nsmax-theme] #nsk-body-left article.post-content hr {
 /* 正文链接：sb.sb——链接色 + 2px 黄色下划线（偏移 3px）；悬停去掉下划线、出现链接浅底 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:not(:has(img)) {
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border-radius: 0 !important;
   background: none !important;
   box-shadow: none !important;
@@ -1708,6 +1791,8 @@ html[data-nsmax-theme] #nsk-body-left article.post-content a:has(img) {
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :not(pre) > code {
   margin: 0 !important;
   padding: 1px 5px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--code-inline-border) !important;
   border-radius: var(--r-xs) !important;
   background: var(--code-inline-bg) !important;
@@ -1720,6 +1805,8 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   position: relative !important;
   margin: 0.8em 0 !important;
   padding: 12px 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-input) !important;
   background: var(--panel-alt) !important;
@@ -1735,6 +1822,8 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) pre code {
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: none !important;
   color: inherit !important;
@@ -1756,6 +1845,7 @@ html[data-nsmax-theme] .nsmax-code > [data-nspp-copy] {
   gap: 4px !important;
   width: auto !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 3px 9px !important;
   border: 1px solid var(--line) !important;
@@ -1807,6 +1897,8 @@ html[data-nsmax-theme] #nsk-body-left article.post-content table {
 }
 html[data-nsmax-theme] #nsk-body-left article.post-content :is(th, td) {
   padding: 8px 12px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-bottom: 1px solid var(--line) !important;
   border-right: 1px solid var(--line) !important;
@@ -1838,6 +1930,8 @@ html[data-nsmax-theme] #nsk-body-left article.post-content tbody tr:hover {
 html[data-nsmax-theme] #nsk-body-left .content-item > .signature {
   margin: 10px 0 0 !important;
   padding: 8px 0 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-top: 1px solid var(--line-soft) !important;
   background: none !important;
@@ -1858,6 +1952,8 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu 
   gap: 10px !important;
   margin: 12px 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -1873,6 +1969,7 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu 
   width: 72px !important;
   min-width: 0 !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 8px 4px !important;
   border: 1px solid var(--line) !important;
@@ -1935,6 +2032,8 @@ html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-m
   gap: 8px !important;
   margin: 6px 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -1943,6 +2042,7 @@ html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-m
   align-items: center !important;
   gap: 3px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
@@ -1973,6 +2073,8 @@ html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .comment-m
 html[data-nsmax-theme] #nsk-body-left > .nsk-post-wrapper > .comment-container {
   margin: var(--gap) 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -1986,6 +2088,8 @@ html[data-nsmax-theme] #nsk-body-left .comment-container > :is(div:has(> .nsk-pa
   gap: 10px !important;
   margin: 0 !important;
   padding: 11px 16px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-bottom: 0 !important;
   border-radius: var(--r) var(--r) 0 0 !important;
@@ -1994,6 +2098,8 @@ html[data-nsmax-theme] #nsk-body-left .comment-container > :is(div:has(> .nsk-pa
 html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-reply-title {
   margin: 0 auto 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text-muted) !important;
   font-size: 14px !important;
   font-weight: 500 !important;
@@ -2002,6 +2108,8 @@ html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-reply-title {
 html[data-nsmax-theme] #nsk-body-left .comment-container > :first-child .nsk-pager :is(.pager-pos, .pager-prev, .pager-next, .nsmax-pager-ellipsis) {
   min-width: 30px !important;
   padding: 2px 9px !important;
+  height: auto !important;
+  min-height: 0 !important;
   font-size: 12px !important;
   line-height: 21px !important;
 }
@@ -2011,6 +2119,8 @@ html[data-nsmax-theme] #nsk-body-left .comment-container > :first-child .nsk-pag
 html[data-nsmax-theme] #nsk-body-left .comment-container > ul.comments {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-top-color: var(--line-soft) !important;
   border-radius: 0 0 var(--r) var(--r) !important;
@@ -2033,6 +2143,8 @@ html[data-nsmax-theme] #nsk-body-left .comment-container > div:has(> .post-botto
   justify-content: center !important;
   margin: var(--gap) 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -2069,7 +2181,10 @@ html[data-nsmax-theme] .md-editor :is(.mde-toolbar, .nsmax-custom-mde-toolbar) :
   border-radius: var(--r-pill) !important;
 }
 html[data-nsmax-theme] .md-editor :is(button.submit, .submit.btn) {
+  line-height: 1.75 !important;
   padding: 7px 16px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--action-border) !important;
   border-radius: var(--r-pill) !important;
   background: var(--action) !important;
@@ -2086,6 +2201,8 @@ html[data-nsmax-theme] .md-editor :is(button.submit, .submit.btn):hover {
 /* ---------- 9. 全站按钮与输入框（sb.sb button/.btn 与 input/select/textarea） ---------- */
 html[data-nsmax-theme] #nsk-frame :is(.btn, .pure-button):not(.nsmax-header-action, [data-nsmax-cta], .small-margin .btn, .nsmax-account-compose, .md-editor .submit) {
   padding: 7px 16px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--action-border) !important;
   border-radius: var(--r-pill) !important;
   background: var(--action) !important;
@@ -2120,6 +2237,8 @@ html[data-nsmax-theme] #nsk-frame :is(input, select, textarea):not(.md-editor *,
 html[data-nsmax-theme] body > footer {
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-top: 1px solid var(--line) !important;
   background: var(--panel) !important;
@@ -2138,6 +2257,8 @@ html[data-nsmax-theme] body > footer .contain {
   max-width: var(--container) !important;
   margin: 0 auto !important;
   padding: 16px !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 html[data-nsmax-theme] body > footer .contain > .col,
 html[data-nsmax-theme] body > footer .contain > .col > ul {
@@ -2150,6 +2271,8 @@ html[data-nsmax-theme] body > footer .contain li {
   display: inline !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   list-style: none !important;
 }
 html[data-nsmax-theme] body > footer :is(a, li) {
@@ -2170,6 +2293,8 @@ html[data-nsmax-theme] body > footer img {
 html[data-nsmax-theme] body > footer .foot {
   margin: 0 0 0 auto !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text-subtle) !important;
   font-size: 13px !important;
   font-variant-numeric: tabular-nums !important;
@@ -2209,6 +2334,7 @@ html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry {
   align-items: center !important;
   gap: 5px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 4px 12px !important;
   border: 1px solid var(--line) !important;
@@ -2234,6 +2360,7 @@ html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry :is(svg, img) {
 html[data-nsmax-theme] .nsmax-prize-badge {
   display: inline-block !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 6px 0 0 !important;
   padding: 1px 8px !important;
   border: 0 !important;
@@ -2268,6 +2395,8 @@ html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .co
   gap: 8px !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -2277,6 +2406,7 @@ html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .co
   gap: 3px !important;
   width: auto !important;
   height: auto !important;
+  min-height: 0 !important;
   min-width: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -2312,6 +2442,7 @@ html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .fl
   align-items: center !important;
   gap: 8px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -2322,6 +2453,7 @@ html[data-nsmax-theme] #nsk-body-left > button.nspp-action {
   display: block !important;
   width: 100% !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 10px 0 0 !important;
   padding: 6px 0 !important;
   border: 0 !important;
@@ -2347,6 +2479,8 @@ html[data-nsmax-theme] .md-editor {
 }
 html[data-nsmax-theme] .md-editor > #editor-body {
   padding: 0 16px 16px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -2357,6 +2491,8 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head {
   gap: 8px !important;
   margin: 0 -16px 14px !important;
   padding: 11px 16px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-bottom: 1px solid var(--line-soft) !important;
   border-radius: 0 !important;
@@ -2365,6 +2501,8 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head {
 html[data-nsmax-theme] .md-editor .nsmax-editor-heading {
   margin: 0 auto 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   color: var(--text) !important;
   font-size: 14px !important;
   font-weight: 500 !important;
@@ -2376,6 +2514,7 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > button {
   align-items: center !important;
   gap: 4px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 4px 11px !important;
   border: 1px solid var(--line) !important;
@@ -2412,6 +2551,8 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-controls {
   gap: 8px !important;
   margin: 0 0 8px !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -2422,6 +2563,7 @@ html[data-nsmax-theme] .md-editor .nspp-upload-choose {
   align-items: center !important;
   gap: 4px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 4px 12px !important;
   border: 1px solid var(--line) !important;
@@ -2461,6 +2603,8 @@ html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar {
   gap: 6px !important;
   margin: 0 0 8px !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -2469,6 +2613,8 @@ html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn {
   min-width: 30px !important;
   justify-content: center !important;
   padding: 4px 8px !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-sep {
   width: 1px !important;
@@ -2481,14 +2627,15 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface {
   position: relative !important;
   margin: 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea,
-html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane],
-html[data-nsmax-theme] .md-editor .nsmax-editor-surface .CodeMirror {
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] {
   box-sizing: border-box !important;
   width: 100% !important;
   min-height: 150px !important;
@@ -2505,10 +2652,21 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface .CodeMirror {
   outline: 0 !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:focus,
-html[data-nsmax-theme] .md-editor .nsmax-editor-surface .CodeMirror-focused {
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane]:focus-within {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
   outline-offset: 0 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] :is(.CodeMirror, #cm-editor-wrapper, #code-mirror-editor, .CodeMirror-scroll) {
+  min-height: 136px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-preview {
   border: 1px solid var(--line) !important;
@@ -2520,12 +2678,16 @@ html[data-nsmax-theme] .md-editor .expression {
   gap: 6px !important;
   margin: 8px 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
 html[data-nsmax-theme] .md-editor .expression > .exp-item {
   margin: 0 !important;
   padding: 2px 10px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
@@ -2541,12 +2703,14 @@ html[data-nsmax-theme] .md-editor .expression > .exp-item:is(:hover, .current-gr
 html[data-nsmax-theme] .md-editor .submit-row,
 html[data-nsmax-theme] .md-editor .topic-select {
   display: flex !important;
-  flex-direction: row-reverse !important;
-  justify-content: flex-end !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
   align-items: center !important;
   gap: 8px !important;
   margin: 14px 0 0 !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -2581,6 +2745,8 @@ html[data-nsmax-theme] .nsmax-message-tabs {
   gap: 4px !important;
   margin: 0 0 var(--gap) !important;
   padding: 0 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 1px solid var(--line) !important;
   background: var(--panel) !important;
   box-shadow: none !important;
@@ -2591,6 +2757,7 @@ html[data-nsmax-theme] .nsmax-message-tabs > a {
   align-items: center !important;
   gap: 6px !important;
   height: auto !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 12px 4px !important;
   border: 0 !important;
@@ -2609,12 +2776,12 @@ html[data-nsmax-theme] .nsmax-message-tabs > a:hover {
   background: transparent !important;
   color: var(--text) !important;
 }
-html[data-nsmax-theme] .nsmax-message-tabs > a:is([aria-current], .active, .is-active, .router-link-active) {
+html[data-nsmax-theme] .nsmax-message-tabs > a:is([aria-current="page"], [aria-current="true"], .active, .is-active, .router-link-active) {
   background: transparent !important;
   color: var(--text) !important;
   font-weight: 500 !important;
 }
-html[data-nsmax-theme] .nsmax-message-tabs > a:is([aria-current], .active, .is-active, .router-link-active)::after {
+html[data-nsmax-theme] .nsmax-message-tabs > a:is([aria-current="page"], [aria-current="true"], .active, .is-active, .router-link-active)::after {
   content: "" !important;
   position: absolute !important;
   right: 0 !important;
@@ -2671,6 +2838,8 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-search input {
 html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer) {
   margin: 0 0 2px !important;
   padding: 10px 11px !important;
+  height: auto !important;
+  min-height: 0 !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -2679,7 +2848,7 @@ html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages
 html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer):hover {
   background: var(--panel-alt) !important;
 }
-html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer):is(.active, .is-active, [aria-current], [aria-selected="true"]) {
+html[data-nsmax-theme] .nspp-messages :is(.nsmax-notice-nav-item, .nspp-messages-peer):is(.active, .is-active, [aria-current="page"], [aria-current="true"], [aria-selected="true"]) {
   background: var(--brand-soft) !important;
   box-shadow: inset 3px 0 0 #f5c518 !important;
 }
@@ -2711,6 +2880,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-thread :is(.nspp-notice-ite
 /* 按钮：sb.sb 次要按钮（细线框、面板底）与主要按钮（实底） */
 html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-more, .nspp-messages-refresh, .nspp-messages-sync-retry, .nspp-messages-top-actions button, .nspp-messages-search button, .nspp-messages-back) {
   height: auto !important;
+  min-height: 0 !important;
   padding: 4px 12px !important;
   border: 1px solid var(--line) !important;
   background: var(--panel) !important;
@@ -2748,4 +2918,782 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-mine .nspp-messa
 html[data-nsmax-theme] .nspp-messages .nspp-messages-message:not(.is-mine, .is-system) .nspp-messages-bubble {
   background: var(--panel-alt) !important;
   color: var(--text) !important;
+}
+
+/* ---------- 18. 真实站点核对后的修正 ---------- */
+/* 置顶标签在标题前（sb.sb .topic-badge.pinned 在标题左边）：置顶行的标题改成可换行的弹性行，标签排第一 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item.topic-pinned .post-title {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  column-gap: 0 !important;
+}
+/* @提及：NodeSeek 自带斜体，sb.sb 的 .mention 是正体（与正文链接同款黄色下划线） */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a {
+  font-style: normal !important;
+}
+/* 正文图片：NodeSeek 自带一圈阴影，sb.sb 的 .post-image 没有；大图最宽 720px，左对齐 */
+html[data-nsmax-theme] #nsk-body-left article.post-content img {
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content img.nsmax-post-image {
+  display: block !important;
+  max-width: min(var(--post-image-max), 100%) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  cursor: zoom-in;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* ---------- 19. 个人空间（sb.sb 个人主页：.user-card.profile-head 资料卡 → .profile-toolbar 标签栏 → .post-list 列表 → 页码） ---------- */
+html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: var(--container) !important;
+  margin: 0 auto !important;
+  padding: 20px 16px 32px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 资料卡：14px 内边距、面板底、细线框；与下方标签栏间距 20px */
+html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container > .head-container {
+  box-sizing: border-box !important;
+  margin: 0 0 var(--gap) !important;
+  padding: 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+/* 标签栏 + 列表：.selector 原本是一行弹性布局（标签、分隔线、列表、页码挤在一行），改成可换行：
+   标签一行，分隔线与内容各占整行；整体是 sb.sb 的工具条 + 列表卡片 */
+html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container > .selector {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item {
+  position: relative !important;
+  display: block !important;
+  flex: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 12px 4px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 24.5px !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item + a.select-item {
+  margin-left: 14px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item:hover {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item:is(.router-link-exact-active, .router-link-active, .active) {
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item::before,
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item::after {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item:is(.router-link-exact-active, .router-link-active, .active)::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  height: 2px !important;
+  background: var(--action) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .hr {
+  flex: 0 0 calc(100% + 28px) !important;
+  height: 1px !important;
+  margin: 0 -14px !important;
+  border: 0 !important;
+  background: var(--line) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > :not(a.select-item, .hr) {
+  flex: 0 0 calc(100% + 28px) !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 -14px !important;
+}
+/* 主题列表：sb.sb .post-item——11px 14px、line-soft 分隔、标题 15px/500 */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .discussion-wrapper {
+  display: block !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 11px 14px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > :is(div.discussion-item, a.discussion-item):first-child {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  color: var(--text) !important;
+  font-size: var(--sb-title) !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a:hover {
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 3px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span {
+  color: inherit !important;
+  font: inherit !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > span {
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+/* 回帖列表：主题标题一行 + 下面一段回帖摘要（sb.sb .profile-reply-excerpt：左侧 2px 细线、13.5px 弱化字） */
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 11px 14px 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: var(--sb-title) !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item:hover {
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 3px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span {
+  color: inherit !important;
+  font: inherit !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.discussion-item) {
+  display: block !important;
+  margin: 0 !important;
+  padding: 4px 14px 11px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.discussion-item) > p {
+  margin: 0 !important;
+  padding: 0 0 0 9px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-left: 2px solid var(--line) !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-size: 13.5px !important;
+  line-height: 1.65 !important;
+}
+/* 页码：sb.sb 放在列表卡片外面、距离 20px——这里用画布色盖住卡片的左右下边框，看起来就在卡片外 */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > div:has(> .nsk-pager) {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 0 -15px -1px !important;
+  flex-basis: calc(100% + 30px) !important;
+  padding: var(--gap) 0 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--bg) !important;
+}
+/* 概况页的自我介绍（readme）：正文样式 */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme {
+  padding: 15px 18px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+}
+
+/* ---------- 20. 消息中心铺满版心（sb.sb /messages/ 用整个版心宽度） ---------- */
+html[data-nsmax-theme][data-nsmax-page="notification"] :is(.nsk-notification, .nspp-messages-container) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: var(--container) !important;
+}
+
+/* ---------- 21. #nsk-frame-block：列表页、帖子页里它是空占位，旧版（v1.7.27 起）一律隐藏；
+   但真实的设置页内容就放在它里面（section#nsk-frame > #nsk-frame-block > div > #user-setting-panel），
+   一律隐藏会让设置页整页空白。只在它为空时隐藏 ---------- */
+html[data-nsmax-theme] #nsk-frame-block:not(:empty) {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ---------- 22. 设置页（sb.sb 设置页：主栏 .form-panel 表单卡片 + 右侧 260px 导航卡片） ---------- */
+html[data-nsmax-theme] #user-setting-panel {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) var(--sidebar-w) !important;
+  grid-template-areas: "head head" "main side" !important;
+  align-items: start !important;
+  gap: var(--gap) !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: var(--container) !important;
+  margin: 0 auto !important;
+  padding: 20px 16px 32px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 顶部资料：sb.sb 资料卡（14px、面板底、细线框；头像 40px、名字 15px/600） */
+html[data-nsmax-theme] #user-setting-panel > .head-container {
+  grid-area: head !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel > .head-container .avatar-wrapper {
+  position: relative !important;
+  flex: none !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel > .head-container .avatar-wrapper img.avatar {
+  display: block !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] #user-setting-panel > .head-container .avatar-wrapper svg {
+  display: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel > .head-container .word {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel > .head-container h1.username {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme] #user-setting-panel > .head-container .word > p {
+  margin: 2px 0 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+/* 选择区拆成两栏：右边导航卡片、左边表单卡片 */
+html[data-nsmax-theme] #user-setting-panel > .selector {
+  display: contents !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-left-side {
+  grid-area: side !important;
+  position: static !important;
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-left-side::before {
+  content: "设置" !important;
+  display: block !important;
+  margin: 0 0 9px !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-item-wrapper {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-item-wrapper > a.select-item {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-item-wrapper > a.select-item:hover {
+  background: transparent !important;
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-item-wrapper > a.select-item.selected {
+  background: transparent !important;
+  color: var(--brand) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-item-wrapper > a.select-item::before,
+html[data-nsmax-theme] #user-setting-panel .selector-item-wrapper > a.select-item::after {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .expend-left {
+  display: none !important;
+}
+/* 表单卡片：sb.sb .form-panel——18px、面板底、细线框；每个字段是 .grid（标签 13.5px/500，字段间距 14px） */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side {
+  grid-area: main !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 18px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(form, fieldset) {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side fieldset {
+  display: block !important;
+  margin: 0 0 14px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(h2, legend, label) {
+  display: block !important;
+  margin: 0 0 5px !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--line-strong) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font: inherit !important;
+  font-size: 14px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side textarea {
+  min-height: 132px !important;
+  line-height: 1.7 !important;
+  resize: vertical !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(input, select, textarea):focus {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .set-avatar {
+  display: flex !important;
+  height: auto !important;
+  min-height: 0 !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .set-avatar img {
+  width: 64px !important;
+  height: 64px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+}
+/* 「确定」：sb.sb 主要按钮，左对齐（sb.sb 的「保存」在表单左下） */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side form > div:last-child {
+  display: flex !important;
+  justify-content: flex-start !important;
+  margin: 4px 0 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  text-align: left !important;
+}
+
+/* ---------- 23. 发帖页（sb.sb「发表主题」：一张 .form-panel 表单卡片；字段：标题 / 内容 / 版块与阅读权限 / 发布按钮） ---------- */
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body,
+html[data-nsmax-theme][data-nsmax-page="new"] section#nsk-frame > #nsk-body.nsk-container {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left #editor > .md-editor {
+  box-sizing: border-box !important;
+  padding: 18px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left #editor > .md-editor::before {
+  content: "发表主题" !important;
+  display: block !important;
+  margin: 0 0 16px !important;
+  color: var(--text) !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input {
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input::before {
+  content: "标题" !important;
+  display: block !important;
+  margin: 0 0 5px !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input input {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font: inherit !important;
+  font-size: 14px !important;
+  outline: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input input:focus {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+}
+/* 发帖页的编辑器不再是单独一张卡片（已在表单卡片里）：去掉外框、标题栏去掉分隔线 */
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > #editor-body {
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .nsmax-editor-head {
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .nsmax-editor-heading {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+/* 版块、阅读权限与发布按钮一行：sb.sb 下拉框 + 主要按钮 */
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  margin: 14px 0 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select label {
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select select {
+  height: auto !important;
+  min-height: 0 !important;
+  min-width: 120px !important;
+  margin: 0 !important;
+  padding: 6px 30px 6px 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  background-color: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > :is(button.submit, .submit.btn) {
+  order: -1 !important;
+}
+/* 发帖须知：sb.sb 提示面板（次底色、细线框、14px 16px） */
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left > .post-content {
+  margin: var(--gap) 0 0 !important;
+  padding: 14px 16px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 13.5px !important;
+  line-height: 1.8 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left > .post-content h2 {
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left > .post-content :is(ul, p) {
+  margin: 0 !important;
+}
+
+/* ---------- 24. 签到排行（sb.sb 排行榜 .top-board / .top-row：名次等宽、前三名金色加粗、头像 26px、分数等宽靠右） ---------- */
+html[data-nsmax-theme] section#nsk-frame > .board {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: var(--container) !important;
+  margin: 20px auto 32px !important;
+  padding: 18px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .board > .head-info {
+  margin: 0 0 16px !important;
+  padding: 10px 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--brand-border) !important;
+  background: var(--brand-soft) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] .board h1 {
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  color: var(--text-strong) !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] .board h1::before {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] .board .rank-row {
+  display: grid !important;
+  grid-template-columns: 22px 26px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 7px 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .board h1 + .rank-row {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] .board .rank-row > div:first-child {
+  color: var(--text-disabled) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme] .board .rank-row:nth-of-type(-n + 3) > div:first-child {
+  color: var(--mark-soft-text) !important;
+  font-weight: 700 !important;
+}
+html[data-nsmax-theme] .board .rank-row > img.avatar {
+  width: 26px !important;
+  height: 26px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .board .rank-row .member-name a {
+  overflow: hidden !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .board .rank-row .member-name a:hover {
+  color: var(--link-hover) !important;
+  text-decoration: underline !important;
+}
+html[data-nsmax-theme] .board .rank-row .coins {
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .board .rank-row .coins::after {
+  content: " 鸡腿" !important;
+  margin-left: 3px !important;
+  color: var(--text-disabled) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+}
+html[data-nsmax-theme] .board .load-more {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 8px 0 0 !important;
+  padding: 6px 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  color: var(--text-muted) !important;
+  cursor: pointer;
+}
+
+/* 帖子预览打开时标题会拿到焦点（程序聚焦），不画焦点框 */
+html[data-nsmax-theme] .nspp-post-preview > header a:is(:focus, :focus-visible) {
+  outline: 0 !important;
+}
+
+html[data-nsmax-theme] .md-editor .submit-row > :is(button.submit, .submit.btn) {
+  order: -1 !important;
+}
+
+/* ---------- 99. 状态隐藏优先：脚本靠属性隐藏的元素（关键词屏蔽的帖子、隐藏的导航项、替换掉的原图标、空统计、
+   分页里省略的页码……）。设计层给这些元素写了 display，权重又高，必须在最后把隐藏状态压回去 ---------- */
+html[data-nsmax-theme] body:is(body, #nsmax-s1):is(body, #nsmax-s2) :is([data-nsmax-blocked], [data-nsmax-own-hide], [data-nsmax-header-hide], [data-nsmax-hidden-panel], [data-nsmax-obsolete-stat], [data-nsmax-empty-readme], [data-nsmax-icon-orig], [data-nsmax-action-original], [data-nsmax-meta-original], [data-nsmax-sort-sep], [data-nsmax-md-hint], [data-nsmax-page-skip], [hidden]) {
+  display: none !important;
 }
