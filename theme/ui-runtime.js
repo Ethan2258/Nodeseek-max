@@ -4,6 +4,10 @@
 	function nsmaxSetText(el, text) {
 		if (el && el.textContent !== text) el.textContent = text;
 	}
+	// 页面类型：主题 CSS 按 html[data-nsmax-page] 分页面排版；搜索、账簿这类结构和列表页相同的页面都算 list
+	function nsmaxPageKind(path = location.pathname) {
+		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : "list";
+	}
 	function nsmaxSetAttr(el, name, value = "") {
 		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
 	}
@@ -682,7 +686,8 @@
 		// 页码外层：列表页底部、帖子评论区上下（底部那个会被移到评论区外面）、个人空间列表下方
 		for (const pager of document.querySelectorAll(".nsk-pager")) {
 			const box = pager.parentElement;
-			if (!box || box.matches("body, #nsk-body, #nsk-body-left, .post-list-controler, .comment-container, .selector, .nsk-post-wrapper")) continue;
+			// 账簿的页码和表格在同一个 div 里，不算页码外层（否则会被排成左右两栏）
+			if (!box || box.matches("body, #nsk-body, #nsk-body-left, .post-list-controler, .comment-container, .selector, .nsk-post-wrapper, .credit-table > div")) continue;
 			nsmaxFlag(box, "data-nsmax-pagerbox", true, pager.matches(".pager-top, .post-top-pager") ? "top" : "bottom");
 		}
 		for (const box of document.querySelectorAll("[data-nsmax-pagerbox]")) if (!box.querySelector(":scope > .nsk-pager")) nsmaxDropAttr(box, "data-nsmax-pagerbox");
@@ -1168,6 +1173,14 @@
 	// 原站结构：.member-list > .fans-switcher（两个切换链接）+ .user-card-wrapper-container > .user-card-wrapper > .user-card
 	// （.user-head 头像与名字 / 加入天数或签名，.user-stat 等级、鸡腿、星辰、主题帖、评论数、粉丝，.usercard-button-group 转账 / 取关 / 私信）。
 	// 每张卡片里追加一块 sb.sb .member-row 版式（原有子元素用 CSS 收起），三个按钮挪进来，保留原站的点击逻辑；只在值变化时写 DOM。
+	// 账簿（/credit）：鸡腿变动按正负上色（sb.sb .points-ledger .num.plus / .minus）；翻页时原站复用同一批单元格，只在值变化时写
+	function nsmaxPrepareCredit() {
+		if (!/^\/credit(?:\/|$)/.test(location.pathname)) return;
+		for (const td of document.querySelectorAll(".credit-table table > tbody > tr > td:first-child")) {
+			const n = Number(td.textContent.trim().replace(/^\+/, ""));
+			nsmaxFlag(td, "data-nsmax-num", Number.isFinite(n) && n !== 0, n > 0 ? "plus" : "minus");
+		}
+	}
 	function nsmaxPrepareFans() {
 		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
 		for (const tab of document.querySelectorAll(".fans-switcher > a.switcher-item")) {
@@ -1258,7 +1271,7 @@
 		const processed = new WeakSet();
 		const images = new WeakSet();
 		const scan = () => {
-			const currentPage = /^\/post-\d+/.test(location.pathname) ? "post" : /^\/notifications?(?:\/|$)/.test(location.pathname) ? "notification" : /^\/space\//.test(location.pathname) ? "space" : /^\/setting(?:\/|$)/.test(location.pathname) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(location.pathname) ? "new" : /^\/board(?:\/|$)/.test(location.pathname) ? "board" : /^\/fans(?:\/|$)/.test(location.pathname) ? "fans" : "list";
+			const currentPage = nsmaxPageKind();
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
 				document.documentElement.dataset.nsmaxPage = currentPage;
 			}
@@ -1277,6 +1290,7 @@
 			nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
 			nsmaxPrepareFans();
+			nsmaxPrepareCredit();
 			nsmaxCleanNotifications();
 			nsmaxCleanBadgesAndNotifications();
 			const isPost = /^\/post-\d+/.test(location.pathname);

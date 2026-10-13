@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -1861,6 +1861,46 @@ test("v1.8.1 我的关注 / 粉丝：sb.sb 成员卡片、按钮挪进卡片、�
 			await page.waitForTimeout(1500);
 			const churn = await page.evaluate(() => new Promise((resolve) => { let n = 0; const o = new MutationObserver((r) => { n += r.length; }); o.observe(document, { childList: true, subtree: true, characterData: true }); setTimeout(() => { o.disconnect(); resolve(n); }, 1500); }));
 			assert.equal(churn, 0, "关注 / 粉丝页静止时仍在改 DOM");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("v1.8.1 账簿：sb.sb 积分账本表格、页码挪到表格下方居中、变动正负上色、静止不改 DOM", async () => {
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/credit#/p-1", { html: creditPage({ dark }), colorScheme: dark ? "dark" : "light" });
+		try {
+			await page.waitForSelector(".credit-table td[data-nsmax-num]");
+			await page.waitForTimeout(1500);
+			const layout = await page.evaluate(() => {
+				const table = document.querySelector(".credit-table table").getBoundingClientRect();
+				const items = Array.from(document.querySelectorAll(".credit-table .nsk-pager :is(.pager-pos, .pager-prev, .pager-next, .nsmax-pager-ellipsis)")).filter((el) => el.getClientRects().length).map((el) => el.getBoundingClientRect());
+				const left = Math.min(...items.map((r) => r.left)), right = Math.max(...items.map((r) => r.right));
+				const cells = Array.from(document.querySelectorAll(".credit-table tbody tr > td:first-child"));
+				const style = (el, pseudo) => getComputedStyle(el, pseudo);
+				return {
+					gap: Math.round(Math.min(...items.map((r) => r.top)) - table.bottom),
+					centerDiff: Math.abs((left + right) / 2 - (table.left + table.right) / 2),
+					radius: style(document.querySelector(".credit-table table")).borderTopLeftRadius,
+					signs: cells.map((td) => td.getAttribute("data-nsmax-num")),
+					plusBefore: style(cells[0], "::before").content,
+					minusColor: style(cells[2]).color,
+					plusColor: style(cells[0]).color,
+					success: style(document.documentElement).getPropertyValue("--success").trim(),
+					font: style(cells[0]).fontFamily,
+					flagged: document.querySelector(".credit-table > div").hasAttribute("data-nsmax-pagerbox"),
+				};
+			});
+			assert.equal(layout.gap, 20, "页码应在表格下方 20px");
+			assert.ok(layout.centerDiff <= 1, `页码应与表格居中对齐（偏 ${layout.centerDiff}px）`);
+			assert.equal(layout.radius, "12px");
+			assert.deepEqual(layout.signs, ["plus", "plus", "minus", "plus", "plus"]);
+			assert.equal(layout.plusBefore, '"+"');
+			assert.notEqual(layout.minusColor, layout.plusColor);
+			assert.match(layout.font, /Space Mono/);
+			assert.equal(layout.flagged, false, "账簿的页码和表格同在一个 div 里，不能当成页码外层排成左右两栏");
+			const churn = await page.evaluate(() => new Promise((resolve) => { let n = 0; const o = new MutationObserver((r) => { n += r.length; }); o.observe(document, { childList: true, subtree: true, characterData: true }); setTimeout(() => { o.disconnect(); resolve(n); }, 1500); }));
+			assert.equal(churn, 0, "账簿页静止时仍在改 DOM");
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}

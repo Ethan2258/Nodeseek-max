@@ -4811,3 +4811,144 @@ html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions 
   background: var(--panel-hover) !important;
   color: var(--text) !important;
 }
+
+/* ---------- 26. 账簿（/credit，按 sb.sb 积分账本 table.list.points-ledger：表格卡片 + 表格下方居中页码） ----------
+   原站结构：.credit-table > div > .nsk-pager（写死 max-width 1300px、margin-bottom 16px）+ table（thead 一行表头、tbody 每行四格：
+   鸡腿变动、鸡腿总计、理由、时间）。页码原本在表格上方，这里和其它页面统一放到列表下方居中、上方 20px。 */
+html[data-nsmax-theme] #nsk-body-left > .credit-table {
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  min-width: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table > div > .nsk-pager {
+  order: 2 !important;
+  display: flex !important;
+  justify-content: center !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: var(--gap) 0 0 !important;
+}
+/* 表格：sb.sb .list——细线框、卡片圆角、面板底、13.5px；表头 panel-alt 底、12.5px 弱化字 500；
+   单元格 9px 12px，行间 line-soft 细线，悬停整行 panel-hover */
+html[data-nsmax-theme] #nsk-body-left > .credit-table > div > table {
+  order: 1 !important;
+  display: table !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table :is(thead, tbody, tr) {
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table th {
+  height: auto !important;
+  padding: 9px 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td {
+  height: auto !important;
+  padding: 9px 12px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table tbody > tr:first-child > td {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table tbody > tr:hover > td {
+  background: var(--panel-hover) !important;
+}
+/* 四角：表格自己圆角之外，角上的格子也圆一下，免得表头底色 / 悬停底色盖住圆角 */
+html[data-nsmax-theme] #nsk-body-left > .credit-table table thead > tr:first-child > th:first-child {
+  border-top-left-radius: max(0px, calc(var(--r) - 1px)) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table thead > tr:first-child > th:last-child {
+  border-top-right-radius: max(0px, calc(var(--r) - 1px)) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table tbody > tr:last-child > td:first-child {
+  border-bottom-left-radius: max(0px, calc(var(--r) - 1px)) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table tbody > tr:last-child > td:last-child {
+  border-bottom-right-radius: max(0px, calc(var(--r) - 1px)) !important;
+}
+/* 变动、总计：sb.sb .points-ledger .num / .points-balance——等宽数字、右对齐；变动正数绿色带 +，负数红色 */
+html[data-nsmax-theme] #nsk-body-left > .credit-table table :is(th, td):is(:nth-child(1), :nth-child(2)) {
+  width: 1% !important;
+  text-align: right !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td:is(:nth-child(1), :nth-child(2)) {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td:nth-child(1)[data-nsmax-num="plus"] {
+  color: var(--success) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td:nth-child(1)[data-nsmax-num="plus"]::before {
+  content: "+" !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td:nth-child(1)[data-nsmax-num="minus"] {
+  color: var(--danger) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td:nth-child(2) {
+  color: var(--text-muted) !important;
+}
+/* 理由占满剩下的宽度，太长时折行；时间：sb.sb .points-when——弱化色、等宽、12.5px */
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td:nth-child(3) {
+  width: auto !important;
+  min-width: 12em !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .credit-table table td:nth-child(4) {
+  color: var(--text-muted) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12.5px !important;
+}
+@media (max-width: 640px) {
+  html[data-nsmax-theme] #nsk-body-left > .credit-table > div {
+    overflow-x: auto !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left > .credit-table table :is(th, td) {
+    padding: 8px 10px !important;
+  }
+}
