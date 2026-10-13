@@ -1164,103 +1164,84 @@
 			}
 		}
 	}
+	// 我的关注 / 我的粉丝（/fans）：按 sb.sb /u/<id>/following/ 的成员列表重排。
+	// 原站结构：.member-list > .fans-switcher（两个切换链接）+ .user-card-wrapper-container > .user-card-wrapper > .user-card
+	// （.user-head 头像与名字 / 加入天数或签名，.user-stat 等级、鸡腿、星辰、主题帖、评论数、粉丝，.usercard-button-group 转账 / 取关 / 私信）。
+	// 每张卡片里追加一块 sb.sb .member-row 版式（原有子元素用 CSS 收起），三个按钮挪进来，保留原站的点击逻辑；只在值变化时写 DOM。
 	function nsmaxPrepareFans() {
 		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
-		for (const sw of document.querySelectorAll("#nsk-body :is(.app-switch, .fans-switch), div:has(> a[href*='type=follow']), div:has(> a[href*='type=fans'])")) {
-			sw.classList.add("nsmax-fans-switch");
-		}
-		const cards = document.querySelectorAll("#nsk-body :is(.user-card, .card-item, .member-card, .fans-card), #nsk-body-left > div > div:has(img.avatar, img.avatar-normal, .avatar-wrapper), .nsk-container :is(.fans-item, .user-card-item)");
-		if (cards.length > 0) {
-			const parent = cards[0].parentElement;
-			if (parent) parent.classList.add("nsmax-fans-grid");
-		}
-		for (const card of cards) {
-			if (card.hasAttribute("data-nsmax-fan-rebuilt")) continue;
-			const avatar = card.querySelector("img.avatar, img.avatar-normal, .avatar-wrapper img, img");
-			const userLink = card.querySelector("a[href*='/space/']");
-			const username = userLink ? userLink.textContent.trim() : "";
-			const userHref = userLink ? userLink.getAttribute("href") : "#";
-
-			const rawText = card.textContent;
-			let subText = "";
-			const joinedMatch = rawText.match(/Joined\s+\d+\s*days?\s*ago/i) || rawText.match(/加入\s*\d+\s*天/);
-			if (joinedMatch) {
-				subText = joinedMatch[0];
-			} else {
-				const p = card.querySelector("p, .bio, .motto, .signature");
-				if (p && p.textContent.trim()) {
-					subText = p.textContent.trim();
-				} else {
-					const textNodes = Array.from(card.querySelectorAll("div, span"))
-						.map(el => el.textContent.trim())
-						.filter(t => t && !/^(等级|鸡腿|星辰|主题|评论|粉丝|私信|回复|@|转账|关注|取关)/.test(t) && t !== username);
-					if (textNodes.length > 0) subText = textNodes[0];
-				}
+		for (const tab of document.querySelectorAll(".fans-switcher > a.switcher-item")) {
+			const label = (tab.textContent || "").replace(/[^\u4e00-\u9fa5A-Za-z0-9 ]/g, "").trim();
+			if (label && tab.getAttribute("data-nsmax-label") !== label) {
+				tab.setAttribute("data-nsmax-label", label);
+				nsmaxSetText(tab, label);
 			}
-
-			const levelMatch = rawText.match(/等级\s*(?:Lv\.?\s*)?(\d+)/i);
-			const drumMatch = rawText.match(/鸡腿\s*(\d+)/);
-			const topicMatch = rawText.match(/(?:主题帖|主题)\s*(\d+)/);
-			const commentMatch = rawText.match(/(?:评论数|评论)\s*(\d+)/);
-			const fansMatch = rawText.match(/粉丝\s*(\d+)/);
-			const starMatch = rawText.match(/星辰\s*(\d+)/);
-
-			const level = levelMatch ? `Lv ${levelMatch[1]}` : "Lv 1";
-			const drum = drumMatch ? drumMatch[1] : "0";
-			const topic = topicMatch ? topicMatch[1] : "0";
-			const comment = commentMatch ? commentMatch[1] : "0";
-			const fans = fansMatch ? fansMatch[1] : "0";
-			const star = starMatch ? starMatch[1] : "0";
-
-			const buttons = Array.from(card.querySelectorAll("button, a.btn, a:not([href*='/space/'])"))
-				.filter(btn => /转账|关注|取关|私信/.test(btn.textContent));
-
+		}
+		for (const card of document.querySelectorAll(".user-card-wrapper > .user-card")) {
+			const text = card.querySelector(":scope > .user-stat")?.textContent || "";
+			const num = (re) => text.match(re)?.[1];
+			const stats = { level: num(/等级\s*(?:Lv\.?\s*)?(\d+)/i), coin: num(/鸡腿\s*(\d+)/), star: num(/星辰\s*(\d+)/), post: num(/主题帖?\s*(\d+)/), comment: num(/评论数?\s*(\d+)/), fans: num(/粉丝\s*(\d+)/) };
+			const signature = JSON.stringify(stats) + "|" + (card.querySelector(".user-head .menu")?.textContent || "");
+			let row = card.querySelector(":scope > .nsmax-member");
+			if (row && row.getAttribute("data-nsmax-sig") === signature) {
+				// 按钮可能被原站重新渲染：不在我们这块里的就挪进来
+				const buttons = card.querySelector(":scope > .usercard-button-group");
+				const slot = row.querySelector(".nsmax-member-actions");
+				if (buttons && slot) for (const btn of buttons.querySelectorAll(":scope > .btn")) slot.append(btn);
+				continue;
+			}
+			row?.remove();
+			row = document.createElement("div");
+			row.className = "nsmax-member";
+			row.setAttribute("data-nsmax-sig", signature);
+			const head = card.querySelector(":scope > .user-head");
+			const nameLink = head?.querySelector(".Username, a[href*='/space/']:not(:has(img))") || head?.querySelector("a[href*='/space/']");
+			const href = nameLink?.getAttribute("href") || head?.querySelector("a[href]")?.getAttribute("href") || "#";
+			const avatarLink = document.createElement("a");
+			avatarLink.className = "nsmax-member-avatar";
+			avatarLink.href = href;
+			const img = head?.querySelector("img");
+			if (img) { const copy = document.createElement("img"); copy.src = img.src; copy.alt = ""; copy.loading = "lazy"; avatarLink.append(copy); }
+			const body = document.createElement("div");
+			body.className = "nsmax-member-body";
+			const title = document.createElement("div");
+			title.className = "nsmax-member-title";
+			const name = document.createElement("a");
+			name.className = "nsmax-member-name";
+			name.href = href;
+			name.textContent = (nameLink?.textContent || "").trim();
+			title.append(name);
+			if (stats.level) { const badge = document.createElement("span"); nsmaxApplyLevel(badge, stats.level); title.append(badge); }
+			// 签名或加入天数：原站写的是英文「Joined 1316days ago」
+			const metaText = Array.from(head?.querySelector(".menu")?.children || []).filter((el) => el !== nameLink).map((el) => el.textContent.trim()).find(Boolean) || "";
+			const joined = metaText.match(/Joined\s*(\d+)\s*days?\s*ago/i);
+			const bio = document.createElement("span");
+			bio.className = "nsmax-member-bio";
+			bio.textContent = joined ? `加入 ${joined[1]} 天` : metaText;
+			if (metaText) bio.title = metaText;
+			const line = document.createElement("span");
+			line.className = "nsmax-member-stats";
+			for (const [label, value] of [["鸡腿", stats.coin], ["星辰", stats.star], ["主题", stats.post], ["评论", stats.comment], ["粉丝", stats.fans]]) {
+				if (value === undefined) continue;
+				const item = document.createElement("span");
+				const b = document.createElement("b");
+				b.textContent = value;
+				item.append(label + " ", b);
+				line.append(item);
+			}
+			body.append(title);
+			if (bio.textContent) body.append(bio);
+			body.append(line);
+			const actions = document.createElement("div");
+			actions.className = "nsmax-member-actions";
+			const buttons = card.querySelector(":scope > .usercard-button-group");
+			// 顺序：关注 / 取关、私信、转账（关注状态最常用放最前）
+			const btns = buttons ? Array.from(buttons.querySelectorAll(":scope > .btn")) : [];
+			const rank = (btn) => /关注|取关/.test(btn.textContent) ? 0 : /私信/.test(btn.textContent) ? 1 : 2;
+			for (const btn of btns.sort((a, b) => rank(a) - rank(b))) actions.append(btn);
+			row.append(avatarLink, body, actions);
+			card.append(row);
 			card.setAttribute("data-nsmax-fan-rebuilt", "true");
-			card.classList.add("nsmax-fan-card");
-			card.innerHTML = "";
-
-			const headRow = document.createElement("div");
-			headRow.className = "nsmax-fan-header";
-			if (avatar) {
-				avatar.className = "avatar";
-				headRow.append(avatar);
-			}
-			const userInfo = document.createElement("div");
-			userInfo.className = "nsmax-fan-info";
-			const nameA = document.createElement("a");
-			nameA.className = "nsmax-fan-name";
-			nameA.href = userHref;
-			nameA.textContent = username;
-			const subDiv = document.createElement("div");
-			subDiv.className = "nsmax-fan-sub";
-			subDiv.textContent = subText || "NodeSeek 会员";
-			userInfo.append(nameA, subDiv);
-			headRow.append(userInfo);
-
-			const statsGrid = document.createElement("div");
-			statsGrid.className = "nsmax-fan-stats-grid";
-			const statsList = [
-				["等级", level],
-				["鸡腿", drum],
-				["主题", topic],
-				["评论", comment],
-				["粉丝", fans],
-				["星辰", star]
-			];
-			for (const [k, v] of statsList) {
-				const cell = document.createElement("div");
-				cell.className = "nsmax-fan-stat-cell";
-				cell.innerHTML = `<span class="nsmax-fan-stat-k">${k}</span><span class="nsmax-fan-stat-v">${v}</span>`;
-				statsGrid.append(cell);
-			}
-
-			const actionRow = document.createElement("div");
-			actionRow.className = "nsmax-fan-actions";
-			for (const btn of buttons) {
-				actionRow.append(btn);
-			}
-
-			card.append(headRow, statsGrid, actionRow);
 		}
 	}
 	function nsmaxCleanNotifications() {

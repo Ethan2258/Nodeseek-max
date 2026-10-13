@@ -122,7 +122,14 @@ const spaceCommentsPage = (options={}) => spaceTopicsPage(options).replace(/<div
 
 const boardPage = (options = {}) => shell("每日签到 - NodeSeek", `<div id="nsk-body-left"><div class="board-container"><div class="title">今日签到</div><ul class="board-list">${Array.from({length: 10}, (_, i) => `<li class="board-item"><span class="rank">${i + 1}</span><img class="avatar" src="${AVATAR}"><a href="/space/${i + 1}">用户${i + 1}</a><span class="count">${16 - i}</span></li>`).join("")}</ul></div></div>${sidebar}`, options);
 
+// 我的关注 / 粉丝（/fans）：与真实站点一致——#nsk-frame > 空 div + div > .member-list（.fans-switcher 两个切换链接 +
+// .user-card-wrapper-container > .user-card-wrapper > .user-card：.user-head、.user-stat 两组统计、.usercard-button-group 三个按钮）
+const fanMembers = [["酒神", 101, 6, 17728, 1281, 363, 4752, 344, "人生得意须尽欢，莫使金樽空对月"], ["Kyoma", 102, 6, 6989, 36, 313, 2353, 46, "Joined 1316days ago"], ["whiteswang", 103, 5, 3084, 35, 268, 2632, 48, "Joined 1220days ago"], ["kaf", 104, 4, 5703, 56, 182, 1764, 5, "Joined 1214days ago"], ["某老板", 105, 3, 7626, 181, 145, 2643, 20, "Boss"]];
+const fanCard = ([name, id, lv, coin, star, posts, comments, fans, meta]) => `<div class="user-card-wrapper"><div class="user-card"><div class="user-head"><a href="/space/${id}"><img class="avatar" src="${AVATAR}" alt="${name}"></a><div class="menu"><a href="/space/${id}" class="Username">${name}</a><div>${meta}</div></div></div><div class="user-stat"><div class="stat-block"><div>${ICON}<span>等级 Lv ${lv}</span></div><div>${ICON}<span>鸡腿 ${coin}</span></div><div><a href="/stardust/list">${ICON}<span>星辰 ${star}</span></a></div></div><div class="stat-block"><div><a href="/space/${id}#/discussions">${ICON}<span>主题帖 ${posts}</span></a></div><div><a href="/space/${id}#/comments">${ICON}<span>评论数 ${comments}</span></a></div><div><span>${ICON}<span>粉丝 ${fans}</span></span></div></div></div><div class="usercard-button-group"><a class="btn">转账</a><a class="btn">取关</a><a class="btn" href="/notification#/message?mode=talk&to=${id}">私信</a></div></div></div>`;
+const fansPage = (options = {}) => shell("NodeSeek", `<div></div><div><div class="member-list nsk-container"><div class="fans-switcher"><a href="/fans?type=follow" class="switcher-item selected">我的关注🔭</a><a href="/fans?type=fans" class="switcher-item">我的粉丝❤️</a></div><div class="user-card-wrapper-container">${fanMembers.map(fanCard).join("")}</div></div></div>`, { ...options, standalone: true });
+
 module.exports = {
+	fansPage,
 	boardPage,
 	spaceTopicsPage,spaceCommentsPage,
 	nativeSpacePage,

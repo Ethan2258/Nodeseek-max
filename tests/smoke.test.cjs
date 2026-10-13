@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -1840,6 +1840,27 @@ test("v1.8.1 防卡死：主题里没有 :has()，个人空间静止时不再反
 			assert.equal(churn, 0, "个人空间静止时仍在改 DOM（整理函数要只在值变化时才写）");
 			await page.locator(".selector a.select-item[data-nsmax-tab=comments]").click();
 			assert.equal(await page.evaluate(() => location.hash), "#/comments");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("v1.8.1 我的关注 / 粉丝：sb.sb 成员卡片、按钮挪进卡片、不把第一张当成自己的资料卡、静止不改 DOM", async () => {
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/fans", { html: fansPage({ dark }), colorScheme: dark ? "dark" : "light" });
+		try {
+			await page.waitForSelector(".nsmax-member");
+			assert.equal(await page.locator(".nsmax-member").count(), 5);
+			assert.deepEqual(await page.locator(".fans-switcher > a.switcher-item").allInnerTexts(), ["我的关注", "我的粉丝"]);
+			assert.equal(await page.locator(".nsmax-member").first().locator(".nsmax-member-actions > .btn").count(), 3);
+			assert.equal(await page.locator(".usercard-button-group > .btn").count(), 0);
+			assert.equal(await page.locator(".user-card-wrapper [data-nsmax-usercard]").count(), 0, "成员卡片不能被当成侧栏资料卡");
+			assert.equal(await page.locator(".nsmax-member").nth(1).locator(".nsmax-member-bio").innerText(), "加入 1316 天");
+			assert.equal(await page.locator(".nsmax-member").first().locator("[data-nsmax-level]").getAttribute("data-nsmax-level"), "6");
+			assert.equal(await page.locator(".nsmax-member").first().locator(".nsmax-member-avatar img").count(), 1);
+			await page.waitForTimeout(1500);
+			const churn = await page.evaluate(() => new Promise((resolve) => { let n = 0; const o = new MutationObserver((r) => { n += r.length; }); o.observe(document, { childList: true, subtree: true, characterData: true }); setTimeout(() => { o.disconnect(); resolve(n); }, 1500); }));
+			assert.equal(churn, 0, "关注 / 粉丝页静止时仍在改 DOM");
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
