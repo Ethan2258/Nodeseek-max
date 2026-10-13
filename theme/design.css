@@ -2388,6 +2388,197 @@ html[data-nsmax-theme] :is(.nspp-post-preview, .nspp-user-hover, .nsmax-person-p
   box-shadow: var(--shadow-medium) !important;
 }
 
+/* 头像 / 用户名悬停资料卡：sb.sb .user-card-pop——320px、头部 12px 14px（44px 小圆角头像、名字 15px/600、右上角等宽 UID 12px），
+   名字那一列下面一排按钮（3px 12px、12.5px 胶囊；关注实底，其余细框），下面 3 列统计（1px 分隔线、8px 13px、标签 12px、数字等宽 15px/600） */
+html[data-nsmax-theme] .nsmax-person-pop {
+  position: fixed !important;
+  z-index: 2147483645 !important;
+  box-sizing: border-box !important;
+  width: min(320px, calc(100vw - 16px)) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  box-shadow: 0 16px 48px -8px rgba(15, 23, 42, 0.22) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+}
+html[data-nsmax-theme][data-nsmax-dark] .nsmax-person-pop {
+  box-shadow: 0 16px 48px -8px rgba(0, 0, 0, 0.62) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop :is(.nsmax-person-head > img, .nsmax-person-avatar-fallback) {
+  flex: none !important;
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel-alt) !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-avatar-fallback {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--text-muted) !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-id {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-id > a {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: var(--text-strong) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.75 !important;
+  text-decoration: none !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-id > a:hover {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px 8px !important;
+  min-height: 18px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-level {
+  margin: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-age {
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 18px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-uid {
+  flex: none !important;
+  margin: 3px 0 0 auto !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-bio {
+  margin: -4px 0 0 !important;
+  padding: 0 14px 10px 68px !important;
+  overflow: hidden !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 14px 12px 68px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > :is(a, button) {
+  display: inline-flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 3px 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > :is(a, button):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-follow:not([data-on]) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-follow:not([data-on]):hover {
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-follow:disabled {
+  opacity: 0.6 !important;
+  cursor: default !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1px !important;
+  margin: 0 !important;
+  padding: 1px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-stats:empty {
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-stats > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 8px 13px !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-stats dt {
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-stats dd {
+  margin: 0 !important;
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-status {
+  margin: 0 !important;
+  padding: 0 14px 12px 68px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+
 /* ---------- 13. 列表里的小部件 ---------- */
 /* NQ 入口：sb.sb 工具条右侧的小按钮（.composer-toggle 同款：4px 12px、细线框、12.5px 弱化字） */
 html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry {

@@ -1754,11 +1754,42 @@
 				fallback.textContent = (name || "U").trim().slice(0, 1).toUpperCase();
 				header.append(fallback);
 			}
-			const identity = document.createElement("div"), profile = document.createElement("a"); profile.href = "/space/"+id; profile.textContent = name; identity.append(profile); header.append(identity);
-			const numbers = document.createElement("dl"), status = document.createElement("p"); status.textContent = "正在读取资料…"; status.setAttribute("role","status");
-			const foot = document.createElement("div"); foot.className = "nsmax-person-foot";
-			for (const [label,path] of [["个人主页","/space/"+id],["私信","/notification#/message?mode=talk&to="+id]]) { const item = document.createElement("a"); item.href = path; item.textContent = label; foot.append(item); }
-			pop.append(header,numbers,status,foot); pop.addEventListener("pointerenter",()=>clearTimeout(closing),{signal:ctx.signal}); pop.addEventListener("pointerleave",closeSoon,{signal:ctx.signal}); document.body.append(pop); document.documentElement.setAttribute("data-nsmax-person-open",""); place();
+			// sb.sb .user-card-pop：头部（44px 头像 + 名字，名字下面一行是等级徽章与注册时长；右上角等宽 UID）→
+			// 名字那一列下面一排按钮（关注实底，其余细框）→ 3 列统计（1px 分隔线）。sb.sb 的烧饼 / 成长值 / 存款等换成 NodeSeek 有的数据
+			const identity = document.createElement("div"); identity.className = "nsmax-person-id";
+			const profile = document.createElement("a"); profile.href = "/space/"+id; profile.textContent = name;
+			const meta = document.createElement("div"); meta.className = "nsmax-person-meta";
+			identity.append(profile, meta);
+			const uid = document.createElement("span"); uid.className = "nsmax-person-uid"; uid.textContent = "UID " + id;
+			header.append(identity, uid);
+			const actions = document.createElement("div"); actions.className = "nsmax-person-actions";
+			const me = unsafeWindow$1.__config__?.user?.member_id;
+			let follow = null;
+			const setFollowed = on => { if (!follow) return; follow.textContent = on ? "已关注" : "关注"; follow.toggleAttribute("data-on", on); follow.setAttribute("aria-pressed", String(on)); };
+			if (me && String(me) !== String(id)) {
+				// 和 NodeSeek 自己的资料卡同一个接口：/api/fans/add 关注、/api/fans/del 取消关注
+				follow = document.createElement("button"); follow.type = "button"; follow.className = "nsmax-person-follow"; follow.disabled = true;
+				setFollowed(false);
+				follow.addEventListener("click", async () => {
+					const on = follow.hasAttribute("data-on");
+					follow.disabled = true;
+					try {
+						const res = await fetch(on ? "/api/fans/del" : "/api/fans/add", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ followed_member_id: Number(id) }) });
+						const json = await res.json().catch(() => ({}));
+						if (!res.ok || json?.success === false) throw new Error(json?.message || "操作失败");
+						setFollowed(!on);
+						cache.delete(id);
+					} catch (error) {
+						status.textContent = (on ? "取消关注" : "关注") + "失败：" + (error?.message || "请稍后再试");
+						if (!status.isConnected) pop?.append(status);
+					} finally { follow.disabled = false; }
+				}, { signal: ctx.signal });
+				actions.append(follow);
+			}
+			for (const [label,path] of [["私信","/notification#/message?mode=talk&to="+id],["主页","/space/"+id]]) { const item = document.createElement("a"); item.href = path; item.textContent = label; actions.append(item); }
+			const numbers = document.createElement("dl"); numbers.className = "nsmax-person-stats";
+			const status = document.createElement("p"); status.className = "nsmax-person-status"; status.textContent = "正在读取资料…"; status.setAttribute("role","status");
+			pop.append(header,actions,numbers,status); pop.addEventListener("pointerenter",()=>clearTimeout(closing),{signal:ctx.signal}); pop.addEventListener("pointerleave",closeSoon,{signal:ctx.signal}); document.body.append(pop); document.documentElement.setAttribute("data-nsmax-person-open",""); place();
 			try {
 				let entry = cache.get(id);
 				if (!entry || Date.now()-entry.at>6e5) { const promise = ctx.request("/api/account/getInfo/"+id).then(data => data?.detail || data?.data || {}); entry = { at:Date.now(), promise }; cache.set(id,entry); if (cache.size>256) cache.delete(cache.keys().next().value); }
@@ -1780,9 +1811,21 @@
 					const level = document.createElement("span");
 					level.className = "nsmax-person-level";
 					nsmaxApplyLevel(level, data.rank);
-					identity.append(level);
+					meta.append(level);
 				}
-				for (const [label,key] of [["鸡腿","coin"],["主题","nPost"],["回复","nComment"],["粉丝","fans"]]) { const item = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd"); term.textContent = label; value.textContent = data[key] === undefined ? "—" : String(data[key]); item.append(term,value); numbers.append(item); }
+				// 注册时长：created_at → 「注册 N 天 / N 个月 / N 年 M 个月」，悬停显示具体日期
+				const created = Date.parse(data.created_at || "");
+				if (created) {
+					const days = Math.max(0, Math.floor((Date.now() - created) / 864e5)), months = Math.floor(days / 30.44);
+					const age = document.createElement("span"); age.className = "nsmax-person-age";
+					age.textContent = days < 31 ? `注册 ${days} 天` : months < 12 ? `注册 ${months} 个月` : `注册 ${Math.floor(months / 12)} 年${months % 12 ? ` ${months % 12} 个月` : ""}`;
+					const d = new Date(created); age.title = `注册于 ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+					meta.append(age);
+				}
+				if (data.bio && String(data.bio).trim()) { const bio = document.createElement("p"); bio.className = "nsmax-person-bio"; bio.textContent = String(data.bio).trim(); header.after(bio); }
+				if (follow) { setFollowed(!!data.followed); follow.disabled = false; }
+				const fmt = value => value === undefined || value === null ? "—" : Number(value) >= 1e5 ? (Number(value) / 1e3).toFixed(Number(value) >= 1e6 ? 0 : 1) + "K" : String(value);
+				for (const [label,key] of [["鸡腿","coin"],["星辰","stardust"],["主题","nPost"],["回复","nComment"],["关注","follows"],["粉丝","fans"]]) { const item = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd"); term.textContent = label; value.textContent = fmt(data[key]); item.append(term,value); numbers.append(item); }
 				status.remove(); place();
 			} catch { cache.delete(id); if (ticket === serial && pop) status.textContent = "暂时无法读取资料，可打开个人主页"; }
 		};
