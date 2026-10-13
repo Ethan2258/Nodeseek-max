@@ -2110,4 +2110,11 @@ test("v1.8.1 深浅色按钮图标跟着页面实际深浅色；Cloudflare 安�
 		await wait(cf.page, 800);
 		assert.equal(await cf.page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-theme")), false, "验证页不能套主题");
 	} finally { await cf.context.close(); }
+	// 普通页面里也有 Cloudflare 的检测脚本（scripts/jsd、scripts/precursor），不能被当成验证页
+	const normal = await open(browser, "https://www.nodeseek.com/", { html: listPage().replace("</head>", '<script src="/cdn-cgi/challenge-platform/scripts/precursor/main.js"></script><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></head>') });
+	try {
+		await wait(normal.page, 800);
+		assert.equal(await normal.page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-theme")), true, "普通页面带 Cloudflare 检测脚本时主题照常生效");
+		assert.equal(await normal.page.locator(".nsmax-settings-button").count(), 1, "功能照常挂载");
+	} finally { await normal.context.close(); }
 });

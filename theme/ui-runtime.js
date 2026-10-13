@@ -1201,6 +1201,42 @@
 			nsmaxFlag(td, "data-nsmax-num", Number.isFinite(n) && n !== 0, n > 0 ? "plus" : "minus");
 		}
 	}
+	// 设置页（/setting）按 sb.sb「个人资料」页：卡片标题用当前分页名；英文字段名改成中文并补一行说明；
+	// 存储位置 Local / Remote 改成「仅本机 / 同步到账号」；和卡片标题重复的分页小标题隐藏；只放了按钮的一行标成操作行。只在值不同时才写 DOM
+	var NSMAX_SETTING_FIELDS = {
+		Bio: ["简介", "一句话介绍自己"],
+		签名: ["签名", "显示在你的帖子和回复正文下方，支持 Markdown"],
+		Readme: ["主页介绍", "显示在你的个人主页，支持 Markdown"]
+	};
+	function nsmaxPrepareSetting() {
+		if (!/^\/setting(?:\/|$)/.test(location.pathname)) return;
+		const right = document.querySelector("#user-setting-panel .selector-right-side");
+		if (!right) return;
+		const current = document.querySelector("#user-setting-panel .selector-left-side a.select-item.selected")?.textContent.trim() || "";
+		nsmaxFlag(right, "data-nsmax-setting-title", !!current, current);
+		for (const h2 of right.querySelectorAll("fieldset > h2")) {
+			const key = h2.getAttribute("data-nsmax-field") || h2.textContent.trim();
+			const entry = NSMAX_SETTING_FIELDS[key];
+			if (!entry) continue;
+			nsmaxSetAttr(h2, "data-nsmax-field", key);
+			nsmaxSetText(h2, entry[0]);
+			let hint = h2.nextElementSibling;
+			if (!hint?.classList.contains("nsmax-setting-hint")) {
+				hint = document.createElement("p");
+				hint.className = "nsmax-setting-hint";
+				h2.after(hint);
+			}
+			nsmaxSetText(hint, entry[1]);
+		}
+		for (const tip of right.querySelectorAll(".storage-tip")) {
+			const raw = tip.getAttribute("data-nsmax-storage") || tip.textContent.trim();
+			nsmaxSetAttr(tip, "data-nsmax-storage", raw);
+			nsmaxSetText(tip, raw === "Local" ? "仅本机" : raw === "Remote" ? "同步到账号" : raw);
+			nsmaxSetAttr(tip, "title", raw === "Local" ? "只保存在这个浏览器里" : raw === "Remote" ? "保存在账号上，换设备也生效" : raw);
+		}
+		for (const h2 of right.querySelectorAll(":scope > div > h2, :scope > form > h2")) nsmaxFlag(h2, "data-nsmax-dup-title", !!current && h2.textContent.trim() === current);
+		for (const row of right.querySelectorAll("form > div")) nsmaxFlag(row, "data-nsmax-setting-actions", row.children.length > 0 && Array.from(row.children).every((child) => child.matches("button, .btn")));
+	}
 	function nsmaxPrepareFans() {
 		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
 		for (const tab of document.querySelectorAll(".fans-switcher > a.switcher-item")) {
@@ -1311,6 +1347,7 @@
 			nsmaxPrepareBoard();
 			nsmaxPrepareFans();
 			nsmaxPrepareCredit();
+			nsmaxPrepareSetting();
 			nsmaxCleanNotifications();
 			nsmaxCleanBadgesAndNotifications();
 			const isPost = /^\/post-\d+/.test(location.pathname);

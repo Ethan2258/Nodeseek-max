@@ -5225,3 +5225,608 @@ html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {
   max-height: none !important;
   overflow: visible !important;
 }
+/* ---------- 28. 设置页（/setting）按 sb.sb「个人资料」页重排 ----------
+   2026-10-13 对照 sb.sb/profile 和 NodeSeek 设置页 8 个分页的真实结构：
+   sb.sb 主栏一张表单卡片，卡片标题 15px/600；字段是「标签 13.5px/500 + 一行 12.5px 弱化说明 + 输入框」，单行输入框最宽 520px；
+   底部「保存」墨色胶囊，上方一道 line-soft 细线；设置分页的入口在右侧栏。NodeSeek 顶部那张「头像 + 名字」卡片 sb.sb 没有，去掉。 */
+html[data-nsmax-theme] #user-setting-panel {
+  grid-template-areas: "main side" !important;
+}
+html[data-nsmax-theme] #user-setting-panel > .head-container {
+  display: none !important;
+}
+/* 卡片标题：当前分页名（nsmaxPrepareSetting 写在 data-nsmax-setting-title 上） */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side[data-nsmax-setting-title]::before {
+  content: attr(data-nsmax-setting-title) !important;
+  display: block !important;
+  margin: 0 0 16px !important;
+  padding: 0 0 12px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  color: var(--text-strong) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+/* 分页里的小节标题（修改邮箱、修改密码、最近登录的 IP……）：14px/600；和卡片标题重复的那个隐藏 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(form, div) > h2 {
+  margin: 22px 0 10px !important;
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(form, div) > h2:first-child {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side h2[data-nsmax-dup-title] {
+  display: none !important;
+}
+/* 字段标签下的说明（nsmaxPrepareSetting 补的）、表单里的小标题（「为确保是用户本人，请输入密码」等）按字段标签处理 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .nsmax-setting-hint {
+  margin: -3px 0 8px !important;
+  padding: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.7 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side h3 {
+  margin: 12px 0 5px !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side input:not([type="checkbox"], [type="radio"], [type="file"]) {
+  max-width: 520px !important;
+}
+/* 文本框：旧规则里 :is(input:not(…), select, textarea) 的权重按 input:not(…) 算，把高度压回 auto（rows=10 时 260px）；这里加权压过它 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side textarea:is(#nsmax-lv, *) {
+  height: 132px !important;
+  min-height: 96px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .pure-form-message {
+  display: block !important;
+  margin: 4px 0 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .pure-form-message.invalid {
+  color: var(--danger) !important;
+}
+/* 头像：sb.sb 头像选项卡片——细线框、卡片圆角，头像 44px，「设置头像」细线框小胶囊 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .set-avatar {
+  box-sizing: border-box !important;
+  max-width: 520px !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .set-avatar img {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: var(--r-sm) !important;
+  object-fit: cover !important;
+}
+/* 按钮：主要按钮（确定、启用 2FA）墨色胶囊；「设置头像」和名单搜索是细线框胶囊 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(button.btn, .btn-primary):is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 7px 16px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(button.btn, .btn-primary):is(#nsmax-lv, *):hover {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(a.btn, .pure-button):is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 5px 13px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side :is(a.btn, .pure-button):is(#nsmax-lv, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .pure-button svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+/* 只放了按钮的那一行（保存）：sb.sb .settings-actions——上方 18px、line-soft 细线、内边距 16px */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side form > div[data-nsmax-setting-actions] {
+  display: flex !important;
+  gap: 8px !important;
+  margin: 18px 0 0 !important;
+  padding: 16px 0 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+}
+/* 开关行（常用偏好、首页版块）：名称在左、存储位置标签跟在名称后面、开关靠右；行间 line-soft 细线，最宽 520px */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .switch-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  max-width: 520px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 10px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .switch-wrapper > div:first-child {
+  order: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .storage-tip {
+  order: 1 !important;
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  margin: 0 !important;
+  padding: 0 6px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-subtle) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 16px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .switch-wrapper > label.switch {
+  order: 2 !important;
+  margin-left: auto !important;
+}
+/* 「夜间模式依据」这种标题 + 单选的行 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .configure-groups > div:not(.switch-wrapper) {
+  box-sizing: border-box !important;
+  max-width: 520px !important;
+  margin: 0 !important;
+  padding: 10px 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .configure-groups > div:not(.switch-wrapper) > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 6px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .configure-groups fieldset {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px 18px !important;
+  margin: 0 !important;
+}
+/* 开关本体：sb.sb 同款 36×20 胶囊，关时 line-strong 底、开时墨色底，圆钮 16px */
+html[data-nsmax-theme] #user-setting-panel label.switch {
+  position: relative !important;
+  display: inline-block !important;
+  flex: none !important;
+  width: 36px !important;
+  height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel label.switch > input {
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel label.switch > .slider {
+  position: absolute !important;
+  inset: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--line-strong) !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease !important;
+}
+/* 圆钮用原站自带的 .circle（里面的 ×、✓ 小图标隐藏） */
+html[data-nsmax-theme] #user-setting-panel label.switch > .slider::before {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel label.switch > .slider > .circle {
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: var(--panel) !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2) !important;
+  transform: none !important;
+  transition: transform 0.15s var(--ease-out) !important;
+}
+html[data-nsmax-theme] #user-setting-panel label.switch > .slider > .circle > * {
+  display: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel label.switch > input:checked + .slider {
+  background: var(--action) !important;
+}
+html[data-nsmax-theme] #user-setting-panel label.switch > input:checked + .slider > .circle {
+  transform: translateX(16px) !important;
+}
+html[data-nsmax-theme] #user-setting-panel label.switch > input:focus-visible + .slider {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px !important;
+}
+/* 单选：文字 13.5px，勾选色用主色 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side label.pure-radio {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  width: auto !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side label.pure-radio > input {
+  margin: 0 !important;
+  accent-color: var(--brand) !important;
+}
+/* 最近登录的 IP：细线框列表，IP 等宽字、时间弱化字靠右 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .ip-list {
+  display: block !important;
+  box-sizing: border-box !important;
+  max-width: 520px !important;
+  margin: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .ip-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .ip-item:first-child {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .ip-item > a {
+  color: var(--text) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .ip-item > p {
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+/* 屏蔽用户：搜索框 + 按钮一行，名单是 sb.sb .list 表格 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .block-list > form {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  max-width: 520px !important;
+  margin: 0 0 12px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .block-list > form > input {
+  flex: 1 1 auto !important;
+  max-width: 320px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .block-list table {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: var(--panel) !important;
+  overflow: hidden !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .block-list :is(th, td) {
+  padding: 8px 12px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .block-list th {
+  border-top: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .block-list tbody tr:first-child td {
+  border-top: 0 !important;
+}
+/* 双因素认证：细线框卡片，标题 14px/600 + 说明，右上角状态小胶囊；密码框和按钮一行 */
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-card {
+  box-sizing: border-box !important;
+  max-width: 520px !important;
+  margin: 0 !important;
+  padding: 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 14px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-title {
+  margin: 0 !important;
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-desc {
+  margin: 4px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.7 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-badge {
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  height: 20px !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-badge:not(.disabled) {
+  border-color: transparent !important;
+  background: var(--success-soft) !important;
+  color: var(--success-soft-text) !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-section {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-section .password-wrapper {
+  flex: 1 1 220px !important;
+  max-width: 320px !important;
+}
+
+/* ---------- 29. 私信聊天按 sb.sb 私信页（.dm-*）重排 ----------
+   sb.sb：会话列表行 10px 11px、圆角 12px，头像 38px（圆角 11px）、名字 13.5px/600、时间 11.5px、摘要 12.5px 弱化字，当前会话浅底 + 左侧 3px 黄条；
+   聊天区面板底色，气泡对方次底色、我方墨色实底（深色下浅色），9px 13px、圆角 12px、14px/1.55、无边框；头像 30px（圆角 9px）；
+   时间是居中的 11.5px 弱化字、两侧细线；底部是一整块圆角 16px 的输入盒（次底色、细线框），里面文本框无边框，工具按钮无边框，
+   「发送」32px、圆角 10px 墨色实底。 */
+/* 会话对象：顶栏已经有名字和「用户主页」，聊天区左上角那块头像 + 名字是重复的，去掉 */
+html[data-nsmax-theme] .nspp-messages .nspp-chat-profile {
+  display: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer {
+  gap: 11px !important;
+  margin: 0 0 2px !important;
+  padding: 10px 11px !important;
+  border-radius: calc(12px * var(--r-scale)) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer:hover {
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer[aria-pressed="true"] {
+  background: var(--brand-soft) !important;
+  box-shadow: inset 3px 0 0 var(--mark) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-chat-avatar-link,
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-chat-avatar-link > img {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: calc(11px * var(--r-scale)) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer-title > strong {
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer-title > time {
+  color: var(--text-subtle) !important;
+  font-size: 11.5px !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-snippet {
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+/* 聊天区：面板底色（对方气泡是次底色，底色相同时气泡就看不见，以前只好给气泡加边框） */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-thread {
+  padding: 16px 22px 8px !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message {
+  align-items: flex-end !important;
+  gap: 10px !important;
+  margin: 10px 0 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message > .nspp-chat-avatar-link,
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message > .nspp-chat-avatar-link > img {
+  flex: none !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: calc(9px * var(--r-scale)) !important;
+}
+/* 气泡：Markdown 气泡不保留源码里的换行空白（以前每个气泡下面多出一大截空白） */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble {
+  max-width: min(600px, 82%) !important;
+  padding: 9px 13px !important;
+  border: 0 !important;
+  border-radius: var(--r) !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble.is-markdown {
+  white-space: normal !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble.is-markdown > * {
+  margin: 0 0 6px !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble.is-markdown > :last-child {
+  margin-bottom: 0 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-mine .nspp-messages-bubble a {
+  color: inherit !important;
+  text-decoration: underline !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble img {
+  max-width: 100% !important;
+  border-radius: calc(8px * var(--r-scale)) !important;
+}
+/* 时间：居中小字，两侧细线 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-stamp {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 12px 0 6px !important;
+  color: var(--text-subtle) !important;
+  font-size: 11.5px !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-stamp::before,
+html[data-nsmax-theme] .nspp-messages .nspp-messages-stamp::after {
+  content: "" !important;
+  flex: 1 !important;
+  height: 1px !important;
+  background: var(--line-soft) !important;
+}
+/* 输入区：一整块圆角输入盒，上半是文本框、下半是工具行 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-composer {
+  padding: 10px 22px 16px !important;
+  border-top: 0 !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-message-editor {
+  padding: 10px 12px 0 !important;
+  border: 1px solid var(--line) !important;
+  border-bottom: 0 !important;
+  border-radius: calc(16px * var(--r-scale)) calc(16px * var(--r-scale)) 0 0 !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-composer textarea {
+  min-height: 48px !important;
+  max-height: 180px !important;
+  padding: 2px 2px 6px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions {
+  gap: 4px !important;
+  padding: 4px 8px 8px !important;
+  border: 1px solid var(--line) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 calc(16px * var(--r-scale)) calc(16px * var(--r-scale)) !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-composer:focus-within :is(.nspp-message-editor, .nspp-messages-compose-actions) {
+  border-color: var(--line-strong) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-message-editor-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-message-editor-toolbar > button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 30px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 9px !important;
+  border: 0 !important;
+  border-radius: calc(8px * var(--r-scale)) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-message-editor-toolbar > button:hover,
+html[data-nsmax-theme] .nspp-messages .nspp-message-editor-toolbar > button[aria-pressed="true"] {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions > small {
+  padding: 0 6px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-send {
+  height: 32px !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: calc(10px * var(--r-scale)) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-send:disabled {
+  opacity: 0.5 !important;
+}
