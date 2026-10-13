@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -727,7 +727,7 @@ test("消息中心：仅一套分类、头部只留全部已读、会话导航�
 		const {context,page,errors,calls}=await open(browser,'https://www.nodeseek.com/notification#/message?mode=talk&to=7',{html:nativeTalkPage(),viewport:{width,height:900}});
 		try{
 			await page.waitForSelector('.nspp-messages textarea:visible');
-			assert.equal(await page.locator('.nsmax-message-tabs:visible').count(),1);
+			assert.equal(await page.locator('.nsmax-message-tabs:visible').count(),width>700?0:1,'宽屏顶部分类和左侧列表重复，已去掉；窄屏保留作切换入口');
 			assert.equal(await page.locator('.app-switch:visible,.nspp-messages-fixed-contacts:visible').count(),0);
 			assert.deepEqual(await page.locator('.nspp-messages-top-actions button').allTextContents(),['全部已读']);
 			assert.deepEqual(await page.locator('.nspp-message-editor-toolbar button').allTextContents(),['附件','预览']);
@@ -739,11 +739,11 @@ test("消息中心：仅一套分类、头部只留全部已读、会话导航�
 			await page.locator('.nspp-message-editor-toolbar').getByRole('button',{name:'编辑',exact:true}).click();
 			assert.equal(await page.locator('.nspp-messages textarea').inputValue(),'**本地消息草稿**');
 			const saved=await page.locator('.nspp-messages textarea').inputValue();
-			await page.locator('.nsmax-message-tabs').getByRole('link',{name:/@我/}).click();
-			await page.locator('.nsmax-message-tabs').getByRole('link',{name:/私信/}).click();
+			await page.locator(width>700?'.nsmax-notice-nav':'.nsmax-message-tabs').getByRole('link',{name:/@我/}).click();
+			if(width<=700) await page.locator('.nsmax-message-tabs').getByRole('link',{name:/私信/}).click();
 			await page.locator('.nspp-messages-peer[data-id="7"]').click();
 			assert.equal(await page.locator('.nspp-messages textarea').inputValue(),saved);
-			assert.equal(await page.locator('.nsmax-message-tabs:visible').count(),1);
+			assert.equal(await page.locator('.nsmax-message-tabs:visible').count(),width>700?0:1,'宽屏顶部分类和左侧列表重复，已去掉；窄屏保留作切换入口');
 			assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
 			assert.equal(calls['/api/notification/message/send']||0,0);
 			assert.deepEqual(errors,[]);
@@ -787,8 +787,8 @@ test("搜索侧栏：热榜最近浏览恢复、随页面滚动与统计链接�
 		const side=page.locator('#nsk-right-panel-container'),main=page.locator('#nsk-body-left');
 		assert.ok(Math.abs((await side.boundingBox()).y-(await main.boundingBox()).y)<=1);
 		await page.evaluate(()=>window.scrollTo(0,800));await page.waitForTimeout(50);
-		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'sticky');
-		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'auto');
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'static','sb.sb 的侧栏随页面滚动，不吸顶');
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'visible','侧栏不能自己单独滚动');
 		for(const [label,href]of[['鸡腿','/credit'],['星辰','/stardust/list'],['主题帖','/space/1#/discussions'],['评论数','/space/1#/comments']])assert.equal(await page.locator('.nsmax-account-stat').filter({has:page.locator('dt').filter({hasText:label})}).getAttribute('href'),href);
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'个人设置',exact:true}).getAttribute('href'),'/setting');
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'我的邀请',exact:true}).count(),0);
@@ -914,13 +914,9 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.equal(await checkinLink.getAttribute('href'), '/board');
 
 		const side = pageCard.locator('#nsk-right-panel-container');
-		assert.equal(await side.evaluate(e => getComputedStyle(e).overflowY), 'auto');
-		assert.equal(await side.evaluate(e => getComputedStyle(e).overscrollBehavior), 'contain');
-		const canScroll = await side.evaluate(e => {
-			e.scrollTop = 50;
-			return e.scrollTop > 0;
-		});
-		assert.equal(canScroll, true, 'Right sidebar can scroll independently');
+		// v1.8.1 起按 sb.sb：侧栏随页面一起滚动，不吸顶、不单独滚动（吸顶 + 单独滚动时，切换编辑器等操作会让侧栏往下滑、资料卡被卷掉半截）
+		assert.equal(await side.evaluate(e => getComputedStyle(e).position), 'static');
+		assert.equal(await side.evaluate(e => getComputedStyle(e).overflowY), 'visible');
 		assert.deepEqual(errorsCard, []);
 	} finally { await ctxCard.close(); }
 
@@ -2023,4 +2019,95 @@ test("v1.8.1 只保留圆角：旧设置里保存的「直角」不再生效", a
 		assert.equal(state.input, "8px");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
+});
+
+test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字操作，楼层编辑用铅笔图标；多行签名不裁、不半透明", async () => {
+	const edit = '<div class="menu-item"><svg class="iconpark-icon"><use href="#edit"></use></svg><span>编辑</span></div>';
+	let menus = 0;
+	const html = postPage()
+		.replace(/<div class="comment-menu">/g, (m) => (++menus <= 2 ? m + edit : m))
+		.replace("</article>", '</article><div class="signature"><p><a href="https://example.com/aff">瓦工AFF</a></p>\n<p>#不卖东西！</p>\n</div>');
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html });
+	try {
+		await page.waitForSelector(".nsmax-op-actions .nsmax-op-edit");
+		await wait(page, 600);
+		const state = await page.evaluate(() => {
+			const op = document.querySelector(".nsk-post > .content-item");
+			const nativeEdit = op.querySelector(":scope > .comment-menu > .menu-item[data-nsmax-action=edit]");
+			const floorEdit = document.querySelector("ul.comments .menu-item[data-nsmax-action=edit]");
+			const sig = op.querySelector(".signature");
+			const lines = [...sig.querySelectorAll("p")];
+			const box = sig.getBoundingClientRect();
+			const before = floorEdit ? getComputedStyle(floorEdit, "::before") : null;
+			return {
+				links: [...op.querySelectorAll(".nsmax-op-action")].map((a) => a.textContent.trim()),
+				nativeHidden: !!nativeEdit && getComputedStyle(nativeEdit).display === "none",
+				floorMask: before ? (before.maskImage || before.webkitMaskImage) : "missing",
+				opacity: lines.map((p) => getComputedStyle(p).opacity),
+				margins: lines.map((p) => getComputedStyle(p).marginTop),
+				lastInside: lines.at(-1).getBoundingClientRect().bottom <= box.bottom + 0.5,
+				sameColor: getComputedStyle(sig.querySelector("a")).color === getComputedStyle(lines[1]).color
+			};
+		});
+		assert.deepEqual(state.links, ["引用", "回复", "编辑", "举报"]);
+		assert.equal(state.nativeHidden, true);
+		assert.match(state.floorMask, /^url\(/, "楼层编辑要有图标");
+		assert.deepEqual(state.opacity, ["1", "1"]);
+		assert.deepEqual(state.margins, ["0px", "0px"]);
+		assert.equal(state.lastInside, true, "签名第二行不能被裁掉");
+		assert.equal(state.sameColor, true, "签名里的链接和文字同色");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.1 同一帖子的其它评论页不新开标签页；回复区「直达底部」把光标放进回复框", async () => {
+	const html = postPage().replace("</article>", '<p><a class="t-same" href="/post-1000-2">第二页</a> <a class="t-other" href="/post-2000-1">别的帖子</a></p></article>');
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html });
+	try {
+		await wait(page, 900);
+		const targets = await page.evaluate(() => ({ same: document.querySelector(".t-same").getAttribute("target"), other: document.querySelector(".t-other").getAttribute("target") }));
+		assert.notEqual(targets.same, "_blank", "同一帖子的评论页不能在新标签页打开");
+		assert.equal(targets.other, "_blank", "别的帖子仍按设置在新标签页打开");
+		await page.locator(".comment-container .nsmax-jump-reply").click();
+		await page.waitForTimeout(700);
+		assert.equal(await page.evaluate(() => !!document.activeElement?.closest(".md-editor")), true, "光标应在回复框里");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.1 个人空间「收藏」：列表占满一行接在标签下面，删除图标在右", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10#/collections", { html: spaceCollectionsPage() });
+	try {
+		await wait(page, 900);
+		const layout = await page.evaluate(() => {
+			const sel = document.querySelector(".selector").getBoundingClientRect();
+			const list = document.querySelector(".selector .discussion-wrapper").getBoundingClientRect();
+			const tab = document.querySelector(".selector > a.select-item.active").getBoundingClientRect();
+			const item = document.querySelector(".discussion-wrapper > a.discussion-item").getBoundingClientRect();
+			const del = document.querySelector(".discussion-wrapper > a.discussion-item > .i-icon-delete").getBoundingClientRect();
+			return { listWidth: Math.round(list.width), selWidth: Math.round(sel.width), tabAbove: tab.bottom <= list.top + 1, delRight: Math.round(item.right - del.right) };
+		});
+		assert.ok(layout.listWidth >= layout.selWidth, `列表应占满一行（${layout.listWidth} / ${layout.selWidth}）`);
+		assert.equal(layout.tabAbove, true, "标签应在列表上方");
+		assert.ok(layout.delRight <= 16, `删除图标应在右边（离右边 ${layout.delRight}px）`);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.1 深浅色按钮图标跟着页面实际深浅色；Cloudflare 安全验证页不套主题", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ dark: true }), seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { enabled: true, colorMode: "light" } } } });
+	try {
+		await wait(page);
+		const icon = await page.evaluate(() => ({ dark: document.documentElement.hasAttribute("data-nsmax-dark"), sun: getComputedStyle(document.querySelector(".nsmax-icon-sun")).display, moon: getComputedStyle(document.querySelector(".nsmax-icon-moon")).display }));
+		assert.equal(icon.dark, false);
+		assert.notEqual(icon.sun, "none", "浅色时显示太阳");
+		assert.equal(icon.moon, "none");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+	const challenge = '<!DOCTYPE html><html lang="zh-cn"><head><title>请稍候…</title><script src="/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1?ray=1"></script></head><body><div class="main-wrapper" role="main"><div class="main-content"><h1 class="zone-name-title h1">www.nodeseek.com</h1><p class="h2">正在进行安全验证</p></div></div></body></html>';
+	const cf = await open(browser, "https://www.nodeseek.com/", { html: challenge });
+	try {
+		await wait(cf.page, 800);
+		assert.equal(await cf.page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-theme")), false, "验证页不能套主题");
+	} finally { await cf.context.close(); }
 });

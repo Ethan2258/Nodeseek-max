@@ -369,13 +369,13 @@
 		}
 	}
 	function nsmaxCleanPostActions() {
-		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"] };
+		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"], "edit": ["编辑","edit"] };
 		for (const menu of document.querySelectorAll(".comment-menu")) {
 			const seen = new Set();
 			for (const action of Array.from(menu.querySelectorAll(":scope > .menu-item"))) {
 			const href = action.querySelector("svg use")?.getAttribute("href")?.slice(1);
-			const label = action.title || Array.from(action.querySelectorAll("span")).map(span=>span.textContent.trim()).find(text=>/^(点赞|加鸡腿|反对|收藏|引用|回复)$/.test(text)) || names[href]?.[0];
-			const icon = ({ "点赞":"thumbup","加鸡腿":"drumstick","反对":"thumbdown","收藏":"star","引用":"quote","回复":"reply" })[label];
+			const label = action.title || Array.from(action.querySelectorAll("span")).map(span=>span.textContent.trim()).find(text=>/^(点赞|加鸡腿|反对|收藏|引用|回复|编辑)$/.test(text)) || names[href]?.[0];
+			const icon = ({ "点赞":"thumbup","加鸡腿":"drumstick","反对":"thumbdown","收藏":"star","引用":"quote","回复":"reply","编辑":"edit" })[label];
 			if (!icon) continue;
 			if (seen.has(icon)) { action.remove(); continue; }
 			seen.add(icon);
@@ -651,7 +651,7 @@
 			const author = item.querySelector(":scope > .nsk-content-meta-info .author-info");
 			if (hot && author) author.append(hot);
 			for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
-				const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报)$/.test(text));
+				const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报|编辑)$/.test(text));
 				if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
 				for (const span of action.querySelectorAll(":scope > span")) {
 					const text = span.textContent.trim();
@@ -1074,6 +1074,26 @@
 			});
 
 			metaInfo.append(actions);
+		}
+
+		// 自己的主帖：NodeSeek 的「编辑」在主帖下方的按钮里（没有标题也没有图标，只剩一个色块）。sb.sb 把编辑放在楼主信息右侧的
+		// 小字操作里（回复 编辑 …），这里照做：小字操作栏里补一个「编辑」，点它就是点原站的编辑按钮；补上以后原站那个按钮隐藏
+		const opBar = metaInfo?.querySelector(".nsmax-op-actions");
+		if (opBar) {
+			const nativeEdit = opPost.querySelector(".content-item > .comment-menu > .menu-item[data-nsmax-action='edit']");
+			let editLink = opBar.querySelector(".nsmax-op-edit");
+			if (nativeEdit && !editLink) {
+				editLink = document.createElement("a");
+				editLink.className = "nsmax-op-action nsmax-op-edit";
+				editLink.setAttribute("role", "button");
+				editLink.title = "编辑本帖";
+				editLink.textContent = "编辑";
+				editLink.addEventListener("click", () => opPost.querySelector(".content-item > .comment-menu > .menu-item[data-nsmax-action='edit']")?.click());
+				const reply = opBar.querySelector(".nsmax-op-reply");
+				if (reply) reply.after(editLink);
+				else opBar.append(editLink);
+			} else if (!nativeEdit && editLink) editLink.remove();
+			if (nativeEdit) nsmaxSetAttr(nativeEdit, "data-nsmax-op-moved");
 		}
 
 		// 4. 清理主帖底部 comment-menu 内的“引用”和“回复”
@@ -1871,6 +1891,22 @@
 					level.className = "nsmax-person-level";
 					nsmaxApplyLevel(level, data.rank);
 					meta.append(level);
+				}
+				// 头衔（活跃、管理、骗子、临时禁言……）：接口的 roles 是名称时直接用；页面上这位用户名字后面已有的头衔也算上；
+				// 管理员没有对应头衔时补「管理」。最多 4 个，违规类红色、管理类黄色
+				const rawRoles = data.roles;
+				const roleNames = (Array.isArray(rawRoles) ? rawRoles : typeof rawRoles === "string" ? rawRoles.split(/[,，|\s]+/) : rawRoles && typeof rawRoles === "object" ? Object.values(rawRoles) : [])
+					.map((role) => typeof role === "string" ? role : role?.name || role?.title || role?.role_name || role?.label || "")
+					.concat(Array.from(owner?.querySelectorAll(".author-info > :is(.role-tag, .user-badge, .nsk-badge):not([data-nsmax-level])") || [], (tag) => tag.textContent))
+					.map((text) => String(text).trim())
+					.filter((text) => text && text.length <= 8 && !/^\d+$/.test(text) && !/^(楼主|Lv\.?\s*\d+)$/i.test(text));
+				if (data.isAdmin && !roleNames.some((text) => /管理/.test(text))) roleNames.unshift("管理");
+				for (const text of [...new Set(roleNames)].slice(0, 4)) {
+					const role = document.createElement("span");
+					role.className = "nsmax-person-role";
+					role.dataset.tone = /骗|禁言|封禁|小黑屋|违规|拉黑/.test(text) ? "danger" : /管理|版主|官方/.test(text) ? "staff" : "plain";
+					role.textContent = text;
+					meta.append(role);
 				}
 				// 注册时长：created_at → 「注册 N 天 / N 个月 / N 年 M 个月」，悬停显示具体日期
 				const created = Date.parse(data.created_at || "");
