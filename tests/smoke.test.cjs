@@ -1363,13 +1363,15 @@ test("v1.7.15 视觉与体验精修：设置面板去遮罩去灰条、字体切
 		const pagerState = await pagePager.evaluate(() => {
 			const pager = document.querySelector(".nsk-pager.pager-bottom, .post-bottom-pager, .nsk-pager:not(.pager-top)");
 			const footer = document.querySelector("footer, .footer, body > footer");
+			const hidden = !footer || getComputedStyle(footer).display === "none";
 			return {
 				pagerVisible: pager ? getComputedStyle(pager).display !== "none" : false,
-				footerHidden: !footer || getComputedStyle(footer).display === "none"
+				// v1.8.1 起桌面端按 sb.sb 新版显示页脚（品牌区 + 5 列链接），它是排在内容之后的普通块：不能固定 / 粘在底部，也不能盖住翻页区
+				footerClear: hidden || (!/fixed|sticky/.test(getComputedStyle(footer).position) && footer.getBoundingClientRect().top >= pager.getBoundingClientRect().bottom)
 			};
 		});
 		assert.equal(pagerState.pagerVisible, true);
-		assert.equal(pagerState.footerHidden, true, "页脚应当彻底隐藏，不应在翻页处形成遮罩");
+		assert.equal(pagerState.footerClear, true, "页脚不应在翻页处形成遮罩");
 		assert.deepEqual(errorsPager, []);
 	} finally { await ctxPager.close(); }
 });

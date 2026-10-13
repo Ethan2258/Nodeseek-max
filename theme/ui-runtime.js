@@ -753,6 +753,68 @@
 		// 登录 / 注册：按钮组
 		for (const box of document.querySelectorAll(":is(#login-panel, #register-panel) fieldset > div")) nsmaxFlag(box, "data-nsmax-btn-group", !!box.querySelector(":scope > button"));
 	}
+	// 页脚品牌块（sb.sb 2026-10-12 新版页脚左侧：标志 + 简介 + 社交图标）。NodeSeek 页脚没有这一块，这里补上：
+	// 简介用站点自己 <meta name=description> 的意思（NodeSeek 给出中文），社交图标取原站「联系我们」里的链接和页脚里的 RSS
+	var NSMAX_FOOTER_ICONS = {
+		telegram: "M21.5 3.6 2.8 10.8c-1 .4-1 1.8.1 2.1l4.6 1.4 1.8 5.6c.3.9 1.4 1.1 2 .4l2.6-2.7 4.7 3.5c.8.6 1.9.1 2.1-.9l3-14.9c.2-1.1-.9-2-1.9-1.7Z M8.4 14.2l9.8-7.4",
+		mail: "M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v10A1.5 1.5 0 0 1 20 18.5H4A1.5 1.5 0 0 1 2.5 17V7A1.5 1.5 0 0 1 4 5.5Z M3 7l9 6.5L21 7",
+		rss: "M5 11a8 8 0 0 1 8 8 M5 4.5A14.5 14.5 0 0 1 19.5 19 M6 19h.01"
+	};
+	function nsmaxBuildFooter() {
+		const inner = document.querySelector("body > footer .contain");
+		if (!inner || inner.querySelector(":scope > .nsmax-footer-brand")) return;
+		const brand = document.createElement("div");
+		brand.className = "nsmax-footer-brand";
+		const deep = /deepflood/i.test(location.hostname);
+		const logo = document.createElement("a");
+		logo.className = "nsmax-footer-logo";
+		logo.href = "/";
+		const mark = document.createElement("span");
+		mark.className = "nsmax-logo-mark";
+		mark.setAttribute("aria-hidden", "true");
+		const word = document.createElement("span");
+		word.className = "nsmax-logo-word";
+		word.textContent = deep ? "DeepFlood" : "NodeSeek";
+		logo.append(mark, word);
+		const about = document.createElement("p");
+		about.className = "nsmax-footer-about";
+		about.textContent = deep ? (document.querySelector('meta[name="description"]')?.content || "") : "NodeSeek 是热爱网站开发、主机、VPS / 服务器等极客事物的人们的聚集地。";
+		const social = document.createElement("p");
+		social.className = "nsmax-footer-social";
+		const links = [];
+		for (const a of inner.querySelectorAll(".col.social a[href]")) {
+			const href = a.getAttribute("href") || "";
+			if (/t\.me\//.test(href)) links.push(["telegram", href, "Telegram"]);
+			else if (/^mailto:/.test(href)) links.push(["mail", href, "邮件"]);
+		}
+		const rss = Array.from(inner.querySelectorAll("a[href]")).find((a) => /rss/i.test(a.getAttribute("href") || "") || /RSS/.test(a.textContent));
+		if (rss) links.push(["rss", rss.getAttribute("href"), "RSS 订阅"]);
+		for (const [icon, href, label] of links) {
+			const a = document.createElement("a");
+			a.href = href;
+			a.setAttribute("aria-label", label);
+			a.title = label;
+			if (/^https?:/.test(href)) { a.target = "_blank"; a.rel = "noopener noreferrer"; }
+			const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			svg.setAttribute("viewBox", "0 0 24 24");
+			svg.setAttribute("fill", "none");
+			svg.setAttribute("stroke", "currentColor");
+			svg.setAttribute("stroke-width", "1.7");
+			svg.setAttribute("stroke-linecap", "round");
+			svg.setAttribute("stroke-linejoin", "round");
+			svg.setAttribute("aria-hidden", "true");
+			for (const d of NSMAX_FOOTER_ICONS[icon].split(" M")) {
+				const path = document.createElementNS(svg.namespaceURI, "path");
+				path.setAttribute("d", d.startsWith("M") ? d : "M" + d);
+				svg.append(path);
+			}
+			a.append(svg);
+			social.append(a);
+		}
+		brand.append(logo, about);
+		if (social.childElementCount) brand.append(social);
+		inner.prepend(brand);
+	}
 	// 首帧前就要完成的界面整理：页面解析阶段每解析出一段执行一次（parsed 判断元素是否已解析完），
 	// 之后 mountLeanUi 的 scan 也调用同一套（都可重复执行），所以首屏就是最终的样子，不会先显示原样再变。
 	function nsmaxEarlyVisuals(parsed) {
@@ -761,6 +823,7 @@
 		nsmaxEnsureNqEntry(parsed);
 		nsmaxTidyPagers();
 		nsmaxTagStructure();
+		nsmaxBuildFooter();
 		nsmaxCleanPostActions();
 		nsmaxMarkLevels();
 		nsmaxApplyChineseTimes(parsed);
@@ -1240,6 +1303,7 @@
 				nsmaxDecoratePostDetail();
 			}
 			nsmaxTagStructure();
+			nsmaxBuildFooter();
 			if (!isPost && !/^\/(?:new|edit)-discussion/.test(location.pathname)) return;
 			for (const image of document.querySelectorAll(".nsk-post article.post-content img,ul.comments article.post-content img")) {
 				if (images.has(image)) continue; images.add(image);
