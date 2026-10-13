@@ -5135,6 +5135,10 @@ html[data-nsmax-theme] .md-editor textarea:not(.CodeMirror textarea) {
   padding: 10px 12px !important;
   text-indent: 0 !important;
 }
+/* Markdown 编辑器（CodeMirror）同样从左上角 10px 12px 开始（以前 14px 18px，下面还空 36px） */
+html[data-nsmax-theme] #nsk-body-left .md-editor .CodeMirror-lines {
+  padding: 10px 12px 14px !important;
+}
 html[data-nsmax-theme] .md-editor textarea::placeholder {
   color: transparent !important;
   opacity: 0 !important;
@@ -5650,7 +5654,7 @@ html[data-nsmax-theme] #user-setting-panel .selector-right-side .twofa-section .
 
 /* ---------- 29. 私信聊天按 sb.sb 私信页（.dm-*）重排 ----------
    sb.sb：会话列表行 10px 11px、圆角 12px，头像 38px（圆角 11px）、名字 13.5px/600、时间 11.5px、摘要 12.5px 弱化字，当前会话浅底 + 左侧 3px 黄条；
-   聊天区面板底色，气泡对方次底色、我方墨色实底（深色下浅色），9px 13px、圆角 12px、14px/1.55、无边框；头像 30px（圆角 9px）；
+   聊天区面板底色，气泡对方次底色、我方墨色实底（深色下浅色），9px 13px、14px/1.55、无边框；头像 30px；
    时间是居中的 11.5px 弱化字、两侧细线；底部是一整块圆角 16px 的输入盒（次底色、细线框），里面文本框无边框，工具按钮无边框，
    「发送」32px、圆角 10px 墨色实底。 */
 /* 会话对象：顶栏已经有名字和「用户主页」，聊天区左上角那块头像 + 名字是重复的，去掉 */
@@ -5661,7 +5665,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-peer {
   gap: 11px !important;
   margin: 0 0 2px !important;
   padding: 10px 11px !important;
-  border-radius: calc(12px * var(--r-scale)) !important;
+  border-radius: var(--r) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-peer:hover {
   background: var(--panel-alt) !important;
@@ -5674,7 +5678,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-chat-avatar-li
 html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-chat-avatar-link > img {
   width: 38px !important;
   height: 38px !important;
-  border-radius: calc(11px * var(--r-scale)) !important;
+  border-radius: var(--r-input) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-peer-title > strong {
   color: var(--text) !important;
@@ -5704,7 +5708,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-message > .nspp-chat-avatar
   flex: none !important;
   width: 30px !important;
   height: 30px !important;
-  border-radius: calc(9px * var(--r-scale)) !important;
+  border-radius: var(--r-sm) !important;
 }
 /* 气泡：Markdown 气泡不保留源码里的换行空白（以前每个气泡下面多出一大截空白） */
 html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble {
@@ -5730,7 +5734,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-mine .nspp-messa
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble img {
   max-width: 100% !important;
-  border-radius: calc(8px * var(--r-scale)) !important;
+  border-radius: var(--r-input) !important;
 }
 /* 时间：居中小字，两侧细线 */
 html[data-nsmax-theme] .nspp-messages .nspp-messages-stamp {
@@ -5758,7 +5762,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-message-editor {
   padding: 10px 12px 0 !important;
   border: 1px solid var(--line) !important;
   border-bottom: 0 !important;
-  border-radius: calc(16px * var(--r-scale)) calc(16px * var(--r-scale)) 0 0 !important;
+  border-radius: var(--r) var(--r) 0 0 !important;
   background: var(--panel-alt) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-composer textarea {
@@ -5779,7 +5783,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions {
   padding: 4px 8px 8px !important;
   border: 1px solid var(--line) !important;
   border-top: 0 !important;
-  border-radius: 0 0 calc(16px * var(--r-scale)) calc(16px * var(--r-scale)) !important;
+  border-radius: 0 0 var(--r) var(--r) !important;
   background: var(--panel-alt) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-composer:focus-within :is(.nspp-message-editor, .nspp-messages-compose-actions) {
@@ -5799,7 +5803,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-message-editor-toolbar > button {
   margin: 0 !important;
   padding: 0 9px !important;
   border: 0 !important;
-  border-radius: calc(8px * var(--r-scale)) !important;
+  border-radius: var(--r-input) !important;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--text-muted) !important;
@@ -5821,7 +5825,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-send {
   height: 32px !important;
   padding: 0 14px !important;
   border: 0 !important;
-  border-radius: calc(10px * var(--r-scale)) !important;
+  border-radius: var(--r-pill) !important;
   background: var(--action) !important;
   color: var(--action-text) !important;
   font-size: 13px !important;
@@ -5829,4 +5833,16 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-send {
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-send:disabled {
   opacity: 0.5 !important;
+}
+
+/* 圆角统一：消息中心也只用全站这一套（卡片 12px、输入框 8px、小部件 6px、按钮胶囊）。sb.sb 私信页自己用了 16 / 11 / 10 / 9px 几种，
+   这里不照搬，整块面板、搜索框、左侧图标都回到同一套规格 */
+html[data-nsmax-theme] .nspp-messages {
+  border-radius: var(--r) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-search input {
+  border-radius: var(--r-input) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nsmax-notice-nav-icon {
+  border-radius: var(--r-input) !important;
 }
