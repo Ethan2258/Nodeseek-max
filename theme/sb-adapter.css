@@ -942,7 +942,7 @@ html[data-nsmax-theme]:root:root:root[data-nsmax-page="fans"] :is(#nsk-body-left
   }
 }
 
-html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card, [data-nsmax-page="fans"] .member-card) {
+html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card-wrapper > .user-card, [data-nsmax-page="fans"] .member-card) {
   display: flex !important;
   flex-direction: column !important;
   padding: 20px !important;
@@ -955,7 +955,7 @@ html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card,
   height: 100% !important;
 }
 
-html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card, [data-nsmax-page="fans"] .member-card):hover {
+html[data-nsmax-theme] :is(.nsmax-fan-card, [data-nsmax-page="fans"] .user-card-wrapper > .user-card, [data-nsmax-page="fans"] .member-card):hover {
   transform: translateY(-2px) !important;
   box-shadow: var(--shadow-medium) !important;
   border-color: var(--line-strong) !important;
@@ -968,7 +968,7 @@ html[data-nsmax-theme] .nsmax-fan-header {
   margin-bottom: 16px !important;
 }
 
-html[data-nsmax-theme] :is(.nsmax-fan-header .avatar, .nsmax-fan-card .avatar, [data-nsmax-page="fans"] .user-card .avatar) {
+html[data-nsmax-theme] :is(.nsmax-fan-header .avatar, .nsmax-fan-card .avatar, [data-nsmax-page="fans"] .user-card-wrapper > .user-card .avatar) {
   width: 44px !important;
   height: 44px !important;
   border-radius: 10px !important;

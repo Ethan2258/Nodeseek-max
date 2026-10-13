@@ -86,8 +86,7 @@ html[data-nsmax-theme] body {
   --code-name: #e45649;
   /* 主色上的文字：浅色主色是墨色 → 白字；深色主色是黄色 → 墨字（sb.sb 没有这个变量，按它的用法补上） */
   --on-brand: #ffffff;
-  /* 形状与尺寸：sb.sb 有圆角 / 直角两种模式，就是 --r-scale 取 1 或 0。默认圆角（卡片 12px、输入框 8px、小部件 6px、
-     按钮与标签胶囊），设置里选「直角」时为 0 */
+  /* 形状与尺寸：只用 sb.sb 的圆角模式（卡片 12px、输入框 8px、按钮与标签胶囊；直角模式已删除）。半径都乘 --r-scale，固定为 1。 */
   --r-scale: 1;
   --nav-ctl: 34px;
   --r-xs: calc(4px * var(--r-scale));
@@ -179,10 +178,6 @@ html[data-nsmax-theme] body {
   --bg-sub-color: var(--panel) !important;
   --text-color: var(--text) !important;
   --text-color-secondary: var(--text-subtle) !important;
-}
-html[data-nsmax-theme][data-nsmax-radius="square"],
-html[data-nsmax-theme][data-nsmax-radius="square"] body {
-  --r-scale: 0;
 }
 html[data-nsmax-theme][data-nsmax-size="large"],
 html[data-nsmax-theme][data-nsmax-size="large"] body {

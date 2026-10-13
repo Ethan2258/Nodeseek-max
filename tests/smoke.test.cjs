@@ -1862,6 +1862,7 @@ test("v1.8.1 我的关注 / 粉丝：sb.sb 成员卡片、按钮挪进卡片、�
 			assert.deepEqual(await page.locator(".fans-switcher > a.switcher-item").allInnerTexts(), ["我的关注", "我的粉丝"]);
 			assert.equal(await page.locator(".nsmax-member").first().locator(".nsmax-member-actions > .btn").count(), 3);
 			assert.equal(await page.locator(".usercard-button-group > .btn").count(), 0);
+			assert.equal(await page.locator(".hover-user-card").evaluate((el) => getComputedStyle(el).display), "none", "NodeSeek 自己的悬停资料卡没触发时不能显示出来");
 			assert.equal(await page.locator(".user-card-wrapper [data-nsmax-usercard]").count(), 0, "成员卡片不能被当成侧栏资料卡");
 			assert.equal(await page.locator(".nsmax-member").nth(1).locator(".nsmax-member-bio").innerText(), "加入 1316 天");
 			assert.equal(await page.locator(".nsmax-member").first().locator("[data-nsmax-level]").getAttribute("data-nsmax-level"), "6");
@@ -1932,10 +1933,12 @@ test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动立即保存、搜索�
 			const box = await host.locator("dialog").evaluate((d) => ({ radius: getComputedStyle(d).borderTopLeftRadius, width: d.getBoundingClientRect().width }));
 			assert.equal(box.radius, "12px");
 			assert.ok(box.width <= 720, `弹窗宽 ${box.width}`);
-			// 分段选择：点「直角」立即写入存储
-			await host.getByRole("radio", { name: "直角", exact: true }).click();
-			assert.equal(await host.getByRole("radio", { name: "直角", exact: true }).getAttribute("aria-checked"), "true");
-			assert.equal((await stored(page))["modern-theme"].radius, "square");
+			// 只保留圆角：面板里没有圆角 / 直角选项
+			assert.equal(await host.getByRole("radio", { name: "直角" }).count(), 0);
+			// 分段选择：点「再大一号」立即写入存储
+			await host.getByRole("radio", { name: "再大一号", exact: true }).click();
+			assert.equal(await host.getByRole("radio", { name: "再大一号", exact: true }).getAttribute("aria-checked"), "true");
+			assert.equal((await stored(page))["modern-theme"].fontSize, "xlarge");
 			// 今日热门：总开关同时关掉「侧栏显示」，不会留下关不掉的子开关
 			await host.getByRole("checkbox", { name: "今日热门", exact: true }).uncheck();
 			const hot = (await stored(page))["hot-rankings"];
@@ -1997,6 +2000,27 @@ test("v1.8.1 用户备注与本地好友：名字后面的胶囊标签", async (
 		assert.notEqual(state.noteBg, state.friendBg);
 		assert.equal(state.noteAuthor, "user0");
 		assert.equal(state.friendAuthor, "user1");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.1 只保留圆角：旧设置里保存的「直角」不再生效", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(),
+		seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { enabled: true, radius: "square" } } }
+	});
+	try {
+		await wait(page);
+		const state = await page.evaluate(() => ({
+			attr: document.documentElement.getAttribute("data-nsmax-radius"),
+			scale: getComputedStyle(document.body).getPropertyValue("--r-scale").trim(),
+			card: getComputedStyle(document.querySelector(".post-list-controler")).borderTopLeftRadius,
+			input: getComputedStyle(document.querySelector("#search-site")).borderTopLeftRadius
+		}));
+		assert.equal(state.attr, "large");
+		assert.equal(state.scale, "1");
+		assert.equal(state.card, "12px");
+		assert.equal(state.input, "8px");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
