@@ -1309,52 +1309,60 @@ test("v1.7.15 视觉与体验精修：设置面板去遮罩去灰条、字体切
 		const dialog = pageSet.locator("#nspp-settings dialog");
 		await dialog.waitFor({ state: "visible" });
 
-		// 检查 Shadow DOM 内部样式：content 无 mask-image，h3 无 sticky 且背景透明
+		// 检查 Shadow DOM 内部样式：滚动区 .body 无 mask-image，模块标题不吸顶、无底色条（v1.8.1 起面板按 sb.sb 重做）
 		const styles = await pageSet.evaluate(() => {
 			const host = document.querySelector("#nspp-settings");
 			const shadow = host?.shadowRoot;
-			const content = shadow?.querySelector(".content");
-			const h3 = shadow?.querySelector("h3");
+			const content = shadow?.querySelector(".body");
+			const h3 = shadow?.querySelector(".module-title");
 			const cStyle = content ? getComputedStyle(content) : null;
 			const hStyle = h3 ? getComputedStyle(h3) : null;
 			return {
+				found: !!content && !!h3,
 				maskImage: cStyle?.maskImage || cStyle?.webkitMaskImage || "none",
 				h3Position: hStyle?.position || "",
 				h3Bg: hStyle?.backgroundColor || ""
 			};
 		});
+		assert.ok(styles.found, "面板里应有滚动区和模块标题");
 		assert.ok(styles.maskImage === "none" || styles.maskImage === "", "content 不应含有遮罩 mask-image");
 		assert.notEqual(styles.h3Position, "sticky", "h3 不应为 sticky 悬浮条");
 		assert.deepEqual(errorsSet, []);
 	} finally { await ctxSet.close(); }
 
-	// 2. 字体切换生效验证（Claude / Inter / System）
-	const { context: ctxFont, page: pageFont, errors: errorsFont } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
-		html: postPage(),
-		seed: {
-			"nsmax:migrate:font-system": true,
-			"nspp:settings:www.nodeseek.com": {
-				"modern-theme": {
-					enabled: true,
-					font: "claude"
-				}
+	// 2. 字体切换生效验证：Inter、系统字体都要改到页面实际用的字体变量（以前被设计层的默认值盖掉）；已移除的 Claude 字体回到 sb.sb 同款
+	for (const [font, attr, sans, mono] of [
+		["inter", "inter", /^"Inter Variable"/, /^"JetBrains Mono Variable"/],
+		["system", "system", /^system-ui/, /^ui-monospace/],
+		["claude", "sbsb", /^system-ui/, /^"Space Mono"/]
+	]) {
+		const { context: ctxFont, page: pageFont, errors: errorsFont } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+			html: postPage(),
+			seed: {
+				"nsmax:migrate:font-system": true,
+				"nsmax:migrate:font-sbsb": true,
+				"nspp:settings:www.nodeseek.com": { "modern-theme": { enabled: true, font } }
 			}
-		}
-	});
-	try {
-		await wait(pageFont);
-		const fontState = await pageFont.evaluate(() => {
-			const html = document.documentElement;
-			const post = document.querySelector("article.post-content, .post-content, h1");
-			return {
-				htmlFontAttr: html.getAttribute("data-nsmax-font"),
-				postFont: post ? getComputedStyle(post).fontFamily : ""
-			};
 		});
-		assert.equal(fontState.htmlFontAttr, "claude", "HTML 应当具有 data-nsmax-font=claude 属性");
-		assert.ok(/serif/i.test(fontState.postFont), "Claude 模式下正文应当应用衬线体: " + fontState.postFont);
-		assert.deepEqual(errorsFont, []);
-	} finally { await ctxFont.close(); }
+		try {
+			await wait(pageFont);
+			const fontState = await pageFont.evaluate(() => {
+				const style = getComputedStyle(document.body);
+				const post = document.querySelector("article.post-content, .post-content, h1");
+				return {
+					attr: document.documentElement.getAttribute("data-nsmax-font"),
+					sans: style.getPropertyValue("--font-sans").trim(),
+					mono: style.getPropertyValue("--font-mono").trim(),
+					postFont: post ? getComputedStyle(post).fontFamily : ""
+				};
+			});
+			assert.equal(fontState.attr, attr, `${font}：data-nsmax-font`);
+			assert.match(fontState.sans, sans, `${font}：--font-sans`);
+			assert.match(fontState.mono, mono, `${font}：--font-mono`);
+			assert.match(fontState.postFont, sans, `${font}：正文实际字体 ${fontState.postFont}`);
+			assert.deepEqual(errorsFont, []);
+		} finally { await ctxFont.close(); }
+	}
 
 	// 3. 翻页区域去遮罩与页脚完全隐藏
 	const { context: ctxPager, page: pagePager, errors: errorsPager } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
@@ -1904,4 +1912,91 @@ test("v1.8.1 账簿：sb.sb 积分账本表格、页码挪到表格下方居中�
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
+});
+
+test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动立即保存、搜索、联动开关、每个模块都有名字", async () => {
+	const KEY = "nspp:settings:www.nodeseek.com";
+	const stored = (page) => page.evaluate((key) => JSON.parse(localStorage.getItem("__gm__:" + key) || "{}"), KEY);
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ dark }), colorScheme: dark ? "dark" : "light", viewport: { width: 1440, height: 900 } });
+		try {
+			await wait(page);
+			await page.getByRole("button", { name: "NodeSeek Max 设置", exact: true }).click();
+			const host = page.locator("#nspp-settings");
+			await host.locator("dialog").waitFor({ state: "visible" });
+			assert.deepEqual(await host.getByRole("tab").allInnerTexts(), ["外观", "浏览", "用户", "工具", "网络", "关于"]);
+			const modules = await host.locator(".module").evaluateAll((list) => list.map((m) => ({ id: m.dataset.feature, title: m.querySelector(".module-title")?.textContent.trim() || "" })));
+			assert.ok(modules.length >= 20, `模块数 ${modules.length}`);
+			assert.deepEqual(modules.filter((m) => !m.title), [], "不能有没名字的空白开关");
+			for (const id of ["sb-page-controls", "post-status-style"]) assert.ok(!modules.some((m) => m.id === id), `${id} 不进面板`);
+			const box = await host.locator("dialog").evaluate((d) => ({ radius: getComputedStyle(d).borderTopLeftRadius, width: d.getBoundingClientRect().width }));
+			assert.equal(box.radius, "12px");
+			assert.ok(box.width <= 720, `弹窗宽 ${box.width}`);
+			// 分段选择：点「直角」立即写入存储
+			await host.getByRole("radio", { name: "直角", exact: true }).click();
+			assert.equal(await host.getByRole("radio", { name: "直角", exact: true }).getAttribute("aria-checked"), "true");
+			assert.equal((await stored(page))["modern-theme"].radius, "square");
+			// 今日热门：总开关同时关掉「侧栏显示」，不会留下关不掉的子开关
+			await host.getByRole("checkbox", { name: "今日热门", exact: true }).uncheck();
+			const hot = (await stored(page))["hot-rankings"];
+			assert.equal(hot.enabled, false);
+			assert.equal(hot.sidebar, false);
+			// 分页切换与搜索
+			await host.getByRole("tab", { name: "工具", exact: true }).click();
+			assert.equal(await host.locator('.module[data-feature="image-upload"]').isVisible(), true);
+			assert.equal(await host.locator('.module[data-feature="modern-theme"]').isVisible(), false);
+			await host.getByRole("searchbox", { name: "搜索设置" }).fill("备注");
+			await page.waitForTimeout(300);
+			assert.deepEqual(await host.locator(".module").evaluateAll((list) => list.map((m) => m.dataset.feature)), ["user-notes"]);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("v1.8.1 自动翻页按设置运行：帖子列表默认不接下一页，打开「帖子自动翻页」才出现加载按钮", async () => {
+	for (const posts of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
+			html: listPage(),
+			pages: { "/page-2": listPage() },
+			seed: { "nspp:settings:www.nodeseek.com": { "infinite-scroll": { enabled: true, posts, comments: true } } }
+		});
+		try {
+			await wait(page, 900);
+			assert.equal(await page.locator("ul.post-list ~ button.nspp-action").count(), posts ? 1 : 0, `posts=${posts}`);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("v1.8.1 用户备注与本地好友：名字后面的胶囊标签", async () => {
+	const seed = { "nspp:settings:www.nodeseek.com": { "user-notes": { enabled: true, notes: "user0=测试备注" }, "local-friends": { enabled: true, users: "user1" } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed });
+	try {
+		await page.waitForSelector(".nspp-user-note");
+		await page.waitForSelector(".nspp-friend-badge");
+		const state = await page.evaluate(() => {
+			const note = document.querySelector(".nspp-user-note");
+			const friend = document.querySelector(".nspp-friend-badge");
+			return {
+				note: note.textContent,
+				title: note.title,
+				friend: friend.textContent,
+				height: note.getBoundingClientRect().height,
+				radius: parseFloat(getComputedStyle(note).borderTopLeftRadius),
+				noteBg: getComputedStyle(note).backgroundColor,
+				friendBg: getComputedStyle(friend).backgroundColor,
+				noteAuthor: note.closest(".post-list-item")?.querySelector(".info-author")?.textContent.trim(),
+				friendAuthor: friend.closest(".post-list-item")?.querySelector(".info-author")?.textContent.trim()
+			};
+		});
+		assert.equal(state.note, "测试备注");
+		assert.equal(state.title, "备注：测试备注");
+		assert.equal(state.friend, "好友");
+		assert.equal(state.height, 16);
+		assert.ok(state.radius >= 8, `圆角 ${state.radius}`);
+		assert.notEqual(state.noteBg, state.friendBg);
+		assert.equal(state.noteAuthor, "user0");
+		assert.equal(state.friendAuthor, "user1");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });

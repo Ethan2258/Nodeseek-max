@@ -32,11 +32,6 @@ html[data-nsmax-theme] body { background:var(--bg)!important; color:var(--text)!
 /* 全站统一字体；代码块、行内代码、NodeSeek 的 xterm 终端和 CodeMirror 内部保留它们自己的等宽字体（不然高亮的 span、终端的行都会变成无衬线字，列对不齐） */
 html[data-nsmax-theme] body,html[data-nsmax-theme] button,html[data-nsmax-theme] input,html[data-nsmax-theme] textarea:not(.xterm-helper-textarea),html[data-nsmax-theme] select,html[data-nsmax-theme] :is(a,p,span,div):not(.xterm,:is(pre,code,kbd,samp,.xterm,.CodeMirror) *) {font-family:var(--font-sans)!important;letter-spacing:0!important;}
 html[data-nsmax-theme] {--font-sans:-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;--font-serif:"Source Serif 4","Charter","Bitstream Charter","Sitka Text",Georgia,Cambria,"Songti SC","SimSun",serif;}
-html[data-nsmax-theme][data-nsmax-font="system"] {--font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
-html[data-nsmax-theme][data-nsmax-font="inter"] {--font-sans:"Inter Variable","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;}
-html[data-nsmax-theme][data-nsmax-font="site"] {--font-sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
-html[data-nsmax-theme][data-nsmax-font="claude"] {--font-sans:"Inter Variable","Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;}
-html[data-nsmax-theme][data-nsmax-font="claude"] :is(.post-content, .comment-content, .markdown-body, .nsk-post-content, .post-entry .post-body, .comment-item .comment-body, article:not(.post-list-item) p, .post-title, h1, h2) {font-family:var(--font-serif)!important;}
 html[data-nsmax-theme] body > footer {display:none!important;}
 html[data-nsmax-theme] #nsk-frame {overflow:visible!important;width:100%!important;min-height:0!important;}
 html[data-nsmax-theme] #nsk-body {display:grid!important;grid-template-columns:minmax(0,1fr) 260px;gap:20px;width:100%!important;max-width:1200px!important;margin:20px auto!important;padding:0 16px!important;background:transparent!important;box-shadow:none!important;border:0!important;}

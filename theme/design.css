@@ -192,6 +192,18 @@ html[data-nsmax-theme][data-nsmax-size="xlarge"],
 html[data-nsmax-theme][data-nsmax-size="xlarge"] body {
   --sb-title: 18px;
 }
+/* 字体设置：默认「sb.sb 同款」就是上面的变量（系统字体 + Space Mono 数字）。另外两种在这里覆盖，选择器多一个属性，
+   权重压过上面的默认值（以前写在适配层，被这一层的默认变量盖掉，切换后看不出变化）。
+   Inter：界面 Inter、数字 JetBrains Mono（首次在线下载后缓存）；系统字体：数字也用系统等宽字体，不下载任何字体。 */
+html[data-nsmax-theme][data-nsmax-font="inter"],
+html[data-nsmax-theme][data-nsmax-font="inter"] body {
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
+}
+html[data-nsmax-theme][data-nsmax-font="system"],
+html[data-nsmax-theme][data-nsmax-font="system"] body {
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", monospace;
+}
 
 /* ---------- 0. 变量：sb.sb 原值（深色） ---------- */
 html[data-nsmax-theme][data-nsmax-dark],
@@ -3915,6 +3927,42 @@ html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme {
   color: var(--text) !important;
   font-size: 15px !important;
   line-height: 1.8 !important;
+}
+
+/* ---------- 19c. 用户备注 / 本地好友标签 ----------
+   设置「用户」页里的两项：跟在用户名后面，和头衔同一套胶囊（18px 高、11px 字）。备注用中性浅底，太长时截断（悬停看全文）；
+   好友用 sb.sb 的黄色强调浅底。列表行的作者信息字小，标签相应缩到 16px 高。 */
+html[data-nsmax-theme] :is(.nspp-user-note, .nspp-friend-badge) {
+  display: inline-block !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  max-width: 12em !important;
+  margin: 0 !important;
+  padding: 0 7px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 16px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme] .nspp-friend-badge {
+  border-color: var(--warning-border) !important;
+  background: var(--mark-soft) !important;
+  color: var(--mark-soft-text) !important;
+}
+html[data-nsmax-theme] .post-info > :is(.nspp-user-note, .nspp-friend-badge) {
+  height: 16px !important;
+  margin-left: -2px !important;
+  padding: 0 6px !important;
+  font-size: 10.5px !important;
+  line-height: 14px !important;
 }
 
 /* ---------- 19b. 名字后面的头衔与等级徽章 ----------
