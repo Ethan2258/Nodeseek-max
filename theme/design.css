@@ -5993,3 +5993,24 @@ html[data-nsmax-theme] #nsk-body-left .post-title mark {
   background: var(--mark-soft) !important;
   color: inherit !important;
 }
+/* 私信输入区工具行：工具按钮（附件、预览）不被压缩；「Enter 发送…」提示放不下时截断，不再盖住「预览」（手机宽度、字体偏宽时会盖住半个按钮，点不到）；
+   手机上没有 Shift，不显示这行提示 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions > .nspp-message-editor-toolbar {
+  flex: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions > small {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions > .nspp-messages-send {
+  flex: none !important;
+  margin-left: auto !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions > small {
+    display: none !important;
+  }
+}

@@ -654,6 +654,10 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-send:hover {
   html[data-nsmax-theme]:root:root:root .nspp-messages-workspace {
     grid-template-columns: minmax(0, 1fr) !important;
   }
+  /* 手机只有一列：聊天区、通知区也放进第 1 列（宽屏时它们在第 2 列；不改的话手机上会多出一列空白，聊天区左边空出一截） */
+  html[data-nsmax-theme]:root:root:root .nspp-messages-workspace > :is(.nspp-messages-sidebar, .nspp-messages-chat, .nspp-notice-workspace) {
+    grid-column: 1 / -1 !important;
+  }
   html[data-nsmax-theme]:root:root:root .nspp-messages:not(.has-conversation) > .nspp-messages-workspace > :is(.nspp-messages-chat, .nspp-notice-workspace) {
     display: none !important;
   }

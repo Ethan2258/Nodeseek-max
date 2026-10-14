@@ -2266,3 +2266,28 @@ test("v1.8.0 私信里粘贴图片：没改过设置也走 NodeImage（以前默
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+test("v1.8.0 私信：手机宽度聊天区占满整行；输入区「Enter 发送」提示不盖住「预览」按钮", async () => {
+	for (const width of [390, 1440]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: nativeTalkPage(), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector(".nspp-messages textarea:visible");
+			await wait(page, 300);
+			// 字体偏宽时（Linux 的中文字体）也不能盖住：把字距拉大模拟
+			await page.addStyleTag({ content: ".nspp-messages-compose-actions, .nspp-messages-compose-actions * { letter-spacing: 1.5px !important; }" });
+			await wait(page, 100);
+			const state = await page.evaluate(() => {
+				const preview = Array.from(document.querySelectorAll(".nspp-message-editor-toolbar button")).find((b) => b.textContent.trim() === "预览");
+				preview.scrollIntoView({ block: "center", behavior: "instant" });
+				const r = preview.getBoundingClientRect();
+				const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+				const workspace = document.querySelector(".nspp-messages-workspace").getBoundingClientRect();
+				const chat = document.querySelector(".nspp-messages-chat").getBoundingClientRect();
+				return { previewHit: preview.contains(hit), chatLeft: Math.round(chat.left - workspace.left), chatRight: Math.round(workspace.right - chat.right) };
+			});
+			assert.equal(state.previewHit, true, `${width}：「预览」按钮中心不能被提示文字盖住`);
+			if (width <= 700) assert.deepEqual([state.chatLeft, state.chatRight], [0, 0], "手机上聊天区左右贴满");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
