@@ -314,7 +314,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.1");
+	assert.equal(packageJson.version, "1.8.2");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -2435,4 +2435,21 @@ test("消息中心：通知列表名字和动作挨在一起、时间靠右成�
 		for (const row of rows) assert.ok(Math.abs(row.mid) <= 2, `时间和正文同一条中线：差 ${row.mid}`);
 		assert.deepEqual(system.errors, []);
 	} finally { await system.context.close(); }
+});
+
+test("今日热门在页面解析阶段就按缓存画出来（不再等整页解析完才「卡着进来」），模块挂载时原地接管、不重复", async () => {
+	const posts = Array.from({ length: 12 }, (_, i) => ({ id: 3000 + i, title: `缓存热帖 ${i + 1}`, author: `a${i}`, views: 900 - i * 10, comments: 5, score: 1000 - i }));
+	const seed = { "nspp:state:www.nodeseek.com:hot-rankings": { "snapshot:daily": { posts, fetched: Date.now() - 6e4, updated: Date.now() - 6e4 } } };
+	const init = `(() => { new MutationObserver((list, observer) => { if (document.querySelector(".nsmax-hot-panel")) { window.__hotAt = performance.now(); window.__hotEarly = document.querySelector(".nsmax-hot-panel").hasAttribute("data-nsmax-hot-early"); observer.disconnect(); } }).observe(document, { childList: true, subtree: true }); document.addEventListener("DOMContentLoaded", () => { window.__dcl = performance.now(); }, { once: true }); })();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed, init, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-hot-panel:not([data-nsmax-hot-early])");
+		await wait(page, 300);
+		const state = await page.evaluate(() => ({ hotAt: window.__hotAt, dcl: window.__dcl, early: window.__hotEarly, panels: document.querySelectorAll(".nsmax-hot-panel").length, first: document.querySelector(".nsmax-hot-text")?.textContent }));
+		// 本地夹具一下子就解析完，和 DOMContentLoaded 比先后没有意义；先出现的是解析阶段画的面板，就说明没等模块挂载
+		assert.equal(state.early, true, "先出现的是解析阶段画的面板");
+		assert.equal(state.panels, 1, "模块接管后只有一个热榜面板");
+		assert.equal(state.first, "缓存热帖 1");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });

@@ -6756,3 +6756,27 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > .nspp-m
   line-height: 1.6 !important;
   white-space: nowrap !important;
 }
+/* ---------- 34. 回复框、发帖框的光标位置照 sb.sb（2026-10-14） ----------
+   sb.sb 的输入框是一个 textarea，内边距 7px 10px，文字离左边框 11px、上边框 8px。这里外框已经是 7px 10px，
+   里面的 CodeMirror 行区（10px 12px 14px）、每一行（左右 4px）又各加了一层，光标离左边 27px、离上边 18px，看着又低又靠里。
+   现在外框的 7px 10px 就是全部留白，里面不再加；纯文本输入框也用 7px 10px（以前 10px 12px）。字号 14px、行高 1.7 与 sb.sb 相同 */
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] .CodeMirror-lines:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] pre.CodeMirror-line:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] pre.CodeMirror-line-like:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] .CodeMirror-sizer:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: 0 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 7px 10px !important;
+}
+/* 消息中心：卡片高度占满窗口——卡片上边在顶栏下 81px 处，下面留 26px，页面正好不出滚动条（以前最高 780px，大屏下面空一大块） */
+@media (min-width: 701px) {
+  html[data-nsmax-theme] .nspp-messages:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    height: calc(100dvh - 107px) !important;
+    min-height: 480px !important;
+  }
+}
