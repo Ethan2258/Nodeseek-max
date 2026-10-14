@@ -6780,3 +6780,113 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:is(#nsmax-lv,
     min-height: 480px !important;
   }
 }
+/* ---------- 35. 楼层操作照 sb.sb .post-ops 改成小字（2026-10-14） ----------
+   sb.sb 每层右上角是一排 12px 次要色小字：回复 举报 亮了 1 点灭 #4，字与字之间 8px，楼号紧跟在后面。
+   这里同样排成：回复 引用 点赞 19 鸡腿 45 反对 #44——不再是一排 48px 宽的图标槽位（图标之间、图标和楼号之间都空一大块）。
+   整排靠右，楼号在最右边，所有楼层（含楼中楼）的楼号右边对齐；悬停变正文色。
+   这一排高 32px、竖直居中，和左边名字那行（名字 / 等级 / 时间）的中线对齐 */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 8px !important;
+  height: 32px !important;
+  min-height: 0 !important;
+}
+/* 旧主题把整排往左挪了 8px（给以前图标槽位的左留白让位），小字排法不需要，否则楼号前会空出 16px */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 8px !important;
+  height: 21px !important;
+  margin: 0 !important;
+  translate: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: baseline !important;
+  justify-content: flex-start !important;
+  gap: 3px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 21px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 21px !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  display: inline !important;
+  flex: none !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  background: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  color: inherit !important;
+  font: inherit !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=reply]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "回复" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=quote]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "引用" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=thumbup]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "点赞" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=drumstick]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "鸡腿" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=thumbdown]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "反对" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=star]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "收藏" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=edit]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "编辑" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=reply]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 1 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=quote]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 2 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=thumbup]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 3 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=drumstick]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 4 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=thumbdown]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 5 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=star]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 6 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=edit]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 7 !important; }
+/* 手机（≤700px）：右上角放不下这一排（会压到名字和时间上）。sb.sb 手机上把 .post-ops 换到名字下面单独一行、靠左和名字对齐，
+   和名字那行隔 8px；这里一样，正文接在下面 */
+@media (max-width: 700px) {
+  html[data-nsmax-theme] #nsk-body-left ul.comments li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 2 / -1 !important;
+    grid-row: 2 !important;
+    justify-self: start !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    height: auto !important;
+    min-height: 21px !important;
+    row-gap: 0 !important;
+    margin: 4px 0 0 !important;
+  }
+  /* 很窄的屏幕上楼中楼放不下一排时折到下一行，不叠在一起 */
+  html[data-nsmax-theme] #nsk-body-left ul.comments li.content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    row-gap: 0 !important;
+  }
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *) > :is(svg, .nsmax-icon, .iconpark-icon, [data-nsmax-action-label]) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *) > span[data-nsmax-action-count] {
+  color: inherit !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 21px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 0 !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+  text-align: right !important;
+}

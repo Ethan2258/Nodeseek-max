@@ -224,8 +224,8 @@ test("回复编辑器：真实嵌套结构可输入、引用和点击原生提�
 		await page.locator(".md-editor button.submit").click();
 		assert.equal(await page.evaluate(() => window.__nativeSubmit), 1);
 		assert.equal(await page.locator(".md-editor textarea").inputValue(), "本地回归测试，不发送到论坛");
-		const masks = await page.locator('.comment-menu [title="点赞"],.comment-menu [title="引用"],.comment-menu [title="回复"]').evaluateAll(es => es.map(e => getComputedStyle(e,"::before").content));
-		assert.ok(masks.every(mask => mask === '""'));
+		const labels = await page.locator('.nsmax-floor-actions .comment-menu :is([title="点赞"],[title="引用"],[title="回复"])').evaluateAll(es => es.map(e => [e.title, getComputedStyle(e,"::before").content]));
+		assert.ok(labels.length > 0 && labels.every(([title, content]) => content === `"${title}"`), JSON.stringify(labels));
 		assert.equal(await page.locator('.nsmax-floor-actions .menu-item[data-nsmax-compact-action]').count(),15);
 		assert.equal(Object.keys(calls).some(key => key.startsWith("/api/account/getInfo/")), false);
 		assert.deepEqual(errors, []);
@@ -314,7 +314,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.2");
+	assert.equal(packageJson.version, "1.8.3");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -569,7 +569,7 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 	}finally{await context.close();}
 });
 
-test("评论对齐：操作区在右上方、无文字、保留真实计数、正文与作者对齐",async()=>{
+test("评论对齐：操作区在右上方、照 sb.sb 用小字、保留真实计数、正文与作者对齐",async()=>{
 	const html=postPage().replaceAll('title="引用"','title="引用"').replaceAll('<span></span>','<span>引用</span>');
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html,viewport:{width:1440,height:900}});
 	try{
@@ -581,7 +581,7 @@ test("评论对齐：操作区在右上方、无文字、保留真实计数、�
 		assert.ok(dims.every(r=>r.authorX===dims[0].authorX),JSON.stringify(dims));
 		assert.equal(await page.locator('.nsmax-floor-actions [data-nsmax-action-label]:visible').count(),0);
 		assert.equal(await page.locator('.nsmax-floor-actions [title="点赞"] [data-nsmax-action-count]').first().innerText(),'1');
-		assert.equal(await page.locator('.nsmax-floor-actions .menu-item').first().evaluate(e=>getComputedStyle(e,'::before').maskImage==='none'),false);
+		assert.equal(await page.locator('.nsmax-floor-actions .menu-item[data-nsmax-action=thumbup]').first().evaluate(e=>getComputedStyle(e,'::before').content),'"点赞"');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });
@@ -832,13 +832,13 @@ test("列表图标与抽奖：五项单图标、SB 悬停色、抽奖标签唯�
 	}finally{await context.close();}
 });
 
-test("评论单图标、楼主蓝色热评红色、楼中楼透明、预览仅标题正文",async()=>{
+test("评论操作小字、楼主蓝色热评红色、楼中楼透明、预览仅标题正文",async()=>{
 	const html=postPage().replace('<a href="#1" class="floor-link">','<span class="hot-badge"></span><a href="#1" class="floor-link">');
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html});
 	try{
 		await page.waitForSelector('.nsmax-floor-actions');
 		assert.equal(await page.locator('.comment-menu .menu-item>svg:visible').count(),0);
-		assert.equal(await page.locator('.nsmax-floor-actions [data-nsmax-action=reply]').first().evaluate(e=>getComputedStyle(e,'::before').maskImage==='none'),false);
+		assert.equal(await page.locator('.nsmax-floor-actions [data-nsmax-action=reply]').first().evaluate(e=>getComputedStyle(e,'::before').content),'"回复"');
 		assert.equal(await page.locator('.is-poster').evaluate(e=>getComputedStyle(e).color),'rgb(26, 26, 26)');
 		assert.equal(await page.locator('.is-poster').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(245, 197, 24)');
 		// 热评：sb.sb 没有对应元素，沿用它的 .post-user-group--staff 小标签（红底白字）
@@ -2024,7 +2024,7 @@ test("v1.8.1 只保留圆角：旧设置里保存的「直角」不再生效", a
 	} finally { await context.close(); }
 });
 
-test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字操作，楼层编辑用铅笔图标；多行签名不裁、不半透明", async () => {
+test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字操作，楼层编辑也是小字；多行签名不裁、不半透明", async () => {
 	const edit = '<div class="menu-item"><svg class="iconpark-icon"><use href="#edit"></use></svg><span>编辑</span></div>';
 	let menus = 0;
 	const html = postPage()
@@ -2045,7 +2045,7 @@ test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字�
 			return {
 				links: [...op.querySelectorAll(".nsmax-op-action")].map((a) => a.textContent.trim()),
 				nativeHidden: !!nativeEdit && getComputedStyle(nativeEdit).display === "none",
-				floorMask: before ? (before.maskImage || before.webkitMaskImage) : "missing",
+				floorEdit: (document.querySelector("ul.comments .nsmax-floor-edit")?.textContent || (before ? before.content.replace(/"/g, "") : "missing")).trim(),
 				opacity: lines.map((p) => getComputedStyle(p).opacity),
 				margins: lines.map((p) => getComputedStyle(p).marginTop),
 				lastInside: lines.at(-1).getBoundingClientRect().bottom <= box.bottom + 0.5,
@@ -2054,7 +2054,7 @@ test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字�
 		});
 		assert.deepEqual(state.links, ["引用", "回复", "编辑", "举报"]);
 		assert.equal(state.nativeHidden, true);
-		assert.match(state.floorMask, /^url\(/, "楼层编辑要有图标");
+		assert.equal(state.floorEdit, "编辑", "楼层编辑是「编辑」小字");
 		assert.deepEqual(state.opacity, ["1", "1"]);
 		assert.deepEqual(state.margins, ["0px", "0px"]);
 		assert.equal(state.lastInside, true, "签名第二行不能被裁掉");
@@ -2325,20 +2325,42 @@ test("登录 / 注册页：表单显示出来（以前 #nsk-body-left-block 被�
 	} finally { await list.context.close(); }
 });
 
-test("楼层操作行：每层 5 个 48px 槽位，计数不推开后面的图标；楼中楼和外层楼层的图标上下对齐", async () => {
+test("楼层操作行：照 sb.sb 排成一排 12px 小字（回复 引用 点赞 鸡腿 反对 #楼号），字间 8px；楼中楼的楼号和外层右边对齐；手机上换到名字下面一行", async () => {
 	const html = postPage({ dark: true }).replace("价格不错，帮顶", '<a href="/space/11">@buyer</a> <a href="/post-1000-1#1">#1</a> 价格不错，帮顶').replace(/(<li class="content-item" id="2">[\s\S]*?)<span>1<\/span>/, "$1<span>19</span>");
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
-	try {
-		await page.waitForSelector("li[id='1'] > .nsmax-nested-replies > li[id='2']");
-		await wait(page, 400);
-		const rows = await page.evaluate(() => Array.from(document.querySelectorAll("ul.comments li.content-item")).map((li) => Array.from(li.querySelectorAll(":scope > .nsmax-floor-actions :is(.menu-item, .floor-link)")).filter((e) => e.getBoundingClientRect().width > 0).map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.width)]; })));
-		assert.equal(rows.length, 3);
-		for (const row of rows) {
-			assert.deepEqual(row.slice(0, 5).map(([, w]) => w), [48, 48, 48, 48, 48], "五个操作槽位都是 48px");
-			assert.deepEqual(row, rows[0], "所有楼层（含楼中楼）图标位置相同");
-		}
-		assert.deepEqual(errors, []);
-	} finally { await context.close(); }
+	const measure = () => Array.from(document.querySelectorAll("ul.comments li.content-item")).map((li) => {
+		const actions = li.querySelector(":scope > .nsmax-floor-actions");
+		const parts = Array.from(actions.querySelectorAll(".menu-item, .floor-link")).filter((e) => e.getBoundingClientRect().width > 0).map((e) => ({ e, r: e.getBoundingClientRect() })).sort((a, b) => a.r.left - b.r.left);
+		const box = actions.getBoundingClientRect();
+		const name = li.querySelector(".author-name").getBoundingClientRect();
+		const body = li.querySelector(":scope > article").getBoundingClientRect();
+		return {
+			labels: parts.map(({ e }) => (e.matches(".floor-link") ? e.textContent.trim().replace(/\d+/, "N") : getComputedStyle(e, "::before").content.replace(/"/g, ""))),
+			gaps: parts.slice(1).map(({ r }, i) => Math.round(r.left - parts[i].r.right)),
+			sizes: [...new Set(parts.map(({ e }) => getComputedStyle(e).fontSize))],
+			right: Math.round(parts.at(-1).r.right),
+			midDiff: Math.abs((box.top + box.bottom) / 2 - (name.top + name.bottom) / 2),
+			left: Math.round(box.left), nameLeft: Math.round(name.left),
+			top: box.top, bottom: box.bottom, nameBottom: name.bottom, bodyTop: body.top
+		};
+	});
+	for (const width of [1440, 390]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector("li[id='1'] > .nsmax-nested-replies > li[id='2']");
+			await wait(page, 400);
+			const rows = await page.evaluate(measure);
+			assert.equal(rows.length, 3);
+			for (const row of rows) {
+				assert.deepEqual(row.labels, ["回复", "引用", "点赞", "鸡腿", "反对", "#N"], JSON.stringify(row));
+				assert.ok(row.gaps.every((gap) => Math.abs(gap - 8) <= 1), `字与字之间 8px：${JSON.stringify(row)}`);
+				assert.deepEqual(row.sizes, ["12px"]);
+				if (width > 700) assert.ok(row.midDiff <= 1, `和名字那行中线对齐：${JSON.stringify(row)}`);
+				else assert.ok(row.top >= row.nameBottom && row.bottom <= row.bodyTop && Math.abs(row.left - row.nameLeft) <= 1, `手机上在名字下面单独一行、和名字左对齐：${JSON.stringify(row)}`);
+			}
+			if (width > 700) assert.ok(rows.every((row) => row.right === rows[0].right), `所有楼层（含楼中楼）楼号右边对齐：${JSON.stringify(rows)}`);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
 });
 
 test("签到排行、管理记录：补上右栏（资料卡 + 今日热门），主栏和右栏两端对齐顶栏，管理记录页码居中", async () => {

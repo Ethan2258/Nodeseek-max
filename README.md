@@ -1,6 +1,6 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.2**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角），保留论坛原生编辑与提交。
+NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.3**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角），保留论坛原生编辑与提交。
 
 ## 安装
 
