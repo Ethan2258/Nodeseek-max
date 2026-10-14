@@ -2363,12 +2363,18 @@ test("签到排行、管理记录：补上右栏（资料卡 + 今日热门）�
 });
 
 test("右栏固定在顶栏下面、可单独滚动；页面别处的操作顺带滚动右栏时滚回原位", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ count: 40 }), viewport: { width: 1440, height: 600 } });
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ count: 40 }), viewport: { width: 1440, height: 500 } });
 	try {
 		await page.waitForSelector(".nsmax-hot-text");
+		// 等首屏整理完（整理期间主栏还收着，页面没那么长）、右栏内容比可视高度高（能单独滚动）
+		await page.waitForFunction(() => {
+			const side = document.getElementById("nsk-right-panel-container");
+			return !document.documentElement.matches("[data-nsmax-boot-left], [data-nsmax-boot-right]") && document.scrollingElement.scrollHeight > 2400 && side.scrollHeight > side.clientHeight + 40;
+		}, null, { timeout: 8000 });
 		const side = page.locator("#nsk-right-panel-container");
 		await page.evaluate(() => window.scrollTo(0, 1200));
 		await wait(page, 100);
+		assert.ok(Math.abs(await page.evaluate(() => scrollY) - 1200) <= 1, "页面滚到 1200");
 		assert.ok(Math.abs((await side.boundingBox()).y - 77) <= 1, "滚动页面后右栏还停在顶栏下面");
 		// 程序顺带滚动右栏（没有滚轮 / 触摸 / 键盘）：滚回原位
 		const restored = await side.evaluate(async (e) => { e.scrollTop = 120; await new Promise((r) => setTimeout(r, 80)); return e.scrollTop; });
