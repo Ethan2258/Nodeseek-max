@@ -1931,9 +1931,9 @@ test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动立即保存、搜索�
 			assert.ok(box.width <= 720, `弹窗宽 ${box.width}`);
 			// 只保留圆角：面板里没有圆角 / 直角选项
 			assert.equal(await host.getByRole("radio", { name: "直角" }).count(), 0);
-			// 分段选择：点「再大一号」立即写入存储
-			await host.getByRole("radio", { name: "再大一号", exact: true }).click();
-			assert.equal(await host.getByRole("radio", { name: "再大一号", exact: true }).getAttribute("aria-checked"), "true");
+			// 分段选择：点「特大」立即写入存储
+			await host.getByRole("radio", { name: "特大", exact: true }).click();
+			assert.equal(await host.getByRole("radio", { name: "特大", exact: true }).getAttribute("aria-checked"), "true");
 			assert.equal((await stored(page))["modern-theme"].fontSize, "xlarge");
 			// 今日热门：总开关同时关掉「侧栏显示」，不会留下关不掉的子开关
 			await host.getByRole("checkbox", { name: "今日热门", exact: true }).uncheck();
@@ -2117,4 +2117,152 @@ test("v1.8.1 深浅色按钮图标跟着页面实际深浅色；Cloudflare 安�
 		assert.equal(await normal.page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-theme")), true, "普通页面带 Cloudflare 检测脚本时主题照常生效");
 		assert.equal(await normal.page.locator(".nsmax-settings-button").count(), 1, "功能照常挂载");
 	} finally { await normal.context.close(); }
+});
+
+// ---------- v1.8.0 设置项排查：选了会出问题的选项去掉，换成重新设计的 ----------
+const OPT_KEY = "nspp:settings:www.nodeseek.com";
+const ownerPost = () => postPage().replace(/\/space\/12/g, "/space/10").replace(/passerby/g, "seller");
+const longReply = Array.from({ length: 40 }, (_, i) => `第 ${i + 1} 段：晚高峰实测丢包率很低，三网回程都走 CN2 GIA。`).join("</p><p>");
+
+test("v1.8.0 设置项重做：图片上传只剩开关、网络请求三档节奏、关键词屏蔽自动判断等级、列表增强不再预读", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await wait(page);
+		await page.getByRole("button", { name: "NodeSeek Max 设置", exact: true }).click();
+		const host = page.locator("#nspp-settings");
+		await host.locator("dialog").waitFor({ state: "visible" });
+		const controls = (id) => host.locator(`.module[data-feature="${id}"]`).evaluate((m) => Array.from(m.querySelectorAll("input, select, textarea"), (c) => `${c.tagName.toLowerCase()}:${c.type || ""}:${c.dataset.key}`));
+		assert.deepEqual(await controls("image-upload"), ["input:checkbox:enabled"], "图床协议、地址、Token 都去掉了");
+		assert.deepEqual(await controls("list-interactions"), ["input:checkbox:enabled"], "自动预读互动计数去掉了");
+		assert.deepEqual(await controls("reading-focus"), ["input:checkbox:enabled"], "只看楼主、折叠高度不再是全局设置");
+		const filter = await controls("content-filter");
+		assert.ok(filter.includes("input:checkbox:lockedAbove"), filter.join());
+		assert.ok(!filter.some((c) => c.startsWith("input:number")), "不再手填当前等级");
+		assert.ok(!filter.includes("input:checkbox:highlight"), "高亮勾选合进「命中后」");
+		await host.getByRole("tab", { name: "网络", exact: true }).click();
+		assert.deepEqual(await host.locator('.module[data-feature="request-settings"] [role=radio]').allInnerTexts(), ["标准", "稳妥", "最慢"]);
+		assert.equal(await host.locator('.module[data-feature="request-settings"] input[type=number]').count(), 0);
+		await host.getByRole("radio", { name: "稳妥", exact: true }).click();
+		const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem("__gm__:" + key) || "{}"), OPT_KEY);
+		assert.equal(stored["request-settings"].pace, "gentle");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.0 只看楼主：回复区标题栏上的按钮，只筛当前帖子，同一标签页刷新后保持", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: ownerPost(), viewport: { width: 1280, height: 900 } });
+	try {
+		await wait(page, 900);
+		const visible = () => page.locator("ul.comments > li.content-item").evaluateAll((items) => items.filter((li) => getComputedStyle(li).display !== "none").map((li) => li.id));
+		const only = page.locator(".comment-container .nsmax-owner-only");
+		assert.equal(await only.innerText(), "只看楼主");
+		assert.deepEqual(await visible(), ["1", "2", "3"]);
+		await only.click();
+		assert.equal(await only.getAttribute("aria-pressed"), "true");
+		assert.deepEqual(await visible(), ["2"], "只剩楼主（seller）的楼层");
+		await page.reload();
+		await wait(page, 900);
+		assert.equal(await page.locator(".comment-container .nsmax-owner-only").getAttribute("aria-pressed"), "true", "同一标签页刷新后保持");
+		assert.deepEqual(await visible(), ["2"]);
+		await page.locator(".comment-container .nsmax-owner-only").click();
+		assert.deepEqual(await visible(), ["1", "2", "3"]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+	// 这一页没有楼主的回复：显示一行提示，不是空白
+	const none = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage() });
+	try {
+		await wait(none.page, 900);
+		await none.page.locator(".comment-container .nsmax-owner-only").click();
+		assert.equal(await none.page.locator("ul.comments").evaluate((ul) => getComputedStyle(ul, "::after").content), '"这一页没有楼主的回复"');
+		assert.deepEqual(none.errors, []);
+	} finally { await none.context.close(); }
+});
+
+test("v1.8.0 折叠超长回复（胶囊按钮、底部渐隐）与关键词屏蔽的「已屏蔽」小条", async () => {
+	const html = postPage().replace("线路怎么样？晚高峰丢包吗？", longReply);
+	const seed = { [OPT_KEY]: { "reading-focus": { enabled: true }, "content-filter": { enabled: true, keywords: "收了", comments: true, mode: "collapse" } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, seed, viewport: { width: 1280, height: 900 } });
+	try {
+		await wait(page, 900);
+		const folded = page.locator('li[id="3"] > article.post-content');
+		assert.equal(Math.round((await folded.boundingBox()).height), 420);
+		assert.equal(await page.locator(".nsk-post article[data-nsmax-folded]").count(), 0, "主帖不折叠");
+		const toggle = page.locator('li[id="3"] > .nsmax-fold-toggle');
+		const style = await toggle.evaluate((b) => ({ text: b.textContent, height: b.getBoundingClientRect().height, radius: parseFloat(getComputedStyle(b).borderTopLeftRadius), mask: getComputedStyle(b.previousElementSibling).maskImage }));
+		assert.equal(style.text, "展开全文");
+		assert.equal(style.height, 28);
+		assert.ok(style.radius >= 14, `胶囊圆角 ${style.radius}`);
+		assert.match(style.mask, /linear-gradient/);
+		await toggle.click();
+		assert.ok((await folded.boundingBox()).height > 720);
+		assert.equal(await toggle.innerText(), "收起");
+		// 关键词命中的回复：原位置一行小条，写明原因；右侧「显示」胶囊点开原内容
+		const bar = page.locator("ul.comments > li.nsmax-filtered");
+		assert.equal(await bar.locator(".nsmax-filtered-label").innerText(), "已屏蔽一条回复：命中「收了」");
+		assert.equal(await page.locator('li[id="1"]').isVisible(), false);
+		await bar.getByRole("button", { name: "显示", exact: true }).click();
+		assert.equal(await page.locator('li[id="1"]').isVisible(), true);
+		assert.equal(await bar.getByRole("button").innerText(), "收起");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.0 关键词「只高亮」不隐藏热榜；停在列表标题上不再整页读取看不见的计数、不再后台预渲染", async () => {
+	const pages = {};
+	for (let i = 0; i < 6; i++) pages[`/post-${1000 + i}-1`] = postPage();
+	const seed = { [OPT_KEY]: { "content-filter": { enabled: true, keywords: "VPS\n甲骨文", mode: "highlight" } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages, seed, viewport: { width: 1280, height: 900 } });
+	try {
+		const requests = [];
+		page.on("request", (r) => { if (/\/post-\d+/.test(r.url())) requests.push(new URL(r.url()).pathname); });
+		await wait(page, 1200);
+		assert.equal(await page.locator(".post-title mark").count(), 1);
+		const mark = await page.locator(".post-title mark").evaluate((m) => getComputedStyle(m).backgroundColor);
+		assert.notEqual(mark, "rgb(255, 255, 0)", "不是浏览器默认的亮黄");
+		assert.equal(await page.locator(".nsmax-hot-panel li a, .nsmax-hot-list li a").count() >= 10, true, "只高亮时热榜照常显示");
+		assert.equal(await page.locator(".nspp-list-actions").count(), 0, "没有看不见的互动计数条");
+		await page.locator("ul.post-list .post-title a").first().hover();
+		await wait(page, 900);
+		const same = requests.filter((path) => path === "/post-1000-1").length;
+		assert.ok(same <= 2, `停一下最多两次请求（卡片预览 + 预取），实际 ${same}：${requests.join()}`);
+		assert.equal(await page.evaluate(() => Array.from(document.querySelectorAll("script[type=speculationrules]")).some((s) => s.textContent.includes("prerender"))), false, "不再预渲染");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.0 帖子列表自动翻页：自动接 3 页后改为点「继续加载下一页」，页脚能翻到", async () => {
+	const pageN = (n) => listPage().replace(/href="\/page-2" rel="next"/g, `href="/page-${n + 1}" rel="next"`).replace(/\/post-(\d+)-1/g, (m, id) => `/post-${Number(id) + n * 100}-1`);
+	const pages = {};
+	for (let n = 2; n <= 6; n++) pages[`/page-${n}`] = pageN(n);
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages, seed: { [OPT_KEY]: { "infinite-scroll": { enabled: true, posts: true, comments: true } } } });
+	try {
+		await wait(page, 900);
+		for (let i = 0; i < 10; i++) {
+			await page.mouse.wheel(0, 4000);
+			await wait(page, 450);
+		}
+		const rows = () => page.locator("ul.post-list > li").count();
+		assert.equal(await rows(), 24, "第 1 页 + 自动接的 3 页");
+		const more = page.locator("ul.post-list ~ button.nspp-action");
+		assert.equal(await more.innerText(), "继续加载下一页");
+		await more.click();
+		await page.waitForFunction(() => document.querySelectorAll("ul.post-list > li").length === 30);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.0 私信里粘贴图片：没改过设置也走 NodeImage（以前默认落到已下线的图床，直接失败）", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: nativeTalkPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nspp-messages textarea:visible");
+		await page.locator(".nspp-messages textarea").evaluate((input) => {
+			const data = new DataTransfer();
+			data.items.add(new File([new Uint8Array([137, 80, 78, 71])], "local.png", { type: "image/png" }));
+			input.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: data }));
+		});
+		await page.waitForFunction(() => window.__uploads?.length === 1);
+		assert.match(await page.evaluate(() => window.__uploads[0].url), /^https:\/\/api\.nodeimage\.com\/api\/upload/);
+		await page.waitForFunction(() => document.querySelector(".nspp-messages textarea").value.includes("abc123.png"));
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });

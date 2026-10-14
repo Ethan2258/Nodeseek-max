@@ -102,7 +102,7 @@ html[data-nsmax-theme] body {
   --post-image-max: 720px;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", monospace;
-  /* 列表标题字号：sb.sb 默认 15px；字号设置「大一号」（默认）与你在 sb.sb 个性设置里的 17px 一致 */
+  /* 列表标题字号：sb.sb 默认 15px；字号设置「大」（默认）与你在 sb.sb 个性设置里的 17px 一致，「特大」18px */
   --sb-title: 15px;
 
   /* 脚本自己的 --nsmax-* 变量全部指向 sb.sb 变量 */
@@ -5852,4 +5852,144 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu 
 html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item::after,
 html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item > span {
   font-weight: 400 !important;
+}
+/* ---------- 30. 设置项重做后的界面（2026-10-14）：只看楼主、折叠超长回复、关键词屏蔽的折叠小条与高亮 ---------- */
+/* 回复区标题栏「只看楼主」：和「直达底部」同一套 12.5px 次要色小字；打开后变成浅黄底小胶囊（sb.sb 的 mark-soft），一眼能看出正在筛选 */
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only {
+  flex: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 22px !important;
+  margin: 0 0 0 12px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only:hover {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only[aria-pressed="true"] {
+  padding: 0 9px !important;
+  background: var(--mark-soft) !important;
+  color: var(--mark-soft-text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only[hidden] {
+  display: none !important;
+}
+/* 只看楼主时：别人的楼层隐藏；楼主回复在别人楼层里的，那一层留着当上下文 */
+html[data-nsmax-theme] #nsk-body-left ul.comments[data-nsmax-owner-only] li.content-item:not([data-nsmax-by-owner]):not([data-nsmax-owner-context]),
+html[data-nsmax-theme] #nsk-body-left ul.comments[data-nsmax-owner-only] > li.nsmax-filtered {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments[data-nsmax-owner-only][data-nsmax-owner-none]::after {
+  content: "这一页没有楼主的回复" !important;
+  display: block !important;
+  padding: 28px 16px !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  text-align: center !important;
+}
+
+/* 折叠超长回复：收到 420px，底部 72px 渐隐；下面一颗 28px 小胶囊「展开全文 / 收起」 */
+html[data-nsmax-theme] #nsk-body-left article.post-content[data-nsmax-folded] {
+  max-height: 420px !important;
+  overflow: hidden !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent) !important;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-fold-toggle {
+  grid-column: 2 !important;
+  justify-self: start !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  width: auto !important;
+  height: 28px !important;
+  margin: 6px 0 2px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-fold-toggle:hover {
+  border-color: var(--line-strong) !important;
+  color: var(--text) !important;
+}
+
+/* 关键词屏蔽「折叠」：被屏蔽的帖子 / 回复原位置留一行弱化小字（为什么屏蔽），右侧「显示 / 收起」小胶囊；左右内边距、分隔线和列表行一致 */
+html[data-nsmax-theme] #nsk-body-left :is(ul.post-list, ul.comments) > li.nsmax-filtered {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  box-sizing: border-box !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 8px 14px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.5 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.nsmax-filtered {
+  padding: 10px 18px !important;
+}
+html[data-nsmax-theme] #nsk-body-left :is(ul.post-list, ul.comments) > li.nsmax-filtered:first-child {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-filtered > .nsmax-filtered-label {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-filtered > .nsmax-filtered-toggle {
+  flex: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 24px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-filtered > .nsmax-filtered-toggle:hover {
+  border-color: var(--line-strong) !important;
+  color: var(--text) !important;
+}
+/* 「只高亮」和折叠展开后，标题里命中的关键词：sb.sb 浅黄底（mark-soft），字色不变，小圆角 */
+html[data-nsmax-theme] #nsk-body-left .post-title mark {
+  padding: 0 2px !important;
+  border-radius: var(--r-xs) !important;
+  background: var(--mark-soft) !important;
+  color: inherit !important;
 }
