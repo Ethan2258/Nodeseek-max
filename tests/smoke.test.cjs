@@ -2372,7 +2372,8 @@ test("右栏固定在顶栏下面、可单独滚动；页面别处的操作顺�
 			return !document.documentElement.matches("[data-nsmax-boot-left], [data-nsmax-boot-right]") && document.scrollingElement.scrollHeight > 2400 && side.scrollHeight > side.clientHeight + 40;
 		}, null, { timeout: 8000 });
 		const side = page.locator("#nsk-right-panel-container");
-		await page.evaluate(() => window.scrollTo(0, 1200));
+		// 页面开着平滑滚动：测试里直接跳过去，不等动画（CI 上动画没走完就量，位置不准）
+		await page.evaluate(() => window.scrollTo({ top: 1200, behavior: "instant" }));
 		await wait(page, 100);
 		assert.ok(Math.abs(await page.evaluate(() => scrollY) - 1200) <= 1, "页面滚到 1200");
 		assert.ok(Math.abs((await side.boundingBox()).y - 77) <= 1, "滚动页面后右栏还停在顶栏下面");
