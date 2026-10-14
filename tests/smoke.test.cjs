@@ -3,10 +3,12 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
+// NodeSeek 自己的偏好（IndexedDB ns-preference-db / ns-preference-store / configuration），页面脚本运行前写好
+const sitePrefInit = (openPostInNewPage) => `(() => { const r = indexedDB.open("ns-preference-db", 1); r.onupgradeneeded = () => r.result.createObjectStore("ns-preference-store"); r.onsuccess = () => { const db = r.result; const tx = db.transaction("ns-preference-store", "readwrite"); tx.objectStore("ns-preference-store").put({ openPostInNewPage: ${openPostInNewPage}, autoDarkMode: false, darkModeFollow: "system" }, "configuration"); tx.oncomplete = () => db.close(); }; })();`;
 
 test.before(async () => {
 	browser = await launch();
@@ -312,7 +314,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.0");
+	assert.equal(packageJson.version, "1.8.1");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -787,8 +789,9 @@ test("搜索侧栏：热榜最近浏览恢复、随页面滚动与统计链接�
 		const side=page.locator('#nsk-right-panel-container'),main=page.locator('#nsk-body-left');
 		assert.ok(Math.abs((await side.boundingBox()).y-(await main.boundingBox()).y)<=1);
 		await page.evaluate(()=>window.scrollTo(0,800));await page.waitForTimeout(50);
-		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'static','sb.sb 的侧栏随页面滚动，不吸顶');
-		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'visible','侧栏不能自己单独滚动');
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).position),'sticky','右栏固定在顶栏下面，不随页面滚动（2026-10-14 按用户要求）');
+		assert.equal(await side.evaluate(e=>getComputedStyle(e).overflowY),'auto','右栏内容比屏幕高时可以单独滚动');
+		assert.ok(Math.abs((await side.boundingBox()).y-77)<=1,'右栏顶端停在顶栏下方 20px');
 		for(const [label,href]of[['鸡腿','/credit'],['星辰','/stardust/list'],['主题帖','/space/1#/discussions'],['评论数','/space/1#/comments']])assert.equal(await page.locator('.nsmax-account-stat').filter({has:page.locator('dt').filter({hasText:label})}).getAttribute('href'),href);
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'个人设置',exact:true}).getAttribute('href'),'/setting');
 		assert.equal(await page.locator('.nsmax-account-menu').getByRole('link',{name:'我的邀请',exact:true}).count(),0);
@@ -914,9 +917,9 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.equal(await checkinLink.getAttribute('href'), '/board');
 
 		const side = pageCard.locator('#nsk-right-panel-container');
-		// v1.8.1 起按 sb.sb：侧栏随页面一起滚动，不吸顶、不单独滚动（吸顶 + 单独滚动时，切换编辑器等操作会让侧栏往下滑、资料卡被卷掉半截）
-		assert.equal(await side.evaluate(e => getComputedStyle(e).position), 'static');
-		assert.equal(await side.evaluate(e => getComputedStyle(e).overflowY), 'visible');
+		// 2026-10-14 起按用户要求：右栏固定、可单独滚动；程序顺带滚动右栏（切换编辑器等）由 nsmaxGuardSidebarScroll 挡回去
+		assert.equal(await side.evaluate(e => getComputedStyle(e).position), 'sticky');
+		assert.equal(await side.evaluate(e => getComputedStyle(e).overflowY), 'auto');
 		assert.deepEqual(errorsCard, []);
 	} finally { await ctxCard.close(); }
 
@@ -2062,7 +2065,8 @@ test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字�
 
 test("v1.8.1 同一帖子的其它评论页不新开标签页；回复区「直达底部」把光标放进回复框", async () => {
 	const html = postPage().replace("</article>", '<p><a class="t-same" href="/post-1000-2">第二页</a> <a class="t-other" href="/post-2000-1">别的帖子</a></p></article>');
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html });
+	// NodeSeek 自己的「新标签页打开主题帖」打开（脚本跟随它）
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, init: sitePrefInit(true) });
 	try {
 		await wait(page, 900);
 		const targets = await page.evaluate(() => ({ same: document.querySelector(".t-same").getAttribute("target"), other: document.querySelector(".t-other").getAttribute("target") }));
@@ -2290,4 +2294,138 @@ test("v1.8.0 私信：手机宽度聊天区占满整行；输入区「Enter 发�
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
+});
+
+// ---------- 2026-10-14 第二批：登录 / 注册页、楼层操作行、签到 / 管理记录右栏、右栏固定、新标签页跟随站点设置、消息中心对齐 ----------
+test("登录 / 注册页：表单显示出来（以前 #nsk-body-left-block 被当成空占位藏掉），按 sb.sb 登录页排成左右两半", async () => {
+	for (const [url, html, inputs] of [["/signIn.html", signInPage, 2], ["/emailSignIn.html", emailSignInPage, 2], ["/smsSignIn.html", smsSignInPage, 2], ["/register.html", registerPage, 6]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com" + url, { html: html(), viewport: { width: 1440, height: 900 } });
+		try {
+			await wait(page, 900);
+			const state = await page.evaluate(() => {
+				const box = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { x: Math.round(r.left), w: Math.round(r.width), h: Math.round(r.height) }; };
+				const visibleInputs = Array.from(document.querySelectorAll("[data-nsmax-auth-app] input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([type=button])")).filter((e) => e.getBoundingClientRect().width > 0);
+				return { page: document.documentElement.dataset.nsmaxPage, card: box("[data-nsmax-auth-card]"), hero: box(".nsmax-auth-hero"), app: box("[data-nsmax-auth-app]"), side: box("#nsk-right-panel-container"), inputs: visibleInputs.length, inputHeight: visibleInputs[0] ? Math.round(visibleInputs[0].getBoundingClientRect().height) : 0, tabs: Array.from(document.querySelectorAll(".nsmax-auth-tabs > a")).map((a) => `${a.textContent}${a.getAttribute("aria-current") ? "*" : ""}`) };
+			});
+			assert.equal(state.page, "auth", url);
+			assert.equal(state.card.w, 980, `${url} 卡片 980px`);
+			assert.equal(state.hero.w, state.app.w, `${url} 左右两半一样宽`);
+			assert.ok(state.inputs >= inputs, `${url} 输入框显示出来：${state.inputs}`);
+			assert.equal(state.inputHeight, 44, `${url} 输入框 44px`);
+			assert.ok(!state.side || state.side.w === 0, `${url} 不显示右栏`);
+			assert.deepEqual(state.tabs, url === "/register.html" ? ["登录", "注册*"] : ["登录*", "注册"]);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	// 普通列表页的 #nsk-body-left-block 是空的，照样不显示
+	const list = await open(browser, "https://www.nodeseek.com/credit", { html: creditPage() });
+	try {
+		await wait(list.page, 600);
+		assert.equal(await list.page.locator("#nsk-body-left-block").evaluate((e) => getComputedStyle(e).display), "none");
+	} finally { await list.context.close(); }
+});
+
+test("楼层操作行：每层 5 个 48px 槽位，计数不推开后面的图标；楼中楼和外层楼层的图标上下对齐", async () => {
+	const html = postPage({ dark: true }).replace("价格不错，帮顶", '<a href="/space/11">@buyer</a> <a href="/post-1000-1#1">#1</a> 价格不错，帮顶').replace(/(<li class="content-item" id="2">[\s\S]*?)<span>1<\/span>/, "$1<span>19</span>");
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector("li[id='1'] > .nsmax-nested-replies > li[id='2']");
+		await wait(page, 400);
+		const rows = await page.evaluate(() => Array.from(document.querySelectorAll("ul.comments li.content-item")).map((li) => Array.from(li.querySelectorAll(":scope > .nsmax-floor-actions :is(.menu-item, .floor-link)")).filter((e) => e.getBoundingClientRect().width > 0).map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.width)]; })));
+		assert.equal(rows.length, 3);
+		for (const row of rows) {
+			assert.deepEqual(row.slice(0, 5).map(([, w]) => w), [48, 48, 48, 48, 48], "五个操作槽位都是 48px");
+			assert.deepEqual(row, rows[0], "所有楼层（含楼中楼）图标位置相同");
+		}
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("签到排行、管理记录：补上右栏（资料卡 + 今日热门），主栏和右栏两端对齐顶栏，管理记录页码居中", async () => {
+	for (const [url, html] of [["/ruling", rulingPage], ["/board", boardRealPage]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com" + url, { html: html(), viewport: { width: 1440, height: 900 } });
+		try {
+			await page.waitForSelector("#nsk-right-panel-container .nsmax-sb-account");
+			await page.waitForSelector("#nsk-right-panel-container .nsmax-hot-text");
+			const m = await page.evaluate(() => {
+				const r = (s) => document.querySelector(s)?.getBoundingClientRect();
+				const head = Math.max(...Array.from(document.querySelectorAll("#nsk-head button, #nsk-head a")).map((e) => e.getBoundingClientRect()).filter((b) => b.width > 0).map((b) => b.right));
+				const pager = r(".ruling-log .rulling-log-head .nsk-pager"), table = r(".ruling-log table");
+				return { logo: r("#nsk-head .site-title").left, main: r(".board, .ruling-log").left, side: r("#nsk-right-panel-container").right, head, account: r(".nsmax-sb-account").top, hot: r(".nsmax-hot-panel").top, pager: pager && table ? Math.round(pager.left + pager.width / 2 - (table.left + table.width / 2)) : 0 };
+			});
+			assert.ok(Math.abs(m.main - m.logo) <= 1, `${url} 主栏左边对齐站标：${m.main} / ${m.logo}`);
+			assert.ok(Math.abs(m.side - m.head) <= 1, `${url} 右栏右边对齐顶栏按钮：${m.side} / ${m.head}`);
+			assert.ok(m.account < m.hot, "资料卡在今日热门上面");
+			assert.ok(Math.abs(m.pager) <= 1, `页码居中：偏 ${m.pager}px`);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("右栏固定在顶栏下面、可单独滚动；页面别处的操作顺带滚动右栏时滚回原位", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ count: 40 }), viewport: { width: 1440, height: 600 } });
+	try {
+		await page.waitForSelector(".nsmax-hot-text");
+		const side = page.locator("#nsk-right-panel-container");
+		await page.evaluate(() => window.scrollTo(0, 1200));
+		await wait(page, 100);
+		assert.ok(Math.abs((await side.boundingBox()).y - 77) <= 1, "滚动页面后右栏还停在顶栏下面");
+		// 程序顺带滚动右栏（没有滚轮 / 触摸 / 键盘）：滚回原位
+		const restored = await side.evaluate(async (e) => { e.scrollTop = 120; await new Promise((r) => setTimeout(r, 80)); return e.scrollTop; });
+		assert.equal(restored, 0, "不是用户自己滚的，右栏滚回原位");
+		// 鼠标放在右栏上滚轮：右栏自己滚，页面不动
+		const before = await page.evaluate(() => scrollY);
+		const box = await side.boundingBox();
+		await page.mouse.move(box.x + 100, box.y + 200);
+		await page.mouse.wheel(0, 200);
+		await wait(page, 300);
+		assert.ok(await side.evaluate((e) => e.scrollTop) > 0, "右栏自己滚动了");
+		assert.equal(await page.evaluate(() => scrollY), before, "页面没有跟着滚");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("帖子是否在新标签页打开：跟随 NodeSeek 自己的「新标签页打开主题帖」，脚本不再自己强制", async () => {
+	for (const [pref, expected] of [[false, null], [true, "_blank"], [null, null]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init: pref === null ? "" : sitePrefInit(pref) });
+		try {
+			await wait(page, 900);
+			const target = await page.locator("ul.post-list .post-title a").first().evaluate((a) => a.getAttribute("target"));
+			assert.equal(target === "_blank" ? "_blank" : null, expected, `站点设置 ${pref}`);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	// 设置面板里不再有脚本自己的「链接在新标签页打开」
+	const { context, page } = await open(browser, "https://www.nodeseek.com/", { html: listPage() });
+	try {
+		await wait(page);
+		await page.getByRole("button", { name: "NodeSeek Max 设置", exact: true }).click();
+		const keys = await page.locator('#nspp-settings .module[data-feature="reading-content"]').evaluate((m) => Array.from(m.querySelectorAll("input"), (i) => i.dataset.key));
+		assert.ok(!keys.includes("newTab"), keys.join());
+	} finally { await context.close(); }
+});
+
+test("消息中心：通知列表名字和动作挨在一起、时间靠右成一列；系统消息时间单独一列右对齐、和正文同一条中线", async () => {
+	const notices = await open(browser, "https://www.nodeseek.com/notification#/atMe", { html: nativeTalkPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await notices.page.waitForSelector(".nspp-notice-workspace .nspp-notice-action");
+		const rows = await notices.page.evaluate(() => Array.from(document.querySelectorAll(".nspp-notice-workspace .nspp-messages-peer")).map((row) => ({ name: row.querySelector(".nspp-messages-peer-title > strong").getBoundingClientRect().right, action: row.querySelector(".nspp-notice-action").getBoundingClientRect().left, time: Math.round(row.querySelector(".nspp-messages-peer-title > time").getBoundingClientRect().right) })));
+		assert.ok(rows.length >= 2);
+		for (const row of rows) assert.ok(row.action - row.name <= 10, `动作紧跟名字：间距 ${row.action - row.name}`);
+		assert.equal(new Set(rows.map((row) => row.time)).size, 1, "时间右边对齐");
+		assert.deepEqual(notices.errors, []);
+	} finally { await notices.context.close(); }
+	const now = Date.now();
+	const items = { success: true, talkTo: { member_id: 9, member_name: "系统通知" }, msgArray: [
+		{ id: 81, sender_id: 9, receiver_id: 1, sender_name: "系统通知", content: "你关注的用户vico发布了一篇[新的帖子](/post-123-1)", is_markdown: true, viewed: 1, created_at: new Date(now - 864e5).toISOString() },
+		{ id: 82, sender_id: 9, receiver_id: 1, sender_name: "系统通知", content: "您的 [评论](/post-1-1#3) 被用户 [早饭](/space/5) 星辰点赞", is_markdown: true, viewed: 1, created_at: new Date(now - 432e5).toISOString() }
+	] };
+	const system = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=9", { html: nativeTalkPage(), api: { "/api/notification/message/with/9": [{ status: 200, body: items }] }, viewport: { width: 1440, height: 900 } });
+	try {
+		await system.page.waitForSelector(".is-system-thread .is-system time");
+		const rows = await system.page.evaluate(() => Array.from(document.querySelectorAll(".is-system")).map((row) => { const text = row.querySelector(".nspp-messages-bubble").getBoundingClientRect(), time = row.querySelector("time").getBoundingClientRect(); return { right: Math.round(time.right), mid: Math.round(time.top + time.height / 2) - Math.round(text.top + text.height / 2) }; }));
+		assert.equal(new Set(rows.map((row) => row.right)).size, 1, "时间右边对齐");
+		for (const row of rows) assert.ok(Math.abs(row.mid) <= 2, `时间和正文同一条中线：差 ${row.mid}`);
+		assert.deepEqual(system.errors, []);
+	} finally { await system.context.close(); }
 });

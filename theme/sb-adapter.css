@@ -443,7 +443,7 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post>.content-item>.comment-menu .men
 /* Pagination from SB: circles, ink current, text next button, no disabled arrow. */
 html[data-nsmax-theme] #nsk-body-left .nsk-pager {display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;padding:0!important;margin:16px 0 0!important;background:transparent!important;border:0!important;}
 html[data-nsmax-theme] #nsk-body-left > div[data-nsmax-pagerbox] {margin:0!important;padding:0!important;background:transparent!important;border:0!important;}
-html[data-nsmax-theme] #nsk-body-left > #nsk-body-left-block {display:none!important;}
+html[data-nsmax-theme] #nsk-body-left > #nsk-body-left-block:empty {display:none!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager [role=navigation] {display:flex!important;align-items:center!important;gap:6px!important;background:transparent!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager :is(.pager-pos,.pager-next,.pager-prev) {display:inline-flex!important;justify-content:center!important;align-items:center!important;box-sizing:border-box!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0 9px!important;margin:0!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel)!important;color:var(--text-muted)!important;font:500 13px/30px var(--font-sans)!important;text-decoration:none!important;}
 html[data-nsmax-theme] #nsk-body-left .nsk-pager .pager-cur {background:transparent!important;color:var(--text-strong)!important;border:2px solid var(--text-strong)!important;font-weight:700!important;}

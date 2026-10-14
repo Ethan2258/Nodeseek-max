@@ -6,7 +6,7 @@
 	}
 	// 页面类型：主题 CSS 按 html[data-nsmax-page] 分页面排版；搜索、账簿这类结构和列表页相同的页面都算 list
 	function nsmaxPageKind(path = location.pathname) {
-		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : "list";
+		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : "list";
 	}
 	function nsmaxSetAttr(el, name, value = "") {
 		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
@@ -650,6 +650,20 @@
 			const hot = actions.querySelector(".hot-badge");
 			const author = item.querySelector(":scope > .nsk-content-meta-info .author-info");
 			if (hot && author) author.append(hot);
+			// 自己楼层的「编辑」挪到时间后面的小字里（和主帖一样）：操作行每层都是同样几个槽位，各楼图标上下对齐
+			const nativeEdit = actions.querySelector(".comment-menu > .menu-item[data-nsmax-action='edit']");
+			const info = item.querySelector(":scope > .nsk-content-meta-info .content-info");
+			let edit = info?.querySelector(":scope > .nsmax-floor-edit");
+			if (nativeEdit && info && !edit) {
+				edit = document.createElement("a");
+				edit.className = "nsmax-floor-edit";
+				edit.setAttribute("role", "button");
+				edit.title = "编辑这条回复";
+				edit.textContent = "编辑";
+				edit.addEventListener("click", () => item.querySelector(":scope > .nsmax-floor-actions .menu-item[data-nsmax-action='edit']")?.click());
+				info.append(edit);
+			} else if (!nativeEdit && edit) edit.remove();
+			if (nativeEdit && info) nsmaxSetAttr(nativeEdit, "data-nsmax-op-moved");
 			for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
 				const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报|编辑)$/.test(text));
 				if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
@@ -1208,6 +1222,156 @@
 		签名: ["签名", "显示在你的帖子和回复正文下方，支持 Markdown"],
 		Readme: ["主页介绍", "显示在你的个人主页，支持 Markdown"]
 	};
+	// 登录、邮箱 / 短信验证登录、注册页按 sb.sb 登录页（.auth-split）排：左边黄底品牌区（站名、站标、说明），右边「登录 / 注册」标签 + 表单。
+	// 表单是站点的 Vue 应用渲染的，不动它里面的节点；品牌区和标签插在 Vue 挂载容器外面那一层（登录页 #nsk-body-left-block、注册页 #nsk-frame-block、
+	// 短信登录页 #nsk-body-left），只在缺少时插入。说明文字只写页面上本来就有的信息。
+	var NSMAX_AUTH_PAGES = {
+		"/signIn.html": ["signIn", "登录说明", ["用户名或注册邮箱都可以登录。", "也可以用邮箱或短信动态验证码登录。", "使用公共设备后请退出登录。"]],
+		"/emailSignIn.html": ["signIn", "邮箱验证码登录", ["填写注册邮箱，点「发送验证码」，再填收到的验证码。", "想用用户名和密码登录，点上面的「登录」。", "使用公共设备后请退出登录。"]],
+		"/smsSignIn.html": ["signIn", "短信验证登录", ["按页面上的提示，用绑定的手机号发送短信完成验证。", "想用用户名和密码登录，点上面的「登录」。", "使用公共设备后请退出登录。"]],
+		"/register.html": ["register", "注册说明", ["用户名 2–15 个字符，密码 6–18 个字符。", "用邮箱或手机号接收验证码。", "提交前请先阅读服务条款。"]]
+	};
+	function nsmaxAuthShell() {
+		const own = (child) => !child.matches(".nsmax-auth-hero, .nsmax-auth-tabs, script, style");
+		const block = document.querySelector("#nsk-body-left > #nsk-body-left-block");
+		const blockApp = block && Array.from(block.children).find(own);
+		if (blockApp) return [block, blockApp];
+		const frame = document.querySelector("#nsk-frame > #nsk-frame-block");
+		const frameApp = frame && Array.from(frame.children).find(own);
+		if (frameApp?.querySelector("form")) return [frame, frameApp];
+		const left = document.querySelector("#nsk-body-left");
+		const form = left?.querySelector(":scope > form");
+		return form ? [left, form] : [];
+	}
+	function nsmaxPrepareAuth() {
+		const page = NSMAX_AUTH_PAGES[location.pathname];
+		if (!page) return;
+		const [shell, app] = nsmaxAuthShell();
+		if (!shell) return;
+		const [kind, title, notes] = page;
+		nsmaxSetAttr(shell, "data-nsmax-auth-card", kind);
+		nsmaxSetAttr(app, "data-nsmax-auth-app", "");
+		let hero = shell.querySelector(":scope > .nsmax-auth-hero");
+		if (!hero) {
+			hero = document.createElement("aside");
+			hero.className = "nsmax-auth-hero";
+			const name = document.createElement("div");
+			name.className = "nsmax-auth-hero-name";
+			name.textContent = "NodeSeek";
+			const art = document.createElement("div");
+			art.className = "nsmax-auth-hero-art";
+			const logo = document.createElement("span");
+			logo.className = "nsmax-auth-hero-logo";
+			logo.setAttribute("aria-hidden", "true");
+			art.append(logo);
+			const box = document.createElement("div");
+			box.className = "nsmax-auth-hero-notes";
+			const head = document.createElement("span");
+			head.className = "nsmax-auth-hero-notes-title";
+			head.textContent = title;
+			const list = document.createElement("ul");
+			for (const text of notes) {
+				const item = document.createElement("li");
+				item.textContent = text;
+				list.append(item);
+			}
+			box.append(head, list);
+			hero.append(name, art, box);
+			shell.prepend(hero);
+		}
+		if (!shell.querySelector(":scope > .nsmax-auth-tabs")) {
+			const tabs = document.createElement("nav");
+			tabs.className = "nsmax-auth-tabs";
+			tabs.setAttribute("aria-label", "登录或注册");
+			for (const [label, href, key] of [["登录", "/signIn.html", "signIn"], ["注册", "/register.html", "register"]]) {
+				const link = document.createElement("a");
+				link.href = href;
+				link.textContent = label;
+				if (key === kind) link.setAttribute("aria-current", "page");
+				tabs.append(link);
+			}
+			hero.after(tabs);
+		}
+		// 输入框后面紧跟按钮的一组（邮箱 + 发送验证码、验证码 + 登录）排成一行
+		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button, :scope > input + span + button"));
+	}
+	// 签到排行（/board）、管理记录（/ruling）是没有右栏的独立页面：照列表页补一个右栏（资料卡、今日热门、最近浏览），
+	// 主栏和右栏一起放进 1600px 版心，左右和顶栏的站标、齿轮对齐。资料卡用页面配置里的当前用户信息拼出原生资料卡的结构，交给 nsmaxBuildAccountCard 排版
+	function nsmaxSidePage(path = location.pathname) {
+		return /^\/(?:board|ruling)(?:\/|$)/.test(path);
+	}
+	function nsmaxPrepareSidePage() {
+		if (!nsmaxSidePage()) return;
+		const frame = document.querySelector("section#nsk-frame");
+		if (!frame || frame.querySelector(":scope > #nsk-body")) return;
+		nsmaxSetAttr(frame, "data-nsmax-side-page", "");
+		if (document.getElementById("nsk-right-panel-container")) return;
+		const side = document.createElement("div");
+		side.id = "nsk-right-panel-container";
+		side.className = "nsmax-side-panel";
+		const user = unsafeWindow$1.__config__?.user;
+		const id = Number(user?.member_id);
+		if (Number.isSafeInteger(id) && id > 0 && typeof user.member_name === "string") {
+			const card = document.createElement("div");
+			card.className = "user-card";
+			const head = document.createElement("div");
+			head.className = "user-head";
+			const picture = document.createElement("a");
+			picture.href = `/space/${id}`;
+			const avatar = document.createElement("img");
+			avatar.className = "avatar-normal";
+			avatar.src = `/avatar/${id}.png`;
+			avatar.alt = user.member_name;
+			picture.append(avatar);
+			const menu = document.createElement("div");
+			menu.className = "menu";
+			const name = document.createElement("a");
+			name.className = "Username";
+			name.href = `/space/${id}`;
+			name.textContent = user.member_name;
+			menu.append(name);
+			head.append(picture, menu);
+			const stats = document.createElement("div");
+			stats.className = "user-stat";
+			const number = (value) => Number.isFinite(Number(value)) ? String(Number(value)) : "—";
+			for (const [label, value] of [["等级", `Lv ${number(user.rank)}`], ["鸡腿", number(user.coin)], ["星辰", number(user.stardust)], ["主题帖", number(user.nPost)], ["评论数", number(user.nComment)]]) {
+				const cell = document.createElement("div");
+				const text = document.createElement("span");
+				text.textContent = `${label} ${value}`;
+				cell.append(text);
+				stats.append(cell);
+			}
+			card.append(head, stats);
+			const box = document.createElement("div");
+			const post = document.createElement("a");
+			post.className = "btn new-discussion";
+			post.href = "/new-discussion";
+			post.textContent = "发帖";
+			box.append(post);
+			side.append(card, box);
+		}
+		frame.append(side);
+	}
+	// 右栏固定在顶栏下面、可以单独滚动（样式见主题第 33 节）：只认用户自己在右栏上的滚动（滚轮、触摸、键盘）；
+	// 页面别处的操作（切换 Markdown 编辑器、聚焦输入框……）让浏览器顺带滚了右栏的，滚回原位，资料卡不会被卷走半截
+	function nsmaxGuardSidebarScroll() {
+		const side = document.getElementById("nsk-right-panel-container");
+		if (!side || side._nsmaxScrollGuard) return;
+		side._nsmaxScrollGuard = true;
+		let userUntil = 0;
+		let last = side.scrollTop;
+		const intent = () => {
+			userUntil = performance.now() + 900;
+		};
+		for (const type of ["wheel", "touchstart", "touchmove", "pointerdown", "keydown"]) side.addEventListener(type, intent, { passive: true });
+		side.addEventListener("scroll", () => {
+			if (performance.now() <= userUntil) {
+				last = side.scrollTop;
+				return;
+			}
+			if (Math.abs(side.scrollTop - last) > 1) side.scrollTop = last;
+		}, { passive: true });
+	}
 	function nsmaxPrepareSetting() {
 		if (!/^\/setting(?:\/|$)/.test(location.pathname)) return;
 		const right = document.querySelector("#user-setting-panel .selector-right-side");
@@ -1348,6 +1512,9 @@
 			nsmaxPrepareFans();
 			nsmaxPrepareCredit();
 			nsmaxPrepareSetting();
+			nsmaxPrepareSidePage();
+			nsmaxGuardSidebarScroll();
+			nsmaxPrepareAuth();
 			nsmaxCleanNotifications();
 			nsmaxCleanBadgesAndNotifications();
 			const isPost = /^\/post-\d+/.test(location.pathname);

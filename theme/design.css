@@ -6014,3 +6014,745 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions > .nspp-mes
     display: none !important;
   }
 }
+/* ---------- 31. 登录 / 注册页按 sb.sb 登录页（.auth-split）（2026-10-14） ----------
+   NodeSeek 把登录表单放在 #nsk-body-left-block 里，以前把它当空占位一律隐藏，登录页只剩空白（见适配层，现在只在它为空时隐藏）。
+   sb.sb：最宽 980px 的一张卡片，上 28px 下 40px；左半黄底品牌区（站名 36px/800、插画、说明列表），右半「登录 / 注册」标签 + 表单；
+   字段名 13px/600，输入框 44px，提交按钮 46px、15px/600、字距 2px；页面不显示右侧栏。800px 以下改成上下排列。
+   表单由站点的 Vue 应用渲染：只改样式，被它用 v-show 藏起来的元素（行内 display: none）不强制显示。 */
+html[data-nsmax-theme][data-nsmax-page="auth"] #nsk-body > #nsk-right-panel-container {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] #nsk-body,
+html[data-nsmax-theme][data-nsmax-page="auth"] section#nsk-frame > #nsk-body.nsk-container {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > #nsk-body-left-block:not(:empty) {
+  display: block !important;
+}
+/* 卡片：左右两半，左边品牌区占两行，右边上面标签、下面表单 */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-card]:is(#nsmax-a, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  grid-template-rows: auto 1fr !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 980px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 28px auto 40px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-card] > :not(.nsmax-auth-hero, .nsmax-auth-tabs, [data-nsmax-auth-app]) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero {
+  grid-column: 1 !important;
+  grid-row: 1 / span 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 32px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 36px 40px !important;
+  background: var(--mark) !important;
+  color: var(--mark-text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-name {
+  font-family: var(--font-sans) !important;
+  font-size: 36px !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-art {
+  display: flex !important;
+  flex: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 0 !important;
+}
+/* sb.sb 这里是自家插画；NodeSeek 用自己的站标（与顶栏、脚本图标同一张），放大到 120px */
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-logo {
+  display: block !important;
+  width: 120px !important;
+  height: 120px !important;
+  border-radius: calc(120px * 14 / 64 * var(--r-scale)) !important;
+  background: var(--nsmax-logo-icon) center / 100% 100% no-repeat !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-notes-title {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-notes-title::after {
+  content: "" !important;
+  display: block !important;
+  width: 24px !important;
+  height: 2px !important;
+  margin: 12px 0 10px !important;
+  background: currentColor !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-notes ul {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-notes li {
+  position: relative !important;
+  margin: 0 !important;
+  padding: 0 0 0 14px !important;
+  font-size: 14px !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-notes li::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0.8em !important;
+  left: 0 !important;
+  width: 4px !important;
+  height: 4px !important;
+  border-radius: calc(1px * var(--r-scale)) !important;
+  background: currentColor !important;
+}
+/* 「登录 / 注册」标签：sb.sb .auth-tabs——15px，当前页 600 字重 + 2px 正文色下划线 */
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-tabs {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 28px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 28px !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-tabs > a {
+  position: relative !important;
+  padding: 16px 0 15px !important;
+  color: var(--text-muted) !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-tabs > a:hover {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-tabs > a[aria-current="page"] {
+  color: var(--text) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-tabs > a[aria-current="page"]::after {
+  content: "" !important;
+  position: absolute !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  height: 2px !important;
+  border-radius: calc(1px * var(--r-scale)) !important;
+  background: var(--text) !important;
+}
+/* 表单区：28px 内边距；原站的面板、表单、分组外框全部去掉 */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 28px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(#login-panel, #register, .form-wrapper, form, fieldset) {
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset:is(fieldset, #nsmax-lv) {
+  margin: 0 0 18px !important;
+}
+/* 注册页「联系方式」里嵌着一个小表单：里面最后一组不再另加下边距（不然和外面一组的间距叠成两倍） */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset fieldset:last-of-type:is(fieldset, #nsmax-lv) {
+  margin-bottom: 0 !important;
+}
+/* 标签页已经写着「登录 / 注册」：表单自己的大标题不再重复 */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(#login-panel legend, #register > h1):is(#nsmax-lv, *) {
+  display: none !important;
+}
+/* 字段名：13px/600，和输入框隔 8px */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(legend, fieldset > label, #login-panel label):not(.pure-radio, [style*="display: none"]) {
+  display: block !important;
+  float: none !important;
+  width: auto !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(#login-panel input + label, fieldset > :is(input, .pure-form-message) + label:not(.pure-radio)):is(#nsmax-lv, *) {
+  margin-top: 18px !important;
+}
+/* 输入框：44px 高、内边距 0 12px，细线框 + 输入框圆角；聚焦时用全站同一圈焦点线 */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input:not([type])):not([style*="display: none"]):is(#nsmax-lv, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  line-height: 42px !important;
+  -moz-appearance: textfield !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] input:is(#nsmax-lv, *)::-webkit-inner-spin-button,
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] input:is(#nsmax-lv, *)::-webkit-outer-spin-button {
+  margin: 0 !important;
+  -webkit-appearance: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] input:is(#nsmax-lv, *)::placeholder {
+  color: var(--text-subtle) !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] input:is(#nsmax-lv, *):focus {
+  border-color: var(--line-strong) !important;
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 1px !important;
+}
+/* 字段下面的说明：12px 弱化字；出错提示红色（被 v-show 藏着时不显示） */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] .pure-form-message:not([style*="display: none"]) {
+  display: block !important;
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] .pure-form-message.invalid {
+  color: var(--danger) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] a {
+  color: var(--link) !important;
+}
+/* 输入框后面紧跟按钮的一组（邮箱 + 发送验证码、验证码 + 登录）：一行排开；组里的提交按钮另起一整行 */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset[data-nsmax-auth-row] {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: 8px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset[data-nsmax-auth-row] > :not(input, button[type="button"]) {
+  grid-column: 1 / -1 !important;
+}
+/* 次要按钮（发送验证码、短信已发送）：44px 细线框胶囊 */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(button[type="button"], input[type="button"]):not([style*="display: none"]):is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(button[type="button"], input[type="button"]):is(#nsmax-lv, *):hover {
+  border-color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(button[type="button"], input[type="button"]):is(#nsmax-lv, *):disabled {
+  opacity: 0.55 !important;
+  cursor: default !important;
+}
+/* 主按钮（登录、提交注册）：sb.sb .auth-submit——整行 46px 墨色胶囊，15px/600、字距 2px */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not([type="button"]):not([style*="display: none"]):is(#nsmax-lv, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 46px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 2px !important;
+  line-height: 46px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not([type="button"]):is(#nsmax-lv, *):hover {
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset[data-nsmax-auth-row] > button:not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-top: 18px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] #register > form > button:not([type="button"]) {
+  margin-top: 4px !important;
+}
+/* 人机验证（Cloudflare Turnstile）：只留出上下间距，组件本身不动 */
+html[data-nsmax-theme][data-nsmax-page="auth"] #login-panel fieldset > div:not(.login-btn-group) {
+  margin: 18px 0 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] form > div:not(.login-btn-group, .form-wrapper) {
+  margin: 0 0 18px !important;
+}
+/* 登录按钮下面「邮箱动态验证 · 短信动态验证」：居中 12.5px 次要色 */
+html[data-nsmax-theme][data-nsmax-page="auth"] #login-panel .login-btn-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 14px !important;
+  margin: 18px 0 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] #login-panel .login-btn-group > span {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 18px !important;
+  margin: 0 !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] #login-panel .login-btn-group > span > a {
+  color: var(--text-muted) !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] #login-panel .login-btn-group > span > a:hover {
+  color: var(--text) !important;
+}
+/* 注册：联系方式单选一行排开；服务协议勾选框 + 文字 + 链接一行 */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] .contact-methods {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 18px !important;
+  margin: 0 0 14px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] label.pure-radio {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(input[type="radio"], input[type="checkbox"]) {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  accent-color: var(--action) !important;
+  vertical-align: -2px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] #agree-tos + label:is(label, #nsmax-lv) {
+  display: inline !important;
+  margin: 0 2px 0 6px !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] #agree-tos ~ a {
+  font-size: 13px !important;
+}
+/* 短信登录：「+ 区号 号码」一行，区号 80px */
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] .phone-input-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] .phone-input-group > input.phone-prefix:is(#nsmax-lv, *) {
+  flex: none !important;
+  width: 80px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] .phone-input-group > span {
+  color: var(--text-muted) !important;
+}
+@media (max-width: 800px) {
+  html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-card]:is(#nsmax-a, *):is(#nsmax-b, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto !important;
+    margin: 8px auto 24px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-tabs {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    padding: 0 20px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r) var(--r) 0 0 !important;
+    background: var(--panel) !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    padding: 20px !important;
+    border: 1px solid var(--line) !important;
+    border-top: 0 !important;
+    border-radius: 0 0 var(--r) var(--r) !important;
+    background: var(--panel) !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    gap: 24px !important;
+    margin-top: var(--gap) !important;
+    padding: 28px 24px !important;
+    border-radius: var(--r) !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-name {
+    font-size: 28px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="auth"] .nsmax-auth-hero-art {
+    display: none !important;
+  }
+  /* 注册页是独立页面，外面没有带左右 16px 内边距的版心：卡片自己留出两边 */
+  html[data-nsmax-theme][data-nsmax-page="auth"] #nsk-frame-block[data-nsmax-auth-card]:is(#nsmax-a, *):is(#nsmax-b, *) {
+    width: calc(100% - 32px) !important;
+  }
+}
+/* ---------- 32. 楼层操作行重做 + 楼中楼（2026-10-14） ----------
+   以前每个操作是「至少 32px」的槽位，有计数的槽位被撑宽、没计数的留一大块空，图标之间的距离忽大忽小；楼中楼还整体往左缩了一截。
+   现在每层都是同样的 5 个 48px 槽位（点赞 / 鸡腿 / 反对 / 引用 / 回复），图标都在槽位左边 8px 处，所以图标之间的距离处处是 48px；
+   计数（等宽数字，三位数以内）紧跟在图标后面，放在槽位留白里，不会把后面的图标推开。楼号 44px 右对齐。
+   所有楼层（含楼中楼）的图标上下对齐、右边对齐；悬停只变正文色（sb.sb .icon-action）。自己楼层的「编辑」挪到时间后面的小字里。 */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions:is(#nsmax-lv, *) {
+  gap: 4px !important;
+  height: 28px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *) {
+  gap: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  flex: none !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
+  width: 48px !important;
+  min-width: 0 !important;
+  height: 28px !important;
+  padding: 0 0 0 8px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--text-subtle) !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):hover {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *)::before {
+  flex: none !important;
+  width: 15px !important;
+  height: 15px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item > span:is(#nsmax-lv, *) {
+  color: inherit !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-op-moved]:is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  line-height: 28px !important;
+  text-align: right !important;
+}
+/* 自己楼层的「编辑」：时间后面 12px 次要色小字 */
+html[data-nsmax-theme] #nsk-body-left .content-item .nsmax-floor-edit {
+  margin-left: 10px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .nsmax-floor-edit:hover {
+  color: var(--text) !important;
+}
+/* 楼中楼：接在外层楼层正文下面，左边一条 2px 细导线；右边不缩进、不留内边距，操作行和外层楼层右边对齐；
+   每条回复上下 12px，之间一条细分隔线，头像 24px，名字 15px（比外层小一号，层级一眼分得清） */
+html[data-nsmax-theme] #nsk-body-left ul.comments li.content-item > .nsmax-nested-replies:is(#nsmax-lv, *) {
+  grid-column: 2 / -1 !important;
+  display: block !important;
+  margin: 12px 0 2px !important;
+  padding: 0 0 0 14px !important;
+  border: 0 !important;
+  border-left: 2px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  gap: 4px 10px !important;
+  margin: 0 !important;
+  padding: 12px 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item:first-child:is(#nsmax-lv, *) {
+  padding-top: 2px !important;
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item:last-child:is(#nsmax-lv, *) {
+  padding-bottom: 2px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .avatar-wrapper:is(#nsmax-lv, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .avatar-wrapper > a:is(#nsmax-lv, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .avatar-wrapper img:is(#nsmax-lv, *) {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: var(--r-sm) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .author-info > a.author-name:is(#nsmax-lv, *) {
+  font-size: 15px !important;
+}
+/* ---------- 33. 2026-10-14 第二批：右栏固定可单独滚动、签到 / 管理记录补右栏、消息中心对齐 ---------- */
+/* 右栏固定在顶栏下面，不随页面滚动；内容比屏幕高时，鼠标放在右栏上滚动只滚右栏（滚到头也不带动页面），放在别处滚动只滚帖子。
+   滚动条不显示（滚轮照常可滚）。程序顺带滚动右栏的情况由 nsmaxGuardSidebarScroll 挡掉 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container:is(#nsmax-lv, *):is(#nsmax-b, *),
+  html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > #nsk-right-panel-container:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    position: sticky !important;
+    top: 77px !important;
+    align-self: start !important;
+    max-height: calc(100vh - 97px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    scrollbar-width: none !important;
+  }
+  html[data-nsmax-theme] :is(#nsk-body, section#nsk-frame) > #nsk-right-panel-container::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}
+/* 签到排行、管理记录：主栏 + 260px 右栏，放进 1600px 版心（左右 16px），两边和顶栏的站标、齿轮对齐（sb.sb .wrap + .forum-layout） */
+html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page]:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) var(--sidebar-w) !important;
+  column-gap: var(--gap) !important;
+  row-gap: 0 !important;
+  align-items: start !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: var(--container) !important;
+  margin: 0 auto !important;
+  padding: 20px 16px 32px !important;
+}
+html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.board, .ruling-log):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > #nsk-right-panel-container:is(#nsmax-lv, *) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--gap) !important;
+  box-sizing: border-box !important;
+  width: var(--sidebar-w) !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 补出来的右栏里资料卡排第一（今日热门挂载时插在最前面） */
+html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > #nsk-right-panel-container > .user-card {
+  order: -1 !important;
+}
+html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :not(.board, .ruling-log, #nsk-right-panel-container) {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+}
+@media (max-width: 800px) {
+  html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page]:is(#nsmax-lv, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 12px 12px 24px !important;
+  }
+  html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > #nsk-right-panel-container:is(#nsmax-lv, *) {
+    display: none !important;
+  }
+}
+/* 管理记录：表格占满主栏，一张卡片（细线框、圆角、表头次底色、行间细线，字 13.5px）；表格上下两排页码居中 */
+html[data-nsmax-theme] .ruling-log > div:is(#nsmax-lv, *) {
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] .ruling-log .rulling-log-head:is(#nsmax-lv, *) {
+  display: flex !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 0 16px !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .ruling-log .rulling-log-head:last-child:is(#nsmax-lv, *) {
+  margin: 16px 0 0 !important;
+}
+html[data-nsmax-theme] .ruling-log table:is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .ruling-log table :is(th, td):is(#nsmax-lv, *) {
+  padding: 10px 14px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme] .ruling-log table th:is(#nsmax-lv, *) {
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .ruling-log table tr:last-child > td:is(#nsmax-lv, *) {
+  border-bottom: 0 !important;
+}
+/* 消息中心「回复主题 / @我」列表：名字和动作（回复了主题 · #17）挨在一起，时间靠右。
+   以前名字、动作、时间三段两端分散，动作的位置随名字长短漂在中间，一列看下去歪歪扭扭 */
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-peer-title:is(#nsmax-lv, *) {
+  justify-content: flex-start !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-peer-title > strong:is(#nsmax-lv, *) {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-notice-action:is(#nsmax-lv, *) {
+  flex: none !important;
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-peer-title > time:is(#nsmax-lv, *) {
+  flex: none !important;
+  margin-left: auto !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  white-space: nowrap !important;
+}
+/* 系统消息：一行一条——左边铃铛、中间正文、右边时间（单独一列、右对齐、和正文同一条中线）；条与条之间一条细线。
+   以前时间直接跟在正文后面，位置忽左忽右，还比正文低半行 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: 20px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: 14px !important;
+  margin: 0 !important;
+  padding: 12px 4px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > :is(img, a):first-child:is(#nsmax-lv, *),
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > :is(img, a):first-child img:is(#nsmax-lv, *) {
+  grid-column: 1 !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > .nspp-messages-bubble:is(#nsmax-lv, *) {
+  grid-column: 2 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > .nspp-messages-bubble > :is(p, div):is(#nsmax-lv, *) {
+  margin: 0 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > .nspp-messages-system-time:is(#nsmax-lv, *) {
+  grid-column: 3 !important;
+  justify-self: end !important;
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  white-space: nowrap !important;
+}
