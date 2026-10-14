@@ -5846,3 +5846,10 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-search input {
 html[data-nsmax-theme] .nspp-messages .nsmax-notice-nav-icon {
   border-radius: var(--r-input) !important;
 }
+
+/* 主帖操作（点赞 / 加鸡腿 / 反对 / 收藏）的文字：sb.sb .topic-action 实测 12.5px/400（以前 500，比 sb.sb 粗一级） */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item,
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item::after,
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item > span {
+  font-weight: 400 !important;
+}
