@@ -360,6 +360,22 @@ test("手机版页面（服务器按手机 UA 输出的顶栏）：≡ / 标志 
 	} finally { await context.close(); }
 });
 
+test("手机版个人空间（没有版块那一排）：不往顶栏那排菜单里补版块，搜索框照样占满剩余宽度", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage({ mobile: true, mobileNav: false }), viewport: { width: 375, height: 812 } });
+	try {
+		await wait(page, 800);
+		const state = await page.evaluate(() => ({
+			extras: document.querySelectorAll("#nsk-head ul.nav-menu > li[data-nsmax-own-header-item], #nsk-head ul.nav-menu > li.nsmax-essence-tab-item").length,
+			search: Math.round(document.querySelector("#nsk-head form.search-box").getBoundingClientRect().width),
+			overflow: document.scrollingElement.scrollWidth > innerWidth + 1
+		}));
+		assert.equal(state.extras, 0, JSON.stringify(state));
+		assert.ok(state.search >= 100, JSON.stringify(state));
+		assert.equal(state.overflow, false);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
 test("手机：长标题折行不撑宽页面；主帖操作换到名字下面；设置页一栏；账簿、管理记录排成卡片；关注页不溢出", async () => {
 	const long = "警惕再次出现的geelinx".repeat(9);
 	const cases = [

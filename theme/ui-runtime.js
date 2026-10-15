@@ -715,6 +715,8 @@
 		for (const span of document.querySelectorAll(".post-list-item .post-title > span")) {
 			nsmaxFlag(span, "data-nsmax-pinned", !!span.querySelector(":scope > svg.pined"));
 			nsmaxFlag(span, "data-nsmax-lock", !!span.querySelector(':scope > svg > use[href="#lock"]'));
+			// 置顶标签挪到标题前面（sb.sb .topic-badge 和标题在同一段文字里）：长标题从标签下面接着折行，不再把标签单独挤到上面一行
+			if (span.hasAttribute("data-nsmax-pinned") && span.parentElement.firstElementChild !== span) span.parentElement.prepend(span);
 		}
 		nsmaxTagImageLinks();
 		// 页面骨架：左栏是否为空、是否帖子页；右栏是否为空
@@ -881,7 +883,7 @@
 	}
 	function nsmaxUpdateNavEssence() {
 		// 手机版顶栏的 ul.nav-menu 是 ≡ / 标志 / 搜索 / 深浅色那一排，版块在 header > ul.mobile-nav：「精华」加进版块那一排
-		const navMenus = [...document.querySelectorAll("ul.nav-menu:not(:has(> #toggle-left-panel)), header > ul.mobile-nav")];
+		const navMenus = [...document.querySelectorAll("ul.nav-menu, header > ul.mobile-nav")].filter((menu) => !menu.querySelector(":scope > #toggle-left-panel"));
 		for (const navMenu of navMenus) {
 			for (const item of navMenu.querySelectorAll(":scope > li")) {
 				const a = item.querySelector("a");

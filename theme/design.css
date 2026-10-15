@@ -3452,13 +3452,8 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-message:not(.is-mine, .is-s
 }
 
 /* ---------- 18. 真实站点核对后的修正 ---------- */
-/* 置顶标签在标题前（sb.sb .topic-badge.pinned 在标题左边）：置顶行的标题改成可换行的弹性行，标签排第一 */
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item.topic-pinned .post-title {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  column-gap: 0 !important;
-}
+/* 置顶标签在标题前（sb.sb .topic-badge.pinned 在标题左边）：nsmaxTagStructure 把标签挪到标题链接前面，
+   标题行照常是一段文字（以前改成弹性行排序，标题一长就整个掉到标签下面一行） */
 /* @提及：NodeSeek 自带斜体，sb.sb 的 .mention 是正体（与正文链接同款黄色下划线） */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a {
   font-style: normal !important;
@@ -7424,6 +7419,23 @@ html[data-nsmax-theme] dialog.nsmax-mobile-nav nav a:is(#nsmax-lv, *):is(#nsmax-
   line-height: 22px !important;
   text-decoration: none !important;
 }
+/* 脚本自己的版块按钮（电脑版页面窄到站点收起版块导航时出现）：照 sb.sb .mobile-menu-button 放在最左边、无框，20px 三横线（原来的列表图标不再显示） */
+html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head .nsmax-mobile-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-items: center !important;
+  justify-content: center !important;
+  order: -1 !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  margin: 0 0 0 -6px !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head .nsmax-mobile-menu > :is(svg, .nsmax-icon):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
 /* 列表标题：sb.sb .post-title 正常折行（以前沿用旧样式的不换行，长标题把整页撑宽，手机上页面被缩小显示） */
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
   white-space: normal !important;
@@ -7464,23 +7476,6 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
     border: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
-  }
-  html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head .nsmax-mobile-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    order: -1 !important;
-    width: 32px !important;
-    min-width: 32px !important;
-    height: 32px !important;
-    margin: 0 0 0 -6px !important;
-    border: 0 !important;
-    border-radius: var(--r-sm) !important;
-    background: transparent !important;
-    color: var(--text-muted) !important;
-  }
-  html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head .nsmax-mobile-menu > :is(svg, .nsmax-icon):is(#nsmax-lv, *):is(#nsmax-b, *) {
-    display: none !important;
   }
   html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head .site-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
     flex: none !important;
