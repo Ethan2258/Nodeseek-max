@@ -323,7 +323,8 @@ test("手机版页面（服务器按手机 UA 输出的顶栏）：≡ / 标志 
 		assert.equal(bar.logoText, "NodeSeek");
 		assert.ok(!bar.keywords?.visible, "窄屏不放关键词屏蔽");
 		assert.ok(bar.menu.left < bar.logo.left && bar.logo.right <= bar.search.left && bar.search.right <= bar.colors.left && bar.colors.right <= bar.settings.left, JSON.stringify(bar));
-		assert.ok(bar.search.width >= 100, `搜索框占满剩余宽度：${bar.search.width}`);
+		// 搜索框占满标志和按钮之间的宽度（两边各隔 8px；字体不同时宽度会变，CI 的 Linux 字体字标更宽）
+		assert.ok(Math.abs(bar.search.left - bar.logo.right - 8) <= 1 && Math.abs(bar.colors.left - bar.search.right - 8) <= 1 && bar.search.width >= 80, `搜索框占满剩余宽度：${JSON.stringify(bar)}`);
 		assert.equal(bar.sticky, "sticky");
 		assert.equal(bar.strip, "static");
 		assert.equal(bar.pills[0], "全部");
@@ -367,10 +368,12 @@ test("手机版个人空间（没有版块那一排）：不往顶栏那排菜�
 		const state = await page.evaluate(() => ({
 			extras: document.querySelectorAll("#nsk-head ul.nav-menu > li[data-nsmax-own-header-item], #nsk-head ul.nav-menu > li.nsmax-essence-tab-item").length,
 			search: Math.round(document.querySelector("#nsk-head form.search-box").getBoundingClientRect().width),
+			// 标志和搜索框之间只隔一个 8px 间距（以前多出 7 个空 li，每个都占一份间距，搜索框被挤到两三个像素）
+			gap: Math.round(document.querySelector("#nsk-head form.search-box").getBoundingClientRect().left - document.querySelector("#nsk-head a.logo-link").getBoundingClientRect().right),
 			overflow: document.scrollingElement.scrollWidth > innerWidth + 1
 		}));
 		assert.equal(state.extras, 0, JSON.stringify(state));
-		assert.ok(state.search >= 100, JSON.stringify(state));
+		assert.ok(state.gap === 8 && state.search >= 80, JSON.stringify(state));
 		assert.equal(state.overflow, false);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
