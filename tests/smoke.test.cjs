@@ -45,7 +45,8 @@ test("列表页：SB Theme UI 套件生效且首屏结构稳定", async () => {
 	assert.equal(state.aliases, true);
 	assert.equal(state.header, true);
 	assert.equal(state.search, true);
-	assert.equal(state.fastNav, "none");
+	// 回到顶部 / 底部照 sb.sb .to-top 显示（以前整组藏起来）
+	assert.equal(state.fastNav, "block");
 	assert.equal(state.tools, "none");
 	assert.equal(state.padding, "11px 66px 11px 14px");
 	assert.deepEqual(errors, []);
@@ -95,7 +96,7 @@ test("帖子页：SB Theme UI 正文、代码块、回复流和操作块生效",
 	assert.equal(state.code, "8px");
 	assert.equal(state.actions, true);
 	assert.equal(state.editor, true);
-	assert.equal(state.fastNav, "none");
+	assert.equal(state.fastNav, "block");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -278,14 +279,118 @@ test("代码复制：按钮不增加正文高度，复制内容不混入按钮�
 	} finally {await context.close();}
 });
 
-test("手机：页面无横向溢出、回复输入可用、页脚链接组隐藏", async () => {
+test("手机：页面无横向溢出、回复输入可用；页脚照 sb.sb 手机版显示（链接两列），设置页和消息中心不显示", async () => {
 	for (const [url, render] of [["/",listPage],["/post-1000-1",postPage],["/setting",settingPage],["/notification",notificationPage]]) {
 		const { context, page, errors } = await open(browser, `https://www.nodeseek.com${url}`, { html: render(), viewport: { width:390,height:844 } });
 		try {
 			await wait(page);
 			assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth+1), false, url);
-			assert.equal(await page.locator('body > footer').isVisible(), false, url);
+			const footer = /setting|notification/.test(url) ? false : true;
+			assert.equal(await page.locator('body > footer').isVisible(), footer, url);
+			if (footer) assert.equal(await page.locator('body > footer .contain').evaluate(e => getComputedStyle(e).gridTemplateColumns.split(' ').length), 2, url);
 			if (url.includes('post-')) assert.equal(await page.locator('.md-editor textarea').isVisible(), true);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("手机版页面（服务器按手机 UA 输出的顶栏）：≡ / 标志 / 搜索框 / 按钮排成一行吸顶，版块一排胶囊不吸顶，侧滑菜单照 sb.sb", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ mobile: true }), viewport: { width: 375, height: 812 } });
+	try {
+		await wait(page, 800);
+		const bar = await page.evaluate(() => {
+			const box = (selector) => { const e = document.querySelector(selector); if (!e) return null; const r = e.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width), visible: r.width > 0 && getComputedStyle(e).visibility !== "hidden" }; };
+			return {
+				flag: document.documentElement.hasAttribute("data-nsmax-mhead"),
+				menu: box("#toggle-left-panel"), logo: box("#nsk-head a.logo-link"), logoText: document.querySelector("#nsk-head a.logo-link")?.textContent.trim(),
+				search: box("#nsk-head form.search-box"), colors: box("#nsk-head [data-nsmax-own-header=colors]"), settings: box("#nsk-head [data-nsmax-own-header=settings]"),
+				keywords: box("#nsk-head [data-nsmax-own-header=keywords]"), ownMenu: !!document.querySelector(".nsmax-mobile-menu"),
+				head: box("#nsk-head"), sticky: getComputedStyle(document.querySelector("#nsk-head")).position,
+				strip: getComputedStyle(document.querySelector("header > ul.mobile-nav")).position,
+				pills: Array.from(document.querySelectorAll("header > ul.mobile-nav > li")).filter((li) => li.getBoundingClientRect().width > 0).map((li) => li.textContent.trim()),
+				pillHeight: Math.round(document.querySelector("header > ul.mobile-nav > li > a").getBoundingClientRect().height),
+				current: getComputedStyle(document.querySelector("header > ul.mobile-nav > li.current-category > a")).backgroundColor,
+				action: getComputedStyle(document.documentElement).getPropertyValue("--action").trim(),
+				overflow: document.scrollingElement.scrollWidth > innerWidth + 1
+			};
+		});
+		assert.equal(bar.flag, true);
+		assert.equal(bar.ownMenu, false, "手机版顶栏自带 ≡，不再加脚本自己的版块按钮");
+		for (const name of ["menu", "logo", "search", "colors", "settings"]) {
+			assert.ok(bar[name]?.visible, `${name} 要显示：${JSON.stringify(bar)}`);
+			assert.ok(bar[name].top >= bar.head.top && bar[name].bottom <= bar.head.bottom && bar[name].right <= 375, `${name} 在顶栏这一行里：${JSON.stringify(bar)}`);
+		}
+		assert.equal(bar.logoText, "NodeSeek");
+		assert.ok(!bar.keywords?.visible, "窄屏不放关键词屏蔽");
+		assert.ok(bar.menu.left < bar.logo.left && bar.logo.right <= bar.search.left && bar.search.right <= bar.colors.left && bar.colors.right <= bar.settings.left, JSON.stringify(bar));
+		assert.ok(bar.search.width >= 100, `搜索框占满剩余宽度：${bar.search.width}`);
+		assert.equal(bar.sticky, "sticky");
+		assert.equal(bar.strip, "static");
+		assert.equal(bar.pills[0], "全部");
+		assert.ok(!bar.pills.includes("推广") && !bar.pills.includes("DF"), JSON.stringify(bar.pills));
+		assert.ok(bar.pills.some((text) => text.includes("精华")), "精华在版块那一排");
+		assert.equal(bar.pillHeight, 32);
+		assert.equal(bar.current, "rgb(28, 28, 30)", "当前版块墨色实底");
+		assert.equal(bar.overflow, false);
+		// 往下滚：顶栏吸顶，版块那一排跟着内容走
+		await page.evaluate(() => window.scrollTo({ top: 300, behavior: "instant" }));
+		await wait(page, 200);
+		const scrolled = await page.evaluate(() => ({ head: Math.round(document.querySelector("#nsk-head").getBoundingClientRect().top), strip: Math.round(document.querySelector("header > ul.mobile-nav").getBoundingClientRect().bottom) }));
+		assert.equal(scrolled.head, 0);
+		assert.ok(scrolled.strip < 0, JSON.stringify(scrolled));
+		await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+		// 侧滑菜单：300px 宽面板底，版块列表照顶栏规则隐藏
+		await page.locator("#toggle-left-panel").click();
+		await wait(page, 500);
+		const drawer = await page.evaluate(() => {
+			const panel = document.getElementById("left-slide-panel");
+			const r = panel.getBoundingClientRect();
+			const links = Array.from(panel.querySelectorAll(".category-mobile a")).filter((a) => a.getBoundingClientRect().height > 0);
+			return { left: Math.round(r.left), width: Math.round(r.width), bg: getComputedStyle(panel).backgroundColor, links: links.map((a) => a.textContent.trim()), row: Math.round(links[0].getBoundingClientRect().height), font: getComputedStyle(links[0].querySelector("p")).fontSize, mask: getComputedStyle(document.querySelector(".global-mask")).backgroundColor };
+		});
+		assert.equal(drawer.left, 0);
+		assert.equal(drawer.width, 300);
+		assert.equal(drawer.bg, "rgb(255, 255, 255)");
+		assert.equal(drawer.font, "14.5px");
+		assert.equal(drawer.row, 39);
+		assert.ok(!drawer.links.some((text) => /推广|生活|Dev|贴图|沙盒/.test(text)), JSON.stringify(drawer.links));
+		assert.ok(drawer.links.includes("日常") && drawer.links.includes("推荐阅读"), JSON.stringify(drawer.links));
+		assert.match(drawer.mask, /rgba\(5, 0, 56, 0\.42\)/);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("手机：长标题折行不撑宽页面；主帖操作换到名字下面；设置页一栏；账簿、管理记录排成卡片；关注页不溢出", async () => {
+	const long = "警惕再次出现的geelinx".repeat(9);
+	const cases = [
+		["/", listPage({ mobile: true }).replace("求推荐稳定的美西 VPS", long)],
+		["/post-1000-1", postPage({ mobile: true })],
+		["/setting", settingPage({ mobile: true })],
+		["/credit", creditPage({ mobile: true })],
+		["/ruling", rulingPage({ mobile: true })],
+		["/fans", fansPage({ mobile: true })]
+	];
+	for (const [url, html] of cases) {
+		const { context, page, errors } = await open(browser, `https://www.nodeseek.com${url}`, { html, viewport: { width: 375, height: 812 } });
+		try {
+			await wait(page, 700);
+			assert.equal(await page.evaluate(() => document.scrollingElement.scrollWidth > innerWidth + 1), false, `${url} 横向溢出`);
+			if (url === "/") {
+				const title = await page.locator(".post-title a", { hasText: "geelinx" }).evaluate((a) => ({ right: a.getBoundingClientRect().right, height: a.closest(".post-title").getBoundingClientRect().height }));
+				assert.ok(title.right <= 375 && title.height > 40, JSON.stringify(title));
+			}
+			if (url.includes("post-")) {
+				const op = await page.evaluate(() => { const item = document.querySelector(".nsk-post > .content-item"); const time = item.querySelector(".date-created").getBoundingClientRect(); const bar = item.querySelector(".nsmax-op-actions").getBoundingClientRect(); return { timeBottom: time.bottom, barTop: bar.top }; });
+				assert.ok(op.barTop >= op.timeBottom, `主帖操作不压在时间上：${JSON.stringify(op)}`);
+			}
+			if (url === "/setting") {
+				const layout = await page.evaluate(() => { const nav = document.querySelector("#user-setting-panel .selector-left-side").getBoundingClientRect(); const form = document.querySelector("#user-setting-panel .selector-right-side").getBoundingClientRect(); return { navBottom: nav.bottom, formTop: form.top, formWidth: form.width }; });
+				assert.ok(layout.formTop >= layout.navBottom && layout.formWidth >= 340, JSON.stringify(layout));
+			}
+			if (url === "/credit" || url === "/ruling") {
+				const table = await page.evaluate(() => { const t = document.querySelector(".credit-table table, .ruling-log table"); return { head: getComputedStyle(t.querySelector("thead")).display, row: getComputedStyle(t.querySelector("tbody > tr")).display }; });
+				assert.deepEqual(table, { head: "none", row: "grid" }, url);
+			}
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
@@ -314,7 +419,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.3");
+	assert.equal(packageJson.version, "1.8.4");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -556,10 +661,8 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 		assert.equal(await page.locator('.pager-bottom .pager-prev').isVisible(),false);
 		const row=page.locator('ul.post-list:not(.topic-carousel-panel)>li').first();
 		const ordered=await row.locator('.post-info').evaluate(e=>[...e.children].filter(n=>n.matches('.info-author,.info-last-comment-time,.nsmax-inline-category,.info-views,.info-comments-count,.info-last-commenter')).map(n=>n.className));
-		assert.ok(ordered[0].includes('info-author'));
-		assert.ok(ordered[1].includes('info-last-comment-time'));
-		assert.equal(ordered[2],'nsmax-inline-category');
-		assert.ok(ordered[3].includes('info-views'));
+		// sb.sb .post-meta：作者 · 版块 · 浏览 · 回复 · 最后回复人 · 时间
+		assert.deepEqual(ordered.map(name=>name.match(/info-author|nsmax-inline-category|info-views|info-comments-count|info-last-commenter|info-last-comment-time/)?.[0]),['info-author','nsmax-inline-category','info-views','info-comments-count','info-last-commenter','info-last-comment-time']);
 		const state=await row.locator('.post-info').evaluate(e=>({font:getComputedStyle(e).fontSize,line:getComputedStyle(e).lineHeight,gap:getComputedStyle(e).gap}));
 		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'0px 10px'});
 		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);

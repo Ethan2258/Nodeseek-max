@@ -453,13 +453,15 @@
 			if (!info) continue;
 			const author = info.querySelector(".info-author"), time = info.querySelector(".info-last-comment-time"), views = info.querySelector(".info-views"), count = info.querySelector(".info-comments-count"), last = info.querySelector(".info-last-commenter");
 			const category = info.querySelector(".post-category");
-			const inline = category?.cloneNode(true);
+			// 手机版（服务器按手机 UA 输出）没有 .post-category：版块是 .post-info 里链到 /categories/ 的那个 a.info-item，直接当行内版块用
+			const inline = category?.cloneNode(true) || info.querySelector(":scope > a.info-item[href*='/categories/']");
 			if (inline) {
 				inline.className = "nsmax-inline-category";
 				inline.querySelectorAll("svg, .iconpark-icon").forEach(s => s.remove());
 				const categoryIcon = toolIcon("board"); categoryIcon.classList.add("nsmax-meta-icon"); inline.prepend(categoryIcon);
 			}
-			for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
+			// 顺序照 sb.sb .post-meta：作者 · 版块 · 浏览 · 回复 · 最后回复人 · 时间（宽屏另有右侧版块标签）
+			for (const item of [author, inline, views, count, last, time, category]) if (item) info.append(item);
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
 	}
@@ -741,6 +743,15 @@
 		}
 		// 顶栏：脚本自己加的按钮、整组链接都被隐藏的分类
 		const head = document.querySelector("#nsk-head");
+		nsmaxFlag(document.documentElement, "data-nsmax-mhead", !!head?.querySelector(":scope > ul.nav-menu > #toggle-left-panel"));
+		// 手机版侧滑菜单（Vue 在页面加载后渲染）的版块列表：和顶栏一样隐藏设置里隐藏的版块和推广
+		const drawer = document.getElementById("left-slide-panel");
+		if (drawer) {
+			try {
+				const hidden = sidebarNavSettings()?.hidden || new Set(filterLines(NSMAX_HIDDEN_DEFAULT).map((name) => name.toLocaleLowerCase()));
+				for (const link of drawer.querySelectorAll(".category-mobile a[href*='/categories/']")) nsmaxFlag(link, "data-nsmax-own-hide", hidden.has(navLabel(link)) || (link.getAttribute("href") || "").includes("/categories/promotion"));
+			} catch {}
+		}
 		if (head) {
 			nsmaxFlag(head, "data-nsmax-has-settings", !!head.querySelector(".nsmax-settings-button"));
 			nsmaxFlag(head, "data-nsmax-has-mobile-menu", !!head.querySelector(".nsmax-mobile-menu"));
@@ -869,7 +880,8 @@
 		}
 	}
 	function nsmaxUpdateNavEssence() {
-		const navMenus = document.querySelectorAll("ul.nav-menu");
+		// 手机版顶栏的 ul.nav-menu 是 ≡ / 标志 / 搜索 / 深浅色那一排，版块在 header > ul.mobile-nav：「精华」加进版块那一排
+		const navMenus = [...document.querySelectorAll("ul.nav-menu:not(:has(> #toggle-left-panel)), header > ul.mobile-nav")];
 		for (const navMenu of navMenus) {
 			for (const item of navMenu.querySelectorAll(":scope > li")) {
 				const a = item.querySelector("a");
@@ -2129,6 +2141,8 @@
 			} catch { cache.delete(id); if (ticket === serial && pop) status.textContent = "暂时无法读取资料，可打开个人主页"; }
 		};
 		document.addEventListener("pointerover",event => {
+			// 手指点按也会触发 pointerover：手机上点头像、名字是要打开主页，不弹资料卡（也不白白请求一次资料）
+			if (event.pointerType === "touch") return;
 			const link=matches(event.target);
 			if (!link || pop?.contains(link) || link.contains(event.relatedTarget)) return;
 			clearTimeout(opening);

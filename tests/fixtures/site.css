@@ -120,3 +120,37 @@ body.dark-layout #nsk-right-panel-container .nsk-panel{border-radius:0!important
 .discussion-wrapper a[data-v-18f8c01b]{color:white}
 .discussion-wrapper .discussion-item[data-v-18f8c01b]{padding:4px 10px;font-size:14px;display:flex;align-items:center}
 .discussion-wrapper .discussion-item[data-v-18f8c01b]:nth-child(n+2){border-top:1px dashed #464646}
+
+/* 手机版（服务器按手机 UA 输出的那一版，2026-10-15 抓取的原样规则）：顶栏 ul.nav-menu 里是 ≡ / 标志 / 搜索图标 / 深浅色，
+   版块单独一排 ul.mobile-nav；左上 ≡ 打开 Vue 渲染的侧滑菜单（.global-mask + #left-slide-panel，left 在 -100% 和 0 之间切换） */
+#nsk-head{display:flex;align-items:center}
+@media screen and (max-width:500px){#nsk-head{background-color:var(--bg-main-color);box-shadow:0 0 5px rgba(0,0,0,.1)}}
+#nsk-head .nav-menu{margin-left:0;height:40px;display:flex;align-items:center}
+@media screen and (max-width:500px){#nsk-head .nav-menu{height:30px}}
+@media screen and (max-width:500px){.nav-menu{flex:1 1 0%;font-size:14px}}
+@media screen and (max-width:500px){.nav-menu .iconpark-icon{width:14px;height:14px}}
+@media screen and (max-width:500px){.nav-menu .meta-button{background-color:#000;width:30px;text-align:center;margin:0 5px 0 0}}
+.nav-menu li{margin:0 8px}
+@media screen and (max-width:500px){.nav-menu li{margin:0 5px;height:30px;line-height:30px}}
+.nav-menu .current-category{font-weight:700}
+.nav-menu .right-button-group{border-left:1px solid #333}
+@media screen and (max-width:500px){.nav-menu .right-button-group{margin:0;padding:0 9px;text-align:center;border-left:1px solid #ccc}}
+.mobile-nav{margin:9px 4px 0;border-radius:4px;display:flex;flex-wrap:wrap;background-color:var(--bg-main-color);box-shadow:0 0 3px rgba(0,0,0,.1)}
+.mobile-nav li{margin:3px 6px}
+.mobile-nav .current-category{font-weight:700}
+#fast-nav-button-group{position:fixed;right:calc(50% - 590px);z-index:99;bottom:40px}
+@media screen and (max-width:500px){#fast-nav-button-group{right:30px}}
+#fast-nav-button-group .nav-item-btn{position:absolute;right:0}
+#fast-nav-button-group .nav-item-btn:nth-last-child(1){bottom:0}
+#fast-nav-button-group .nav-item-btn:nth-last-child(2){bottom:40px}
+.nav-item-btn{display:none;width:30px;height:30px;justify-content:center;align-items:center;box-sizing:border-box;border:1px solid var(--glass-color);border-radius:20%;background-color:var(--bg-main-color);box-shadow:0 0 10px rgba(0,0,0,.3)}
+.global-mask{width:100%;height:150%;top:0;left:0;background-color:rgba(0,0,0,.15);position:fixed;z-index:99}
+#left-slide-panel{background-color:#4a7a6e;width:65%;min-width:100px;height:100%;overflow-y:auto;order:9999;top:0;left:0;position:fixed;transition:all .5s;z-index:99}
+#left-slide-panel .user-card-container{padding:12px 5px 5px;background-color:var(--bg-main-color)}
+#left-slide-panel .welcome-new{border-radius:1px;color:#888;padding:6px 10px 14px;margin:0 0 10px;box-shadow:0 0 2px #999}
+.category-mobile{padding-top:30px}
+.category-mobile h2,.category-mobile p{color:#eee;margin:0 18px;padding:5px 0 5px 18px;font-size:1rem;border-bottom:1px dashed hsla(0,0%,100%,.15)}
+.category-mobile h2{padding-left:9px}
+.category-mobile a.selected p{background-color:rgba(0,0,0,.2)}
+.category-mobile .iconpark-icon{color:#eee;margin-right:5px;width:1rem;height:1rem}
+.dark-layout #left-slide-panel{background-color:#0a3228!important}
