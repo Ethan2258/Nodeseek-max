@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage } = require("./fixtures/pages.cjs");
+const { listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -438,7 +438,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.5");
+	assert.equal(packageJson.version, "1.8.6");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -2701,4 +2701,192 @@ test("点赞成功：这一项变红（原站 .clicked），弹出「已点赞�
 		assert.equal(after, "rgb(207, 43, 43)");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
+});
+
+test("编辑主帖：标题栏写「编辑帖子」、标题框排在标题栏下面；阅读限制是小字 + 34px 下拉框，宽屏和按钮同一行、手机单独一行不出界", async () => {
+	for (const [width, mobile] of [[1440, false], [375, true]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ editorMode: "edit-discussion", mobile }), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector('.md-editor[data-nsmax-editor-mode="edit-discussion"] > .nsmax-editor-head + .title-input');
+			await wait(page, 300);
+			const info = await page.evaluate(() => {
+				const editor = document.querySelector(".md-editor");
+				const field = editor.querySelector(".topic-select > [data-nsmax-topic-field]");
+				const select = field.querySelector("select"), label = field.querySelector("label"), button = editor.querySelector(".topic-select > button.submit");
+				const rect = (element) => element.getBoundingClientRect();
+				const middle = (element) => (rect(element).top + rect(element).bottom) / 2;
+				return {
+					heading: editor.querySelector(".nsmax-editor-heading").textContent,
+					button: button.textContent.trim(),
+					titleHeight: Math.round(rect(editor.querySelector(".title-input input")).height),
+					selectHeight: Math.round(rect(select).height),
+					labelSize: getComputedStyle(label).fontSize,
+					iconShown: [...field.children].some((element) => !element.matches("label, select") && element.getClientRects().length > 0),
+					sameRow: Math.abs(middle(select) - middle(button)) < 4,
+					fieldAbove: rect(field).bottom <= rect(button).top,
+					selectRight: Math.round(rect(select).right),
+					editorRight: Math.round(rect(editor).right),
+					overflow: document.documentElement.scrollWidth - innerWidth,
+				};
+			});
+			assert.equal(info.heading, "编辑帖子");
+			assert.equal(info.button, "编辑帖子");
+			assert.equal(info.titleHeight, 40);
+			assert.equal(info.selectHeight, 34);
+			assert.equal(info.labelSize, "13px");
+			assert.equal(info.iconShown, false);
+			if (mobile) {
+				assert.ok(info.fieldAbove, JSON.stringify(info));
+				assert.ok(info.selectRight <= info.editorRight, JSON.stringify(info));
+				assert.ok(info.overflow <= 0, JSON.stringify(info));
+			} else assert.ok(info.sameRow, JSON.stringify(info));
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	// 真站回复模式：提交行里是站点留的空 div + 「发布评论」，手机上空 div 不能单独占一行把按钮往下推
+	{
+		const { context, page } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ editorMode: "codemirror", mobile: true }), viewport: { width: 375, height: 900 } });
+		try {
+			await page.waitForSelector(".md-editor > .topic-select > button.submit");
+			await wait(page, 500);
+			const gap = await page.evaluate(() => { const row = document.querySelector(".md-editor > .topic-select"); return Math.round(row.querySelector("button.submit").getBoundingClientRect().top - row.getBoundingClientRect().top); });
+			assert.equal(gap, 0);
+		} finally { await context.close(); }
+	}
+	// 平常回复：还是「发表回复」+「回复」按钮，标题栏留在正文框里
+	const { context, page } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".md-editor .nsmax-editor-heading");
+		await wait(page, 300);
+		assert.deepEqual(await page.evaluate(() => [document.querySelector(".nsmax-editor-heading").textContent, document.querySelector(".md-editor button.submit").textContent.trim(), !!document.querySelector("#editor-body > .nsmax-editor-head"), document.querySelector(".md-editor").dataset.nsmaxEditorMode]), ["发表回复", "回复", true, "reply"]);
+	} finally { await context.close(); }
+});
+
+test("搜索结果页没有结果：照 sb.sb 一行搜索摘要 + 空状态面板，排序、分页、站点自己的提示都收起来；「换个关键词」打开站点的搜索框", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E7%94%B2%E9%AA%A8%E6%96%87vps&category=tech", { html: searchPage({ nativeEmpty: "没有找到相关内容" }), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-search-empty .empty-state");
+		await wait(page, 300);
+		const info = await page.evaluate(() => {
+			const left = document.querySelector("#nsk-body-left");
+			const summary = left.querySelector(".nsmax-search-summary");
+			const panel = left.querySelector(".nsmax-search-empty");
+			const state = panel.querySelector(".empty-state");
+			return {
+				summary: summary.textContent,
+				keywordColor: getComputedStyle(summary.querySelector("strong")).color,
+				summaryColor: getComputedStyle(summary).color,
+				summarySize: getComputedStyle(summary).fontSize,
+				shown: [...left.children].filter((element) => element.getClientRects().length > 0).map((element) => element.className),
+				padding: getComputedStyle(state).padding,
+				align: getComputedStyle(state).textAlign,
+				title: panel.querySelector(".nsmax-search-empty-title").textContent,
+				actions: [...panel.querySelectorAll(".nsmax-search-empty-actions > *")].map((element) => [element.textContent, element.getAttribute("href")]),
+				input: document.querySelector("#search-site2").value,
+			};
+		});
+		assert.equal(info.summary, "搜索 甲骨文vps · 版块 技术 · 没有找到结果");
+		assert.notEqual(info.keywordColor, info.summaryColor);
+		assert.equal(info.summarySize, "13.5px");
+		assert.deepEqual(info.shown, ["nsmax-search-summary", "nsmax-search-empty"]);
+		assert.equal(info.padding, "44px 16px");
+		assert.equal(info.align, "center");
+		assert.equal(info.title, "没有找到相关帖子");
+		assert.deepEqual(info.actions, [["换个关键词", null], ["搜索全部版块", "/search?q=" + encodeURIComponent("甲骨文vps")]]);
+		assert.equal(info.input, "甲骨文vps");
+		// 站点的搜索弹层挂在顶栏搜索框的点击上
+		await page.evaluate(() => document.querySelector("form.search-box").addEventListener("click", (event) => { event.preventDefault(); window.__nsmaxSearchOpened = true; }));
+		await page.click(".nsmax-search-empty-actions > button");
+		assert.equal(await page.evaluate(() => window.__nsmaxSearchOpened), true);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("搜索结果页有结果：列表照常显示，上面一行搜索摘要（翻到第 2 页时带上页码）", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=vps&page=2", { html: searchPage({ count: 4 }), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-search-summary");
+		await wait(page, 300);
+		const info = await page.evaluate(() => ({
+			summary: document.querySelector(".nsmax-search-summary").textContent,
+			empty: !!document.querySelector(".nsmax-search-empty"),
+			rows: [...document.querySelectorAll("ul.post-list > li.post-list-item")].filter((element) => element.getClientRects().length > 0).length,
+			toolbar: document.querySelector(".post-list-controler").getClientRects().length > 0,
+			gap: Math.round(document.querySelector(".post-list-controler").getBoundingClientRect().top - document.querySelector(".nsmax-search-summary").getBoundingClientRect().bottom),
+		}));
+		assert.deepEqual(info, { summary: "搜索 vps · 第 2 页", empty: false, rows: 4, toolbar: true, gap: 8 });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("抽奖页：顶上一条细线栏（链接 + 右侧三个按钮），标题和简介照常显示，表单是 sb.sb 面板（四格一排、36px 输入框、主题色按钮）；手机上不出界", async () => {
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/lucky", { html: luckyPage(), viewport: { width: 1280, height: 900 } });
+		try {
+			await page.waitForSelector(".sample-panel > header > nav > .nsmax-header-action");
+			await wait(page, 300);
+			const info = await page.evaluate(() => {
+				const rect = (selector) => document.querySelector(selector).getBoundingClientRect();
+				const shown = (element) => element.getClientRects().length > 0;
+				const nav = document.querySelector(".sample-panel > header > nav");
+				return {
+					page: document.documentElement.dataset.nsmaxPage,
+					navHeight: Math.round(nav.getBoundingClientRect().height),
+					links: [...nav.querySelectorAll(":scope > a")].filter(shown).map((element) => element.textContent.trim()),
+					actions: nav.querySelectorAll(":scope > .nsmax-header-action").length,
+					actionsRight: Math.round(nav.lastElementChild.getBoundingClientRect().right) === Math.round(rect(".sample-panel > form").right),
+					heroActions: document.querySelectorAll(".hero-div .nsmax-header-action").length,
+					intro: shown(document.querySelector(".intro")),
+					formBelowIntro: rect(".sample-panel > form").top >= rect(".intro").bottom,
+					legendWeight: getComputedStyle(document.querySelector("legend")).fontWeight,
+					inputHeight: Math.round(rect("#post-id").height),
+					fieldTops: [...document.querySelectorAll(".pure-g > *")].map((element) => Math.round(element.getBoundingClientRect().top)),
+					button: getComputedStyle(document.querySelector(".sample-panel .pure-button-primary")).backgroundColor,
+					overflow: document.documentElement.scrollWidth - innerWidth,
+				};
+			});
+			assert.equal(info.page, "lucky");
+			assert.equal(info.navHeight, 53);
+			assert.deepEqual(info.links, ["主页"]);
+			assert.equal(info.actions, 3);
+			assert.ok(info.actionsRight, JSON.stringify(info));
+			assert.equal(info.heroActions, 0);
+			assert.equal(info.intro, true);
+			assert.ok(info.formBelowIntro, JSON.stringify(info));
+			assert.equal(info.legendWeight, "600");
+			assert.equal(info.inputHeight, 36);
+			assert.equal(new Set(info.fieldTops).size, 1, JSON.stringify(info.fieldTops));
+			assert.notEqual(info.button, "rgb(0, 120, 231)");
+			assert.equal(info.overflow, 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/lucky", { html: luckyPage({ view: true }), viewport: { width: 375, height: 812 } });
+		try {
+			await page.waitForSelector(".sample-panel > header > nav > .nsmax-header-action");
+			await wait(page, 300);
+			const info = await page.evaluate(() => {
+				const rect = (element) => element.getBoundingClientRect();
+				const fields = [...document.querySelectorAll(".pure-g > *")];
+				const board = document.querySelector(".board");
+				return {
+					links: [...document.querySelectorAll(".sample-panel > header > nav > a")].filter((element) => element.getClientRects().length > 0).map((element) => element.textContent.trim()),
+					dateFull: Math.round(rect(fields[1]).width) === Math.round(rect(document.querySelector(".pure-g")).width - 32),
+					pairTop: Math.round(rect(fields[2]).top) === Math.round(rect(fields[3]).top),
+					boardLeft: Math.round(rect(board).left),
+					formLeft: Math.round(rect(document.querySelector(".sample-panel > form")).left),
+					rows: document.querySelectorAll(".board .rank-row").length,
+					overflow: document.documentElement.scrollWidth - innerWidth,
+				};
+			});
+			assert.deepEqual(info.links, ["主页", "抽奖贴"]);
+			assert.ok(info.dateFull, JSON.stringify(info));
+			assert.ok(info.pairTop, JSON.stringify(info));
+			assert.equal(info.boardLeft, info.formLeft);
+			assert.equal(info.rows, 3);
+			assert.equal(info.overflow, 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
 });

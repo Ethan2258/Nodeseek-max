@@ -69,6 +69,9 @@ const pagerHtml = (mode, page = 1, last = 100) => mode === "wrapped"
 	? `<span class="pager-prev"><div class="triangle-left"></div></span><span class="pager-group"><a class="pager-pos active" href="/page-1">1</a><a class="pager-pos active" href="/page-2">2</a><a class="pager-pos active" href="/page-3">3</a></span><span class="pager-more"><span>..</span><a class="pager-pos" href="/page-${last}"><span>${last}</span></a></span><a class="pager-next" href="/page-2"><div class="triangle-right"></div></a>`
 	: `<div role="navigation" aria-label="pagination"><span aria-disabled="true" class="pager-prev"><div class="triangle-left"></div></span> <!----> <span href="/page-${page}" aria-label="page${page}" aria-current="page" class="pager-pos pager-cur">${page}</span><a href="/page-2" aria-label="page2" aria-current="page" class="pager-pos">2</a><a href="/page-3" aria-label="page3" aria-current="page" class="pager-pos">3</a> <a href="/page-${last}" class="pager-pos"><span class="ellipsis">..</span>${last}</a> <a href="/page-2" rel="next" class="pager-next"><div class="triangle-right"></div></a></div>`;
 const controller = (mode) => `<div class="post-list-controler"><div class="sorter"><a data-sort="replyTime" class="selected">新评论</a><a data-sort="postTime">新帖子</a></div> <div class="nsk-pager pager-top">${pagerHtml(mode)}</div></div>`;
+// 搜索结果页（登录后 /search?q=…）：和首页同一套列表（排序 + 页码 + ul.post-list）；默认 count: 0，列表是空的。
+// nativeEmpty 给了就在列表后面放一句站点自己的空结果提示（登录后的真实写法没见过，按最常见的样子放一个 div）
+const searchPage = (options = {}) => shell("NodeSeek", `<div id="nsk-body-left">${controller(options.pagerMode)} <ul class="post-list">${listItems(options.count ?? 0)}</ul>${options.nativeEmpty ? `<div class="search-empty">${options.nativeEmpty}</div>` : ""} <div style="padding: 2px 0;display: flex;justify-content: flex-end;"><div class="nsk-pager pager-bottom">${pagerHtml(options.pagerMode)}</div></div> <div id="nsk-body-left-block"></div></div>${sidebar}`, options);
 const listPage = (options = {}) => shell("NodeSeek", `<div id="nsk-body-left">${controller(options.pagerMode)} <ul class="post-list">${listItems(options.count)}</ul> <div style="padding: 2px 0;display: flex;justify-content: flex-end;"><div class="nsk-pager pager-bottom">${pagerHtml(options.pagerMode)}</div></div> <div id="nsk-body-left-block"></div></div>${sidebar}`, options);
 
 const content = `<h2>配置说明</h2><p>这是一段正文，包含 <a href="/jump?to=https%3A%2F%2Fexample.com%2Fdocs">外部链接</a> 和 <code>inline code</code>。</p>
@@ -97,10 +100,15 @@ const editorFor = (mode) => mode === "native"
 	: `<div class="md-editor"><div class="tab-select">${editorTabs}</div><div class="mde-toolbar">${toolButtons}<span class="toolbar-item right">支持markdown语法</span>${asideIcons}</div>${editorRest}`;
 const editor = editorFor();
 const codeMirrorEditor = `<div class="md-editor"><div id="editor-body"><div class="tab-select window_header"><div class="tab-option">内容</div><div class="tab-option">预览</div></div><div class="mde-toolbar">${toolButtons}</div><div class="vue-codemirror"><div class="CodeMirror"><div style="overflow:hidden;position:relative;width:3px;height:0"><textarea style="position:absolute;bottom:-1em;padding:0;width:1000px;height:1em;min-height:1em"></textarea></div><div class="CodeMirror-scroll"><div class="CodeMirror-lines"><div class="CodeMirror-code" contenteditable="true" role="textbox" aria-label="CodeMirror 回复">鼓励友善发言，禁止人身攻击</div></div></div></div></div><div class="expression"><div class="exp-item">AC娘</div></div></div><div class="topic-select"><div></div><button class="submit btn">发布评论</button></div></div>`;
+// 楼主在帖子页里编辑主帖（editor.edit → edit-discussion，真站编辑器模板 markdownEditor-*.js）：编辑器最上面多一个标题框，
+// 提交行里多一组「阅读限制」（图标 + label[for=rank] + select#rank.focus-visible：公开 / Lv1…自己的等级 / 私有），按钮是「编辑帖子」
+const editDiscussionEditor = editorFor("native")
+	.replace('<div class="md-editor">', '<div class="md-editor"><div class="title-input"><input type="text" name="title" id="mde-title" placeholder="请输入标题" tabindex="1" value="出一台香港 CN2 GIA 小鸡，年付 99"></div>')
+	.replace('<div class="submit-row" style="padding:8px;text-align:right"><button class="submit btn">发布评论</button></div></div>', `</div><div class="topic-select"><div><span><svg class="iconpark-icon"><use href="#permissions"></use></svg></span><label for="rank">阅读限制</label><select name="" id="rank" tabindex="4" class="focus-visible">${["公开", "Lv1", "Lv2", "Lv3", "Lv4", "Lv5", "Lv6", "私有"].map((text, index) => `<option value="${index === 7 ? 255 : index}"${index === 7 ? " selected" : ""}>${text}</option>`).join("")}</select></div><button class="submit btn focus-visible" tabindex="5">编辑帖子</button></div>`);
 const postData = { category: "trade", categoryWord: "交易", categoryLink: "/categories/trade", postId: 1000, postPage: 1, title: "出一台香港 CN2 GIA 小鸡，年付 99", views: "1234", postPageCount: 1, collectionCount: 5 };
 const signature = `<div class="signature">签名：机器不跑路 <a href="https://example.com/x" style="color:#2ea44f">Xmanager</a> | <span style="color:#3fb950">Xshell</span></div>`;
 const postPage = (options = {}) => shell("出一台香港 CN2 GIA 小鸡 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-post-wrapper"><div class="nsk-post"><div class="post-title"><h1><a href="/post-1000-1" class="post-title-link nspp-read">出一台香港 CN2 GIA 小鸡，年付 99</a></h1></div> ${entry("div", 0, 10, "seller", content, { op: true, extra: signature })}</div> <div class="comment-container"><div><div class="nsk-pager post-top-pager">${pagerHtml(undefined, 1, 3)}</div></div> <ul class="comments">${comment(1, 11, "buyer", "收了，私信你")}${comment(2, 12, "passerby", "价格不错，帮顶")}${comment(3, 13, "curious", "线路怎么样？晚高峰丢包吗？")}</ul> <div><div class="nsk-pager post-bottom-pager">${pagerHtml(undefined, 1, 3)}</div></div></div>
-${options.editorMode === "codemirror" ? codeMirrorEditor : editorFor(options.editorMode || "native")}
+${options.editorMode === "codemirror" ? codeMirrorEditor : options.editorMode === "edit-discussion" ? editDiscussionEditor : editorFor(options.editorMode || "native")}
 </div></div>${sidebar}`, { ...options, postData });
 
 const notificationPage = (options = {}) => shell("通知 - NodeSeek", `<div id="nsk-body-left"><div class="nsk-notification">
@@ -174,7 +182,65 @@ const rulingPager = `<div class="rulling-log-head"><div class="nsk-pager">${page
 const rulingPage = (options = {}) => shell("NodeSeek-管理记录", `<div id="nsk-frame-block"></div><div class="ruling-log"><div>${rulingPager}<table><thead><tr><th>ID</th><th>用户</th><th>操作</th><th>管理员</th><th>时间</th></tr></thead><tbody>${rulingRows}</tbody></table>${rulingPager}</div></div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
 const boardRealPage = (options = {}) => shell("NodeSeek-签到", `<div id="nsk-frame-block"></div><div class="board"><div class="head-info"><div>今日签到获得鸡腿2个，当前排名第11872</div></div><div><h1>今日签到鸡腿排行榜</h1>${Array.from({ length: 12 }, (_, i) => `<div class="rank-row"><div>${i + 1}</div><img class="avatar" src="${AVATAR}" alt="m${i}"><div class="member-name">member${i}</div><div class="coins">${16 - Math.floor(i / 3)} 鸡腿</div></div>`).join("")}</div></div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
 
+// 抽奖页（/lucky）：站点独立的 Vue 小页面（static/js/lucky.*.js），没有站点顶栏、左右栏和页脚；结构照真站模板，
+// 样式带上真站的作用域样式（data-v-23190e9e）和用到的 pure / vue2-datepicker 规则，背景是一层礼物花纹。
+// view: true 是「查看」模式（多一个「抽奖贴」链接、表单只读、「重新编辑 / 生成@消息」、下面是中奖名单）；linkText: 生成链接之后的文本框和复制按钮
+const luckyCss = `body{margin:0;font-family:sans-serif;background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect x='20' y='30' width='40' height='30' fill='%23e91e63'/></svg>")}
+.pure-g{letter-spacing:-.31em;display:flex;flex-flow:row wrap;align-content:flex-start}
+.pure-g [class*=pure-u]{letter-spacing:normal}
+.pure-u-1{display:inline-block;width:100%}
+.pure-u-23-24{width:95.8333%}
+@media screen and (min-width:48em){.pure-u-md-1-4{width:25%}.pure-u-md-1-2{width:50%}}
+.pure-form input[type=number],.pure-form input[type=text],.pure-form textarea{padding:.5em .6em;display:inline-block;border:1px solid #ccc;box-shadow:inset 0 1px 3px #ddd;border-radius:4px;vertical-align:middle;box-sizing:border-box}
+.pure-form fieldset{margin:0;padding:.35em 0 .75em;border:0}
+.pure-form legend{display:block;width:100%;padding:.3em 0;margin-bottom:.3em;color:#333;border-bottom:1px solid #e5e5e5}
+.pure-form-stacked label{display:block;margin:.25em 0}
+.pure-form-stacked input[type=number],.pure-form-stacked textarea{display:block;margin:.25em 0}
+.pure-form .pure-checkbox{margin:.5em 0;display:block}
+.pure-button{display:inline-block;line-height:normal;white-space:nowrap;vertical-align:middle;text-align:center;cursor:pointer;user-select:none;box-sizing:border-box;font-size:100%;padding:.5em 1em;color:rgba(0,0,0,.8);border:none transparent;background-color:#e6e6e6;text-decoration:none;border-radius:2px}
+.pure-button-primary{background-color:#0078e7;color:#fff}
+.mx-datepicker{position:relative;display:inline-block;width:210px}
+.mx-input-wrapper{position:relative}
+.mx-input{display:inline-block;box-sizing:border-box;width:100%;height:34px;padding:6px 30px 6px 10px;font-size:14px;line-height:1.4;color:#555;background-color:#fff;border:1px solid #ccc;border-radius:4px;box-shadow:inset 0 1px 1px rgba(0,0,0,.075)}
+.mx-icon-calendar{position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:16px;line-height:1;color:rgba(0,0,0,.5)}
+.mx-icon-calendar svg{width:1em;height:1em;fill:currentColor}
+.add-margin[data-v-23190e9e]{margin:5px 0}
+.not-revealed[data-v-23190e9e]{text-align:center;color:#333;font-size:30px;font-weight:bold;min-width:300px;width:40%;background:rgba(255,255,255,.1);margin:0 auto;backdrop-filter:blur(4px);border-radius:10px;padding:8px 0}
+header[data-v-23190e9e]{height:200px;background-color:rgba(255,255,255,.5);backdrop-filter:blur(4px)}
+header nav[data-v-23190e9e]{display:flex;justify-content:flex-end;padding:5px 15px;box-shadow:0 0 6px rgba(0,0,0,.25)}
+header nav a[data-v-23190e9e]{margin-left:10px;color:#000017;font-size:14px}
+header .hero-div[data-v-23190e9e]{font-size:2.4rem;margin-top:10px;font-weight:bold;color:#36618a;text-align:center}
+header .intro[data-v-23190e9e]{text-align:center;font-size:1rem}
+form[data-v-23190e9e]{width:80%;padding:20px 30px;position:relative;top:-50px;box-shadow:2px 0 8px rgba(0,0,0,.17);margin:0 auto;border-radius:8px;background-color:white}
+@media screen and (max-width:568px){form[data-v-23190e9e]{margin:14px 3px}}
+.board[data-v-23190e9e]{max-width:500px;margin:30px auto;background-color:white;box-shadow:4px 4px 8px rgba(0,0,0,.1)}
+.board h1[data-v-23190e9e]{border-left:#333 5px solid;padding-left:10px;margin:20px 10px}
+.board .head-info[data-v-23190e9e]{font-size:18px;background-color:rgba(255,217,0,.6);padding:20px;text-align:center}
+.rank-row[data-v-23190e9e]{display:flex;align-items:center;margin:10px 0}
+.rank-row .draw-number[data-v-23190e9e]{color:#FE2D46;font-size:1.1rem;font-weight:bold;width:30px;text-align:right;padding-right:18px}
+.rank-row .member-name[data-v-23190e9e]{margin:0 10px;width:200px;font-size:1rem}
+.rank-row .coins[data-v-23190e9e]{margin:0 10px;font-weight:bold}
+.avatar[data-v-23190e9e]{border-radius:15%;height:40px;width:40px;box-shadow:0 0 3px rgba(0,0,0,.1)}`;
+const luckyField = (id, label, value = "", view = false) => `<div data-v-23190e9e="" class="pure-u-1 pure-u-md-1-4"><label data-v-23190e9e="" for="${id}">${label}</label> <input data-v-23190e9e="" type="number" id="${id}" class="pure-u-23-24"${value === "" ? "" : ` value="${value}"`}${view ? " disabled" : ""}></div>`;
+const luckyPage = ({ view = false, linkText = "", dark = false } = {}) => `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NodeSeek-抽奖程序</title><style>${luckyCss}</style>
+<script>${config}</script></head>
+<body class="${dark ? "dark-layout" : "light-layout"}"><svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><symbol id="permissions" viewBox="0 0 48 48"><path d="M6 9h36v30H6z" fill="none" stroke="currentColor" stroke-width="4"></path></symbol></svg><div data-v-23190e9e="" class="sample-panel"><header data-v-23190e9e=""><nav data-v-23190e9e=""><a data-v-23190e9e="" href="/">主页</a> ${view ? `<a data-v-23190e9e="" href="/post-1000-1">抽奖贴</a>` : "<!---->"} <a data-v-23190e9e="" href="#how">原理</a></nav> <div data-v-23190e9e="" class="hero-div"><img data-v-23190e9e="" src="${AVATAR}" alt="" style="width: 60px; vertical-align: -16px;">Lucky Draw
+        </div> <div data-v-23190e9e="" class="intro">
+            NodeSeek论坛专用抽奖工具，保障抽奖/T楼活动的合理性和透明度，具备楼层去重等实用功能.
+        </div></header> <form data-v-23190e9e="" class="pure-form pure-form-stacked"><fieldset data-v-23190e9e=""><legend data-v-23190e9e="" style="font-weight: bold;">抽奖信息</legend> <div data-v-23190e9e="" class="pure-g">${luckyField("post-id", "主题帖ID", view ? 1000 : "", view)} <div data-v-23190e9e="" class="pure-u-1 pure-u-md-1-4"><label data-v-23190e9e="" for="reveal-name">开奖时间</label> <div data-v-23190e9e="" class="mx-datepicker" style="top: -3px; width: 95.8333%;"><div class="mx-input-wrapper"><input name="date" type="text" autocomplete="off" placeholder="" class="mx-input"${view ? " disabled" : ""} value="2026-10-16 21:31:11"><i class="mx-icon-calendar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1em" height="1em"><path d="M940.218 107.055H730.764v-60.51H665.6v60.51H363.055v-60.51H297.89v60.51H83.78c-18.617 0-32.581 13.963-32.581 32.581v805.237c0 18.618 13.964 32.582 32.582 32.582h861.09c18.619 0 32.583-13.964 32.583-32.582V139.636c-4.655-18.618-18.619-32.581-37.237-32.581z"></path></svg></i></div></div></div> ${luckyField("gift-count", "奖品数目", view ? 3 : "", view)} ${luckyField("first-floor", "起始楼层", 1, view)}</div> <label data-v-23190e9e="" for="remove-duplicated" class="pure-checkbox add-margin"><input data-v-23190e9e="" type="checkbox" id="remove-duplicated" checked${view ? " disabled" : ""}> 楼层去重
+            </label> ${view ? `<!----> <button data-v-23190e9e="" class="pure-button pure-button-primary add-margin">重新编辑</button> <button data-v-23190e9e="" class="pure-button pure-button-primary add-margin">生成@消息</button>` : `<button data-v-23190e9e="" class="pure-button pure-button-primary add-margin">生成链接</button> <!----> <!---->`} ${linkText ? `<textarea data-v-23190e9e="" placeholder="T楼链接" class="pure-u-23-24 pure-u-md-1-2 add-margin">${linkText}</textarea> <div data-v-23190e9e="" class="add-margin"><button data-v-23190e9e="" class="pure-button pure-button-primary">复制</button> <button data-v-23190e9e="" class="pure-button pure-button-primary">复制为markdown</button> <button data-v-23190e9e="" class="pure-button pure-button-primary">打开</button></div>` : "<!---->"} <!----></fieldset></form> ${view ? `<div data-v-23190e9e=""><div data-v-23190e9e=""><div data-v-23190e9e="" class="board"><div data-v-23190e9e="" class="head-info">
+                        你没有中奖
+                    </div> <div data-v-23190e9e="" style="padding: 0px 20px 20px;"><h1 data-v-23190e9e="">
+                        中奖名单
+                    </h1> ${["泡泡mercy", "vader", "weseeker"].map((name, index) => `<div data-v-23190e9e="" class="rank-row"><div data-v-23190e9e="" class="draw-number">${index + 1}</div> <img data-v-23190e9e="" src="${AVATAR}" alt="avatar" loading="lazy" class="avatar"> <div data-v-23190e9e="" class="member-name"><a data-v-23190e9e="" href="/space/${20 + index}">
+                                ${name}
+                            </a> ${index === 2 ? `<span data-v-23190e9e="">(重复楼层)</span>` : "<!---->"}</div> <div data-v-23190e9e="" class="coins">
+                            ${12 + index * 7}楼
+                        </div></div>`).join(" ")}</div></div></div></div>` : "<!---->"}</div></body></html>`;
+
 module.exports = {
+	luckyPage,
+	searchPage,
 	creditPage,
 	fansPage,
 	boardPage,

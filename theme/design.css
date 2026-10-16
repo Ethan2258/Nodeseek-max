@@ -8077,3 +8077,635 @@ html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme > div > :fir
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme p:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin: 0 0 12px !important;
 }
+/* ---------- 38. 帖子页编辑主帖：标题框、阅读限制（2026-10-16） ----------
+   楼主在帖子页点「编辑」，回复卡片变成「编辑帖子」（标题栏跟着改，见 nsmaxSyncEditorMode）：标题栏下面是标题框——和发帖页一样，
+   「标题」小字 + 40px 输入框；提交行左边「编辑帖子」，右边「阅读限制」：13px 次要色小字 + 34px 下拉框（细线框、输入框圆角、右侧小箭头），
+   站点那个图标不放（回复模式下这一行只有站点留的一个空 div，用 :not(:empty) 排除，免得手机上空占一行）。以前标题框是一个没样式的小输入框挤在卡片左上角，阅读限制是一行大白字加一个灰字小下拉框、还一直套着一圈黄框 */
+/* 标题栏挪到了 #editor-body 外面（标题框上面），那里没有 16px 内边距，去掉配套的 -16px 外边距 */
+html[data-nsmax-theme] .md-editor[data-nsmax-editor-mode] > .nsmax-editor-head:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 0 14px !important;
+}
+html[data-nsmax-theme] .md-editor[data-nsmax-editor-mode] > .title-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 16px 12px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  outline: 0 !important;
+}
+html[data-nsmax-theme] .md-editor[data-nsmax-editor-mode] > .title-input:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "标题" !important;
+  display: block !important;
+  margin: 0 0 5px !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] .md-editor[data-nsmax-editor-mode] > .title-input input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 40px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  outline: 0 !important;
+}
+html[data-nsmax-theme] .md-editor[data-nsmax-editor-mode] > .title-input input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex-wrap: wrap !important;
+  row-gap: 10px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field]:not(:empty):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  flex: none !important;
+  gap: 8px !important;
+  width: auto !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > :is(span, i, svg):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > label:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 96px !important;
+  height: 34px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 30px 0 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background-color: var(--panel) !important;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%) !important;
+  background-position: right 15px center, right 10px center !important;
+  background-repeat: no-repeat !important;
+  background-size: 5px 5px, 5px 5px !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  line-height: 32px !important;
+  outline: 0 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select option:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+@media (max-width: 600px) {
+  /* 手机：阅读限制单独一行，放在按钮那一行上面，下拉框占满剩余宽度 */
+  html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field]:not(:empty):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex: 1 1 100% !important;
+    order: -2 !important;
+    margin: 0 !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex: 1 1 auto !important;
+  }
+}
+/* ---------- 39. 搜索结果页（2026-10-16） ----------
+   照 sb.sb：列表上面一行 .search-summary（13.5px 次要色，关键词正文色，一行放不下省略）；没有结果时排序、分页、空列表收起，
+   只留一块 .empty-state 面板（44px 16px、居中、14px 弱化色），下面两个小胶囊按钮：换个关键词 / 搜索全部版块。见 nsmaxPrepareSearch */
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-summary:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  min-width: 0 !important;
+  margin: 0 0 8px !important;
+  padding: 0 2px !important;
+  overflow: hidden !important;
+  color: var(--text-muted) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-summary strong:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #nsk-body-left[data-nsmax-search-empty] > [data-nsmax-search-hide]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-empty > .empty-state:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 44px 16px !important;
+  border: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 14px !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-empty .nsmax-search-empty-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-empty .nsmax-search-empty-hint:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 4px 0 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-empty .nsmax-search-empty-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin: 16px 0 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-empty .nsmax-search-empty-actions > :is(button, a):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  height: 32px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-search-empty .nsmax-search-empty-actions > :is(button, a):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+/* ---------- 40. 抽奖页 /lucky（2026-10-16） ----------
+   站点独立的 Vue 小页面：.sample-panel > header（nav 一排链接 + .hero-div 礼物图大标题 + .intro 简介）、form.pure-form（抽奖信息四格 +
+   楼层去重 + 按钮，生成链接后多一个文本框和复制按钮），查看模式下面是 .board 中奖名单（排法同签到排行，见第 24 节）。
+   以前套的是顶栏规划：三个按钮挤在大标题旁边、表单卡片被站点 200px 高的顶部压住一截、按钮还是站点蓝。现在照 sb.sb：
+   顶上一条 53px 细线栏（链接胶囊 + 右侧 34px 圆钮），内容 760px 居中：22px/600 标题 + 13.5px 简介，表单是 sb.sb 面板
+   （14px/600 标题栏 + 36px 输入框 + 实底胶囊按钮），中奖名单也是面板 */
+html[data-nsmax-theme][data-nsmax-page="lucky"] body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--bg) !important;
+  background-image: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 0 48px !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  box-sizing: border-box !important;
+  height: 53px !important;
+  margin: 0 !important;
+  padding: 0 max(16px, calc((100% - 760px) / 2 + 16px)) !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav > a:not([data-nsmax-header-hide]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border-radius: var(--r-pill) !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav > a:first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: -12px !important;
+  color: var(--text) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav > .nsmax-header-action:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+  width: var(--nav-ctl) !important;
+  min-width: var(--nav-ctl) !important;
+  height: var(--nav-ctl) !important;
+  margin: 0 0 0 2px !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav > .nsmax-header-action[data-nsmax-own-first]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: auto !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav > .nsmax-header-action:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--brand-border) !important;
+  color: var(--brand) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > nav > .nsmax-header-action svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 15px !important;
+  height: 15px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > .hero-div:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+  max-width: 760px !important;
+  margin: 28px auto 6px !important;
+  padding: 0 16px !important;
+  color: var(--text-strong) !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > .hero-div > img:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 30px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  object-fit: contain !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > .intro:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  max-width: 760px !important;
+  margin: 0 auto 18px !important;
+  padding: 0 16px !important;
+  color: var(--text-muted) !important;
+  font-size: 13.5px !important;
+  line-height: 1.7 !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > :is(form, div):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: static !important;
+  top: auto !important;
+  box-sizing: border-box !important;
+  width: calc(100% - 32px) !important;
+  max-width: 728px !important;
+  margin: 0 auto !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 0 16px !important;
+  border: 0 !important;
+  font-size: 14px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > legend:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  margin: 0 0 14px !important;
+  padding: 12px 16px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 14px 12px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  letter-spacing: normal !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g > *:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: auto !important;
+  min-width: 0 !important;
+  letter-spacing: normal !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g label:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  margin: 0 0 6px !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form :is(input[type="number"], input.mx-input):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 36px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  outline: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form input.mx-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding-right: 32px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form :is(input[type="number"], input.mx-input, textarea):is(#nsmax-lv, *):is(#nsmax-b, *):focus {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form :is(input[type="number"], input.mx-input):is(#nsmax-lv, *):is(#nsmax-b, *):disabled {
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+  cursor: default !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form .mx-datepicker:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  top: 0 !important;
+  width: 100% !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form .mx-icon-calendar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  right: 10px !important;
+  color: var(--text-subtle) !important;
+  font-size: 15px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-checkbox:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: fit-content !important;
+  margin: 14px 16px 0 !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-checkbox input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0 !important;
+  accent-color: var(--action) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: 34px !important;
+  margin: 16px 0 0 16px !important;
+  padding: 0 16px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-button + .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: 4px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+}
+/* 生成链接以后：T楼链接 / @消息文本框（等宽小字、浅底），下面「复制 / 复制为markdown / 打开」是次级细线胶囊 */
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > textarea:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: calc(100% - 32px) !important;
+  min-height: 76px !important;
+  margin: 16px 16px 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  word-break: break-all !important;
+  resize: vertical !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > div.add-margin:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin: 10px 16px 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > div.add-margin > .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border-color: var(--line-strong) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > div.add-margin > .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+/* 查看模式：未到开奖时间 / 中奖名单 / 加载中，都排在表单下面同宽 */
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > div:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-top: 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .not-revealed:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 28px 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .not-revealed > img:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 26px !important;
+  height: 26px !important;
+  object-fit: contain !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board > .head-info a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--link) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board > div:not(.head-info):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board .rank-row .member-name:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board .rank-row .member-name > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-weight: 500 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board .rank-row .member-name > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: 6px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .loading-img:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 22px !important;
+  height: 22px !important;
+  margin-right: 6px !important;
+  vertical-align: middle !important;
+}
+/* 开奖时间的日期弹层（vue2-datepicker，挂在 body 上）：面板底色、细线框、当前项实底 */
+html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-medium) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main :is(.mx-btn, .mx-calendar-header-label, th, .mx-time-header-title):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main :is(.cell, .mx-time-item):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-radius: var(--r-xs) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main :is(.cell.not-current-month, .cell.disabled, .mx-time-item.disabled):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: transparent !important;
+  color: var(--text-disabled) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main :is(.cell, .mx-time-item):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main :is(.cell.active, .mx-time-item.active):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main :is(.mx-datepicker-footer, .mx-time, .mx-time-header, .mx-time-column, .mx-calendar + .mx-calendar):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--line-soft) !important;
+  background: transparent !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g > :nth-child(-n + 2):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 1 / -1 !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > header > .hero-div:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    margin-top: 20px !important;
+    font-size: 19px !important;
+  }
+}
+@media (max-width: 360px) {
+  html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

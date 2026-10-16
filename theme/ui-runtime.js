@@ -6,7 +6,7 @@
 	}
 	// 页面类型：主题 CSS 按 html[data-nsmax-page] 分页面排版；搜索、账簿这类结构和列表页相同的页面都算 list
 	function nsmaxPageKind(path = location.pathname) {
-		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : "list";
+		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : /^\/lucky(?:\/|$)/.test(path) ? "lucky" : "list";
 	}
 	function nsmaxSetAttr(el, name, value = "") {
 		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
@@ -479,6 +479,87 @@
 			for (const item of [author, inline, views, count, last, time, category]) if (item) info.append(item);
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
+	}
+	// 搜索结果页（/search?q=…，登录后才有，结果还是首页那套 ul.post-list）：照 sb.sb 在列表上面加一行 .search-summary——
+	// 「搜索 关键词 · 版块 · 第几页」，13.5px 次要色、关键词正文色；一条结果都没有时排序、分页、空列表（还有站点自己那句提示）都收起来，
+	// 换成 sb.sb 的 .empty-state 面板：「没有找到相关帖子」+ 一行提示 +「换个关键词」（打开站点自己的搜索框）/「搜索全部版块」（带了版块筛选时）
+	function nsmaxPrepareSearch() {
+		if (location.pathname !== "/search") return;
+		const left = document.querySelector("#nsk-body-left");
+		if (!left) return;
+		const params = new URLSearchParams(location.search);
+		const keyword = (params.get("q") || "").trim();
+		const category = (params.get("category") || "").trim();
+		const page = Math.max(1, Number.parseInt(params.get("page"), 10) || 1);
+		// 顶栏搜索框里显示这次搜的词（登录后点它打开的是站点的搜索弹层，这里只让人看到现在搜的是什么；只填一次，清空了不再补回去）
+		const input = document.querySelector("#search-site2");
+		if (input && keyword && !input.hasAttribute("data-nsmax-search-filled")) {
+			input.setAttribute("data-nsmax-search-filled", "");
+			if (!input.value) input.value = keyword;
+		}
+		// 页面还在解析时列表可能还没出来，等解析完再判断是不是真的没有结果
+		if (document.readyState === "loading" && !nsmaxPrepareSearch.waiting) {
+			nsmaxPrepareSearch.waiting = true;
+			document.addEventListener("DOMContentLoaded", () => nsmaxPrepareSearch(), { once: true });
+		}
+		const empty = document.readyState !== "loading" && !left.querySelector("ul.post-list > li.post-list-item");
+		const categoryName = category && ((document.querySelector(`a[href="/categories/${CSS.escape(category)}"]`)?.textContent || "").trim() || category);
+		let summary = left.querySelector(":scope > .nsmax-search-summary");
+		if (!summary) {
+			summary = document.createElement("p");
+			summary.className = "nsmax-search-summary";
+		}
+		if (left.firstElementChild !== summary) left.prepend(summary);
+		const key = [keyword, categoryName, page, empty].join("\n");
+		if (summary.dataset.nsmaxKey !== key) {
+			summary.dataset.nsmaxKey = key;
+			const strong = (text) => { const element = document.createElement("strong"); element.textContent = text; return element; };
+			const parts = keyword ? ["搜索 ", strong(keyword)] : ["没有输入关键词"];
+			if (categoryName) parts.push(" · 版块 ", strong(categoryName));
+			if (empty) { if (keyword) parts.push(" · 没有找到结果"); }
+			else if (page > 1) parts.push(` · 第 ${page} 页`);
+			summary.replaceChildren(...parts);
+			summary.title = summary.textContent;
+		}
+		nsmaxFlag(left, "data-nsmax-search-empty", empty);
+		let panel = left.querySelector(":scope > .nsmax-search-empty");
+		for (const child of left.children) {
+			if (child === summary || child === panel) continue;
+			const native = child.matches(".post-list-controler, ul.post-list") || !!child.querySelector(".nsk-pager")
+				|| !child.matches("#nsk-body-left-block") && !child.querySelector("input, textarea, select") && child.textContent.trim().length <= 60 && /没有|暂无|无结果|找不到|未找到|nothing|no results?|not found/i.test(child.textContent);
+			nsmaxFlag(child, "data-nsmax-search-hide", empty && native);
+		}
+		if (!empty) { panel?.remove(); return; }
+		if (!panel) {
+			panel = document.createElement("div");
+			panel.className = "nsmax-search-empty";
+		}
+		if (summary.nextElementSibling !== panel) summary.after(panel);
+		if (panel.dataset.nsmaxKey === key) return;
+		panel.dataset.nsmaxKey = key;
+		const state = document.createElement("div"); state.className = "empty-state";
+		const title = document.createElement("p"); title.className = "nsmax-search-empty-title";
+		title.textContent = keyword ? "没有找到相关帖子" : "输入关键词开始搜索";
+		const hint = document.createElement("p"); hint.className = "nsmax-search-empty-hint";
+		hint.textContent = keyword ? (category ? "换个关键词，或者去掉版块筛选再试试" : "换个关键词，或者少用几个词再试试") : "可以搜帖子标题、正文，也可以搜用户";
+		const actions = document.createElement("div"); actions.className = "nsmax-search-empty-actions";
+		const retry = document.createElement("button");
+		retry.type = "button";
+		retry.textContent = keyword ? "换个关键词" : "搜索";
+		retry.addEventListener("click", () => {
+			// 站点的搜索弹层挂在顶栏搜索框（宽屏）和放大镜（手机）的点击上
+			(document.querySelector("#mobile-search") || document.querySelector("form.search-box"))?.click();
+			setTimeout(() => document.querySelector(".search-overlay input:not([type=hidden])")?.focus(), 60);
+		});
+		actions.append(retry);
+		if (keyword && category) {
+			const all = document.createElement("a");
+			all.href = "/search?q=" + encodeURIComponent(keyword);
+			all.textContent = "搜索全部版块";
+			actions.append(all);
+		}
+		state.append(title, hint, actions);
+		panel.replaceChildren(state);
 	}
 	function nsmaxPrepareBoard() {
 		if (!/^\/board(?:\/|$)/.test(location.pathname)) {
@@ -1515,6 +1596,28 @@
 			}
 		}
 	}
+	// 帖子页的编辑器在「回复 / 编辑主帖 / 编辑回复」之间切换：NodeSeek 只改提交按钮上的字（发布评论 / 编辑帖子 / 编辑评论），
+	// 编辑主帖时最上面多一个标题框（.title-input）、提交行多一组「阅读限制」。卡片标题跟着改成「编辑帖子 / 编辑回复」；
+	// 编辑主帖时把脚本自己的标题栏挪到标题框上面（标题栏是脚本建的，挪它不碰站点 Vue 管的节点），标题框就排在卡片里、标题栏下面
+	function nsmaxSyncEditorMode() {
+		if (!/^\/post-\d+/.test(location.pathname)) return;
+		for (const editor of document.querySelectorAll(".md-editor")) {
+			const head = editor.querySelector(".nsmax-editor-head");
+			const heading = head?.querySelector(".nsmax-editor-heading");
+			const button = editor.querySelector(":scope > :is(.topic-select, .submit-row) > button.submit");
+			const text = (button?.textContent || "").trim();
+			// 提交中按钮换成灰色的另一个按钮、字也不同：认不出的字沿用上一次的模式，标题栏不跟着闪
+			const mode = { "编辑帖子": "edit-discussion", "编辑评论": "edit-comment", "发布评论": "reply", "回复": "reply" }[text] || editor.getAttribute("data-nsmax-editor-mode") || "reply";
+			nsmaxSetAttr(editor, "data-nsmax-editor-mode", mode);
+			if (heading) nsmaxSetText(heading, mode === "edit-discussion" ? "编辑帖子" : mode === "edit-comment" ? "编辑回复" : "发表回复");
+			if (button && text === "发布评论") nsmaxSetText(button, "回复");
+			const title = editor.querySelector(":scope > .title-input");
+			const body = editor.querySelector(":scope > #editor-body");
+			if (head && title) {
+				if (head.nextElementSibling !== title) editor.insertBefore(head, title);
+			} else if (head && body && head.parentElement !== body) body.prepend(head);
+		}
+	}
 	// 一句话提示：sb.sb .toast——屏幕下方居中的深色小条，2.2 秒后淡出（连续触发时重新计时）
 	let nsmaxToastTimer = 0;
 	function nsmaxToast(text) {
@@ -1599,6 +1702,7 @@
 			nsmaxEnsureNqEntry();
 			nsmaxTidyPagers();
 			nsmaxProcessPostListRows();
+			nsmaxPrepareSearch();
 			nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
 			nsmaxPrepareFans();
@@ -1951,7 +2055,7 @@
 				surface.before(controls, mdeToolbar);
 				body.prepend(head);
 				const submit = editor.querySelector(".topic-select,.submit-row");
-				if (isPost) { const button = editor.querySelector("button.submit,button[type=submit]"); if (button) button.textContent="回复"; }
+				if (isPost) { const button = editor.querySelector("button.submit,button[type=submit]"); if (button && button.textContent.trim() === "发布评论") button.textContent="回复"; }
 				if (!submit) { const footer = document.createElement("div"); footer.className = "submit-row"; editor.append(footer); }
 				const submitBtn = editor.querySelector("button.submit,button[type=submit]");
 				if (!isPost && /^\/new-discussion$/.test(location.pathname) && submitBtn && !editor.querySelector(".nsmax-lucky-trigger")) {
@@ -1983,6 +2087,7 @@
 				}
 				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); mdeToolbar.remove(); preview.remove(); });
 			}
+			nsmaxSyncEditorMode();
 			// Only group explicit replies to an earlier floor already present on this page.
 			// Moving the existing node preserves native actions, anchors and drafts.
 			const list = document.querySelector("ul.comments");
