@@ -7857,3 +7857,223 @@ html[data-nsmax-theme] #fast-nav-button-group > #back-to-bottom:is(#nsmax-lv, *)
     inset: -10px -4px !important;
   }
 }
+/* ---------- 37. 操作反馈、提示框、个人介绍（2026-10-16） ----------
+   - 点赞 / 加鸡腿 / 反对 / 收藏成功后，NodeSeek 只给这一项加 .clicked（原站图标变红）。小字排法把颜色统一成次要色以后就看不出点过了：
+     点过的照原站用红色（--danger）；主帖那排方框换成红色细框、浅红底。成功时脚本另外弹一条 toast（nsmaxActionFeedback）。
+   - toast：sb.sb .toast——屏幕下方居中、深色底白字、13.5px、柔和投影，淡入淡出。
+   - NodeSeek 的提示框 msc-confirm（mscAlert / mscConfirm）：原来没有卡片，标题是一行很大的白字、按钮是绿色胶囊。
+     一句话的提示由脚本改成 toast；要确认的照 sb.sb .modal-panel 排：440px 卡片、「提示」标题栏、正文、右下角「取消 / 确定」。
+   - 个人介绍（原站「概况」页的 .readme）：旧版把它连同「概况」标签一起藏了，现在作为「介绍」标签的内容，照帖子正文排 */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item.clicked:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item.clicked:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):hover {
+  color: var(--danger) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item.clicked:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > .comment-menu > .menu-item.clicked:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--danger-border) !important;
+  background: color-mix(in srgb, var(--danger-soft) 40%, var(--panel)) !important;
+  color: var(--danger) !important;
+}
+html[data-nsmax-theme] .nsmax-toast:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: fixed !important;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  z-index: 2147483000 !important;
+  box-sizing: border-box !important;
+  max-width: calc(100vw - 32px) !important;
+  margin: 0 !important;
+  padding: 9px 16px !important;
+  border: 0 !important;
+  border-radius: var(--r) !important;
+  background: var(--inverse) !important;
+  box-shadow: var(--shadow-medium) !important;
+  color: var(--inverse-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  text-align: center !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translate(-50%, 8px) !important;
+  transition: opacity 0.14s ease, transform 0.14s ease, visibility 0s linear 0.14s !important;
+}
+html[data-nsmax-theme] .nsmax-toast[data-nsmax-shown]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translate(-50%, 0) !important;
+  transition: opacity 0.2s cubic-bezier(0.2, 0.65, 0.3, 1), transform 0.2s cubic-bezier(0.2, 0.65, 0.3, 1), visibility 0s !important;
+}
+html[data-nsmax-theme] .msc-confirm:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147482000 !important;
+}
+html[data-nsmax-theme] .msc-confirm > .msc-overlay:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: fixed !important;
+  inset: 0 !important;
+  margin: 0 !important;
+  background: var(--backdrop) !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-close:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .msc-confirm > .msc-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: fixed !important;
+  inset: 0 !important;
+  box-sizing: border-box !important;
+  width: min(440px, calc(100vw - 32px)) !important;
+  max-width: none !important;
+  height: fit-content !important;
+  max-height: 84vh !important;
+  margin: auto !important;
+  padding: 0 !important;
+  overflow: hidden auto !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-medium) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] .msc-confirm > .msc-content:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "提示" !important;
+  display: block !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 16px 16px 0 !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0 !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 0 16px !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-sub:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 6px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-sub:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 36px !important;
+  margin: 10px 0 0 !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+}
+/* 按钮：sb.sb 弹窗底部右对齐，主按钮墨色实底、次按钮细线框；「确定」放在右边（站点 DOM 里确定在前，这里反过来排） */
+html[data-nsmax-theme] .msc-confirm .msc-action:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 16px !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-action > button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  min-width: 72px !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  outline: none !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-action > button.msc-ok:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--action) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-action > button:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-action > button.msc-ok:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--action) !important;
+  background: var(--action) !important;
+  opacity: 0.88 !important;
+}
+html[data-nsmax-theme] .msc-confirm .msc-action > button:is(#nsmax-lv, *):is(#nsmax-b, *):focus-visible {
+  box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--brand-border) !important;
+}
+/* 个人介绍：原站概况页的 .readme（用户自己写的 Markdown），照帖子正文排——15px / 1.8，图片最宽占满、表格可横向滚动 */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme:not([data-nsmax-empty-readme]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  padding: 18px !important;
+  overflow-wrap: anywhere !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme :is(img, video):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  max-width: min(100%, 720px) !important;
+  height: auto !important;
+  margin: 8px 0 !important;
+  border-radius: var(--r-sm) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme table:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  border: 0 !important;
+  margin: 12px 0 !important;
+  overflow-x: auto !important;
+  border-collapse: collapse !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 8px 12px !important;
+  border: 1px solid var(--line) !important;
+  vertical-align: top !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme th:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--panel-alt) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme :is(h1, h2, h3, h4):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 20px 0 8px !important;
+  color: var(--text) !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme h2:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 18px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme > div > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 0 12px !important;
+}

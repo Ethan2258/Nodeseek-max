@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -438,7 +438,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.4");
+	assert.equal(packageJson.version, "1.8.5");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -2594,6 +2594,111 @@ test("今日热门在页面解析阶段就按缓存画出来（不再等整页�
 		assert.equal(state.early, true, "先出现的是解析阶段画的面板");
 		assert.equal(state.panels, 1, "模块接管后只有一个热榜面板");
 		assert.equal(state.first, "缓存热帖 1");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("个人空间：写了介绍时显示「介绍」标签并默认打开，介绍照正文排（以前整个藏掉）；没写时不显示这个标签", async () => {
+	const intro = '<p><img src="https://example.com/banner.webp" alt="banner" style="width:1600px;height:400px"></p><h2>JP Riven Gen2</h2><p><strong>1Gbps@100GB 月流量，￥55/月</strong></p><table><thead><tr><th>直连</th><th>IX</th></tr></thead><tbody><tr><td>1Gbps</td><td>200Mbps</td></tr></tbody></table>';
+	const html = spaceGeneralPage(intro);
+	const api = { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail: { member_id: 10, member_name: "Steve", rank: 6, coin: 7900, nPost: 459, nComment: 7947, readme: "![banner](https://example.com/banner.webp)\n## JP Riven Gen2", created_at: "2023-10-17T00:00:00.000Z" } } }] };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10#/general", { html, api, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".selector a.select-item[data-nsmax-tab=general]:not([hidden])");
+		await wait(page, 400);
+		const state = await page.evaluate(() => {
+			const readme = document.querySelector(".selector > .readme");
+			const img = readme.querySelector("img").getBoundingClientRect();
+			return {
+				hash: location.hash,
+				tabs: Array.from(document.querySelectorAll(".selector a.select-item")).filter((a) => a.getBoundingClientRect().width > 0).map((a) => a.textContent.trim()),
+				active: document.querySelector(".selector a.select-item.active")?.textContent.trim(),
+				visible: readme.getBoundingClientRect().height > 100,
+				imgFits: img.right <= readme.getBoundingClientRect().right,
+				overflow: document.scrollingElement.scrollWidth > innerWidth + 1
+			};
+		});
+		assert.equal(state.hash, "#/general");
+		assert.deepEqual(state.tabs, ["介绍", "主题", "回帖", "收藏"]);
+		assert.equal(state.active, "介绍");
+		assert.equal(state.visible, true, "介绍内容要显示");
+		assert.equal(state.imgFits, true);
+		assert.equal(state.overflow, false);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+	// 没写介绍（接口 readme 为空、站点显示「没有找到readme」）：不显示「介绍」，落到「主题」
+	const empty = await open(browser, "https://www.nodeseek.com/space/10#/general", { html: spaceGeneralPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await wait(empty.page, 1200);
+		const state = await empty.page.evaluate(() => ({ hash: location.hash, tabs: Array.from(document.querySelectorAll(".selector a.select-item")).filter((a) => a.getBoundingClientRect().width > 0).map((a) => a.textContent.trim()), active: document.querySelector(".selector a.select-item.active")?.textContent.trim() }));
+		assert.equal(state.hash, "#/discussions");
+		assert.deepEqual(state.tabs, ["主题", "回帖", "收藏"]);
+		assert.equal(state.active, "主题");
+		assert.deepEqual(empty.errors, []);
+	} finally { await empty.context.close(); }
+});
+
+test("提示：NodeSeek 一句话提示框改成 sb.sb toast；要确认的提示框排成 sb.sb 弹窗、按钮是「确定 / 取消」", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-floor-actions");
+		await wait(page, 300);
+		// 照 msc-script 的 buildUI 造一个提示框：先整个建好再加到 body，点确定后移除并回调
+		const alerted = await page.evaluate(() => new Promise((resolve) => {
+			window.__mscBuild = (title, type, onOk) => {
+				const dialog = document.createElement("div"); dialog.className = "msc-confirm";
+				dialog.innerHTML = `<div class="msc-overlay"><button class="msc-close">×</button></div><div class="msc-content"><h3 class="msc-title"></h3><div class="msc-body"><p class="msc-sub"></p></div><div class="msc-action"><button class="msc-ok">OK</button>${type === "alert" ? "" : '<button class="msc-cancel">Cancel</button>'}</div></div>`;
+				dialog.querySelector(".msc-title").textContent = title;
+				dialog.querySelector(".msc-ok").addEventListener("click", () => { dialog.remove(); onOk?.(); });
+				document.body.appendChild(dialog);
+				dialog.style.display = "block";
+			};
+			window.__mscBuild("您已进行过点赞操作", "alert", () => resolve("ok-called"));
+			setTimeout(() => resolve("not-dismissed"), 1000);
+		}));
+		assert.equal(alerted, "ok-called", "一句话提示自动关掉（照常回调）");
+		assert.equal(await page.locator(".msc-confirm").count(), 0);
+		await page.waitForSelector(".nsmax-toast[data-nsmax-shown]");
+		await wait(page, 350);
+		assert.equal(await page.locator(".nsmax-toast").innerText(), "您已进行过点赞操作");
+		const toast = await page.locator(".nsmax-toast").evaluate((e) => ({ bg: getComputedStyle(e).backgroundColor, bottom: Math.round(innerHeight - e.getBoundingClientRect().bottom) }));
+		assert.deepEqual(toast, { bg: "rgb(28, 28, 30)", bottom: 24 });
+		// 要确认的：留着，排成卡片
+		await page.evaluate(() => window.__mscBuild("是否投喂鸡腿，这将消耗你一个鸡腿", "confirm"));
+		await wait(page, 300);
+		const confirm = await page.evaluate(() => {
+			const content = document.querySelector(".msc-confirm .msc-content");
+			const r = content.getBoundingClientRect();
+			return { width: Math.round(r.width), centered: Math.abs((r.left + r.right) / 2 - innerWidth / 2) <= 1, bg: getComputedStyle(content).backgroundColor, head: getComputedStyle(content, "::before").content, title: getComputedStyle(content.querySelector(".msc-title")).fontSize, buttons: Array.from(content.querySelectorAll(".msc-action > button")).map((b) => [b.textContent, Math.round(b.getBoundingClientRect().left)]) };
+		});
+		assert.equal(confirm.width, 440);
+		assert.equal(confirm.centered, true);
+		assert.equal(confirm.bg, "rgb(255, 255, 255)");
+		assert.equal(confirm.head, '"提示"');
+		assert.equal(confirm.title, "14px");
+		assert.deepEqual(confirm.buttons.map(([text]) => text), ["确定", "取消"]);
+		assert.ok(confirm.buttons[0][1] > confirm.buttons[1][1], "确定在右边");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("点赞成功：这一项变红（原站 .clicked），弹出「已点赞」", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-floor-actions");
+		await wait(page, 300);
+		const like = page.locator('ul.comments li.content-item .nsmax-floor-actions .menu-item[title="点赞"]').first();
+		const before = await like.evaluate((e) => getComputedStyle(e).color);
+		await like.click();
+		// 站点的 Vue 组件在接口成功后给这一项加上 clicked
+		await like.evaluate((e) => setTimeout(() => e.classList.add("clicked"), 120));
+		await page.waitForSelector(".nsmax-toast[data-nsmax-shown]");
+		assert.equal(await page.locator(".nsmax-toast").innerText(), "已点赞");
+		await page.mouse.move(5, 5);
+		await wait(page, 300);
+		const after = await like.evaluate((e) => getComputedStyle(e).color);
+		assert.notEqual(after, before);
+		assert.equal(after, "rgb(207, 43, 43)");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

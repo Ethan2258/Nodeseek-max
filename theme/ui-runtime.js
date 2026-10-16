@@ -20,6 +20,8 @@
 	function nsmaxShowEl(el) {
 		if (el && el.style.getPropertyValue("display")) el.style.removeProperty("display");
 	}
+	// 个人空间：这个人有没有写个人介绍（uid → true / false；接口没回来时没有这一项）
+	const nsmaxSpaceIntro = new Map();
 	function nsmaxPrepareSpace() {
 		if (!/^\/space\/\d+/.test(location.pathname)) return;
 		// 资料卡里那一组统计由下面的 renderStatsAndProgress 管，这里只标记原站其余位置的过时统计
@@ -27,12 +29,15 @@
 			if (item.closest(".head-container")) continue;
 			item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
 		}
+		const hasIntro = nsmaxSpaceIntro.get(location.pathname.match(/\/space\/(\d+)/)?.[1]);
 		for (const readme of document.querySelectorAll(".readme")) {
 			const text = readme.textContent.trim();
 			const hasWatermark = !!readme.querySelector("img[src*='logo'], img[src*='nodeseek'], svg");
-			const isEmpty = !text || /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)$/i.test(text) || (hasWatermark && text.length < 20);
+			// 接口说写了介绍就照常显示（介绍可能只有一张图）；站点写着「没有找到readme」或还没渲染出来时不显示
+			const isEmpty = !text && !readme.querySelector("img") || /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)/i.test(text) || hasIntro !== true && hasWatermark && text.length < 20;
 			readme.toggleAttribute("data-nsmax-empty-readme", isEmpty);
 			if (isEmpty) nsmaxHideEl(readme);
+			else nsmaxShowEl(readme);
 		}
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
 		if (!head) return;
@@ -237,17 +242,22 @@
 			renderStatsAndProgress(parsedLevel, parsedCoin, parsedPost, parsedComment);
 		}
 
-		// 2. 通过 API 保证异步获取完整数据（支持直达非概况页面）
+		// 2. 通过 API 保证异步获取完整数据（支持直达非概况页面）。带上 readme=1（站点自己也这样请求）：顺便知道这个人有没有写介绍，
+		//    决定「介绍」标签显示与否（见下面的标签部分）
+		if (!window.__nsmax_space_api_cache) window.__nsmax_space_api_cache = new Map();
+		let reqPromise = uid ? window.__nsmax_space_api_cache.get(uid) : null;
+		if (uid && !reqPromise) {
+			reqPromise = fetch("/api/account/getInfo/" + uid + "?readme=1", { headers: { "Accept": "application/json" } })
+				.then(res => res.json())
+				.then(data => data?.detail || data?.data || {})
+				.catch(() => ({}));
+			window.__nsmax_space_api_cache.set(uid, reqPromise);
+			reqPromise.then(info => {
+				nsmaxSpaceIntro.set(uid, typeof info?.readme === "string" ? info.readme.trim().length > 0 : false);
+				nsmaxPrepareSpace();
+			});
+		}
 		if (uid && (parsedLevel === undefined || !head.querySelector(".nsmax-space-progress"))) {
-			if (!window.__nsmax_space_api_cache) window.__nsmax_space_api_cache = new Map();
-			let reqPromise = window.__nsmax_space_api_cache.get(uid);
-			if (!reqPromise) {
-				reqPromise = fetch("/api/account/getInfo/" + uid, { headers: { "Accept": "application/json" } })
-					.then(res => res.json())
-					.then(data => data?.detail || data?.data || {})
-					.catch(() => ({}));
-				window.__nsmax_space_api_cache.set(uid, reqPromise);
-			}
 			reqPromise.then(info => {
 				if (!info || typeof info !== "object") return;
 				const l = info.rank !== undefined ? Number(info.rank) : (parsedLevel || 1);
@@ -267,25 +277,21 @@
 			});
 		}
 
-		// 对齐空间页 Tab：固定【主题】、【回帖】、【收藏】三项，置于卡片顶部，隐藏概况/资料/设置
+		// 空间页标签（sb.sb .profile-toolbar）：【介绍】【主题】【回帖】【收藏】，置于列表卡片顶部。
+		// 「介绍」就是原站的「概况」（站点只在这一页渲染 .readme，也就是用户写的个人介绍）：写了介绍才显示这个标签，
+		// 并且和原站一样进来先看介绍；没写（接口返回的 readme 为空）就不显示，落到「主题」
 		const selectorNav = document.querySelector(".selector");
 		if (selectorNav) {
 			const settingBtn = selectorNav.querySelector(".nsmax-space-setting-btn");
 			if (settingBtn) settingBtn.remove();
 
-			// 隐藏概况/资料 Tab
-			for (const tab of selectorNav.querySelectorAll("a.select-item")) {
-				const text = tab.textContent.trim();
-				const href = tab.getAttribute("href") || "";
-				if (/概况|资料/i.test(text) || href.includes("general") || href.includes("info") || href.includes("profile")) {
-					nsmaxHideEl(tab);
-					nsmaxSetAttr(tab, "hidden");
-					if (tab.classList.contains("active")) tab.classList.remove("active");
-					if (tab.classList.contains("router-link-active")) tab.classList.remove("router-link-active");
-				}
-			}
-
+			const hash = location.hash;
+			const onGeneral = !hash || hash === "#" || /^#\/(?:general|info|profile)/.test(hash);
+			const intro = nsmaxSpaceIntro.get(uid);
+			// 写了介绍：显示；不知道（接口还没回来）时只在停在概况页时先显示；确定没写：不显示
+			const showIntro = intro === true || intro === undefined && onGeneral;
 			const tabDefs = [
+				{ key: "general", text: "介绍", href: "#/general", match: /概况|资料|介绍|general|info|profile/i, hidden: !showIntro },
 				{ key: "discussions", text: "主题", href: "#/discussions", match: /主题|讨论|帖子|discussions/i },
 				{ key: "comments", text: "回帖", href: "#/comments", match: /评论|回帖|回复|comments/i },
 				{ key: "collections", text: "收藏", href: "#/collections", match: /收藏|collections|fav/i }
@@ -293,19 +299,27 @@
 
 			const orderedTabs = [];
 			for (const def of tabDefs) {
-				let tab = Array.from(selectorNav.querySelectorAll("a.select-item")).find(t => 
-					t.getAttribute("data-nsmax-tab") === def.key || 
-					def.match.test(t.textContent.trim()) || 
+				let tab = Array.from(selectorNav.querySelectorAll("a.select-item")).find(t =>
+					t.getAttribute("data-nsmax-tab") === def.key ||
+					def.match.test(t.textContent.trim()) ||
 					(t.getAttribute("href") || "").includes(def.key)
 				);
 				if (!tab) {
+					if (def.hidden) continue;
 					tab = document.createElement("a");
 					tab.className = "select-item";
 					selectorNav.append(tab);
 				}
 				nsmaxSetText(tab, def.text);
-				nsmaxSetAttr(tab, "href", def.href);
+				// 概况标签保留站点原来的地址（真站是 #/general，个别页面是 #/info）
+				if (def.key !== "general" || !/^#\/(?:general|info|profile)/.test(tab.getAttribute("href") || "")) nsmaxSetAttr(tab, "href", def.href);
 				nsmaxSetAttr(tab, "data-nsmax-tab", def.key);
+				if (def.hidden) {
+					nsmaxHideEl(tab);
+					nsmaxSetAttr(tab, "hidden");
+					for (const name of ["active", "router-link-active", "router-link-exact-active"]) if (tab.classList.contains(name)) tab.classList.remove(name);
+					continue;
+				}
 				nsmaxDropAttr(tab, "hidden");
 				nsmaxShowEl(tab);
 				orderedTabs.push(tab);
@@ -321,11 +335,15 @@
 			}
 
 			const syncActiveTabs = () => {
-				const hash = location.hash || "#/discussions";
+				const hash = location.hash;
+				const general = !hash || hash === "#" || /^#\/(?:general|info|profile)/.test(hash);
+				const introShown = orderedTabs.some((tab) => tab.getAttribute("data-nsmax-tab") === "general");
 				for (const tab of orderedTabs) {
 					const key = tab.getAttribute("data-nsmax-tab");
 					let isActive = false;
-					if (key === "discussions" && (/discussions|posts/.test(hash) || !hash || hash === "#" || hash.includes("general") || hash.includes("info"))) {
+					if (key === "general" && general) {
+						isActive = true;
+					} else if (key === "discussions" && (/discussions|posts/.test(hash) || general && !introShown)) {
 						isActive = true;
 					} else if (key === "comments" && /comments/.test(hash)) {
 						isActive = true;
@@ -353,11 +371,8 @@
 				}
 			}
 
-			// 首次进入空间时，如果是概况/空hash则平滑切换至主题
-			const currentHash = location.hash;
-			if (!currentHash || currentHash === "#" || currentHash === "#/general" || currentHash.startsWith("#/general") || currentHash.includes("info") || currentHash.includes("profile")) {
-				location.hash = "#/discussions";
-			}
+			// 停在概况页、但确定这个人没写介绍：换到「主题」（替换当前历史记录，返回键不会又回到空的概况页）
+			if (onGeneral && intro === false) location.replace("#/discussions");
 			syncActiveTabs();
 		}
 
@@ -1500,10 +1515,73 @@
 			}
 		}
 	}
+	// 一句话提示：sb.sb .toast——屏幕下方居中的深色小条，2.2 秒后淡出（连续触发时重新计时）
+	let nsmaxToastTimer = 0;
+	function nsmaxToast(text) {
+		let toast = document.querySelector("body > .nsmax-toast");
+		if (!toast) {
+			toast = document.createElement("div");
+			toast.className = "nsmax-toast";
+			toast.setAttribute("role", "status");
+			toast.setAttribute("aria-live", "polite");
+			document.body.append(toast);
+		}
+		toast.textContent = text;
+		toast.removeAttribute("data-nsmax-shown");
+		void toast.offsetWidth;
+		toast.setAttribute("data-nsmax-shown", "");
+		clearTimeout(nsmaxToastTimer);
+		nsmaxToastTimer = setTimeout(() => toast.removeAttribute("data-nsmax-shown"), 2200);
+	}
+	// 点赞 / 加鸡腿 / 反对 / 收藏：NodeSeek 成功后什么也不说，只给这一项加上 .clicked（原站变红）。
+	// 点了以后盯住这一项，它变成「已点」（加鸡腿、反对要先在确认框里点确定，所以最多等 30 秒）就弹一条 toast
+	const NSMAX_ACTION_DONE = { "点赞": ["已点赞"], "加鸡腿": ["已投喂鸡腿"], "反对": ["已反对"], "收藏": ["已收藏", "已取消收藏"] };
+	function nsmaxActionFeedback(ctx) {
+		document.addEventListener("click", (event) => {
+			const item = event.target instanceof Element ? event.target.closest(".comment-menu > .menu-item[title]") : null;
+			const texts = item && NSMAX_ACTION_DONE[item.title];
+			if (!texts || item.__nsmaxWatch) return;
+			const was = item.classList.contains("clicked");
+			const observer = new MutationObserver(() => {
+				const now = item.classList.contains("clicked");
+				if (now === was) return;
+				stop();
+				const text = now ? texts[0] : texts[1];
+				if (text) nsmaxToast(text);
+			});
+			const timer = setTimeout(() => stop(), 30e3);
+			const stop = () => { observer.disconnect(); clearTimeout(timer); item.__nsmaxWatch = null; };
+			item.__nsmaxWatch = stop;
+			observer.observe(item, { attributes: true, attributeFilter: ["class"] });
+		}, { capture: true, signal: ctx.signal });
+	}
+	// NodeSeek 的提示框（msc-confirm，mscAlert / mscConfirm 每次新建一个加到 body 末尾，点按钮后移除）：
+	// 只有一个按钮、一句话的提示（「您已进行过点赞操作」「您未登录……」）改成 toast，原提示框在画出来之前就替用户点掉；
+	// 要确认的（有「取消」，如「是否投喂鸡腿……」）留着，排成 sb.sb 的弹窗（见主题 37 节），按钮改成「确定 / 取消」
+	function nsmaxWatchMsc(ctx) {
+		const handle = (box) => {
+			const ok = box.querySelector(".msc-ok");
+			const cancel = box.querySelector(".msc-cancel");
+			if (ok && ok.textContent.trim() === "OK") ok.textContent = "确定";
+			if (cancel && /^cancel$/i.test(cancel.textContent.trim())) cancel.textContent = "取消";
+			const title = (box.querySelector(".msc-title")?.textContent || "").trim();
+			const sub = (box.querySelector(".msc-sub")?.textContent || "").trim();
+			if (cancel || box.querySelector(".msc-input") || sub || !title || title.length > 40 || !ok) return;
+			nsmaxToast(title);
+			ok.click();
+		};
+		const observer = new MutationObserver((records) => {
+			for (const record of records) for (const node of record.addedNodes) if (node instanceof HTMLElement && node.classList.contains("msc-confirm")) handle(node);
+		});
+		observer.observe(document.body, { childList: true });
+		ctx.signal.addEventListener("abort", () => observer.disconnect(), { once: true });
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const processed = new WeakSet();
 		const images = new WeakSet();
+		nsmaxActionFeedback(ctx);
+		nsmaxWatchMsc(ctx);
 		const scan = () => {
 			const currentPage = nsmaxPageKind();
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {

@@ -135,6 +135,9 @@ const newPostPage = (options = {}) => shell("NodeSeek", `<div id="nsk-body-left"
 
 const nativeSpacePage = (options={}) => shell("Steve 的主页 - NodeSeek", `<div class="nsk-container"><div class="head-container"><img src="${AVATAR}" alt="Steve"><div><h1>Steve</h1><p>一句话介绍自己</p></div><a class="btn" href="/notification#/message?mode=talk&to=10">私信</a></div><div class="selector"><a class="select-item active" href="#/info">概况</a><a class="select-item" href="#/posts">主题帖</a><a class="select-item" href="#/comments">评论</a><div class="selector-right-side"><div class="card-block">${[["加入天数",659],["等级",3],["鸡腿数目",1257],["主题帖数",100],["评论数目",873]].map(([label,count])=>`<div class="card-item"><div>${label}</div><div>${count}</div></div>`).join('')}<div class="card-item"></div></div><div class="readme">没有找到readme 🙄</div><div class="comments-list" style="background-color:rgb(48,48,48);color:white">${Array.from({length:4},(_,i)=>`<div><a href="/post-${4000+i}-1">测试主题 ${i+1}</a><p style="color:rgb(144,144,144)">测试评论摘要，保持真实链接</p></div>`).join('')}</div></div></div></div>`,{...options,standalone:true});
 
+// 个人空间「概况」页（真站 2026-10-16 抓取）：.selector 下直接是标签（概况 / 主题帖 / 评论）、分隔线、统计卡、
+// 用户写的个人介绍 .readme.post-content（站点用 /api/account/getInfo/<uid>?readme=1 取回 Markdown 后渲染）
+const spaceGeneralPage = (readme = "", options = {}) => shell("Grey的用户空间", `<div class="nsk-container"><div class="head-container"><img class="avatar" src="${AVATAR}" alt="Grey"><div class="word"><h1 class="username">Grey</h1><p>在工作的大马华人</p></div></div><div class="selector"><a class="select-item router-link-exact-active router-link-active" href="#/general">概况</a><a class="select-item" href="#/discussions">主题帖</a><a class="select-item" href="#/comments">评论</a><div class="hr"></div><div class="card-block">${[["加入天数", 731], ["等级", 6], ["鸡腿数目", 7900]].map(([label, count]) => `<div class="card-item"><div>${label}</div><div>${count}</div></div>`).join("")}<a class="card-item" href="#/discussions"><div>主题帖数</div><div>459</div></a><a class="card-item" href="#/comments"><div>评论数目</div><div>7947</div></a></div><div data-v-18f8c01b class="readme post-content"><div data-v-18f8c01b>${readme || "没有找到readme 🙄"}</div></div></div></div>`, { ...options, standalone: true });
 const spaceTopicsPage = (options={}) => nativeSpacePage(options).replace(/<div class="comments-list"[\s\S]*?<\/div><\/div><\/div><\/div><\/div>/, `<div class="discussion-wrapper" data-v-18f8c01b>${Array.from({length:6},(_,i)=>`<div class="discussion-item" data-v-18f8c01b><a href="/post-${4000+i}-1" data-v-18f8c01b><span data-v-18f8c01b>真实结构主题 ${i+1}</span><span style="color:rgb(255,152,152)" data-v-18f8c01b><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span></a><span></span></div>`).join('')}</div></div></div></div>`);
 const spaceCommentsPage = (options={}) => spaceTopicsPage(options).replace(/<div class="discussion-item" data-v-18f8c01b><a href="(.*?)" data-v-18f8c01b>(.*?)<\/a><span><\/span><\/div>/g, '<a href="$1" class="discussion-item" data-v-18f8c01b>$2<span></span></a><a href="$1#1" data-v-18f8c01b><p data-v-18f8c01b>真实评论摘要</p></a>');
 
@@ -177,6 +180,7 @@ module.exports = {
 	boardPage,
 	spaceTopicsPage,spaceCommentsPage,
 	nativeSpacePage,
+	spaceGeneralPage,
 	spaceCollectionsPage,
 	newPostPage,
 	listPage,
