@@ -157,3 +157,36 @@ body.dark-layout #nsk-right-panel-container .nsk-panel{border-radius:0!important
 /* 站点对所有 header / footer 元素的通用样式（真站 style-*.css）：脚本弹窗里的 header、footer 也会被套上 */
 header{transition:background-color .5s;box-shadow:0 0 5px rgba(0,0,0,.1);background-color:var(--bg-main-color)}
 footer{width:100%;position:relative;height:auto;background-color:#333}
+/* 站点正文折叠块（真站 style-*.css） */
+.dark-layout .post-content details{background:#3b3b3b}
+.post-content details{background:#f9fafe;border-radius:16px;padding:1em 2em;margin:1em 0}
+.post-content summary{cursor:pointer;padding:0;position:relative}
+.dark-layout .post-content details[open]>summary{border-bottom:1px solid #2a2b2d}
+.post-content details[open]>summary{border-bottom:1px solid #e3e8f4;padding:0 0 1em;margin:0 0 1em}
+/* 站点页脚各列（真站 style-*.css）：≤950px 每列 width:33%、≤500px 50%、≤340px 100%，≤950px 藏 .col.pc */
+footer .col{height:auto;box-sizing:border-box;padding-bottom:20px}
+footer .col .group-head-link{margin:0;font-family:inherit;font-size:14px;line-height:17px;padding:20px 0 5px;color:#edd6ac;font-weight:700;text-transform:uppercase;letter-spacing:.25em}
+footer .col ul{list-style-type:none;margin:0;padding:0}
+footer .col ul li{color:#999;font-size:14px;font-family:inherit;font-weight:700;padding:5px 0;cursor:pointer;transition:.2s}
+footer .col ul li:hover{color:#fff;transition:.1s}
+@media only screen and (max-width:950px){footer .col{width:33%}footer .col .group-head-link{font-size:14px}footer .col ul li{font-size:13px}.col.pc{display:none}}
+@media only screen and (max-width:500px){footer .col{width:50%}footer .col .group-head-link{font-size:14px}footer .col ul li{font-size:13px}}
+@media only screen and (max-width:340px){footer .col{width:100%}}
+/* 站点正文选项卡（nsk-magic-tabs，真站 style-*.css；站点脚本给容器加 .enabled、给当前标题加 .is-active） */
+:root{--tabs-bg: #f8fafc;--tabs-border: #e5e7eb;--tab-text: #64748b;--tab-text-hover: #020817;--tab-hover-bg: #f1f5f9;--tab-active-bg: #ffffff;--tab-active-text: #020817;--body-bg: #ffffff;--body-text: #020817;--disabled-text: #94a3b8;--shadow-light: rgba(0, 0, 0, .02)}
+body.dark-layout{--tabs-bg: #3b3b3b;--tabs-border: #2c2c2c;--tab-text: #bfbfbf;--tab-text-hover: #ffffff;--tab-hover-bg: #343434;--tab-active-bg: #2f2f2f;--tab-active-text: #ffffff;--body-bg: #2f2f2f;--body-text: #f1f1f1;--disabled-text: #8a8a8a;--shadow-light: rgba(0, 0, 0, .4)}
+.nsk-magic-tabs{display:flex;flex-wrap:wrap}
+.nsk-magic-tabs>*{order:1000}
+.nsk-magic-tabs>.nsk-magic-tab-title{order:1}
+.nsk-magic-tabs>.nsk-magic-tab-body{order:100;width:100%;box-sizing:border-box}
+.nsk-magic-tabs.enabled>.nsk-magic-tab-title:not(.is-active)+.nsk-magic-tab-body{display:none}
+.nsk-magic-tabs:not(.enabled)>.nsk-magic-tab-body~.nsk-magic-tab-body{display:none}
+.nsk-magic-tabs{padding:4px 4px 0;margin-bottom:-1px;background-color:var(--tabs-bg);border:1px solid var(--tabs-border);border-bottom:none;border-radius:8px 8px 0 0}
+.nsk-magic-tab-title{position:relative;padding:8px 10px;font-size:14px;font-weight:500;line-height:1.4;color:var(--tab-text);background-color:transparent;border:1px solid transparent;border-radius:6px 6px 0 0;cursor:pointer;user-select:none}
+.nsk-magic-tab-title:hover{color:var(--tab-text-hover);background-color:var(--tab-hover-bg)}
+.nsk-magic-tab-title.is-active{z-index:2;color:var(--tab-active-text);background-color:var(--tab-active-bg);border-color:var(--tabs-border);border-bottom-color:var(--body-bg);box-shadow:0 -1px 0 var(--shadow-light)}
+.nsk-magic-tab-title.is-active:hover{background-color:var(--tab-active-bg)}
+.nsk-magic-tab-title:nth-child(n+2){margin-left:2px}
+.nsk-magic-tab-body{position:relative;padding:16px 10px;background-color:var(--body-bg);border:1px solid var(--tabs-border);color:var(--body-text);border-radius:0 10px 10px;margin-top:-1px;font-size:14px;line-height:1.6}
+.nsk-magic-tab-body>p{margin-top:0}
+@media screen and (max-width:900px){.nsk-magic-tab-title{padding:6px 8px!important;font-size:12px!important}}

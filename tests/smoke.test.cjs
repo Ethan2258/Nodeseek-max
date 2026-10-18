@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.11");
+	assert.equal(packageJson.version, "1.8.12");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4391,6 +4391,236 @@ test("第十批（2026-10-18）：站点页面里的红框大红字报错（管�
 			assert.notEqual(state.border, "rgb(255, 0, 0)");
 			assert.equal(state.fontSize, "14px");
 			assert.equal(state.login, login ? "/signIn.html" : null);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十一批（2026-10-19）：帖子页中等宽度（801～1000px，右栏还在）楼层也排成一列——作者栏在正文上面一行，正文不再被 180px 作者栏挤到 300px 左右；1000px 以上照旧左右两栏", async () => {
+	for (const [width, stacked] of [[860, true], [1000, true], [1100, false]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: floorPost(), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector("ul.comments > li[id='1'] > .nsmax-author-col");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const floor = document.querySelector("ul.comments > li[id='1']");
+				const col = floor.querySelector(":scope > .nsmax-author-col").getBoundingClientRect();
+				const article = floor.querySelector(":scope > article").getBoundingClientRect();
+				const main = document.querySelector("#nsk-body-left").getBoundingClientRect();
+				return {
+					above: col.bottom <= article.top + 1,
+					left: col.right <= article.left + 1,
+					avatar: Math.round(floor.querySelector(".nsmax-author-avatar").getBoundingClientRect().width),
+					ratio: article.width / main.width,
+					side: document.querySelector("#nsk-right-panel-container").getClientRects().length > 0,
+					overflow: document.documentElement.scrollWidth - innerWidth
+				};
+			});
+			assert.equal(state.side, true, `${width}：右栏还在`);
+			if (stacked) {
+				assert.equal(state.above, true, `${width}：作者栏在正文上面`);
+				assert.equal(state.avatar, 40, `${width}：作者栏一行，40px 头像`);
+				assert.ok(state.ratio > 0.9, `${width}：正文差不多占满主栏（${state.ratio.toFixed(2)}）`);
+			} else {
+				assert.equal(state.left, true, `${width}：作者栏在左边`);
+				assert.equal(state.avatar, 88);
+			}
+			assert.ok(state.overflow <= 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十一批（2026-10-19）：正文里列多的表格在窄屏（≤1000px）照 sb.sb 手机做法——按内容宽度、单元格不折行、在表格里左右滑动（以前挤成一列一个字，手机上最右几列还被楼层卡片裁掉）；宽屏照旧占满正文", async () => {
+	const table = `<table><thead><tr>${Array.from({ length: 12 }, (_, i) => `<th>列标题${i + 1}很长很长</th>`).join("")}</tr></thead><tbody><tr>${Array.from({ length: 12 }, (_, i) => `<td>数据${i + 1}_ABCDEFGHIJ</td>`).join("")}</tr></tbody></table>`;
+	const html = postPage().replace("<p>收了，私信你</p>", `<p>收了，私信你</p>${table}`);
+	for (const width of [390, 860, 1440]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector("ul.comments > li[id='1'] article table");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const table = document.querySelector("ul.comments > li[id='1'] article table");
+				const article = table.closest("article").getBoundingClientRect();
+				const box = table.getBoundingClientRect();
+				const th = table.querySelector("th");
+				return {
+					display: getComputedStyle(table).display,
+					scrolls: table.scrollWidth > table.clientWidth + 1,
+					inside: box.left >= article.left - 1 && box.right <= article.right + 1,
+					thLines: Math.round(th.getBoundingClientRect().height / parseFloat(getComputedStyle(th).lineHeight)),
+					full: Math.abs(box.width - article.width) <= 1,
+					overflow: document.documentElement.scrollWidth - innerWidth
+				};
+			});
+			assert.equal(state.inside, true, `${width}：表格不超出正文`);
+			assert.ok(state.overflow <= 0, `${width}：页面不被撑宽`);
+			if (width <= 1000) {
+				assert.equal(state.display, "block");
+				assert.equal(state.scrolls, true, `${width}：表格里能左右滑动`);
+				assert.ok(state.thLines <= 2, `${width}：表头不折行（${state.thLines}）`);
+			} else {
+				assert.equal(state.display, "table");
+				assert.equal(state.full, true, "宽屏表格占满正文");
+			}
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十一批（2026-10-19）：电脑浏览器窗口窄到顶栏收起版块时，≡ 版块菜单最后一块是「论坛应用」，放 NQ（NodeQuality 测机）黄底按钮——以前 NQ 跟着版块一起藏了，窄窗口下找不到", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 820, height: 800 } });
+	try {
+		await page.waitForSelector("#nsk-head .nsmax-mobile-menu");
+		await wait(page, 300);
+		assert.equal(await page.evaluate(() => document.querySelector("#nsk-head ul.nav-menu a.nsmax-nq-tab")?.getClientRects().length || 0), 0, "顶栏里的 NQ 藏了");
+		await page.locator("#nsk-head .nsmax-mobile-menu").click();
+		await page.waitForSelector("dialog.nsmax-mobile-nav[open] .nsmax-mobile-nav-apps a.nsmax-nq-tab");
+		const state = await page.evaluate(() => {
+			const dialog = document.querySelector("dialog.nsmax-mobile-nav");
+			const apps = dialog.querySelector(".nsmax-mobile-nav-apps");
+			const nq = apps.querySelector("a.nsmax-nq-tab");
+			const style = getComputedStyle(nq);
+			return {
+				last: dialog.lastElementChild === apps,
+				title: getComputedStyle(apps, "::before").content,
+				href: nq.href,
+				target: nq.target,
+				text: nq.textContent,
+				bg: style.backgroundColor,
+				shown: nq.getClientRects().length > 0
+			};
+		});
+		assert.deepEqual(state, { last: true, title: '"论坛应用"', href: "https://nodequality.com/", target: "_blank", text: "NQ", bg: "rgb(255, 208, 47)", shown: true });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十一批（2026-10-19）：正文折叠块（<details>）换成 sb.sb 折叠条——细线框、次底色、8px 圆角，标题 500 字重，展开后标题下一道细线；深色下不再是站点的 #3b3b3b 灰底", async () => {
+	const body = `<p>收了，私信你</p><details><summary>点击展开配置详情</summary><p>CPU：2 核</p></details><details open><summary>已展开的折叠块</summary><p>展开后的内容</p></details>`;
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ dark }).replace("<p>收了，私信你</p>", body), viewport: { width: 1440, height: 900 }, colorScheme: dark ? "dark" : "light" });
+		try {
+			await page.waitForSelector("ul.comments > li[id='1'] article details");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const [closed, opened] = document.querySelectorAll("ul.comments > li[id='1'] article details");
+				const probe = document.createElement("div");
+				probe.style.background = "var(--panel-alt)";
+				document.body.append(probe);
+				const panelAlt = getComputedStyle(probe).backgroundColor;
+				probe.remove();
+				const s = getComputedStyle(closed);
+				return {
+					bg: s.backgroundColor === panelAlt,
+					border: `${s.borderTopWidth} ${s.borderTopStyle}`,
+					radius: s.borderTopLeftRadius,
+					weight: getComputedStyle(closed.querySelector("summary")).fontWeight,
+					closedLine: getComputedStyle(closed.querySelector("summary")).borderBottomStyle,
+					openLine: getComputedStyle(opened.querySelector("summary")).borderBottomStyle,
+					gray: s.backgroundColor === "rgb(59, 59, 59)"
+				};
+			});
+			assert.deepEqual(state, { bg: true, border: "1px solid", radius: "8px", weight: "500", closedLine: "none", openLine: "solid", gray: false }, dark ? "深色" : "浅色");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十一批（2026-10-19）：页脚各列不再被站点的 width:33% / 50% 挤窄——880px 时「相关网站」不再一字一行、链接不再只剩「L…」，手机上每列占满半行；链接 400 字重、列标题没有 0.25em 字距（sb.sb .footer-col-title）", async () => {
+	for (const width of [390, 880, 950, 1440]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/credit#/p-1", { html: creditPage({ mobile: width < 700 }), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector("body > footer .nsmax-footer-brand");
+			await page.locator("body > footer").scrollIntoViewIfNeeded();
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const contain = document.querySelector("body > footer .contain");
+				const cols = [...contain.querySelectorAll(":scope > .col")].filter((col) => col.getClientRects().length);
+				const cell = (contain.clientWidth - 32) / getComputedStyle(contain).gridTemplateColumns.split(" ").length;
+				const head = cols[0].querySelector(".group-head-link");
+				return {
+					count: cols.length,
+					narrow: cols.filter((col) => col.getBoundingClientRect().width < Math.min(cell * 0.9, 100)).length,
+					headLines: Math.round(head.getBoundingClientRect().height / parseFloat(getComputedStyle(head).lineHeight)),
+					cut: cols.flatMap((col) => [...col.querySelectorAll("a")]).filter((a) => a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()),
+					weight: getComputedStyle(cols[0].querySelector("li")).fontWeight,
+					spacing: getComputedStyle(head).letterSpacing,
+					overflow: document.documentElement.scrollWidth - innerWidth
+				};
+			});
+			assert.equal(state.count, 5, `${width}：五列都在`);
+			assert.equal(state.narrow, 0, `${width}：没有被挤窄的列`);
+			assert.equal(state.headLines, 1, `${width}：列标题一行`);
+			assert.deepEqual(state.cut, [], `${width}：链接没有被省略`);
+			assert.equal(state.weight, "400");
+			assert.equal(state.spacing, "normal");
+			assert.ok(state.overflow <= 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十一批（2026-10-19）：正文选项卡（nsk-magic-tabs）换成主题配色——外框次底色细线框、当前标签和内容区面板底（深色下不再是站点的 #3b3b3b / #2f2f2f 灰块）；外框四边都有、和后面的正文隔开", async () => {
+	const tabs = `<p>收了，私信你</p><div class="nsk-magic-tabs enabled"><div class="nsk-magic-tab-title is-active">YABS</div><div class="nsk-magic-tab-body"><p>第一页</p></div><div class="nsk-magic-tab-title">融合怪</div><div class="nsk-magic-tab-body"><p>第二页</p></div></div><p>后面一段正文。</p>`;
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage({ dark }).replace("<p>收了，私信你</p>", tabs), viewport: { width: 1440, height: 900 }, colorScheme: dark ? "dark" : "light" });
+		try {
+			await page.waitForSelector("ul.comments > li[id='1'] .nsk-magic-tabs");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const color = (value) => { const probe = document.createElement("div"); probe.style.background = value; document.body.append(probe); const out = getComputedStyle(probe).backgroundColor; probe.remove(); return out; };
+				const box = document.querySelector("ul.comments > li[id='1'] .nsk-magic-tabs");
+				const [active, idle] = box.querySelectorAll(".nsk-magic-tab-title");
+				const body = box.querySelector(".nsk-magic-tab-body");
+				const next = box.nextElementSibling.getBoundingClientRect();
+				return {
+					box: getComputedStyle(box).backgroundColor === color("var(--panel-alt)"),
+					active: getComputedStyle(active).backgroundColor === color("var(--panel)"),
+					body: getComputedStyle(body).backgroundColor === color("var(--panel)"),
+					hidden: getComputedStyle(idle.nextElementSibling).display,
+					bottom: getComputedStyle(box).borderBottomStyle,
+					gap: Math.round(next.top - box.getBoundingClientRect().bottom)
+				};
+			});
+			assert.deepEqual({ ...state, gap: state.gap >= 8 }, { box: true, active: true, body: true, hidden: "none", bottom: "solid", gap: true }, dark ? "深色" : "浅色");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十一批（2026-10-19）：顶栏版块照 sb.sb .forum-nav——一行放不下的整个藏起来（不再横向滚动、把最后一个切成半个字），这时左边亮出 ≡，藏起来的版块和 NQ 都在 ≡ 菜单里；放得下时没有 ≡", async () => {
+	for (const width of [940, 1440]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width, height: 800 } });
+		try {
+			await page.waitForSelector("#nsk-head .nsmax-mobile-menu", { state: "attached" });
+			await wait(page, 400);
+			const state = await page.evaluate(() => {
+				const head = document.querySelector("#nsk-head");
+				const nav = head.querySelector(":scope > ul.nav-menu");
+				const box = nav.getBoundingClientRect();
+				const items = [...nav.children].filter((li) => li.getClientRects().length);
+				const inRow = (li) => li.getBoundingClientRect().top < box.bottom - 1;
+				return {
+					cut: items.filter((li) => inRow(li) && li.getBoundingClientRect().right > box.right + 1).map((li) => li.textContent.trim()),
+					hidden: items.filter((li) => !inRow(li)).map((li) => li.textContent.trim()),
+					menu: getComputedStyle(head.querySelector(".nsmax-mobile-menu")).display,
+					scroll: getComputedStyle(nav).overflowX
+				};
+			});
+			assert.deepEqual(state.cut, [], `${width}：没有被切掉半截的版块`);
+			assert.equal(state.scroll, "hidden", "不再是横向滚动条");
+			if (width === 940) {
+				assert.ok(state.hidden.includes("NQ"), `${width}：NQ 放不下（${state.hidden}）`);
+				assert.equal(state.menu, "flex", "有版块藏起来时亮出 ≡");
+				await page.locator("#nsk-head .nsmax-mobile-menu").click();
+				await page.waitForSelector("dialog.nsmax-mobile-nav[open]");
+				const listed = await page.evaluate(() => [...document.querySelectorAll("dialog.nsmax-mobile-nav[open] a")].map((a) => a.textContent.trim()));
+				for (const name of state.hidden) assert.ok(listed.includes(name), `≡ 菜单里有「${name}」（${listed}）`);
+			} else {
+				assert.deepEqual(state.hidden, [], "宽屏全部放得下");
+				assert.equal(state.menu, "none", "放得下时没有 ≡");
+			}
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}

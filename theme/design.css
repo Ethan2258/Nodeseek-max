@@ -2457,11 +2457,15 @@ html[data-nsmax-theme] body > footer .nsmax-footer-social svg {
 html[data-nsmax-theme] body > footer .contain > .col.social {
   display: none !important;
 }
+/* 站点在 ≤950px 给每列写了 width:33%（≤500px 50%、≤340px 100%），放进网格就成了格子宽度的三分之一：880px 时每列只剩 26px，
+   「相关网站」一字一行、链接只剩「L…」；手机上每列也只有半格宽。宽度交给网格 */
 html[data-nsmax-theme] body > footer .contain > .col {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
   gap: 10px !important;
+  box-sizing: border-box !important;
+  width: auto !important;
   min-width: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -2477,6 +2481,8 @@ html[data-nsmax-theme] body > footer .group-head-link {
   font-size: 14px !important;
   font-weight: 600 !important;
   line-height: 1.75 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
 }
 html[data-nsmax-theme] body > footer .contain > .col a {
   display: block !important;
@@ -2496,6 +2502,7 @@ html[data-nsmax-theme] body > footer .contain li {
 html[data-nsmax-theme] body > footer :is(a, li) {
   color: var(--text-subtle) !important;
   font-size: 13px !important;
+  font-weight: 400 !important;
   line-height: 1.75 !important;
   text-decoration: none !important;
 }
@@ -2531,7 +2538,8 @@ html[data-nsmax-theme] body > footer .foot {
     display: block !important;
   }
 }
-@media (max-width: 860px) {
+/* 1000px 以下品牌块单独一行、链接五列排在下面（以前到 860px 才换，900px 左右品牌块占掉 390px，每列只剩 80px，链接被省略） */
+@media (max-width: 1000px) {
   html[data-nsmax-theme] body > footer .contain {
     grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
@@ -10234,8 +10242,9 @@ html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-layout-toggle[ar
   background: var(--action) !important;
   color: var(--action-text) !important;
 }
-@media (max-width: 720px) {
-  /* 手机：一列。作者栏变成一行（40px 头像 + 名字、UID、等级），不显示三格数字；楼层操作在时间下面单独一行；每层一张卡片，相隔 10px */
+@media (max-width: 1000px) {
+  /* 手机和中等宽度（≤1000px：右栏还在时主栏不到 690px，左边再占 180px 作者栏，正文只剩 270～470px）：一列。
+     作者栏变成一行（40px 头像 + 名字、UID、等级），不显示三格数字；楼层操作在时间下面单独一行；每层一张卡片，相隔 10px */
   html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item):is(#nsmax-lv, *):is(#nsmax-b, *) {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: auto auto auto auto auto 1fr auto auto auto auto auto !important;
@@ -10465,7 +10474,7 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies >
 html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content p + p:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
   content: " " !important;
 }
-html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content > :is(blockquote, ul, ol, pre, .nsmax-code, table, h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content > :is(blockquote, ul, ol, pre, .nsmax-code, table, details, h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin: 6px 0 0 !important;
   font-size: 13.5px !important;
 }
@@ -12420,4 +12429,153 @@ html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error] > .nsmax-site-error
 }
 html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--action-hover) !important;
+}
+/* ---------- 58. 2026-10-19 第十一批 ----------
+   ≡ 菜单（电脑版页面窄到站点收起版块导航时）最后一块「论坛应用」：NQ 和顶栏同一个样子——黄底深色字、6px 圆角、14px/600。
+   以前顶栏一收起 NQ 就跟着版块藏了，菜单里也没有，窄窗口下找不到 */
+html[data-nsmax-theme] dialog.nsmax-mobile-nav .nsmax-mobile-nav-apps:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  margin: 14px 0 0 !important;
+  padding: 12px 0 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] dialog.nsmax-mobile-nav .nsmax-mobile-nav-apps:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "论坛应用" !important;
+  display: block !important;
+  margin: 0 0 8px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme] dialog.nsmax-mobile-nav .nsmax-mobile-nav-apps > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 11px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: #ffd02f !important;
+  color: #1c1c1e !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 22px !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] dialog.nsmax-mobile-nav .nsmax-mobile-nav-apps > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: #f5c518 !important;
+}
+html[data-nsmax-theme] dialog.nsmax-mobile-nav .nsmax-mobile-nav-apps > a.nsmax-nq-tab svg.nsmax-nq-icon:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  flex: none !important;
+  width: 15px !important;
+  height: 15px !important;
+  color: inherit !important;
+}
+/* 正文表格：窄屏（≤1000px，帖子页改成一列排法的宽度）照 sb.sb 手机（≤640px）的做法——表格按内容宽度、单元格不折行，
+   比正文宽就在表格里左右滑动。以前列多的表格被挤成一列一个字，手机上楼层卡片还把最右边几列裁掉了。抽奖表有自己的排法，不动 */
+@media (max-width: 1000px) {
+  html[data-nsmax-theme] #nsk-body-left article.post-content table:not(.nsmax-lottery-table):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    display: block !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  html[data-nsmax-theme] #nsk-body-left article.post-content table:not(.nsmax-lottery-table) :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    white-space: nowrap !important;
+  }
+}
+/* 正文折叠块（Markdown 里的 <details>）：站点给的是浅蓝灰底、16px 大圆角、左右 2em 留白，深色下是一块 #3b3b3b 灰底，和主题配色对不上。
+   换成 sb.sb 折叠条的样子（同 .profile-disclosure-summary）：1px 细线框、次底色、输入框圆角；标题一行 500 字重，展开后标题下一道细线 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0.8em 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert) > summary:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 -14px !important;
+  padding: 9px 14px !important;
+  border: 0 !important;
+  color: var(--text) !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert)[open] > summary:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 10px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert) > summary::marker {
+  color: var(--text-subtle);
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert)[open] > :last-child:not(summary):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 12px !important;
+}
+/* 正文选项卡（NodeSeek 的 nsk-magic-tabs，测评帖常用来分页放 YABS、融合怪、流媒体结果）：站点是另一套配色——浅色 slate 灰蓝，
+   深色是 #3b3b3b / #2f2f2f 灰块；外框没有底边、也不留下边距，后面的正文直接贴着。换成主题颜色：外框次底色细线框、
+   当前标签和内容区面板底，标签 13px/500；外框四边都有、上下留 0.8em。颜色变量也一起换掉，站点脚本启用前的样子也一致 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .nsk-magic-tabs:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --tabs-bg: var(--panel-alt);
+  --tabs-border: var(--line);
+  --tab-text: var(--text-muted);
+  --tab-text-hover: var(--text);
+  --tab-hover-bg: var(--panel-hover);
+  --tab-active-bg: var(--panel);
+  --tab-active-text: var(--text);
+  --body-bg: var(--panel);
+  --body-text: var(--text);
+  --disabled-text: var(--text-subtle);
+  --shadow-light: transparent;
+  margin: 0.8em 0 !important;
+  padding: 4px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .nsk-magic-tabs > .nsk-magic-tab-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 6px 12px !important;
+  border-radius: var(--r-sm) var(--r-sm) 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .nsk-magic-tabs > .nsk-magic-tab-title:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .nsk-magic-tabs > .nsk-magic-tab-title.is-active:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--line) var(--line) var(--panel) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .nsk-magic-tabs > .nsk-magic-tab-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-top: -1px !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 var(--r-sm) var(--r-sm) var(--r-sm) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .nsk-magic-tabs > .nsk-magic-tab-body > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 0 !important;
+}
+/* 顶栏版块照 sb.sb .forum-nav：一行放不下的整个排到看不见的第二行（最高一行 34.5px），不再横向滚动——以前滚动条藏着，
+   880px 时最后一个「曝光」被切成「曝」，后面的内版、NQ 滚不到也看不到。有版块藏起来时脚本在 #nsk-head 上标
+   data-nsmax-nav-overflow，亮出 ≡（藏起来的版块和 NQ 都在 ≡ 菜单里） */
+@media (min-width: 501px) {
+  html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head > ul.nav-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    max-height: 35px !important;
+    overflow: hidden !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head[data-nsmax-nav-overflow] > .nsmax-mobile-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    display: inline-flex !important;
+  }
 }
