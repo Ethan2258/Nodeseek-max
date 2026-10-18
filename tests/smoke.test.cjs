@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.9");
+	assert.equal(packageJson.version, "1.8.10");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4176,4 +4176,126 @@ test("第八批（2026-10-18）：顶栏 NQ 照 sb.sb「论坛应用」按钮是
 		assert.equal(state.today, true);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
+});
+
+test("第九批（2026-10-18）：一键抽奖、管理记录弹窗——站点给 footer 的 #333 底和 width:100% 不再套上（按钮不被切掉）；一键抽奖宽屏两栏、预览就是帖子里那张抽奖卡片，不再套一层滚动", async () => {
+	const footState = () => {
+		const dialog = document.querySelector("dialog.nsmax-dialog[open]");
+		const box = dialog.getBoundingClientRect();
+		const foot = dialog.querySelector(".nsmax-dialog-foot");
+		return {
+			tag: foot.tagName,
+			bg: getComputedStyle(foot).backgroundColor,
+			footRight: Math.round(foot.getBoundingClientRect().right),
+			buttonsRight: Math.max(...Array.from(foot.querySelectorAll("button, a"), (el) => el.hidden ? 0 : Math.round(el.getBoundingClientRect().right))),
+			dialogRight: Math.round(box.right),
+			headShadow: getComputedStyle(dialog.querySelector(".nsmax-dialog-head")).boxShadow
+		};
+	};
+	for (const [width, mobile] of [[1440, false], [390, true]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/new-discussion", { html: newPostPage({ mobile }), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector(".nsmax-lucky-trigger");
+			await page.locator(".nsmax-lucky-trigger").click();
+			await page.waitForSelector("dialog.nsmax-lucky-dialog[open] .nsmax-lottery[data-nsmax-preview]");
+			await page.locator("dialog.nsmax-lucky-dialog .nsmax-lucky-field input").first().fill("50 鸡腿");
+			await wait(page, 300);
+			const foot = await page.evaluate(footState);
+			assert.notEqual(foot.tag, "FOOTER");
+			assert.equal(foot.bg, "rgba(0, 0, 0, 0)", "脚栏不是站点给 footer 的 #333 灰底");
+			assert.ok(foot.buttonsRight <= foot.dialogRight - 8, JSON.stringify(foot));
+			assert.ok(foot.footRight <= foot.dialogRight, JSON.stringify(foot));
+			assert.equal(foot.headShadow, "none");
+			const layout = await page.evaluate(() => {
+				const dialog = document.querySelector("dialog.nsmax-lucky-dialog");
+				const form = dialog.querySelector(".nsmax-lucky-form").getBoundingClientRect();
+				const side = dialog.querySelector(".nsmax-lucky-side").getBoundingClientRect();
+				const preview = dialog.querySelector(".nsmax-lucky-preview");
+				return {
+					sideBy: side.left >= form.right,
+					previewScroll: preview.scrollHeight - preview.clientHeight,
+					prize: dialog.querySelector(".nsmax-lottery-prize").textContent,
+					clock: dialog.querySelectorAll(".nsmax-lottery-seg").length,
+					overflow: document.documentElement.scrollWidth - innerWidth
+				};
+			});
+			assert.equal(layout.sideBy, !mobile, JSON.stringify(layout));
+			assert.ok(layout.previewScroll <= 1, `预览不再套一层滚动：${layout.previewScroll}`);
+			assert.equal(layout.prize, "50 鸡腿");
+			assert.equal(layout.clock, 4);
+			assert.ok(layout.overflow <= 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	const row = (id, uid, name, request) => ({ id, request: JSON.stringify(request), admin_member_id: 9, admin_member_name: "酒神", target_member_id: uid, target_member_name: name, post_id: -1, comment_id: -1, floor_index: -1, created_at: new Date(Date.now() - id * 6e4).toISOString() });
+	const filler = (start, count) => Array.from({ length: count }, (_, i) => row(start + i, 999, "other", { target: { uid: 999 }, coin: { coin_diff: -5, reason: "灌水" } }));
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(), viewport: { width: 1440, height: 900 },
+		api: { "/api/admin/ruling/page-1": [{ status: 200, body: { success: true, data: filler(100, 20) } }], "/api/admin/ruling/page-2": [{ status: 200, body: { success: true, data: filler(200, 3) } }] }
+	});
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.locator("ul.post-list>li>a:has(img)").first().hover();
+		await page.waitForSelector(".nsmax-person-pop .nsmax-person-ruling");
+		await page.locator(".nsmax-person-pop .nsmax-person-ruling").click();
+		await page.waitForFunction(() => /已查完/.test(document.querySelector("dialog.nsmax-ruling-dialog .nsmax-ruling-status")?.textContent || ""));
+		const foot = await page.evaluate(footState);
+		assert.equal(foot.bg, "rgba(0, 0, 0, 0)");
+		assert.ok(foot.buttonsRight <= foot.dialogRight - 8, JSON.stringify(foot));
+		assert.equal(await page.locator("dialog.nsmax-ruling-dialog .nsmax-ruling-empty").isVisible(), true);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第九批（2026-10-18）：脚本里其他弹窗、面板里的 header / footer（浏览记录、帖子监控、帖子预览……）不被站点的通用样式套上阴影、#333 灰底和 width:100%", async () => {
+	const { context, page } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 800 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const state = await page.evaluate(() => Array.from(["nspp-monitor", "nspp-history", "nspp-post-preview", "nsmax-other"], (className) => {
+			const dialog = document.createElement("dialog");
+			dialog.className = className;
+			dialog.innerHTML = "<header style='padding:0 20px'>头</header><footer style='padding:0 20px'>脚</footer>";
+			document.body.append(dialog);
+			dialog.show();
+			const foot = dialog.querySelector("footer");
+			const result = { className, footBg: getComputedStyle(foot).backgroundColor, footWider: foot.getBoundingClientRect().right > dialog.getBoundingClientRect().right, headShadow: getComputedStyle(dialog.querySelector("header")).boxShadow };
+			dialog.remove();
+			return result;
+		}));
+		for (const item of state) {
+			assert.notEqual(item.footBg, "rgb(51, 51, 51)", JSON.stringify(item));
+			assert.equal(item.footWider, false, JSON.stringify(item));
+			assert.equal(item.headShadow, "none", JSON.stringify(item));
+		}
+	} finally { await context.close(); }
+});
+
+test("第九批（2026-10-18）：我的关注 / 粉丝——站点数据到之前是「正在加载…」占位；站点画出卡片的那一帧就已经是 sb.sb 成员卡片（不先闪原版再跳）；按钮排在名字下面一行", async () => {
+	for (const [width, mobile] of [[1440, false], [390, true]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/fans?type=follow", { html: fansPage({ delayed: 900, mobile }), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector("#fans-mount");
+			await wait(page, 300);
+			const loading = await page.evaluate(() => {
+				const mount = document.querySelector("#fans-mount");
+				return mount ? { text: getComputedStyle(mount.querySelector("span"), "::after").content, gif: getComputedStyle(mount.querySelector(".loading-img")).display, height: Math.round(mount.getBoundingClientRect().height) } : null;
+			});
+			assert.ok(loading, "数据到之前还在加载占位");
+			assert.equal(loading.text, '"正在加载…"');
+			assert.equal(loading.gif, "none");
+			assert.ok(loading.height >= 300, JSON.stringify(loading));
+			await page.waitForFunction(() => Array.isArray(window.__fansFirstFrame));
+			assert.deepEqual(await page.evaluate(() => window.__fansFirstFrame), [true, true, true, true, true], "站点画出卡片的那一帧之前就改好了");
+			await wait(page, 200);
+			const rows = await page.evaluate(() => Array.from(document.querySelectorAll(".nsmax-member"), (member) => {
+				const name = member.querySelector(".nsmax-member-name").getBoundingClientRect();
+				const buttons = Array.from(member.querySelectorAll(".nsmax-member-actions > .btn"), (btn) => btn.getBoundingClientRect());
+				return { tops: new Set(buttons.map((box) => Math.round(box.top))).size, belowName: buttons.every((box) => box.top > name.bottom), alignedLeft: Math.abs(Math.round(buttons[0].left - name.left)) <= 1, count: buttons.length };
+			}));
+			assert.equal(rows.length, 5);
+			for (const row of rows) assert.deepEqual(row, { tops: 1, belowName: true, alignedLeft: true, count: 3 });
+			assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
 });

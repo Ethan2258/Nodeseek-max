@@ -859,59 +859,10 @@
 			link.setAttribute("data-nsmax-lottery", "");
 			const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
 			if (postId && link.closest(".nsk-post")) nsmaxRememberLotteryTime(postId, time);
-			const make = (tag, className, text) => {
-				const el = document.createElement(tag);
-				if (className) el.className = className;
-				if (text !== undefined) el.textContent = text;
-				return el;
-			};
-			const date = new Date(time);
-			const pad = (n) => String(n).padStart(2, "0");
-			const card = make("div", "nsmax-lottery");
-			card.dataset.nsmaxTime = String(time);
-			card.dataset.nsmaxWhen = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-			const head = make("div", "nsmax-lottery-head");
-			head.append(make("span", "nsmax-lottery-icon"), make("strong", "", "抽奖"), make("span", "nsmax-lottery-state"));
-			const countdown = make("div", "nsmax-lottery-countdown");
-			const clock = make("span", "nsmax-lottery-clock");
-			for (const unit of ["天", "时", "分", "秒"]) {
-				const seg = make("span", "nsmax-lottery-seg");
-				seg.append(make("b", "", "0"), make("i", "nsmax-lottery-unit", unit));
-				clock.append(seg);
-			}
-			countdown.append(make("span", "nsmax-lottery-label", "距开奖"), clock);
-			// 奖品 / 名额 / 中奖者（sb.sb .lottery-prizes 小表）
-			const table = make("table", "nsmax-lottery-table");
-			const thead = make("thead");
-			const headRow = make("tr");
-			headRow.append(make("th", "", "奖品"), make("th", "", "名额"), make("th", "", "中奖者"));
-			thead.append(headRow);
-			const tbody = make("tbody");
-			const row = make("tr");
 			const article = link.closest("article.post-content") || document;
-			row.append(make("td", "nsmax-lottery-prize", nsmaxLotteryPrize(article)), make("td", "nsmax-lottery-count", String(count)), make("td", "nsmax-lottery-winners", "未开奖"));
-			tbody.append(row);
-			table.append(thead, tbody);
-			const note = make("p", "nsmax-lottery-note", `到开奖时间后，站点按回复的楼层抽出中奖者（从 ${start} 楼起，${duplicate ? "可以重复中奖" : "每人最多中一次"}），点「查看开奖」看结果。`);
-			// 「N 条回复 · 从 1 楼起 · 共 N 个名额」+ 前 12 位参与人
-			const stat = make("div", "nsmax-lottery-stat");
 			const replies = Number((document.querySelector(".nsmax-reply-head")?.textContent.match(/(\d+)\s*条回复/) || [])[1]);
 			const entrants = nsmaxLotteryEntrants(start);
-			stat.append(make("span", "", `开奖 ${card.dataset.nsmaxWhen}`), make("span", "", `${Number.isFinite(replies) ? replies : entrants.length} 条回复`), make("span", "", `从 ${start} 楼起`), make("span", "", `共 ${count} 个名额`));
-			const people = make("div", "nsmax-lottery-people");
-			for (const [floor, name] of entrants.slice(0, 12)) {
-				const chip = make("a", "nsmax-lottery-person", `#${floor} ${name}`);
-				chip.href = `#${floor}`;
-				people.append(chip);
-			}
-			const actions = make("div", "nsmax-lottery-actions");
-			const view = make("a", "nsmax-lottery-view", "查看开奖");
-			view.setAttribute("data-nsmax-lottery", "");
-			view.href = url.href;
-			view.target = "_blank";
-			view.rel = "noopener";
-			const join = make("button", "nsmax-lottery-join", "回复参与");
-			join.type = "button";
+			const { card, join } = nsmaxBuildLotteryCard({ time, count, start, duplicate, prize: nsmaxLotteryPrize(article), href: url.href, replies: Number.isFinite(replies) ? replies : entrants.length, entrants });
 			join.addEventListener("click", () => {
 				const editor = document.querySelector("#nsk-body-left .md-editor");
 				if (!editor) return;
@@ -922,20 +873,84 @@
 					else editor.querySelector("textarea:not(.CodeMirror textarea)")?.focus({ preventScroll: true });
 				}, 320);
 			});
-			actions.append(join, view);
-			card.append(head, countdown, table, note, stat);
-			if (people.childElementCount) card.append(people);
-			card.append(actions);
 			const block = link.closest("p, li, blockquote") || link;
 			if (block !== link && block.textContent.trim() === link.textContent.trim()) block.setAttribute("data-nsmax-lottery-source", "");
 			else link.setAttribute("data-nsmax-lottery-source", "");
 			block.after(card);
-			nsmaxLotteryCards.add(card);
+			nsmaxTrackLottery(card);
 		}
-		if (nsmaxLotteryCards.size) {
-			nsmaxLotteryTick();
-			nsmaxLotteryTimer ||= setInterval(nsmaxLotteryTick, 1e3);
+	}
+	// 让卡片的倒计时每秒走（卡片不在页面上了，下一次走的时候自己去掉）
+	function nsmaxTrackLottery(card) {
+		nsmaxLotteryCards.add(card);
+		nsmaxLotteryTick();
+		nsmaxLotteryTimer ||= setInterval(nsmaxLotteryTick, 1e3);
+	}
+	// 一张抽奖卡片（sb.sb .lottery-widget）：帖子里开奖链接换成的卡片，一键抽奖弹窗的预览也用这一张（preview：按钮不能点、没有参与人）
+	function nsmaxBuildLotteryCard({ time, count, start, duplicate, prize, href = "", replies = 0, entrants = [], preview = false }) {
+		const make = (tag, className, text) => {
+			const el = document.createElement(tag);
+			if (className) el.className = className;
+			if (text !== undefined) el.textContent = text;
+			return el;
+		};
+		const date = new Date(time);
+		const pad = (n) => String(n).padStart(2, "0");
+		const card = make("div", "nsmax-lottery");
+		card.dataset.nsmaxTime = String(time);
+		card.dataset.nsmaxWhen = Number.isFinite(date.getTime()) ? `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}` : "—";
+		if (preview) card.setAttribute("data-nsmax-preview", "");
+		const head = make("div", "nsmax-lottery-head");
+		head.append(make("span", "nsmax-lottery-icon"), make("strong", "", "抽奖"), make("span", "nsmax-lottery-state"));
+		const countdown = make("div", "nsmax-lottery-countdown");
+		const clock = make("span", "nsmax-lottery-clock");
+		for (const unit of ["天", "时", "分", "秒"]) {
+			const seg = make("span", "nsmax-lottery-seg");
+			seg.append(make("b", "", "0"), make("i", "nsmax-lottery-unit", unit));
+			clock.append(seg);
 		}
+		countdown.append(make("span", "nsmax-lottery-label", "距开奖"), clock);
+		// 奖品 / 名额 / 中奖者（sb.sb .lottery-prizes 小表）
+		const table = make("table", "nsmax-lottery-table");
+		const thead = make("thead");
+		const headRow = make("tr");
+		headRow.append(make("th", "", "奖品"), make("th", "", "名额"), make("th", "", "中奖者"));
+		thead.append(headRow);
+		const tbody = make("tbody");
+		const row = make("tr");
+		row.append(make("td", "nsmax-lottery-prize", prize || "（奖品）"), make("td", "nsmax-lottery-count", String(count)), make("td", "nsmax-lottery-winners", "未开奖"));
+		tbody.append(row);
+		table.append(thead, tbody);
+		const note = make("p", "nsmax-lottery-note", `到开奖时间后，站点按回复的楼层抽出中奖者（从 ${start} 楼起，${duplicate ? "可以重复中奖" : "每人最多中一次"}），点「查看开奖」看结果。`);
+		// 「开奖时间 · N 条回复 · 从 1 楼起 · 共 N 个名额」+ 前 12 位参与人
+		const stat = make("div", "nsmax-lottery-stat");
+		stat.append(make("span", "", `开奖 ${card.dataset.nsmaxWhen}`));
+		if (!preview) stat.append(make("span", "", `${replies} 条回复`));
+		stat.append(make("span", "", `从 ${start} 楼起`), make("span", "", `共 ${count} 个名额`));
+		const people = make("div", "nsmax-lottery-people");
+		for (const [floor, name] of entrants.slice(0, 12)) {
+			const chip = make("a", "nsmax-lottery-person", `#${floor} ${name}`);
+			chip.href = `#${floor}`;
+			people.append(chip);
+		}
+		const actions = make("div", "nsmax-lottery-actions");
+		const view = make("a", "nsmax-lottery-view", "查看开奖");
+		view.setAttribute("data-nsmax-lottery", "");
+		const join = make("button", "nsmax-lottery-join", "回复参与");
+		join.type = "button";
+		if (preview) {
+			join.disabled = true;
+			view.setAttribute("aria-disabled", "true");
+		} else {
+			view.href = href;
+			view.target = "_blank";
+			view.rel = "noopener";
+		}
+		actions.append(join, view);
+		card.append(head, countdown, table, note, stat);
+		if (people.childElementCount) card.append(people);
+		card.append(actions);
+		return { card, join, view };
 	}
 	function nsmaxCleanBadgesAndNotifications() {
 		for (const el of document.querySelectorAll(".notify-count, .unread-count, .nspp-messages-count, .nspp-messages-unread")) {
@@ -2954,10 +2969,28 @@
 		observer.observe(document.body, { childList: true });
 		ctx.signal.addEventListener("abort", () => observer.disconnect(), { once: true });
 	}
+	// 我的关注 / 粉丝：列表是站点前端画的（先是一个 Loading，拿到数据后整块画出来）。页面整理要在页面变化后 100ms 以上才跑，
+	// 站点画出来的原版卡片会先在屏幕上露一下，再变成 sb.sb 成员卡片、整块跳一下。这里单独盯着：站点一画出卡片，
+	// 就在同一轮微任务里（浏览器画下一帧之前）改好，屏幕上不出现原版。nsmaxPrepareFans 只在需要时改 DOM，改完那次变化不会再引起改动
+	// 页面解析阶段（脚本注入得早时）就装上，模块挂载时再调一次不重复装
+	var nsmaxFansWatching = false;
+	function nsmaxWatchFans(ctx) {
+		if (nsmaxFansWatching || !/^\/fans(?:\/|$)/.test(location.pathname) || !document.body) return;
+		nsmaxFansWatching = true;
+		const relevant = (node) => node instanceof Element && (node.matches(".member-list, .user-card-wrapper-container, .user-card-wrapper, .user-card, .usercard-button-group, .fans-switcher, .switcher-item, .btn") || !!node.querySelector(".user-card, .fans-switcher"));
+		const observer = new MutationObserver((records) => {
+			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
+			try { nsmaxPrepareFans(); } catch {}
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
+		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxFansWatching = false; }, { once: true });
+		try { nsmaxPrepareFans(); } catch {}
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		nsmaxActionFeedback(ctx);
 		nsmaxWatchMsc(ctx);
+		nsmaxWatchFans(ctx);
 		const scan = () => {
 			const currentPage = nsmaxPageKind();
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
@@ -3173,16 +3206,17 @@
 						date.setHours(20, 0, 0, 0);
 						return date.getTime();
 					};
+					// 弹窗的头、脚用 div：站点给所有 header / footer 元素套了阴影、#333 灰底和 width:100%（脚栏会比弹窗宽，右边的按钮被切掉）
 					const dialog = make("dialog", "nsmax-dialog nsmax-lucky-dialog");
 					dialog.setAttribute("aria-label", "一键抽奖");
-					const head = make("header", "nsmax-dialog-head");
+					const head = make("div", "nsmax-dialog-head");
 					const closeButton = make("button", "nsmax-dialog-close");
 					closeButton.type = "button";
 					closeButton.setAttribute("aria-label", "关闭");
 					closeButton.append(toolIcon("close"));
 					head.append(make("h3", "", "一键抽奖"), closeButton);
 					const body = make("div", "nsmax-dialog-body");
-					const intro = make("p", "nsmax-lucky-intro", "填好下面几项，点「发布抽奖帖」直接发出去；发出去后脚本自动生成开奖链接补进正文（站点到开奖时间按回复楼层抽出中奖者）。");
+					const intro = make("p", "nsmax-lucky-intro", "点「发布抽奖帖」直接发出去。发出去以后脚本按新帖子的编号生成开奖链接补进正文，到开奖时间站点按回复楼层抽出中奖者。");
 					const prize = input("text", "", { placeholder: "例如：50 鸡腿 / 香港小鸡一台 / 兑换码", maxlength: "60" });
 					const count = input("number", "1", { min: "1", max: "100" });
 					const when = input("datetime-local", local(nextHour(24)));
@@ -3221,21 +3255,24 @@
 					const status = make("p", "nsmax-lucky-error");
 					status.setAttribute("role", "alert");
 					status.hidden = true;
-					body.append(
-						intro,
+					// 宽屏两栏：左边表单，右边预览（跟着滚动停在顶上）和说明；窄屏一栏，预览排在表单后面
+					const form = make("div", "nsmax-lucky-form");
+					const timeField = make("div", "nsmax-lucky-group");
+					timeField.append(field("开奖时间", when), presets);
+					form.append(
 						field("奖品", prize),
-						row(field("中奖人数", count), field("从第几楼开始算", start, "楼主的楼层是 0，回复从 1 楼开始")),
-						field("开奖时间", when),
-						presets,
+						row(field("中奖人数", count), field("从第几楼开始算", start, "楼主是 0 楼，回复从 1 楼开始")),
+						timeField,
 						onceBox,
 						field("参与方式", rule),
 						field("补充说明", extra),
 						row(field("版块", category), field("标题", titleInput)),
-						make("span", "nsmax-lucky-label", "预览"),
-						preview,
 						status
 					);
-					const foot = make("footer", "nsmax-dialog-foot");
+					const side = make("div", "nsmax-lucky-side");
+					side.append(make("span", "nsmax-lucky-label", "预览"), preview, intro);
+					body.append(form, side);
+					const foot = make("div", "nsmax-dialog-foot");
 					const cancel = make("button", "nsmax-dialog-button", "取消");
 					cancel.type = "button";
 					const go = make("button", "nsmax-dialog-button primary", "发布抽奖帖");
@@ -3264,16 +3301,10 @@
 					const update = () => {
 						const v = values();
 						if (!titleTouched) titleInput.value = v.prize ? `【抽奖】${v.prize}` : "";
-						const left = v.time - Date.now();
-						const days = Math.floor(left / 864e5), hours = Math.floor(left / 36e5) % 24, minutes = Math.floor(left / 6e4) % 60;
-						const card = make("div", "nsmax-lucky-card");
-						const cardHead = make("div", "nsmax-lucky-card-head");
-						cardHead.append(make("strong", "", "抽奖"), make("span", "", "进行中"));
-						const clock = make("div", "nsmax-lucky-card-clock", left > 0 ? `距开奖 ${days > 0 ? days + " 天 " : ""}${pad(hours)} 时 ${pad(minutes)} 分` : "开奖时间要晚于现在");
-						const table = make("div", "nsmax-lucky-card-table");
-						table.append(make("span", "", "奖品"), make("span", "", "名额"), make("span", "", "中奖者"), make("b", "", v.prize || "（奖品）"), make("b", "", String(v.count)), make("span", "", "未开奖"));
-						card.append(cardHead, clock, table, make("p", "", `开奖 ${v.when || "—"} · 从 ${v.start} 楼起 · ${v.duplicate ? "可以重复中奖" : "每人最多中一次"} · ${v.rule}`));
+						// 和帖子里那张卡片同一个样子（同一个函数生成），倒计时也一样每秒走
+						const { card } = nsmaxBuildLotteryCard({ time: Number.isFinite(v.time) ? v.time : Date.now(), count: v.count, start: v.start, duplicate: v.duplicate, prize: v.prize, preview: true });
 						preview.replaceChildren(card);
+						nsmaxTrackLottery(card);
 					};
 					for (const el of [prize, count, when, start, once, rule]) {
 						el.addEventListener("input", update);
@@ -3866,7 +3897,8 @@
 		};
 		const dialog = make("dialog", "nsmax-dialog nsmax-ruling-dialog");
 		dialog.setAttribute("aria-label", `${name} 的管理记录`);
-		const head = make("header", "nsmax-dialog-head");
+		// 头、脚用 div：站点给所有 header / footer 元素套了阴影、#333 灰底和 width:100%（脚栏比弹窗宽，右边的按钮被切掉）
+		const head = make("div", "nsmax-dialog-head");
 		const close = make("button", "nsmax-dialog-close");
 		close.type = "button";
 		close.setAttribute("aria-label", "关闭");
@@ -3879,7 +3911,7 @@
 		const empty = make("p", "nsmax-ruling-empty");
 		empty.hidden = true;
 		body.append(intro, list, empty);
-		const foot = make("footer", "nsmax-dialog-foot");
+		const foot = make("div", "nsmax-dialog-foot");
 		const status = make("span", "nsmax-ruling-status", "正在查找…");
 		status.setAttribute("role", "status");
 		const more = make("button", "nsmax-dialog-button", "再往前查");

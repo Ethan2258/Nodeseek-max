@@ -154,3 +154,6 @@ body.dark-layout #nsk-right-panel-container .nsk-panel{border-radius:0!important
 .category-mobile a.selected p{background-color:rgba(0,0,0,.2)}
 .category-mobile .iconpark-icon{color:#eee;margin-right:5px;width:1rem;height:1rem}
 .dark-layout #left-slide-panel{background-color:#0a3228!important}
+/* 站点对所有 header / footer 元素的通用样式（真站 style-*.css）：脚本弹窗里的 header、footer 也会被套上 */
+header{transition:background-color .5s;box-shadow:0 0 5px rgba(0,0,0,.1);background-color:var(--bg-main-color)}
+footer{width:100%;position:relative;height:auto;background-color:#333}
