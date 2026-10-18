@@ -287,7 +287,10 @@ html[data-nsmax-theme] body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-html[data-nsmax-theme] ::selection {
+/* 选中文字的颜色只挂在 html 上：::selection 会从父元素继承（Chrome 的高亮继承），效果和「html ::selection」一样；
+   写成后代选择器时每次整页重算样式都要给每个元素单独算一份 ::selection，实测多 60ms。
+   不支持高亮继承的浏览器由脚本补一条后代规则（见 nsmaxSelectionFallback）。 */
+html[data-nsmax-theme]::selection {
   background: var(--selection);
   color: var(--mark-text);
 }
@@ -1221,7 +1224,10 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu > a :is(svg, .nsmax
   color: currentColor !important;
 }
 /* 未读数：sb.sb .notify-badge——红底、等宽 10px、16px 高 */
+/* 未读数：sb.sb .notify-badge——16px 高、至少 16px 宽的红色小圆（一位数就是正圆）。sb.sb 全站 border-box，这里也得是 border-box，
+   否则 16px 最小宽度再加左右 4px 内边距，一位数也有 24px 宽，成了扁胶囊 */
 html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-unread {
+  box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1334,7 +1340,9 @@ html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-head {
   height: auto !important;
   min-height: 0 !important;
 }
-html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-head .nsmax-hot-title {
+/* 标题在标题行里不再带下边距：标题行自己有 9px，标题以前又被上面「卡片标题」那条（带 #id，优先级更高）加了 9px，
+   「今日热门」和第一条之间空出两倍的距离 */
+html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-panel .nsmax-hot-head .nsmax-hot-title {
   margin: 0 !important;
 }
 html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-tabs {
@@ -8707,5 +8715,2515 @@ html[data-nsmax-theme][data-nsmax-page="lucky"] .mx-datepicker-main :is(.mx-date
 @media (max-width: 360px) {
   html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g:is(#nsmax-lv, *):is(#nsmax-b, *) {
     grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* ---------- 41. 我的通知整页重排（2026-10-17）：照 sb.sb 通知页 + 私信页 ----------
+   以前是一整块卡片：左栏把「@我 / 回复主题」入口和私信会话混在一起，右边是通知或聊天，筛选框、刷新各有两份。
+   现在：顶上一张标签栏卡片（sb.sb .profile-toolbar：@我 / 回复主题 / 私信 + 未读数，右边筛选、刷新、全部已读），下面——
+   · @我、回复主题：一整列通知（sb.sb .post-item / .notification-item：11px 14px、24px 头像、行间 line-soft 细线；
+     未读行品牌浅底 +「未读」小标，未读和已读之间「以下为已读」，所在帖子在下一行）；
+   · 私信：左边会话列表、右边聊天，两张卡片相隔 18px（sb.sb .dm-shell：296px + 1fr）。 */
+html[data-nsmax-theme] .nspp-messages:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 标签栏卡片 */
+html[data-nsmax-theme] .nspp-messages > .nspp-messages-top:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex: none !important;
+  align-items: center !important;
+  gap: 14px !important;
+  min-height: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages-top > .nsmax-message-tabs:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  align-items: center !important;
+  gap: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+html[data-nsmax-theme] .nspp-messages-top > .nsmax-message-tabs > a:is(#nsmax-lv, *) {
+  flex: none !important;
+  white-space: nowrap !important;
+}
+/* 未读数：sb.sb .notify-badge——16px 高的红色小胶囊、等宽 10px 数字，跟在标签文字后面 */
+html[data-nsmax-theme] .nspp-messages-top > .nsmax-message-tabs .nspp-messages-count:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 16px !important;
+  height: 16px !important;
+  padding: 0 4px !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--danger) !important;
+  color: var(--on-danger) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] .nspp-messages-top > .nspp-messages-top-actions:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex: none !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] .nspp-messages-top .nsmax-notice-tools:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .nspp-messages-top .nsmax-notice-tools[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 筛选框：sb.sb 输入框的小号——30px 高、深一级细线、输入框圆角、13px；聚焦黄色描边 + 浅黄光圈 */
+html[data-nsmax-theme] .nspp-messages-top .nsmax-notice-tools input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: 200px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nspp-messages-top .nsmax-notice-tools input:focus:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
+}
+/* 刷新、全部已读：sb.sb .profile-toolbar 右侧的小胶囊——3px 12px、深一级细线、12.5px 弱化字；悬停墨色实底 */
+html[data-nsmax-theme] .nspp-messages-top :is(.nsmax-notice-tools, .nspp-messages-top-actions) > button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 3px 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nspp-messages-top :is(.nsmax-notice-tools, .nspp-messages-top-actions) > button:hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+/* 下面的工作区：撑满标签栏以下的高度 */
+html[data-nsmax-theme] .nspp-messages > .nspp-messages-workspace:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+/* @我 / 回复主题：一整列通知卡片 */
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="notice"] > .nspp-messages-workspace:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+}
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="notice"] > .nspp-messages-workspace > :is(.nspp-messages-sidebar, .nspp-messages-chat):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 通知卡片按内容高度，最高到窗口底，再多就在卡片里滚动（以前几条通知也撑满整个窗口，下面一大块空白） */
+html[data-nsmax-theme] .nspp-messages .nspp-notice-workspace:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex: 0 1 auto !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-notice-workspace[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace > .nspp-notice-list-scroll:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-list:is(#nsmax-lv, *) {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 一条通知：sb.sb .post-item——11px 14px、间距 10px、上方 line-soft 细线；悬停整行 panel-hover；未读品牌浅底 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 11px 14px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default !important;
+  transition: none !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-list > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row[data-unread]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--brand-soft) !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row:hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--panel-hover) !important;
+}
+/* 头像：sb.sb .post-avatar 24px、上移 2px，图片小圆角、次底色 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-avatar:is(#nsmax-lv, *) {
+  flex: none !important;
+  display: block !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin: 2px 0 0 !important;
+  line-height: 0 !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-avatar > img:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-main:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  color: var(--text) !important;
+  text-decoration: none !important;
+}
+/* 第一行：名字 14px/600、动作 12.5px 淡字、楼号等宽 12px（sb.sb .notification-floor）、未读小标，时间靠右 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-main > .nspp-messages-peer-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-floor:is(#nsmax-lv, *) {
+  flex: none !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+}
+/* 未读：sb.sb .notification-unread——危险色浅底、11px、小胶囊 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-unread:is(#nsmax-lv, *) {
+  flex: none !important;
+  align-self: center !important;
+  padding: 1px 6px !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
+  font-size: 11px !important;
+  line-height: 1.6 !important;
+}
+/* 回复摘要：sb.sb .notification-content——14px/1.7 正文色，最多三行 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-main > .nspp-notice-excerpt:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 3 !important;
+  margin: 2px 0 0 !important;
+  overflow: hidden !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+/* 所在帖子：sb.sb .post-meta .notification-where——12.5px，帖子标题弱化色，整行悬停时变链接色 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-where:is(#nsmax-lv, *) {
+  display: block !important;
+  margin: 3px 0 0 !important;
+  overflow: hidden !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-where > b:is(#nsmax-lv, *) {
+  color: var(--text-muted) !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-main:hover .nsmax-notice-where > b:is(#nsmax-lv, *) {
+  color: var(--link-hover) !important;
+}
+/* 「以下为已读」：sb.sb .notification-read-divider——7px 14px、上方细线、次底色、12px 淡字居中 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-divider:is(#nsmax-lv, *) {
+  padding: 7px 14px !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  text-align: center !important;
+}
+/* 列表里的状态行、空状态（sb.sb .dm-empty-list：40px 16px、13.5px 淡字居中）、「加载更多」 */
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-list-status:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-list-status:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 40px 16px !important;
+  font-size: 13.5px !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-more:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  margin: 10px auto 14px !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-more[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 私信：左边会话列表、右边聊天，两张卡片相隔 18px（sb.sb .dm-shell 296px + 1fr、.dm-list / .dm-pane） */
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] > .nspp-messages-workspace:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: 296px minmax(0, 1fr) !important;
+  gap: 18px !important;
+}
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] > .nspp-messages-workspace > :is(.nspp-messages-sidebar, .nspp-messages-chat):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] > .nspp-messages-workspace > .nspp-notice-workspace:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 会话列表顶上的搜索：sb.sb .dm-list-head 14px 14px 12px + line-soft 细线 */
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] .nspp-messages-sidebar > .nspp-messages-search:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 14px 14px 12px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] .nspp-messages-sidebar > .nspp-messages-contact-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 8px !important;
+}
+/* 聊天区顶栏（返回、名字、用户主页）：sb.sb .dm-head——60px 高、0 16px、line-soft 细线，名字 14.5px/700 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-chat > .nspp-messages-heading:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex: none !important;
+  align-items: center !important;
+  gap: 12px !important;
+  height: 60px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-chat > .nspp-messages-heading[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-chat > .nspp-messages-heading > strong:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--text-strong) !important;
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+/* 没选会话时聊天卡片只放提示，不留一条只写着「消息」的顶栏 */
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"]:not(.has-conversation) .nspp-messages-chat > .nspp-messages-heading:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 没选会话：sb.sb .dm-placeholder——居中 13.5px 淡字 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-chat .nspp-messages-empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: auto !important;
+  padding: 40px 16px !important;
+  color: var(--text-subtle) !important;
+  font-size: 13.5px !important;
+  text-align: center !important;
+}
+/* 「返回」只在手机上用（列表和聊天两屏切换）；宽屏左边一直有会话列表 */
+@media (min-width: 701px) {
+  html[data-nsmax-theme] .nspp-messages .nspp-messages-chat > .nspp-messages-heading > .nspp-messages-back:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    display: none !important;
+  }
+}
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] .nspp-messages-sidebar .nspp-messages-more:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  margin: 6px auto 10px !important;
+}
+html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] .nspp-messages-sidebar .nspp-messages-more[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+@media (max-width: 700px) {
+  /* 手机：标签栏一行可横向滑动，筛选框收起（列表本身就短）；私信仍是「列表 ↔ 聊天」两屏切换 */
+  html[data-nsmax-theme] .nspp-messages-top .nsmax-notice-tools > input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    display: none !important;
+  }
+  html[data-nsmax-theme] .nspp-messages > .nspp-messages-top:is(#nsmax-lv, *) {
+    gap: 8px !important;
+    padding: 0 10px !important;
+  }
+  html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"] > .nspp-messages-workspace:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"].has-conversation > .nspp-messages-workspace > .nspp-messages-sidebar:is(#nsmax-lv, *):is(#nsmax-b, *),
+  html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"]:not(.has-conversation) > .nspp-messages-workspace > .nspp-messages-chat:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    display: none !important;
+  }
+  html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    padding: 10px 12px !important;
+  }
+}
+
+/* ---------- 42. 回复区标题栏的「只看楼主」「直达底部」（2026-10-17）：sb.sb .reply-head 里的 .bot-toggle——
+   4px 11px 细线框小胶囊、12px/500 弱化字，打开时墨色实底 ---------- */
+html[data-nsmax-theme] #nsk-body-left .comment-container :is(.nsmax-owner-only, .nsmax-jump-reply):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 4px 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container :is(.nsmax-owner-only, .nsmax-jump-reply):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only[aria-pressed="true"]:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only[aria-pressed="true"]:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-jump-reply:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: none !important;
+}
+/* 标题栏里几个开关之间 6px，第一个靠右（sb.sb .reply-head 里 .bot-toggle 第一个 margin-left:auto） */
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-reply-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-right: auto !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container :is(div[data-nsmax-pagerbox], .nsmax-reply-head):first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 6px !important;
+}
+
+/* ---------- 43. 2026-10-17 第二批：正文图片、旧资料卡、私信未读、个人空间统计 ---------- */
+/* 正文图片：站点自带「上下 1rem、左右缩进 2.5%」和一圈阴影，脚本给大图换排法之前图片会先缩进放着、之后突然左移。
+   一律不缩进、不加阴影（表情除外），大图从一出现就是最终位置（见 nsmaxClassifyPostImages） */
+html[data-nsmax-theme] #nsk-body-left article.post-content img:not(.sticker, .smoji, [class*="emoji"]):is(#nsmax-lv, *) {
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+/* 大图（没包在链接里的）：sb.sb .post-image-link——8px 小圆角；悬停一圈 2px 深一级细线、外移 1px。
+   以前一条规则把圆角、描边都写死成 0，没包链接的图片既没有圆角，悬停也没有那一圈 */
+html[data-nsmax-theme] #nsk-body-left article.post-content img.nsmax-post-image:not(a img):is(#nsmax-lv, *) {
+  border-radius: var(--r-input) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content img.nsmax-post-image:not(a img):is(#nsmax-lv, *):hover {
+  outline: 2px solid var(--line-strong) !important;
+  outline-offset: 1px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content a.post-image-link:is(#nsmax-lv, *) {
+  border-radius: var(--r-input) !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content a.post-image-link:is(#nsmax-lv, *):hover {
+  outline: 2px solid var(--line-strong) !important;
+  outline-offset: 1px !important;
+}
+/* NodeSeek 自带的头像资料卡（.hover-user-card，旧样式）一律不显示：悬停有 sb.sb 样式的资料卡，点头像直接进主页。
+   以前只在我们的资料卡打开时藏它——点一下头像，我们的卡片先关上，旧卡片就露了出来 */
+html[data-nsmax-theme] .user-card.hover-user-card:is(#nsmax-lv, *) {
+  display: none !important;
+}
+/* 私信会话有未读：sb.sb .dm-unread-line——摘要金色加粗；右边一个 8px 黄点（站点只说有没有未读，不给条数）。
+   以前这里是一个空的 .nspp-messages-unread，被「空的未读标记不显示」那条规则藏掉了，系统消息、私信有未读都看不出来 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer[data-unread] .nspp-messages-snippet:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: #b8860b !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-messages-unread:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  flex: none !important;
+  align-self: center !important;
+  width: 8px !important;
+  min-width: 0 !important;
+  height: 8px !important;
+  margin: 0 0 0 2px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #f5c518 !important;
+}
+/* 个人空间资料卡的四格统计（等级 / 鸡腿 / 主题 / 回帖）：每格内容居中，四格在整行里均匀排开（以前都靠左，最后一格右边空一大块） */
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* ---------- 44. 投票、抽奖（2026-10-17）：照 sb.sb .topic-badge.poll-badge / .poll-widget / .lottery-widget ---------- */
+/* 标题前「投票」：sb.sb .topic-badge.poll-badge——#3b6fe0 底白字，和「抽奖」同一款小胶囊（1px 8px、11px/500） */
+html[data-nsmax-theme] .nsmax-poll-badge {
+  display: inline-block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 6px 0 0 !important;
+  padding: 1px 8px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: #3b6fe0 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+  vertical-align: middle !important;
+}
+/* 帖子标题里的小标大一号：sb.sb .post-content-title .topic-badge——2px 10px、13px，竖直居中 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge):is(#nsmax-lv, *) {
+  display: inline-block !important;
+  height: auto !important;
+  padding: 2px 10px !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  vertical-align: middle !important;
+}
+/* 帖子里的投票：sb.sb .poll-widget——次底色、细线框、输入框圆角、14px 16px，帖子正文宽度（以前站点排成 400px 宽的居中小卡片） */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel:is(#nsmax-lv, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 12px 0 !important;
+  padding: 14px 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel :is(.embed-vote, form.pure-form):is(#nsmax-lv, *) {
+  display: block !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel form.pure-form:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+/* 标题行：sb.sb .poll-head——品牌色图标、15px 标题，右边总票数 12.5px 弱化字 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel form > h2:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text-strong) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel form > h2:is(#nsmax-lv, *)::before {
+  content: "" !important;
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--brand) !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M5 20v-8M12 20V5M19 20v-11'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M5 20v-8M12 20V5M19 20v-11'/%3E%3C/svg%3E") center / contain no-repeat !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel form > h2[data-nsmax-total]:is(#nsmax-lv, *)::after {
+  content: attr(data-nsmax-total) !important;
+  margin-left: auto !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel fieldset:is(#nsmax-lv, *) {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat-wrapper:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat:is(#nsmax-lv, *) {
+  position: relative !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+/* 结果：sb.sb .poll-result——选项、票数一行（13px），下面 8px 进度条（品牌色），再下面一排 20px 投票人头像 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat.voted > input:is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat > label.pure-checkbox:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 5px 12px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  cursor: default !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat .vote-item-text:is(#nsmax-lv, *) {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  overflow-wrap: anywhere !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat :is(.vote-stat-count, .vote-item-voter):is(#nsmax-lv, *) {
+  display: contents !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat .vote-stat-count-value:is(#nsmax-lv, *) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat .vote-stat-count-value[data-nsmax-pct]:is(#nsmax-lv, *)::after {
+  content: " 票 · " attr(data-nsmax-pct) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat .vote-stat-count-bar-wrapper:is(#nsmax-lv, *) {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  height: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--line) !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat .vote-stat-count-bar:is(#nsmax-lv, *) {
+  height: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--brand) !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+/* 自己投的那一项：sb.sb .poll-result.poll-mine——进度条换成绿色 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat > input:checked + label .vote-stat-count-bar:is(#nsmax-lv, *) {
+  background: var(--success-soft-text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat .voter-avatar-container:is(#nsmax-lv, *) {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  margin: 1px 0 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat .voter-avatar-container:empty:is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .voter-avatar-container > a:is(#nsmax-lv, *) {
+  display: block !important;
+  flex: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: none !important;
+  outline: 0 !important;
+  overflow: hidden !important;
+  line-height: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .voter-avatar-container img:is(#nsmax-lv, *) {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  object-fit: cover !important;
+}
+/* 还没投：sb.sb .poll-choice——每项一张 10px 12px 细线框小卡片，前面是单选 / 多选框；悬停品牌色细线 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat:not(.voted):is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat:not(.voted):is(#nsmax-lv, *):hover {
+  border-color: var(--brand-border) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat:not(.voted) > input:is(#nsmax-lv, *) {
+  display: block !important;
+  flex: none !important;
+  margin: 0 !important;
+  accent-color: var(--brand) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .vote-stat:not(.voted) > label.pure-checkbox:is(#nsmax-lv, *) {
+  flex: 1 1 auto !important;
+  cursor: pointer !important;
+}
+/* 底部：站点的「不排序」开关和投票按钮；按钮照 sb.sb .poll-vote-btn——8px 18px、输入框圆角、墨色实底 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel fieldset.op-buttons:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch:is(#nsmax-lv, *) {
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons :is(button, .pure-button, input[type="submit"]):is(#nsmax-lv, *) {
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px 18px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons :is(button, .pure-button, input[type="submit"]):is(#nsmax-lv, *):hover {
+  background: var(--action-hover) !important;
+}
+/* 投票下面站点给 App 用的深链接文字（nsapp://vote?id=…），网页上用不上 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel form > div[style*="text-align"]:is(#nsmax-lv, *) {
+  display: none !important;
+}
+/* 抽奖卡片：sb.sb .lottery-widget——次底色、细线框、输入框圆角、14px 16px；标题栏（图标、「抽奖」、右边状态），
+   倒计时条（.lottery-countdown：面板底细线框，数字 19px/600 等宽、单位 11.5px；一小时内品牌浅底，五分钟内红色浅底），
+   开奖时间 / 中奖人数 / 起始楼层（12.5px 弱化字），「查看开奖」墨色实底按钮 + 「回复参与」细线框按钮 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery:is(#nsmax-lv, *) {
+  margin: 12px 0 !important;
+  padding: 14px 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-head:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 12px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-head > strong:is(#nsmax-lv, *) {
+  color: var(--text-strong) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-icon:is(#nsmax-lv, *) {
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--brand) !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7C10.5 4 7 3.5 7 6s3 1 5 1zm0 0c1.5-3 5-3.5 5-1s-3 1-5 1z'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7C10.5 4 7 3.5 7 6s3 1 5 1zm0 0c1.5-3 5-3.5 5-1s-3 1-5 1z'/%3E%3C/svg%3E") center / contain no-repeat !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-state:is(#nsmax-lv, *) {
+  margin-left: auto !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-countdown:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 0 12px !important;
+  padding: 8px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-label:is(#nsmax-lv, *) {
+  flex: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-clock:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-seg:is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 2px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-seg > b:is(#nsmax-lv, *) {
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-seg > i:is(#nsmax-lv, *) {
+  color: var(--text-muted) !important;
+  font-size: 11.5px !important;
+  font-style: normal !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="soon"] .nsmax-lottery-countdown:is(#nsmax-lv, *) {
+  border-color: var(--brand-border) !important;
+  background: var(--brand-soft) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="soon"] .nsmax-lottery-seg > b:is(#nsmax-lv, *) {
+  color: var(--brand) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="imminent"] .nsmax-lottery-countdown:is(#nsmax-lv, *) {
+  border-color: var(--danger-border) !important;
+  background: var(--danger-soft) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="imminent"] :is(.nsmax-lottery-seg > b, .nsmax-lottery-seg > i):is(#nsmax-lv, *) {
+  color: var(--danger-soft-text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="done"] .nsmax-lottery-countdown:is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-meta:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px 14px !important;
+  margin: 10px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-meta b:is(#nsmax-lv, *) {
+  color: var(--text) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-actions:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 12px 0 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-actions > :is(a, button):is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+/* 还没开奖时「回复参与」是主按钮（sb.sb .lottery-enter-btn 墨色实底）；到了开奖时间换成「查看开奖」 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery:not([data-state="done"]) .nsmax-lottery-actions > .nsmax-lottery-join:is(#nsmax-lv, *),
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="done"] .nsmax-lottery-actions > .nsmax-lottery-view:is(#nsmax-lv, *) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery:not([data-state="done"]) .nsmax-lottery-actions > .nsmax-lottery-join:is(#nsmax-lv, *):hover,
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="done"] .nsmax-lottery-actions > .nsmax-lottery-view:is(#nsmax-lv, *):hover {
+  background: var(--action-hover) !important;
+}
+/* 次按钮：sb.sb .lottery-draw-btn 的悬停——品牌浅底、品牌细线 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery:not([data-state="done"]) .nsmax-lottery-actions > .nsmax-lottery-view:is(#nsmax-lv, *):hover,
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="done"] .nsmax-lottery-actions > .nsmax-lottery-join:is(#nsmax-lv, *):hover {
+  border-color: var(--brand-border) !important;
+  background: var(--brand-soft) !important;
+}
+/* 原来只有一个开奖链接的那一段收起（卡片里有「查看开奖」） */
+html[data-nsmax-theme] #nsk-body-left article.post-content [data-nsmax-lottery-source]:is(#nsmax-lv, *) {
+  display: none !important;
+}
+/* 投票底部「不排序」开关：换成和私信输入框同一款 sb.sb 小开关（30×18 胶囊、白色圆钮，打开时品牌色），说明文字放在开关右边 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch:is(#nsmax-lv, *) {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  font-size: 12.5px !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch .v-switch-input:is(#nsmax-lv, *) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch .v-switch-core:is(#nsmax-lv, *) {
+  position: relative !important;
+  display: block !important;
+  flex: none !important;
+  width: 30px !important;
+  height: 18px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--line-strong) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch .v-switch-core:is(#nsmax-lv, *)::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  transition: transform .12s !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch.toggled .v-switch-core:is(#nsmax-lv, *) {
+  background: var(--brand) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch.toggled .v-switch-core:is(#nsmax-lv, *)::before {
+  transform: translateX(12px) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch .v-switch-button:is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel .op-buttons .vue-js-switch .v-switch-label:is(#nsmax-lv, *) {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  transform: none !important;
+}
+/* ---------- 45. 站点自带的旧样式提示块（2026-10-17）：换成 sb.sb 的同类样式 ---------- */
+/* 风险提示条（.risk-alert，站点组件，橙色大圆角带阴影）：照 sb.sb .verify-banner——警示浅底、警示细线、输入框圆角、13.5px；外边距沿用站点的 */
+html[data-nsmax-theme] .risk-alert:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--warning-border) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--warning-soft) !important;
+  box-shadow: none !important;
+  color: var(--warning-soft-text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .risk-alert .risk-alert__icon:is(#nsmax-lv, *) {
+  width: 16px !important;
+  height: 16px !important;
+  color: inherit !important;
+  fill: currentColor !important;
+}
+html[data-nsmax-theme] .risk-alert .risk-alert__close:is(#nsmax-lv, *) {
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 16px !important;
+  opacity: .7 !important;
+}
+html[data-nsmax-theme] .risk-alert .risk-alert__close:is(#nsmax-lv, *):hover {
+  opacity: 1 !important;
+}
+/* 帖子里的提示块（> [!NOTE] 之类，.markdown-alert）：站点是 4px 左边线 + 直角 + 16px 标题；
+   换成和正文其他块一样的细线框、输入框圆角，左边 3px 保留各类型的颜色（站点的 --border-color），浅色同色底，13.5px 标题 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .markdown-alert:is(#nsmax-lv, *) {
+  margin: 12px 0 !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-left: 3px solid var(--border-color, var(--line-strong)) !important;
+  border-radius: var(--r-input) !important;
+  background: color-mix(in srgb, var(--border-color, var(--line-strong)) 6%, var(--panel)) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .markdown-alert > .markdown-alert-title:is(#nsmax-lv, *) {
+  gap: 6px !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--border-color, var(--text-strong)) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details.markdown-alert:not([open]) > summary.markdown-alert-title:is(#nsmax-lv, *) {
+  margin: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .markdown-alert .markdown-alert-icon:is(#nsmax-lv, *) {
+  flex: none !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .markdown-alert > :last-child:is(#nsmax-lv, *) {
+  margin-bottom: 0 !important;
+}
+/* ---------- 46. 回复框照 sb.sb .reply-panel（2026-10-17 第三批） ----------
+   标题栏：左边「发表回复」14px/500，右边「说两句」12.5px 淡字（sb.sb .reply-status），高 45px——以前「内容 / 预览」两个胶囊放在这里，
+   标题栏 53px；「预览」挪进下面那排工具按钮。输入框里的字用系统字体（sb.sb textarea），以前 CodeMirror 每一行被全站 pre 的等宽字体
+   规则套成了 Space Mono。提示字「写下你的回复…」用弱化色。提交行：「回复楼主 / 回复层主」墨色实底，「取消回复」「清空草稿」是 sb.sb button.alt */
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > .nsmax-editor-status {
+  flex: none !important;
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror :is(pre.CodeMirror-line, pre.CodeMirror-line-like, .CodeMirror-placeholder):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0 !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror .CodeMirror-placeholder:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .md-editor textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] .md-editor :is(.topic-select, .submit-row) > :is(.nsmax-reply-cancel, .nsmax-draft-clear):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: -1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 7px 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .md-editor :is(.topic-select, .submit-row) > :is(.nsmax-reply-cancel, .nsmax-draft-clear):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .md-editor :is(.topic-select, .submit-row) > :is(.nsmax-reply-cancel, .nsmax-draft-clear)[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 「预览」的文字被编辑器整理模块当成「内容 / 预览」标签（28px 高、0 10px 的胶囊），挪进工具按钮后比别的按钮大一圈：还原成纯文字 */
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button .nsmax-action-label:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  font: inherit !important;
+  line-height: inherit !important;
+}
+/* 回复某一层时回复框挂在那一层末尾（sb.sb .post-dz .reply-panel.is-inline）：在楼层右边那一栏里，和上面一块隔 12px */
+html[data-nsmax-theme] #nsk-body-left li.content-item > [data-nsmax-inline]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 / -1 !important;
+  min-width: 0 !important;
+  margin: 12px 0 2px !important;
+}
+html[data-nsmax-theme] #nsk-body-left li.content-item > [data-nsmax-inline] .md-editor:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left li.content-item > .md-editor[data-nsmax-inline]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-top: 0 !important;
+}
+
+/* ---------- 47. 帖子页经典布局（2026-10-17 第三批，用户图七）：照 sb.sb 帖子页默认的 .post-entry.post-dz ----------
+   每层左边 180px 一栏作者（.post-author-col：次底色、右侧 line-soft 细线、18px 12px，内容居中）：88px 头像、名字 15px/700、
+   UID 小胶囊、等级徽章、帖子 / 鸡腿 / 星辰三格（上下虚线、14px/700 数字、11.5px 标签）。不放 sb.sb 的勋章、头衔、宠物（NodeSeek 没有）。
+   右边：头部一行——楼主标签、时间，楼层操作是一排细线框小胶囊（sb.sb .post-dz .icon-action），楼号在最后，下面一条虚线；正文；
+   签名（「个性签名」后面一条虚线）；楼中楼框；回复这一层时的回复框。回复奇数层整层浅品牌色底（sb.sb 斑马纹）。
+   手机（≤720px）：作者栏变成头像 + 名字一行，每层一张卡片。回复区标题栏的「简洁模式」切回以前的紧凑排法（html[data-nsmax-post-layout=simple]） */
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-author-col {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-template-columns: 180px minmax(0, 1fr) !important;
+  grid-template-rows: auto auto auto 1fr auto auto auto auto auto !important;
+  align-items: start !important;
+  gap: 0 !important;
+  padding: 0 !important;
+}
+/* 右边每一块都在第 2 列，左右留 20px；第 9 行是底部 16px 留白，第 4 行吃掉作者栏比内容高时多出来的高度（签名、楼中楼因此落在底部） */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > :not(.nsmax-author-col, .nsk-content-meta-info):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 !important;
+  width: auto !important;
+  max-width: none !important;
+  margin-left: 20px !important;
+  margin-right: 20px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item):is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "" !important;
+  display: block !important;
+  grid-column: 2 !important;
+  grid-row: 9 !important;
+  height: 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .content-item > .nsmax-author-col:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 1 !important;
+  grid-row: 1 / -1 !important;
+  align-self: stretch !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 18px 12px !important;
+  border-right: 1px solid var(--line-soft) !important;
+  background: var(--panel-alt) !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsmax-author-col:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item:last-child > .nsmax-author-col:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-bottom-left-radius: max(0px, calc(var(--r) - 1px)) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col > .nsmax-author-avatar {
+  display: block !important;
+  flex: none !important;
+  width: 88px !important;
+  height: 88px !important;
+  line-height: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col > .nsmax-author-avatar > img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel-alt) !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col > .nsmax-author-who {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  align-self: stretch !important;
+  gap: 5px 6px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name {
+  flex-basis: 100% !important;
+  min-width: 0 !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+  overflow-wrap: anywhere !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name:hover {
+  color: var(--link-hover) !important;
+}
+/* UID：sb.sb .post-user-uid——1px 8px 小胶囊、细线框、等宽 11px 弱化字 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-uid {
+  flex: none !important;
+  padding: 1px 8px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+}
+/* 帖子 / 鸡腿 / 星辰：sb.sb .post-author-stats——三格、上下虚线、数字 14px/700、标签 11.5px 淡字 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats {
+  flex-basis: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  margin: 4px 0 0 !important;
+  padding: 8px 0 !important;
+  border-top: 1px dashed var(--line) !important;
+  border-bottom: 1px dashed var(--line) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats > a {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  line-height: 1.25 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats > a > b {
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats > a > span {
+  color: var(--text-subtle) !important;
+  font-size: 11.5px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats > a:hover > * {
+  color: var(--link-hover) !important;
+}
+/* 右边头部一行：原来的 32px 头像和名字收起（作者栏里有了），楼主标签、时间留下；下面一条虚线（sb.sb .post-dz .post-head） */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .nsk-content-meta-info > .avatar-wrapper:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .nsk-content-meta-info .author-info > :is(a.author-name, [data-nsmax-level]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .nsk-content-meta-info > :not(.avatar-wrapper, .floor-link-wrapper, .nsmax-op-actions):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  align-self: stretch !important;
+  box-sizing: border-box !important;
+  min-height: 42px !important;
+  margin: 14px 20px 0 !important;
+  padding: 0 0 10px !important;
+  border-bottom: 1px dashed var(--line) !important;
+}
+/* 楼层操作（回复层）和主帖的「引用 回复 举报」：头部一行最右边 */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .nsmax-op-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  align-self: start !important;
+  height: 32px !important;
+  margin: 14px 20px 0 0 !important;
+}
+/* 楼层操作改成一排细线框小胶囊：sb.sb .post-dz .post-ops .icon-action——2px 10px、12.5px、间距 6px；悬停深一级细线 + 浅底 */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .nsmax-op-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: auto !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .nsmax-op-actions > .nsmax-op-action:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 2px 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .nsmax-op-actions > .nsmax-op-action:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *) > span[data-nsmax-action-count] {
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 0 !important;
+  margin-left: 4px !important;
+}
+/* 右边各块：正文、警告、主帖的点赞那排、签名、楼中楼、回复框；块与块之间 12px */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > article.post-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 2 !important;
+  margin-top: 12px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .topic-warning:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 3 !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 5 !important;
+  margin-top: 12px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .signature:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 6 !important;
+  position: relative !important;
+  max-height: 84px !important;
+  margin-top: 12px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+/* 签名前面「个性签名」：sb.sb .post-sig-rule——11.5px、字距 0.12em、淡字，后面一条虚线 */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .signature:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "个性签名" !important;
+  display: block !important;
+  margin: 0 0 6px !important;
+  color: var(--text-subtle) !important;
+  font-size: 11.5px !important;
+  letter-spacing: 0.12em !important;
+  line-height: 18px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .signature:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 9px !important;
+  left: 62px !important;
+  right: 0 !important;
+  border-top: 1px dashed var(--line) !important;
+}
+/* 签名正文（站点放在一个 h3 里）：正文字号、不加粗 */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .content-item > .signature :is(h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+  line-height: inherit !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-box:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 7 !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > [data-nsmax-inline]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 8 !important;
+  margin-top: 12px !important;
+}
+/* 斑马纹：sb.sb 回复奇数层，作者栏品牌浅色 45%、右边 22% */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item:nth-child(odd):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: color-mix(in srgb, var(--brand-soft) 22%, var(--panel)) !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item:nth-child(odd) > .nsmax-author-col:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: color-mix(in srgb, var(--brand-soft) 45%, var(--panel-alt)) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item:nth-child(odd):hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    background: color-mix(in srgb, var(--brand-soft) 22%, var(--panel-hover)) !important;
+  }
+}
+/* 回复区标题栏的「简洁模式」：和「只看楼主」「直达底部」同一款 sb.sb .bot-toggle（4px 11px 细线框小胶囊、12px/500），打开时墨色实底 */
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-layout-toggle:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 4px 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-layout-toggle:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-layout-toggle[aria-pressed="true"]:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-layout-toggle[aria-pressed="true"]:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+@media (max-width: 720px) {
+  /* 手机：一列。作者栏变成一行（40px 头像 + 名字、UID、等级），不显示三格数字；楼层操作在时间下面单独一行；每层一张卡片，相隔 10px */
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto auto auto 1fr auto auto auto auto auto !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > :not(.nsmax-author-col, .nsk-content-meta-info):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 1 !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item):is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+    grid-column: 1 !important;
+    grid-row: 11 !important;
+    height: 12px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .content-item > .nsmax-author-col:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px 12px 10px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--line-soft) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item:nth-child(odd) > .nsmax-author-col:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    background: transparent !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .nsmax-author-col > .nsmax-author-avatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .nsmax-author-col > .nsmax-author-who {
+    flex: 1 !important;
+    justify-content: flex-start !important;
+    gap: 4px 6px !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name {
+    flex-basis: auto !important;
+    font-size: 14px !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats {
+    display: none !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .nsk-content-meta-info > :not(.avatar-wrapper, .floor-link-wrapper, .nsmax-op-actions):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    min-height: 0 !important;
+    margin: 10px 12px 0 !important;
+    padding: 0 !important;
+    border-bottom: 0 !important;
+  }
+  /* 楼层操作：时间下面单独一行、靠左，放不下就折行（sb.sb 手机上 .post-ops 同样折到下一行） */
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *),
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .nsmax-op-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    justify-self: start !important;
+    flex-wrap: wrap !important;
+    height: auto !important;
+    margin: 8px 12px 0 !important;
+    padding: 0 0 10px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex-wrap: wrap !important;
+    row-gap: 6px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *),
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .nsmax-op-actions > .nsmax-op-action:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    padding: 1px 8px !important;
+    font-size: 12px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > article.post-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-row: 4 !important;
+    margin-top: 0 !important;
+    padding-top: 10px !important;
+    border-top: 1px dashed var(--line) !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .topic-warning:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-row: 5 !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-row: 7 !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .signature:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-row: 8 !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-box:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-row: 9 !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > [data-nsmax-inline]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-row: 10 !important;
+  }
+  /* 每层一张卡片：回复列表本身不再有框，标题栏单独一张圆角卡片 */
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .comment-container > ul.comments:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r) !important;
+    background: var(--panel) !important;
+    overflow: hidden !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item + li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    margin-top: 10px !important;
+  }
+}
+
+/* ---------- 48. 楼中楼框（2026-10-17 第三批，用户图五）：照 sb.sb .floor-box ----------
+   回复某一层的楼层收进那一层末尾的一个次底色圆角框（2px 12px、line-soft 细线框），每条一行（sb.sb .floor-box-item：7px 0，条与条之间虚线）：
+   28px 头像 | 「名字 回复 某某：内容」14px（段落接在一行里，sb.sb .floor-box-body p { display:inline }）| 时间 | #楼号 回复 引用 点赞…（12px 淡字）。
+   框底「共 N 条回复」12.5px 淡字，右边「我也说一句」墨色小按钮（sb.sb .floor-box-say：3px 14px、13px）。窄屏（≤560px）时间和操作折到内容下面 */
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-box:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 / -1 !important;
+  display: block !important;
+  min-width: 0 !important;
+  margin-top: 12px !important;
+  margin-bottom: 2px !important;
+  padding: 2px 12px !important;
+  border: 1px solid var(--line-soft) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel-alt) !important;
+}
+/* 经典布局里列由通用规则管（宽屏第 2 列、手机第 1 列）；这里再写列号的话，手机上会多出一列，别的块被挤成一条竖线 */
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-box:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto !important;
+  grid-template-rows: auto !important;
+  align-items: start !important;
+  gap: 4px 12px !important;
+  margin: 0 !important;
+  padding: 7px 0 !important;
+  border: 0 !important;
+  border-top: 1px dashed var(--line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  scroll-margin-top: 72px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-top: 0 !important;
+}
+/* 被链接到的那一条（#楼号）：sb.sb .floor-box-item.post-highlight——品牌浅底 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:target:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 4px -6px !important;
+  padding-inline: 6px !important;
+  border-top-color: transparent !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--brand-soft) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsk-content-meta-info:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsk-content-meta-info > :not(.avatar-wrapper):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: contents !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .avatar-wrapper:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .avatar-wrapper :is(a, img):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: var(--r-sm) !important;
+}
+/* 名字、楼主 / 热评标签、「编辑于」收起（名字写进内容前面了）；时间放第 3 列 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .author-info:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info > :not(.date-created, .nsmax-floor-edit):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > :is(.signature, .topic-warning):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 3px 0 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info :is(time, span, a):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .nsmax-floor-edit:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: 0 !important;
+}
+/* 内容：14px、行高 1.65，段落接成一行（sb.sb .floor-box-text / .floor-box-body） */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+  overflow-wrap: anywhere !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline !important;
+  margin: 0 !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content p + p:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: " " !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content > :is(blockquote, ul, ol, pre, .nsmax-code, table, h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 6px 0 0 !important;
+  font-size: 13.5px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content img:not(.nsmax-post-image):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: 1.55em !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 1px !important;
+  vertical-align: -0.35em !important;
+  border-radius: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content img.nsmax-post-image:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content a.post-image-link:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  max-width: min(320px, 100%) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box [data-nsmax-fb-lead]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box .nsmax-fb-who:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box .nsmax-fb-who > :is(.nsmax-fb-name, .nsmax-fb-target):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box .nsmax-fb-who > :is(.nsmax-fb-name, .nsmax-fb-target):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box .nsmax-fb-who > :is(.nsmax-fb-to, .nsmax-fb-colon):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-subtle) !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box .nsmax-fb-who > .nsmax-fb-to:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 4px !important;
+}
+/* 右边：#楼号 回复 引用 点赞…（sb.sb .floor-box-meta：12px 淡字、间距 10px、不折行），楼号排在最前面 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  align-self: start !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 3px 0 0 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .floor-link-wrapper:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: -1 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 10px !important;
+  height: auto !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: 21px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+/* 框底：sb.sb .floor-box-foot——8px 0、上方虚线、12.5px 淡字；「我也说一句」靠右 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px 12px !important;
+  margin: 0 !important;
+  padding: 8px 0 !important;
+  border-top: 1px dashed var(--line) !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-say:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 0 0 auto !important;
+  padding: 3px 14px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-say:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--action-hover) !important;
+}
+@media (max-width: 560px) {
+  html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: 28px minmax(0, 1fr) !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-self: start !important;
+    padding: 0 !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *),
+  html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    gap: 8px !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-self: end !important;
+    padding: 0 !important;
+  }
+}
+
+/* ---------- 49. 2026-10-17 第四批：侧栏广告、开奖单位、NQ、投票 / 抽奖标签、取关按钮、预览里的图片、搜索面板 ---------- */
+/* 侧栏广告卡片：不再是设置项，一直不显示；写在主题里，页面一出来就没有（以前要等模块启动才藏，先闪一下） */
+html[data-nsmax-theme] .promotation-item {
+  display: none !important;
+}
+/* 开奖倒计时的单位（d h m s）：站点有一条 .post-content i:not([class]) { display:none }，单位带了类名，这里再保证显示 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-seg > i.nsmax-lottery-unit:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline !important;
+}
+/* 顶栏「精华」后面的 NQ（NodeQuality 测机）：和「精华」同高的细线框小块（6px 圆角、3px 10px + 1px 线），15px 图标 + NQ */
+html[data-nsmax-theme] #nsk-head ul.nav-menu > li.nsmax-nq-tab-item:is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] #nsk-head ul.nav-menu > li > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 5px !important;
+  min-width: 0 !important;
+  margin-left: 6px !important;
+  padding: 3px 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #nsk-head ul.nav-menu > li > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] :is(#nsk-head, body > header) a.nsmax-nq-tab .nsmax-nq-icon:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  flex: none !important;
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-mhead] body > header > ul.mobile-nav > li > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 4px !important;
+}
+html[data-nsmax-theme][data-nsmax-mhead] body > header > ul.mobile-nav > li > a.nsmax-nq-tab .nsmax-nq-icon:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 13px !important;
+  height: 13px !important;
+}
+/* 列表工具条「投票」「抽奖」：接在「新评论 / 新帖子」后面，同一款标签（12px 4px、14px 弱化字，当前项 500 + 底部 2px 墨色线）；
+   在这两个搜索里时，站点自己的排序标签不再显示选中线 */
+/* 工具条原来是两端对齐（排序在左、页码在右）：页码不显示时，「投票」「抽奖」会被挤到最右边；改成从左排，右边的东西靠 margin-left:auto 推过去 */
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  justify-content: flex-start !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsmax-kind-tabs:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  margin: 0 0 0 -8px !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsmax-kind-tabs + :not(.sorter):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: auto !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsmax-kind-tabs > a.nsmax-kind-tab:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: relative !important;
+  display: block !important;
+  height: auto !important;
+  margin: 0 0 0 10px !important;
+  padding: 12px 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 24.5px !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsmax-kind-tabs > a.nsmax-kind-tab:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsmax-kind-tabs > a.nsmax-kind-tab[data-nsmax-on]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .nsmax-kind-tabs > a.nsmax-kind-tab[data-nsmax-on]:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "" !important;
+  position: absolute !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  height: 2px !important;
+  border-radius: calc(1px * var(--r-scale)) !important;
+  background: var(--action) !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler[data-nsmax-kind-on] > .sorter > a.selected:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-muted) !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler[data-nsmax-kind-on] > .sorter > a.selected:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: none !important;
+  display: none !important;
+}
+/* 我的关注「取关」：站点写死的灰底去掉后，和「私信」「转账」一样的细线按钮，次底色、弱化字；悬停浅红（取消关注） */
+html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn[data-nsmax-unfollow]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn[data-nsmax-unfollow]:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--danger-border) !important;
+  background: var(--danger-soft) !important;
+  color: var(--danger-soft-text) !important;
+}
+/* 帖子预览里的图片：和帖子里一样——表情贴图最宽 90px、和文字竖直居中（以前按原大小排在文字基线上，字掉到图片底下）；
+   其他图片单独一行、细线框小圆角、次底色，最高 140px（白底截图放在白卡片上以前看着像一大块空白）；图片后面紧跟的换行不再多空一行 */
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content img:is(.sticker, .smoji, .emoji):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline !important;
+  width: auto !important;
+  max-width: 90px !important;
+  height: auto !important;
+  max-height: 90px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content img:not(.sticker, .smoji, .emoji):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 140px !important;
+  margin: 6px 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  object-fit: contain !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content img:not(.sticker, .smoji, .emoji) + br:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 0 !important;
+}
+/* 搜索面板（站点的 .search-overlay，点顶栏搜索框弹出）：照 sb.sb 弹窗重排——
+   卡片 640px、细线框、卡片圆角、柔和投影；顶上一排「帖子 / 用户」（sb.sb .tab-bar：14px，当前项 500 + 底部 2px 墨色线）和关闭按钮，下面一条细线；
+   内容区 16px 18px 18px：先是 40px 搜索框（左边放大镜、深一级细线，聚焦时品牌黄边框 + 光圈）和墨色「搜索」按钮，
+   再是一排版块小标签（26px、12.5px，放不下时横着滑，不再折成两三行），最后「搜索历史」（12.5px 淡字 +「清空」，下面一排 28px 小胶囊） */
+html[data-nsmax-theme] .search-overlay:is(#nsmax-lv, *) {
+  background: rgba(15, 23, 42, 0.32) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-nsmax-theme][data-nsmax-dark] .search-overlay:is(#nsmax-lv, *) {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: min(640px, calc(100vw - 32px)) !important;
+  max-width: none !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: 0 16px 48px -8px rgba(15, 23, 42, 0.24) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-tabs:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+  height: 48px !important;
+  margin: 0 !important;
+  padding: 0 10px 0 18px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 48px !important;
+  margin: 0 !important;
+  padding: 0 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn.active:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: none !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn.active:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "" !important;
+  position: absolute !important;
+  top: auto !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  width: auto !important;
+  height: 2px !important;
+  border-radius: 1px !important;
+  background: var(--action) !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 15px !important;
+  height: 15px !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-close svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 18px !important;
+  height: 18px !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 16px 18px 18px !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 auto !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 12px 0 36px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8f9e' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 12px center / 16px 16px no-repeat !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  line-height: 38px !important;
+  outline: 0 !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, *):is(#nsmax-b, *)::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 18px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-search-btn svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 15px !important;
+  height: 15px !important;
+}
+html[data-nsmax-theme] .search-overlay .sub-nav:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 2 !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 0 2px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+html[data-nsmax-theme] .search-overlay .sub-nav:is(#nsmax-lv, *):is(#nsmax-b, *)::-webkit-scrollbar {
+  display: none !important;
+}
+html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 26px !important;
+  margin: 0 !important;
+  padding: 0 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill.active:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .search-overlay .search-history:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 3 !important;
+  margin: 2px 0 0 !important;
+  padding: 12px 0 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .search-overlay .history-header:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .search-overlay .history-header > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .search-overlay .history-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 28px !important;
+  margin: 0 !important;
+  padding: 0 6px 0 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .search-overlay .history-scope-tag:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 0 6px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-subtle) !important;
+  font-size: 11px !important;
+  line-height: 18px !important;
+}
+@media (max-width: 600px) {
+  html[data-nsmax-theme] .search-overlay .glass-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    width: calc(100vw - 16px) !important;
+  }
+  html[data-nsmax-theme] .search-overlay .glass-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    padding: 14px !important;
+  }
+  html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    padding: 0 14px !important;
+  }
+}
+
+/* ---------- 50. 2026-10-18 侧栏一起出现：今日热门的骨架行和真实行一样高（6px 上下 + 13px × 1.5），数据到了面板不变高 ---------- */
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list > li.nsmax-hot-skeleton:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  min-height: calc(13px * 1.5 + 12px) !important;
+  padding: 6px 0 !important;
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-skeleton .nsmax-hot-line:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 0 1 auto !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+  background-color: var(--panel-hover) !important;
+}
+/* 主栏和右栏一起出现（data-nsmax-boot-body，见 startEarlyPass）：右栏整理好（站点画好资料卡，今日热门、最近浏览也放好）之前
+   整个主体先不显示，好了一起淡入 0.16 秒；最多等 1.5 秒，页面解析完、主模块启动时也会撤掉 */
+html[data-nsmax-theme][data-nsmax-boot-body] #nsk-body {
+  opacity: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-boot-fade] #nsk-body {
+  transition: opacity 160ms var(--ease-out) !important;
+}
+
+/* ---------- 51. 2026-10-18 第五批：温馨提醒、侧栏间距、回复框间距、编辑器配色、置顶回复、抽奖页、提示条 ---------- */
+/* 风险提示条（「温馨提醒」，站点 .risk-alert）：和正文里的提示块（.markdown-alert）同一套——细线框、输入框圆角、左边 3px 警示色、
+   警示色 6% 浅底、13.5px；图标警示色，关闭按钮是 22px 的小方块（悬停浅底）。左右和正文对齐（以前各缩进 20px），上面隔 12px */
+html[data-nsmax-theme] .risk-alert:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  width: auto !important;
+  margin: 12px 0 0 !important;
+  padding: 9px 8px 9px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-left: 3px solid var(--warning) !important;
+  border-radius: var(--r-input) !important;
+  background: color-mix(in srgb, var(--warning) 6%, var(--panel)) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  line-height: 22px !important;
+}
+html[data-nsmax-theme] .risk-alert .risk-alert__icon:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 3px 0 0 !important;
+  color: var(--warning) !important;
+  fill: currentColor !important;
+}
+html[data-nsmax-theme] .risk-alert .risk-alert__text:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  color: inherit !important;
+}
+html[data-nsmax-theme] .risk-alert .risk-alert__close:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm, 6px) !important;
+  background: transparent !important;
+  color: var(--text-subtle) !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .risk-alert .risk-alert__close:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+/* 右栏里站点留下的空 div 收起（nsmaxTidySidebar）：右栏按 20px 间距排，空 div 也占一份，资料卡和今日热门之间以前是 40px */
+html[data-nsmax-theme] #nsk-right-panel-container > [data-nsmax-empty]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 回复框上下一样宽：标题栏、工具按钮、输入框、发送按钮之间都是 14px（以前工具按钮上面 14px、下面 8px，底下 16px） */
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 14px !important;
+}
+html[data-nsmax-theme] .md-editor > :is(.topic-select, .submit-row):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding-bottom: 14px !important;
+}
+/* 编辑器里的 Markdown 高亮（站点 .cm-s-nsk：链接和网址绿色、一级标题绿色、列表蓝色、引用橄榄色）：换成主题的墨色、灰色 */
+html[data-nsmax-theme] .md-editor .CodeMirror :is(.cm-link, .cm-header, .cm-strong):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-strong) !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror .cm-link:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  text-decoration: underline !important;
+  text-decoration-color: var(--line-strong) !important;
+  text-underline-offset: 3px !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror :is(.cm-url, .cm-link + .cm-url, .cm-formatting, .cm-quote, .cm-comment, .cm-tag, .cm-attribute, .cm-hr):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror :is(.cm-variable-2, .cm-variable-3, .cm-string, .cm-string-2, .cm-keyword, .cm-atom, .cm-number):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: inherit !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror .cm-comment:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-family: var(--font-mono) !important;
+}
+/* 置顶的回复：站点的绿色圆底图钉藏起来，头部「楼主」那一排加一个「置顶」小标（nsmaxMarkPinnedReplies）。
+   楼主常常置顶自己的回复，「楼主」是黄色，「置顶」用主题的墨色（深底白字，深色模式下反过来），挨在一起也分得清 */
+html[data-nsmax-theme] #nsk-body-left .content-item .pined-comment-badge:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item .author-info > .nsmax-pin-tag:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: none !important;
+  margin: 0 !important;
+  padding: 1px 8px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--inverse) !important;
+  color: var(--inverse-text) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+}
+/* 「抽奖」页（站内搜索「抽奖」当分类用）：只显示确认有开奖链接的帖子；下面一行状态（正在识别 / 这一页没有抽奖帖） */
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:not([data-nsmax-lottery="yes"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 抽奖页是分类，不是搜索结果：搜索页上面那行「搜索 抽奖」不要 */
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left > .nsmax-search-summary:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-lottery-status:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 52px !important;
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-lottery-status[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-lottery-status[data-nsmax-busy]:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "" !important;
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid var(--line-strong) !important;
+  border-top-color: var(--text-muted) !important;
+  border-radius: 50% !important;
+  animation: nsmax-spin 0.8s linear infinite !important;
+}
+@keyframes nsmax-spin {
+  to { transform: rotate(360deg); }
+}
+/* 提示条（sb.sb .toast）：用 popover 放进顶层后，去掉浏览器给 popover 的默认样式（铺满、居中、边框、内边距）；
+   出错时红底（sb.sb .toast.is-error）；进出场时间、缓动和 sb.sb 一样（出现 200ms、消失 140ms） */
+html[data-nsmax-theme] .nsmax-toast:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  top: auto !important;
+  right: auto !important;
+  width: max-content !important;
+  height: auto !important;
+  overflow: visible !important;
+  transition: opacity 140ms var(--ease-out), transform 140ms var(--ease-out), visibility 0s linear 140ms !important;
+}
+html[data-nsmax-theme] .nsmax-toast[data-nsmax-shown]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out), visibility 0s !important;
+}
+html[data-nsmax-theme] .nsmax-toast.is-error:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--danger-fill) !important;
+  color: var(--on-danger-fill) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme] .nsmax-toast:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    transform: translate(-50%, 0) !important;
+  }
+}
+/* 主帖下面「点赞 加鸡腿 反对 收藏」一排（.comment-menu.topic-actions，52px 高、上面隔 12px）是站点脚本在页面加载完才画出来的：
+   以前画出来时签名和整个评论区一下往下跳 64px。站点先放的空占位 .comment-menu-mount 按画好后的大小先撑开（画好时它被换掉） */
+html[data-nsmax-theme] #nsk-body-left .nsk-post .content-item > .comment-menu-mount:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  height: 52px !important;
+  margin: 12px 0 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post .content-item > .comment-menu-mount:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 5 !important;
+  grid-column: 2 !important;
+  margin: 12px 20px 0 !important;
+}
+
+/* ---------- 52. 2026-10-18 第六批：等级锁对齐、我的回复、资料卡的管理记录 / 屏蔽 ---------- */
+/* 标题后面的等级限制（锁 + 最低等级）：和标题文字中线对齐（以前上提 2px，比文字高出 3px），离标题近一点（以前 11px，现在约 6px） */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(.min-grade, span[data-nsmax-lock]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: 16px !important;
+  margin-left: 1px !important;
+  vertical-align: middle !important;
+  font-family: var(--font-sans) !important;
+  line-height: 16px !important;
+}
+/* 我的回复：列表行里元信息下面一行，帖子评论区最上面一行——左边「我的回复」小标，后面楼号（等宽字，悬停下划线） */
+html[data-nsmax-theme] .nsmax-my-replies:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px 10px !important;
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > .nsmax-my-replies:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 10px 20px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-my-replies > .nsmax-my-replies-label:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--mark) !important;
+  color: var(--mark-text) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nsmax-my-replies > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-my-replies > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--link-hover) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+/* 资料卡：关注 私信 主页 管理记录 屏蔽 五个按钮一排放得下（卡片 320px → 380px，按钮左右内边距 12px → 9px）；
+   「屏蔽」悬停红色，「已屏蔽」红字 */
+html[data-nsmax-theme] .nsmax-person-pop:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: min(380px, calc(100vw - 16px)) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > :is(a, button):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 3px 9px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-block:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-block[data-on]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line)) !important;
+  background: color-mix(in srgb, var(--danger) 6%, var(--panel)) !important;
+  color: var(--danger) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-block:disabled:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 0.6 !important;
+  cursor: default !important;
+}
+/* 53. 长列表只画看得见的部分（2026-10-18）：帖子行用 content-visibility:auto，屏幕外的行不算样式、不排版、不绘制，
+   滚到附近浏览器再画；第一帧里屏幕上的行照样画出来。没画过的行按实际行高预留（桌面 73px，手机 90px），滚动条不跳。
+   只在正常打开页面时用（data-nsmax-cv，见 applyThemeAttributes）：刷新、前进后退时浏览器按原来的滚动位置恢复，
+   上面没画过的行按预留高度算，标题折行的行多了会停错位置 */
+html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  content-visibility: auto !important;
+  contain-intrinsic-size: auto 73px !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    contain-intrinsic-size: auto 90px !important;
   }
 }

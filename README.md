@@ -1,12 +1,15 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.6**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角），保留论坛原生编辑与提交。
+NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.7**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角），保留论坛原生编辑与提交。
 
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey。
 2. [安装最新版脚本](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)。
 3. 停用其他 NodeSeek 增强脚本，避免重复注入。
+4. Tampermonkey 用户：管理面板 → 设置，「配置模式」选「高级」，把「Content Script API」改成「UserScripts API Dynamic」并保存。
+   默认的注入方式要先从后台取脚本，脚本比页面晚运行，打开页面时会先闪一下站点原来的样子；改了以后脚本在页面画出来之前运行，首屏直接是整理好的完整页面。
+   脚本设置「关于」里能看到当前页面是不是注入晚了。
 
 [版本与安装文件](https://github.com/Ethan2258/Nodeseek-max/releases)
 

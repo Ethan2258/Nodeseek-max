@@ -110,6 +110,7 @@ button:not(:disabled):active{transform:translateY(1px)}
 .about-heading>strong{color:var(--s-text-strong);font-size:15px;font-weight:600}
 .about-version{color:var(--s-muted);font:400 12px var(--s-mono)}
 .about-content>p{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.7}
+.about-content>p.about-timing[data-late]{color:var(--s-warning-text)}
 .about-links{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
 .about-links a{padding:3px 12px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12.5px;text-decoration:none}
 .about-links a:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}

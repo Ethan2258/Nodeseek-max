@@ -238,7 +238,19 @@ const luckyPage = ({ view = false, linkText = "", dark = false } = {}) => `<!doc
                             ${12 + index * 7}楼
                         </div></div>`).join(" ")}</div></div></div></div>` : "<!---->"}</div></body></html>`;
 
+// 投票帖、抽奖帖（真站 2026-10-17 post-988952 的投票结构）：.vote-panel > .embed-vote > form.pure-form（h2 标题 + 选项 fieldset + 「不排序」开关 +
+// App 深链接灰字），投过票的选项是 .vote-stat.voted（进度条 title 是百分比、投票人头像一排、票数在最后）；开奖链接是 /lucky?post=…&time=开奖毫秒数…
+const voteAvatar = (color) => "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' fill='${color}'/></svg>`);
+const voteStat = (id, text, { count = 0, pct = "", voted = false, checked = false, voters = 0, color = "#7c8a9a" } = {}) => `<div class="vote-stat${voted ? " voted" : ""}"><input id="vote-item-1-${id}" name="vote-item"${voted ? ' disabled="disabled"' : ""}${checked ? " checked" : ""} type="radio" value="${id}"> <label for="vote-item-1-${id}" class="pure-checkbox"><div class="vote-item-text"> ${text} </div> ${voted ? `<div class="vote-stat-count"><div class="vote-stat-count-bar-wrapper"><div title="${pct}" class="vote-stat-count-bar" style="width: ${pct};"> ${pct} </div></div> <div class="vote-item-voter"><div class="voter-avatar-container">${Array.from({ length: voters }, (_, i) => `<a href="/space/${300 + id * 40 + i}"><img src="${voteAvatar(color)}" class="voter-avatar" alt="v${i}"></a>`).join("")}</div> <div class="vote-stat-count-value">${count}</div></div></div>` : ""}</label></div>`;
+const voteSwitch = `<label class="vue-js-switch" style="margin: 0px 10px;"><input type="checkbox" class="v-switch-input"> <div class="v-switch-core" style="width: 62px; height: 22px; background-color: rgb(191, 203, 217); border-radius: 11px;"><div class="v-switch-button" style="width: 16px; height: 16px; transition: transform 300ms; transform: translate3d(3px, 3px, 0px);"></div></div> <span class="v-switch-label v-right" style="line-height: 22px;">不排序</span></label>`;
+const votePanel = (title, stats, buttons, kind) => `<p><div class="vote-panel"><div class="embed-vote"><form class="pure-form"><h2 style="text-align: center; font-size: 1.2rem;">${title}</h2> <fieldset class="vote-stat-wrapper">${stats}</fieldset> <fieldset class="op-buttons">${buttons}</fieldset> <div style="text-align: center; color: gray; font-size: 10px; font-weight: 300;">nsapp://vote?id=3380 (${kind})</div> <div></div></form></div></div></p>`;
+const lotteryLink = (time, count, start, duplicate) => `<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=${time}&amp;count=${count}&amp;start=${start}&amp;duplicate=${duplicate}">https://www.nodeseek.com/lucky?post=1000&amp;time=${time}&amp;count=${count}</a></p>`;
+const specialPostPage = ({ now = Date.now(), ...options } = {}) => postPage(options)
+	.replace("出一台香港 CN2 GIA 小鸡，年付 99</a></h1>", "【投票】claude 封号情况，顺便抽奖</a></h1>")
+	.replace("<h2>配置说明</h2>", () => `<p>正文第一段。</p>${votePanel("claude封号情况", voteStat(1, "网页claude pro被封号", { count: 9, pct: "6%", voted: true, voters: 9 }) + voteStat(2, "网页claude max被封号", { count: 3, pct: "2%", voted: true, checked: true, voters: 3, color: "#a0846c" }) + voteStat(3, "没被封", { count: 140, pct: "92%", voted: true, voters: 26, color: "#6c9a84" }), voteSwitch, "公开投票")}<p>没投过的投票：</p>${votePanel("你用哪家 VPS", voteStat(11, "搬瓦工") + voteStat(12, "Vultr") + voteStat(13, "DMIT"), '<button type="button" class="pure-button pure-button-primary">投票</button>', "匿名投票")}${lotteryLink(now + 2 * 36e5 + 5e3, 3, 2, false)}${lotteryLink(now + 30 * 6e4, 1, 1, true)}${lotteryLink(now + 2 * 6e4, 1, 1, false)}${lotteryLink(now - 6e4, 2, 5, false)}<p>结尾段落。</p><h2>配置说明</h2>`);
+
 module.exports = {
+	specialPostPage,
 	luckyPage,
 	searchPage,
 	creditPage,
