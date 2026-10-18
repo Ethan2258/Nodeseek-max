@@ -4670,3 +4670,25 @@ test("第十一批（2026-10-19）：热评排在评论最前面、它回复的�
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+test("第十一批（2026-10-19）：楼中楼一条在框窄时（≤1200px，左边还有作者栏）时间和操作换到内容下面一行，内容占满整行；宽屏照旧同一行", async () => {
+	for (const width of [880, 1100, 1440]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: floorPost(), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector("li[id='1'] > .nsmax-floor-box li[id='2'] > .nsmax-floor-actions");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const item = document.querySelector("li[id='1'] > .nsmax-floor-box li[id='2']");
+				const box = item.closest(".nsmax-floor-box").getBoundingClientRect();
+				const article = item.querySelector(":scope > article").getBoundingClientRect();
+				const actions = item.querySelector(":scope > .nsmax-floor-actions").getBoundingClientRect();
+				return { below: actions.top >= article.bottom - 1, wide: article.width / box.width };
+			});
+			if (width <= 1200) {
+				assert.equal(state.below, true, `${width}：操作在内容下面一行`);
+				assert.ok(state.wide > 0.85, `${width}：内容占满整行（${state.wide.toFixed(2)}）`);
+			} else assert.equal(state.below, false, "宽屏操作和内容同一行");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});

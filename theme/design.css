@@ -10581,7 +10581,9 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
 html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-say:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--action-hover) !important;
 }
-@media (max-width: 560px) {
+/* 楼中楼一条在框窄时（sb.sb 是 ≤560px；这里左边还有 180px 作者栏，1200px 以下框只有 450～640px 宽）：时间、楼号和操作换到内容下面一行。
+   以前 800～1200px 时内容被右边的时间和五个操作挤到 150～260px，一句话折成三四行 */
+@media (max-width: 1200px) {
   html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
     grid-template-columns: 28px minmax(0, 1fr) !important;
   }
