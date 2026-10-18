@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.8");
+	assert.equal(packageJson.version, "1.8.9");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -681,7 +681,7 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 	try{
 		await page.waitForSelector('.nsmax-hot-text');
 		assert.equal(await page.locator('#nsk-head .nsmax-nq-tab').innerText(),'NQ');
-		assert.equal(await page.locator('#nsk-head .nsmax-nq-tab svg').count(),0);
+		assert.equal(await page.locator('#nsk-head .nsmax-nq-tab svg.nsmax-nq-icon').count(),1);
 		assert.equal(await page.locator('.pager-bottom a.pager-next').innerText(),'下一页');
 		assert.equal(await page.locator('.pager-bottom .pager-prev').isVisible(),false);
 		const row=page.locator('ul.post-list:not(.topic-carousel-panel)>li').first();
@@ -1322,9 +1322,10 @@ test("v1.7.13 细节精修：NQ彩标前置、设置页居中去黑胶囊、帖�
 		await wait(pageList);
 		const nq = pageList.locator("#nsk-head .nsmax-nq-tab");
 		assert.equal(await nq.count(), 1);
-		const nqIcon = nq.locator("img.nsmax-nq-icon");
-		assert.equal(await nqIcon.count(), 1, "NQ 按钮前置 NodeQuality 彩色图标");
-		assert.ok((await nqIcon.getAttribute("src")).startsWith("data:image/png;base64,"));
+		// 2026-10-18 起照 sb.sb 顶栏「论坛应用」按钮：黄底深色字，图标是单色的阶梯「N」（深色模式下也看得清）
+		const nqIcon = nq.locator("svg.nsmax-nq-icon");
+		assert.equal(await nqIcon.count(), 1, "NQ 按钮前置 NodeQuality「N」图标");
+		assert.equal(await nq.evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(255, 208, 47)");
 		assert.deepEqual(errorsList, []);
 	} finally { await ctxList.close(); }
 
@@ -4132,4 +4133,47 @@ test("第七批（2026-10-18）：字号照 sb.sb 统一——通知每一条的
 		assert.equal(await input.inputValue(), "", "只有「@某某 #楼号」时一起清掉");
 		assert.deepEqual(post.errors, []);
 	} finally { await post.context.close(); }
+});
+
+// 2026-10-18 第八批
+test("第八批（2026-10-18）：帖子页第 4 层以后屏幕外先不画（content-visibility:auto）；直接打开 #10 照样停在那一层；回复框挂在哪一层，那一层照常画", async () => {
+	let html = postPage();
+	const third = html.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0];
+	html = html.replace(third, third + Array.from({ length: 9 }, (_, i) => third.replace(/id="3"/, `id="${i + 4}"`).replace(/href="#3"/g, `href="#${i + 4}"`).replace(/>#3</g, `>#${i + 4}<`)).join(""));
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1#10", { html, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForFunction(() => performance.getEntriesByName("nsmax:deferred-start").length > 0);
+		await wait(page, 800);
+		const state = await page.evaluate(() => {
+			const floor = (id) => document.querySelector(`ul.comments > li[id='${id}']`);
+			const box = floor("10").getBoundingClientRect();
+			return { first: getComputedStyle(floor("3")).contentVisibility, later: getComputedStyle(floor("5")).contentVisibility, inView: box.top < innerHeight && box.bottom > 0 };
+		});
+		assert.deepEqual(state, { first: "visible", later: "auto", inView: true });
+		await page.locator("li[id='8'] .menu-item[title='回复']").scrollIntoViewIfNeeded();
+		await page.locator("li[id='8'] .menu-item[title='回复']").click();
+		await page.waitForFunction(() => document.querySelector("ul.comments > li[id='8']").hasAttribute("data-nsmax-replying"));
+		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("ul.comments > li[id='8']")).contentVisibility), "visible", "回复框所在的那一层照常画（表情面板、上传弹出框不被裁掉）");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第八批（2026-10-18）：顶栏 NQ 照 sb.sb「论坛应用」按钮是黄底深色字（深色模式下也看得清）；签到页站点写着今天签过了、账簿里还没读到时，连续签到和本月签到也算上今天", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/board", { html: boardRealPage(), viewport: { width: 1440, height: 900 }, colorScheme: "dark", seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { enabled: true, colorMode: "dark" } } } });
+	try {
+		await page.waitForSelector("#nsk-head .nsmax-nq-tab");
+		await page.waitForSelector(".board > .nsmax-checkin");
+		await page.waitForFunction(() => document.querySelector(".nsmax-checkin .nsmax-checkin-streak > b")?.textContent === "1");
+		const state = await page.evaluate(() => ({
+			dark: document.documentElement.hasAttribute("data-nsmax-dark"),
+			nq: (({ backgroundColor, color }) => ({ backgroundColor, color }))(getComputedStyle(document.querySelector("#nsk-head .nsmax-nq-tab"))),
+			month: document.querySelector('.nsmax-checkin-stats > [data-key="month"] > dd').textContent,
+			today: !!document.querySelector(".nsmax-checkin-day[data-today][data-signed]")
+		}));
+		assert.equal(state.dark, true);
+		assert.deepEqual(state.nq, { backgroundColor: "rgb(255, 208, 47)", color: "rgb(28, 28, 30)" });
+		assert.equal(state.month, "1 天");
+		assert.equal(state.today, true);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });

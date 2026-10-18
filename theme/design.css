@@ -12167,3 +12167,35 @@ html[data-nsmax-theme][data-nsmax-page="board"] section#nsk-frame > .board > div
   border-radius: var(--r) !important;
   background: var(--panel) !important;
 }
+/* ---------- 55. 2026-10-18 第八批 ---------- */
+/* 顶栏 NQ：照 sb.sb 顶栏「论坛应用」按钮（.nav-apps-toggle）——黄底 #ffd02f、深色字 #1c1c1e、没有边框、6px 圆角、4px 11px、
+   14px/600、15px 单色图标；浅色、深色模式都是黄底（以前是面板色细线框小块，深色模式下几乎看不见） */
+html[data-nsmax-theme] :is(#nsk-head ul.nav-menu, body > header > ul.mobile-nav) > li > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 4px !important;
+  padding: 4px 11px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: #ffd02f !important;
+  box-shadow: none !important;
+  color: #1c1c1e !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] :is(#nsk-head ul.nav-menu, body > header > ul.mobile-nav) > li > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: #f5c518 !important;
+  color: #1c1c1e !important;
+}
+html[data-nsmax-theme] :is(#nsk-head, body > header) a.nsmax-nq-tab svg.nsmax-nq-icon:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  flex: none !important;
+  width: 15px !important;
+  height: 15px !important;
+  color: inherit !important;
+  fill: currentColor !important;
+}
+/* 帖子页第 4 层以后也只画看得见的（content-visibility:auto，和长列表同一套，只在正常打开时，见第 53 节）：
+   站点自己的脚本在第一帧之前会强制排一次版（真站帖子页量到 141ms，楼层越多越慢），屏幕外的楼层先不算样式、不排版。
+   回复框挂在下面的那一层不这样（表情面板、上传弹出框会被裁掉） */
+html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.comments > li.content-item:nth-child(n+4):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  content-visibility: auto !important;
+  contain-intrinsic-size: auto 260px !important;
+}

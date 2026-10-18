@@ -641,10 +641,22 @@
 		link.target = "_blank";
 		link.rel = "noopener noreferrer";
 		link.title = "NodeQuality 测机";
-		const icon = document.createElement("img");
-		icon.className = "nsmax-nq-icon";
-		icon.alt = "";
-		icon.src = NSMAX_NQ_ICON;
+		// 2026-10-18 第八批：照 sb.sb 顶栏「论坛应用」按钮做成黄底深色字，图标换成单色的阶梯「N」（NodeQuality 标志的形状，跟字一个颜色）；
+		// 原来那张彩色小图是白底的，放在黄底上会露出一块白方块，深色模式下又看不清
+		const ns = "http://www.w3.org/2000/svg";
+		const icon = document.createElementNS(ns, "svg");
+		icon.setAttribute("class", "nsmax-nq-icon");
+		icon.setAttribute("viewBox", "0 0 16 16");
+		icon.setAttribute("fill", "currentColor");
+		icon.setAttribute("aria-hidden", "true");
+		for (const [x, y, w, h] of [[1.5, 1, 3, 14], [11.5, 1, 3, 14], [4.5, 1, 2, 3.8], [6.2, 4.8, 2, 3.2], [7.8, 8, 2, 3.4], [9.5, 11.2, 2, 3.8]]) {
+			const rect = document.createElementNS(ns, "rect");
+			rect.setAttribute("x", String(x));
+			rect.setAttribute("y", String(y));
+			rect.setAttribute("width", String(w));
+			rect.setAttribute("height", String(h));
+			icon.append(rect);
+		}
 		const text = document.createElement("span");
 		text.textContent = "NQ";
 		link.append(icon, text);
@@ -1193,7 +1205,6 @@
 	}
 	var nsmaxChineseTimeEnabled = null;
 	// NQ（NodeQuality 测机）的图标
-	var NSMAX_NQ_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABaFBMVEX///95v5gJiUIJi0RGh1PBJSLDCgrCDAzjjo72/PlSyYcIslRw0pz+/v5fsoMAhDkAhz0pazC1CQTBAAC/AADdc3Pv+vQ1wHMAr01fzZH+//5fsoQAhDoAiD4pbDG2CQQAr04pbTK1CQW+AADccG7+9e398ur+9vH///4AhjwxjVLRenXca2vbbm/pknfwkVDwj03yoGj98ekAhDs1n2Tv+PP3xKLtey3tey7uhkD86Ns1nmTv9/LtfC/tfDDuiEL86dz3xqTuikXo47/f883f8szw+eb97OH5za75zK7y07Kp1nCU0VOT0VHB5Jz1+++j12uRz06Qz02+45b1+u6R0E6+45fw+vT2+/Gm2XCS0E2S1ZaG2vqF2vmE2e4iunP+/v3j89LV7bza77yB1dYAr/AAsOcBsHEAsE6X3vkAsPEAsHGW3vk0nmNuupAAhTtCpW70+fad4PkCsPAAsPARtescuH1n0Jb3nMn7AAAAAWJLR0QAiAUdSAAAAAd0SU1FB+kDFxUCHTwsmtwAAADQSURBVDjLY2AAAUYmZhZWNnYOBhjg5OLm5oHzGHj5+AUEhYRFROEiYuISEpJSCAXSMrJy8qgKFAajAkUlEWUVVTV1DRwKNLW0dXT19A0MjXAoMDYxZWAwM7ewtMKlwNoGqMDWzt5hsCtwtLV1cnZxdcOpwN3D08vbx9cPpwIg8A8IDArGpyAkIDQobBAoADoyHKeCiMjQqOiY2Lh4XAoSEpOSU1JT09IzcCgAgczUrLRsfApyBkQBn4xxLj4FDHn5+QWFcF5RcUlpWYZCOZgDAFNzXYZTvYTRAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI1LTAzLTIzVDIxOjAxOjIxKzAwOjAwLt9JcQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNS0wMy0yM1QyMTowMToyMSswMDowMF+C8c0AAAAgdEVYdHNvZnR3YXJlAGh0dHBzOi8vaW1hZ2VtYWdpY2sub3JnvM8dnQAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpIZWlnaHQAMTkyQF1xVQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE3NDI3NjM2ODE9AtgpAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMjUtMDMtMjMvY2UzZTUwZjg4YjEzOGFiYTY3ODJlMjdmZjk2OTYzYjUuaWNvLnBuZ/HFgxIAAAAASUVORK5CYII=";
 	// 列表工具条：NQ 入口挪到顶栏「精华」后面（见 nsmaxUpdateNavEssence），这里只清掉以前放在工具条上的那个；工具条加「投票」「抽奖」
 	function nsmaxEnsureNqEntry(parsed) {
 		for (const old of document.querySelectorAll(".post-list-controler > .nsmax-nq-entry")) old.remove();
@@ -2033,6 +2044,16 @@
 			}
 		}
 		card.toggleAttribute("data-done", done);
+		// 站点那一行说今天签过了（账簿里那一条可能还没读到）：今天先记上，连续签到、本月签到、日历都算上今天
+		const uidNow = unsafeWindow$1.__config__?.user?.member_id;
+		if (done && uidNow && Number.isFinite(gain)) {
+			const record = nsmaxCheckinRecord(uidNow);
+			const today = nsmaxBeijingDay(Date.now());
+			if (record.days[today] !== gain) {
+				record.days[today] = gain;
+				nsmaxCheckinSave(uidNow, record);
+			}
+		}
 		const cell = (key) => card.querySelector(`.nsmax-checkin-stats > [data-key="${key}"] > dd`);
 		const live = nsmaxCheckinState.board;
 		nsmaxSetText(cell("gain"), Number.isFinite(gain) ? `${gain} 鸡腿` : live?.record?.gain ? `${live.record.gain} 鸡腿` : "—");
@@ -2055,7 +2076,7 @@
 		const prefix = today.slice(0, 8);
 		const signed = Object.keys(record.days).filter((day) => day.startsWith(prefix));
 		const { streak, complete } = nsmaxCheckinStreak(record, today);
-		nsmaxSetText(card.querySelector(".nsmax-checkin-streak > b"), uid && (record.newest || signed.length) ? `${streak}${complete ? "" : "+"}` : "—");
+		nsmaxSetText(card.querySelector(".nsmax-checkin-streak > b"), uid && (record.newest || signed.length) ? `${streak}${complete || !streak ? "" : "+"}` : "—");
 		nsmaxSetText(card.querySelector('.nsmax-checkin-stats > [data-key="month"] > dd'), uid && record.newest ? `${signed.length} 天` : "—");
 		nsmaxSetText(card.querySelector(".nsmax-checkin-month"), `${year} 年 ${month} 月`);
 		const calendar = card.querySelector(".nsmax-checkin-calendar");
@@ -2119,6 +2140,8 @@
 			}
 			record.newest = today;
 			if (!record.oldest || oldestSeen < record.oldest) record.oldest = oldestSeen;
+			// 账簿读到头了（这一页不满 20 条）：以前的都读过了，连续签到是数清楚的
+			if (rows.length < 20) record.oldest = "0000-00-00";
 			nsmaxCheckinSave(uid, record);
 			nsmaxCheckinCalendar(card);
 			if (rows.length < 20) break;
