@@ -12388,8 +12388,10 @@ html[data-nsmax-theme] #left-slide-panel .user-card-container > .user-card.nsmax
   }
 }
 /* 站点 Vue 页面里的报错框：行内写死 margin 4rem、红框、2rem 大红字（管理记录页的「用户未登录」等，见 nsmaxTidySiteErrors）。
-   照 sb.sb 空状态排：面板卡片、细线框、44px 16px、居中 14px 次要色；未登录时下面一个「去登录」实底胶囊 */
-html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+   照 sb.sb 空状态排：面板卡片、细线框、44px 16px、居中 14px 次要色；未登录时下面一个「去登录」实底胶囊。
+   管理记录页的报错框直接按行内样式认（站点一画出来就是这个样子，不先闪一下红框）；别处的等脚本打上标记 */
+html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-frame .ruling-log > div[style*="solid red"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: border-box !important;
   margin: 0 0 16px !important;
   padding: 44px 16px !important;
