@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.10");
+	assert.equal(packageJson.version, "1.8.11");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4295,6 +4295,102 @@ test("第九批（2026-10-18）：我的关注 / 粉丝——站点数据到之�
 			assert.equal(rows.length, 5);
 			for (const row of rows) assert.deepEqual(row, { tops: 1, belowName: true, alignedLeft: true, count: 3 });
 			assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十批（2026-10-18）：个人空间加入日期——站点页面上没有加入天数时用接口的注册时间补上，拿不到就不写（以前一律写「近期加入」，论坛最早那批账号也是）", async () => {
+	const withoutDays = (options) => spaceTopicsPage(options).replace(/<div class="card-item"><div>加入天数<\/div><div>659<\/div><\/div>/, "");
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/1#/discussions", {
+			html: withoutDays(), viewport: { width: 1440, height: 900 },
+			api: { "/api/account/getInfo/1": [{ status: 200, body: { success: true, detail: { member_id: 1, member_name: "Steve", rank: 3, coin: 1257, nPost: 100, nComment: 873, created_at: "2022-11-20T08:00:00.000Z" } } }] }
+		});
+		try {
+			await page.waitForFunction(() => /加入/.test(document.querySelector(".nsmax-space-join")?.textContent || ""));
+			const join = await page.evaluate(() => { const el = document.querySelector(".nsmax-space-join"); return { text: el.textContent, shown: el.getClientRects().length > 0 }; });
+			assert.deepEqual(join, { text: "2022-11-20 加入", shown: true });
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/1#/discussions", {
+			html: withoutDays(), viewport: { width: 1440, height: 900 },
+			api: { "/api/account/getInfo/1": [{ status: 200, body: { success: true, detail: { member_id: 1, rank: 3 } } }] }
+		});
+		try {
+			await page.waitForSelector(".nsmax-space-join", { state: "attached" });
+			await wait(page, 600);
+			const join = await page.evaluate(() => { const el = document.querySelector(".nsmax-space-join"); return { text: el.textContent, shown: el.getClientRects().length > 0 }; });
+			assert.equal(join.shown, false, JSON.stringify(join));
+			assert.doesNotMatch(await page.locator(".head-container").innerText(), /近期加入/);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十批（2026-10-18）：手机侧滑菜单（≡）里的资料卡换成和右栏同一张 sb.sb 资料卡——四格统计、我的主页 / 我的通知 / 每日签到……、发帖按钮；站点原来那一列收起", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ mobile: true }), viewport: { width: 390, height: 844 } });
+	try {
+		await page.waitForSelector("#left-slide-panel .user-card .nsmax-sb-account");
+		await page.locator("#toggle-left-panel").click();
+		await wait(page, 500);
+		const state = await page.evaluate(() => {
+			const card = document.querySelector("#left-slide-panel .user-card");
+			const account = card.querySelector(".nsmax-sb-account");
+			const box = account.getBoundingClientRect();
+			return {
+				nativeShown: Array.from(card.children).filter((el) => el !== account && el.getClientRects().length > 0).map((el) => el.className),
+				stats: Array.from(account.querySelectorAll(".nsmax-account-stat dt"), (dt) => dt.textContent),
+				menu: Array.from(account.querySelectorAll(".nsmax-account-menu > a"), (a) => a.textContent.replace(/\d+$/, "").trim()),
+				compose: account.querySelector(".nsmax-account-compose")?.getAttribute("href"),
+				inside: box.left >= 0 && box.right <= 300 + 1,
+				overflow: document.documentElement.scrollWidth - innerWidth
+			};
+		});
+		assert.deepEqual(state.nativeShown, []);
+		assert.deepEqual(state.stats, ["鸡腿", "星辰", "主题帖", "评论数"]);
+		assert.deepEqual(state.menu, ["我的主页", "我的主题", "我的回帖", "我的收藏", "我的粉丝", "我的关注", "我的通知", "每日签到", "管理记录", "个人设置"]);
+		assert.equal(state.compose, "/new-discussion");
+		assert.equal(state.inside, true);
+		assert.ok(state.overflow <= 0);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十批（2026-10-18）：手机上只看私信会话列表时卡片按会话多少变高（不再固定占满一屏）；打开聊天还是占满一屏", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=list", { html: nativeTalkPage({ mobile: true }), viewport: { width: 390, height: 844 } });
+	try {
+		await page.waitForSelector(".nspp-messages-peer");
+		await wait(page, 400);
+		const list = await page.evaluate(() => Math.round(document.querySelector(".nspp-messages").getBoundingClientRect().height));
+		assert.ok(list < 500, `会话列表卡片 ${list}px`);
+		await page.locator(".nspp-messages-peer").first().click();
+		await page.waitForSelector(".nspp-messages.has-conversation .nspp-messages-composer textarea");
+		await wait(page, 300);
+		const chat = await page.evaluate(() => Math.round(document.querySelector(".nspp-messages").getBoundingClientRect().height));
+		assert.ok(chat >= 600, `聊天卡片 ${chat}px`);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十批（2026-10-18）：站点页面里的红框大红字报错（管理记录页「用户未登录」等）排成 sb.sb 空状态，未登录时多一个「去登录」；「Not allowed to search」换成中文", async () => {
+	for (const [error, text, login] of [["用户未登录", "用户未登录", true], ["Not allowed to search", "站点只给管理员按用户名搜索管理记录", false]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/ruling", { html: rulingPage({ error }), viewport: { width: 1440, height: 900 } });
+		try {
+			await page.waitForSelector("[data-nsmax-site-error]");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const box = document.querySelector("[data-nsmax-site-error]");
+				const cs = getComputedStyle(box);
+				return { text: box.firstChild.textContent.trim(), color: cs.color, fontSize: cs.fontSize, border: cs.borderTopColor, login: box.querySelector(".nsmax-site-error-login")?.getAttribute("href") || null };
+			});
+			assert.equal(state.text, text);
+			assert.notEqual(state.color, "rgb(255, 0, 0)");
+			assert.notEqual(state.border, "rgb(255, 0, 0)");
+			assert.equal(state.fontSize, "14px");
+			assert.equal(state.login, login ? "/signIn.html" : null);
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}

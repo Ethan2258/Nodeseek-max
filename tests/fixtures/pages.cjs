@@ -183,7 +183,10 @@ const registerPage = (options = {}) => shell("NodeSeek-注册", `<div id="nsk-fr
 // 空的 #nsk-frame-block、内容块和 #search-panel-mount，没有 #nsk-body 和右栏；管理记录表格上下各一排页码（.rulling-log-head）
 const rulingRows = Array.from({ length: 6 }, (_, i) => `<tr><td><a href="/post-${3000 + i}-1">${33505 - i}</a></td><td><a href="/space/${50 + i}">user${i}</a></td><td>因"违规"-100鸡腿<br>用户被禁言1天</td><td><a href="/space/9">admin</a></td><td>2026/10/14 上午12:3${i}:49</td></tr>`).join("");
 const rulingPager = `<div class="rulling-log-head"><div class="nsk-pager">${pagerHtml(undefined, 1, 100)}</div></div>`;
-const rulingPage = (options = {}) => shell("NodeSeek-管理记录", `<div id="nsk-frame-block"></div><div class="ruling-log"><div>${rulingPager}<table><thead><tr><th>ID</th><th>用户</th><th>操作</th><th>管理员</th><th>时间</th></tr></thead><tbody>${rulingRows}</tbody></table>${rulingPager}</div></div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
+// error：站点拿不到数据时（未登录「用户未登录」、普通账号按名字搜「Not allowed to search」）换成行内写死的红框大红字报错（真站结构）
+const rulingPage = (options = {}) => shell("NodeSeek-管理记录", `<div id="nsk-frame-block"></div><div class="ruling-log">${options.error ? `<div data-v-3ae870dc style="margin: 4rem; padding: 1rem; border: 1px solid red; text-align: center; color: red; font-size: 2rem;">
+        ${options.error}
+    </div>` : `<div>${rulingPager}<table><thead><tr><th>ID</th><th>用户</th><th>操作</th><th>管理员</th><th>时间</th></tr></thead><tbody>${rulingRows}</tbody></table>${rulingPager}</div>`}</div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
 const boardRealPage = (options = {}) => shell("NodeSeek-签到", `<div id="nsk-frame-block"></div><div class="board"><div class="head-info"><div>今日签到获得鸡腿2个，当前排名第11872</div></div><div><h1>今日签到鸡腿排行榜</h1>${Array.from({ length: 12 }, (_, i) => `<div class="rank-row"><div>${i + 1}</div><img class="avatar" src="${AVATAR}" alt="m${i}"><div class="member-name">member${i}</div><div class="coins">${16 - Math.floor(i / 3)}</div></div>`).join("")}</div></div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
 
 // 抽奖页（/lucky）：站点独立的 Vue 小页面（static/js/lucky.*.js），没有站点顶栏、左右栏和页脚；结构照真站模板，

@@ -89,7 +89,9 @@
 				const date = new Date(Date.now() - daysMatch * 864e5);
 				joinSpan.textContent = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} 加入`;
 			} else {
-				joinSpan.textContent = "近期加入";
+				// 站点这一页没写加入天数：先不写，下面接口的注册时间到了再补上（以前写「近期加入」，
+				// 而补日期时又只认「不含『加入』」的空格子，论坛最早的那批账号也一直显示「近期加入」）
+				joinSpan.hidden = true;
 			}
 
 			// 严格仅展示 UID 与加入时间，绝不显示在线或最后在线状态
@@ -271,15 +273,18 @@
 				const p = info.nPost !== undefined ? Number(info.nPost) : (parsedPost || 0);
 				const cm = info.nComment !== undefined ? Number(info.nComment) : (parsedComment || 0);
 				renderStatsAndProgress(l, c, p, cm);
-				if (info.created_at) {
-					try {
-						const d = new Date(info.created_at);
-						const jEl = head.querySelector(".nsmax-space-join");
-						if (jEl && !/加入/.test(jEl.textContent)) {
-							jEl.textContent = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} 加入`;
-						}
-					} catch {}
-				}
+			});
+		}
+		// 加入日期：站点页面上没有时（上面先藏着），用接口的注册时间补上
+		const joinEl = head.querySelector(".nsmax-space-join");
+		if (uid && reqPromise && joinEl?.hidden && !joinEl.hasAttribute("data-nsmax-waiting")) {
+			joinEl.setAttribute("data-nsmax-waiting", "");
+			reqPromise.then(info => {
+				const created = Date.parse(info?.created_at || "");
+				if (!joinEl.isConnected || !Number.isFinite(created)) return;
+				const d = new Date(created);
+				joinEl.textContent = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} 加入`;
+				joinEl.hidden = false;
 			});
 		}
 
@@ -2972,6 +2977,22 @@
 	// 我的关注 / 粉丝：列表是站点前端画的（先是一个 Loading，拿到数据后整块画出来）。页面整理要在页面变化后 100ms 以上才跑，
 	// 站点画出来的原版卡片会先在屏幕上露一下，再变成 sb.sb 成员卡片、整块跳一下。这里单独盯着：站点一画出卡片，
 	// 就在同一轮微任务里（浏览器画下一帧之前）改好，屏幕上不出现原版。nsmaxPrepareFans 只在需要时改 DOM，改完那次变化不会再引起改动
+	// 站点 Vue 页面里的报错框（行内写死的红框、2rem 大红字，如管理记录页的「用户未登录」「Not allowed to search」）：
+	// 主题排成 sb.sb 空状态（见 design.css 第 57 节）；未登录的加一个「去登录」按钮，英文的换成中文
+	function nsmaxTidySiteErrors() {
+		for (const box of document.querySelectorAll('#nsk-frame div[style*="solid red"]')) {
+			nsmaxSetAttr(box, "data-nsmax-site-error");
+			const text = box.firstChild?.nodeType === 3 ? box.firstChild.data.trim() : box.textContent.trim();
+			if (/^not allowed to search$/i.test(text)) nsmaxSetText(box, "站点只给管理员按用户名搜索管理记录");
+			if (text === "用户未登录" && !box.querySelector(".nsmax-site-error-login")) {
+				const link = document.createElement("a");
+				link.className = "nsmax-site-error-login";
+				link.href = "/signIn.html";
+				link.textContent = "去登录";
+				box.append(link);
+			}
+		}
+	}
 	// 页面解析阶段（脚本注入得早时）就装上，模块挂载时再调一次不重复装
 	var nsmaxFansWatching = false;
 	function nsmaxWatchFans(ctx) {
@@ -3019,6 +3040,7 @@
 			nsmaxPrepareCredit();
 			nsmaxPrepareSetting();
 			nsmaxPrepareSidePage();
+			nsmaxTidySiteErrors();
 			nsmaxGuardSidebarScroll();
 			nsmaxPrepareAuth();
 			nsmaxCleanNotifications();

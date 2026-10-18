@@ -12368,3 +12368,54 @@ html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions 
   padding: 0 12px !important;
   line-height: 1 !important;
 }
+/* ---------- 57. 2026-10-18 第十批：手机侧滑菜单里的资料卡 ----------
+   侧滑菜单（≡）里站点那张原版资料卡（一列图标 + 文字）换成和右栏同一张 sb.sb 资料卡（nsmaxBuildAccountCard）：
+   头像名字、四格统计、我的主页 / 我的通知 / 每日签到……两列菜单、发帖按钮。站点原来的内容收起；外层留 16px，卡片自己不再加内边距 */
+html[data-nsmax-theme] #left-slide-panel .user-card-container > .user-card.nsmax-sb-account-host > :not(.nsmax-sb-account):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #left-slide-panel .user-card-container > .user-card.nsmax-sb-account-host > .nsmax-sb-account:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+}
+/* 手机上只看私信会话列表时，卡片跟着会话多少变高（以前固定占满一屏，两三个会话下面空一大块）；打开聊天还是占满一屏 */
+@media (max-width: 700px) {
+  html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"]:not(.has-conversation):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  html[data-nsmax-theme] .nspp-messages[data-nsmax-view="message"]:not(.has-conversation) > .nspp-messages-workspace > .nspp-messages-sidebar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    min-height: 0 !important;
+  }
+}
+/* 站点 Vue 页面里的报错框：行内写死 margin 4rem、红框、2rem 大红字（管理记录页的「用户未登录」等，见 nsmaxTidySiteErrors）。
+   照 sb.sb 空状态排：面板卡片、细线框、44px 16px、居中 14px 次要色；未登录时下面一个「去登录」实底胶囊 */
+html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  margin: 0 0 16px !important;
+  padding: 44px 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  width: fit-content !important;
+  margin: 14px auto 0 !important;
+  padding: 6px 18px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--action-hover) !important;
+}
