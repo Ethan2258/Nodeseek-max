@@ -4630,3 +4630,43 @@ test("第十一批（2026-10-19）：顶栏版块照 sb.sb .forum-nav——一�
 		} finally { await context.close(); }
 	}
 });
+
+test("第十一批（2026-10-19）：热评排在评论最前面、它回复的那层后来才加载出来时，楼中楼不再一层套一层——收进外层框时自带的楼中楼框摊平、按楼号排，外层才有的作者栏去掉，「回复 某某」跟着新的外层重新判断", async () => {
+	const base = postPage();
+	const li3 = base.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0];
+	const floor = (n, text) => li3.replace('id="3"', `id="${n}"`).replace('href="#3" class="floor-link">#3<', `href="#${n}" class="floor-link">#${n}<`).replace("<p>线路怎么样？晚高峰丢包吗？</p>", `<p>${text}</p>`);
+	const reply = (name, n, text) => `<a href="/member?t=${name}">@${name}</a> <a href="/post-1000-1#${n}" target="_self">#${n}</a> ${text}`;
+	// 真站 post-893437 的样子：热评 #8（回复 #5）、#9（回复 #8）排在最前面，#5（回复 #1）在后面的页里，翻页加载后才出现
+	const html = base.replace('<ul class="comments">', `<ul class="comments">${floor(8, reply("curious", 5, "第八层"))}${floor(9, reply("curious", 8, "第九层"))}`);
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector("li[id='8'] > .nsmax-floor-box li[id='9']");
+		await page.evaluate((markup) => document.querySelector("#nsk-body-left ul.comments").insertAdjacentHTML("beforeend", markup), floor(5, reply("buyer", 1, "第五层")));
+		await page.waitForFunction(() => document.querySelectorAll("li[id='1'] > .nsmax-floor-box > .nsmax-nested-replies > li").length === 3, null, { timeout: 5000 });
+		await wait(page, 300);
+		const state = await page.evaluate(() => {
+			const box = document.querySelector("li[id='1'] > .nsmax-floor-box");
+			const items = [...box.querySelectorAll(":scope > .nsmax-nested-replies > li")];
+			const who = (id) => document.querySelector(`li[id='${id}'] .nsmax-fb-who`)?.textContent;
+			return {
+				order: items.map((li) => li.id),
+				deep: document.querySelectorAll(".nsmax-floor-box .nsmax-floor-box").length,
+				col: !!document.querySelector("li[id='8'] > .nsmax-author-col"),
+				who5: who(5),
+				who8: who(8),
+				who9: who(9),
+				count: box.querySelector(".nsmax-fb-count").textContent,
+				narrow: items.filter((li) => li.getBoundingClientRect().width < box.getBoundingClientRect().width * 0.8).map((li) => li.id)
+			};
+		});
+		assert.deepEqual(state.order, ["5", "8", "9"], "都收进 #1 的框、按楼号排");
+		assert.equal(state.deep, 0, "框里不再套框");
+		assert.equal(state.col, false, "收进框里的楼层没有外层的作者栏");
+		assert.equal(state.who5, "curious：", "回复的就是层主时只写名字");
+		assert.equal(state.who8, "curious回复curious：");
+		assert.equal(state.who9, "curious回复curious：", "原来回复的是当时的外层 #8，摊平后写「回复」");
+		assert.equal(state.count, "共 3 条回复");
+		assert.deepEqual(state.narrow, [], "每条都是整行宽");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});

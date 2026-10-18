@@ -1490,7 +1490,10 @@
 		if (!list) return;
 		const floors = new Map(Array.from(list.querySelectorAll("li.content-item[id]"), (item) => [item.id, item]));
 		const post = location.pathname.match(/^\/post-(\d+)-/)?.[1];
-		for (const [id, item] of floors) {
+		// 按楼号从小到大处理：站点把热评排在评论最前面，热评又常常是楼中楼回复。按页面顺序处理时，回复会比它回复的那一层先被收起来，
+		// 那一层后来再被收进别的框，就一层套一层（2026-10-19 真站 post-893437：#1 > #40 > #42 > #43，里面几层被挤成 0～130px 宽）
+		const order = Array.from(floors).sort((a, b) => Number(a[0]) - Number(b[0]));
+		for (const [id, item] of order) {
 			if (nsmaxNestedMoved.has(item) || parsed && !parsed(item)) continue;
 			const paragraph = item.querySelector(":scope > article.post-content > p:first-child");
 			if (!paragraph || !/^\s*@/.test(paragraph.textContent)) continue;
@@ -1519,9 +1522,24 @@
 				if (inline) inline.before(box);
 				else rootFloor.append(box);
 			}
-			box.querySelector(":scope > .nsmax-nested-replies").append(item);
+			const nested = box.querySelector(":scope > .nsmax-nested-replies");
+			nsmaxNestInto(nested, item);
+			// 这一层以前当过外层（它回复的那层当时还没加载出来）：自己的楼中楼框里的回复摊平到外层框里，外层才有的作者栏去掉
+			const own = item.querySelector(":scope > .nsmax-floor-box");
+			if (own) {
+				for (const reply of own.querySelectorAll(":scope > .nsmax-nested-replies > li.content-item")) nsmaxNestInto(nested, reply);
+				own.remove();
+			}
+			item.querySelector(":scope > .nsmax-author-col")?.remove();
 			nsmaxNestedMoved.add(item);
 		}
+	}
+	// 楼中楼按楼号排（sb.sb 楼中楼按时间先后）：插在第一条楼号比它大的前面
+	function nsmaxNestInto(nested, item) {
+		const after = Array.from(nested.children).find((other) => other !== item && Number(other.id) > Number(item.id));
+		if (after) {
+			if (after.previousElementSibling !== item) after.before(item);
+		} else if (nested.lastElementChild !== item) nested.append(item);
 	}
 	// 楼中楼每一条：sb.sb .floor-box-item——「名字 回复 某某：内容」一行（回复的就是层主时只写「名字：内容」），开头站点自带的
 	// 「@某某 #楼号」两个链接藏起来；框底的条数跟着更新。只在没整理过时写 DOM
@@ -1532,7 +1550,28 @@
 			const rootFloor = box.closest("li.content-item");
 			for (const item of items) {
 				const article = item.querySelector(":scope > article.post-content");
-				if (!article || article.querySelector(":scope > .nsmax-fb-who, :scope > p > .nsmax-fb-who")) continue;
+				if (!article) continue;
+				const done = article.querySelector(":scope > .nsmax-fb-who, :scope > p > .nsmax-fb-who");
+				if (done) {
+					// 整理过、后来又被摊平到另一个外层的框里：「回复 某某」跟着新的外层重新判断（回复的就是层主时不写）
+					const leads = article.querySelectorAll("a[data-nsmax-fb-lead]");
+					const parentId = leads[1]?.getAttribute("href")?.match(/#(\d+)$/)?.[1];
+					const to = done.querySelector(":scope > .nsmax-fb-to");
+					if (parentId && parentId !== rootFloor?.id && !to) {
+						const word = document.createElement("span");
+						word.className = "nsmax-fb-to";
+						word.textContent = "回复";
+						const target = document.createElement("a");
+						target.className = "nsmax-fb-target";
+						target.href = "#" + parentId;
+						target.textContent = leads[0].textContent.trim().replace(/^@/, "");
+						done.querySelector(":scope > .nsmax-fb-colon")?.before(word, target);
+					} else if (to && (!parentId || parentId === rootFloor?.id)) {
+						if (to.nextElementSibling?.matches(".nsmax-fb-target")) to.nextElementSibling.remove();
+						to.remove();
+					}
+					continue;
+				}
 				const name = item.querySelector(":scope > .nsk-content-meta-info .author-info > a.author-name, :scope > .nsk-content-meta-info .author-info > a[href*='/space/']");
 				if (!name) continue;
 				const first = article.firstElementChild;
