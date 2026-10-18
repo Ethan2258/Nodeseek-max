@@ -4620,6 +4620,11 @@ test("第十一批（2026-10-19）：顶栏版块照 sb.sb .forum-nav——一�
 			} else {
 				assert.deepEqual(state.hidden, [], "宽屏全部放得下");
 				assert.equal(state.menu, "none", "放得下时没有 ≡");
+				// 窗口拖窄：版块挪到第二行只是位置变了，≡ 也要跟着亮出来；再拖宽收回去
+				await page.setViewportSize({ width: 940, height: 800 });
+				await page.waitForFunction(() => getComputedStyle(document.querySelector("#nsk-head .nsmax-mobile-menu")).display === "flex", null, { timeout: 3000 });
+				await page.setViewportSize({ width: 1440, height: 800 });
+				await page.waitForFunction(() => getComputedStyle(document.querySelector("#nsk-head .nsmax-mobile-menu")).display === "none", null, { timeout: 3000 });
 			}
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }

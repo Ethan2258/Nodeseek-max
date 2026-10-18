@@ -27101,25 +27101,31 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 		document.body.append(dialog);
 		// 版块一行放不下时（窗口 1000px 上下；登录后右边按钮多，更早），放不下的整个排到看不见的第二行（design.css 第 58 节），
 		// 这时在 #nsk-head 上标 data-nsmax-nav-overflow 亮出 ≡：藏起来的版块和 NQ 都在 ≡ 菜单里
+		// 排到第二行的版块只是挪了位置、尺寸没变，ResizeObserver 收不到；用以版块条为根的 IntersectionObserver 看每一项还在不在可见的那一行里
+		// （样式晚到、字体换了、窗口变宽变窄、NQ 后加进来，都会重新报）
 		const nav = head.querySelector(":scope > ul.nav-menu");
-		let frame = 0;
-		const check = () => {
-			frame = 0;
-			const items = nav ? [...nav.children].filter((li) => li.getClientRects().length) : [];
-			const hidden = items.length > 1 && items.some((li) => li.offsetTop > items[0].offsetTop + 2);
+		const clipped = new Set();
+		const seen = nav && typeof IntersectionObserver === "function" ? new IntersectionObserver((entries) => {
+			for (const entry of entries) {
+				// display:none 的项（藏掉的推广等）没有框，不算
+				if (entry.intersectionRatio > 0.5 || !entry.target.getClientRects().length) clipped.delete(entry.target);
+				else clipped.add(entry.target);
+			}
+			const hidden = clipped.size > 0;
 			if (head.hasAttribute("data-nsmax-nav-overflow") !== hidden) head.toggleAttribute("data-nsmax-nav-overflow", hidden);
+		}, { root: nav, threshold: [0, 0.5, 1] }) : null;
+		const watchItems = () => {
+			if (!seen) return;
+			seen.disconnect();
+			clipped.clear();
+			for (const li of nav.children) seen.observe(li);
 		};
-		const queue = () => { if (!frame) frame = requestAnimationFrame(check); };
-		const sizes = nav && typeof ResizeObserver === "function" ? new ResizeObserver(queue) : null;
-		sizes?.observe(nav);
-		sizes?.observe(head);
-		const changes = nav ? new MutationObserver(queue) : null;
-		changes?.observe(nav, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "data-nsmax-own-hide", "data-nsmax-hidden"] });
-		queue();
+		const changes = seen ? new MutationObserver(watchItems) : null;
+		changes?.observe(nav, { childList: true });
+		watchItems();
 		return () => {
-			sizes?.disconnect();
+			seen?.disconnect();
 			changes?.disconnect();
-			cancelAnimationFrame(frame);
 			head.removeAttribute("data-nsmax-nav-overflow");
 			button.remove();
 			dialog.remove();
