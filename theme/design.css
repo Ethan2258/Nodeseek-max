@@ -2806,6 +2806,22 @@ html[data-nsmax-theme] .nsmax-prize-badge {
   line-height: 1.6 !important;
   vertical-align: middle !important;
 }
+/* 到了开奖时间的抽奖帖：sb.sb .lottery-badge-done + .special-ended——次底色、细线框、弱化字的「抽奖」「已结束」 */
+html[data-nsmax-theme] .nsmax-ended-badge {
+  display: inline-block !important;
+  margin: 0 6px 0 0 !important;
+  border-radius: var(--r-pill) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme] :is(.nsmax-prize-badge[data-ended], .nsmax-ended-badge):is(#nsmax-lv, *) {
+  padding: 0 8px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
 
 /* ---------- 14. 回复楼层右侧操作（sb.sb .post-ops：靠右、间距 8px；.icon-action 12px 次要色、悬停品牌色；.post-reply-no 等宽 12px） ---------- */
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions {
@@ -9232,7 +9248,7 @@ html[data-nsmax-theme] .nsmax-poll-badge {
   vertical-align: middle !important;
 }
 /* 帖子标题里的小标大一号：sb.sb .post-content-title .topic-badge——2px 10px、13px，竖直居中 */
-html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge):is(#nsmax-lv, *) {
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge):is(#nsmax-lv, *) {
   display: inline-block !important;
   height: auto !important;
   padding: 2px 10px !important;
@@ -9576,20 +9592,97 @@ html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-s
 html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="imminent"] :is(.nsmax-lottery-seg > b, .nsmax-lottery-seg > i):is(#nsmax-lv, *) {
   color: var(--danger-soft-text) !important;
 }
-html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="done"] .nsmax-lottery-countdown:is(#nsmax-lv, *) {
+/* 到了开奖时间：倒计时条只留一句「已于 … 开奖」 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="done"] .nsmax-lottery-clock:is(#nsmax-lv, *),
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-seg[hidden]:is(#nsmax-lv, *) {
   display: none !important;
 }
-html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-meta:is(#nsmax-lv, *) {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 6px 14px !important;
-  margin: 10px 0 0 !important;
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery[data-state="done"] .nsmax-lottery-label:is(#nsmax-lv, *) {
+  color: var(--text) !important;
+}
+/* 奖品 / 名额 / 中奖者（sb.sb .lottery-prizes：表头 12.5px 弱化字、下面一条细线；奖品加粗，名额等宽数字，中奖者弱化字） */
+html[data-nsmax-theme] #nsk-body-left article.post-content table.nsmax-lottery-table:is(#nsmax-lv, *) {
+  display: table !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-collapse: collapse !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  table-layout: auto !important;
+  overflow: visible !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content table.nsmax-lottery-table :is(th, td):is(#nsmax-lv, *) {
+  padding: 8px 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content table.nsmax-lottery-table th:is(#nsmax-lv, *) {
   color: var(--text-muted) !important;
   font-size: 12.5px !important;
 }
-html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-meta b:is(#nsmax-lv, *) {
-  color: var(--text) !important;
+html[data-nsmax-theme] #nsk-body-left article.post-content table.nsmax-lottery-table :is(th, td):is(:nth-child(2), :nth-child(3)):is(#nsmax-lv, *) {
+  width: 1% !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content table.nsmax-lottery-table tbody tr:last-child td:is(#nsmax-lv, *) {
+  border-bottom: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-prize:is(#nsmax-lv, *) {
+  color: var(--text-strong) !important;
   font-weight: 600 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-count:is(#nsmax-lv, *) {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-winners:is(#nsmax-lv, *) {
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content p.nsmax-lottery-note:is(#nsmax-lv, *) {
+  margin: 10px 0 0 !important;
+  padding: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-stat:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px 14px !important;
+  margin: 8px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+}
+/* 参与人：sb.sb .lottery-entrant 小胶囊（#楼号 名字），点了跳到那一楼 */
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-people:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin: 10px 0 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content a.nsmax-lottery-person:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content a.nsmax-lottery-person:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
 }
 html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-lottery-actions:is(#nsmax-lv, *) {
   display: flex !important;
@@ -11226,4 +11319,851 @@ html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-car
   html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
     contain-intrinsic-size: auto 90px !important;
   }
+}
+/* ---------- 54. 2026-10-18 第七批：侧栏卡片不被压扁、资料卡重排、管理记录弹窗 ---------- */
+/* 右栏是固定高度的竖排弹性盒（固定在顶栏下面、内容多时单独滚动）：卡片默认会被等比例压扁、超出部分被裁掉（签到页的资料卡「发帖」
+   按钮、今日热门最后几条都只剩半截）。卡片保持原来的高度，放不下时右栏自己滚动 */
+html[data-nsmax-theme] :is(#nsk-body, section#nsk-frame) > #nsk-right-panel-container > *:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex-shrink: 0 !important;
+}
+/* 资料卡：名字下面一排三个一样宽的按钮（关注实底、私信、主页），管理记录、屏蔽挪到统计下面的底栏 */
+html[data-nsmax-theme] .nsmax-person-pop:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: min(320px, calc(100vw - 16px)) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 0 14px 12px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions[data-count="1"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions[data-count="2"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > :is(a, button):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  justify-content: center !important;
+  min-width: 0 !important;
+  padding: 4px 8px !important;
+  overflow: hidden !important;
+  font-size: 13px !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 5px 8px !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  height: 28px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > button svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > button:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > .nsmax-person-block:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > .nsmax-person-block[data-on]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: color-mix(in srgb, var(--danger) 8%, transparent) !important;
+  color: var(--danger) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > .nsmax-person-block:disabled:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 0.6 !important;
+  cursor: default !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-stats + .nsmax-person-status:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 10px 14px 0 !important;
+}
+/* 弹窗（管理记录、一键抽奖共用）：sb.sb .modal-panel——面板底、细线框、12px 圆角，头部 15px/600 标题 + 关闭，
+   中间可滚动，底部一排按钮 */
+html[data-nsmax-theme] dialog.nsmax-dialog:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: min(560px, calc(100vw - 32px)) !important;
+  max-width: none !important;
+  max-height: min(80vh, 760px) !important;
+  margin: auto !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-medium) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] dialog.nsmax-dialog[open]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+}
+html[data-nsmax-theme] dialog.nsmax-dialog:is(#nsmax-lv, *):is(#nsmax-b, *)::backdrop {
+  background: rgba(15, 23, 42, 0.36) !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-head:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex: none !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 12px 12px 12px 18px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-head > h3:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--text-strong) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-close:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-close:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-close svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 16px !important;
+  height: 16px !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 14px 18px !important;
+  overflow: auto !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-foot:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex: none !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 12px 18px !important;
+  border-top: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-foot > .nsmax-ruling-status:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-right: auto !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 6px 16px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-button:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-button.primary:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-button.primary:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-button:disabled:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 0.55 !important;
+  cursor: default !important;
+}
+html[data-nsmax-theme] .nsmax-dialog .nsmax-dialog-button[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 管理记录列表：一条一块，上面一行时间（等宽）· 管理员 · 相关帖子，下面处理内容 */
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-intro:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 0 6px !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 10px 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-item:first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-top: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-meta:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 2px 12px !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-meta > time:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-meta > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--link) !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-meta > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--link-hover) !important;
+  text-decoration: underline !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-action:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 3px 0 0 !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 10px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-empty[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 编辑器的提示字（写下你的回复… / 写下正文…）：聚焦输入时藏起来，光标不再压在提示字上 */
+html[data-nsmax-theme] .md-editor .CodeMirror-focused .CodeMirror-placeholder:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  visibility: hidden !important;
+}
+html[data-nsmax-theme] .md-editor textarea:focus:is(#nsmax-lv, *):is(#nsmax-b, *)::placeholder {
+  color: transparent !important;
+}
+/* 发帖页照 sb.sb /t/new/：表单卡片 + 右栏（资料卡、今日热门、最近浏览）。表单里的顺序：
+   版块（下面一行说明，内容是站点「重要提醒」里的规则）→ 标题 → 内容（工具按钮 + 输入框）→ 阅读限制 → 发布帖子、一键抽奖。
+   站点的节点不挪：「版块 / 阅读限制」外面那两层用 display: contents 拆开，整张表单排成一个网格按顺序摆 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body:is(#nsmax-lv, *):is(#nsmax-b, *),
+  html[data-nsmax-theme][data-nsmax-page="new"] section#nsk-frame > #nsk-body.nsk-container:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: minmax(0, 1fr) var(--sidebar-w) !important;
+  }
+}
+@media (max-width: 800px) {
+  html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body > #nsk-right-panel-container.nsmax-side-panel:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    display: none !important;
+  }
+}
+html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container.nsmax-side-panel > .user-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: -1 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left > .post-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left #editor > .md-editor:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: max-content max-content minmax(0, 1fr) !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+  row-gap: 0 !important;
+  padding: 18px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] #nsk-body-left #editor > .md-editor:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  grid-column: 1 / -1 !important;
+  order: -10 !important;
+  margin: 0 0 16px !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > :is(.title-input, #editor-body, .nsmax-new-hint):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nspp-upload-status:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > :is(label, select):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 1 / -1 !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: contents !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > :is(span, i, svg):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 字段的小标题：sb.sb .form-group label——14px/500、正文色，和输入框隔 8px；字段之间 16px */
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > label:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input:is(#nsmax-lv, *):is(#nsmax-b, *)::before,
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .nsmax-editor-heading:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .nsmax-editor-status:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > label[for="category"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 1 !important;
+  margin-bottom: 2px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .nsmax-new-hint:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 2 !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select#category:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 3 !important;
+  margin: 0 0 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 4 !important;
+  margin: 0 0 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 5 !important;
+  margin: 0 0 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nspp-upload-status:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 6 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > label[for="rank"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 7 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select#rank:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 8 !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 100% !important;
+  max-width: none !important;
+  height: 40px !important;
+  font-size: 14px !important;
+}
+/* 发布帖子 + 一键抽奖：同一行，靠左；卡片底边只留 20px（以前按钮下面空出一大截） */
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > :is(button.submit, .submit.btn):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 1 !important;
+  order: 9 !important;
+  margin: 20px 0 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nsmax-lucky-trigger:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 !important;
+  order: 10 !important;
+  margin: 20px 0 0 !important;
+}
+/* 签到页照 sb.sb /checkin/：最上面「每日签到」卡（大字连续签到天数 + 签到按钮，四格统计，本月日历），下面排行榜。
+   站点自己那一行（今日签到获得鸡腿 N 个…… / 今日还未签到 + 两个按钮）的文字和按钮都进了卡片，原来那一行收起 */
+html[data-nsmax-theme] .board > .head-info:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .board > .nsmax-checkin:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  margin: 0 0 var(--gap) !important;
+  padding: 18px 20px 20px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin > .nsmax-checkin-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text-strong) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin > .nsmax-checkin-title:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-top:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--mark-soft-text) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 40px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-side:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  text-align: right !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 7px 18px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button.primary:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button.primary:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:disabled:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  cursor: default !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-note:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  max-width: 420px !important;
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 18px 0 0 !important;
+  padding: 14px 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats > div:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats dd:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats dt:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-month:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 16px 0 10px !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-calendar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-weekday:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 0 2px !important;
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  text-align: center !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  box-sizing: border-box !important;
+  height: 56px !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-family: var(--font-mono) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > i:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 11.5px !important;
+  font-style: normal !important;
+  line-height: 1.2 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-signed]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--mark) !important;
+  color: var(--mark-text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-today]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--text-strong) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-future]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--line) !important;
+  border-style: dashed !important;
+  background: transparent !important;
+  color: var(--text-subtle) !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-top:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex-direction: column !important;
+  }
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-side:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    height: 42px !important;
+  }
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > i:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    display: none !important;
+  }
+}
+/* 排行榜里每人得到的鸡腿：照 sb.sb 今日签到板的「+3 饼」小胶囊——「+14 鸡腿」（站点只写数字） */
+html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 1px 8px !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--mark-soft) !important;
+  color: var(--mark-soft-text) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "+" !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: " 鸡腿" !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 500 !important;
+}
+/* 一键抽奖弹窗：sb.sb 表单（字段小标题 13.5px/500、40px 输入框、两项并排），下面是发出去以后抽奖卡片的预览 */
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-intro:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 0 14px !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-field:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  margin: 0 0 12px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-label:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-hint:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 38px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog textarea.nsmax-lucky-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: auto !important;
+  min-height: 72px !important;
+  padding: 8px 12px !important;
+  line-height: 1.6 !important;
+  resize: vertical !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
+  outline: none !important;
+  border-color: var(--field-focus) !important;
+  box-shadow: 0 0 0 3px var(--field-ring) !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-row:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-presets:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin: -4px 0 12px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-chip:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 3px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-chip:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-check:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 12px !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-check > input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  accent-color: var(--action) !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-preview:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 6px 0 0 !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 12px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card-head:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 0 0 8px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card-head > strong:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card-head > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card-clock:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 0 8px !important;
+  padding: 6px 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card-table:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  gap: 4px 16px !important;
+  padding: 0 0 8px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card-table > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card-table > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  overflow: hidden !important;
+  color: var(--text-strong) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-card > p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 8px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-error:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 10px 0 0 !important;
+  color: var(--danger) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-error[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+@media (max-width: 600px) {
+  html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-row:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+}
+/* 字号对齐 sb.sb（2026-10-18 第七批，逐页在 sb.sb 上量过）：
+   通知每一条的名字和列表标题一样大（sb.sb .notification-item .post-title：列表标题字号 / 500，以前 14px/600 显得比别的页面小一截），
+   时间 12.5px；资料卡菜单 13.5px（sb.sb .nav-user-item）；顶栏搜索框 14px（sb.sb .search-input） */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-main > .nspp-messages-peer-title > strong:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-strong) !important;
+  font-size: var(--nsmax-list-title) !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-main > .nspp-messages-peer-title > time:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 13.5px !important;
+}
+html[data-nsmax-theme] #nsk-head :is(input[data-nsmax-header-search], [data-nsmax-header-search] input, form.search-box input):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 14px !important;
+}
+/* 签到页（sb.sb /checkin/ 量的）：连续天数 52px/700、说明 13px、按钮 14px/500、月份 14px/500、日期数字 13px；
+   排行标题 15px/600，每行名字 13.5px/600，「+N 鸡腿」11.5px/600 */
+html[data-nsmax-theme] .nsmax-checkin > .nsmax-checkin-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 52px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 14px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-month:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board h1:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .member-name :is(a, span):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .member-name:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 11.5px !important;
+}
+/* 签到页：外层不再是一张卡片（以前「每日签到」卡套在排行榜那张卡片里），「每日签到」和排行榜各自一张卡片，中间隔 20px */
+html[data-nsmax-theme][data-nsmax-page="board"] section#nsk-frame > .board:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] section#nsk-frame > .board > div:not(.head-info):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  padding: 18px 20px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
 }

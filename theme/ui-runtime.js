@@ -507,6 +507,7 @@
 			return;
 		}
 		nsmaxRememberSpecialPost(id, nsmaxSpecialKindsOf(op));
+		nsmaxRememberLotteryTime(id, nsmaxLotteryTimeOf(op));
 		nsmaxMarkSpecialChecked(id);
 	}
 	async function nsmaxRunSpecialQueue(ctx) {
@@ -654,6 +655,7 @@
 		const op = postId && document.querySelector(".nsk-post article.post-content");
 		if (op) {
 			nsmaxRememberSpecialPost(postId, nsmaxSpecialKindsOf(op));
+			nsmaxRememberLotteryTime(postId, nsmaxLotteryTimeOf(op));
 			// 整页解析完才算「查过」：解析到一半时正文还不全，记成「不是」以后就不会再认
 			if (document.readyState !== "loading") nsmaxMarkSpecialChecked(postId);
 		}
@@ -663,7 +665,14 @@
 			if (!link) continue;
 			const id = (link.getAttribute("href") || "").match(/\/post-(\d+)/)?.[1] || postId;
 			// 只有确认正文里有开奖链接的才挂「抽奖」；投票帖不再挂小标（2026-10-18）
-			nsmaxTopicBadge(title, link, "nsmax-prize-badge", "抽奖", (id && known.get(id) || "").split(",").includes("lottery"));
+			const lottery = (id && known.get(id) || "").split(",").includes("lottery");
+			// 到了开奖时间（sb.sb .lottery-badge-done + .special-ended）：「抽奖」变成细线框灰字，后面多一个「已结束」
+			const time = lottery ? nsmaxLotteryTimes().get(id) : 0;
+			const ended = !!time && time <= Date.now();
+			nsmaxTopicBadge(title, link, "nsmax-prize-badge", "抽奖", lottery);
+			const badge = title.querySelector(":scope > .nsmax-prize-badge");
+			if (badge) nsmaxFlag(badge, "data-ended", ended);
+			nsmaxTopicBadge(title, link, "nsmax-ended-badge", "已结束", lottery && ended);
 			title.querySelector(":scope > .nsmax-poll-badge")?.remove();
 		}
 	}
@@ -684,9 +693,50 @@
 			if (head) nsmaxSetAttr(head, "data-nsmax-total", (kind ? kind + " · " : "") + `${total} 票`);
 		}
 	}
-	// 帖子里的开奖链接（/lucky?post=…&time=开奖时间&count=中奖人数&start=起始楼层&duplicate=可否重复中奖）：
-	// 在链接所在段落后面放一张 sb.sb .lottery-widget 样式的抽奖卡片——标题栏、倒计时（天 时 分 秒）、开奖时间 / 中奖人数 / 起始楼层，
-	// 「查看开奖」打开站点的开奖页，「回复参与」跳到回复框。原来那条只有一个链接的段落收起
+	// 开奖时间记在本机（帖子 ID → 时间，最多 400 篇）：列表里已经到了开奖时间的抽奖帖，标签照 sb.sb 换成细线框的「抽奖」「已结束」
+	var NSMAX_LOTTERY_TIMES_KEY = "nsmax:lottery-times";
+	var nsmaxLotteryTimesMap;
+	function nsmaxLotteryTimes() {
+		if (nsmaxLotteryTimesMap) return nsmaxLotteryTimesMap;
+		nsmaxLotteryTimesMap = new Map();
+		try {
+			for (const [id, time] of Object.entries(JSON.parse(localStorage.getItem(NSMAX_LOTTERY_TIMES_KEY) || "{}"))) if (Number.isFinite(time)) nsmaxLotteryTimesMap.set(id, time);
+		} catch {}
+		return nsmaxLotteryTimesMap;
+	}
+	function nsmaxRememberLotteryTime(id, time) {
+		if (!id || !Number.isFinite(time) || time <= 0) return;
+		const map = nsmaxLotteryTimes();
+		if (map.get(id) === time) return;
+		map.delete(id);
+		map.set(id, time);
+		while (map.size > 400) map.delete(map.keys().next().value);
+		try { localStorage.setItem(NSMAX_LOTTERY_TIMES_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
+	// 开奖链接（/lucky?post=…&time=开奖时间&count=中奖人数&start=起始楼层&duplicate=可否重复中奖）的参数；只认本站的 /lucky
+	function nsmaxLuckyParams(href) {
+		let url;
+		try { url = new URL(href, location.href); } catch { return null; }
+		const time = Number(url.searchParams.get("time"));
+		if (url.origin !== location.origin || url.pathname !== "/lucky" || !Number.isFinite(time) || time <= 0) return null;
+		return {
+			url,
+			time,
+			count: Math.max(1, Number(url.searchParams.get("count")) || 1),
+			start: Math.max(1, Number(url.searchParams.get("start")) || 1),
+			duplicate: url.searchParams.get("duplicate") === "true"
+		};
+	}
+	function nsmaxLotteryTimeOf(op) {
+		for (const link of op.querySelectorAll('a[href*="/lucky?"]')) {
+			const params = nsmaxLuckyParams(link.getAttribute("href") || "");
+			if (params) return params.time;
+		}
+		return 0;
+	}
+	// 帖子里的开奖链接：照 sb.sb 的 .lottery-widget（2026-10-18 第七批重排）——标题栏（图标、「抽奖」、右边「进行中 / 已结束」）、
+	// 倒计时条（中文单位 天 时 分 秒，不足一天不显示「天」）、奖品 / 名额 / 中奖者小表、一行说明、「N 条回复 · 从 1 楼起 · 共 N 个名额」、
+	// 前 12 位参与人小胶囊（#楼号 名字）、「回复参与」「查看开奖」。原来那条只有一个链接的段落收起
 	var nsmaxLotteryCards = new Set();
 	var nsmaxLotteryTimer = 0;
 	function nsmaxLotteryTick() {
@@ -699,13 +749,17 @@
 			const left = Number(card.dataset.nsmaxTime) - now;
 			const state = left <= 0 ? "done" : left <= 3e5 ? "imminent" : left <= 36e5 ? "soon" : "open";
 			nsmaxSetAttr(card, "data-state", state);
-			const label = card.querySelector(".nsmax-lottery-state");
-			nsmaxSetText(label, state === "done" ? "已到开奖时间" : "进行中");
+			nsmaxSetText(card.querySelector(".nsmax-lottery-state"), state === "done" ? "已结束" : "进行中");
+			nsmaxSetText(card.querySelector(".nsmax-lottery-label"), state === "done" ? `已于 ${card.dataset.nsmaxWhen} 开奖` : "距开奖");
+			nsmaxSetText(card.querySelector(".nsmax-lottery-winners"), state === "done" ? "已开奖，点「查看开奖」" : "未开奖");
 			const parts = left <= 0 ? [0, 0, 0, 0] : [Math.floor(left / 864e5), Math.floor(left / 36e5) % 24, Math.floor(left / 6e4) % 60, Math.floor(left / 1e3) % 60];
-			card.querySelectorAll(".nsmax-lottery-clock b").forEach((b, i) => {
+			card.querySelectorAll(".nsmax-lottery-clock > .nsmax-lottery-seg").forEach((seg, i) => {
+				const hidden = i === 0 && parts[0] === 0;
+				if (seg.hidden !== hidden) seg.hidden = hidden;
+				const b = seg.firstElementChild;
 				const text = i === 0 ? String(parts[i]) : String(parts[i]).padStart(2, "0");
 				// 只改文字节点（characterData），不替换子节点：页面观察器只看增删节点，倒计时不会触发整页整理
-				if (b.firstChild && b.firstChild.data !== text) b.firstChild.data = text;
+				if (b?.firstChild && b.firstChild.data !== text) b.firstChild.data = text;
 			});
 		}
 		if (!nsmaxLotteryCards.size) {
@@ -713,50 +767,131 @@
 			nsmaxLotteryTimer = 0;
 		}
 	}
+	// 一键抽奖发出去以后（见编辑器里的 nsmaxOpenLuckyModal）：站点跳到新帖子，这里按新帖子的编号生成开奖链接，
+	// 用站点自己的编辑接口（/api/content/edit-discussion，和站点编辑器发的一样）把正文里「开奖链接：发布后自动生成」换成链接，再刷新。
+	// 只认 15 分钟内、标题对得上、楼主是自己、正文里还没有开奖链接的帖子；失败时把链接给出来，可以复制后手动编辑
+	var NSMAX_LUCKY_PENDING = "nsmax:lucky:pending";
+	var nsmaxLuckyFinishing = false;
+	function nsmaxFinishLuckyPost() {
+		if (nsmaxLuckyFinishing) return;
+		let pending;
+		try { pending = JSON.parse(localStorage.getItem(NSMAX_LUCKY_PENDING) || "null"); } catch { return; }
+		if (!pending) return;
+		if (!(Date.now() - pending.at < 9e5)) {
+			try { localStorage.removeItem(NSMAX_LUCKY_PENDING); } catch {}
+			return;
+		}
+		const config = unsafeWindow$1.__config__;
+		const post = config?.postData;
+		const postId = Number(post?.postId || location.pathname.match(/^\/post-(\d+)/)?.[1]);
+		const op = post?.comments?.find?.((comment) => Number(comment?.floorIndex) === 0) || post?.comments?.[0];
+		const me = config?.user?.member_id;
+		const mine = op?.poster?.isMe === true || me !== undefined && String(op?.poster?.uid ?? op?.poster?.member_id) === String(me);
+		if (!postId || !op || !mine || String(post.title || "").trim() !== String(pending.title || "").trim()) return;
+		const markdown = String(op.markdown ?? "");
+		if (!markdown || /\/lucky\?/.test(markdown)) {
+			try { localStorage.removeItem(NSMAX_LUCKY_PENDING); } catch {}
+			return;
+		}
+		nsmaxLuckyFinishing = true;
+		try { localStorage.removeItem(NSMAX_LUCKY_PENDING); } catch {}
+		const url = `${location.origin}/lucky?post=${postId}&time=${pending.time}&count=${pending.count}&start=${pending.start}&duplicate=${pending.duplicate ? "true" : "false"}`;
+		const line = `- **开奖链接**：[查看开奖](${url})`;
+		const content = /- \*\*开奖链接\*\*：发布后自动生成/.test(markdown) ? markdown.replace(/- \*\*开奖链接\*\*：发布后自动生成/, line) : `${markdown.replace(/\s+$/, "")}${String.fromCharCode(10, 10)}${line}`;
+		const token = Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) => byte.toString(16).padStart(2, "0")).join("");
+		nsmaxToast("正在生成开奖链接…");
+		fetch("/api/content/edit-discussion", {
+			method: "POST",
+			credentials: "same-origin",
+			headers: { "Content-Type": "application/json", "csrf-token": token },
+			body: JSON.stringify({ content, mode: "edit-discussion", title: post.title, postId, rank: Number(post.rank) || 0 })
+		}).then((res) => res.json()).then((json) => {
+			if (!json?.success) throw new Error(json?.message || "编辑失败");
+			nsmaxToast("开奖链接已补进帖子");
+			setTimeout(() => location.reload(), 600);
+		}).catch((error) => {
+			nsmaxToast(`开奖链接没补上（${error?.message || "请稍后再试"}），已复制链接，编辑帖子贴进去就行`, { error: true });
+			try { navigator.clipboard?.writeText(url); } catch {}
+		});
+	}
+	// 奖品：正文里写着「奖品：…」的那一行；没有就用标题（去掉「【抽奖】」「抽奖：」）
+	function nsmaxLotteryPrize(article) {
+		for (const node of article.querySelectorAll("li, p, td, h2, h3, h4")) {
+			if (node.closest(".nsmax-lottery")) continue;
+			const match = node.textContent.match(/奖品\s*[:：]\s*(.+)/);
+			if (match) return match[1].replace(/\s+/g, " ").trim().slice(0, 80);
+		}
+		const title = document.querySelector(".nsk-post > .post-title h1, .post-title h1")?.textContent || "";
+		return title.replace(/^\s*(?:【\s*抽奖\s*】|\[\s*抽奖\s*\]|抽奖\s*[:：])\s*/, "").trim().slice(0, 80) || "见正文";
+	}
+	// 参与人：已经加载出来的楼层里，从起始楼层起回复的人（按楼层先后、同一个人只算一次）
+	function nsmaxLotteryEntrants(start) {
+		const people = [];
+		const seen = new Set();
+		for (const item of document.querySelectorAll("ul.comments li.content-item")) {
+			const floor = Number(item.id);
+			const name = item.querySelector(".author-info > a.author-name")?.textContent.trim();
+			if (!Number.isFinite(floor) || floor < start || !name || seen.has(name)) continue;
+			seen.add(name);
+			people.push([floor, name]);
+		}
+		return people.sort((a, b) => a[0] - b[0]);
+	}
 	function nsmaxPrepareLottery() {
 		for (const link of document.querySelectorAll('article.post-content a[href*="/lucky?"]:not([data-nsmax-lottery])')) {
 			// 卡片自己的「查看开奖」也是开奖链接：不跳过的话下一轮扫描又按它生成一张卡片，一层套一层
 			if (link.closest(".nsmax-lottery")) continue;
-			let url;
-			try { url = new URL(link.href, location.href); } catch { continue; }
-			const time = Number(url.searchParams.get("time"));
-			if (url.origin !== location.origin || url.pathname !== "/lucky" || !Number.isFinite(time) || time <= 0) continue;
+			const params = nsmaxLuckyParams(link.href);
+			if (!params) continue;
+			const { url, time, count, start, duplicate } = params;
 			link.setAttribute("data-nsmax-lottery", "");
-			const count = Math.max(1, Number(url.searchParams.get("count")) || 1);
-			const start = Math.max(1, Number(url.searchParams.get("start")) || 1);
+			const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
+			if (postId && link.closest(".nsk-post")) nsmaxRememberLotteryTime(postId, time);
 			const make = (tag, className, text) => {
 				const el = document.createElement(tag);
 				if (className) el.className = className;
 				if (text !== undefined) el.textContent = text;
 				return el;
 			};
+			const date = new Date(time);
+			const pad = (n) => String(n).padStart(2, "0");
 			const card = make("div", "nsmax-lottery");
 			card.dataset.nsmaxTime = String(time);
+			card.dataset.nsmaxWhen = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 			const head = make("div", "nsmax-lottery-head");
 			head.append(make("span", "nsmax-lottery-icon"), make("strong", "", "抽奖"), make("span", "nsmax-lottery-state"));
 			const countdown = make("div", "nsmax-lottery-countdown");
 			const clock = make("span", "nsmax-lottery-clock");
-			for (const unit of ["d", "h", "m", "s"]) {
+			for (const unit of ["天", "时", "分", "秒"]) {
 				const seg = make("span", "nsmax-lottery-seg");
 				seg.append(make("b", "", "0"), make("i", "nsmax-lottery-unit", unit));
 				clock.append(seg);
 			}
 			countdown.append(make("span", "nsmax-lottery-label", "距开奖"), clock);
-			const date = new Date(time);
-			const pad = (n) => String(n).padStart(2, "0");
-			const meta = make("div", "nsmax-lottery-meta");
-			const item = (label, value, suffix = "") => {
-				const span = make("span", "", label + " ");
-				span.append(make("b", "", value));
-				if (suffix) span.append(suffix);
-				return span;
-			};
-			meta.append(
-				item("开奖时间", `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`),
-				item("中奖", String(count), " 人"),
-				item("从", "#" + start, " 楼起"),
-				make("span", "", url.searchParams.get("duplicate") === "true" ? "可以重复中奖" : "每人最多中一次")
-			);
+			// 奖品 / 名额 / 中奖者（sb.sb .lottery-prizes 小表）
+			const table = make("table", "nsmax-lottery-table");
+			const thead = make("thead");
+			const headRow = make("tr");
+			headRow.append(make("th", "", "奖品"), make("th", "", "名额"), make("th", "", "中奖者"));
+			thead.append(headRow);
+			const tbody = make("tbody");
+			const row = make("tr");
+			const article = link.closest("article.post-content") || document;
+			row.append(make("td", "nsmax-lottery-prize", nsmaxLotteryPrize(article)), make("td", "nsmax-lottery-count", String(count)), make("td", "nsmax-lottery-winners", "未开奖"));
+			tbody.append(row);
+			table.append(thead, tbody);
+			const note = make("p", "nsmax-lottery-note", `到开奖时间后，站点按回复的楼层抽出中奖者（从 ${start} 楼起，${duplicate ? "可以重复中奖" : "每人最多中一次"}），点「查看开奖」看结果。`);
+			// 「N 条回复 · 从 1 楼起 · 共 N 个名额」+ 前 12 位参与人
+			const stat = make("div", "nsmax-lottery-stat");
+			const replies = Number((document.querySelector(".nsmax-reply-head")?.textContent.match(/(\d+)\s*条回复/) || [])[1]);
+			const entrants = nsmaxLotteryEntrants(start);
+			stat.append(make("span", "", `开奖 ${card.dataset.nsmaxWhen}`), make("span", "", `${Number.isFinite(replies) ? replies : entrants.length} 条回复`), make("span", "", `从 ${start} 楼起`), make("span", "", `共 ${count} 个名额`));
+			const people = make("div", "nsmax-lottery-people");
+			for (const [floor, name] of entrants.slice(0, 12)) {
+				const chip = make("a", "nsmax-lottery-person", `#${floor} ${name}`);
+				chip.href = `#${floor}`;
+				people.append(chip);
+			}
 			const actions = make("div", "nsmax-lottery-actions");
 			const view = make("a", "nsmax-lottery-view", "查看开奖");
 			view.setAttribute("data-nsmax-lottery", "");
@@ -775,8 +910,10 @@
 					else editor.querySelector("textarea:not(.CodeMirror textarea)")?.focus({ preventScroll: true });
 				}, 320);
 			});
-			actions.append(view, join);
-			card.append(head, countdown, meta, actions);
+			actions.append(join, view);
+			card.append(head, countdown, table, note, stat);
+			if (people.childElementCount) card.append(people);
+			card.append(actions);
 			const block = link.closest("p, li, blockquote") || link;
 			if (block !== link && block.textContent.trim() === link.textContent.trim()) block.setAttribute("data-nsmax-lottery-source", "");
 			else link.setAttribute("data-nsmax-lottery-source", "");
@@ -1444,6 +1581,17 @@
 	var NSMAX_MENTION_ONLY = /^\s*(?:@\S+(?:\s+(?:#\d+|\[#\d+\]\([^)\s]*\)))?\s*)+$/;
 	var NSMAX_FLOOR_MENTION = /(?:^|\s)@\S+\s+(?:#\d+(?!\d)|\[#\d+\]\()/;
 	var nsmaxComposer = null;
+	// 提交按钮上的字（2026-10-18 第七批）：没 @ 人是「回复楼主」；回复框挂在某一层下面时，@ 的是层主写「回复层主」，
+	// @ 的是楼中楼里别的人写「回复 某某」（以前一律写「回复层主」，回复楼中楼里的人也这么写）
+	function nsmaxReplyLabel(editor) {
+		const match = nsmaxEditorValue(editor).match(/(?:^|\s)@(\S+)\s+(?:#\d+(?!\d)|\[#\d+\]\()/);
+		if (!match) return "回复楼主";
+		const floor = editor.closest("li.content-item");
+		const host = floor?.querySelector(".author-name")?.textContent.trim();
+		const name = match[1];
+		if (!floor || !host || host === name) return "回复层主";
+		return `回复 ${name.length > 10 ? name.slice(0, 10) + "…" : name}`;
+	}
 	function nsmaxEditorValue(root) {
 		const cm = root?.querySelector(".CodeMirror")?.CodeMirror;
 		if (cm) return cm.getValue();
@@ -1536,6 +1684,13 @@
 			}
 			if (target.closest(".menu-item[data-nsmax-action='edit'], .nsmax-floor-edit, .nsmax-op-edit")) restore(false);
 		}, { capture: true, signal: ctx.signal });
+		// 回复框挂在某一层下面时按 Esc：和「取消回复」一样放回页面底部（只有「@某某 #楼号」时一起清掉，写了别的内容照样留着）
+		md.addEventListener("keydown", (event) => {
+			if (event.key !== "Escape" || !host.hasAttribute("data-nsmax-inline") || document.querySelector("dialog[open]")) return;
+			const floor = host.closest("li.content-item");
+			restore(true);
+			floor?.scrollIntoView({ block: "nearest" });
+		}, { signal: ctx.signal });
 		nsmaxComposer = { host, md, moveTo, restore };
 		ctx.signal.addEventListener("abort", () => {
 			restore(false);
@@ -1705,6 +1860,7 @@
 			for (const child of row.children) nsmaxFlag(child, "data-nsmax-ed-toolwrap", !child.matches(".mde-toolbar") && !!child.querySelector(".mde-toolbar"));
 		}
 		for (const field of document.querySelectorAll(".md-editor .topic-select > div")) nsmaxFlag(field, "data-nsmax-topic-field", !!field.querySelector("select, .category-select") || !field.querySelector("button"));
+		if (/^\/new-discussion(?:\/|$)/.test(location.pathname)) nsmaxNewPostHint();
 		// 通知 / 私信：消息中心已接管时原生标签栏隐藏；原生「全部已读」按钮外层
 		for (const box of document.querySelectorAll(".nsk-notification")) {
 			nsmaxFlag(box, "data-nsmax-msgcenter", !!box.querySelector(".nspp-messages"));
@@ -1784,6 +1940,208 @@
 	}
 	// 首帧前就要完成的界面整理：页面解析阶段每解析出一段执行一次（parsed 判断元素是否已解析完），
 	// 之后 mountLeanUi 的 scan 也调用同一套（都可重复执行），所以首屏就是最终的样子，不会先显示原样再变。
+	// 签到页（/board，照 sb.sb /checkin/，2026-10-18 第七批）：最上面一张「每日签到」卡——左边大字连续签到天数，右边签到按钮
+	// （还没签时是站点的「鸡腿 x 5」「试试手气」，点的就是站点自己的按钮；签过了是灰的「今日已签到」），下面四格：今日获得、今日排名、
+	// 本月签到、今日签到人数，再下面本月日历（签过的日子黄底，今天细框）。哪天签过：账簿里「签到收益N个鸡腿」那几条（按北京时间算日子），
+	// 记在本机，下次只读新增的几页；排名、签到人数取站点签到排行接口
+	function nsmaxBeijingDay(time) {
+		return new Date(time + 8 * 36e5).toISOString().slice(0, 10);
+	}
+	function nsmaxShiftDay(day, delta) {
+		return new Date(Date.parse(day + "T00:00:00Z") + delta * 864e5).toISOString().slice(0, 10);
+	}
+	var NSMAX_CHECKIN_KEY = "nsmax:checkin:";
+	function nsmaxCheckinRecord(uid) {
+		try {
+			const value = JSON.parse(localStorage.getItem(NSMAX_CHECKIN_KEY + uid) || "null");
+			if (value && typeof value.days === "object") return value;
+		} catch {}
+		return { days: {}, newest: "", oldest: "" };
+	}
+	function nsmaxCheckinSave(uid, record) {
+		const days = Object.keys(record.days).sort().reverse().slice(0, 400);
+		record.days = Object.fromEntries(days.map((day) => [day, record.days[day]]));
+		try { localStorage.setItem(NSMAX_CHECKIN_KEY + uid, JSON.stringify(record)); } catch {}
+	}
+	// 连续签到：今天签了从今天往前数，还没签从昨天往前数；数到读过的最早一天还没断时，前面没读过的不算
+	function nsmaxCheckinStreak(record, today) {
+		let day = record.days[today] !== undefined ? today : nsmaxShiftDay(today, -1);
+		let streak = 0;
+		while (record.days[day] !== undefined) {
+			streak++;
+			day = nsmaxShiftDay(day, -1);
+		}
+		return { streak, complete: !record.oldest || day >= record.oldest };
+	}
+	var nsmaxCheckinState = { loading: false, board: null };
+	function nsmaxCheckinPage() {
+		const board = document.querySelector("section#nsk-frame > .board");
+		const head = board?.querySelector(":scope > .head-info");
+		if (!board || !head) return;
+		const make = (tag, className, text) => {
+			const el = document.createElement(tag);
+			if (className) el.className = className;
+			if (text !== undefined) el.textContent = text;
+			return el;
+		};
+		let card = board.querySelector(":scope > .nsmax-checkin");
+		if (!card) {
+			card = make("section", "nsmax-checkin");
+			const top = make("div", "nsmax-checkin-top");
+			const streak = make("div", "nsmax-checkin-streak");
+			streak.append(make("b", "", "—"), make("span", "", "连续签到（天）"));
+			const side = make("div", "nsmax-checkin-side");
+			side.append(make("div", "nsmax-checkin-actions"), make("p", "nsmax-checkin-note"));
+			top.append(streak, side);
+			const stats = make("dl", "nsmax-checkin-stats");
+			for (const [key, label] of [["gain", "今日获得"], ["order", "今日排名"], ["month", "本月签到"], ["total", "今日签到人数"]]) {
+				const cell = make("div");
+				cell.dataset.key = key;
+				cell.append(make("dd", "", "—"), make("dt", "", label));
+				stats.append(cell);
+			}
+			const month = make("div", "nsmax-checkin-month");
+			const calendar = make("div", "nsmax-checkin-calendar");
+			card.append(make("h2", "nsmax-checkin-title", "每日签到"), top, stats, month, calendar);
+			board.prepend(card);
+		}
+		// 站点自己那一行（「今日签到获得鸡腿9个，当前排名第288」或「今日还未签到」+ 两个按钮）：文字放进卡片，按钮换成卡片里的同名按钮
+		const text = head.textContent.replace(/\s+/g, " ").trim();
+		const done = /获得鸡腿\s*\d+\s*个|已签到/.test(text);
+		const gain = Number(text.match(/获得鸡腿\s*(\d+)\s*个/)?.[1]);
+		const order = Number(text.match(/排名第\s*(\d+)/)?.[1]);
+		nsmaxSetText(card.querySelector(".nsmax-checkin-note"), done ? text : "今天还没签到，签到领鸡腿；「试试手气」随机 1–10 个。");
+		const actions = card.querySelector(".nsmax-checkin-actions");
+		const nativeButtons = Array.from(head.querySelectorAll("button, a.btn, .pure-button")).filter((button) => button.textContent.trim());
+		const signature = done ? "done" : nativeButtons.map((button) => button.textContent.trim()).join("|");
+		if (actions.dataset.signature !== signature) {
+			actions.dataset.signature = signature;
+			actions.replaceChildren();
+			if (done || !nativeButtons.length) {
+				const button = make("button", "nsmax-checkin-button", done ? "今日已签到" : "签到");
+				button.type = "button";
+				button.disabled = done;
+				if (!done) button.addEventListener("click", () => { location.href = "/board"; });
+				actions.append(button);
+			} else {
+				nativeButtons.forEach((native, index) => {
+					const button = make("button", "nsmax-checkin-button" + (index === 0 ? " primary" : ""), native.textContent.replace(/\s+/g, " ").trim());
+					button.type = "button";
+					button.addEventListener("click", () => native.click());
+					actions.append(button);
+				});
+			}
+		}
+		card.toggleAttribute("data-done", done);
+		const cell = (key) => card.querySelector(`.nsmax-checkin-stats > [data-key="${key}"] > dd`);
+		const live = nsmaxCheckinState.board;
+		nsmaxSetText(cell("gain"), Number.isFinite(gain) ? `${gain} 鸡腿` : live?.record?.gain ? `${live.record.gain} 鸡腿` : "—");
+		nsmaxSetText(cell("order"), Number.isFinite(order) ? `第 ${order}` : live?.order ? `第 ${live.order}` : "—");
+		if (live?.total) nsmaxSetText(cell("total"), String(live.total));
+		nsmaxCheckinCalendar(card);
+		const uid = unsafeWindow$1.__config__?.user?.member_id;
+		if (uid && !nsmaxCheckinState.loading && document.readyState !== "loading") {
+			nsmaxCheckinState.loading = true;
+			nsmaxLoadCheckin(uid, card).catch(() => {});
+		}
+	}
+	function nsmaxCheckinCalendar(card) {
+		const uid = unsafeWindow$1.__config__?.user?.member_id;
+		const record = uid ? nsmaxCheckinRecord(uid) : { days: {}, oldest: "" };
+		const today = nsmaxBeijingDay(Date.now());
+		const [year, month] = today.split("-").map(Number);
+		const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
+		const first = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
+		const prefix = today.slice(0, 8);
+		const signed = Object.keys(record.days).filter((day) => day.startsWith(prefix));
+		const { streak, complete } = nsmaxCheckinStreak(record, today);
+		nsmaxSetText(card.querySelector(".nsmax-checkin-streak > b"), uid && (record.newest || signed.length) ? `${streak}${complete ? "" : "+"}` : "—");
+		nsmaxSetText(card.querySelector('.nsmax-checkin-stats > [data-key="month"] > dd'), uid && record.newest ? `${signed.length} 天` : "—");
+		nsmaxSetText(card.querySelector(".nsmax-checkin-month"), `${year} 年 ${month} 月`);
+		const calendar = card.querySelector(".nsmax-checkin-calendar");
+		const signature = `${prefix}|${signed.sort().join(",")}|${today}`;
+		if (calendar.dataset.signature === signature) return;
+		calendar.dataset.signature = signature;
+		const tiles = [];
+		for (const label of ["一", "二", "三", "四", "五", "六", "日"]) {
+			const head = document.createElement("span");
+			head.className = "nsmax-checkin-weekday";
+			head.textContent = label;
+			tiles.push(head);
+		}
+		for (let i = 0; i < first; i++) tiles.push(Object.assign(document.createElement("span"), { className: "nsmax-checkin-blank" }));
+		for (let d = 1; d <= days; d++) {
+			const day = prefix + String(d).padStart(2, "0");
+			const tile = document.createElement("span");
+			tile.className = "nsmax-checkin-day";
+			const number = document.createElement("b");
+			number.textContent = String(d);
+			tile.append(number);
+			const gain = record.days[day];
+			if (gain !== undefined) {
+				tile.setAttribute("data-signed", "");
+				const small = document.createElement("i");
+				small.textContent = `+${gain}`;
+				tile.append(small);
+				tile.title = `${day} 签到获得 ${gain} 个鸡腿`;
+			}
+			if (day === today) tile.setAttribute("data-today", "");
+			else if (day > today) tile.setAttribute("data-future", "");
+			tiles.push(tile);
+		}
+		calendar.replaceChildren(...tiles);
+	}
+	async function nsmaxLoadCheckin(uid, card) {
+		const json = (url) => fetch(url, { credentials: "same-origin" }).then((res) => res.json());
+		// 今日排名、今日签到人数
+		json("/api/attendance/board?page=1").then((data) => {
+			if (!data?.success && !Array.isArray(data?.list)) return;
+			nsmaxCheckinState.board = { total: data.total, order: data.order, record: data.record };
+			nsmaxCheckinPage();
+		}).catch(() => {});
+		// 哪天签过：从账簿第一页往后读，读到上次读过的那一天、并且本月和连续签到都数清楚了就停（最多 40 页）
+		const record = nsmaxCheckinRecord(uid);
+		const today = nsmaxBeijingDay(Date.now());
+		const monthStart = today.slice(0, 8) + "01";
+		const previous = record.newest;
+		let oldestSeen = today;
+		for (let page = 1; page <= 40; page++) {
+			const data = await json(`/api/account/credit/page-${page}`);
+			const rows = Array.isArray(data?.data) ? data.data : [];
+			for (const row of rows) {
+				const [, , reason, time] = Array.isArray(row) ? row : [];
+				const at = Date.parse(time);
+				if (!Number.isFinite(at)) continue;
+				const day = nsmaxBeijingDay(at);
+				if (day < oldestSeen) oldestSeen = day;
+				const match = /签到收益\s*(\d+)\s*个鸡腿/.exec(reason || "");
+				if (match) record.days[day] = Number(match[1]);
+			}
+			record.newest = today;
+			if (!record.oldest || oldestSeen < record.oldest) record.oldest = oldestSeen;
+			nsmaxCheckinSave(uid, record);
+			nsmaxCheckinCalendar(card);
+			if (rows.length < 20) break;
+			const overlap = previous && oldestSeen < previous;
+			const monthDone = record.oldest < monthStart;
+			const streakDone = nsmaxCheckinStreak(record, today).complete;
+			if (monthDone && streakDone && (overlap || !previous)) break;
+		}
+	}
+	// 发帖页（照 sb.sb /t/new/，2026-10-18 第七批）：「版块」下面一行弱化字说明，内容取站点「重要提醒」卡片里的几条规则
+	// （那张卡片由主题收起，sb.sb 也是把规则写在版块下面）。卡片还没解析出来时先不加，免得只有半句
+	function nsmaxNewPostHint() {
+		const editor = document.querySelector("#editor > .md-editor");
+		if (!editor || editor.querySelector(":scope > .nsmax-new-hint")) return;
+		const card = document.querySelector("#nsk-body-left > .post-content");
+		if (!card && document.readyState === "loading") return;
+		const rules = Array.from(card?.querySelectorAll("li") || [], (li) => li.textContent.replace(/\s+/g, " ").trim().replace(/[。；;，,]$/, "")).filter(Boolean);
+		const tail = card?.querySelector(":scope > p")?.textContent.replace(/\s+/g, " ").trim();
+		const hint = document.createElement("p");
+		hint.className = "nsmax-new-hint";
+		hint.textContent = `请选择正确的版块${rules.length ? "：" + rules.join("；") + "。" : "。"}${tail ? tail.replace(/[。.]?$/, "。") : ""}`;
+		editor.append(hint);
+	}
 	function nsmaxEarlyVisuals(parsed) {
 		const nav = document.querySelector("ul.nav-menu");
 		if (nav && (!parsed || parsed(nav))) nsmaxUpdateNavEssence();
@@ -1795,6 +2153,7 @@
 		nsmaxMarkLevels();
 		nsmaxApplyChineseTimes(parsed);
 		nsmaxTidySidebar();
+		if (/^\/board(?:\/|$)/.test(location.pathname)) nsmaxCheckinPage();
 		// 「抽奖」页：查过的抽奖帖首屏就显示、别的先不显示（没查过的等模块启动后在后台查）
 		if (nsmaxIsLotteryView()) nsmaxFilterLotteryRows();
 		if (!/^\/post-\d+/.test(location.pathname)) return;
@@ -2221,18 +2580,56 @@
 	function nsmaxSidePage(path = location.pathname) {
 		return /^\/(?:board|ruling)(?:\/|$)/.test(path);
 	}
-	function nsmaxPrepareSidePage() {
-		if (!nsmaxSidePage()) return;
-		const frame = document.querySelector("section#nsk-frame");
-		if (!frame || frame.querySelector(":scope > #nsk-body")) return;
-		nsmaxSetAttr(frame, "data-nsmax-side-page", "");
+	// 发帖页也有右栏（照 sb.sb /t/new/：表单 + 右边资料卡、今日热门、最近浏览，2026-10-18 第七批）
+	function nsmaxNewPostPage(path = location.pathname) {
+		return /^\/new-discussion(?:\/|$)/.test(path);
+	}
+	// 自己的资料（名字、头像、等级、鸡腿、星辰、主题帖、评论数）：站点只在有右栏的页面给资料卡，在那些页面上记一份；
+	// 签到、管理记录、发帖这些脚本自己补右栏的页面先按记下的画（页面解析阶段站点配置还没出来），站点配置里有的数字再盖上去
+	var NSMAX_ACCOUNT_KEY = "nsmax:account";
+	function nsmaxStoredAccount() {
+		try {
+			const value = JSON.parse(localStorage.getItem(NSMAX_ACCOUNT_KEY) || "null");
+			return value && typeof value === "object" ? value : {};
+		} catch {
+			return {};
+		}
+	}
+	function nsmaxRememberAccount(data) {
+		const clean = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined && value !== null && value !== "" && !Number.isNaN(value)));
+		if (!Number.isSafeInteger(Number(clean.id))) return;
+		const stored = nsmaxStoredAccount();
+		const next = { ...(String(stored.id) === String(clean.id) ? stored : {}), ...clean };
+		if (Object.keys(next).every((key) => next[key] === stored[key])) return;
+		try { localStorage.setItem(NSMAX_ACCOUNT_KEY, JSON.stringify(next)); } catch {}
+	}
+	function nsmaxPrepareSidePage(early = false) {
+		const newPost = nsmaxNewPostPage();
+		if (!nsmaxSidePage() && !newPost) return;
 		if (document.getElementById("nsk-right-panel-container")) return;
+		const frame = document.querySelector("section#nsk-frame");
+		if (!frame) return;
+		let host;
+		if (newPost) {
+			host = document.getElementById("nsk-body");
+			if (!host || document.getElementById("nsk-body-left")?.parentElement !== host) return;
+		} else {
+			if (frame.querySelector(":scope > #nsk-body")) return;
+			nsmaxSetAttr(frame, "data-nsmax-side-page", "");
+			host = frame;
+		}
+		const config = unsafeWindow$1.__config__?.user;
+		const live = { id: config?.member_id, name: config?.member_name, rank: config?.rank, coin: config?.coin, stardust: config?.stardust, nPost: config?.nPost, nComment: config?.nComment };
+		const stored = nsmaxStoredAccount();
+		const user = { ...(live.id === undefined || String(stored.id) === String(live.id) ? stored : {}), ...Object.fromEntries(Object.entries(live).filter(([, value]) => value !== undefined && value !== null)) };
+		const id = Number(user.id);
+		const known = Number.isSafeInteger(id) && id > 0 && typeof user.name === "string" && !!user.name;
+		// 页面解析阶段只在记过资料时先画（站点配置在页面最后才有）；没记过的等页面解析完再补
+		if (early && !known) return;
 		const side = document.createElement("div");
 		side.id = "nsk-right-panel-container";
 		side.className = "nsmax-side-panel";
-		const user = unsafeWindow$1.__config__?.user;
-		const id = Number(user?.member_id);
-		if (Number.isSafeInteger(id) && id > 0 && typeof user.member_name === "string") {
+		if (known) {
 			const card = document.createElement("div");
 			card.className = "user-card";
 			const head = document.createElement("div");
@@ -2241,23 +2638,24 @@
 			picture.href = `/space/${id}`;
 			const avatar = document.createElement("img");
 			avatar.className = "avatar-normal";
-			avatar.src = `/avatar/${id}.png`;
-			avatar.alt = user.member_name;
+			avatar.src = user.avatar || `/avatar/${id}.png`;
+			avatar.alt = user.name;
 			picture.append(avatar);
 			const menu = document.createElement("div");
 			menu.className = "menu";
 			const name = document.createElement("a");
 			name.className = "Username";
 			name.href = `/space/${id}`;
-			name.textContent = user.member_name;
+			name.textContent = user.name;
 			menu.append(name);
 			head.append(picture, menu);
 			const stats = document.createElement("div");
 			stats.className = "user-stat";
-			const number = (value) => Number.isFinite(Number(value)) ? String(Number(value)) : "—";
+			const number = (value) => Number.isFinite(Number(value)) && value !== null && value !== "" ? String(Number(value)) : "—";
 			for (const [label, value] of [["等级", `Lv ${number(user.rank)}`], ["鸡腿", number(user.coin)], ["星辰", number(user.stardust)], ["主题帖", number(user.nPost)], ["评论数", number(user.nComment)]]) {
 				const cell = document.createElement("div");
 				const text = document.createElement("span");
+				text.dataset.nsmaxStat = label;
 				text.textContent = `${label} ${value}`;
 				cell.append(text);
 				stats.append(cell);
@@ -2271,7 +2669,25 @@
 			box.append(post);
 			side.append(card, box);
 		}
-		frame.append(side);
+		host.append(side);
+		// 站点配置里没有主题帖、评论数（签到、管理记录、发帖页都没有）：页面解析完读一次自己的资料补上
+		if (known && !early) nsmaxRefreshSideAccount(id);
+	}
+	function nsmaxRefreshSideAccount(id) {
+		fetch(`/api/account/getInfo/${id}`, { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
+			const data = json?.detail || json?.data;
+			if (!data || json?.success === false) return;
+			const values = { "等级": data.rank !== undefined ? `Lv ${data.rank}` : undefined, "鸡腿": data.coin, "星辰": data.stardust, "主题帖": data.nPost, "评论数": data.nComment };
+			let changed = false;
+			for (const span of document.querySelectorAll("#nsk-right-panel-container .user-card .user-stat [data-nsmax-stat]")) {
+				const value = values[span.dataset.nsmaxStat];
+				if (value === undefined || value === null) continue;
+				const text = `${span.dataset.nsmaxStat} ${value}`;
+				if (span.textContent !== text) { span.textContent = text; changed = true; }
+			}
+			nsmaxRememberAccount({ id, name: data.member_name, rank: data.rank, coin: data.coin, stardust: data.stardust, nPost: data.nPost, nComment: data.nComment });
+			if (changed) nsmaxBuildAccountCard();
+		}).catch(() => {});
 	}
 	// 右栏固定在顶栏下面、可以单独滚动（样式见主题第 33 节）：只认用户自己在右栏上的滚动（滚轮、触摸、键盘）；
 	// 页面别处的操作（切换 Markdown 编辑器、聚焦输入框……）让浏览器顺带滚了右栏的，滚回原位，资料卡不会被卷走半截
@@ -2426,10 +2842,11 @@
 			const button = editor.querySelector(":is(.topic-select, .submit-row) > button.submit");
 			const text = (button?.textContent || "").trim();
 			// 提交中按钮换成灰色的另一个按钮、字也不同：认不出的字沿用上一次的模式，标题栏不跟着闪
-			const mode = { "编辑帖子": "edit-discussion", "编辑评论": "edit-comment", "发布评论": "reply", "回复": "reply", "回复楼主": "reply", "回复层主": "reply" }[text] || editor.getAttribute("data-nsmax-editor-mode") || "reply";
+			const replyText = /^(?:发布评论|回复|回复楼主|回复层主)$/.test(text) || /^回复 \S/.test(text);
+			const mode = { "编辑帖子": "edit-discussion", "编辑评论": "edit-comment" }[text] || (replyText ? "reply" : "") || editor.getAttribute("data-nsmax-editor-mode") || "reply";
 			nsmaxSetAttr(editor, "data-nsmax-editor-mode", mode);
 			if (heading) nsmaxSetText(heading, mode === "edit-discussion" ? "编辑帖子" : mode === "edit-comment" ? "编辑回复" : "发表回复");
-			if (button && /^(?:发布评论|回复|回复楼主|回复层主)$/.test(text)) nsmaxSetText(button, NSMAX_FLOOR_MENTION.test(nsmaxEditorValue(editor)) ? "回复层主" : "回复楼主");
+			if (button && replyText) nsmaxSetText(button, nsmaxReplyLabel(editor));
 			const title = editor.querySelector(":scope > .title-input");
 			const body = editor.querySelector(":scope > #editor-body");
 			if (head && title) {
@@ -2541,6 +2958,7 @@
 			nsmaxPrepareSearch();
 			nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
+			if (/^\/board(?:\/|$)/.test(location.pathname)) nsmaxCheckinPage();
 			nsmaxPrepareFans();
 			nsmaxPrepareCredit();
 			nsmaxPrepareSetting();
@@ -2552,6 +2970,7 @@
 			const isPost = /^\/post-\d+/.test(location.pathname);
 			if (isPost) {
 				nsmaxDecoratePostDetail();
+				nsmaxFinishLuckyPost();
 			}
 			nsmaxTagStructure();
 			nsmaxBuildFooter();
@@ -2573,7 +2992,7 @@
 				editor.classList.add("nsmax-compact-reply");
 				const heading = document.createElement("h2");
 				heading.className = "nsmax-editor-heading";
-				heading.textContent = isPost ? "发表回复" : "编辑正文";
+				heading.textContent = isPost ? "发表回复" : "内容";
 				const controls = document.createElement("div");
 				controls.className = "nsmax-editor-controls";
 				const head = document.createElement("div"); head.className = "nsmax-editor-head"; head.append(heading);
@@ -2690,119 +3109,193 @@
 					mdeToolbar.hidden = !on;
 					cm?.refresh();
 				});
+				// 一键抽奖（2026-10-18 第七批，真的一键）：弹窗里填奖品、中奖人数、开奖时间、从几楼起、能否重复中奖、版块，
+				// 点「发布抽奖帖」——标题、正文、版块填进发帖表单，点站点自己的「发布帖子」发出去（内版收费确认等照常由站点弹）；
+				// 站点跳到新帖子后，脚本按新帖子的编号生成开奖链接（/lucky?post=…&time=…&count=…&start=…&duplicate=…），
+				// 用站点自己的编辑接口补进正文（见 nsmaxFinishLuckyPost）。不用再去开奖页生成链接、回来编辑
 				function nsmaxOpenLuckyModal(titleEl, setValueFn, cmInst, inputEl) {
-					let dialog = document.querySelector("dialog.nsmax-lucky-modal");
-					if (!dialog) {
-						dialog = document.createElement("dialog");
-						dialog.className = "nsmax-lucky-modal";
-						dialog.innerHTML = `
-							<div class="nsmax-lucky-head">
-								<h3>🎁 快捷抽奖配置</h3>
-								<button type="button" class="nsmax-lucky-close" aria-label="关闭">&times;</button>
-							</div>
-							<div class="nsmax-lucky-body">
-								<label class="nsmax-lucky-field">
-									<span>奖品名称</span>
-									<input type="text" class="nsmax-lucky-prize" placeholder="例如：50 鸡腿 / 香港轻量云 / 专属兑换码" value="50 鸡腿">
-								</label>
-								<div class="nsmax-lucky-row">
-									<label class="nsmax-lucky-field">
-										<span>中奖人数 (份)</span>
-										<input type="number" class="nsmax-lucky-count" min="1" max="100" value="1">
-									</label>
-									<label class="nsmax-lucky-field">
-										<span>开奖时间</span>
-										<input type="text" class="nsmax-lucky-time" value="24 小时后自动开奖">
-									</label>
-								</div>
-								<div class="nsmax-lucky-presets">
-									<span>快捷时间：</span>
-									<button type="button" data-preset="24 小时后">24小时后</button>
-									<button type="button" data-preset="48 小时后">48小时后</button>
-									<button type="button" data-preset="今晚 20:00">今晚20:00</button>
-									<button type="button" data-preset="手动开奖">手动开奖</button>
-								</div>
-								<label class="nsmax-lucky-field">
-									<span>参与方式</span>
-									<select class="nsmax-lucky-rule">
-										<option value="任意回复即可参与">任意回复即可参与</option>
-										<option value="回复指定关键词参与">回复指定关键词参与</option>
-										<option value="点赞或加鸡腿参与">点赞或加鸡腿参与</option>
-									</select>
-								</label>
-								<div class="nsmax-lucky-field">
-									<span>Markdown 正文预览</span>
-									<pre class="nsmax-lucky-preview"></pre>
-								</div>
-							</div>
-							<div class="nsmax-lucky-foot">
-								<button type="button" class="nsmax-lucky-cancel">取消</button>
-								<button type="button" class="nsmax-lucky-confirm primary">确认插入抽奖信息</button>
-							</div>
-						`;
-						document.body.append(dialog);
-
-						const prizeInput = dialog.querySelector(".nsmax-lucky-prize");
-						const countInput = dialog.querySelector(".nsmax-lucky-count");
-						const timeInput = dialog.querySelector(".nsmax-lucky-time");
-						const ruleSelect = dialog.querySelector(".nsmax-lucky-rule");
-						const previewEl = dialog.querySelector(".nsmax-lucky-preview");
-
-						const updatePreview = () => {
-							const prize = prizeInput.value.trim() || "奖品名称";
-							const count = countInput.value.trim() || "1";
-							const time = timeInput.value.trim() || "24 小时后";
-							const rule = ruleSelect.value;
-							const md = `# 🎁 抽奖信息\n\n- **奖品**：${prize} × ${count} 份\n- **参与方式**：${rule}\n- **开奖时间**：${time}\n- **开奖说明**：请按规则在本帖回复参与，开奖后会在本帖公布中奖楼层与名单。\n- **开奖链接**：[点此查看开奖结果](__POST_ID__) *(发布后替换为本帖链接)*\n\n---\n`;
-							previewEl.textContent = md;
-							return { prize, count, time, rule, md };
-						};
-
-						dialog.querySelectorAll(".nsmax-lucky-presets button").forEach(btn => {
-							btn.addEventListener("click", () => {
-								timeInput.value = btn.dataset.preset;
-								updatePreview();
-							});
-						});
-
-						[prizeInput, countInput, timeInput, ruleSelect].forEach(el => {
-							el.addEventListener("input", updatePreview);
-							el.addEventListener("change", updatePreview);
-						});
-
-						const close = () => {
-							if (typeof dialog.close === "function") dialog.close();
-							else dialog.removeAttribute("open");
-						};
-
-						dialog.querySelector(".nsmax-lucky-close").addEventListener("click", close);
-						dialog.querySelector(".nsmax-lucky-cancel").addEventListener("click", close);
-
-						dialog.querySelector(".nsmax-lucky-confirm").addEventListener("click", () => {
-							const { prize, md } = updatePreview();
-							const activeTitle = titleEl || document.querySelector(".post-title-input,[name=title],input[placeholder*='标题']");
-							if (activeTitle && !/抽奖/.test(activeTitle.value)) {
-								const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-								setter?.call(activeTitle, `抽奖：${activeTitle.value.trim() || prize}`);
-								activeTitle.dispatchEvent(new Event("input", { bubbles: true }));
-							}
-							const current = cmInst ? cmInst.getValue() : inputEl?.value || "";
-							if (!/开奖链接/.test(current)) {
-								const combined = current.trim() ? `${md}\n${current.trim()}` : md;
-								setValueFn(combined);
-							}
-							close();
-						});
-
-						dialog.addEventListener("keydown", e => {
-							if (e.key === "Escape") close();
-						});
-						dialog._updatePreview = updatePreview;
+					document.querySelector("dialog.nsmax-lucky-dialog")?.close();
+					const make = (tag, className, text) => {
+						const el = document.createElement(tag);
+						if (className) el.className = className;
+						if (text !== undefined) el.textContent = text;
+						return el;
+					};
+					const field = (label, control, hint) => {
+						const box = make("label", "nsmax-lucky-field");
+						box.append(make("span", "nsmax-lucky-label", label), control);
+						if (hint) box.append(make("small", "nsmax-lucky-hint", hint));
+						return box;
+					};
+					const input = (type, value, attrs = {}) => {
+						const el = make("input", "nsmax-lucky-input");
+						el.type = type;
+						el.value = value;
+						for (const [key, val] of Object.entries(attrs)) el.setAttribute(key, val);
+						return el;
+					};
+					const pad = (n) => String(n).padStart(2, "0");
+					const local = (time) => {
+						const date = new Date(time);
+						return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+					};
+					const nextHour = (hours) => {
+						const date = new Date(Date.now() + hours * 36e5);
+						date.setMinutes(0, 0, 0);
+						return date.getTime() + 36e5;
+					};
+					const evening = (days) => {
+						const date = new Date();
+						date.setDate(date.getDate() + days);
+						date.setHours(20, 0, 0, 0);
+						return date.getTime();
+					};
+					const dialog = make("dialog", "nsmax-dialog nsmax-lucky-dialog");
+					dialog.setAttribute("aria-label", "一键抽奖");
+					const head = make("header", "nsmax-dialog-head");
+					const closeButton = make("button", "nsmax-dialog-close");
+					closeButton.type = "button";
+					closeButton.setAttribute("aria-label", "关闭");
+					closeButton.append(toolIcon("close"));
+					head.append(make("h3", "", "一键抽奖"), closeButton);
+					const body = make("div", "nsmax-dialog-body");
+					const intro = make("p", "nsmax-lucky-intro", "填好下面几项，点「发布抽奖帖」直接发出去；发出去后脚本自动生成开奖链接补进正文（站点到开奖时间按回复楼层抽出中奖者）。");
+					const prize = input("text", "", { placeholder: "例如：50 鸡腿 / 香港小鸡一台 / 兑换码", maxlength: "60" });
+					const count = input("number", "1", { min: "1", max: "100" });
+					const when = input("datetime-local", local(nextHour(24)));
+					const presets = make("div", "nsmax-lucky-presets");
+					const tonight = new Date().getHours() < 19;
+					for (const [label, time] of [["24 小时后", () => nextHour(24)], ["48 小时后", () => nextHour(48)], [tonight ? "今晚 20:00" : "明晚 20:00", () => evening(tonight ? 0 : 1)], ["三天后 20:00", () => evening(3)]]) {
+						const chip = make("button", "nsmax-lucky-chip", label);
+						chip.type = "button";
+						chip.addEventListener("click", () => { when.value = local(time()); update(); });
+						presets.append(chip);
 					}
-
-					dialog._updatePreview();
+					const start = input("number", "1", { min: "1", max: "100000" });
+					const once = input("checkbox", "");
+					once.checked = true;
+					const onceBox = make("label", "nsmax-lucky-check");
+					onceBox.append(once, make("span", "", "每人最多中一次（同一个人回复多次只算一次）"));
+					const rule = input("text", "回复本帖即可参与", { maxlength: "80" });
+					const extra = make("textarea", "nsmax-lucky-input nsmax-lucky-extra");
+					extra.rows = 3;
+					extra.placeholder = "补充说明（可不填），比如奖品详情、发放方式";
+					const current = (cmInst ? cmInst.getValue() : inputEl?.value || "").trim();
+					if (current && !/开奖链接/.test(current)) extra.value = current;
+					const nativeCategory = document.querySelector("#editor select#category");
+					const category = make("select", "nsmax-lucky-input");
+					for (const option of nativeCategory?.options || []) category.append(new Option(option.textContent.trim(), option.value, false, option.value === nativeCategory.value));
+					const titleInput = input("text", "", { maxlength: "120" });
+					let titleTouched = false;
+					titleInput.addEventListener("input", () => { titleTouched = true; });
+					const row = (...children) => {
+						const box = make("div", "nsmax-lucky-row");
+						box.append(...children);
+						return box;
+					};
+					// 预览：发出去以后帖子里那张抽奖卡片的样子（sb.sb .lottery-widget）
+					const preview = make("div", "nsmax-lucky-preview");
+					const status = make("p", "nsmax-lucky-error");
+					status.setAttribute("role", "alert");
+					status.hidden = true;
+					body.append(
+						intro,
+						field("奖品", prize),
+						row(field("中奖人数", count), field("从第几楼开始算", start, "楼主的楼层是 0，回复从 1 楼开始")),
+						field("开奖时间", when),
+						presets,
+						onceBox,
+						field("参与方式", rule),
+						field("补充说明", extra),
+						row(field("版块", category), field("标题", titleInput)),
+						make("span", "nsmax-lucky-label", "预览"),
+						preview,
+						status
+					);
+					const foot = make("footer", "nsmax-dialog-foot");
+					const cancel = make("button", "nsmax-dialog-button", "取消");
+					cancel.type = "button";
+					const go = make("button", "nsmax-dialog-button primary", "发布抽奖帖");
+					go.type = "button";
+					foot.append(cancel, go);
+					dialog.append(head, body, foot);
+					document.body.append(dialog);
+					const close = () => dialog.close();
+					dialog.addEventListener("close", () => dialog.remove());
+					closeButton.addEventListener("click", close);
+					cancel.addEventListener("click", close);
+					const values = () => {
+						const time = new Date(when.value).getTime();
+						const date = new Date(time);
+						return {
+							prize: prize.value.trim(),
+							count: Math.max(1, Math.min(100, Math.floor(Number(count.value) || 1))),
+							time,
+							when: Number.isFinite(time) ? `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}` : "",
+							start: Math.max(1, Math.floor(Number(start.value) || 1)),
+							duplicate: !once.checked,
+							rule: rule.value.trim() || "回复本帖即可参与",
+							extra: extra.value.trim()
+						};
+					};
+					const update = () => {
+						const v = values();
+						if (!titleTouched) titleInput.value = v.prize ? `【抽奖】${v.prize}` : "";
+						const left = v.time - Date.now();
+						const days = Math.floor(left / 864e5), hours = Math.floor(left / 36e5) % 24, minutes = Math.floor(left / 6e4) % 60;
+						const card = make("div", "nsmax-lucky-card");
+						const cardHead = make("div", "nsmax-lucky-card-head");
+						cardHead.append(make("strong", "", "抽奖"), make("span", "", "进行中"));
+						const clock = make("div", "nsmax-lucky-card-clock", left > 0 ? `距开奖 ${days > 0 ? days + " 天 " : ""}${pad(hours)} 时 ${pad(minutes)} 分` : "开奖时间要晚于现在");
+						const table = make("div", "nsmax-lucky-card-table");
+						table.append(make("span", "", "奖品"), make("span", "", "名额"), make("span", "", "中奖者"), make("b", "", v.prize || "（奖品）"), make("b", "", String(v.count)), make("span", "", "未开奖"));
+						card.append(cardHead, clock, table, make("p", "", `开奖 ${v.when || "—"} · 从 ${v.start} 楼起 · ${v.duplicate ? "可以重复中奖" : "每人最多中一次"} · ${v.rule}`));
+						preview.replaceChildren(card);
+					};
+					for (const el of [prize, count, when, start, once, rule]) {
+						el.addEventListener("input", update);
+						el.addEventListener("change", update);
+					}
+					go.addEventListener("click", () => {
+						const v = values();
+						const error = !v.prize ? "请填写奖品" : !Number.isFinite(v.time) ? "请选择开奖时间" : v.time <= Date.now() + 6e4 ? "开奖时间要晚于现在" : !category.value ? "请选择版块" : !titleInput.value.trim() ? "请填写标题" : "";
+						status.hidden = !error;
+						status.textContent = error;
+						if (error) return;
+						const title = titleInput.value.trim();
+						const md = [
+							"## 🎁 抽奖",
+							"",
+							`- **奖品**：${v.prize}`,
+							`- **中奖人数**：${v.count} 人`,
+							`- **开奖时间**：${v.when}`,
+							`- **参与方式**：${v.rule}`,
+							`- **规则**：从 ${v.start} 楼起，${v.duplicate ? "可以重复中奖" : "每人最多中一次"}`,
+							"- **开奖链接**：发布后自动生成",
+							...(v.extra ? ["", v.extra] : [])
+						].join(String.fromCharCode(10));
+						const activeTitle = titleEl || document.querySelector("#mde-title, .post-title-input, [name=title], input[placeholder*='标题']");
+						if (activeTitle) {
+							const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+							setter?.call(activeTitle, title);
+							activeTitle.dispatchEvent(new Event("input", { bubbles: true }));
+						}
+						setValueFn(md);
+						if (nativeCategory && nativeCategory.value !== category.value) {
+							nativeCategory.value = category.value;
+							nativeCategory.dispatchEvent(new Event("change", { bubbles: true }));
+						}
+						try {
+							localStorage.setItem(NSMAX_LUCKY_PENDING, JSON.stringify({ title, time: v.time, count: v.count, start: v.start, duplicate: v.duplicate, at: Date.now() }));
+						} catch {}
+						close();
+						// 等编辑器和表单把新内容记进去（站点的标题、正文、版块都是数据绑定）再点站点自己的「发布帖子」
+						setTimeout(() => document.querySelector("#editor .md-editor button.submit, #editor .md-editor .submit.btn")?.click(), 60);
+					});
+					update();
 					if (typeof dialog.showModal === "function") dialog.showModal();
 					else dialog.setAttribute("open", "");
+					prize.focus();
 				}
 				action("附件", "image", () => (editor.querySelector(".nspp-upload-choose") || editor.querySelector('.mde-toolbar [title="图片"],.mde-toolbar [title="上传图片"]'))?.click());
 				action("表情", "smile", button => {
@@ -2958,18 +3451,21 @@
 					document.documentElement.toggleAttribute("data-nsmax-composing", on);
 					document.dispatchEvent(new Event("nspp:reply-state"));
 				};
+				// 提示字（sb.sb 同款）：帖子页「写下你的回复…」，发帖 / 编辑页「写下正文…」——所有编辑器都换掉站点自己的
+				// 「鼓励友善发言，禁止人身攻击」（以前只换了帖子页，发帖页还是站点的提示）。聚焦输入时提示由主题 CSS 藏起来，不和光标叠在一起
+				const hint = isPost ? "写下你的回复…" : "写下正文…";
+				if (cm) {
+					try { if (cm.getOption("placeholder") !== hint) cm.setOption("placeholder", hint); } catch {}
+				} else if (input && (!input.placeholder || /鼓励友善/.test(input.placeholder))) input.placeholder = hint;
 				if (isPost) {
 					if (cm) {
 						cm.on("change", syncDraft);
 						cm.on("focus", () => composing(true));
 						cm.on("blur", () => composing(false));
-						// sb.sb 的提示字「写下你的回复…」（以前站点的提示被整个藏掉，空着的输入框什么也看不到）
-						try { cm.setOption("placeholder", "写下你的回复…"); } catch {}
 					} else if (input) {
 						input.addEventListener("input", syncDraft, { signal: ctx.signal });
 						input.addEventListener("focus", () => composing(true), { signal: ctx.signal });
 						input.addEventListener("blur", () => composing(false), { signal: ctx.signal });
-						if (!input.placeholder) input.placeholder = "写下你的回复…";
 					}
 					setTimeout(syncDraft, 0);
 				}
@@ -3283,6 +3779,179 @@
 			return null;
 		});
 	}
+	// 资料卡数据存在本次会话里（sessionStorage，10 分钟）：换了页面再停在同一个人上，卡片马上就是完整的
+	var NSMAX_PERSON_CACHE = "nsmax:person:";
+	function nsmaxPersonCached(id) {
+		try {
+			const raw = JSON.parse(sessionStorage.getItem(NSMAX_PERSON_CACHE + id) || "null");
+			if (raw && Date.now() - raw.at < 6e5 && raw.data && typeof raw.data === "object") return raw.data;
+		} catch {}
+		return null;
+	}
+	function nsmaxPersonStore(id, data) {
+		try { sessionStorage.setItem(NSMAX_PERSON_CACHE + id, JSON.stringify({ at: Date.now(), data })); } catch {}
+	}
+	function nsmaxPersonForget(id) {
+		try { sessionStorage.removeItem(NSMAX_PERSON_CACHE + id); } catch {}
+	}
+	// 管理记录（2026-10-18 第七批）：站点的管理记录页只给管理员按用户名搜，普通账号搜会提示「Not allowed to search」、页面空白。
+	// 这里弹一个窗口，从最新的记录往前翻（接口每页 20 条，站点最多让翻 100 页 = 最近 2000 条），把和这个人有关的列出来：
+	// 先翻 10 页（三页一起读），没找全可以「再往前查」；翻过的页这次打开页面期间记着，换一个人查时不重复读。管理员直接按名字搜
+	var nsmaxRulingPages = new Map();
+	async function nsmaxRulingPage(page, search = "") {
+		const key = search ? `${page}?${search}` : String(page);
+		const hit = nsmaxRulingPages.get(key);
+		if (hit && Date.now() - hit.at < 3e5) return hit.rows;
+		const res = await fetch(`/api/admin/ruling/page-${page}${search ? "?search=" + encodeURIComponent(search) : ""}`, { credentials: "same-origin" });
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok || !json?.success) throw new Error(json?.message || `读取失败（${res.status}）`);
+		const rows = Array.isArray(json.data) ? json.data : [];
+		nsmaxRulingPages.set(key, { at: Date.now(), rows });
+		return rows;
+	}
+	// 处理内容：和站点管理记录页（ruling.js 的 formatAction）同一套写法
+	function nsmaxRulingLines(request) {
+		let action;
+		try { action = typeof request === "string" ? JSON.parse(request) : request || {}; } catch { return []; }
+		const lines = [];
+		const signed = (value) => `${Number(value) < 0 ? "" : "+"}${value}`;
+		if (action.coin) lines.push(`因“${action.coin.reason || ""}”被${signed(action.coin.coin_diff)}鸡腿`);
+		if (action.stardust) lines.push(`${signed(action.stardust.stardust_diff)}星辰币`);
+		const summary = action.postSummary;
+		if (summary) {
+			if (summary.title) lines.push(`标题被改为${summary.title}`);
+			if (summary.category) lines.push(`移动到 ${unsafeWindow$1.__config__?.allCategory?.find?.((item) => item.key === summary.category)?.cn_text || summary.category} 版块`);
+			if (summary.rank !== undefined) lines.push(`阅读权限被改为${summary.rank}`);
+			if (summary.locked !== undefined) lines.push(`${summary.locked ? "锁定" : "解锁"}修改`);
+			if (summary.award !== undefined) lines.push(`${summary.award ? "" : "取消"}设为推荐阅读`);
+		}
+		if (action.hideComment) {
+			const all = action.target?.uid ? "全部" : "";
+			lines.push(`${action.target?.uid ? "用户被" : ""}${action.hideComment.status ? "隐藏" : "取消隐藏"}${all}内容`);
+		}
+		if (action.pinComment) lines.push(action.pinComment.status ? "置顶评论" : "取消置顶评论");
+		if (action.suspend) lines.push(`用户被${action.suspend.status ? `禁言${action.suspend.value}天` : "取消禁言"}`);
+		return lines;
+	}
+	function nsmaxRulingDialog(id, name) {
+		document.querySelector("dialog.nsmax-ruling-dialog")?.close();
+		const make = (tag, className, text) => {
+			const el = document.createElement(tag);
+			if (className) el.className = className;
+			if (text !== undefined) el.textContent = text;
+			return el;
+		};
+		const dialog = make("dialog", "nsmax-dialog nsmax-ruling-dialog");
+		dialog.setAttribute("aria-label", `${name} 的管理记录`);
+		const head = make("header", "nsmax-dialog-head");
+		const close = make("button", "nsmax-dialog-close");
+		close.type = "button";
+		close.setAttribute("aria-label", "关闭");
+		close.append(toolIcon("close"));
+		head.append(make("h3", "", `${name} 的管理记录`), close);
+		const admin = !!unsafeWindow$1.__config__?.user?.isAdmin;
+		const body = make("div", "nsmax-dialog-body");
+		const intro = make("p", "nsmax-ruling-intro", admin ? "按用户名搜索站点的管理记录。" : "站点只给管理员按用户名搜，这里从最新的管理记录往前找（站点最多能翻到最近 2000 条）。");
+		const list = make("ol", "nsmax-ruling-list");
+		const empty = make("p", "nsmax-ruling-empty");
+		empty.hidden = true;
+		body.append(intro, list, empty);
+		const foot = make("footer", "nsmax-dialog-foot");
+		const status = make("span", "nsmax-ruling-status", "正在查找…");
+		status.setAttribute("role", "status");
+		const more = make("button", "nsmax-dialog-button", "再往前查");
+		more.type = "button";
+		more.hidden = true;
+		const page$ = make("a", "nsmax-dialog-button", "管理记录页");
+		page$.href = "/ruling";
+		page$.target = "_blank";
+		page$.rel = "noopener";
+		foot.append(status, more, page$);
+		dialog.append(head, body, foot);
+		document.body.append(dialog);
+		let stopped = false;
+		dialog.addEventListener("close", () => { stopped = true; dialog.remove(); });
+		dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+		close.addEventListener("click", () => dialog.close());
+		const pad = (n) => String(n).padStart(2, "0");
+		const when = (value) => {
+			const date = new Date(value);
+			return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+		};
+		const render = (row) => {
+			const item = make("li", "nsmax-ruling-item");
+			const meta = make("div", "nsmax-ruling-meta");
+			const time = make("time", "", when(row.created_at));
+			time.dateTime = row.created_at || "";
+			meta.append(time, make("span", "", `管理员 ${row.admin_member_name || "—"}`));
+			const postId = Number(row.post_id), floor = Number(row.floor_index);
+			if (postId > 0) {
+				const target = make("a", "", floor > 0 ? `帖子 #${floor}` : "帖子");
+				target.href = `/post-${postId}-${Math.max(1, Math.ceil(floor / 10))}${floor > 0 ? "#" + floor : ""}`;
+				target.target = "_blank";
+				target.rel = "noopener";
+				meta.append(target);
+			}
+			const lines = nsmaxRulingLines(row.request);
+			const action = make("div", "nsmax-ruling-action");
+			for (const line of lines.length ? lines : ["（站点没写处理内容）"]) action.append(make("div", "", line));
+			item.append(meta, action);
+			return item;
+		};
+		let page = 0, found = 0, scanned = 0, oldest = "", finished = false;
+		const mine = (row) => String(row?.target_member_id) === String(id) || row?.target_member_name === name;
+		const report = () => {
+			const range = oldest ? `（到 ${when(oldest).slice(0, 10)}）` : "";
+			status.textContent = `${finished ? "已查完" : "已查"}最近 ${scanned} 条${range}，找到 ${found} 条`;
+			empty.hidden = !!found || !finished && page < 10;
+			empty.textContent = finished ? "最近的管理记录里没有和 TA 有关的。" : "这段时间里没有和 TA 有关的管理记录，可以「再往前查」。";
+		};
+		const scan = async (pages) => {
+			more.disabled = true;
+			const until = Math.min(100, page + pages);
+			try {
+				while (page < until && !stopped) {
+					const batch = [];
+					for (let i = 0; i < 3 && page + batch.length < until; i++) batch.push(page + batch.length + 1);
+					const results = await Promise.all(batch.map((p) => nsmaxRulingPage(p)));
+					if (stopped) return;
+					page += batch.length;
+					for (const rows of results) {
+						scanned += rows.length;
+						for (const row of rows) {
+							oldest = row.created_at || oldest;
+							if (!mine(row)) continue;
+							list.append(render(row));
+							found++;
+						}
+					}
+					if (results.some((rows) => rows.length < 20) || page >= 100) finished = true;
+					report();
+					if (finished) break;
+				}
+			} catch (error) {
+				status.textContent = `读取失败：${error?.message || "请稍后再试"}`;
+			} finally {
+				more.disabled = false;
+				more.hidden = finished || stopped;
+			}
+		};
+		if (admin) {
+			nsmaxRulingPage(1, name).then((rows) => {
+				if (stopped) return;
+				for (const row of rows) { list.append(render(row)); found++; }
+				finished = true;
+				page = 1;
+				status.textContent = `找到 ${found} 条（站点按用户名搜索的第一页）`;
+				empty.hidden = !!found;
+				empty.textContent = "没有和 TA 有关的管理记录。";
+			}).catch((error) => { status.textContent = `读取失败：${error?.message || "请稍后再试"}`; });
+		} else scan(10);
+		more.addEventListener("click", () => scan(10));
+		if (typeof dialog.showModal === "function") dialog.showModal();
+		else dialog.setAttribute("open", "");
+		return dialog;
+	}
 	var personHoverFeature = { id: "sb-person-hover", defaults: { enabled: true }, mount(ctx) {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
 		const matches = target => {
@@ -3335,11 +4004,14 @@
 			identity.append(profile, meta);
 			const uid = document.createElement("span"); uid.className = "nsmax-person-uid"; uid.textContent = "UID " + id;
 			header.append(identity, uid);
+			// 2026-10-18 第七批重排：名字下面一排三个一样宽的按钮（关注实底、私信、主页；看自己是 我的主页、个人设置），
+			// 「管理记录」「屏蔽」挪到统计下面的底栏（小图标 + 弱化字），五个按钮不再挤在一排
 			const actions = document.createElement("div"); actions.className = "nsmax-person-actions";
 			const me = unsafeWindow$1.__config__?.user?.member_id;
+			const self = !!me && String(me) === String(id);
 			let follow = null;
 			const setFollowed = on => { if (!follow) return; follow.textContent = on ? "已关注" : "关注"; follow.toggleAttribute("data-on", on); follow.setAttribute("aria-pressed", String(on)); };
-			if (me && String(me) !== String(id)) {
+			if (me && !self) {
 				// 和 NodeSeek 自己的资料卡同一个接口：/api/fans/add 关注、/api/fans/del 取消关注
 				follow = document.createElement("button"); follow.type = "button"; follow.className = "nsmax-person-follow"; follow.disabled = true;
 				setFollowed(false);
@@ -3352,6 +4024,7 @@
 						if (!res.ok || json?.success === false) throw new Error(json?.message || "操作失败");
 						setFollowed(!on);
 						cache.delete(id);
+						nsmaxPersonForget(id);
 					} catch (error) {
 						status.textContent = (on ? "取消关注" : "关注") + "失败：" + (error?.message || "请稍后再试");
 						if (!status.isConnected) pop?.append(status);
@@ -3359,17 +4032,26 @@
 				}, { signal: ctx.signal });
 				actions.append(follow);
 			}
-			for (const [label,path] of [["私信","/notification#/message?mode=talk&to="+id],["主页","/space/"+id]]) { const item = document.createElement("a"); item.href = path; item.textContent = label; actions.append(item); }
-			// 「管理记录」：站点管理记录页按用户名搜（/ruling#/p-1?search=名字），看和这个人有关的处理（2026-10-18）
-			const ruling = document.createElement("a"); ruling.className = "nsmax-person-ruling"; ruling.textContent = "管理记录";
-			const setRuling = (who) => { ruling.href = "/ruling#/p-1?search=" + encodeURIComponent(who); };
-			setRuling(name);
-			actions.append(ruling);
+			for (const [label, path] of self ? [["我的主页", "/space/" + id], ["个人设置", "/setting"]] : [["私信", "/notification#/message?mode=talk&to=" + id], ["主页", "/space/" + id]]) { const item = document.createElement("a"); item.href = path; item.textContent = label; actions.append(item); }
+			actions.dataset.count = String(actions.childElementCount);
+			const foot = document.createElement("div"); foot.className = "nsmax-person-foot";
+			// 「管理记录」：站点的管理记录页只给管理员按用户名搜（普通账号会提示 Not allowed to search、页面空白）；
+			// 点了弹一个窗口，从最新的管理记录往前找和这个人有关的（见 nsmaxRulingDialog）
+			const ruling = document.createElement("button"); ruling.type = "button"; ruling.className = "nsmax-person-ruling";
+			ruling.append(toolIcon("balance"), document.createTextNode("管理记录"));
+			ruling.addEventListener("click", () => {
+				const who = profile.textContent.trim() || name;
+				hide();
+				nsmaxRulingDialog(id, who);
+			}, { signal: ctx.signal });
+			foot.append(ruling);
 			// 「屏蔽」：和站点的黑名单连在一起——站点黑名单里加上 / 去掉（/api/block-list/add 按用户名、/del 按 ID），
 			// 脚本的屏蔽名单也同步改，他的帖子、回复马上藏起来；先问一句再动手
-			if (me && String(me) !== String(id)) {
+			if (me && !self) {
 				const block = document.createElement("button"); block.type = "button"; block.className = "nsmax-person-block";
-				const setBlocked = (on) => { block.textContent = on ? "已屏蔽" : "屏蔽"; block.toggleAttribute("data-on", on); block.setAttribute("aria-pressed", String(on)); };
+				const blockLabel = document.createElement("span");
+				block.append(toolIcon("ban"), blockLabel);
+				const setBlocked = (on) => { blockLabel.textContent = on ? "已屏蔽" : "屏蔽"; block.toggleAttribute("data-on", on); block.setAttribute("aria-pressed", String(on)); };
 				const who = () => profile.textContent.trim() || name;
 				setBlocked(!!nsmaxContentFilter?.blocksUser?.(name));
 				nsmaxOfficialBlocks().then((list) => { if (list && block.isConnected) setBlocked(list.ids.has(String(id)) || list.names.has(who()) || !!nsmaxContentFilter?.blocksUser?.(who())); });
@@ -3401,18 +4083,21 @@
 					if (typeof confirm === "function") confirm({ title, subtitle, okText: on ? "取消屏蔽" : "屏蔽", cancelText: "取消", onOk: run, dismissOverlay: true, closeOnEscape: true });
 					else if (window.confirm(title + subtitle)) run();
 				}, { signal: ctx.signal });
-				actions.append(block);
+				foot.append(block);
 			}
+			// 统计格先按最后的样子摆好（数字位置先放「…」），资料到了只换数字，卡片不变高
 			const numbers = document.createElement("dl"); numbers.className = "nsmax-person-stats";
-			const status = document.createElement("p"); status.className = "nsmax-person-status"; status.textContent = "正在读取资料…"; status.setAttribute("role","status");
-			pop.append(header,actions,numbers,status); pop.addEventListener("pointerenter",()=>clearTimeout(closing),{signal:ctx.signal}); pop.addEventListener("pointerleave",closeSoon,{signal:ctx.signal}); document.body.append(pop); document.documentElement.setAttribute("data-nsmax-person-open",""); place();
+			const cells = {};
+			for (const [label, key] of [["鸡腿", "coin"], ["星辰", "stardust"], ["主题", "nPost"], ["回复", "nComment"], ["关注", "follows"], ["粉丝", "fans"]]) {
+				const item = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd");
+				term.textContent = label; value.textContent = "…"; item.append(term, value); numbers.append(item); cells[key] = value;
+			}
+			const status = document.createElement("p"); status.className = "nsmax-person-status"; status.setAttribute("role","status");
+			pop.append(header,actions,numbers,foot); pop.addEventListener("pointerenter",()=>clearTimeout(closing),{signal:ctx.signal}); pop.addEventListener("pointerleave",closeSoon,{signal:ctx.signal}); document.body.append(pop); document.documentElement.setAttribute("data-nsmax-person-open",""); place();
 			try {
-				let entry = cache.get(id);
-				if (!entry || Date.now()-entry.at>6e5) { const promise = ctx.request("/api/account/getInfo/"+id).then(data => data?.detail || data?.data || {}); entry = { at:Date.now(), promise }; cache.set(id,entry); if (cache.size>256) cache.delete(cache.keys().next().value); }
-				const data = await entry.promise;
+				const data = await personInfo(id);
 				if (ticket !== serial || !pop) return;
 				profile.textContent = data.member_name || name;
-				setRuling(data.member_name || name);
 				const liveAvatar = data.avatar || data.avatar_url || findAvatarSrc();
 				if (liveAvatar) {
 					if (!avatar || !header.contains(avatar)) {
@@ -3458,10 +4143,35 @@
 				if (data.bio && String(data.bio).trim()) { const bio = document.createElement("p"); bio.className = "nsmax-person-bio"; bio.textContent = String(data.bio).trim(); header.after(bio); }
 				if (follow) { setFollowed(!!data.followed); follow.disabled = false; }
 				const fmt = value => value === undefined || value === null ? "—" : Number(value) >= 1e5 ? (Number(value) / 1e3).toFixed(Number(value) >= 1e6 ? 0 : 1) + "K" : String(value);
-				for (const [label,key] of [["鸡腿","coin"],["星辰","stardust"],["主题","nPost"],["回复","nComment"],["关注","follows"],["粉丝","fans"]]) { const item = document.createElement("div"), term = document.createElement("dt"), value = document.createElement("dd"); term.textContent = label; value.textContent = fmt(data[key]); item.append(term,value); numbers.append(item); }
-				status.remove(); place();
-			} catch { cache.delete(id); if (ticket === serial && pop) status.textContent = "暂时无法读取资料，可打开个人主页"; }
+				for (const [key, cell] of Object.entries(cells)) cell.textContent = fmt(data[key]);
+				place();
+			} catch {
+				cache.delete(id);
+				if (ticket === serial && pop) {
+					for (const cell of Object.values(cells)) cell.textContent = "—";
+					status.textContent = "暂时无法读取资料，可打开个人主页";
+					numbers.after(status);
+				}
+			}
 		};
+		// 资料：同一个人 10 分钟内不重复读，存在本次会话里（换了页面再停在同一个人上马上出来）；
+		// 直接读、不排进模块的请求队列（帖子页的作者栏同时在读一串资料时，悬停的这一个不用排在后面等）
+		function personInfo(id) {
+			let entry = cache.get(id);
+			if (entry && Date.now() - entry.at < 6e5) return entry.promise;
+			const stored = nsmaxPersonCached(id);
+			const promise = stored ? Promise.resolve(stored) : fetch("/api/account/getInfo/" + id, { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
+				const data = json?.detail || json?.data || {};
+				if (json?.success === false || !data || typeof data !== "object") throw new Error(json?.message || "读取失败");
+				nsmaxPersonStore(id, data);
+				return data;
+			});
+			entry = { at: Date.now(), promise };
+			promise.catch(() => { if (cache.get(id) === entry) cache.delete(id); });
+			cache.set(id, entry);
+			if (cache.size > 256) cache.delete(cache.keys().next().value);
+			return promise;
+		}
 		document.addEventListener("pointerover",event => {
 			// 手指点按也会触发 pointerover：手机上点头像、名字是要打开主页，不弹资料卡（也不白白请求一次资料）
 			if (event.pointerType === "touch") return;
@@ -3469,16 +4179,10 @@
 			if (!link || pop?.contains(link) || link.contains(event.relatedTarget)) return;
 			clearTimeout(opening);
 			clearTimeout(closing);
+			// 鼠标一停上去就开始读资料，60ms 后弹卡片（划过去的不弹）
 			const match = link.href.match(/\/space\/(\d+)/);
-			if (match) {
-				const id = match[1];
-				if (!cache.has(id)) {
-					const promise = ctx.request("/api/account/getInfo/"+id).then(data => data?.detail || data?.data || {}).catch(() => ({}));
-					cache.set(id, { at: Date.now(), promise });
-					if (cache.size > 256) cache.delete(cache.keys().next().value);
-				}
-			}
-			opening=setTimeout(()=>show(link),90);
+			if (match) personInfo(match[1]).catch(() => {});
+			opening=setTimeout(()=>show(link),60);
 		}, { signal:ctx.signal });
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
