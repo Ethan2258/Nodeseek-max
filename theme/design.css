@@ -12920,13 +12920,17 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-pr
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card:is(.note, .warning, .info, .draft) > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin-bottom: 0 !important;
 }
-/* 手机上代码一行常常比屏幕宽，右上角的「复制」会一直盖住第一行的末尾：代码块顶上留一条放按钮，代码从按钮下面开始 */
+/* 「复制」一直显示时（站点偏好「一直显示复制按钮」），以及手机上（一行代码常常比屏幕宽，触屏上按钮也常显）：右上角的「复制」会一直盖住
+   第一行的末尾。代码块顶上留一条放按钮，代码从按钮下面开始。只在悬停时出现的（sb.sb 默认）照旧浮在右上角 */
+html[data-nsmax-theme] .nsmax-code > pre[data-nsmax-copy][data-nsmax-copy-always]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding-top: 38px !important;
+}
 @media (max-width: 640px) {
   html[data-nsmax-theme] .nsmax-code > pre[data-nsmax-copy]:is(#nsmax-lv, *):is(#nsmax-b, *) {
     padding-top: 38px !important;
   }
 }
-/* 作者栏：等级还没读到时徽章先占着位置但看不见（读到后只换字，作者栏不变高）；三格数字没读到时是淡色的「—」 */
+/* 作者栏：等级还没读到时徽章先占着位置但看不见（读到后只换字，作者栏不变高）；三格数字没读到时是「—」 */
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-level[data-nsmax-pending]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   visibility: hidden !important;
 }
