@@ -118,7 +118,8 @@ async function open(browser, url, { html, seed, fontFiles, colorScheme = "light"
 	await context.route("**/*", async (route) => {
 		const request = route.request();
 		const target = new URL(request.url());
-		if (target.hostname === "www.nodeseek.com") {
+		// DeepFlood（同一套站点程序）和 NodeSeek 一样处理
+		if (target.hostname === "www.nodeseek.com" || target.hostname === "www.deepflood.com") {
 			const key = target.pathname.replace(/\/$/, "") || "/";
 			if (key.startsWith("/api/")) {
 				calls[key] = (calls[key] || 0) + 1;
@@ -128,7 +129,8 @@ async function open(browser, url, { html, seed, fontFiles, colorScheme = "light"
 				return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
 			}
 			const page = pages[target.pathname] ?? (target.pathname === new URL(url).pathname ? html : undefined);
-			if (page) return route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: page });
+			// pages 里也可以给 { body, contentType }（比如站点直接返回 JSON 的地址）
+			if (page) return route.fulfill({ status: 200, contentType: typeof page === "object" ? page.contentType : "text/html; charset=utf-8", body: typeof page === "object" ? page.body : page });
 			if (/^\/avatar\//.test(target.pathname)) return route.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' fill='#9aa5b1'/></svg>" });
 			return route.fulfill({ status: 404, body: "not found" });
 		}

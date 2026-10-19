@@ -12400,9 +12400,11 @@ html[data-nsmax-theme] #left-slide-panel .user-card-container > .user-card.nsmax
 }
 /* 站点 Vue 页面里的报错框：行内写死 margin 4rem、红框、2rem 大红字（管理记录页的「用户未登录」等，见 nsmaxTidySiteErrors）。
    照 sb.sb 空状态排：面板卡片、细线框、44px 16px、居中 14px 次要色；未登录时下面一个「去登录」实底胶囊。
-   管理记录页的报错框直接按行内样式认（站点一画出来就是这个样子，不先闪一下红框）；别处的等脚本打上标记 */
-html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *),
-html[data-nsmax-theme] #nsk-frame .ruling-log > div[style*="solid red"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+   管理记录页的报错框直接按行内样式认（站点一画出来就是这个样子，不先闪一下红框）；别处的等脚本打上标记。
+   邀请好友页没登录时只有一行居中的 h2「用户未登录」（2026-10-19），同样排成空状态 */
+html[data-nsmax-theme] #nsk-frame :is(div, h2)[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-frame .ruling-log > div[style*="solid red"]:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-frame .invite-panel > h2:only-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: border-box !important;
   margin: 0 0 16px !important;
   padding: 44px 16px !important;
@@ -12416,7 +12418,7 @@ html[data-nsmax-theme] #nsk-frame .ruling-log > div[style*="solid red"]:is(#nsma
   line-height: 1.6 !important;
   text-align: center !important;
 }
-html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme] #nsk-frame :is(div, h2)[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: block !important;
   width: fit-content !important;
   margin: 14px auto 0 !important;
@@ -12429,7 +12431,7 @@ html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error] > .nsmax-site-error
   font-weight: 500 !important;
   text-decoration: none !important;
 }
-html[data-nsmax-theme] #nsk-frame div[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+html[data-nsmax-theme] #nsk-frame :is(div, h2)[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--action-hover) !important;
 }
 /* ---------- 58. 2026-10-19 第十一批 ----------
@@ -12594,4 +12596,186 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-pr
     order: -1 !important;
     margin: 0 0 0 2px !important;
   }
+}
+/* 合作商家（/providers）、友站链接（/friends）：站点是一块行内样式的土黄渐变卡片、居中的大标题。照 sb.sb 页面卡片：面板底细线框，
+   标题一行 15px/600 靠左、下面一道细线，最下面的说明一行小字。友站照 sb.sb .links-grid / .link-card：190px 起的网格，
+   36px 头像 + 名字 14.5px/600 + 域名 12.5px。商家 logo 有白字的也有深色字的，底板用中间灰（文字色 40% 混面板色），两种都看得清 */
+html[data-nsmax-theme] #nsk-frame > .nsk-container:is(.nsk-providers, .nsk-friends):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: calc(100% - 32px) !important;
+  max-width: min(var(--container), 1180px) !important;
+  margin: 20px auto 32px !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-container:is(.nsk-providers, .nsk-friends) > h2:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 14px 18px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-container:is(.nsk-providers, .nsk-friends) > p:last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 12px 18px 14px !important;
+  border-top: 1px solid var(--line-soft) !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.7 !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-container:is(.nsk-providers, .nsk-friends) > p:last-child a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--link) !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-container:is(.nsk-providers, .nsk-friends) > p:last-child a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-providers > .provider-grid-container:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+  gap: 10px !important;
+  padding: 16px 18px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-providers > .provider-grid-container > .provider:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  width: auto !important;
+  height: 72px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: var(--r-input) !important;
+  background: color-mix(in srgb, var(--text) 40%, var(--panel)) !important;
+  transition: background-color 0.15s ease !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-providers > .provider-grid-container > .provider:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: color-mix(in srgb, var(--text) 50%, var(--panel)) !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-providers > .provider-grid-container > .provider > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-providers > .provider-grid-container > .provider img:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  max-width: 100% !important;
+  max-height: 40px !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 16px 18px !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: auto !important;
+  min-width: 0 !important;
+  border-radius: 0 !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: grid !important;
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+  box-sizing: border-box !important;
+  height: 100% !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text-strong) !important;
+  font-weight: 400 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a > :is(img, .nsmax-friend-avatar):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 1 !important;
+  grid-row: 1 / span 2 !important;
+  box-sizing: border-box !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: var(--r-sm) !important;
+  box-shadow: none !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a > .nsmax-friend-avatar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a > p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--text-strong) !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a > p:not(:last-child):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-row: 1 !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a:hover > p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-frame > .nsk-friends > .friends-container > div > a > .nsmax-friend-host:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  overflow: hidden !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+/* 签到页没登录时：卡片里只留标题、说明和「登录后签到」；连续签到、统计、日历都是个人的，不显示。以前照样摆着「签到」按钮
+   （点了只是刷新页面）和「今天还没签到」，站点自己写的是「登录后签到」 */
+html[data-nsmax-theme] .nsmax-checkin[data-guest] :is(.nsmax-checkin-streak, .nsmax-checkin-stats, .nsmax-checkin-month, .nsmax-checkin-calendar):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-checkin a.nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-checkin[data-guest] .nsmax-checkin-top:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+}
+html[data-nsmax-theme] .nsmax-checkin[data-guest] .nsmax-checkin-side:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+html[data-nsmax-theme] .nsmax-checkin[data-guest] .nsmax-checkin-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  justify-content: flex-start !important;
+}
+/* 没登录时通知、设置页的空状态卡片直接放在 #nsk-frame 里：居中、最宽 720px、上下留白；关注页的放在两个标签下面 */
+html[data-nsmax-theme] #nsk-frame > .nsmax-guest-empty[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  width: calc(100% - 32px) !important;
+  max-width: 720px !important;
+  margin: 40px auto !important;
+}
+html[data-nsmax-theme] #nsk-frame .member-list > .nsmax-guest-empty[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 16px 0 0 !important;
 }

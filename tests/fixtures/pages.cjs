@@ -187,7 +187,7 @@ const rulingPager = `<div class="rulling-log-head"><div class="nsk-pager">${page
 const rulingPage = (options = {}) => shell("NodeSeek-管理记录", `<div id="nsk-frame-block"></div><div class="ruling-log">${options.error ? `<div data-v-3ae870dc style="margin: 4rem; padding: 1rem; border: 1px solid red; text-align: center; color: red; font-size: 2rem;">
         ${options.error}
     </div>` : `<div>${rulingPager}<table><thead><tr><th>ID</th><th>用户</th><th>操作</th><th>管理员</th><th>时间</th></tr></thead><tbody>${rulingRows}</tbody></table>${rulingPager}</div>`}</div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
-const boardRealPage = (options = {}) => shell("NodeSeek-签到", `<div id="nsk-frame-block"></div><div class="board"><div class="head-info"><div>今日签到获得鸡腿2个，当前排名第11872</div></div><div><h1>今日签到鸡腿排行榜</h1>${Array.from({ length: 12 }, (_, i) => `<div class="rank-row"><div>${i + 1}</div><img class="avatar" src="${AVATAR}" alt="m${i}"><div class="member-name">member${i}</div><div class="coins">${16 - Math.floor(i / 3)}</div></div>`).join("")}</div></div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
+const boardRealPage = (options = {}) => shell("NodeSeek-签到", `<div id="nsk-frame-block"></div><div class="board"><div class="head-info"><div>${options.guest ? `<a href="/signIn.html">登录</a>后签到 ` : "今日签到获得鸡腿2个，当前排名第11872"}</div></div><div><h1>今日签到鸡腿排行榜</h1>${Array.from({ length: 12 }, (_, i) => `<div class="rank-row"><div>${i + 1}</div><img class="avatar" src="${AVATAR}" alt="m${i}"><div class="member-name">member${i}</div><div class="coins">${16 - Math.floor(i / 3)}</div></div>`).join("")}</div></div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
 
 // 抽奖页（/lucky）：站点独立的 Vue 小页面（static/js/lucky.*.js），没有站点顶栏、左右栏和页脚；结构照真站模板，
 // 样式带上真站的作用域样式（data-v-23190e9e）和用到的 pure / vue2-datepicker 规则，背景是一层礼物花纹。
@@ -256,7 +256,36 @@ const specialPostPage = ({ now = Date.now(), ...options } = {}) => postPage(opti
 	.replace("出一台香港 CN2 GIA 小鸡，年付 99</a></h1>", "【投票】claude 封号情况，顺便抽奖</a></h1>")
 	.replace("<h2>配置说明</h2>", () => `<p>正文第一段。</p>${votePanel("claude封号情况", voteStat(1, "网页claude pro被封号", { count: 9, pct: "6%", voted: true, voters: 9 }) + voteStat(2, "网页claude max被封号", { count: 3, pct: "2%", voted: true, checked: true, voters: 3, color: "#a0846c" }) + voteStat(3, "没被封", { count: 140, pct: "92%", voted: true, voters: 26, color: "#6c9a84" }), voteSwitch, "公开投票")}<p>没投过的投票：</p>${votePanel("你用哪家 VPS", voteStat(11, "搬瓦工") + voteStat(12, "Vultr") + voteStat(13, "DMIT"), '<button type="button" class="pure-button pure-button-primary">投票</button>', "匿名投票")}${lotteryLink(now + 2 * 36e5 + 5e3, 3, 2, false)}${lotteryLink(now + 30 * 6e4, 1, 1, true)}${lotteryLink(now + 2 * 6e4, 1, 1, false)}${lotteryLink(now - 6e4, 2, 5, false)}<p>结尾段落。</p><h2>配置说明</h2>`);
 
+// 合作商家（/providers）和友站链接（/friends）：真站结构（2026-10-19 抓取）。两页都是 section#nsk-frame 里一个行内样式的
+// .nsk-container（土黄渐变底、标题行内样式）。logo 有白字透明底、深色字、自带底色几种；友站有的头像图是坏的
+const logoImage = (text, fg, bg) => "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='160' height='40'>${bg ? `<rect width='160' height='40' fill='${bg}'/>` : ""}<text x='80' y='27' font-family='Arial' font-size='20' font-weight='700' fill='${fg}' text-anchor='middle'>${text}</text></svg>`);
+const providerLogos = [["RackNerd", "#ffffff"], ["KuaiCheDao", "#333333"], ["SpeedyPage", "#ffffff", "#1b2a4a"], ["ix.cm", "#111111", "#ffffff"], ["EdgeNAT", "#f26b1d"], ["Haruka", "#b48ad6"], ["BatuCloud", "#ffffff"]];
+const providersPage = (options = {}) => shell("NodeSeek-商家合作", `<div id="nsk-frame-block"></div><div></div><div class="nsk-container nsk-providers" style="margin:1rem auto;border-radius:10px;overflow:hidden;background:linear-gradient(19deg, #fff8bf3b, #ffc010a8);"><h2 style="margin: 30px 15px; color: #4e3618; font-size: 1.6rem; text-align: center;">NodeSeek合作商家</h2> <div class="provider-grid-container">${providerLogos.map(([name, fg, bg], i) => `<div class="provider"><a href="/space/${600 + i}" title="${name}"><img src="${logoImage(name, fg, bg)}" alt="logo" style="max-height: 50px; max-width: 100%;"></a></div>`).join("")}</div> <p style="text-align: right ;margin: 1rem 2rem;"><a href="/post-6797-1" target="_self">商家会员申请要求</a><br>如需申请，请联系我们联系<a href="https://t.me/nodeseek" rel="external" target="_blank">telegram: @nodeseek</a></p></div>`, { ...options, standalone: true });
+const friendSites = [["EdNovas的小站", "https://ednovas.xyz/"], ["非主流论坛", "https://www.example.org/forum"], ["主机百科", "https://zhujibaike.example.com/"], ["Low Level News", "https://lowlevel.example.net/", true], ["DR导航", "https://dr.example.cn/", true], ["一个名字特别特别长的友站博客", "https://long-name.example.com/"]];
+const friendsPage = (options = {}) => shell("NodeSeek的朋友们", `<div id="nsk-frame-block"></div><div></div><div class="nsk-container nsk-friends" style="margin:1rem auto;border-radius:10px;overflow:hidden;background:linear-gradient(19deg, #fff8bf3b, #ffc010a8);"><h2 style="margin: 20px 15px; color: #4e3618; font-size: 1.5rem; text-align: center;">NodeSeek友站列表</h2> <div class="friends-container" style="display: flex;margin-bottom: 15px;flex-wrap: wrap;">${friendSites.map(([name, url, broken]) => `<div style="text-align: center; width:130px;border-radius: 10px;"><a href="${url}" target="_blank" rel="noopener external" title="${name}"><img src="${broken ? "data:image/png;base64,AAAA" : AVATAR}" alt="头像" style="width: 70px;height: 70px;box-shadow: 0 0 9px rgba(0,0,0,0.15);border-radius: 10px"> <p>${name}</p></a></div>`).join("")}</div> <p style="text-align: right ;margin: 1rem 2rem;">
+        如需交换友链，请联系<a href="https://t.me/nodeseek" rel="external" target="_blank">telegram: @nodeseek</a></p></div>`, { ...options, standalone: true });
+
+// 邀请好友（/invite）没登录时：Vue 在 .invite-panel 里只画一个居中的 h2「用户未登录」（真站 2026-10-19）
+const invitePage = (options = {}) => shell("NodeSeek-邀请好友", `<div id="nsk-body-left" class="forum-main main-panel"><div id="nsk-body-left-block"><div><div class="invite-panel"><h2 style="text-align: center;">用户未登录</h2></div></div></div></div>${guestSidebar}`, { ...options, guest: true });
+
+// 账簿（/credit）没登录时：.credit-table 里只有一个写着「用户未登录」的 div（真站 2026-10-19）
+const creditGuestPage = (options = {}) => shell("NodeSeek-账簿", `<div id="nsk-body-left"><div id="nsk-body-left-block"></div><div data-v-e2af6d06="" class="credit-table"><div data-v-e2af6d06="">
+        用户未登录
+    </div></div></div>${guestSidebar}`, { ...options, guest: true });
+
+// 没登录时的通知、设置、关注页（真站 2026-10-19）：站点弹「用户未登录」提示，通知和设置页 #nsk-frame 里什么也没有，关注页只有两个标签
+const notificationGuestPage = (options = {}) => shell("NodeSeek Message", `<div id="nsk-frame-block"></div> <div id="search-panel-mount"></div>`, { ...options, guest: true, standalone: true });
+const settingGuestPage = (options = {}) => shell("NodeSeek Setting", `<div id="nsk-frame-block"><div data-v-app=""><!----></div></div> <div id="search-panel-mount"></div>`, { ...options, guest: true, standalone: true });
+const fansGuestPage = (options = {}) => shell("NodeSeek", `<div id="nsk-frame-block"></div> <div data-v-6f7c77cb=""><div data-v-c602bc02="" data-v-6f7c77cb="" class="member-list nsk-container"><div data-v-6f7c77cb="" data-v-c602bc02="" class="fans-switcher"><a data-v-6f7c77cb="" data-v-c602bc02="" href="/fans?type=follow" class="switcher-item selected"> 我的关注🔭 </a> <a data-v-6f7c77cb="" data-v-c602bc02="" href="/fans?type=fans" class="switcher-item"> 我的粉丝❤️ </a></div> <div data-v-c602bc02="" class="user-card-wrapper-container"></div> <!----></div></div> <div id="search-panel-mount"></div>`, { ...options, guest: true, standalone: true });
+
 module.exports = {
+	notificationGuestPage,
+	settingGuestPage,
+	fansGuestPage,
+	creditGuestPage,
+	invitePage,
+	providersPage,
+	friendsPage,
 	specialPostPage,
 	luckyPage,
 	searchPage,

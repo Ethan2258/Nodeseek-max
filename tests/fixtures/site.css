@@ -190,3 +190,12 @@ body.dark-layout{--tabs-bg: #3b3b3b;--tabs-border: #2c2c2c;--tab-text: #bfbfbf;-
 .nsk-magic-tab-body{position:relative;padding:16px 10px;background-color:var(--body-bg);border:1px solid var(--tabs-border);color:var(--body-text);border-radius:0 10px 10px;margin-top:-1px;font-size:14px;line-height:1.6}
 .nsk-magic-tab-body>p{margin-top:0}
 @media screen and (max-width:900px){.nsk-magic-tab-title{padding:6px 8px!important;font-size:12px!important}}
+/* 合作商家、友站链接（真站 style-*.css） */
+.provider-grid-container{display:flex;flex-wrap:wrap;align-items:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.provider-grid-container .provider{height:100px;width:20%;box-sizing:border-box;padding:0 10px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;border-right:1px solid rgba(0,0,0,.3);transition:all .5s;background-color:#0000001a}
+.provider-grid-container .provider:nth-child(5n){border-right:none}
+.provider-grid-container .provider:hover{background-color:#0003}
+@media screen and (max-width:500px){.provider-grid-container .provider{width:33.3%}.provider-grid-container .provider:nth-child(3n){border-right:none}.provider-grid-container .provider:nth-child(5n){border-right:1px solid rgba(0,0,0,.3)}}
+.dark-layout .nsk-friends,.dark-layout .nsk-providers{color:#ddd}
+.dark-layout .nsk-friends a,.dark-layout .nsk-providers a{font-weight:700;color:#ddd}
+.dark-layout .nsk-friends a:hover,.dark-layout .nsk-providers a:hover{color:#fff}

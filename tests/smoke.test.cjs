@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage } = require("./fixtures/pages.cjs");
+const { providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.12");
+	assert.equal(packageJson.version, "1.8.13");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4699,4 +4699,152 @@ test("第十一批（2026-10-19）：楼中楼一条在框窄时（≤1200px，�
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
+});
+
+// 第十二批（2026-10-19）
+// DeepFlood 首页：顶栏版块是它自己的（AI、摸鱼、情感……），站点配置里的版块表也是 DeepFlood 的
+const deepFloodList = () => listPage()
+	.replace(/<ul class="nav-menu">[\s\S]*?<\/ul>/, `<ul class="nav-menu"><!----> <!----> <li><a href="/categories/ai">AI</a></li><li><a href="/categories/daily">摸鱼</a></li><li><a href="/categories/emotion">情感</a></li><li><a href="/categories/stream">影音</a></li><li><a href="/categories/sports">运动</a></li><li><a href="/categories/coupon">羊毛</a></li><li><a href="/categories/promotion">推广</a></li> <li><a href="https://www.nodeseek.com" target="_blank">NodeSeek</a></li> <!----></ul>`)
+	.replace('<span class="title-text" style="vertical-align: middle;">NodeSeek</span>', '<span class="title-text" style="vertical-align: middle;">DeepFlood</span>')
+	.replace(/allCategory: \[[^\]]*\]/, "allCategory: " + JSON.stringify([["ai", "人工智能"], ["daily", "摸鱼闲聊"], ["emotion", "情感八卦"], ["stream", "影音图文"], ["sports", "运动赛事"], ["game", "游戏同好"], ["coupon", "羊毛福利"], ["promotion", "服务推广"], ["sandbox", "沙盒测试"]].map(([key, cn_text]) => ({ key, cn_text, showInNav: true, adminOnly: false }))));
+
+test("第十二批（2026-10-19）：DeepFlood 宽屏顶栏照样有版块（AI、摸鱼、情感……）——以前只认 NodeSeek 的版块名，整排被当成杂项藏掉；推广和指向 NodeSeek 的外链照旧不显示", async () => {
+	const { context, page, errors } = await open(browser, "https://www.deepflood.com/", { html: deepFloodList(), viewport: { width: 1440, height: 800 } });
+	try {
+		await page.waitForSelector("#nsk-head .nsmax-mobile-menu", { state: "attached" });
+		await wait(page, 400);
+		const state = await page.evaluate(() => {
+			const nav = document.querySelector("#nsk-head > ul.nav-menu");
+			return {
+				shown: nav.getClientRects().length > 0,
+				items: [...nav.children].filter((li) => li.getClientRects().length).map((li) => li.textContent.trim())
+			};
+		});
+		assert.equal(state.shown, true, "顶栏版块这一排显示");
+		assert.deepEqual(state.items, ["AI", "摸鱼", "情感", "影音", "运动", "羊毛", "NQ"]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十二批（2026-10-19）：合作商家（/providers）、友站链接（/friends）照 sb.sb 页面卡片——不再是土黄渐变底、居中大标题；商家 logo 放在中间灰底板上（白字、深色字都看得清），友站照 sb.sb .link-card：头像 + 名字 + 域名，坏掉的头像换成首字占位", async () => {
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/providers", { html: providersPage({ dark }), viewport: { width: 1280, height: 800 }, colorScheme: dark ? "dark" : "light" });
+		try {
+			await page.waitForSelector(".nsk-providers .provider img");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const color = (value) => { const probe = document.createElement("div"); probe.style.background = value; document.body.append(probe); const out = getComputedStyle(probe).backgroundColor; probe.remove(); return out; };
+				const box = document.querySelector(".nsk-providers");
+				const s = getComputedStyle(box);
+				const title = getComputedStyle(box.querySelector(":scope > h2"));
+				const tile = box.querySelector(".provider");
+				const tiles = [...box.querySelectorAll(".provider")].map((el) => el.getBoundingClientRect());
+				return {
+					panel: s.backgroundColor === color("var(--panel)"),
+					gradient: s.backgroundImage !== "none",
+					border: s.borderTopWidth,
+					title: [title.fontSize, title.textAlign],
+					grid: getComputedStyle(box.querySelector(".provider-grid-container")).display,
+					tile: getComputedStyle(tile).backgroundColor === color("color-mix(in srgb, var(--text) 40%, var(--panel))"),
+					sameRow: tiles.filter((r) => Math.abs(r.top - tiles[0].top) < 1).length,
+					overflow: document.documentElement.scrollWidth - innerWidth
+				};
+			});
+			assert.deepEqual({ ...state, sameRow: state.sameRow >= 5 }, { panel: true, gradient: false, border: "1px", title: ["15px", "left"], grid: "grid", tile: true, sameRow: true, overflow: 0 }, dark ? "深色" : "浅色");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/friends", { html: friendsPage(), viewport: { width: 1280, height: 800 } });
+	try {
+		await page.waitForSelector(".nsk-friends .nsmax-friend-host");
+		await page.waitForFunction(() => document.querySelectorAll(".nsk-friends .nsmax-friend-avatar").length === 2);
+		const state = await page.evaluate(() => {
+			const cards = [...document.querySelectorAll(".nsk-friends .friends-container > div > a")];
+			const card = (name) => cards.find((a) => a.querySelector("p").textContent === name);
+			return {
+				display: getComputedStyle(cards[0]).display,
+				host: card("EdNovas的小站").querySelector(".nsmax-friend-host").textContent,
+				hostWww: card("非主流论坛").querySelector(".nsmax-friend-host").textContent,
+				broken: ["Low Level News", "DR导航"].map((name) => [card(name).querySelector(".nsmax-friend-avatar")?.textContent, card(name).querySelector("img").hidden]),
+				nameSize: getComputedStyle(cards[0].querySelector("p")).fontSize,
+				avatar: Math.round(cards[0].querySelector("img").getBoundingClientRect().width),
+				ellipsis: getComputedStyle(card("一个名字特别特别长的友站博客").querySelector("p")).textOverflow
+			};
+		});
+		assert.deepEqual(state, { display: "grid", host: "ednovas.xyz", hostWww: "example.org", broken: [["L", true], ["D", true]], nameSize: "14.5px", avatar: 36, ellipsis: "ellipsis" });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十二批（2026-10-19）：没登录时的「用户未登录」统一排成 sb.sb 空状态卡片 + 「去登录」——邀请好友页的居中 h2、账簿页的空 div（以前一行孤零零的字）", async () => {
+	for (const [url, html, selector] of [["https://www.nodeseek.com/invite", invitePage(), ".invite-panel > h2"], ["https://www.nodeseek.com/credit#/p-1", creditGuestPage(), ".credit-table > div"]]) {
+		const { context, page, errors } = await open(browser, url, { html, viewport: { width: 1280, height: 700 } });
+		try {
+			await page.waitForSelector(`${selector}[data-nsmax-site-error] > .nsmax-site-error-login`);
+			const state = await page.evaluate((sel) => {
+				const box = document.querySelector(sel);
+				const s = getComputedStyle(box);
+				return { login: box.querySelector(".nsmax-site-error-login").getAttribute("href"), border: s.borderTopWidth, align: s.textAlign, size: s.fontSize };
+			}, selector);
+			assert.deepEqual(state, { login: "/signIn.html", border: "1px", align: "center", size: "14px" }, url);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十二批（2026-10-19）：签到页没登录时只写「登录后才能签到」和一个「登录后签到」按钮；连续签到、统计、日历不显示（以前照样摆着「签到」按钮和「今天还没签到」）", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/board", { html: boardRealPage({ guest: true }), viewport: { width: 1280, height: 800 } });
+	try {
+		await page.waitForSelector(".nsmax-checkin[data-guest] .nsmax-checkin-actions a");
+		const state = await page.evaluate(() => {
+			const card = document.querySelector(".nsmax-checkin");
+			const shown = (sel) => !!card.querySelector(sel)?.getClientRects().length;
+			return {
+				action: [...card.querySelectorAll(".nsmax-checkin-actions > *")].map((el) => `${el.tagName.toLowerCase()} ${el.getAttribute("href") || ""} ${el.textContent}`),
+				note: card.querySelector(".nsmax-checkin-note").textContent,
+				streak: shown(".nsmax-checkin-streak"),
+				stats: shown(".nsmax-checkin-stats"),
+				calendar: shown(".nsmax-checkin-calendar")
+			};
+		});
+		assert.deepEqual(state.action, ["a /signIn.html 登录后签到"]);
+		assert.match(state.note, /^登录后才能签到/);
+		assert.deepEqual([state.streak, state.stats, state.calendar], [false, false, false]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十二批（2026-10-19）：没登录时打开通知、设置、关注页，站点只弹「用户未登录」、点掉后整页空白——放一张空状态卡片：一句话 + 「去登录」；登录后不出现", async () => {
+	for (const [url, html, text] of [["https://www.nodeseek.com/notification#/atMe", notificationGuestPage(), "登录后才能查看通知和私信"], ["https://www.nodeseek.com/setting", settingGuestPage(), "登录后才能修改个人设置"], ["https://www.nodeseek.com/fans", fansGuestPage(), "登录后才能查看关注和粉丝"]]) {
+		const { context, page, errors } = await open(browser, url, { html, viewport: { width: 1280, height: 700 } });
+		try {
+			await page.waitForSelector(".nsmax-guest-empty > .nsmax-site-error-login");
+			const state = await page.evaluate(() => {
+				const box = document.querySelector(".nsmax-guest-empty");
+				const r = box.getBoundingClientRect();
+				return { text: box.firstChild.textContent, login: box.querySelector("a").getAttribute("href"), centered: Math.abs(r.left + r.width / 2 - innerWidth / 2) < 2, count: document.querySelectorAll(".nsmax-guest-empty").length };
+			});
+			assert.equal(state.text, text, url);
+			assert.equal(state.login, "/signIn.html");
+			assert.equal(state.centered, true, `${url}：卡片居中`);
+			assert.equal(state.count, 1);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	const { context, page } = await open(browser, "https://www.nodeseek.com/setting#/profile", { html: settingPage(), viewport: { width: 1280, height: 700 } });
+	try {
+		await page.waitForSelector("#user-setting-panel");
+		await wait(page, 500);
+		assert.equal(await page.locator(".nsmax-guest-empty").count(), 0, "登录后不出现");
+	} finally { await context.close(); }
+});
+
+test("第十二批（2026-10-19）：站点直接返回 JSON 的地址（没登录打开发帖页是 {\"message\":\"USER NOT FOUND\"}）脚本不动：不套主题、不加按钮", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/new-discussion", { pages: { "/new-discussion": { body: "{\"message\":\"USER NOT FOUND\",\"status\":404,\"success\":false}", contentType: "application/json" } }, viewport: { width: 1280, height: 700 } });
+	try {
+		await wait(page, 800);
+		const state = await page.evaluate(() => ({ theme: document.documentElement.hasAttribute("data-nsmax-theme"), tools: !!document.getElementById("nspp-tools"), styles: document.querySelectorAll("style").length }));
+		assert.deepEqual(state, { theme: false, tools: false, styles: 0 });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });

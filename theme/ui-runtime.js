@@ -2077,17 +2077,24 @@
 		}
 		// 站点自己那一行（「今日签到获得鸡腿9个，当前排名第288」或「今日还未签到」+ 两个按钮）：文字放进卡片，按钮换成卡片里的同名按钮
 		const text = head.textContent.replace(/\s+/g, " ").trim();
-		const done = /获得鸡腿\s*\d+\s*个|已签到/.test(text);
+		// 没登录：站点那一行是「登录后签到」。卡片里只写一句说明和「登录后签到」，连续签到、统计、日历都是个人的，不显示（design.css 第 58 节）
+		const guest = !unsafeWindow$1.__config__?.user && !!head.querySelector('a[href*="signIn"]');
+		card.toggleAttribute("data-guest", guest);
+		const done = !guest && /获得鸡腿\s*\d+\s*个|已签到/.test(text);
 		const gain = Number(text.match(/获得鸡腿\s*(\d+)\s*个/)?.[1]);
 		const order = Number(text.match(/排名第\s*(\d+)/)?.[1]);
-		nsmaxSetText(card.querySelector(".nsmax-checkin-note"), done ? text : "今天还没签到，签到领鸡腿；「试试手气」随机 1–10 个。");
+		nsmaxSetText(card.querySelector(".nsmax-checkin-note"), guest ? "登录后才能签到。每天签到领鸡腿；「试试手气」随机 1–10 个。" : done ? text : "今天还没签到，签到领鸡腿；「试试手气」随机 1–10 个。");
 		const actions = card.querySelector(".nsmax-checkin-actions");
 		const nativeButtons = Array.from(head.querySelectorAll("button, a.btn, .pure-button")).filter((button) => button.textContent.trim());
-		const signature = done ? "done" : nativeButtons.map((button) => button.textContent.trim()).join("|");
+		const signature = guest ? "guest" : done ? "done" : nativeButtons.map((button) => button.textContent.trim()).join("|");
 		if (actions.dataset.signature !== signature) {
 			actions.dataset.signature = signature;
 			actions.replaceChildren();
-			if (done || !nativeButtons.length) {
+			if (guest) {
+				const login = make("a", "nsmax-checkin-button primary", "登录后签到");
+				login.href = "/signIn.html";
+				actions.append(login);
+			} else if (done || !nativeButtons.length) {
 				const button = make("button", "nsmax-checkin-button", done ? "今日已签到" : "签到");
 				button.type = "button";
 				button.disabled = done;
@@ -3019,7 +3026,21 @@
 	// 站点 Vue 页面里的报错框（行内写死的红框、2rem 大红字，如管理记录页的「用户未登录」「Not allowed to search」）：
 	// 主题排成 sb.sb 空状态（见 design.css 第 57 节）；未登录的加一个「去登录」按钮，英文的换成中文
 	function nsmaxTidySiteErrors() {
-		for (const box of document.querySelectorAll('#nsk-frame div[style*="solid red"]')) {
+		// 邀请好友页没登录时是 .invite-panel 里单独一个 h2「用户未登录」
+		const boxes = new Set(document.querySelectorAll('#nsk-frame div[style*="solid red"], #nsk-frame .invite-panel > h2:only-child'));
+		// 别的页面没登录时只是一个写着「用户未登录」的空元素（账簿页是 .credit-table 里一个 div，2026-10-19）：没登录时按文字认
+		const frame = document.getElementById("nsk-frame");
+		if (frame && !unsafeWindow$1.__config__?.user && frame.textContent.includes("用户未登录")) {
+			const walker = document.createTreeWalker(frame, NodeFilter.SHOW_TEXT);
+			while (walker.nextNode()) {
+				const node = walker.currentNode;
+				if (node.data.trim() !== "用户未登录") continue;
+				const box = node.parentElement;
+				if (!box || box.children.length && !box.hasAttribute("data-nsmax-site-error") || box.closest("#nsk-left-panel-container, #nsk-right-panel-container, [class*='nsmax-']")) continue;
+				boxes.add(box);
+			}
+		}
+		for (const box of boxes) {
 			nsmaxSetAttr(box, "data-nsmax-site-error");
 			const text = box.firstChild?.nodeType === 3 ? box.firstChild.data.trim() : box.textContent.trim();
 			if (/^not allowed to search$/i.test(text)) nsmaxSetText(box, "站点只给管理员按用户名搜索管理记录");
@@ -3030,6 +3051,62 @@
 				link.textContent = "去登录";
 				box.append(link);
 			}
+		}
+	}
+	// 没登录时打开通知、设置、关注 / 粉丝：站点只弹一个「用户未登录」提示，点掉之后整页空白（关注页只剩两个标签）。
+	// 放一张和别处一样的空状态卡片：一句话 + 「去登录」（2026-10-19）
+	function nsmaxGuestPlaceholder() {
+		if (unsafeWindow$1.__config__?.user) return;
+		const path = location.pathname;
+		const fans = /^\/fans(?:\/|$)/.test(path);
+		const text = /^\/notification(?:\/|$)/.test(path) ? "登录后才能查看通知和私信" : /^\/setting(?:\/|$)/.test(path) ? "登录后才能修改个人设置" : fans ? "登录后才能查看关注和粉丝" : "";
+		if (!text) return;
+		const host = fans ? document.querySelector("#nsk-frame .member-list") : document.getElementById("nsk-frame");
+		if (!host || host.querySelector(":scope > .nsmax-guest-empty")) return;
+		const box = document.createElement("div");
+		box.className = "nsmax-guest-empty";
+		box.setAttribute("data-nsmax-site-error", "");
+		box.append(text);
+		const link = document.createElement("a");
+		link.className = "nsmax-site-error-login";
+		link.href = "/signIn.html";
+		link.textContent = "去登录";
+		box.append(link);
+		const mount = host.querySelector(":scope > #search-panel-mount");
+		if (mount) mount.before(box);
+		else host.append(box);
+	}
+	// 友站链接页（/friends）照 sb.sb .link-card：名字下面一行写网址的域名（主题排版见 design.css 第 58 节）；
+	// 头像图挂了的（站点上有几个外链图已经失效，显示成破图加「头像」两个字）换成名字首字的占位块
+	function nsmaxPrepareFriends() {
+		const list = document.querySelector("#nsk-frame > .nsk-friends > .friends-container");
+		if (!list) return;
+		for (const link of list.querySelectorAll(":scope > div > a[href]")) {
+			if (!link.querySelector(":scope > .nsmax-friend-host")) {
+				let host = "";
+				try { host = new URL(link.href, location.href).hostname.replace(/^www\./, ""); } catch {}
+				if (host) {
+					const meta = document.createElement("span");
+					meta.className = "nsmax-friend-host";
+					meta.textContent = host;
+					link.append(meta);
+				}
+			}
+			const image = link.querySelector(":scope > img");
+			if (!image || image.hasAttribute("data-nsmax-watched")) continue;
+			image.setAttribute("data-nsmax-watched", "");
+			const broken = () => {
+				if (image.hidden) return;
+				image.hidden = true;
+				const name = link.querySelector(":scope > p")?.textContent.trim() || link.title || "";
+				const badge = document.createElement("span");
+				badge.className = "nsmax-friend-avatar";
+				badge.setAttribute("aria-hidden", "true");
+				badge.textContent = Array.from(name)[0] || "?";
+				image.before(badge);
+			};
+			if (image.complete && !image.naturalWidth) broken();
+			else image.addEventListener("error", broken, { once: true });
 		}
 	}
 	// 页面解析阶段（脚本注入得早时）就装上，模块挂载时再调一次不重复装
@@ -3080,6 +3157,8 @@
 			nsmaxPrepareSetting();
 			nsmaxPrepareSidePage();
 			nsmaxTidySiteErrors();
+			nsmaxGuestPlaceholder();
+			nsmaxPrepareFriends();
 			nsmaxGuardSidebarScroll();
 			nsmaxPrepareAuth();
 			nsmaxCleanNotifications();
