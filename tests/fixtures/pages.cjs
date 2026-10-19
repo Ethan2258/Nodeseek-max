@@ -278,7 +278,33 @@ const notificationGuestPage = (options = {}) => shell("NodeSeek Message", `<div 
 const settingGuestPage = (options = {}) => shell("NodeSeek Setting", `<div id="nsk-frame-block"><div data-v-app=""><!----></div></div> <div id="search-panel-mount"></div>`, { ...options, guest: true, standalone: true });
 const fansGuestPage = (options = {}) => shell("NodeSeek", `<div id="nsk-frame-block"></div> <div data-v-6f7c77cb=""><div data-v-c602bc02="" data-v-6f7c77cb="" class="member-list nsk-container"><div data-v-6f7c77cb="" data-v-c602bc02="" class="fans-switcher"><a data-v-6f7c77cb="" data-v-c602bc02="" href="/fans?type=follow" class="switcher-item selected"> 我的关注🔭 </a> <a data-v-6f7c77cb="" data-v-c602bc02="" href="/fans?type=fans" class="switcher-item"> 我的粉丝❤️ </a></div> <div data-v-c602bc02="" class="user-card-wrapper-container"></div> <!----></div></div> <div id="search-panel-mount"></div>`, { ...options, guest: true, standalone: true });
 
+// 搜索面板（登录后点顶栏搜索框、按 / 或 Ctrl+/ 弹出）：照真站 index.*.js 里 Vue 组件的模板（2026-10-19 取出），组件 scoped 样式在 search-overlay.css。
+// 打开时 #search-panel-mount 换成 .search-overlay；「帖子」下面是版块小胶囊（版块表里 showInIndex 的那些），有搜索历史时最下面一排历史
+const searchOverlayCss = fs.readFileSync(path.join(__dirname, "search-overlay.css"), "utf8");
+const searchTabIcons = {
+	post: `<path data-v-9b37650a="" d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path> <!----> <!---->`,
+	user: `<!----> <path data-v-9b37650a="" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path> <!---->`,
+	google: `<!----> <!----> <path data-v-9b37650a="" fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>`
+};
+const searchOverlayHtml = ({ scope = "post", history = [["vps", "全部"], ["甲骨文", "技术"], ["CN2 GIA 年付", "交易"], ["tester", "用户"]] } = {}) => {
+	const tabs = [["post", "帖子"], ["user", "用户"], ["google", "谷歌"]].map(([id, label]) => `<button data-v-9b37650a="" class="tab-btn${id === scope ? " active" : ""}"><svg data-v-9b37650a="" viewBox="0 0 20 20" fill="currentColor" class="tab-icon">${searchTabIcons[id]}</svg>
+        ${label}
+      </button>`).join("");
+	const pills = scope === "post" ? `<div data-v-9b37650a="" class="sub-nav">${["全部", "日常", "技术", "情报", "测评", "交易", "拼车", "Dev", "贴图", "曝光"].map((name, index) => `<span data-v-9b37650a="" class="sub-pill${index ? "" : " active"}">
+          ${name}
+        </span>`).join("")}</div>` : "<!---->";
+	const placeholder = scope === "user" ? "输入用户名..." : scope === "google" ? "利用谷歌全文搜索..." : "搜索 全部 帖子...";
+	const historyHtml = history.length ? `<div data-v-9b37650a="" class="search-history"><div data-v-9b37650a="" class="history-header"><span data-v-9b37650a="">搜索历史</span> <button data-v-9b37650a="" class="clear-history-btn">清空</button></div> <div data-v-9b37650a="" class="history-list">${history.map(([query, tag]) => `<div data-v-9b37650a="" class="history-item"><span data-v-9b37650a="" class="history-keyword">${query}</span> <span data-v-9b37650a="" class="history-scope-tag">${tag}</span></div>`).join("")}</div></div>` : "<!---->";
+	return `<div data-v-9b37650a="" tabindex="0" class="search-overlay"><div data-v-9b37650a="" class="glass-card"><nav data-v-9b37650a="" class="glass-tabs">${tabs} <button data-v-9b37650a="" class="glass-close"><svg data-v-9b37650a="" viewBox="0 0 20 20" fill="currentColor"><path data-v-9b37650a="" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button></nav> <div data-v-9b37650a="" class="glass-content">${pills} <div data-v-9b37650a="" class="glass-input-group"><input data-v-9b37650a="" type="text" placeholder="${placeholder}"> <button data-v-9b37650a="" class="glass-search-btn" style="white-space: nowrap; flex-shrink: 0;"><svg data-v-9b37650a="" viewBox="0 0 20 20" fill="currentColor"><path data-v-9b37650a="" fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg> <span data-v-9b37650a="">搜索</span></button></div> ${historyHtml}</div></div></div>`;
+};
+// 列表页上打开了搜索面板
+const searchOverlayPage = (options = {}) => listPage(options)
+	.replace("</head>", `<style>${searchOverlayCss}</style></head>`)
+	.replace("</section>", `${searchOverlayHtml(options)}</section>`);
+
 module.exports = {
+	searchOverlayPage,
+	searchOverlayHtml,
 	notificationGuestPage,
 	settingGuestPage,
 	fansGuestPage,

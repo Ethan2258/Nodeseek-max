@@ -10754,38 +10754,45 @@ html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content img:not(.s
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin-bottom: 0 !important;
 }
-/* 搜索面板（站点的 .search-overlay，点顶栏搜索框弹出）：照 sb.sb 弹窗重排——
-   卡片 640px、细线框、卡片圆角、柔和投影；顶上一排「帖子 / 用户」（sb.sb .tab-bar：14px，当前项 500 + 底部 2px 墨色线）和关闭按钮，下面一条细线；
-   内容区 16px 18px 18px：先是 40px 搜索框（左边放大镜、深一级细线，聚焦时品牌黄边框 + 光圈）和墨色「搜索」按钮，
-   再是一排版块小标签（26px、12.5px，放不下时横着滑，不再折成两三行），最后「搜索历史」（12.5px 淡字 +「清空」，下面一排 28px 小胶囊） */
-html[data-nsmax-theme] .search-overlay:is(#nsmax-lv, *) {
-  background: rgba(15, 23, 42, 0.32) !important;
+/* 搜索面板（站点的 .search-overlay：登录后点顶栏搜索框、按 / 或 Ctrl+/ 弹出，组件结构见 tests/fixtures/pages.cjs searchOverlayHtml）。
+   sb.sb 没有搜索弹窗，照它的弹窗和顶栏搜索条（.search-form）排（2026-10-19 重做）：
+   - 遮罩 var(--backdrop)，卡片 600px、细线框、卡片圆角、shadow-medium，离顶 12vh；
+   - 顶上一排「帖子 / 用户」：只留文字（站点那几个实心小图标和主题的线条图标不搭），14px，当前项 500 + 底部 2px 墨色线；右边关闭按钮；
+   - 搜索条和顶栏搜索框是同一个样子：一个 44px 的框（次底色细线框，聚焦时换成面板底 + 品牌色边框），左边放大镜，
+     「搜索」按钮收进框里右边（墨色小胶囊，只写字——以前框里一个放大镜、按钮里又一个放大镜）；
+   - 下面一排版块小标签（26px、12.5px，放不下时横着滑），最后「搜索历史」（12.5px 淡字 +「清空」，下面一排 28px 小胶囊）；
+   - 手机（≤640px）：站点把卡片撑成满屏白板，下面一大片空白、左右还露出两条遮罩。改成顶部抽屉：贴着屏幕顶、宽度占满、
+     高度跟内容走，下面是遮罩，点遮罩关闭 */
+html[data-nsmax-theme] .search-overlay:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-items: flex-start !important;
+  padding: 12vh 16px 16px !important;
+  background: var(--backdrop) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-html[data-nsmax-theme][data-nsmax-dark] .search-overlay:is(#nsmax-lv, *) {
-  background: rgba(0, 0, 0, 0.5) !important;
-}
 html[data-nsmax-theme] .search-overlay .glass-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: border-box !important;
-  width: min(640px, calc(100vw - 32px)) !important;
-  max-width: none !important;
+  width: 600px !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: calc(100dvh - 12vh - 16px) !important;
+  margin: 0 !important;
   padding: 0 !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r) !important;
   background: var(--panel) !important;
-  box-shadow: 0 16px 48px -8px rgba(15, 23, 42, 0.24) !important;
+  box-shadow: var(--shadow-medium) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  overflow: hidden !important;
+  overflow: auto !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-tabs:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: flex !important;
   align-items: center !important;
-  gap: 18px !important;
-  height: 48px !important;
+  gap: 20px !important;
+  height: 46px !important;
   margin: 0 !important;
-  padding: 0 10px 0 18px !important;
+  padding: 0 8px 0 18px !important;
   border: 0 !important;
   border-bottom: 1px solid var(--line-soft) !important;
   background: transparent !important;
@@ -10794,15 +10801,15 @@ html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):i
   position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  height: 48px !important;
+  height: 46px !important;
   margin: 0 !important;
-  padding: 0 2px !important;
+  padding: 0 1px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   font-weight: 400 !important;
   line-height: 1 !important;
@@ -10832,17 +10839,16 @@ html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn.active:is(#nsmax-l
   opacity: 1 !important;
   transform: none !important;
 }
-html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  flex: none !important;
-  width: 15px !important;
-  height: 15px !important;
+html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn > svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 32px !important;
-  height: 32px !important;
+  flex: none !important;
+  width: 30px !important;
+  height: 30px !important;
   margin: 0 0 0 auto !important;
   padding: 0 !important;
   border: 0 !important;
@@ -10850,57 +10856,69 @@ html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b
   background: transparent !important;
   box-shadow: none !important;
   color: var(--text-subtle) !important;
+  cursor: pointer !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--panel-hover) !important;
   color: var(--text) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-close svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  width: 18px !important;
-  height: 18px !important;
+  width: 17px !important;
+  height: 17px !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: flex !important;
   flex-direction: column !important;
-  gap: 12px !important;
+  gap: 14px !important;
   margin: 0 !important;
   padding: 16px 18px 18px !important;
   background: transparent !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *) {
   order: 1 !important;
+  box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 0 !important;
+  height: 44px !important;
   margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
+  padding: 0 5px 0 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *):focus-within {
+  border-color: var(--brand-border) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "" !important;
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--text-subtle) !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center / contain no-repeat !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, *):is(#nsmax-b, *) {
   flex: 1 1 auto !important;
   box-sizing: border-box !important;
   min-width: 0 !important;
-  height: 40px !important;
+  height: 100% !important;
   margin: 0 !important;
-  padding: 0 12px 0 36px !important;
-  border: 1px solid var(--line-strong) !important;
-  border-radius: var(--r-input) !important;
-  background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8f9e' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 12px center / 16px 16px no-repeat !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
   color: var(--text) !important;
   font-family: var(--font-sans) !important;
-  font-size: 14px !important;
-  line-height: 38px !important;
+  font-size: 15px !important;
   outline: 0 !important;
 }
-html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
-  border-color: var(--field-focus) !important;
-  outline: 3px solid var(--field-ring) !important;
-  outline-offset: 0 !important;
-}
 html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, *):is(#nsmax-b, *)::placeholder {
-  color: var(--text-muted) !important;
+  color: var(--text-subtle) !important;
   opacity: 1 !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -10908,27 +10926,27 @@ html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#ns
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
-  height: 40px !important;
+  height: 32px !important;
   margin: 0 !important;
-  padding: 0 18px !important;
+  padding: 0 14px !important;
   border: 1px solid var(--action-border) !important;
   border-radius: var(--r-pill) !important;
   background: var(--action) !important;
   box-shadow: none !important;
   color: var(--action-text) !important;
   font-family: var(--font-sans) !important;
-  font-size: 14px !important;
+  font-size: 13.5px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--action-hover) !important;
 }
-html[data-nsmax-theme] .search-overlay .glass-search-btn svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  flex: none !important;
-  width: 15px !important;
-  height: 15px !important;
+html[data-nsmax-theme] .search-overlay .glass-search-btn > svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-search-btn > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline !important;
 }
 html[data-nsmax-theme] .search-overlay .sub-nav:is(#nsmax-lv, *):is(#nsmax-b, *) {
   order: 2 !important;
@@ -10936,7 +10954,7 @@ html[data-nsmax-theme] .search-overlay .sub-nav:is(#nsmax-lv, *):is(#nsmax-b, *)
   flex-wrap: nowrap !important;
   gap: 6px !important;
   margin: 0 !important;
-  padding: 0 0 2px !important;
+  padding: 0 !important;
   overflow-x: auto !important;
   scrollbar-width: none !important;
 }
@@ -10950,7 +10968,7 @@ html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(
   align-items: center !important;
   height: 26px !important;
   margin: 0 !important;
-  padding: 0 11px !important;
+  padding: 0 10px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
@@ -10964,6 +10982,7 @@ html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(
 }
 html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   border-color: var(--line-strong) !important;
+  background: var(--panel) !important;
   color: var(--text) !important;
 }
 html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill.active:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -10974,8 +10993,8 @@ html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill.active:is(#nsmax-lv,
 }
 html[data-nsmax-theme] .search-overlay .search-history:is(#nsmax-lv, *):is(#nsmax-b, *) {
   order: 3 !important;
-  margin: 2px 0 0 !important;
-  padding: 12px 0 0 !important;
+  margin: 0 !important;
+  padding: 14px 0 0 !important;
   border: 0 !important;
   border-top: 1px solid var(--line-soft) !important;
   background: transparent !important;
@@ -10984,7 +11003,7 @@ html[data-nsmax-theme] .search-overlay .history-header:is(#nsmax-lv, *):is(#nsma
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  margin: 0 0 8px !important;
+  margin: 0 0 9px !important;
   padding: 0 !important;
 }
 html[data-nsmax-theme] .search-overlay .history-header > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -11000,11 +11019,11 @@ html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#n
   background: none !important;
   box-shadow: none !important;
   color: var(--text-subtle) !important;
-  font-size: 12px !important;
+  font-size: 12.5px !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
-  color: var(--text) !important;
+  color: var(--link-hover) !important;
 }
 html[data-nsmax-theme] .search-overlay .history-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: flex !important;
@@ -11018,9 +11037,10 @@ html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
+  max-width: 100% !important;
   height: 28px !important;
   margin: 0 !important;
-  padding: 0 6px 0 11px !important;
+  padding: 0 5px 0 11px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
@@ -11034,7 +11054,16 @@ html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
 }
+html[data-nsmax-theme] .search-overlay .history-keyword:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
 html[data-nsmax-theme] .search-overlay .history-scope-tag:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
   margin: 0 !important;
   padding: 0 6px !important;
   border: 0 !important;
@@ -11043,16 +11072,29 @@ html[data-nsmax-theme] .search-overlay .history-scope-tag:is(#nsmax-lv, *):is(#n
   color: var(--text-subtle) !important;
   font-size: 11px !important;
   line-height: 18px !important;
+  opacity: 1 !important;
 }
-@media (max-width: 600px) {
-  html[data-nsmax-theme] .search-overlay .glass-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    width: calc(100vw - 16px) !important;
+@media (max-width: 640px) {
+  html[data-nsmax-theme] .search-overlay:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    padding: 0 !important;
+    background: var(--backdrop) !important;
   }
-  html[data-nsmax-theme] .search-overlay .glass-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    padding: 14px !important;
+  html[data-nsmax-theme] .search-overlay .glass-card:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    width: 100% !important;
+    max-height: 100dvh !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    border-radius: 0 0 var(--r) var(--r) !important;
   }
-  html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    padding: 0 14px !important;
+  html[data-nsmax-theme] .search-overlay .glass-tabs:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    box-sizing: content-box !important;
+    padding: env(safe-area-inset-top, 0px) 6px 0 16px !important;
+  }
+  html[data-nsmax-theme] .search-overlay .glass-content:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    padding: 14px 14px 16px !important;
+  }
+  html[data-nsmax-theme] .search-overlay .glass-search-btn > span:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    display: inline !important;
   }
 }
 

@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open } = require("./harness.cjs");
-const { providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage } = require("./fixtures/pages.cjs");
+const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.13");
+	assert.equal(packageJson.version, "1.8.14");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -3425,7 +3425,8 @@ test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预
 			const pills = Array.from(document.querySelectorAll(".search-overlay .sub-pill"), (p) => Math.round(p.getBoundingClientRect().top));
 			return { width: Math.round(card.width), input: Math.round(input.height), inputFirst: input.top < pills[0], oneRow: new Set(pills).size === 1 };
 		});
-		assert.deepEqual(overlay, { width: 640, input: 40, inputFirst: true, oneRow: true });
+		// 2026-10-19 第十三批改成 600px 卡片、44px 一体搜索框（输入框在框里，高 42px）
+		assert.deepEqual(overlay, { width: 600, input: 42, inputFirst: true, oneRow: true });
 		assert.deepEqual(list.errors, []);
 	} finally { await list.context.close(); }
 });
@@ -4845,6 +4846,91 @@ test("第十二批（2026-10-19）：站点直接返回 JSON 的地址（没登�
 		await wait(page, 800);
 		const state = await page.evaluate(() => ({ theme: document.documentElement.hasAttribute("data-nsmax-theme"), tools: !!document.getElementById("nspp-tools"), styles: document.querySelectorAll("style").length }));
 		assert.deepEqual(state, { theme: false, tools: false, styles: 0 });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+// 第十三批（2026-10-19）
+test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——标签只留文字；输入框和「搜索」按钮是一个框（框里一个放大镜，按钮只写字，不再两个放大镜）；聚焦时品牌色边框；手机上是贴顶的抽屉、高度跟内容走", async () => {
+	for (const [width, dark] of [[1280, false], [1280, true], [390, false]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: searchOverlayPage({ dark, mobile: width < 700 }), viewport: { width, height: 760 }, colorScheme: dark ? "dark" : "light" });
+		try {
+			await page.waitForSelector(".search-overlay .glass-card");
+			await wait(page, 400);
+			const state = await page.evaluate(() => {
+				const card = document.querySelector(".search-overlay .glass-card");
+				const group = card.querySelector(".glass-input-group");
+				const input = group.querySelector("input");
+				const button = group.querySelector(".glass-search-btn");
+				const box = (el) => el.getBoundingClientRect();
+				const g = box(group), i = box(input), b = box(button), c = box(card);
+				return {
+					tabIcons: [...card.querySelectorAll(".tab-btn svg")].filter((svg) => svg.getClientRects().length).length,
+					tabs: [...card.querySelectorAll(".tab-btn")].filter((btn) => btn.getClientRects().length).map((btn) => btn.textContent.trim()),
+					groupBorder: getComputedStyle(group).borderTopWidth,
+					inputBorder: getComputedStyle(input).borderTopWidth,
+					buttonInside: b.left >= g.left && b.right <= g.right + 0.5 && b.top >= g.top && b.bottom <= g.bottom + 0.5,
+					inputInside: i.left >= g.left && i.right <= b.left + 1,
+					buttonIcon: !!button.querySelector("svg")?.getClientRects().length,
+					buttonText: getComputedStyle(button.querySelector("span")).display !== "none" ? button.textContent.trim() : "",
+					magnifier: getComputedStyle(group, "::before").content !== "none",
+					card: [Math.round(c.left), Math.round(c.top), Math.round(c.width), Math.round(c.height)],
+					overflow: document.documentElement.scrollWidth - innerWidth
+				};
+			});
+			assert.equal(state.tabIcons, 0, "标签只留文字");
+			assert.deepEqual(state.tabs, ["帖子", "用户"]);
+			assert.equal(state.groupBorder, "1px", "输入框和按钮外面是一个框");
+			assert.equal(state.inputBorder, "0px", "输入框自己不再有框");
+			assert.equal(state.buttonInside, true, "「搜索」按钮在框里");
+			assert.equal(state.inputInside, true);
+			assert.equal(state.buttonIcon, false, "按钮里不再有放大镜");
+			assert.equal(state.buttonText, "搜索");
+			assert.equal(state.magnifier, true, "框里左边一个放大镜");
+			if (width < 700) {
+				assert.deepEqual(state.card.slice(0, 3), [0, 0, width], "手机：贴着屏幕顶、宽度占满");
+				assert.ok(state.card[3] < 400, `手机：高度跟内容走（${state.card[3]}）`);
+			} else {
+				assert.equal(state.card[2], 600);
+				assert.equal(state.card[0], (width - 600) / 2, "居中");
+			}
+			assert.ok(state.overflow <= 0);
+			await page.locator(".search-overlay .glass-input-group input").focus();
+			await wait(page, 350);
+			const focus = await page.evaluate(() => {
+				const probe = document.createElement("div");
+				probe.style.borderColor = "var(--brand-border)";
+				document.body.append(probe);
+				const brand = getComputedStyle(probe).borderTopColor;
+				probe.remove();
+				return getComputedStyle(document.querySelector(".search-overlay .glass-input-group")).borderTopColor === brand;
+			});
+			assert.equal(focus, true, "聚焦时框换成品牌色边框");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十三批（2026-10-19）：普通搜索结果里不放「精华」「抽奖」（首页列表的筛选，点了就离开搜索结果）；首页照旧有", async () => {
+	for (const [url, html, expected] of [["https://www.nodeseek.com/search?q=vps", searchPage({ count: 3 }), 0], ["https://www.nodeseek.com/", listPage(), 2]]) {
+		const { context, page, errors } = await open(browser, url, { html, viewport: { width: 1280, height: 760 } });
+		try {
+			await page.waitForSelector("#nsk-body-left > .post-list-controler > .sorter");
+			await wait(page, 500);
+			assert.equal(await page.locator("#nsk-body-left .nsmax-kind-tabs > a").count(), expected, url);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("第十三批（2026-10-19）：没登录时页面一打开站点就弹的「用户未登录」提示框（脚本装好之前就弹出来了）也换成 toast，不再挡在「登录后才能……」卡片前面", async () => {
+	const alert = `<div class="msc-confirm" style="display: block;"><div class="msc-overlay"><button class="msc-close">×</button></div><div class="msc-content"><h3 class="msc-title">用户未登录</h3><div class="msc-body"><p class="msc-sub"></p></div><div class="msc-action"><button class="msc-ok">OK</button></div></div></div><script>document.querySelector(".msc-confirm .msc-ok").addEventListener("click", (event) => event.target.closest(".msc-confirm").remove());</script>`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/setting", { html: settingGuestPage().replace("</body>", `${alert}</body>`), viewport: { width: 1280, height: 700 } });
+	try {
+		await page.waitForSelector(".nsmax-guest-empty");
+		await page.waitForSelector(".nsmax-toast[data-nsmax-shown]");
+		assert.equal(await page.locator(".msc-confirm").count(), 0, "提示框关掉了");
+		assert.equal(await page.locator(".nsmax-toast").innerText(), "用户未登录");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

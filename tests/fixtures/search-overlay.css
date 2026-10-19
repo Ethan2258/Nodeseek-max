@@ -1,0 +1,308 @@
+/* 站点搜索面板组件（index.*.js 里 Vue 组件 data-v-9b37650a 的 scoped 样式，2026-10-19 从真站脚本里取出）。
+   登录后点顶栏搜索框、按 / 或 Ctrl+/ 弹出；站点把这段样式在运行时插进 <style> */
+/* 亮色模式变量 (默认) */
+.search-overlay[data-v-9b37650a] {
+  --bg-overlay: rgba(0, 0, 0, 0.1);
+  --bg-card: #ffffff;
+  --bg-muted: #f4f4f5;
+  --border-color: #e4e4e7;
+  --text-main: #09090b;
+  --text-muted: #71717a;
+  --accent: #137930;
+  --accent-text: #ffffff;
+  --ring-color: rgba(24, 24, 27, 0.1);
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 15vh;
+  background: var(--bg-overlay);
+  backdrop-filter: none;
+  /* 去掉模糊 */
+  outline: none;
+}
+/* 暗色模式变量覆盖 */
+body.dark-layout .search-overlay[data-v-9b37650a] {
+  --bg-overlay: rgba(0, 0, 0, 0.2);
+  --bg-card: #272727;
+  --bg-muted: #2d2d2d;
+  --border-color: #1d1d1dbf;
+  --text-main: #fafafa;
+  --text-muted: #a1a1aa;
+  --accent: #259946;
+  --accent-text: #09090b;
+  --ring-color: rgba(250, 250, 250, 0.2);
+}
+/* 卡片容器 */
+.glass-card[data-v-9b37650a] {
+  width: 90%;
+  max-width: 600px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+/* 顶部导航 */
+.glass-tabs[data-v-9b37650a] {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
+}
+.tab-btn[data-v-9b37650a] {
+  border: none;
+  background: transparent;
+  padding: 16px 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  transition: color 0.2s;
+}
+.tab-btn[data-v-9b37650a]:hover {
+  color: var(--text-main);
+}
+.tab-btn.active[data-v-9b37650a] {
+  color: var(--text-main);
+}
+.tab-btn.active[data-v-9b37650a]::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+.tab-icon[data-v-9b37650a] {
+  width: 16px;
+  height: 16px;
+}
+.glass-close[data-v-9b37650a] {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.glass-close[data-v-9b37650a]:hover {
+  background: var(--bg-muted);
+  color: var(--text-main);
+}
+.glass-close svg[data-v-9b37650a] {
+  width: 20px;
+  /* 必须有明确单位 */
+  height: 20px;
+  flex-shrink: 0;
+  /* 防止在 flex 容器中被挤压 */
+  display: block;
+  /* 消除 baseline 间隙 */
+}
+/* 内容区 */
+.glass-content[data-v-9b37650a] {
+  padding: 20px;
+}
+/* 版块小胶囊 (Pills) */
+.sub-nav[data-v-9b37650a] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.sub-pill[data-v-9b37650a] {
+  padding: 4px 12px;
+  background: var(--bg-muted);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.sub-pill[data-v-9b37650a]:not(.active):hover {
+  background: var(--border-color);
+  color: var(--text-main);
+}
+body.dark-layout .sub-pill[data-v-9b37650a]:not(.active):hover {
+  background: #666;
+}
+.sub-pill.active[data-v-9b37650a] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+/* 输入框组合 */
+.glass-input-group[data-v-9b37650a] {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.glass-input-group input[data-v-9b37650a] {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 16px;
+  height: 44px;
+  color: var(--text-main);
+  font-size: 15px;
+  transition: all 0.2s;
+  min-width: 0;
+}
+.glass-input-group input[data-v-9b37650a]:focus {
+  outline: none;
+  border-color: var(--text-muted);
+  box-shadow: 0 0 0 2px var(--ring-color);
+}
+.glass-input-group input[data-v-9b37650a]::-moz-placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.glass-input-group input[data-v-9b37650a]::placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+/* 搜索按钮 */
+.glass-search-btn[data-v-9b37650a] {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  padding: 0 16px;
+  height: 44px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s;
+}
+.glass-search-btn[data-v-9b37650a]:hover {
+  opacity: 0.9;
+}
+.glass-search-btn svg[data-v-9b37650a] {
+  width: 16px;
+  height: 16px;
+}
+/* 极简流光动画 */
+.dynamic-glow[data-v-9b37650a] {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 200px;
+  background: radial-gradient(circle, var(--ring-color) 0%, transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+/* 动画效果：更轻微、更快速 */
+.modal-fade-enter-active[data-v-9b37650a],
+.modal-fade-leave-active[data-v-9b37650a] {
+  transition: opacity 0.15s ease;
+}
+.modal-fade-enter[data-v-9b37650a],
+.modal-fade-leave-to[data-v-9b37650a] {
+  opacity: 0;
+}
+@media (max-width: 640px) {
+.search-overlay[data-v-9b37650a] {
+    padding-top: 0;
+    background: var(--bg-card);
+}
+.glass-card[data-v-9b37650a] {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+.glass-tabs[data-v-9b37650a] {
+    padding-top: env(safe-area-inset-top);
+}
+.glass-search-btn span[data-v-9b37650a] {
+    display: none;
+}
+}
+/* 保持原有样式并增加以下新样式 */
+.glass-search-btn[data-v-9b37650a] {
+  /* 确保按钮里的文字不换行 */
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.search-history[data-v-9b37650a] {
+  margin-top: 20px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 15px;
+}
+.history-header[data-v-9b37650a] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.history-header span[data-v-9b37650a] {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.clear-history-btn[data-v-9b37650a] {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.clear-history-btn[data-v-9b37650a]:hover {
+  color: var(--accent);
+}
+.history-list[data-v-9b37650a] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.history-item[data-v-9b37650a] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--bg-muted);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.history-item[data-v-9b37650a]:hover {
+  background: var(--bg-card);
+  border-color: var(--accent);
+}
+.history-keyword[data-v-9b37650a] {
+  font-size: 13px;
+  color: var(--text-main);
+}
+.history-scope-tag[data-v-9b37650a] {
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--ring-color);
+  padding: 1px 6px;
+  border-radius: 4px;
+  opacity: 0.8;
+}
+/* 原有样式保持不变... */

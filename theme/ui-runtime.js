@@ -543,6 +543,11 @@
 		const controller = document.querySelector("#nsk-body-left > .post-list-controler");
 		const sorter = controller?.querySelector(":scope > .sorter");
 		if (!sorter || parsed && !parsed(sorter)) return;
+		// 普通搜索结果里不放「精华」「抽奖」：它们是首页列表的筛选，点了就离开搜索结果（「抽奖」那一页本身是一个搜索，照放）
+		if (location.pathname === "/search" && !nsmaxIsLotteryView()) {
+			controller.querySelector(":scope > .nsmax-kind-tabs")?.remove();
+			return;
+		}
 		let tabs = controller.querySelector(":scope > .nsmax-kind-tabs");
 		if (!tabs) {
 			tabs = document.createElement("div");
@@ -3010,6 +3015,13 @@
 			if (cancel && /^cancel$/i.test(cancel.textContent.trim())) cancel.textContent = "取消";
 			const title = (box.querySelector(".msc-title")?.textContent || "").trim();
 			const sub = (box.querySelector(".msc-sub")?.textContent || "").trim();
+			// 没登录打开通知、设置、关注页时站点弹「提示：用户未登录」：页面里已经有一张「登录后才能……」+「去登录」的卡片（nsmaxGuestPlaceholder），
+			// 不再挡在页面中间，改成 toast
+			if (!cancel && ok && !box.querySelector(".msc-input") && (sub || title) === "用户未登录") {
+				nsmaxToast("用户未登录");
+				ok.click();
+				return;
+			}
 			if (cancel || box.querySelector(".msc-input") || sub || !title || title.length > 40 || !ok) return;
 			nsmaxToast(title);
 			ok.click();
@@ -3019,6 +3031,8 @@
 		});
 		observer.observe(document.body, { childList: true });
 		ctx.signal.addEventListener("abort", () => observer.disconnect(), { once: true });
+		// 脚本装好之前就弹出来的（页面一打开站点就弹的提示）也处理一遍
+		for (const box of document.querySelectorAll("body > .msc-confirm")) handle(box);
 	}
 	// 我的关注 / 粉丝：列表是站点前端画的（先是一个 Loading，拿到数据后整块画出来）。页面整理要在页面变化后 100ms 以上才跑，
 	// 站点画出来的原版卡片会先在屏幕上露一下，再变成 sb.sb 成员卡片、整块跳一下。这里单独盯着：站点一画出卡片，
