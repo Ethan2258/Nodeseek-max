@@ -4590,8 +4590,9 @@ test("第十一批（2026-10-19）：正文选项卡（nsk-magic-tabs）换成�
 });
 
 test("第十一批（2026-10-19）：顶栏版块照 sb.sb .forum-nav——一行放不下的整个藏起来（不再横向滚动、把最后一个切成半个字），这时左边亮出 ≡，藏起来的版块和 NQ 都在 ≡ 菜单里；放得下时没有 ≡", async () => {
-	for (const width of [940, 1440]) {
-		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width, height: 800 } });
+	// 940px 时版块放不下（Linux 上字体宽，1024px 就放不下）：≡ 排在版块后面，Logo 仍和帖子列表左边对齐
+	for (const [width, html] of [[940, listPage()], [1440, listPage()]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, viewport: { width, height: 800 } });
 		try {
 			await page.waitForSelector("#nsk-head .nsmax-mobile-menu", { state: "attached" });
 			await wait(page, 400);
@@ -4605,14 +4606,21 @@ test("第十一批（2026-10-19）：顶栏版块照 sb.sb .forum-nav——一�
 					cut: items.filter((li) => inRow(li) && li.getBoundingClientRect().right > box.right + 1).map((li) => li.textContent.trim()),
 					hidden: items.filter((li) => !inRow(li)).map((li) => li.textContent.trim()),
 					menu: getComputedStyle(head.querySelector(".nsmax-mobile-menu")).display,
-					scroll: getComputedStyle(nav).overflowX
+					scroll: getComputedStyle(nav).overflowX,
+					logoX: Math.round(head.querySelector(".site-title").getBoundingClientRect().x),
+					leftX: Math.round(document.querySelector("#nsk-body-left").getBoundingClientRect().x),
+					menuBox: [Math.round(head.querySelector(".nsmax-mobile-menu").getBoundingClientRect().left), Math.round(head.querySelector(".nsmax-mobile-menu").getBoundingClientRect().right)],
+					navRight: Math.round(box.right),
+					searchX: Math.round(head.querySelector(".search-box").getBoundingClientRect().x)
 				};
 			});
 			assert.deepEqual(state.cut, [], `${width}：没有被切掉半截的版块`);
 			assert.equal(state.scroll, "hidden", "不再是横向滚动条");
-			if (width === 940) {
+			assert.equal(state.logoX, state.leftX, `${width}：Logo（${state.logoX}px）和帖子列表（${state.leftX}px）左边对齐`);
+			if (width < 1440) {
 				assert.ok(state.hidden.includes("NQ"), `${width}：NQ 放不下（${state.hidden}）`);
 				assert.equal(state.menu, "flex", "有版块藏起来时亮出 ≡");
+				assert.ok(state.menuBox[0] >= state.navRight - 1 && state.menuBox[1] <= state.searchX + 1, `${width}：≡ 在版块后面、搜索框前面（${state.menuBox} / ${state.navRight} / ${state.searchX}）`);
 				await page.locator("#nsk-head .nsmax-mobile-menu").click();
 				await page.waitForSelector("dialog.nsmax-mobile-nav[open]");
 				const listed = await page.evaluate(() => [...document.querySelectorAll("dialog.nsmax-mobile-nav[open] a")].map((a) => a.textContent.trim()));

@@ -12581,3 +12581,17 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-pr
     display: inline-flex !important;
   }
 }
+/* 宽屏（>860px，顶栏还是一整排）版块放不下时，≡ 排在版块后面（相当于「更多版块」），不挤到 Logo 左边：
+   Logo 仍和下面的帖子列表左边对齐（v1.7.27 的对齐要求；Linux 上字体宽，1024px 时就会放不下）。≤860px 的紧凑顶栏照旧在最左边 */
+@media (min-width: 861px) {
+  html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head[data-nsmax-nav-overflow] > .site-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    order: -3 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head[data-nsmax-nav-overflow] > ul.nav-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    order: -2 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-mhead]) #nsk-head[data-nsmax-nav-overflow] > .nsmax-mobile-menu:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    order: -1 !important;
+    margin: 0 0 0 2px !important;
+  }
+}
