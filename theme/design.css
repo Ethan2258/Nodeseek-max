@@ -1900,7 +1900,8 @@ html[data-nsmax-theme] #nsk-body-left article.post-content a[data-nsmax-imglink]
   color: var(--text) !important;
   text-decoration: none !important;
 }
-/* 行内代码：sb.sb——1px 5px、代码浅黄底 + 黄边框、深黄字 */
+/* 行内代码：sb.sb——1px 5px、代码浅黄底 + 黄边框、深黄字，字号 0.875em（sb.sb code{font-size:.875em}；以前和正文一样大，
+   等宽字体又宽，一句话里夹一段代码显得很挤） */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :not(pre) > code {
   margin: 0 !important;
   padding: 1px 5px !important;
@@ -1910,12 +1911,15 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   border-radius: var(--r-xs) !important;
   background: var(--code-inline-bg) !important;
   color: var(--code-inline-text) !important;
-  font-size: inherit !important;
+  font-size: 0.875em !important;
   font-weight: 400 !important;
 }
-/* 代码块：sb.sb .code-block——次底色、1px 细线框、12px 14px；复制按钮在右上角，悬停代码块时出现 */
+/* 代码块：sb.sb .code-block——次底色、1px 细线框、12px 14px；复制按钮在右上角，悬停代码块时出现。
+   占满正文宽：站点把 .post-content pre 限成 724px，外层 .nsmax-code 又是整行宽，复制按钮跑到代码块外面最右边 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) pre {
   position: relative !important;
+  box-sizing: border-box !important;
+  max-width: 100% !important;
   margin: 0.8em 0 !important;
   padding: 12px 14px !important;
   height: auto !important;
@@ -1945,6 +1949,8 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
 html[data-nsmax-theme] .nsmax-code {
   position: relative !important;
   margin: 0.8em 0 !important;
+  /* 站点给 .post-content > div 加了 3px 内边距，代码块两边会缩进去一点 */
+  padding: 0 !important;
 }
 html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-code > pre {
   margin: 0 !important;
@@ -12820,4 +12826,110 @@ html[data-nsmax-theme] #nsk-frame > .nsmax-guest-empty[data-nsmax-site-error]:is
 }
 html[data-nsmax-theme] #nsk-frame .member-list > .nsmax-guest-empty[data-nsmax-site-error]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   margin: 16px 0 0 !important;
+}
+
+/* ---------- 59. 2026-10-19 第十四批：正文 Markdown 再对一遍 sb.sb ----------
+   站点后来自己也给代码块加复制按钮（pre.code-copy-wrapper > button.code-copy-btn，lucide 图标；带 .always 是站点偏好「一直显示」，
+   .hover 是悬停才出现），脚本的「复制」也在，一个代码块两个复制。脚本的复制在时站点的藏起来（脚本给 pre 标 data-nsmax-copy）；
+   站点偏好「一直显示」时脚本的「复制」也一直显示（data-nsmax-copy-always）。脚本的「代码复制」关掉时，站点的按钮换成同样的细线框小按钮 */
+html[data-nsmax-theme] pre[data-nsmax-copy] > .code-copy-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-code > pre[data-nsmax-copy-always] ~ [data-nspp-copy]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] pre[data-nsmax-copy-always] > [data-nspp-copy]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content) pre > .code-copy-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  top: 8px !important;
+  right: 8px !important;
+  width: 30px !important;
+  height: 26px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content) pre > .code-copy-btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(:hover, .copied) {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content) pre > .code-copy-btn svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 13px !important;
+  height: 13px !important;
+}
+/* 列表：sb.sb——方块符号、品牌色（深色下是黄色）。站点自己用 li::before 再画一个「•」，以前和方块叠在一起，看着是个糊掉的粗点 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) ul > li::before {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) ul > li::marker {
+  color: var(--brand) !important;
+}
+/* @用户（站点写成 /member?t=名字，自动识别出来的是整条地址）和个人空间链接：sb.sb a.mention——正文强调色 + 黄色下划线，不用链接色
+   （深色下以前和普通链接一样整段黄字，一句话里 @ 了几个人就一片黄；站点自己是斜体绿字，也不要） */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:is([href^="/member?t="], [href*="nodeseek.com/member?t="], [href*="deepflood.com/member?t="], [href^="/space/"]):not([data-nsmax-imglink]):is(#nsmax-lv, *) {
+  color: var(--text-strong) !important;
+  font-style: normal !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) a:is([href^="/member?t="], [href*="nodeseek.com/member?t="], [href*="deepflood.com/member?t="], [href^="/space/"]):not([data-nsmax-imglink]):is(#nsmax-lv, *):hover {
+  color: var(--text-strong) !important;
+}
+/* 站点的彩色卡片（.card.note / .warning / .info / .draft）：站点是 16px 大圆角、左右 2em 留白、整块粉绿 / 粉红底色（深色下是发灰的色块）。
+   换成和提示块（.markdown-alert）一样：细线框、输入框圆角、左边 3px 类型色、同色很浅的底 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card:is(.note, .warning, .info, .draft):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #1a7f37;
+  margin: 12px 0 !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-left: 3px solid var(--nsmax-card-accent) !important;
+  border-radius: var(--r-input) !important;
+  background: color-mix(in srgb, var(--nsmax-card-accent) 6%, var(--panel)) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card.warning:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #cf222e;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card.info:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #0969da;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card.draft:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #8250df;
+}
+html[data-nsmax-theme][data-nsmax-dark] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card.note:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #2ea043;
+}
+html[data-nsmax-theme][data-nsmax-dark] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card.warning:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #da3633;
+}
+html[data-nsmax-theme][data-nsmax-dark] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card.info:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #1f6feb;
+}
+html[data-nsmax-theme][data-nsmax-dark] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card.draft:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  --nsmax-card-accent: #8957e5;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card:is(.note, .warning, .info, .draft) > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) .card:is(.note, .warning, .info, .draft) > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 0 !important;
+}
+/* 手机上代码一行常常比屏幕宽，右上角的「复制」会一直盖住第一行的末尾：代码块顶上留一条放按钮，代码从按钮下面开始 */
+@media (max-width: 640px) {
+  html[data-nsmax-theme] .nsmax-code > pre[data-nsmax-copy]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    padding-top: 38px !important;
+  }
+}
+/* 作者栏：等级还没读到时徽章先占着位置但看不见（读到后只换字，作者栏不变高）；三格数字没读到时是淡色的「—」 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-level[data-nsmax-pending]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  visibility: hidden !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col:not([data-nsmax-filled]) .nsmax-author-stats > a > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  transition: color 0.2s ease !important;
 }
