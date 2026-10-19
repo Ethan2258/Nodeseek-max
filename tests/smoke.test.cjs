@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.15");
+	assert.equal(packageJson.version, "1.8.16");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5161,6 +5161,65 @@ test("第十四批（2026-10-19）：进帖子不再一卡一卡——页面一�
 		assert.deepEqual(state.reply, ["Lv.3", "913,1107,19"], "读到资料后换上");
 		assert.deepEqual(state.stored, ["10", "11", "12"], "读过的人记在本机，下次直接显示");
 		assert.ok((calls["/api/account/getInfo/11"] || 0) + (calls["/api/account/getInfo/12"] || 0) === 2 && !calls["/api/account/getInfo/10"], "记下过（10 分钟内）的不再读：" + JSON.stringify(calls));
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十五批（2026-10-20）：点开帖子之前先备好——鼠标在列表标题上停 0.25 秒以上，就在后台准备好这篇帖子的作者资料、作者头像和前几张图（点开时作者栏第一帧就是完整的，图片直接出来）；悬停预览同一篇只取一次网页（以前取两遍）；扫过不停留的不准备", async () => {
+	const imagePost = postPage().replace("</article>", '<p><img src="https://img.example.org/a.png" alt="图一"></p><p><img src="https://img.example.org/b.png" alt="图二"></p></article>');
+	const requests = [];
+	const init = `if (window.top === window) document.addEventListener("DOMContentLoaded", () => { window.__atDcl = { filled: document.querySelectorAll(".nsmax-author-col[data-nsmax-filled]").length, pending: document.querySelectorAll(".nsmax-author-level[data-nsmax-pending]").length, level: document.querySelector(".nsk-post .nsmax-author-level")?.textContent || "" }; });`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1440, height: 900 }, pages: { "/post-1000-1": imagePost, "/post-1001-1": postPage() }, beforeNavigate: (page) => page.on("request", (request) => requests.push([request.url(), request.resourceType()])) });
+	try {
+		await page.waitForSelector("ul.post-list > li.post-list-item .post-title a[href='/post-1001-1']");
+		await wait(page, 600);
+		const titles = page.locator("ul.post-list > li.post-list-item .post-title a");
+		// 1001：扫过（不到 0.25 秒）——只取预览用的网页，不准备作者和图片
+		await titles.nth(1).hover();
+		await page.waitForTimeout(120);
+		await page.mouse.move(5, 5);
+		await page.waitForTimeout(500);
+		const stored = () => page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("nsmax:members") || "{}")).sort());
+		assert.deepEqual(await stored(), [], "扫过的不准备作者资料");
+		// 1000：停 0.6 秒——作者资料（楼主 + 三层回复的作者）、头像、前两张图都在后台取好
+		await titles.nth(0).hover();
+		await page.waitForFunction(() => Object.keys(JSON.parse(localStorage.getItem("nsmax:members") || "{}")).length >= 4, null, { timeout: 5e3 });
+		await page.waitForTimeout(300);
+		assert.deepEqual(await stored(), ["10", "11", "12", "13"]);
+		const urls = requests.map(([url]) => url);
+		assert.ok(urls.includes("https://img.example.org/a.png") && urls.includes("https://img.example.org/b.png"), "前几张图提前下载");
+		assert.ok(["/avatar/10.png", "/avatar/11.png"].every((path) => urls.includes("https://www.nodeseek.com" + path)), "作者头像提前下载");
+		assert.equal(requests.filter(([url, type]) => url === "https://www.nodeseek.com/post-1000-1" && (type === "fetch" || type === "xhr")).length, 1, "预览和准备共用一次请求");
+		assert.deepEqual(errors, []);
+		// 点开：作者栏在页面解析完（DOMContentLoaded）时已经是完整的，没有「等级先空着、再闪出来」
+		await titles.nth(0).click();
+		await page.waitForURL("https://www.nodeseek.com/post-1000-1");
+		await page.waitForFunction(() => window.__atDcl);
+		const atDcl = await page.evaluate(() => window.__atDcl);
+		assert.equal(atDcl.pending, 0, "没有等着读的等级");
+		assert.ok(atDcl.filled >= 3, "作者栏一出来就是完整的：" + JSON.stringify(atDcl));
+		assert.equal(atDcl.level, "Lv.3");
+	} finally { await context.close(); }
+});
+
+test("第十五批（2026-10-20）：帖子页首屏以外楼层的作者资料，页面加载完空下来就低优先级读好（以前要滚到附近才读，滚得快时等级晚一步才出来）；读到之前等级看不见、数字淡色「—」，读到后淡入", async () => {
+	// 12 层回复、各是不同的人：前 5 位（楼主 + 4 层）马上读，其余加载完再读
+	const floors = Array.from({ length: 12 }, (_, i) => `<li class="content-item" id="${i + 1}"><div class="nsk-content-meta-info"><div class="avatar-wrapper"><a href="/space/${200 + i}"><img src="/avatar/${200 + i}.png" class="avatar-normal"></a></div> <div><div class="author-info"><a href="/space/${200 + i}" class="author-name">u${200 + i}</a></div> <div class="content-info"><span class="date-created"><time datetime="2026-10-03T04:00:00.000Z">1h ago</time></span></div></div> <div class="floor-link-wrapper"><a href="#${i + 1}" class="floor-link">#${i + 1}</a></div></div> <article class="post-content"><p>第 ${i + 1} 楼</p></article></li>`).join("");
+	const html = postPage().replace(/<ul class="comments">[\s\S]*?<\/ul>/, `<ul class="comments">${floors}</ul>`);
+	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForFunction(() => document.querySelectorAll(".nsmax-author-col[data-nsmax-filled]").length === 13, null, { timeout: 8e3 });
+		const state = await page.evaluate(() => {
+			const last = document.querySelector('li[id="12"] > .nsmax-author-col');
+			return { pending: document.querySelectorAll(".nsmax-author-level[data-nsmax-pending], .nsmax-author-stats[data-nsmax-pending]").length, opacity: getComputedStyle(last.querySelector(".nsmax-author-level")).opacity, transition: getComputedStyle(last.querySelector(".nsmax-author-level")).transitionProperty, scrolled: scrollY };
+		});
+		assert.equal(state.scrolled, 0, "没滚动也都读好了");
+		assert.equal(state.pending, 0);
+		assert.equal(state.opacity, "1");
+		assert.equal(state.transition, "opacity", "等级徽章淡入");
+		const read = Object.keys(calls).filter((key) => key.startsWith("/api/account/getInfo/2")).length;
+		assert.equal(read, 12, "每位作者都读了：" + read);
+		assert.ok(Object.entries(calls).filter(([key]) => key.startsWith("/api/account/getInfo/2")).every(([, count]) => count === 1), "每位只读一次：" + JSON.stringify(calls));
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

@@ -12930,10 +12930,17 @@ html[data-nsmax-theme] .nsmax-code > pre[data-nsmax-copy][data-nsmax-copy-always
     padding-top: 38px !important;
   }
 }
-/* 作者栏：等级还没读到时徽章先占着位置但看不见（读到后只换字，作者栏不变高）；三格数字没读到时是「—」 */
-html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-level[data-nsmax-pending]:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  visibility: hidden !important;
+/* 作者栏：等级还没读到时徽章先占着位置但看不见，三格数字是淡色的「—」；读到后只换字，等级徽章和数字 0.2 秒淡入
+   （2026-10-20：以前读到时徽章「闪一下」冒出来）。本机记下过的人建作者栏时就填好，第一帧就是完整的，不走淡入 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-level:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  transition: opacity 0.2s ease !important;
 }
-html[data-nsmax-theme] #nsk-body-left .nsmax-author-col:not([data-nsmax-filled]) .nsmax-author-stats > a > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  transition: color 0.2s ease !important;
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-level[data-nsmax-pending]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats > a > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  transition: opacity 0.2s ease !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats[data-nsmax-pending] > a > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 0.35 !important;
 }

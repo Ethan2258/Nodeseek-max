@@ -548,7 +548,7 @@
 	async function nsmaxCheckSpecialPost(ctx, id) {
 		let op = null, title = "";
 		try {
-			const html = await ctx.request(`/post-${id}-1`, { responseType: "text", until: "</article>", signal: ctx.signal });
+			const html = await ctx.request(`/post-${id}-1`, { responseType: "text", until: "</article>", signal: ctx.signal, priority: "low" });
 			const doc = new DOMParser().parseFromString(html, "text/html");
 			op = doc.querySelector(".nsk-post article.post-content, .nsk-post .post-content");
 			title = doc.querySelector(".nsk-post .post-title")?.textContent || "";
@@ -566,6 +566,8 @@
 	async function nsmaxRunSpecialQueue(ctx) {
 		if (nsmaxSpecialBusy || !nsmaxSpecialQueue.length) return;
 		nsmaxSpecialBusy = true;
+		// 等页面自己的活（站点脚本、首屏图片）忙完、主线程空下来再开始查（最多等 0.8 秒），查的请求也是低优先级：不和页面抢（2026-10-20）
+		await new Promise((resolve) => typeof requestIdleCallback === "function" ? requestIdleCallback(resolve, { timeout: 800 }) : setTimeout(resolve, 200));
 		const worker = async () => {
 			while (nsmaxSpecialQueue.length && !ctx.signal.aborted) {
 				if (document.hidden) {
@@ -1371,6 +1373,8 @@
 		for (const image of document.querySelectorAll(".nsk-post article.post-content img, ul.comments article.post-content img")) {
 			if (nsmaxClassifiedImages.has(image) || parsed && !parsed(image)) continue;
 			nsmaxClassifiedImages.add(image);
+			// 图片在后台线程解码（2026-10-20）：几 MB 的截图滚进屏幕时不再占着主线程解码、把滚动卡一下
+			if (!image.hasAttribute("decoding")) image.decoding = "async";
 			const parent = image.parentElement;
 			const emoji = /emoji|smoji|expression|emoticon|yct\d|xhj\d|表情/i.test(image.className + " " + image.alt + " " + image.src);
 			// 投票里的投票人头像、指向个人主页的小头像不是正文配图（以前被当成大图，每个头像单独占一行，一个投票拉得两三千像素高）
@@ -1446,17 +1450,18 @@
 		return promise;
 	}
 	// 页面还在解析、功能模块还没启动时就读作者资料用的请求：同时最多 4 个；站点正在限流（脚本记下的冷却时间没过）时不读，
-	// 留给模块启动后的 nsmaxLoadAuthorStats 走带冷却、重试的请求队列
+	// 留给模块启动后的 nsmaxLoadAuthorStats 走带冷却、重试的请求队列。priority：后台提前准备的（悬停、首屏以外）用 "low"，
+	// 不和页面自己的请求、点开链接抢网速
 	var nsmaxEarlyFetchQueue = [];
 	var nsmaxEarlyFetchActive = 0;
-	function nsmaxEarlyJson(url) {
+	function nsmaxEarlyJson(url, priority = "auto") {
 		try {
 			if (GM_getValue$1(COOLDOWN_KEY(), 0) > Date.now()) return Promise.reject(new Error("站点限流中"));
 		} catch {}
 		return new Promise((resolve, reject) => {
 			const run = () => {
 				nsmaxEarlyFetchActive++;
-				fetch(url, { credentials: "same-origin", headers: { accept: "application/json" } }).then((response) => {
+				fetch(url, { credentials: "same-origin", headers: { accept: "application/json" }, priority }).then((response) => {
 					if (!response.ok) throw new Error(`请求失败（HTTP ${response.status}）`);
 					return response.json();
 				}).then(resolve, reject).finally(() => {
@@ -1467,6 +1472,77 @@
 			if (nsmaxEarlyFetchActive < 4) run();
 			else nsmaxEarlyFetchQueue.push(run);
 		});
+	}
+	// 点开帖子之前先把东西备好（2026-10-20）：鼠标停在帖子标题上时「帖子卡片预览」本来就要取这篇帖子，取到后顺手——
+	// 1. 正文前几张图（主帖 3 张、前两层回复各 1 张）：先连上图床（第一次连一个图床要多花 0.2～0.4 秒），在后台下好，点开时直接出来；
+	// 2. 主帖和前几层回复的作者资料（等级、帖子 / 鸡腿 / 星辰）：读好记在本机，点开时作者栏第一帧就是完整的，不再「闪一下才出现」。
+	// 都是低优先级请求，同一篇只准备一次；省流量模式下不做。帖子网页本身同一篇只取一次（以前预览一篇要取两遍）
+	var nsmaxPostHtmlCache = new Map();
+	function nsmaxPostHtml(request, href) {
+		const key = String(href).replace(/#.*$/, "");
+		const hit = nsmaxPostHtmlCache.get(key);
+		if (hit && Date.now() - hit.at < 3e5) return hit.promise;
+		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority: "low" }) };
+		nsmaxPostHtmlCache.set(key, entry);
+		entry.promise.catch(() => {
+			if (nsmaxPostHtmlCache.get(key) === entry) nsmaxPostHtmlCache.delete(key);
+		});
+		while (nsmaxPostHtmlCache.size > 20) nsmaxPostHtmlCache.delete(nsmaxPostHtmlCache.keys().next().value);
+		return entry.promise;
+	}
+	var nsmaxWarmedPosts = new Set();
+	var nsmaxWarmImages = [];
+	var nsmaxPreconnected = new Set();
+	function nsmaxPreconnect(origin) {
+		if (!origin || origin === location.origin || nsmaxPreconnected.has(origin) || nsmaxPreconnected.size >= 30) return;
+		nsmaxPreconnected.add(origin);
+		const link = document.createElement("link");
+		link.rel = "preconnect";
+		link.href = origin;
+		(document.head || document.documentElement).append(link);
+	}
+	function nsmaxWarmImage(src, base) {
+		let url;
+		try { url = new URL(src, base); } catch { return; }
+		if (!/^https?:$/.test(url.protocol)) return;
+		nsmaxPreconnect(url.origin);
+		if (nsmaxWarmImages.some((image) => image.src === url.href)) return;
+		const image = new Image();
+		image.decoding = "async";
+		image.fetchPriority = "low";
+		image.src = url.href;
+		nsmaxWarmImages.push(image);
+		if (nsmaxWarmImages.length > 40) nsmaxWarmImages.shift();
+	}
+	// doc：DOMParser 解析好的帖子页
+	function nsmaxWarmPost(href, doc) {
+		const key = String(href).replace(/#.*$/, "");
+		if (!doc || nsmaxWarmedPosts.has(key) || navigator.connection?.saveData) return;
+		nsmaxWarmedPosts.add(key);
+		const op = doc.querySelector(".nsk-post article.post-content");
+		for (const image of Array.from(op?.querySelectorAll("img:not(.sticker)") || []).slice(0, 3)) nsmaxWarmImage(image.getAttribute("src"), key);
+		for (const article of Array.from(doc.querySelectorAll("ul.comments > li.content-item > article.post-content")).slice(0, 2)) {
+			const image = article.querySelector("img:not(.sticker)");
+			if (image) nsmaxWarmImage(image.getAttribute("src"), key);
+		}
+		nsmaxWarmAuthors(doc, 6);
+	}
+	// 一页楼层（当前页面，或者取来的另一页）前 limit 位作者里，本机没记下或者超过 10 分钟的，低优先级读好
+	function nsmaxWarmAuthors(doc, limit) {
+		if (navigator.connection?.saveData) return;
+		const ids = [];
+		for (const link of doc.querySelectorAll(".nsk-post > .content-item > .nsk-content-meta-info .author-info > a[href*='/space/'], ul.comments > li.content-item > .nsk-content-meta-info .author-info > a[href*='/space/']")) {
+			const id = link.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
+			if (id && !ids.includes(id)) ids.push(id);
+			if (ids.length >= limit) break;
+		}
+		for (const id of ids) {
+			// 头像也先下好（作者栏的 88px 头像点开时直接出来）
+			nsmaxWarmImage(`/avatar/${id}.png`, location.href);
+			const stored = nsmaxMembers().get(id);
+			if (stored && Date.now() - stored.at < NSMAX_MEMBER_TTL) continue;
+			nsmaxMemberInfo(id, (url) => nsmaxEarlyJson(url, "low")).catch(() => {});
+		}
 	}
 	function nsmaxPostLayout() {
 		try { return localStorage.getItem("nsmax:post-layout") === "simple" ? "simple" : "classic"; } catch { return "classic"; }
@@ -1514,6 +1590,7 @@
 			nsmaxApplyLevel(level, 1);
 			const stats = document.createElement("div");
 			stats.className = "nsmax-author-stats";
+			stats.setAttribute("data-nsmax-pending", "");
 			for (const [text, href, title] of [["帖子", `/space/${id}#/discussions`, "主题和评论加起来，点开看 TA 的主题"], ["鸡腿", `/space/${id}`, "鸡腿"], ["星辰", `/space/${id}`, "星辰"]]) {
 				const cell = document.createElement("a");
 				cell.href = href;
@@ -1532,18 +1609,36 @@
 		}
 	}
 	// 作者栏一建好：本机记下过这个人就先填上（10 分钟内读过的算准的，不再读）；没记下或者旧了，首屏那几层（主帖和前 4 层回复）
-	// 马上去读，读到后换字；再往下的等滚到附近再读（nsmaxLoadAuthorStats），一页十几个人不一起去请求
+	// 马上去读，读到后换字；再往下的等页面加载完、空下来以后低优先级读（2026-10-20：以前等滚到附近才读，滚得快时徽章晚一步才出来）
 	var nsmaxAuthorPrefetched = 0;
+	var nsmaxAuthorLater = null;
 	function nsmaxPrefetchAuthor(column) {
 		const id = column.dataset.nsmaxUid;
 		const stored = nsmaxMembers().get(id);
 		if (stored) nsmaxFillAuthor(column, stored, Date.now() - stored.at >= NSMAX_MEMBER_TTL);
 		if (column.hasAttribute("data-nsmax-filled") || document.documentElement.dataset.nsmaxPostLayout === "simple") return;
 		if (!nsmaxMemberCache.has(id)) {
-			if (nsmaxAuthorPrefetched >= 5) return;
+			if (nsmaxAuthorPrefetched >= 5) {
+				(nsmaxAuthorLater ||= nsmaxScheduleLaterAuthors()).add(column);
+				return;
+			}
 			nsmaxAuthorPrefetched++;
 		}
 		nsmaxMemberInfo(id, nsmaxEarlyJson).then((detail) => nsmaxFillAuthor(column, detail)).catch(() => {});
+	}
+	function nsmaxScheduleLaterAuthors() {
+		const columns = new Set();
+		const run = () => {
+			nsmaxAuthorLater = null;
+			for (const column of columns) {
+				if (!column.isConnected || column.hasAttribute("data-nsmax-filled")) continue;
+				nsmaxMemberInfo(column.dataset.nsmaxUid, (url) => nsmaxEarlyJson(url, "low")).then((detail) => nsmaxFillAuthor(column, detail)).catch(() => {});
+			}
+		};
+		const idle = () => typeof requestIdleCallback === "function" ? requestIdleCallback(run, { timeout: 1500 }) : setTimeout(run, 300);
+		if (document.readyState === "complete") setTimeout(idle, 0);
+		else window.addEventListener("load", idle, { once: true });
+		return columns;
 	}
 	// 作者栏出现在屏幕上时再读资料：等级徽章 + 帖子（主题 + 评论）/ 鸡腿 / 星辰
 	var nsmaxAuthorWatched = new WeakSet();
@@ -1584,6 +1679,8 @@
 		}
 		const posts = number(detail.nPost), comments = number(detail.nComment);
 		const values = [posts === null && comments === null ? null : (posts || 0) + (comments || 0), number(detail.coin), number(detail.stardust)];
+		const stats = who.querySelector(":scope > .nsmax-author-stats");
+		if (stats && values.some((value) => value !== null)) nsmaxDropAttr(stats, "data-nsmax-pending");
 		who.querySelectorAll(":scope > .nsmax-author-stats > a > b").forEach((b, index) => {
 			const value = values[index];
 			nsmaxSetText(b, value === null || value === undefined ? "—" : value >= 1e5 ? (value / 1e4).toFixed(value >= 1e6 ? 0 : 1) + "万" : String(value));
@@ -2503,7 +2600,7 @@
 		const cached = nsmaxReplyCounts().get(id);
 		if ((!cached || Date.now() - cached[1] > 10 * 60e3) && !nsmaxReplyFetching.has(id) && pages > 1) {
 			nsmaxReplyFetching.add(id);
-			fetch(`/post-${id}-${pages}`, { credentials: "same-origin" }).then((response) => response.ok ? response.text() : "").then((html) => {
+			fetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" }).then((response) => response.ok ? response.text() : "").then((html) => {
 				if (!html) return;
 				const doc = new DOMParser().parseFromString(html, "text/html");
 				const last = Array.from(doc.querySelectorAll("ul.comments li.content-item[id]"), (li) => Number(li.id)).filter(Number.isFinite);
