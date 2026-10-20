@@ -5296,3 +5296,13 @@ test("第十六批（2026-10-20）：多页评论区的下一页预取、首屏�
 		assert.deepEqual(errors.filter((e) => !/hang\.png|ERR_|net::/i.test(e)), []);
 	} finally { await context.close(); }
 });
+
+test("第十六批（2026-10-20）：帖子地址打开的是站点出错页（502、帖子不存在，页面上没有 .nsk-post）时脚本不报错——以前找主帖时用了不合法的选择器 .content-item#0，直接抛错，整轮整理中断", async () => {
+	const html = "<!doctype html><html><head><title>502 Bad Gateway</title></head><body><center><h1>502 Bad Gateway</h1></center><hr><center>nginx</center></body></html>";
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-9999-1", { html, viewport: { width: 1280, height: 900 } });
+	try {
+		await wait(page, 1500);
+		assert.equal(await page.locator("h1").innerText(), "502 Bad Gateway");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});

@@ -2643,7 +2643,9 @@
 			}
 		}
 
-		const opPost = document.querySelector(".nsk-post") || document.querySelector("#nsk-body-left .content-item#0") || document.querySelector(".content-item#0");
+		// 主帖：.nsk-post，没有时找楼号 0 的那层。id 以数字开头不能写成 #0（选择器不合法会直接抛错：站点出错页、帖子不存在时
+		// 页面上没有 .nsk-post，走到这里整轮整理就断了，2026-10-20），用属性选择器
+		const opPost = document.querySelector(".nsk-post") || document.querySelector('#nsk-body-left .content-item[id="0"]') || document.querySelector('.content-item[id="0"]');
 		if (!opPost) return;
 
 		// 1. 彻底隐藏 OP 主帖 #0 楼号
