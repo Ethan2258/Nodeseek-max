@@ -1081,8 +1081,9 @@
 				inline.querySelectorAll("svg, .iconpark-icon").forEach(s => s.remove());
 				const categoryIcon = toolIcon("board"); categoryIcon.classList.add("nsmax-meta-icon"); inline.prepend(categoryIcon);
 			}
-			// 顺序照 sb.sb .post-meta：作者 · 版块 · 浏览 · 回复 · 最后回复人 · 时间（宽屏另有右侧版块标签）
-			for (const item of [author, inline, views, count, last, time, category]) if (item) info.append(item);
+			// 2026-10-20 实时 sb.sb .post-meta：作者 · 时间 · 版块 · 浏览 · 回复 · 最后回复人。
+			// NodeSeek 的时间仍取原生最后回复时间，仅调整显示顺序；宽屏另有右侧版块标签。
+			for (const item of [author, time, inline, views, count, last, category]) if (item) info.append(item);
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
 	}
@@ -1317,9 +1318,13 @@
 				}
 				if (keep) previous = n;
 			}
+			// 站点在 .pager-more 里写死的「..」也收掉：脚本插的是「…」，两个并排会连成「..…」
+			for (const dots of pager.querySelectorAll(".pager-more > span:not([class])")) if (/^\.{2,}$/.test(dots.textContent.trim())) dots.hidden = true;
 			for (const [selector, label] of [["a.pager-next", "下一页"], ["a.pager-prev", "上一页"]]) {
 				const link = pager.querySelector(selector);
 				if (link && link.textContent !== label) link.textContent = label;
+				// 手机像 sb.sb 一样只画箭头，保留读屏和键盘可辨认的翻页名称。
+				nsmaxSetAttr(link, "aria-label", label);
 			}
 		}
 	}

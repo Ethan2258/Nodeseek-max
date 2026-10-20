@@ -12944,3 +12944,76 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats > a 
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats[data-nsmax-pending] > a > b:is(#nsmax-lv, *):is(#nsmax-b, *) {
   opacity: 0.35 !important;
 }
+
+/* ---------- 2026-10-20：sb.sb 手机分页（≤560px） ----------
+   数字最小 30px、5px 7px、间距 4px；上/下页只画箭头，名称由 aria-label 保留。
+   同时覆盖列表、搜索、评论和个人空间里的原生页码，避免手机上整排被挤成两行。 */
+@media (max-width: 560px) {
+  html[data-nsmax-theme] .nsk-pager > div:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    gap: 4px !important;
+  }
+  html[data-nsmax-theme] .nsk-pager :is(.pager-pos, .pager-prev, .pager-next, .nsmax-pager-ellipsis):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    min-width: 30px !important;
+    padding: 5px 7px !important;
+    font-size: 13px !important;
+    line-height: 22.75px !important;
+  }
+  html[data-nsmax-theme] .nsk-pager .nsmax-pager-ellipsis:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    min-width: 0 !important;
+    padding: 5px 2px !important;
+  }
+  html[data-nsmax-theme] .nsk-pager :is(a.pager-prev, a.pager-next):is(#nsmax-lv, *):is(#nsmax-b, *) {
+    font-size: 0 !important;
+  }
+  html[data-nsmax-theme] .nsk-pager :is(a.pager-prev, a.pager-next):is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+    display: inline !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+  }
+  html[data-nsmax-theme] .nsk-pager a.pager-prev:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+    content: "‹" !important;
+  }
+  html[data-nsmax-theme] .nsk-pager a.pager-next:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+    content: "›" !important;
+  }
+}
+
+/* ---------- 61. 2026-10-20 第十五批：代码高亮补齐 + 分页收尾 ----------
+   代码块：sb.sb 的 hljs 配色一共 9 组，这一层（第 2000 行起）只落了 5 组，JSON / JS 的对象键、变量、
+   函数参数、标点、运算符、diff 的删除行走的是「代码语法高亮」模块注入的 GitHub 调色板——对象键是绿色
+   #116329，而 sb.sb 的 --code-name 是 #e45649（深色 #e06c75）。补齐后这些 token 都回到 sb.sb 的颜色。
+   分页：站点把页码包在 span.pager-group / span.pager-more 里（运行时给它们打 data-nsmax-pg-wrap，
+   这一层展成 display:contents），页码因此直接成了 .nsk-pager 的弹性子项，间距取的是适配层给
+   .nsk-pager 自己的 6px（sb.sb 是 8px）。另外禁用态的「上一页 / 下一页」是 span，三角形被隐藏后只剩
+   一个 36×14 的空胶囊；sb.sb 没有这个空框。 */
+html[data-nsmax-theme] :is(.hljs-attr, .hljs-variable, .hljs-template-variable, .hljs-selector-class, .hljs-selector-id, .hljs-property) {
+  color: var(--code-name) !important;
+}
+html[data-nsmax-theme] :is(.hljs-meta, .hljs-params, .hljs-punctuation, .hljs-operator) {
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] .hljs-deletion {
+  color: var(--code-name) !important;
+}
+html[data-nsmax-theme] .hljs-meta .hljs-string {
+  color: var(--code-string) !important;
+}
+html[data-nsmax-theme] .hljs-emphasis {
+  font-style: italic !important;
+}
+html[data-nsmax-theme] .hljs-strong {
+  font-weight: 600 !important;
+}
+/* 分页外层自己也要 8px：内层没有 div 时页码就是它的弹性子项；只有一个子元素时 gap 不生效，不会叠加 */
+html[data-nsmax-theme] .nsk-pager:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 8px !important;
+}
+/* 禁用的「上一页 / 下一页」不留空胶囊（和上面隐藏 [aria-disabled="true"] 是同一个意思） */
+html[data-nsmax-theme] .nsk-pager [data-nsmax-pg-off]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+@media (max-width: 560px) {
+  html[data-nsmax-theme] .nsk-pager:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    gap: 4px !important;
+  }
+}

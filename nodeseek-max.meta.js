@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.8.17
+// @version      1.8.18
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -37,7 +37,7 @@
 // @match        *://www.360doc.com/content/*
 // @match        *://www.pixiv.net/jump.php*
 // @match        *://m.sogou.com/*/tc*
-// @match        *://m.sogou.com*/tc*
+// @match        *://m.sogou.com/tc*
 // @match        *://www.chinaz.com/go.shtml*
 // @match        *://www.oschina.net/action/GoToLink*
 // @match        *://link.juejin.cn/*
@@ -81,7 +81,9 @@
 // @match        *://ababtools.com/?plugin=redirect_page*
 // @match        *://help.aliyun.com/redirect*
 // @match        *://linux.do/*
-// @include      /^https?:\/\/www\.google\..{2,7}url/
+// @include      https://www.nodeseek.com/*
+// @include      https://www.deepflood.com/*
+// @include      *://www.google.*/url*
 // @connect      api.nodeimage.com
 // @connect      rss.nodeseek.com
 // @connect      api.bimg.eu.org

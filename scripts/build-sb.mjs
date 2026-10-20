@@ -180,6 +180,28 @@ ast.walkRules(rule => {
   if (!rule.selector.includes(":is(")) return;
   rule.selector = optimize.nsmaxSplitTop(rule.selector, c=>c===",").flatMap(part=>optimize.nsmaxExpandSelector(part.trim()) || [part.trim()]).join(",");
 });
+// 三个相同的 :is() 合为一个，匹配范围仍为 :root 或同一 ID，
+// 参数里重复三次 ID 保持原来的三份 ID 特异度；不改变层叠顺序。
+ast.walkRules(rule => {
+  rule.selector = rule.selector.replaceAll(
+    ":is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u)",
+    ":is(:root,#nsmax-u#nsmax-u#nsmax-u)"
+  );
+});
+// 只压缩 AST 的排版空白，不改声明值、calc() 空格、选择器组合符或规则顺序。
+// 源 CSS 继续保留注释和缩进，浏览器少下载、解析重复格式字符。
+ast.walk(node => {
+  node.raws.before = "";
+  if (node.type === "decl") {
+    node.raws.between = ":";
+    if (node.important) node.raws.important = "!important";
+  } else if (node.type === "rule" || node.type === "atrule") {
+    node.raws.between = "";
+    node.raws.after = "";
+    if (node.type === "atrule") node.raws.afterName = node.params ? " " : "";
+  }
+});
+ast.raws.after = "";
 const compiled = ast.toString();
 const leftoverHas = [];
 ast.walkRules(rule => {

@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.17");
+	assert.equal(packageJson.version, "1.8.18");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -686,8 +686,8 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 		assert.equal(await page.locator('.pager-bottom .pager-prev').isVisible(),false);
 		const row=page.locator('ul.post-list:not(.topic-carousel-panel)>li').first();
 		const ordered=await row.locator('.post-info').evaluate(e=>[...e.children].filter(n=>n.matches('.info-author,.info-last-comment-time,.nsmax-inline-category,.info-views,.info-comments-count,.info-last-commenter')).map(n=>n.className));
-		// sb.sb .post-meta：作者 · 版块 · 浏览 · 回复 · 最后回复人 · 时间
-		assert.deepEqual(ordered.map(name=>name.match(/info-author|nsmax-inline-category|info-views|info-comments-count|info-last-commenter|info-last-comment-time/)?.[0]),['info-author','nsmax-inline-category','info-views','info-comments-count','info-last-commenter','info-last-comment-time']);
+		// 2026-10-20 实时 sb.sb .post-meta：作者 · 时间 · 版块 · 浏览 · 回复 · 最后回复人
+		assert.deepEqual(ordered.map(name=>name.match(/info-author|nsmax-inline-category|info-views|info-comments-count|info-last-commenter|info-last-comment-time/)?.[0]),['info-author','info-last-comment-time','nsmax-inline-category','info-views','info-comments-count','info-last-commenter']);
 		const state=await row.locator('.post-info').evaluate(e=>({font:getComputedStyle(e).fontSize,line:getComputedStyle(e).lineHeight,gap:getComputedStyle(e).gap}));
 		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'0px 10px'});
 		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);
@@ -5324,4 +5324,89 @@ test("第十六批（2026-10-20）：在后台打开的多页帖子（中键一�
 		assert.equal(await page.locator("ul.comments li.content-item").count(), 3, "没往下看时不接上");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
+});
+
+test("元信息（2026-10-20）：@include 都是能解析出站点的写法（篡改猴「站点」列不再是问号）", () => {
+	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8");
+	const header = source.match(/^\/\/ ==UserScript==\r?\n[\s\S]*?^\/\/ ==\/UserScript==/m)[0];
+	const includes = [...header.matchAll(/^\/\/ @include\s+(\S+)\s*$/gm)].map((match) => match[1]);
+	// 篡改猴只有在脚本带 @include 时才按 @include 画「站点」列；正则写法解析不出域名，那一格就只剩一个问号
+	assert.deepEqual(includes.filter((line) => line.startsWith("/")), [], "正则 @include 会让「站点」列显示问号，改成 * 通配写法");
+	assert.equal(includes.includes("*://www.google.*/url*"), true, "Google 跳转页还要能匹配");
+	assert.match(header, /^\/\/ @match\s+https:\/\/www\.nodeseek\.com\/\*$/m);
+	assert.match(header, /^\/\/ @include\s+https:\/\/www\.nodeseek\.com\/\*$/m, "保留站内 @include，「站点」列才画 NodeSeek 的图标");
+});
+
+test("手机分页（2026-10-20）：≤560px 页码缩到 30px、上一页 / 下一页只画箭头，读屏仍有名称；宽屏不变", async () => {
+	const html = listPage().replaceAll('<span aria-disabled="true" class="pager-prev"><div class="triangle-left"></div></span>', '<a class="pager-prev" href="/page-1"><div class="triangle-left"></div></a>');
+	const readPager = (page) => page.evaluate(() => {
+		const pager = document.querySelector(".nsk-pager.pager-bottom");
+		const one = (el) => {
+			if (!el) return null;
+			const style = getComputedStyle(el);
+			return { text: el.textContent.trim(), label: el.getAttribute("aria-label"), font: style.fontSize, minWidth: style.minWidth, before: getComputedStyle(el, "::before").content };
+		};
+		return { next: one(pager?.querySelector("a.pager-next")), prev: one(pager?.querySelector("a.pager-prev")), gap: pager?.firstElementChild ? getComputedStyle(pager.firstElementChild).gap : "" };
+	});
+	const phone = await open(browser, "https://www.nodeseek.com/", { html, viewport: { width: 420, height: 900 } });
+	try {
+		await phone.page.waitForSelector("html[data-nsmax-theme]");
+		await wait(phone.page);
+		const state = await readPager(phone.page);
+		assert.ok(state.next && state.prev, "手机上两个翻页按钮都要在");
+		assert.equal(state.next.text, "下一页");
+		assert.equal(state.prev.text, "上一页");
+		assert.equal(state.next.label, "下一页");
+		assert.equal(state.prev.label, "上一页");
+		assert.equal(state.next.font, "0px", "文字藏起来，只留箭头");
+		assert.equal(state.next.before, '"\u203a"');
+		assert.equal(state.prev.before, '"\u2039"');
+		assert.equal(state.next.minWidth, "30px");
+		assert.equal(state.gap, "4px");
+		assert.deepEqual(phone.errors, []);
+	} finally { await phone.context.close(); }
+	const desktop = await open(browser, "https://www.nodeseek.com/", { html, viewport: { width: 1280, height: 900 } });
+	try {
+		await desktop.page.waitForSelector("html[data-nsmax-theme]");
+		await wait(desktop.page);
+		const state = await readPager(desktop.page);
+		assert.equal(state.next.text, "下一页");
+		assert.notEqual(state.next.font, "0px", "宽屏还是文字");
+		assert.equal(state.next.before, "none");
+		assert.equal(state.next.label, "下一页", "读屏名称在宽屏也保留");
+		assert.deepEqual(desktop.errors, []);
+	} finally { await desktop.context.close(); }
+});
+
+test("第十五批（2026-10-20）：代码高亮对象键用 sb.sb 的颜色、分页外层 8px、禁用箭头不留空胶囊、站点「..」收掉", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForSelector("html[data-nsmax-theme]");
+		await wait(page);
+		const colors = await page.evaluate(() => {
+			const code = document.querySelector("pre code");
+			code.innerHTML = '<span class="hljs-attr">"key"</span>: <span class="hljs-meta">x</span> <span class="hljs-string">"v"</span>';
+			const pick = (selector) => getComputedStyle(code.querySelector(selector)).color;
+			return { attr: pick(".hljs-attr"), meta: pick(".hljs-meta"), string: pick(".hljs-string") };
+		});
+		assert.equal(colors.attr, "rgb(228, 86, 73)", "对象键要用 --code-name（sb.sb #e45649），不是高亮模块的绿色");
+		assert.equal(colors.meta, "rgb(85, 90, 106)", "标点 / 元信息用 --text-muted");
+		assert.equal(colors.string, "rgb(80, 161, 79)", "字符串色不变");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+	const wrap = await open(browser, "https://www.nodeseek.com/", { html: listPage({ pagerMode: "wrapped" }), viewport: { width: 1280, height: 900 } });
+	try {
+		await wrap.page.waitForSelector("html[data-nsmax-theme]");
+		await wait(wrap.page);
+		const state = await wrap.page.evaluate(() => {
+			const pager = document.querySelector(".nsk-pager.pager-bottom");
+			const more = pager.querySelector(".pager-more > span:not([class])");
+			const off = pager.querySelector("[data-nsmax-pg-off]");
+			return { gap: getComputedStyle(pager).gap, moreHidden: more ? more.hidden : null, offHidden: off ? getComputedStyle(off).display === "none" : null };
+		});
+		assert.equal(state.gap, "8px", "分页外层自己也要 8px（站点把页码包在 span 里时取的是外层的间距）");
+		assert.equal(state.moreHidden, true, "站点在 .pager-more 里写死的「..」要收掉，不然和「…」连成「..…」");
+		assert.ok(state.offHidden === null || state.offHidden === true, "禁用的上一页 / 下一页不留空胶囊");
+		assert.deepEqual(wrap.errors, []);
+	} finally { await wrap.context.close(); }
 });
