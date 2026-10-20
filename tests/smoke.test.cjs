@@ -5306,3 +5306,22 @@ test("第十六批（2026-10-20）：帖子地址打开的是站点出错页（5
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+test("第十六批（2026-10-20）：在后台打开的多页帖子（中键一次开好几篇），页面不可见时不预取下一页；切到这个标签页时马上取好，不用等开始滚动", async () => {
+	const first = postPage().replaceAll("/page-2", "/post-1000-2");
+	const second = postPage().replace('id="1"', 'id="4"').replace('id="2"', 'id="5"').replace('id="3"', 'id="6"').replaceAll('class="pager-pos pager-cur">1', 'class="pager-pos pager-cur">2').replaceAll('class="pager-next"', 'class="pager-end"');
+	// 模拟后台标签页：document.hidden 先是 true，之后切到前台
+	const init = "window.__fakeHidden = true; Object.defineProperty(Document.prototype, 'hidden', { configurable: true, get() { return window.__fakeHidden; } }); Object.defineProperty(Document.prototype, 'visibilityState', { configurable: true, get() { return window.__fakeHidden ? 'hidden' : 'visible'; } });";
+	const requested = [];
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: first, init, viewport: { width: 1280, height: 500 }, pages: { "/post-1000-2": second }, beforeNavigate: (p) => p.on("request", (request) => requested.push(new URL(request.url()).pathname)) });
+	try {
+		await page.waitForSelector("button.nspp-action");
+		await wait(page, 3200);
+		assert.equal(requested.filter((path) => path === "/post-1000-2").length, 0, "后台时不预取");
+		await page.evaluate(() => { window.__fakeHidden = false; document.dispatchEvent(new Event("visibilitychange")); });
+		await wait(page, 600);
+		assert.equal(requested.filter((path) => path === "/post-1000-2").length, 1, "切到前台就取好下一页");
+		assert.equal(await page.locator("ul.comments li.content-item").count(), 3, "没往下看时不接上");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});

@@ -4735,9 +4735,15 @@ var nsmaxRedirecting = false;
 		// 页面停一会儿、主线程空下来以后也先取好下一页（不用等开始滚动）。不等 load（2026-10-20）：load 要等页面上所有图片下完，
 		// 图床慢的帖子（测评截图）要多等好几秒；这次请求是低优先级，不和图片抢
 		let idleHandle = 0;
+		let idleReady = false;
 		const idlePrefetch = setTimeout(() => {
+			idleReady = true;
 			idleHandle = typeof requestIdleCallback === "function" ? requestIdleCallback(startPrefetch, { timeout: 1500 }) : setTimeout(startPrefetch, 0);
 		}, 1200);
+		// 在后台打开的标签页（中键一次开好几篇）错过了上面那次（页面不可见时不取）：切到这个标签页时就取，不用等开始滚动
+		document.addEventListener("visibilitychange", () => {
+			if (!document.hidden && idleReady) startPrefetch();
+		}, { signal: ctx.signal });
 		return () => {
 			observer.disconnect();
 			loading?.abort();
