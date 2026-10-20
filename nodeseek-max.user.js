@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.8.16
+// @version      1.8.17
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -895,7 +895,7 @@ var nsmaxRedirecting = false;
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
 	// 站点直接返回 JSON 的地址（没登录打开发帖页时是 {"message":"USER NOT FOUND"}，浏览器按 JSON 显示）不是论坛页面：不套主题、不加按钮
 	if (!/html/i.test(document.contentType || "text/html")) return;
-	var NSMAX_VERSION = "1.8.16";
+	var NSMAX_VERSION = "1.8.17";
 	var NSMAX_BOOT_REGIONS = Object.freeze(["header", "left", "right"]);
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
@@ -1332,11 +1332,13 @@ var nsmaxRedirecting = false;
 			}
 		};
 		if (target.origin !== location.origin) return execute();
+		// 排队顺序：后台提前准备的（priority: "low"：抽奖帖识别、评论下一页预取……）排在最后，
+		// 不挡着正等着看的预览卡、资料卡（2026-10-20：以前和它们排在同一档，先来先走）
 		return enqueue(async () => {
 			init.signal?.throwIfAborted();
 			await waitCooldown(init.signal);
 			return execute();
-		}, (profile || isPreview) ? -1 : 0);
+		}, init.priority === "low" ? 1 : (profile || isPreview) ? -1 : 0);
 	}
 	var validObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 	function normalizeSettings(features, value) {
@@ -4468,7 +4470,8 @@ var nsmaxRedirecting = false;
 	function directLink(href, base) {
 		try {
 			let url = new URL(href, base);
-			for (let i = 0; i < 3 && url.origin === new URL(base).origin && url.pathname === "/jump" && url.searchParams.has("to"); i++) url = new URL(url.searchParams.get("to"), base);
+			const origin = new URL(base).origin;
+			for (let i = 0; i < 3 && url.origin === origin && url.pathname === "/jump" && url.searchParams.has("to"); i++) url = new URL(url.searchParams.get("to"), base);
 			return /^https?:$/.test(url.protocol) ? url.href : void 0;
 		} catch {
 			return;
@@ -4729,13 +4732,18 @@ var nsmaxRedirecting = false;
 			button.hidden = true;
 			button.setAttribute("data-nsmax-all-loaded", "");
 		}
-		// 页面加载完、停一会儿以后也先取好下一页（不用等开始滚动）
-		const idlePrefetch = setTimeout(() => { if (document.readyState === "complete") startPrefetch(); else window.addEventListener("load", startPrefetch, { once: true, signal: ctx.signal }); }, 1500);
+		// 页面停一会儿、主线程空下来以后也先取好下一页（不用等开始滚动）。不等 load（2026-10-20）：load 要等页面上所有图片下完，
+		// 图床慢的帖子（测评截图）要多等好几秒；这次请求是低优先级，不和图片抢
+		let idleHandle = 0;
+		const idlePrefetch = setTimeout(() => {
+			idleHandle = typeof requestIdleCallback === "function" ? requestIdleCallback(startPrefetch, { timeout: 1500 }) : setTimeout(startPrefetch, 0);
+		}, 1200);
 		return () => {
 			observer.disconnect();
 			loading?.abort();
 			prefetch?.controller.abort();
 			clearTimeout(idlePrefetch);
+			if (idleHandle) (typeof cancelIdleCallback === "function" ? cancelIdleCallback : clearTimeout)(idleHandle);
 			cancelAnimationFrame(scrollFrame);
 			button.remove();
 			pause.remove();
@@ -5096,6 +5104,7 @@ var nsmaxRedirecting = false;
 					const wantNewTab = newTabWanted();
 					const newTabChanged = lastNewTab !== sitePref;
 					lastNewTab = sitePref;
+					const cleanLinks = ctx.get("cleanLinks");
 					document.querySelectorAll(linkSelector).forEach((a) => {
 						if (processed.has(a) && !newTabChanged) return;
 						processed.add(a);
@@ -5106,7 +5115,8 @@ var nsmaxRedirecting = false;
 						];
 						try {
 							let url = new URL(a.href);
-							if (ctx.get("cleanLinks")) {
+							// 只有站内跳转链接（/jump?to=…）才要还原成直达地址；一页几百个链接，别的不再逐个解析一遍
+							if (cleanLinks && url.pathname === "/jump" && url.origin === location.origin) {
 								const resolved = directLink(a.href, location.href);
 								if (resolved && resolved !== a.href) {
 									a.href = resolved;
@@ -12087,12 +12097,14 @@ var nsmaxRedirecting = false;
 					url.hash = "";
 					return url.href === location.href.replace(/#.*$/, "") ? null : url.href;
 				};
-				// 同一标签页打开的用 Speculation Rules 预取（只取网页，不预渲染）；新标签页打开的用 <link rel=prefetch>（进 HTTP 缓存，新标签页也能用上）
-				const prefetch = (href, blank) => {
+				// 用 Speculation Rules 预取（只取网页，不预渲染）。新标签页打开的链接（站点偏好「新标签页打开帖子」、中键点开）也一样（2026-10-20）：
+				// Chrome 在新标签页里也用得上这份预取；以前给它们用 <link rel=prefetch>，可站点网页不带缓存头，进了 HTTP 缓存也用不上，
+				// 点开时照样重新请求，每次悬停白取一遍。不支持 Speculation Rules 的浏览器才退回 <link rel=prefetch>
+				const prefetch = (href) => {
 					if (!href || seen.has(href) || seen.size >= 40) return;
 					seen.add(href);
 					let node;
-					if (native && !blank) {
+					if (native) {
 						node = document.createElement("script");
 						node.type = "speculationrules";
 						node.textContent = JSON.stringify({ prefetch: [{
@@ -12116,14 +12128,15 @@ var nsmaxRedirecting = false;
 					hovered = anchor;
 					clearTimeout(timer);
 					const href = target(anchor);
-					if (href && !seen.has(href)) timer = setTimeout(() => prefetch(href, anchor.target === "_blank"), 65);
+					if (href && !seen.has(href)) timer = setTimeout(() => prefetch(href), 65);
 				}, {
 					passive: true,
 					signal: ctx.signal
 				});
+				// 按下（左键，或者中键在新标签页打开）到松开、跳转之间还有一百来毫秒，先开始取
 				document.addEventListener("pointerdown", (event) => {
-					const anchor = event.button === 0 && event.target instanceof Element ? event.target.closest("a[href]") : null;
-					if (anchor) prefetch(target(anchor), anchor.target === "_blank");
+					const anchor = event.button <= 1 && event.target instanceof Element ? event.target.closest("a[href]") : null;
+					if (anchor) prefetch(target(anchor));
 				}, {
 					passive: true,
 					signal: ctx.signal
@@ -19926,7 +19939,8 @@ var nsmaxRedirecting = false;
 		const articleFor = (url) => {
 			let promise = parsedArticles.get(url.href);
 			if (promise) return promise;
-			promise = nsmaxPostHtml(ctx.request, url.href).then((html) => {
+			// 卡片马上要显示，用普通优先级（不和后台准备的请求一起排在图片后面）
+			promise = nsmaxPostHtml(ctx.request, url.href, "auto").then((html) => {
 				const doc = new DOMParser().parseFromString(html, "text/html");
 				const body = doc.querySelector(".nsk-post .post-content, .nsk-post .nsk-content, .post-content, .nsk-post .markdown-body, .nsk-content");
 				if (!body) throw new Error("未找到正文");
@@ -29300,13 +29314,14 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 	// 点开帖子之前先把东西备好（2026-10-20）：鼠标停在帖子标题上时「帖子卡片预览」本来就要取这篇帖子，取到后顺手——
 	// 1. 正文前几张图（主帖 3 张、前两层回复各 1 张）：先连上图床（第一次连一个图床要多花 0.2～0.4 秒），在后台下好，点开时直接出来；
 	// 2. 主帖和前几层回复的作者资料（等级、帖子 / 鸡腿 / 星辰）：读好记在本机，点开时作者栏第一帧就是完整的，不再「闪一下才出现」。
-	// 都是低优先级请求，同一篇只准备一次；省流量模式下不做。帖子网页本身同一篇只取一次（以前预览一篇要取两遍）
+	// 都是低优先级请求，同一篇只准备一次；省流量模式下不做。帖子网页本身同一篇只取一次（以前预览一篇要取两遍）。
+	// priority：预览卡要马上显示的那篇用 "auto"（2026-10-20：以前也是 "low"，页面上图片多时卡片要排在图片后面）
 	var nsmaxPostHtmlCache = new Map();
-	function nsmaxPostHtml(request, href) {
+	function nsmaxPostHtml(request, href, priority = "low") {
 		const key = String(href).replace(/#.*$/, "");
 		const hit = nsmaxPostHtmlCache.get(key);
 		if (hit && Date.now() - hit.at < 3e5) return hit.promise;
-		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority: "low" }) };
+		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority }) };
 		nsmaxPostHtmlCache.set(key, entry);
 		entry.promise.catch(() => {
 			if (nsmaxPostHtmlCache.get(key) === entry) nsmaxPostHtmlCache.delete(key);
@@ -29433,7 +29448,7 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 		}
 	}
 	// 作者栏一建好：本机记下过这个人就先填上（10 分钟内读过的算准的，不再读）；没记下或者旧了，首屏那几层（主帖和前 4 层回复）
-	// 马上去读，读到后换字；再往下的等页面加载完、空下来以后低优先级读（2026-10-20：以前等滚到附近才读，滚得快时徽章晚一步才出来）
+	// 马上去读，读到后换字；再往下的等页面解析完、空下来以后低优先级读（2026-10-20：以前等滚到附近才读，滚得快时徽章晚一步才出来）
 	var nsmaxAuthorPrefetched = 0;
 	var nsmaxAuthorLater = null;
 	function nsmaxPrefetchAuthor(column) {
@@ -29459,9 +29474,11 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 				nsmaxMemberInfo(column.dataset.nsmaxUid, (url) => nsmaxEarlyJson(url, "low")).then((detail) => nsmaxFillAuthor(column, detail)).catch(() => {});
 			}
 		};
-		const idle = () => typeof requestIdleCallback === "function" ? requestIdleCallback(run, { timeout: 1500 }) : setTimeout(run, 300);
-		if (document.readyState === "complete") setTimeout(idle, 0);
-		else window.addEventListener("load", idle, { once: true });
+		// 页面解析完、站点脚本跑完以后，停 0.6 秒、主线程空下来就读。不等 load（2026-10-20）：load 要等所有图片下完，
+		// 图床慢的帖子要多等好几秒；这些请求是低优先级，不和图片抢
+		const idle = () => setTimeout(() => typeof requestIdleCallback === "function" ? requestIdleCallback(run, { timeout: 1500 }) : run(), 600);
+		if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", idle, { once: true });
+		else idle();
 		return columns;
 	}
 	// 作者栏出现在屏幕上时再读资料：等级徽章 + 帖子（主题 + 评论）/ 鸡腿 / 星辰

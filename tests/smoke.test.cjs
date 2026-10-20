@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.16");
+	assert.equal(packageJson.version, "1.8.17");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5221,5 +5221,78 @@ test("第十五批（2026-10-20）：帖子页首屏以外楼层的作者资料�
 		assert.equal(read, 12, "每位作者都读了：" + read);
 		assert.ok(Object.entries(calls).filter(([key]) => key.startsWith("/api/account/getInfo/2")).every(([, count]) => count === 1), "每位只读一次：" + JSON.stringify(calls));
 		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+// 第十六批（2026-10-20）
+test("第十六批（2026-10-20）：在新标签页打开的帖子链接，悬停时也用浏览器原生预取（Speculation Rules，新标签页里也用得上）；不再插 <link rel=prefetch>（站点网页没有缓存头，点开时用不上，每次悬停白取一遍）", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await wait(page, 1200);
+		const link = page.locator("ul.post-list .post-title a").nth(1);
+		await link.evaluate((a) => { a.target = "_blank"; a.rel = "noopener noreferrer"; });
+		const href = await link.evaluate((a) => a.href);
+		await link.hover();
+		await wait(page, 400);
+		const state = await page.evaluate((href) => ({
+			rules: Array.from(document.querySelectorAll("script[type=speculationrules]")).some((s) => (JSON.parse(s.textContent).prefetch || []).some((rule) => rule.urls.includes(href))),
+			links: document.querySelectorAll("link[rel=prefetch]").length
+		}), href);
+		assert.equal(state.rules, true, "新标签页打开的也用 Speculation Rules 预取");
+		assert.equal(state.links, 0, "不再插 <link rel=prefetch>");
+		// 中键（在新标签页打开）按下时也先开始取
+		const other = page.locator("ul.post-list .post-title a").nth(3);
+		const otherHref = await other.evaluate((a) => a.href);
+		await other.evaluate((a) => a.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 1 })));
+		assert.equal(await page.evaluate((href) => Array.from(document.querySelectorAll("script[type=speculationrules]")).some((s) => s.textContent.includes(href)), otherHref), true, "中键按下也预取");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十六批（2026-10-20）：帖子预览卡取网页用普通优先级（以前和「点开之前先备好」一样是低优先级，页面上图片多时卡片要排在图片后面）", async () => {
+	const pages = {};
+	for (let i = 0; i < 6; i++) pages[`/post-${1000 + i}-1`] = postPage();
+	const init = "window.__fetches = []; const nsmaxOriginalFetch = window.fetch; window.fetch = function (input, options) { try { const url = new URL(input instanceof Request ? input.url : String(input), location.href); if (/^\\/post-\\d+/.test(url.pathname)) window.__fetches.push([url.pathname, (options && options.priority) || 'auto']); } catch {} return nsmaxOriginalFetch.apply(this, arguments); };";
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages, init, viewport: { width: 1280, height: 900 } });
+	try {
+		await wait(page, 1200);
+		await page.locator("ul.post-list .post-title a").first().hover();
+		await page.waitForFunction(() => window.__fetches.some(([path]) => path === "/post-1000-1"), null, { timeout: 5e3 });
+		await wait(page, 500);
+		const fetches = await page.evaluate(() => window.__fetches.filter(([path]) => path === "/post-1000-1"));
+		assert.equal(fetches.length, 1, "预览和准备共用一次请求：" + JSON.stringify(fetches));
+		assert.equal(fetches[0][1], "auto", "预览卡用普通优先级");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第十六批（2026-10-20）：多页评论区的下一页预取、首屏以外楼层的作者资料，不再等页面上所有图片下完（load）——图床慢的帖子以前要多等好几秒", async () => {
+	// 12 层回复、各是不同的人，每层很高（后几层离首屏很远）；主帖里一张图一直下不完，页面的 load 一直不来
+	const floors = Array.from({ length: 12 }, (_, i) => `<li class="content-item" id="${i + 1}"><div class="nsk-content-meta-info"><div class="avatar-wrapper"><a href="/space/${200 + i}"><img src="/avatar/${200 + i}.png" class="avatar-normal"></a></div> <div><div class="author-info"><a href="/space/${200 + i}" class="author-name">u${200 + i}</a></div> <div class="content-info"><span class="date-created"><time datetime="2026-10-03T04:00:00.000Z">1h ago</time></span></div></div> <div class="floor-link-wrapper"><a href="#${i + 1}" class="floor-link">#${i + 1}</a></div></div> <article class="post-content"><p style="height:320px">第 ${i + 1} 楼</p></article></li>`).join("");
+	const first = postPage().replaceAll("/page-2", "/post-1000-2").replace(/<ul class="comments">[\s\S]*?<\/ul>/, `<ul class="comments">${floors}</ul>`).replace("</article>", '<p><img src="https://img.example.org/hang.png" alt="慢图"></p></article>');
+	const second = postPage().replace('id="1"', 'id="21"').replace('id="2"', 'id="22"').replace('id="3"', 'id="23"').replaceAll('class="pager-pos pager-cur">1', 'class="pager-pos pager-cur">2').replaceAll('class="pager-next"', 'class="pager-end"');
+	const requested = [];
+	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+		html: first, viewport: { width: 1280, height: 900 }, pages: { "/post-1000-2": second },
+		beforeNavigate: (p) => {
+			p.on("request", (request) => requested.push(new URL(request.url()).pathname));
+			return p.route("https://img.example.org/hang.png", () => {});
+		}
+	});
+	try {
+		await page.waitForSelector("button.nspp-action");
+		await page.waitForFunction(() => document.querySelectorAll(".nsmax-author-col").length >= 13);
+		const start = Date.now();
+		while (Date.now() - start < 6e3) {
+			const authors = Object.keys(calls).filter((key) => key.startsWith("/api/account/getInfo/2")).length;
+			if (authors === 12 && requested.includes("/post-1000-2")) break;
+			await wait(page, 200);
+		}
+		assert.equal(await page.evaluate(() => document.readyState), "interactive", "图片还没下完，load 没来");
+		assert.equal(requested.filter((path) => path === "/post-1000-2").length, 1, "没等 load 就取好了下一页");
+		const authors = Object.keys(calls).filter((key) => key.startsWith("/api/account/getInfo/2"));
+		assert.equal(authors.length, 12, "没等 load 就读好了每位作者：" + authors.join());
+		assert.equal(await page.locator("ul.comments > li.content-item").count(), 12, "没往下看时不接上下一页");
+		assert.deepEqual(errors.filter((e) => !/hang\.png|ERR_|net::/i.test(e)), []);
 	} finally { await context.close(); }
 });

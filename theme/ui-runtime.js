@@ -1476,13 +1476,14 @@
 	// 点开帖子之前先把东西备好（2026-10-20）：鼠标停在帖子标题上时「帖子卡片预览」本来就要取这篇帖子，取到后顺手——
 	// 1. 正文前几张图（主帖 3 张、前两层回复各 1 张）：先连上图床（第一次连一个图床要多花 0.2～0.4 秒），在后台下好，点开时直接出来；
 	// 2. 主帖和前几层回复的作者资料（等级、帖子 / 鸡腿 / 星辰）：读好记在本机，点开时作者栏第一帧就是完整的，不再「闪一下才出现」。
-	// 都是低优先级请求，同一篇只准备一次；省流量模式下不做。帖子网页本身同一篇只取一次（以前预览一篇要取两遍）
+	// 都是低优先级请求，同一篇只准备一次；省流量模式下不做。帖子网页本身同一篇只取一次（以前预览一篇要取两遍）。
+	// priority：预览卡要马上显示的那篇用 "auto"（2026-10-20：以前也是 "low"，页面上图片多时卡片要排在图片后面）
 	var nsmaxPostHtmlCache = new Map();
-	function nsmaxPostHtml(request, href) {
+	function nsmaxPostHtml(request, href, priority = "low") {
 		const key = String(href).replace(/#.*$/, "");
 		const hit = nsmaxPostHtmlCache.get(key);
 		if (hit && Date.now() - hit.at < 3e5) return hit.promise;
-		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority: "low" }) };
+		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority }) };
 		nsmaxPostHtmlCache.set(key, entry);
 		entry.promise.catch(() => {
 			if (nsmaxPostHtmlCache.get(key) === entry) nsmaxPostHtmlCache.delete(key);
@@ -1609,7 +1610,7 @@
 		}
 	}
 	// 作者栏一建好：本机记下过这个人就先填上（10 分钟内读过的算准的，不再读）；没记下或者旧了，首屏那几层（主帖和前 4 层回复）
-	// 马上去读，读到后换字；再往下的等页面加载完、空下来以后低优先级读（2026-10-20：以前等滚到附近才读，滚得快时徽章晚一步才出来）
+	// 马上去读，读到后换字；再往下的等页面解析完、空下来以后低优先级读（2026-10-20：以前等滚到附近才读，滚得快时徽章晚一步才出来）
 	var nsmaxAuthorPrefetched = 0;
 	var nsmaxAuthorLater = null;
 	function nsmaxPrefetchAuthor(column) {
@@ -1635,9 +1636,11 @@
 				nsmaxMemberInfo(column.dataset.nsmaxUid, (url) => nsmaxEarlyJson(url, "low")).then((detail) => nsmaxFillAuthor(column, detail)).catch(() => {});
 			}
 		};
-		const idle = () => typeof requestIdleCallback === "function" ? requestIdleCallback(run, { timeout: 1500 }) : setTimeout(run, 300);
-		if (document.readyState === "complete") setTimeout(idle, 0);
-		else window.addEventListener("load", idle, { once: true });
+		// 页面解析完、站点脚本跑完以后，停 0.6 秒、主线程空下来就读。不等 load（2026-10-20）：load 要等所有图片下完，
+		// 图床慢的帖子要多等好几秒；这些请求是低优先级，不和图片抢
+		const idle = () => setTimeout(() => typeof requestIdleCallback === "function" ? requestIdleCallback(run, { timeout: 1500 }) : run(), 600);
+		if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", idle, { once: true });
+		else idle();
 		return columns;
 	}
 	// 作者栏出现在屏幕上时再读资料：等级徽章 + 帖子（主题 + 评论）/ 鸡腿 / 星辰
