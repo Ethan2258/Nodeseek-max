@@ -5337,6 +5337,16 @@ test("元信息（2026-10-20）：@include 都是能解析出站点的写法（�
 	assert.match(header, /^\/\/ @include\s+https:\/\/www\.nodeseek\.com\/\*$/m, "保留站内 @include，「站点」列才画 NodeSeek 的图标");
 });
 
+test("主题 CSS 短名化（2026-10-21）：特异度垫片不再用长名字、样式仍是合法 CSS", () => {
+	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8");
+	const line = source.slice(source.indexOf("var modern_theme_compiled = "), source.indexOf("\n", source.indexOf("var modern_theme_compiled = ")));
+	assert.equal(/#nsmax-(?:u|lv|b|c|d|s|a|e)\b/.test(line), false, "垫片 ID 要短名化成 #x，不然每条选择器白占几个字节");
+	assert.equal(/\.nsmax-s\b/.test(line), false, "垫片类要短名化成 .x");
+	assert.equal(line.includes("[data-nsmax-palette=claude]"), false, "palette 门控恒真，换成 :root");
+	assert.ok(line.includes(":is(#x, *)") || line.includes("#x#x#x), *"), "特异度垫片还在（只是变短了）");
+});
+
+
 test("手机分页（2026-10-20）：≤560px 页码缩到 30px、上一页 / 下一页只画箭头，读屏仍有名称；宽屏不变", async () => {
 	const html = listPage().replaceAll('<span aria-disabled="true" class="pager-prev"><div class="triangle-left"></div></span>', '<a class="pager-prev" href="/page-1"><div class="triangle-left"></div></a>');
 	const readPager = (page) => page.evaluate(() => {

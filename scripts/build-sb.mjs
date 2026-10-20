@@ -203,13 +203,42 @@ ast.walk(node => {
 });
 ast.raws.after = "";
 const compiled = ast.toString();
+// 诱饵 token 短名化（2026-10-21）：#nsmax-u / #nsmax-lv / #nsmax-b / #nsmax-c / #nsmax-d / #nsmax-s / #nsmax-a / #nsmax-e、
+// .nsmax-s 和类型选择器 nsmax-s 都只是提特异度的垫片——每条都写成 :is(垫片, *)，永远由 * 兜底命中，名字本身没有语义。
+// 换成 #x / .x / x 以后匹配范围不变、特异度的形状（ID / 类 / 类型各几份）不变，只是每条选择器短几个字节。
+// [data-nsmax-palette=claude] 由脚本在根元素上写死（palette 设置已隐藏、恒为 claude），换成 :root 特异度同为 (0,1,0)。
+let shipped = compiled;
+// 只换完整的垫片名：`.nsmax-s` 后面不能再跟字母或连字符，否则会把 .nsmax-space-top、.nsmax-sb-account
+// 这类真类名一起截断（第一次就是这么把个人空间、侧滑资料卡、快捷键的样式改没的）
+shipped = shipped.replace(/#nsmax-(?:u|lv|b|c|d|s|a|e)(?![-\w])/g, "#x").replace(/#nsmax-s([12])(?![-\w])/g, "#x$1");
+shipped = shipped.replace(/\.nsmax-s(?![-\w])/g, ".x").replace(/(?<![#.\w-])nsmax-s(?![-\w])/g, "x");
+shipped = shipped.replaceAll("[data-nsmax-palette=claude]", ":root");
+// 校验：垫片换干净了、其它类名和 ID 一个都没变、规则数量没变、仍然是合法 CSS
+const tokenCounts = (css, pattern) => {
+  const map = new Map();
+  for (const match of css.matchAll(pattern)) map.set(match[0], (map.get(match[0]) ?? 0) + 1);
+  return map;
+};
+const pads = new Set(["#nsmax-u", "#nsmax-lv", "#nsmax-b", "#nsmax-c", "#nsmax-d", "#nsmax-s", "#nsmax-a", "#nsmax-e", "#nsmax-s1", "#nsmax-s2"]);
+const beforeClasses = tokenCounts(compiled, /\.nsmax-[a-z0-9_-]+/g);
+const afterClasses = tokenCounts(shipped, /\.nsmax-[a-z0-9_-]+/g);
+for (const [token, count] of beforeClasses) if (token !== ".nsmax-s" && afterClasses.get(token) !== count) throw new Error(`短名化改坏了类名 ${token}`);
+for (const token of afterClasses.keys()) if (!beforeClasses.has(token) && token !== ".x") throw new Error(`短名化冒出了新类名 ${token}`);
+const beforeIds = tokenCounts(compiled, /#nsmax-[a-z0-9_-]+/g);
+const afterIds = tokenCounts(shipped, /#nsmax-[a-z0-9_-]+/g);
+for (const [token, count] of beforeIds) if (!pads.has(token) && afterIds.get(token) !== count) throw new Error(`短名化改坏了 ID ${token}`);
+for (const token of afterIds.keys()) if (!beforeIds.has(token) && !pads.has(token)) throw new Error(`短名化冒出了新 ID ${token}`);
+if (/(?:#nsmax-(?:u|lv|b|c|d|s|a|e)(?![-\w]))|(?:\.nsmax-s(?![-\w]))/.test(shipped)) throw new Error("诱饵 token 没换干净");
+if (shipped.includes("[data-nsmax-palette")) throw new Error("palette 门控没换干净");
+if ((shipped.match(/\{/g) || []).length !== (compiled.match(/\{/g) || []).length) throw new Error("短名化改坏了规则数量");
+postcss.parse(shipped);
 const leftoverHas = [];
 ast.walkRules(rule => {
   if (rule.selector.includes(":has(")) leftoverHas.push(...rule.selectors.filter(selector => selector.includes(":has(")));
 });
 if (leftoverHas.length) throw new Error("主题里不能再有 :has()（会让 NodeSeek 的终端渲染卡死整页），请在 nsmaxTagStructure() 里打属性，或加进 hasRewrites：\n" + leftoverHas.join("\n"));
 source = source.replace(/\tvar modern_theme_compiled = .*;\n/, "");
-source = source.replace("\tvar hot_sidebar_default = `", "\tvar modern_theme_compiled = " + JSON.stringify(compiled) + ";\n\tvar hot_sidebar_default = `");
+source = source.replace("\tvar hot_sidebar_default = `", "\tvar modern_theme_compiled = " + JSON.stringify(shipped) + ";\n\tvar hot_sidebar_default = `");
 source = source.replace("_css(modern_theme_default);", "_css(modern_theme_compiled, true);");
 if (process.argv.includes("--check")) {
   if (source !== original || themeSource !== originalTheme) throw new Error("SB suite or adapter is stale; run npm run sb");
@@ -217,4 +246,4 @@ if (process.argv.includes("--check")) {
   writeFileSync(themePath, themeSource);
   writeFileSync(scriptPath, source);
 }
-console.log(`SB suite compiled: ${compiled.length} characters`);
+console.log(`SB suite compiled: ${shipped.length} characters (${compiled.length} before decoy short-names)`);
