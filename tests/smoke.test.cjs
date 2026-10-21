@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.19");
+	assert.equal(packageJson.version, "1.8.20");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5461,4 +5461,34 @@ test("悬停预览（2026-10-21）：读到主帖 </article> 就渲染，不等�
 		assert.equal(state.images[0].decoding, "async");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
+});
+
+test("第十七批（2026-10-21）：登录 / 注册页密码框右侧的「显示 / 隐藏」（照 sb.sb），按钮在输入框里、点了不提交表单", async () => {
+	const init = 'window.__submitted = 0; document.addEventListener("submit", () => { window.__submitted++; }, true);';
+	for (const [path, render] of [["/signIn.html", signInPage], ["/register.html", registerPage]]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com" + path, { html: render(), init, viewport: { width: 1280, height: 900 } });
+		try {
+			await page.waitForSelector("input[data-nsmax-password]");
+			await page.waitForTimeout(300);
+			const toggle = page.locator(".nsmax-password-toggle").first();
+			const input = page.locator("input[data-nsmax-password]").first();
+			assert.equal(await toggle.innerText(), "显示");
+			assert.equal(await input.getAttribute("type"), "password");
+			const aligned = await page.evaluate(() => {
+				const field = document.querySelector("input[data-nsmax-password]").getBoundingClientRect();
+				const button = document.querySelector(".nsmax-password-toggle").getBoundingClientRect();
+				return { dy: Math.round((button.top + button.height / 2) - (field.top + field.height / 2)), inside: button.right <= field.right + 0.5 && button.left > field.left };
+			});
+			assert.ok(Math.abs(aligned.dy) <= 2, "「显示」要在输入框的垂直中线上：" + JSON.stringify(aligned));
+			assert.equal(aligned.inside, true, "「显示」要落在输入框内（fieldset 的 legend 会把绝对定位的包含块往下推）");
+			await toggle.click();
+			assert.equal(await input.getAttribute("type"), "text");
+			assert.equal(await toggle.innerText(), "隐藏");
+			await toggle.click();
+			assert.equal(await input.getAttribute("type"), "password");
+			assert.equal(await toggle.innerText(), "显示");
+			assert.equal(await page.evaluate(() => window.__submitted), 0, "点「显示」不能提交表单");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
 });

@@ -2964,7 +2964,54 @@
 		}
 		// 输入框后面紧跟按钮的一组（邮箱 + 发送验证码、验证码 + 登录）排成一行
 		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button, :scope > input + span + button"));
+		nsmaxPasswordToggles(app);
 	}
+	// 登录 / 注册页密码框右侧的「显示 / 隐藏」：sb.sb 登录页在密码框里放了同款文字按钮（2026-10-21）。
+	// 不动表单结构（站点样式里有 fieldset > input 这类直接子元素选择器），按钮挂在最近的 fieldset 上绝对定位，
+	// 竖向位置按密码框自己的 offsetTop 算，窗口缩放 / 字体加载完再量一次。
+	const nsmaxPasswordFields = new Map();
+	// 以「top:0 时按钮落在哪儿」为原点自己量：fieldset 的 <legend> 会把绝对定位的包含块往下推，
+	// 用 input.offsetTop 算会和实际差一个 legend 的高度（注册页两个密码框的量出来差 28px）
+	const nsmaxPlacePasswordToggle = (input, toggle) => {
+		const field = input.closest("fieldset") || input.parentElement;
+		if (!field || !toggle.isConnected || !input.isConnected) return;
+		toggle.style.top = "0px";
+		const origin = toggle.getBoundingClientRect().top;
+		const inputRect = input.getBoundingClientRect();
+		toggle.style.top = `${Math.max(0, Math.round(inputRect.top + (inputRect.height - toggle.offsetHeight) / 2 - origin))}px`;
+	};
+	function nsmaxPasswordToggles(app) {
+		for (const input of app.querySelectorAll('input[type="password"]')) {
+			if (nsmaxPasswordFields.has(input)) continue;
+			const field = input.closest("fieldset") || input.parentElement;
+			if (!field) continue;
+			const toggle = document.createElement("button");
+			toggle.type = "button";
+			toggle.className = "nsmax-password-toggle";
+			toggle.textContent = "显示";
+			toggle.setAttribute("aria-label", "显示密码");
+			toggle.setAttribute("aria-pressed", "false");
+			toggle.addEventListener("click", () => {
+				const show = input.type === "password";
+				input.type = show ? "text" : "password";
+				toggle.textContent = show ? "隐藏" : "显示";
+				toggle.setAttribute("aria-label", show ? "隐藏密码" : "显示密码");
+				toggle.setAttribute("aria-pressed", String(show));
+				input.focus({ preventScroll: true });
+			});
+			field.append(toggle);
+			input.setAttribute("data-nsmax-password", "");
+			nsmaxPasswordFields.set(input, toggle);
+			nsmaxPlacePasswordToggle(input, toggle);
+			requestAnimationFrame(() => nsmaxPlacePasswordToggle(input, toggle));
+		}
+		document.fonts?.ready?.then(() => {
+			for (const [input, toggle] of nsmaxPasswordFields) nsmaxPlacePasswordToggle(input, toggle);
+		}).catch(() => {});
+	}
+	window.addEventListener("resize", () => {
+		for (const [input, toggle] of nsmaxPasswordFields) nsmaxPlacePasswordToggle(input, toggle);
+	}, { passive: true });
 	// 签到排行（/board）、管理记录（/ruling）是没有右栏的独立页面：照列表页补一个右栏（资料卡、今日热门、最近浏览），
 	// 主栏和右栏一起放进 1600px 版心，左右和顶栏的站标、齿轮对齐。资料卡用页面配置里的当前用户信息拼出原生资料卡的结构，交给 nsmaxBuildAccountCard 排版
 	function nsmaxSidePage(path = location.pathname) {
