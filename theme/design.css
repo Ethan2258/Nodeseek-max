@@ -13480,3 +13480,14 @@ html[data-nsmax-theme] .nspp-message-editor-status:is(#nsmax-lv, *):empty {
   display: none !important;
   padding: 0 !important;
 }
+
+/* ---------- 68. 2026-10-21 第二十一批：悬停预览卡片的标题最多两行 ----------
+   帖子标题经常很长：预览卡片的标题以前会折三行甚至四行，把正文挤下去，卡片高度还跳来跳去。
+   照常见悬浮卡的做法最多两行、超出省略号；完整标题在 title 属性里还能看到，点标题直接打开原帖。 */
+html[data-nsmax-theme] dialog.nspp-post-preview > header > a:is(#nsmax-lv, *) {
+  display: -webkit-box !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow-wrap: anywhere !important;
+}

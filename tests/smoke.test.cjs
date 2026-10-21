@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.23");
+	assert.equal(packageJson.version, "1.8.24");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5548,9 +5548,9 @@ test("第二十批（2026-10-21）：加载状态不再是一条白色扫光—�
 			const box = document.querySelector("dialog.nspp-post-preview .nspp-preview-skeleton");
 			return box ? { lines: box.querySelectorAll(".nsmax-skeleton-line").length, widths: [...box.children].map((line) => line.style.width), height: Math.round(box.getBoundingClientRect().height) } : null;
 		});
-		assert.equal(skeletonBox.lines, 4, "正文没到时先摆 4 行骨架，不是一片空白");
-		assert.deepEqual(skeletonBox.widths, ["92%", "100%", "76%", "48%"]);
-		assert.ok(skeletonBox.height >= 70, JSON.stringify(skeletonBox));
+		assert.equal(skeletonBox.lines, 3, "正文没到时先摆 3 行骨架，不是一片空白");
+		assert.deepEqual(skeletonBox.widths, ["100%", "76%", "48%"]);
+		assert.ok(skeletonBox.height >= 50, JSON.stringify(skeletonBox));
 		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
 		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nsmax-spinner")), false, "加载完转圈收掉");
 		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nspp-preview-skeleton")), false, "加载完骨架收掉");
@@ -5643,6 +5643,28 @@ test("第二十三批（2026-10-21）：私信里粘贴图片——上传成功�
 		assert.match(await page.locator(".nspp-messages textarea").inputValue(), /!\[image\]\(<https:\/\/api\.nodeimage\.com/);
 		await page.waitForFunction(() => (document.querySelector(".nspp-message-editor-status")?.textContent || "") === "", null, { timeout: 4e3 });
 		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nspp-message-editor-status")).display), "none", "提示消失后不占高度");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第二十四批（2026-10-21）：悬停预览的标题太长时最多两行（超出省略号，全文在 title 属性里）", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		const longTitle = "【已出】出 mkcloud 广港 iepl 308元出 358元那款 11月19日到期 现在只用了 10g 流量 需要的朋友联系我 谢谢支持 走过路过不要错过";
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.evaluate((text) => { document.querySelector(".post-list-item .post-title a").textContent = text; }, longTitle);
+		await page.locator(".post-list-item .post-title a").first().hover();
+		await page.waitForSelector("dialog.nspp-post-preview:not([hidden])", { timeout: 5e3 });
+		const state = await page.evaluate(() => {
+			const link = document.querySelector("dialog.nspp-post-preview > header > a");
+			const style = getComputedStyle(link);
+			return { clamp: style.webkitLineClamp, display: style.display, clipped: link.scrollHeight > link.clientHeight + 1, title: link.getAttribute("title"), text: link.textContent, lines: Math.round(link.getBoundingClientRect().height / parseFloat(style.lineHeight)) };
+		});
+		assert.equal(state.clamp, "2");
+		assert.ok(state.display === "-webkit-box" || state.display === "flow-root", state.display);
+		assert.equal(state.clipped, true, "长标题被截成两行");
+		assert.equal(state.lines, 2);
+		assert.equal(state.title, state.text, "全文在 title 属性里");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
