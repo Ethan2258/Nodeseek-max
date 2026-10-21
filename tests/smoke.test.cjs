@@ -5736,7 +5736,7 @@ test("v1.8.26 提速：主题 CSS 按页面分块注入——每页只解析当�
 		assert.equal(diff, -1, `${name}: 第 ${diff} 个元素和整份注入不一致：\n分块 ${chunked.styles[diff]}\n整份 ${full.styles[diff]}`);
 	}
 });
-test("v1.8.27 提速：浮层样式（弹窗 / 用户卡 / 搜索面板 / toast）首帧不注入，交互时先补、首帧后空闲自动补上", async () => {
+test("v1.8.27 提速：浮层样式（弹窗 / 用户卡 / 搜索面板 / toast）首帧不注入，打开前显式补、首帧后空闲自动补上", async () => {
 	const readCss = (page) => page.evaluate(() => [...document.querySelectorAll("style")].filter((tag) => (tag.textContent || "").includes("data-nsmax-theme")).map((tag) => tag.textContent).join(""));
 	// 关掉「首帧后自动注入」，验证首帧确实没有浮层段、而交互会先补上
 	const lazy = await open(browser, "https://www.nodeseek.com/?nsmax-no-lazy-overlay=1", { html: listPage(), viewport: { width: 1280, height: 900 } });
@@ -5745,13 +5745,13 @@ test("v1.8.27 提速：浮层样式（弹窗 / 用户卡 / 搜索面板 / toast�
 		const early = await readCss(lazy.page);
 		assert.equal(early.includes(".search-overlay"), false, "首帧只注入页面本体需要的段，浮层段还没注入");
 		assert.equal(early.includes(".nspp-post-preview"), false);
-		await lazy.page.mouse.move(12, 12);
-		await lazy.page.waitForFunction(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes(".search-overlay")), null, { timeout: 3e3 });
-		const after = await readCss(lazy.page);
-		assert.ok(after.length > early.length + 30000, `交互后补上浮层段（${Math.round(early.length / 1024)}KB → ${Math.round(after.length / 1024)}KB）`);
-		// 提前打开（悬停预览）的浮层有样式：卡片圆角 12px
+		// 打开浮层前会显式补注入（预览卡片），补上后浮层样式完整
 		await lazy.page.locator(".post-list-item .post-title a").first().hover();
 		await lazy.page.waitForSelector("dialog.nspp-post-preview:not([hidden])", { timeout: 5e3 });
+		const after = await readCss(lazy.page);
+		assert.equal(after.includes(".search-overlay"), true, "打开浮层前补注入 overlay 段");
+		assert.ok(after.length > early.length + 30000, `补上浮层段（${Math.round(early.length / 1024)}KB → ${Math.round(after.length / 1024)}KB）`);
+		// 提前打开（悬停预览）的浮层有样式：卡片圆角 12px
 		const radius = await lazy.page.evaluate(() => getComputedStyle(document.querySelector("dialog.nspp-post-preview")).borderRadius);
 		assert.equal(radius, "12px");
 		assert.deepEqual(lazy.errors, []);

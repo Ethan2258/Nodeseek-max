@@ -27424,17 +27424,19 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 		// 浮层样式（弹窗 / 用户卡 / 搜索面板 / toast）首帧用不到：第一帧画完后空闲时补注入；
 		// 用户在那之前移动鼠标 / 按键 / 点开弹窗时也会先补上，不会出现没样式的浮层
 		const ensureOverlayCss = () => { try { nsmaxEnsureOverlayCss(); } catch {} };
-		for (const type of ["pointerdown", "pointermove", "keydown", "focusin"]) document.addEventListener(type, ensureOverlayCss, { capture: true, once: true, passive: true });
-		// 排查 / 测试用：地址带 ?nsmax-no-lazy-overlay 时不安排首帧后的自动注入（交互时仍会补上）
-		if (!new URLSearchParams(location.search).has("nsmax-no-lazy-overlay")) document.addEventListener("DOMContentLoaded", () => {
-			// 双 rAF 保证在第一帧之后；之后再用空闲时间补，不影响滚动 / 点击
-			const afterPaint = () => requestAnimationFrame(() => requestAnimationFrame(() => {
-				if (typeof requestIdleCallback === "function") requestIdleCallback(ensureOverlayCss, { timeout: 800 });
-				else setTimeout(ensureOverlayCss, 120);
-			}));
-			if (document.readyState === "complete") afterPaint();
-			else window.addEventListener("load", afterPaint, { once: true });
-		}, { once: true });
+		// 排查 / 测试用：地址带 ?nsmax-no-lazy-overlay 时关掉所有自动补注入（toast、预览、弹窗打开前的显式补注入仍生效）
+		if (!new URLSearchParams(location.search).has("nsmax-no-lazy-overlay")) {
+			for (const type of ["pointerdown", "pointermove", "keydown"]) document.addEventListener(type, ensureOverlayCss, { capture: true, once: true, passive: true });
+			document.addEventListener("DOMContentLoaded", () => {
+				// 双 rAF 保证在第一帧之后；之后再用空闲时间补，不影响滚动 / 点击
+				const afterPaint = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+					if (typeof requestIdleCallback === "function") requestIdleCallback(ensureOverlayCss, { timeout: 800 });
+					else setTimeout(ensureOverlayCss, 120);
+				}));
+				if (document.readyState === "complete") afterPaint();
+				else window.addEventListener("load", afterPaint, { once: true });
+			}, { once: true });
+		}
 		_css("html[data-nsmax-mounting] #nspp-tools{visibility:hidden!important}");
 		_css("[data-nsmax-blocked]{display:none!important}");
 		// Cloudflare 安全验证页不套主题：它自己处理深浅色，套上主题的背景后标题文字和底色同色，看不清
