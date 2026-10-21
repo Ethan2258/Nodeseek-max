@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.21");
+	assert.equal(packageJson.version, "1.8.22");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5300,12 +5300,23 @@ test("第十六批（2026-10-20）：多页评论区的下一页预取、首屏�
 	} finally { await context.close(); }
 });
 
-test("第十六批（2026-10-20）：帖子地址打开的是站点出错页（502、帖子不存在，页面上没有 .nsk-post）时脚本不报错——以前找主帖时用了不合法的选择器 .content-item#0，直接抛错，整轮整理中断", async () => {
+test("第十六批（2026-10-20）：帖子地址打开的是站点出错页（502、帖子不存在，页面上没有 .nsk-post）时脚本不报错——以前找主帖时用了不合法的选择器 .content-item#0，直接抛错，整轮整理中断；2026-10-21 起整页换成分栏出错卡片", async () => {
 	const html = "<!doctype html><html><head><title>502 Bad Gateway</title></head><body><center><h1>502 Bad Gateway</h1></center><hr><center>nginx</center></body></html>";
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-9999-1", { html, viewport: { width: 1280, height: 900 } });
 	try {
-		await wait(page, 1500);
-		assert.equal(await page.locator("h1").innerText(), "502 Bad Gateway");
+		await page.waitForSelector(".nsmax-error-split", { timeout: 5e3 });
+		const state = await page.evaluate(() => {
+			const card = document.querySelector(".nsmax-error-split");
+			return {
+				code: card.querySelector(".nsmax-error-code").textContent,
+				title: card.querySelector(".nsmax-error-title").textContent,
+				primary: card.querySelector(".nsmax-error-primary").textContent,
+				secondary: card.querySelector(".nsmax-error-secondary").textContent,
+				searchAction: card.querySelector(".nsmax-error-form")?.getAttribute("action"),
+				columns: getComputedStyle(card).gridTemplateColumns.split(" ").length
+			};
+		});
+		assert.deepEqual(state, { code: "502", title: "出错了", primary: "回到首页", secondary: "返回上一页", searchAction: "/search", columns: 2 });
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -5535,6 +5546,40 @@ test("第二十批（2026-10-21）：加载状态不再是一条白色扫光—�
 		assert.notEqual(loading.skeletonBg, "rgba(0, 0, 0, 0)");
 		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
 		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nsmax-spinner")), false, "加载完转圈收掉");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第二十一批（2026-10-21）：不存在的帖子站点只回 text/plain 的「not found」时，整页换成 sb.sb 的分栏出错卡片（404）", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-9999-1", { html: { body: "not found", contentType: "text/plain; charset=utf-8" }, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-error-split", { timeout: 5e3 });
+		const state = await page.evaluate(() => {
+			const card = document.querySelector(".nsmax-error-split");
+			const hero = card.querySelector(".nsmax-error-hero");
+			return {
+				theme: document.documentElement.hasAttribute("data-nsmax-theme"),
+				title: document.title,
+				code: card.querySelector(".nsmax-error-code").textContent,
+				heading: card.querySelector(".nsmax-error-title").textContent,
+				message: card.querySelector(".nsmax-error-message").textContent,
+				places: [...card.querySelectorAll(".nsmax-error-places a")].map((link) => link.textContent),
+				columns: getComputedStyle(card).gridTemplateColumns.split(" ").length,
+				heroBg: getComputedStyle(hero).backgroundColor,
+				border: getComputedStyle(card).borderTopWidth,
+				searchAction: card.querySelector(".nsmax-error-form")?.getAttribute("action")
+			};
+		});
+		assert.equal(state.theme, true, "主题属性挂上了");
+		assert.equal(state.title, "页面不存在 - NodeSeek");
+		assert.equal(state.code, "404");
+		assert.equal(state.heading, "页面不存在");
+		assert.match(state.message, /没有对应的页面/);
+		assert.deepEqual(state.places, ["全部主题", "精华", "排行榜", "合作商家"]);
+		assert.equal(state.columns, 2, "宽屏是左右分栏");
+		assert.equal(state.heroBg, "rgb(255, 208, 47)", "左边是黄底");
+		assert.equal(state.border, "1px", "主题样式注入进来了");
+		assert.equal(state.searchAction, "/search");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

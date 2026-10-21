@@ -3408,6 +3408,127 @@
 	// 就在同一轮微任务里（浏览器画下一帧之前）改好，屏幕上不出现原版。nsmaxPrepareFans 只在需要时改 DOM，改完那次变化不会再引起改动
 	// 站点 Vue 页面里的报错框（行内写死的红框、2rem 大红字，如管理记录页的「用户未登录」「Not allowed to search」）：
 	// 主题排成 sb.sb 空状态（见 design.css 第 57 节）；未登录的加一个「去登录」按钮，英文的换成中文
+	// 出错页（404 / 502 / 503 / 504）：照 sb.sb 的分栏卡片——左边黄底站名 + 站标 + 大号状态码，
+	// 右边标题 / 说明 / 两个按钮 / 「搜一下」/「也可以去」。和登录页共用同一套分栏尺寸（980px、1:1、--r 圆角）
+	function nsmaxErrorCard({ code, title, message }) {
+		const card = document.createElement("div");
+		card.className = "nsmax-error-split";
+		const hero = document.createElement("aside");
+		hero.className = "nsmax-error-hero";
+		const name = document.createElement("div");
+		name.className = "nsmax-error-name";
+		name.textContent = "NodeSeek";
+		const art = document.createElement("div");
+		art.className = "nsmax-error-art";
+		art.setAttribute("aria-hidden", "true");
+		const codeEl = document.createElement("p");
+		codeEl.className = "nsmax-error-code";
+		codeEl.textContent = code;
+		hero.append(name, art, codeEl);
+		const main = document.createElement("div");
+		main.className = "nsmax-error-main";
+		const heading = document.createElement("h1");
+		heading.className = "nsmax-error-title";
+		heading.textContent = title;
+		const text = document.createElement("p");
+		text.className = "nsmax-error-message";
+		text.textContent = message;
+		const actions = document.createElement("div");
+		actions.className = "nsmax-error-actions";
+		const home = document.createElement("a");
+		home.className = "nsmax-error-primary";
+		home.href = "/";
+		home.textContent = "回到首页";
+		const back = document.createElement("button");
+		back.type = "button";
+		back.className = "nsmax-error-secondary";
+		back.textContent = "返回上一页";
+		back.addEventListener("click", () => history.back());
+		actions.append(home, back);
+		const search = document.createElement("div");
+		search.className = "nsmax-error-search";
+		const searchLabel = document.createElement("span");
+		searchLabel.className = "nsmax-error-label";
+		searchLabel.textContent = "搜一下";
+		const form = document.createElement("form");
+		form.className = "nsmax-error-form";
+		form.action = "/search";
+		form.method = "get";
+		const input = document.createElement("input");
+		input.className = "nsmax-error-input";
+		input.type = "search";
+		input.name = "q";
+		input.placeholder = "搜索帖子标题";
+		input.autocomplete = "off";
+		input.required = true;
+		const submit = document.createElement("button");
+		submit.type = "submit";
+		submit.className = "nsmax-error-submit";
+		submit.textContent = "搜索";
+		form.append(input, submit);
+		search.append(searchLabel, form);
+		const places = document.createElement("div");
+		places.className = "nsmax-error-places";
+		const placesLabel = document.createElement("span");
+		placesLabel.className = "nsmax-error-label";
+		placesLabel.textContent = "也可以去";
+		const list = document.createElement("ul");
+		for (const [label, href] of [["全部主题", "/"], ["精华", "/award"], ["排行榜", "/board"], ["合作商家", "/providers"]]) {
+			const item = document.createElement("li");
+			const link = document.createElement("a");
+			link.href = href;
+			link.textContent = label;
+			item.append(link);
+			list.append(item);
+		}
+		places.append(placesLabel, list);
+		main.append(heading, text, actions, search, places);
+		card.append(hero, main);
+		return card;
+	}
+	// 站点整页出错（nginx 的 502 / 503 / 504 只回一个 h1，没有 #nsk-frame）：整页换成分栏卡片
+	function nsmaxErrorPage() {
+		if (document.querySelector(".nsmax-error-split") || document.getElementById("nsk-frame")) return;
+		const heading = document.querySelector("h1");
+		const code = (heading?.textContent.trim().match(/^([45]\d\d)\b/) || document.title.match(/\b([45]\d\d)\b/) || [])[1];
+		if (!code) return;
+		const wrap = document.createElement("div");
+		wrap.className = "nsmax-error-page";
+		wrap.append(nsmaxErrorCard({ code, title: "出错了", message: `页面暂时打不开（${code}）。可以稍后刷新重试，或者回首页看看别的帖子。` }));
+		document.body.replaceChildren(wrap);
+		nsmaxSetAttr(document.documentElement, "data-nsmax-page", "error");
+	}
+	// 站点对不存在的帖子直接回 text/plain 的「not found」（9 个字节），浏览器里只有一行灰字，也没有站点样式。
+	// 这种文档进不了主题那套流程（入口发现不是 HTML 就退出），所以自己铺：设好主题属性、注入编译好的主题样式，再放出错卡片
+	function nsmaxPlainTextErrorPage() {
+		if (!/^text\/plain/i.test(document.contentType || "")) return;
+		const text = (document.body?.textContent || "").trim();
+		if (text && !/^not found\.?$/i.test(text)) return;
+		const render = () => {
+			try {
+				const root = document.documentElement;
+				root.setAttribute("data-nsmax-theme", "");
+				root.setAttribute("data-nsmax-page", "error");
+				root.setAttribute("data-nsmax-palette", "claude");
+				if (window.matchMedia?.("(prefers-color-scheme: dark)")?.matches) root.setAttribute("data-nsmax-dark", "");
+				document.title = "页面不存在 - NodeSeek";
+				if (!document.querySelector("style[data-nsmax-error-style]")) {
+					const style = document.createElement("style");
+					style.setAttribute("data-nsmax-error-style", "");
+					style.textContent = modern_theme_compiled;
+					(document.head || root).append(style);
+				}
+				const wrap = document.createElement("div");
+				wrap.className = "nsmax-error-page";
+				wrap.append(nsmaxErrorCard({ code: "404", title: "页面不存在", message: "这个地址没有对应的页面。它可能已被删除、改过地址，或者从来就不存在。" }));
+				document.body.replaceChildren(wrap);
+			} catch (error) {
+				nsmaxRecordError("error-page", error);
+			}
+		};
+		if (document.body) render();
+		else document.addEventListener("DOMContentLoaded", render, { once: true });
+	}
 	function nsmaxTidySiteErrors() {
 		// 邀请好友页没登录时是 .invite-panel 里单独一个 h2「用户未登录」
 		const boxes = new Set(document.querySelectorAll('#nsk-frame div[style*="solid red"], #nsk-frame .invite-panel > h2:only-child'));
@@ -3541,6 +3662,7 @@
 			nsmaxPrepareSetting();
 			nsmaxPrepareSidePage();
 			nsmaxTidySiteErrors();
+			nsmaxErrorPage();
 			nsmaxGuestPlaceholder();
 			nsmaxPrepareFriends();
 			nsmaxGuardSidebarScroll();

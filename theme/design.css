@@ -4627,7 +4627,8 @@ html[data-nsmax-theme] .board h1 + .rank-row {
   border-top: 0 !important;
 }
 html[data-nsmax-theme] .board .rank-row > div:first-child {
-  color: var(--text-disabled) !important;
+  /* 名次数字：sb.sb 用 --text-disabled，白底上对比度只有 3.1:1（12px 小字看不清），改用次级文字色 */
+  color: var(--text-subtle) !important;
   font-family: var(--font-mono) !important;
   font-size: 12px !important;
   font-weight: 400 !important;
@@ -8970,14 +8971,15 @@ html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-floor:is(#nsmax-lv, 
   font-family: var(--font-mono) !important;
   font-size: 12px !important;
 }
-/* 未读：sb.sb .notification-unread——危险色浅底、11px、小胶囊 */
+/* 未读：sb.sb .notification-unread——危险色浅底、11px、小胶囊。文字色用 danger-soft 的配套深色
+   （sb.sb 用的是 --danger，浅底上只有 3.8:1，11px 小字看不清） */
 html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-unread:is(#nsmax-lv, *) {
   flex: none !important;
   align-self: center !important;
   padding: 1px 6px !important;
   border-radius: var(--r-pill) !important;
   background: var(--danger-soft) !important;
-  color: var(--danger) !important;
+  color: var(--danger-soft-text) !important;
   font-size: 11px !important;
   line-height: 1.6 !important;
 }
@@ -13179,5 +13181,274 @@ html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount > span:is(#nsmax-lv, 
   html[data-nsmax-theme] #nsk-body-left button.nspp-action[aria-busy="true"]:is(#nsmax-lv, *)::before,
   html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount > span:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
     animation: none !important;
+  }
+}
+
+/* ---------- 65. 2026-10-21 第十九批：出错页（404 / 502 / 503 / 504）照 sb.sb 的分栏卡片 ----------
+   sb.sb 的 404：左边黄底「站名 + 插画 + 72px 状态码」，右边标题（26px）/ 说明（15px/1.8）/ 两个按钮 /
+   「搜一下」搜索框 / 「也可以去」链接。尺寸照抄：卡片 980px、1:1、--r 圆角、1px 细线；主栏 44px 40px；
+   搜索与链接之间用 1px 细线分开。≤800px 时竖着排：主栏在上、黄底块在下（和黄底登录页同一套规则）。 */
+html[data-nsmax-theme][data-nsmax-page="error"] body {
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+}
+html[data-nsmax-theme] .nsmax-error-page:is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  padding: 0 16px !important;
+}
+html[data-nsmax-theme] .nsmax-error-split:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 980px !important;
+  margin: 28px auto 40px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+}
+html[data-nsmax-theme] .nsmax-error-hero:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 24px !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  padding: 36px 40px !important;
+  background: var(--mark) !important;
+  color: var(--mark-text) !important;
+}
+html[data-nsmax-theme] .nsmax-error-name:is(#nsmax-lv, *) {
+  font-family: var(--font-sans) !important;
+  font-size: 36px !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] .nsmax-error-art:is(#nsmax-lv, *) {
+  display: block !important;
+  width: 120px !important;
+  height: 120px !important;
+  margin: auto !important;
+  border-radius: calc(120px * 14 / 64 * var(--r-scale)) !important;
+  background: var(--nsmax-logo-icon) center / 100% 100% no-repeat !important;
+}
+html[data-nsmax-theme] .nsmax-error-code:is(#nsmax-lv, *) {
+  margin: 0 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 72px !important;
+  font-weight: 800 !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+  letter-spacing: .04em !important;
+}
+html[data-nsmax-theme] .nsmax-error-main:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  padding: 44px 40px !important;
+}
+html[data-nsmax-theme] .nsmax-error-title:is(#nsmax-lv, *) {
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+}
+html[data-nsmax-theme] .nsmax-error-message:is(#nsmax-lv, *) {
+  margin: 12px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+}
+html[data-nsmax-theme] .nsmax-error-actions:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  margin-top: 26px !important;
+}
+html[data-nsmax-theme] :is(.nsmax-error-primary, .nsmax-error-secondary):is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 18px !important;
+  border-radius: var(--r-pill) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-error-primary:is(#nsmax-lv, *) {
+  border: 1px solid var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-error-primary:is(#nsmax-lv, *):hover {
+  background: var(--action-hover) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-error-secondary:is(#nsmax-lv, *) {
+  border: 1px solid var(--line-strong) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-error-secondary:is(#nsmax-lv, *):hover {
+  border-color: var(--text-subtle) !important;
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-error-label:is(#nsmax-lv, *) {
+  display: block !important;
+  margin: 0 0 8px !important;
+  color: var(--text-subtle) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] .nsmax-error-search:is(#nsmax-lv, *) {
+  margin-top: 32px !important;
+  padding-top: 24px !important;
+  border-top: 1px solid var(--line) !important;
+}
+html[data-nsmax-theme] .nsmax-error-form:is(#nsmax-lv, *) {
+  display: flex !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-error-input:is(#nsmax-lv, *) {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .nsmax-error-input:is(#nsmax-lv, *):focus {
+  outline: none !important;
+  border-color: var(--field-focus) !important;
+  box-shadow: 0 0 0 3px var(--field-ring) !important;
+}
+html[data-nsmax-theme] .nsmax-error-submit:is(#nsmax-lv, *) {
+  flex: none !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 18px !important;
+  border: 1px solid var(--action-border) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-error-submit:is(#nsmax-lv, *):hover {
+  background: var(--action-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-error-places:is(#nsmax-lv, *) {
+  margin-top: 24px !important;
+}
+html[data-nsmax-theme] .nsmax-error-search + .nsmax-error-places {
+  margin-top: 20px !important;
+}
+html[data-nsmax-theme] .nsmax-error-places ul:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] .nsmax-error-places li:is(#nsmax-lv, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-error-places li:is(#nsmax-lv, *)::before {
+  content: none !important;
+}
+html[data-nsmax-theme] .nsmax-error-places a:is(#nsmax-lv, *) {
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nsmax-error-places a:is(#nsmax-lv, *):hover {
+  color: var(--text) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--link-line) !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+}
+@media (max-width: 800px) {
+  html[data-nsmax-theme] .nsmax-error-split:is(#nsmax-lv, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: var(--gap) !important;
+    margin-top: 8px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  html[data-nsmax-theme] .nsmax-error-main:is(#nsmax-lv, *) {
+    order: 1 !important;
+    padding: 28px 20px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r) !important;
+    background: var(--panel) !important;
+  }
+  html[data-nsmax-theme] .nsmax-error-hero:is(#nsmax-lv, *) {
+    order: 2 !important;
+    padding: 28px 24px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r) !important;
+  }
+  html[data-nsmax-theme] .nsmax-error-name:is(#nsmax-lv, *) {
+    font-size: 28px !important;
+  }
+  html[data-nsmax-theme] .nsmax-error-art:is(#nsmax-lv, *) {
+    display: none !important;
+  }
+  html[data-nsmax-theme] .nsmax-error-code:is(#nsmax-lv, *) {
+    font-size: 56px !important;
+  }
+  html[data-nsmax-theme] .nsmax-error-title:is(#nsmax-lv, *) {
+    font-size: 22px !important;
+  }
+}
+
+/* ---------- 66. 2026-10-21 第十九批：触屏上的小控件（细节优化） ----------
+   全站审计（14 个页面 × 桌面/手机 × 浅色/深色）只发现两类「点起来费劲」的小控件：
+   登录页的「显示」按钮 26px 高、设置页的复选框 15px。指针是粗的（手机、平板）时把它们放大，
+   鼠标（fine）保持 sb.sb 原尺寸不变。 */
+@media (pointer: coarse) {
+  html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button.nsmax-password-toggle[type="button"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    height: 32px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme] :is(#user-setting-panel, #nsk-frame, .nsmax-picker-panel) input[type="checkbox"]:is(#nsmax-lv, *) {
+    width: 18px !important;
+    height: 18px !important;
   }
 }
