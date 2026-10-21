@@ -12364,21 +12364,21 @@ html[data-nsmax-theme] .nsmax-ruling-dialog .nsmax-ruling-empty:is(#nsmax-lv, *)
     flex: 1 1 100% !important;
   }
 }
-/* 我的关注 / 粉丝：站点拿到数据之前，#fans-mount 里是一张转圈图和英文 Loading（站点数据到了整块换掉）。照 sb.sb 换成加载占位：
-   和列表同宽的一张空卡片，中间一行弱化字「正在加载…」，占位高度接近列表，
-   数据到了列表接上来，页脚不会先冲上来再被推下去 */
+/* 我的关注 / 粉丝：站点拿到数据之前，#fans-mount 里是一张转圈图和英文 Loading（站点数据到了整块换掉）。
+   照列表骨架放 4 行占位（头像 + 两行灰条，见 nsmaxFansSkeleton），数据到了列表接上来；
+   脚本还没跑的那一下则是「小转圈 + 正在加载…」，页脚不会先冲上来再被推下去 */
 html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0 !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 14px !important;
   box-sizing: border-box !important;
   width: calc(100% - 32px) !important;
   max-width: calc(var(--container) - 32px) !important;
-  min-height: 60vh !important;
+  min-height: min(60vh, 440px) !important;
   margin: 20px auto 32px !important;
-  padding: 0 !important;
+  padding: 20px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r) !important;
   background: var(--panel) !important;
@@ -12388,12 +12388,44 @@ html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount > .loading-img:is(#ns
   display: none !important;
 }
 html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: auto 0 !important;
   font-size: 0 !important;
+  text-align: center !important;
 }
 html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount > span:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
   content: "正在加载…" !important;
   color: var(--text-subtle) !important;
   font-size: 13.5px !important;
+}
+/* 骨架行：48px 头像块 + 两行灰条，和成员卡片同宽同高（数据到了不会跳） */
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-row:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-avatar:is(#nsmax-lv, *) {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: var(--r-sm) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-body:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-body > .nsmax-skeleton-line:is(#nsmax-lv, *) {
+  height: 12px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-short:is(#nsmax-lv, *) {
+  width: 38% !important;
 }
 /* 成员卡片里的按钮（取关 / 关注、私信、转账）：以前竖着叠在右边，把卡片撑到 130px，统计那行也被挤得折行。
    改成排在名字下面一行（和名字左对齐），28px 细线小胶囊；资料那几行占满卡片宽度 */
@@ -13058,4 +13090,94 @@ html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button.nsma
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button.nsmax-password-toggle[type="button"]:is(#nsmax-lv, *):is(#nsmax-b, *):focus-visible {
   outline: 2px solid var(--field-focus) !important;
   outline-offset: 1px !important;
+}
+
+/* ---------- 64. 2026-10-21 第十八批：加载状态统一 ----------
+   以前加载中是 NodeSeek++ 的「白色扫光」：一条白色高光在文字和骨架条上反复扫过（任何 [aria-busy=true] 和 .nspp-sweep-shine），
+   浅色面板上像一块反光在动，看着很脏。现在
+   1) 全局去掉那层白色扫光（骨架条自己的扫带另算）；
+   2) 文字类加载中统一成「小转圈 + 弱化文字」（悬停预览的正在加载帖子…、自动翻页的正在加载…、关注页第一帧）；
+   3) 骨架条（今日热门、帖子预览）用浅灰底 + 一条更浅的亮带慢慢扫（1.4 秒），亮带只落在骨架里，不套在文字上；
+   4) 系统开了「减少动态效果」时一律静止。 */
+html[data-nsmax-theme] :is([aria-busy="true"], .nspp-sweep-shine):is(#nsmax-lv, *) {
+  background-image: none !important;
+  animation: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+html[data-nsmax-theme] .nsmax-spinner:is(#nsmax-lv, *) {
+  display: inline-block !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+  width: 14px !important;
+  height: 14px !important;
+  border: 2px solid var(--line-strong) !important;
+  border-top-color: var(--text-muted) !important;
+  border-radius: 50% !important;
+  animation: nsmax-spin 0.7s linear infinite !important;
+}
+html[data-nsmax-theme] .nsmax-loading:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--text-subtle) !important;
+}
+@keyframes nsmax-spin {
+  to { transform: rotate(360deg); }
+}
+/* 骨架条：浅灰底上一条更浅的亮带缓慢扫过（只动背景位置，不动透明度，不会有闪烁） */
+html[data-nsmax-theme] {
+  --nsmax-skeleton-bg: var(--line);
+  --nsmax-skeleton-sheen: #ffffff;
+}
+html[data-nsmax-theme][data-nsmax-dark] {
+  --nsmax-skeleton-bg: #262834;
+  --nsmax-skeleton-sheen: rgb(255 255 255 / 0.07);
+}
+html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-skeleton .nsmax-hot-line:is(#nsmax-lv, *),
+html[data-nsmax-theme] .nsmax-skeleton-line:is(#nsmax-lv, *) {
+  display: block !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+  background-color: var(--nsmax-skeleton-bg) !important;
+  background-image: linear-gradient(90deg, transparent 0%, var(--nsmax-skeleton-sheen) 50%, transparent 100%) !important;
+  background-repeat: no-repeat !important;
+  background-size: 60% 100% !important;
+  animation: nsmax-skeleton-sweep 1.4s ease-in-out infinite !important;
+}
+@keyframes nsmax-skeleton-sweep {
+  0% { background-position: -80% 0; }
+  100% { background-position: 180% 0; }
+}
+/* 自动翻页按钮：加载中带一个小转圈 */
+html[data-nsmax-theme] #nsk-body-left button.nspp-action[aria-busy="true"]:is(#nsmax-lv, *)::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin-right: 8px !important;
+  vertical-align: -2px !important;
+  border: 2px solid var(--line-strong) !important;
+  border-top-color: var(--text-muted) !important;
+  border-radius: 50% !important;
+  animation: nsmax-spin 0.7s linear infinite !important;
+}
+/* 关注 / 粉丝页第一帧：站点那张转圈 gif + 英文 Loading 换成小转圈 + 「正在加载…」 */
+html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount > span:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "" !important;
+  display: block !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 auto 10px !important;
+  border: 2px solid var(--line-strong) !important;
+  border-top-color: var(--text-muted) !important;
+  border-radius: 50% !important;
+  animation: nsmax-spin 0.7s linear infinite !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme] :is(.nsmax-spinner, .nsmax-skeleton-line):is(#nsmax-lv, *),
+  html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-skeleton .nsmax-hot-line:is(#nsmax-lv, *),
+  html[data-nsmax-theme] #nsk-body-left button.nspp-action[aria-busy="true"]:is(#nsmax-lv, *)::before,
+  html[data-nsmax-theme][data-nsmax-page="fans"] #fans-mount > span:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+    animation: none !important;
+  }
 }

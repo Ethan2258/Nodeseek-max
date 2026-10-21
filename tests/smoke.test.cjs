@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.20");
+	assert.equal(packageJson.version, "1.8.21");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4271,7 +4271,7 @@ test("第九批（2026-10-18）：脚本里其他弹窗、面板里的 header / 
 	} finally { await context.close(); }
 });
 
-test("第九批（2026-10-18）：我的关注 / 粉丝——站点数据到之前是「正在加载…」占位；站点画出卡片的那一帧就已经是 sb.sb 成员卡片（不先闪原版再跳）；按钮排在名字下面一行", async () => {
+test("第九批（2026-10-18）：我的关注 / 粉丝——站点数据到之前是骨架占位（2026-10-21 改成列表骨架，不再是转圈 gif）；站点画出卡片的那一帧就已经是 sb.sb 成员卡片（不先闪原版再跳）；按钮排在名字下面一行", async () => {
 	for (const [width, mobile] of [[1440, false], [390, true]]) {
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/fans?type=follow", { html: fansPage({ delayed: 900, mobile }), viewport: { width, height: 900 } });
 		try {
@@ -4279,11 +4279,14 @@ test("第九批（2026-10-18）：我的关注 / 粉丝——站点数据到之�
 			await wait(page, 300);
 			const loading = await page.evaluate(() => {
 				const mount = document.querySelector("#fans-mount");
-				return mount ? { text: getComputedStyle(mount.querySelector("span"), "::after").content, gif: getComputedStyle(mount.querySelector(".loading-img")).display, height: Math.round(mount.getBoundingClientRect().height) } : null;
+				const skeleton = mount?.querySelector(".nsmax-fans-skeleton");
+				const line = skeleton?.querySelector(".nsmax-skeleton-line");
+				return mount ? { rows: skeleton ? skeleton.querySelectorAll(".nsmax-fans-skeleton-row").length : 0, gif: mount.querySelector(".loading-img") ? getComputedStyle(mount.querySelector(".loading-img")).display : "removed", height: Math.round(mount.getBoundingClientRect().height), animation: line ? getComputedStyle(line).animationName : "" } : null;
 			});
 			assert.ok(loading, "数据到之前还在加载占位");
-			assert.equal(loading.text, '"正在加载…"');
-			assert.equal(loading.gif, "none");
+			assert.equal(loading.rows, 6, "骨架行数");
+			assert.equal(loading.gif, "removed", "站点的转圈 gif 不再出现");
+			assert.equal(loading.animation, "nsmax-skeleton-sweep", "骨架条自己在扫");
 			assert.ok(loading.height >= 300, JSON.stringify(loading));
 			await page.waitForFunction(() => Array.isArray(window.__fansFirstFrame));
 			assert.deepEqual(await page.evaluate(() => window.__fansFirstFrame), [true, true, true, true, true], "站点画出卡片的那一帧之前就改好了");
@@ -5491,4 +5494,47 @@ test("第十七批（2026-10-21）：登录 / 注册页密码框右侧的「显�
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
+});
+
+test("第二十批（2026-10-21）：加载状态不再是一条白色扫光——悬停预览是「小转圈 + 弱化文字」，骨架条自己扫，aria-busy 的高光关掉", async () => {
+	const head = '<!doctype html><html><head><title>NodeSeek</title></head><body><section id="nsk-frame"><div id="nsk-body-left"><div class="nsk-post"><article class="post-content"><p>正文来了。</p></article>';
+	const init = `(() => {
+		const real = window.fetch.bind(window);
+		window.fetch = async (input, options) => {
+			const raw = input && input.url ? input.url : String(input);
+			let path = raw; try { path = new URL(raw, location.href).pathname; } catch {}
+			if (path !== "/post-1000-1") return real(input, options);
+			await new Promise((resolve) => setTimeout(resolve, 700));
+			return new Response(${JSON.stringify(head)}, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
+		};
+	})();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.locator(".post-list-item .post-title a").first().hover();
+		await page.waitForSelector("dialog.nspp-post-preview .nsmax-spinner", { timeout: 5e3 });
+		const loading = await page.evaluate(() => {
+			const status = document.querySelector("dialog.nspp-post-preview .nsmax-loading");
+			const spinner = status.querySelector(".nsmax-spinner");
+			const style = getComputedStyle(status);
+			const line = document.createElement("span");
+			line.className = "nsmax-skeleton-line";
+			document.body.append(line);
+			const lineStyle = getComputedStyle(line);
+			// 先取值再移除：getComputedStyle 是活的，元素一旦离开文档就读不到动画了
+			const skeleton = lineStyle.animationName;
+			const skeletonBg = lineStyle.backgroundColor;
+			line.remove();
+			return { busy: status.getAttribute("aria-busy"), sweep: style.animationName, background: style.backgroundImage, spin: getComputedStyle(spinner).animationName, skeleton, skeletonBg };
+		});
+		assert.equal(loading.busy, "true");
+		assert.equal(loading.sweep, "none", "加载中的文字上不再有白色扫光");
+		assert.equal(loading.background, "none");
+		assert.equal(loading.spin, "nsmax-spin", "加载中是一个小转圈");
+		assert.equal(loading.skeleton, "nsmax-skeleton-sweep", "骨架条自己在扫");
+		assert.notEqual(loading.skeletonBg, "rgba(0, 0, 0, 0)");
+		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
+		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nsmax-spinner")), false, "加载完转圈收掉");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });

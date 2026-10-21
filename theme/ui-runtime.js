@@ -3175,8 +3175,34 @@
 		for (const h2 of right.querySelectorAll(":scope > div > h2, :scope > form > h2")) nsmaxFlag(h2, "data-nsmax-dup-title", !!current && h2.textContent.trim() === current);
 		for (const row of right.querySelectorAll("form > div")) nsmaxFlag(row, "data-nsmax-setting-actions", row.children.length > 0 && Array.from(row.children).every((child) => child.matches("button, .btn")));
 	}
+	// 关注 / 粉丝页第一帧：数据是站点前端画的（先是一张转圈 gif + 英文 Loading，整块换掉）。
+	// 照列表骨架放 4 行占位（头像圆 + 两行灰条），比一张大空卡片中间一个小转圈好看，数据到了自然消失
+	function nsmaxFansSkeleton() {
+		const mount = document.querySelector("#nsk-frame #fans-mount");
+		if (!mount || mount.querySelector(":scope > .nsmax-fans-skeleton")) return;
+		if (!mount.querySelector(":scope > .loading-img, :scope > span")) return;
+		const list = document.createElement("div");
+		list.className = "nsmax-fans-skeleton";
+		for (let i = 0; i < 6; i++) {
+			const row = document.createElement("div");
+			row.className = "nsmax-fans-skeleton-row";
+			const avatar = document.createElement("span");
+			avatar.className = "nsmax-skeleton-line nsmax-fans-skeleton-avatar";
+			const body = document.createElement("span");
+			body.className = "nsmax-fans-skeleton-body";
+			const line = document.createElement("span");
+			line.className = "nsmax-skeleton-line";
+			const short = document.createElement("span");
+			short.className = "nsmax-skeleton-line nsmax-fans-skeleton-short";
+			body.append(line, short);
+			row.append(avatar, body);
+			list.append(row);
+		}
+		mount.replaceChildren(list);
+	}
 	function nsmaxPrepareFans() {
 		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
+		nsmaxFansSkeleton();
 		// 「取关」：站点给这个按钮写了行内的 background-color: gray !important（压过所有样式表），灰底灰字很怪；
 		// 去掉这条行内样式，按 sb.sb 的细线按钮排（悬停时浅红，提示是取消关注）
 		for (const btn of document.querySelectorAll(":is(.nsmax-member-actions, .usercard-button-group) > .btn")) {
