@@ -88,7 +88,9 @@ themeSource = themeSource.replace("${nsmax_design_default}\n", "");
 themeSource = themeSource.replace(endMarker, "\n${nsmax_design_default}" + endMarker);
 // CSSOM selector optimization formerly ran during document-start. Compile it once at build time.
 const context = {};
-vm.runInNewContext(source.slice(source.indexOf("\tvar NSMAX_ACCENTS = {"), source.indexOf("\tvar modern_theme_compiled = ")) + themeSource, context);
+// 主题 CSS 变量现在叫 nsmax_theme_segments（分页面段），这里只需要它之前的那段脚本 + themeSource 来算出 legacy 主题
+const themeCssStart = source.indexOf("\tvar nsmax_theme_segments = ");
+vm.runInNewContext(source.slice(source.indexOf("\tvar NSMAX_ACCENTS = {"), themeCssStart < 0 ? source.length : themeCssStart) + themeSource, context);
 const legacy = context.modern_theme_default.replace(/\r\n?/g, "\n");
 const skinStart = legacy.indexOf("/* ==================== v1.7.0 全站重做");
 if (skinStart < 0) throw new Error("Real DOM skin marker missing");
@@ -237,9 +239,124 @@ ast.walkRules(rule => {
   if (rule.selector.includes(":has(")) leftoverHas.push(...rule.selectors.filter(selector => selector.includes(":has(")));
 });
 if (leftoverHas.length) throw new Error("主题里不能再有 :has()（会让 NodeSeek 的终端渲染卡死整页），请在 nsmaxTagStructure() 里打属性，或加进 hasRewrites：\n" + leftoverHas.join("\n"));
-source = source.replace(/\tvar modern_theme_compiled = .*;\n/, "");
-source = source.replace("\tvar hot_sidebar_default = `", "\tvar modern_theme_compiled = " + JSON.stringify(shipped) + ";\n\tvar hot_sidebar_default = `");
-source = source.replace("_css(modern_theme_default);", "_css(modern_theme_compiled, true);");
+// 按页面分块（2026-10-22）：整份主题 CSS 有 860KB+，但每个页面只用得到一部分。构建时把规则按「只在某个页面用得到」
+// 拆成有序段：[base 段, 页面专属段, base 段, ……]。运行时按当前页面把需要的段拼起来再注入，规则顺序和整份 CSS 一致
+// （层叠结果不变），别的页面的规则完全不参与解析：列表页 / 帖子页 / 通知页这类常用页面少解析 25%–50% 的 CSS。
+// 判定保守：选择器里带 [data-nsmax-page=X]（页面明确标记）或括号外出现某个页面专属的类名前缀才算专属；
+// 一条规则里只要有一个选择器拿不准、或者分属两个页面，整条留在 base（宁可多注入，不能少样式）。
+const pageMarkers = [
+	["post", /\.nsk-post\b|ul\.comments\b|\.content-item\b|\.nsmax-author-col\b|\.nsk-content-meta-info\b|\.nsmax-floor\b|\.nsmax-op-|\.nsmax-post-stats\b|\.nsmax-title-stats\b|\.comment-container\b|\.reply-panel\b|\.nsmax-nested\b|\.nsmax-reply\b|\.topic-warning\b|\.post-table\b/],
+	["editor", /\.md-editor\b|\.nsmax-editor\b|\.nsmax-compose\b|\.CodeMirror\b/],
+	["notification", /\.nspp-messages\b|\.nsmax-notice\b|\.nsmax-message\b|\.nspp-message\b|\.dm-/],
+	["setting", /#user-setting-panel\b|\.nsmax-setting\b/],
+	["auth", /\.nsmax-auth\b|\[data-nsmax-auth|\.nsmax-password-toggle\b/],
+	["fans", /\.nsmax-member\b|\.user-card-wrapper\b|\.fans-switcher\b|\.nsmax-fans\b/],
+	["board", /\.nsmax-board\b|\.rank-row\b|\.top-rank\b|\.nsmax-checkin\b/],
+	["lucky", /\.sample-panel\b|\.nsmax-lucky\b|\.lucky-|\.nsmax-draw\b/],
+	["space", /\.discussion-wrapper\b|\.nsmax-space\b|\.head-container\b|\.profile-head\b/],
+	["search", /\.nsmax-search\b/],
+	["credit", /\.credit-|\.nsmax-credit\b|\.points-/]
+];
+const anchoredPatternOf = (pattern) => new RegExp("^(?:" + pattern.source + ")");
+const topLevelMatch = (selector, pattern) => {
+	const anchoredPattern = anchoredPatternOf(pattern);
+	let depth = 0;
+	for (let index = 0; index < selector.length; index++) {
+		const char = selector[index];
+		if (char === "(") depth++;
+		else if (char === ")") depth = Math.max(0, depth - 1);
+		else if (depth === 0 && anchoredPattern.test(selector.slice(index))) return true;
+	}
+	return false;
+};
+const pageScopeOf = (selector) => {
+	const scopes = new Set();
+	let depth = 0;
+	for (let index = 0; index < selector.length; index++) {
+		const char = selector[index];
+		if (char === "(") depth++;
+		else if (char === ")") depth = Math.max(0, depth - 1);
+		else if (depth === 0) {
+			const match = selector.slice(index).match(/^\[data-nsmax-page=(?:"([a-z]+)"|([a-z]+))\]/);
+			if (match) scopes.add(match[1] || match[2]);
+		}
+	}
+	return scopes;
+};
+const chunkOfRule = (rule) => {
+	const chunks = new Set();
+	for (const selector of rule.selectors) {
+		// 弹窗（dialog）和全局悬浮层在哪个页面都可能打开：一键抽奖在发帖页、管理记录在个人空间和各处……，
+		// 只要选择器里提到 dialog / 这些全局弹层，整条规则留在 base，不跟着所在页面的段落走
+		if (/dialog|nsmax-person-pop|nsmax-shortcuts|nsmax-toast/.test(selector)) return "base";
+		const scopes = pageScopeOf(selector);
+		if (scopes.size > 1) return "base";
+		if (scopes.size === 1) { chunks.add([...scopes][0]); continue; }
+		const hits = new Set();
+		for (const [name, pattern] of pageMarkers) if (topLevelMatch(selector, pattern)) hits.add(name);
+		if (hits.size !== 1) return "base";
+		chunks.add([...hits][0]);
+	}
+	return chunks.size === 1 ? [...chunks][0] : "base";
+};
+const segments = [];
+const pushSegment = (chunk, text) => {
+	const last = segments[segments.length - 1];
+	if (last && last[0] === chunk) last[1] += text;
+	else segments.push([chunk, text]);
+};
+const segmentRoot = postcss.parse(shipped);
+for (const node of segmentRoot.nodes) {
+	if (node.type === "rule") { pushSegment(chunkOfRule(node), node.toString()); continue; }
+	if (node.type !== "atrule") continue;
+	// @keyframes / @font-face 之类的整块放 base（各页面的动画都可能用到它）
+	if (!["media", "supports"].includes(node.name)) { pushSegment("base", node.toString()); continue; }
+	let run = null;
+	let children = 0;
+	const flush = () => {
+		if (!run) return;
+		pushSegment(run.chunk, `@${node.name} ${node.params}{${run.css}}`);
+		run = null;
+	};
+	for (const child of node.nodes || []) {
+		children++;
+		if (child.type === "rule") {
+			const chunk = chunkOfRule(child);
+			if (run && run.chunk === chunk) run.css += child.toString();
+			else { flush(); run = { chunk, css: child.toString() }; }
+		} else {
+			flush();
+			pushSegment("base", `@${node.name} ${node.params}{${child.toString()}}`);
+		}
+	}
+	flush();
+	if (!children) pushSegment("base", node.toString());
+}
+// 校验：拆出来的段按顺序拼起来，规则（连同所在 @media 外壳）、顺序、选择器、声明必须和整份 CSS 完全一致
+const flattenTheme = (css) => {
+	const list = [];
+	const walk = (node, context) => {
+		for (const child of node.nodes || []) {
+			if (child.type === "rule") list.push(JSON.stringify([context, child.selector, child.nodes.map((decl) => decl.prop + ":" + decl.value + (decl.important ? "!" : "")).join(";")]));
+			else if (child.type === "atrule") {
+				if (/keyframes/.test(child.name)) list.push(JSON.stringify([context, "@" + child.name + " " + child.params, child.toString().length]));
+				else if (child.nodes) walk(child, context.concat("@" + child.name + " " + child.params));
+				else list.push(JSON.stringify([context, "@" + child.name + " " + child.params, ""]));
+			}
+		}
+	};
+	walk(postcss.parse(css), []);
+	return list;
+};
+const themeBefore = flattenTheme(shipped);
+const themeAfter = flattenTheme(segments.map(([, css]) => css).join(""));
+if (themeBefore.length !== themeAfter.length) throw new Error(`主题分块后规则数变了（${themeBefore.length} → ${themeAfter.length}）`);
+for (let index = 0; index < themeBefore.length; index++) {
+	if (themeBefore[index] !== themeAfter[index]) throw new Error(`主题分块后第 ${index} 条规则对不上：\n${themeBefore[index]}\n${themeAfter[index]}`);
+}
+source = source.replace(/\tvar (?:modern_theme_compiled|nsmax_theme_segments) = .*;\n/, "");
+source = source.replace("\tvar hot_sidebar_default = `", "\tvar nsmax_theme_segments = " + JSON.stringify(segments) + ";\n\tvar hot_sidebar_default = `");
+source = source.replace("_css(modern_theme_default);", "_css(nsmaxThemeCss(), true);");
 if (process.argv.includes("--check")) {
   if (source !== original || themeSource !== originalTheme) throw new Error("SB suite or adapter is stale; run npm run sb");
 } else {

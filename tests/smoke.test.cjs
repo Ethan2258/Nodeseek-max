@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.25");
+	assert.equal(packageJson.version, "1.8.26");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -1974,8 +1974,10 @@ test("v1.7.27 发帖按钮全宽胶囊与文字完整性、顶栏精华跟随分
 
 test("v1.8.1 防卡死：主题里没有 :has()，个人空间静止时不再反复改 DOM", async () => {
 	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8");
-	const line = source.slice(source.indexOf("var modern_theme_compiled = "), source.indexOf("\n", source.indexOf("var modern_theme_compiled = ")));
-	assert.equal(line.includes(":has("), false, "主题 CSS 里的 :has() 会让帖子里的终端渲染卡死整页");
+	// 主题 CSS 现在是按页面分块（nsmax_theme_segments），拼起来检查
+	const themeLine = source.split("\n").find((line) => line.startsWith("\tvar nsmax_theme_segments = "));
+	const themeCss = JSON.parse(themeLine.slice("\tvar nsmax_theme_segments = ".length, -1)).map(([, css]) => css).join("");
+	assert.equal(themeCss.includes(":has("), false, "主题 CSS 里的 :has() 会让帖子里的终端渲染卡死整页");
 	for (const [render, hash] of [[spaceTopicsPage, "#/discussions"], [spaceCommentsPage, "#/comments"]]) {
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10" + hash, { html: render() });
 		try {
@@ -3536,8 +3538,8 @@ test("侧栏一起出现（2026-10-18）：脚本在页面解析前运行时，�
 test("页面更顺滑（2026-10-18）：主题里没有最右边是多参数 :is() 的选择器（每次整页重算样式都要拿每个元素试一遍），选中文字颜色只挂在 html 上", async () => {
 	// Windows 上 git（core.autocrlf）检出的文件是 CRLF
 	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8").replace(/\r\n?/g, "\n");
-	const line = source.split("\n").find((l) => l.startsWith("\tvar modern_theme_compiled = "));
-	const css = JSON.parse(line.slice("\tvar modern_theme_compiled = ".length, -1));
+	const themeLine = source.split("\n").find((line) => line.startsWith("\tvar nsmax_theme_segments = "));
+	const css = JSON.parse(themeLine.slice("\tvar nsmax_theme_segments = ".length, -1)).map(([, part]) => part).join("");
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 } });
 	try {
 		await page.waitForSelector(".nsmax-sb-account");
@@ -5372,7 +5374,8 @@ test("元信息（2026-10-20）：@include 都是能解析出站点的写法（�
 
 test("主题 CSS 短名化（2026-10-21）：特异度垫片不再用长名字、样式仍是合法 CSS", () => {
 	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8");
-	const line = source.slice(source.indexOf("var modern_theme_compiled = "), source.indexOf("\n", source.indexOf("var modern_theme_compiled = ")));
+	const themeLine = source.split("\n").find((line) => line.startsWith("\tvar nsmax_theme_segments = "));
+	const line = JSON.parse(themeLine.slice("\tvar nsmax_theme_segments = ".length, -1)).map(([, css]) => css).join("");
 	assert.equal(/#nsmax-(?:u|lv|b|c|d|s|a|e)\b/.test(line), false, "垫片 ID 要短名化成 #x，不然每条选择器白占几个字节");
 	assert.equal(/\.nsmax-s\b/.test(line), false, "垫片类要短名化成 .x");
 	assert.equal(line.includes("[data-nsmax-palette=claude]"), false, "palette 门控恒真，换成 :root");
@@ -5686,4 +5689,48 @@ test("第二十四批（2026-10-21）：悬停预览的标题太长时最多两�
 		assert.equal(state.title, state.text, "全文在 title 属性里");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
+});
+
+test("v1.8.26 提速：主题 CSS 按页面分块注入——每页只解析当前页面需要的段，样式和整份注入逐元素一致", async () => {
+	const snapshot = async (html, path, full) => {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com" + path + (full ? (path.includes("?") ? "&" : "?") + "nsmax-all-css=1" : ""), { html, viewport: { width: 1280, height: 900 } });
+		await page.waitForSelector("html[data-nsmax-theme]");
+		await wait(page, 1200);
+		const state = await page.evaluate(() => {
+			const tags = [...document.querySelectorAll("style")].filter((tag) => (tag.textContent || "").includes("data-nsmax-theme"));
+			const css = tags.map((tag) => tag.textContent).join("");
+			const label = (el) => `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.classList.length ? "." + [...el.classList].slice(0, 3).join(".") : ""}`;
+			// 悬浮工具条（#nspp-tools）里的签到按钮等是异步状态，两次打开的时机可能不同，不比它
+			const styles = [...document.body.querySelectorAll("*")].filter((el) => !el.closest("#nspp-tools")).map((el) => {
+				const s = getComputedStyle(el);
+				return [label(el), s.display, s.position, s.color, s.backgroundColor, s.borderTopWidth, s.borderTopColor, s.borderTopStyle, s.borderRadius, s.padding, s.margin, s.fontSize, s.fontWeight, s.lineHeight, s.height, s.width, s.overflow, s.boxShadow, s.textDecorationLine, s.gap, s.flexDirection, s.alignItems, s.justifyContent, s.gridTemplateColumns, s.textAlign].join("|");
+			});
+			return { bytes: css.length, styles };
+		});
+		await context.close();
+		return { ...state, errors };
+	};
+	const pages = [
+		["list", "/", listPage()],
+		["post", "/post-1000-1", postPage()],
+		["notification", "/notification", notificationPage()],
+		["setting", "/setting", settingPage()],
+		["space", "/space/10", nativeSpacePage()],
+		["auth", "/signIn.html", signInPage()],
+		["board", "/board", boardRealPage()],
+		["fans", "/fans?type=follow", fansPage()],
+		["lucky", "/lucky", luckyPage()],
+		["search", "/search?q=vps", searchPage()],
+		["credit", "/credit", creditPage()]
+	];
+	for (const [name, path, html] of pages) {
+		const chunked = await snapshot(html, path, false);
+		const full = await snapshot(html, path, true);
+		assert.equal(chunked.errors.length, 0, `${name}: ${chunked.errors[0] || ""}`);
+		assert.ok(chunked.bytes < full.bytes * 0.8, `${name}: 分块后注入 ${Math.round(chunked.bytes / 1024)}KB，整份 ${Math.round(full.bytes / 1024)}KB，应该明显更少`);
+		assert.equal(chunked.styles.length, full.styles.length, `${name}: 元素数量一致`);
+		let diff = -1;
+		for (let index = 0; index < full.styles.length; index++) if (chunked.styles[index] !== full.styles[index]) { diff = index; break; }
+		assert.equal(diff, -1, `${name}: 第 ${diff} 个元素和整份注入不一致：\n分块 ${chunked.styles[diff]}\n整份 ${full.styles[diff]}`);
+	}
 });

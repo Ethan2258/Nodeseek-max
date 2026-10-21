@@ -8,6 +8,35 @@
 	function nsmaxPageKind(path = location.pathname) {
 		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : /^\/lucky(?:\/|$)/.test(path) ? "lucky" : "list";
 	}
+	// 主题 CSS 按页面分块注入（2026-10-22）：构建时把编译后的样式拆成有序段（base + 各页面专属段，段序 = 原规则序），
+	// 这里按当前页面只拼需要的段：别的页面的规则完全不参与解析，列表页 / 帖子页 / 通知页少解析 25%–50% 的 CSS，
+	// 层叠结果和整份注入完全一样（段顺序不变，规则一条不少）。页面判定之外的兜底：认不出的页面只注入 base。
+	// 自测 / 排查时在页面里设 window.__NSMAX_ALL_CSS = true（或 localStorage nsmax:all-css=1）注入全部段。
+	function nsmaxThemeChunkKeys(kind = nsmaxPageKind()) {
+		const keys = new Set(["base", "error", kind]);
+		if (kind === "post" || kind === "new") keys.add("editor");
+		// 抽奖页里嵌了一块排行榜预览（.board .rank-row），这两块要一起给
+		if (kind === "lucky") keys.add("board");
+		if (kind === "list") {
+			if (location.pathname === "/search") keys.add("search");
+			if (/^\/credit(?:\/|$)/.test(location.pathname)) keys.add("credit");
+		}
+		try {
+			// 自测 / 排查：地址上带 ?nsmax-all-css（或在页面里设 window.__NSMAX_ALL_CSS）时注入全部段
+			if (unsafeWindow$1.__NSMAX_ALL_CSS || new URLSearchParams(location.search).has("nsmax-all-css") || localStorage.getItem("nsmax:all-css") === "1") for (const [name] of nsmax_theme_segments) keys.add(name);
+		} catch {}
+		return keys;
+	}
+	// 缓存挂在函数上：主题 CSS 在脚本一开始（applyModernThemeEarly）就要注入，那时运行时块里的 let / var 还没执行到，
+	// 用模块级变量会撞上 TDZ。函数声明整体提升，属性挂在函数上最稳。
+	function nsmaxThemeCss(kind) {
+		if (nsmaxThemeCss.cache) return nsmaxThemeCss.cache;
+		const keys = nsmaxThemeChunkKeys(kind);
+		let css = "";
+		for (const [name, text] of nsmax_theme_segments) if (keys.has(name)) css += text;
+		nsmaxThemeCss.cache = css;
+		return css;
+	}
 	function nsmaxSetAttr(el, name, value = "") {
 		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
 	}
@@ -3515,7 +3544,7 @@
 				if (!document.querySelector("style[data-nsmax-error-style]")) {
 					const style = document.createElement("style");
 					style.setAttribute("data-nsmax-error-style", "");
-					style.textContent = modern_theme_compiled;
+					style.textContent = nsmaxThemeCss("error");
 					(document.head || root).append(style);
 				}
 				const wrap = document.createElement("div");
