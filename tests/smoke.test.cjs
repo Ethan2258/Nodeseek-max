@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.24");
+	assert.equal(packageJson.version, "1.8.25");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4867,16 +4867,26 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 				const button = group.querySelector(".glass-search-btn");
 				const box = (el) => el.getBoundingClientRect();
 				const g = box(group), i = box(input), b = box(button), c = box(card);
+				const groupStyle = getComputedStyle(group), buttonStyle = getComputedStyle(button);
 				return {
 					tabIcons: [...card.querySelectorAll(".tab-btn svg")].filter((svg) => svg.getClientRects().length).length,
 					tabs: [...card.querySelectorAll(".tab-btn")].filter((btn) => btn.getClientRects().length).map((btn) => btn.textContent.trim()),
-					groupBorder: getComputedStyle(group).borderTopWidth,
+					groupBorder: groupStyle.borderTopWidth,
 					inputBorder: getComputedStyle(input).borderTopWidth,
 					buttonInside: b.left >= g.left && b.right <= g.right + 0.5 && b.top >= g.top && b.bottom <= g.bottom + 0.5,
 					inputInside: i.left >= g.left && i.right <= b.left + 1,
 					buttonIcon: !!button.querySelector("svg")?.getClientRects().length,
 					buttonText: getComputedStyle(button.querySelector("span")).display !== "none" ? button.textContent.trim() : "",
 					magnifier: getComputedStyle(group, "::before").content !== "none",
+					// 「搜索」是框里贴着右沿的一段：外框才有圆角（8px），按钮自己没有圆角、被框裁掉右边两个角；
+					// 以前按钮是独立的小胶囊（9999px），和外框的圆角对不上
+					groupRadius: groupStyle.borderRadius,
+					groupOverflow: groupStyle.overflow,
+					buttonRadius: buttonStyle.borderRadius,
+					buttonFlushRight: Math.abs(g.right - b.right) <= 1.5,
+					buttonFullHeight: Math.abs(g.height - b.height) <= 2.5,
+					buttonDivider: buttonStyle.borderLeftWidth,
+					buttonBackground: buttonStyle.backgroundColor,
 					card: [Math.round(c.left), Math.round(c.top), Math.round(c.width), Math.round(c.height)],
 					overflow: document.documentElement.scrollWidth - innerWidth
 				};
@@ -4890,6 +4900,15 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 			assert.equal(state.buttonIcon, false, "按钮里不再有放大镜");
 			assert.equal(state.buttonText, "搜索");
 			assert.equal(state.magnifier, true, "框里左边一个放大镜");
+			// 框和按钮的圆角是同一个：框 8px 圆角 + overflow:hidden，按钮自己没有圆角、贴着右沿，
+			// 右边两个角由框裁出来（以前按钮是 9999px 小胶囊，和框的圆角对不上）
+			assert.equal(state.groupRadius, "8px");
+			assert.equal(state.groupOverflow, "hidden");
+			assert.equal(state.buttonRadius, "0px");
+			assert.equal(state.buttonFlushRight, true, "「搜索」贴着框的右沿");
+			assert.equal(state.buttonFullHeight, true, "「搜索」和框一样高（右边两个角被裁成框的圆角）");
+			assert.equal(state.buttonDivider, "1px", "和输入之间一条细线");
+			assert.equal(state.buttonBackground, "rgba(0, 0, 0, 0)", "按钮是透明的，不再是独立实底胶囊");
 			if (width < 700) {
 				assert.deepEqual(state.card.slice(0, 3), [0, 0, width], "手机：贴着屏幕顶、宽度占满");
 				assert.ok(state.card[3] < 400, `手机：高度跟内容走（${state.card[3]}）`);

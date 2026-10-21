@@ -10882,6 +10882,8 @@ html[data-nsmax-theme] .search-overlay .glass-content:is(#nsmax-lv, *):is(#nsmax
   padding: 16px 18px 18px !important;
   background: transparent !important;
 }
+/* 搜索条就是一个框：左边放大镜 + 输入，右边「搜索」贴着框的右沿（左细线分隔、透明底、没有自己的圆角，
+   靠 overflow:hidden 裁掉右边两个角）——以前按钮是个独立小胶囊，和外框的圆角对不上（2026-10-21） */
 html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *) {
   order: 1 !important;
   box-sizing: border-box !important;
@@ -10890,7 +10892,8 @@ html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#n
   gap: 0 !important;
   height: 44px !important;
   margin: 0 !important;
-  padding: 0 5px 0 12px !important;
+  padding: 0 0 0 12px !important;
+  overflow: hidden !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-input) !important;
   background: var(--panel-alt) !important;
@@ -10934,21 +10937,26 @@ html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#ns
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  height: 32px !important;
+  align-self: stretch !important;
+  box-sizing: border-box !important;
+  height: auto !important;
   margin: 0 !important;
-  padding: 0 14px !important;
-  border: 1px solid var(--action-border) !important;
-  border-radius: var(--r-pill) !important;
-  background: var(--action) !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-left: 1px solid var(--line-soft) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
-  color: var(--action-text) !important;
+  color: var(--text-muted) !important;
   font-family: var(--font-sans) !important;
   font-size: 13.5px !important;
   font-weight: 500 !important;
+  line-height: 1 !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
-  background: var(--action-hover) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn > svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
