@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.26");
+	assert.equal(packageJson.version, "1.8.27");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5695,6 +5695,8 @@ test("v1.8.26 提速：主题 CSS 按页面分块注入——每页只解析当�
 	const snapshot = async (html, path, full) => {
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com" + path + (full ? (path.includes("?") ? "&" : "?") + "nsmax-all-css=1" : ""), { html, viewport: { width: 1280, height: 900 } });
 		await page.waitForSelector("html[data-nsmax-theme]");
+		// 浮层样式是首帧后按需注入的：先动一下鼠标，保证两边的浮层段都已经注入再比
+		await page.mouse.move(8, 8);
 		await wait(page, 1200);
 		const state = await page.evaluate(() => {
 			const tags = [...document.querySelectorAll("style")].filter((tag) => (tag.textContent || "").includes("data-nsmax-theme"));
@@ -5733,4 +5735,31 @@ test("v1.8.26 提速：主题 CSS 按页面分块注入——每页只解析当�
 		for (let index = 0; index < full.styles.length; index++) if (chunked.styles[index] !== full.styles[index]) { diff = index; break; }
 		assert.equal(diff, -1, `${name}: 第 ${diff} 个元素和整份注入不一致：\n分块 ${chunked.styles[diff]}\n整份 ${full.styles[diff]}`);
 	}
+});
+test("v1.8.27 提速：浮层样式（弹窗 / 用户卡 / 搜索面板 / toast）首帧不注入，交互时先补、首帧后空闲自动补上", async () => {
+	const readCss = (page) => page.evaluate(() => [...document.querySelectorAll("style")].filter((tag) => (tag.textContent || "").includes("data-nsmax-theme")).map((tag) => tag.textContent).join(""));
+	// 关掉「首帧后自动注入」，验证首帧确实没有浮层段、而交互会先补上
+	const lazy = await open(browser, "https://www.nodeseek.com/?nsmax-no-lazy-overlay=1", { html: listPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await lazy.page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const early = await readCss(lazy.page);
+		assert.equal(early.includes(".search-overlay"), false, "首帧只注入页面本体需要的段，浮层段还没注入");
+		assert.equal(early.includes(".nspp-post-preview"), false);
+		await lazy.page.mouse.move(12, 12);
+		await lazy.page.waitForFunction(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes(".search-overlay")), null, { timeout: 3e3 });
+		const after = await readCss(lazy.page);
+		assert.ok(after.length > early.length + 30000, `交互后补上浮层段（${Math.round(early.length / 1024)}KB → ${Math.round(after.length / 1024)}KB）`);
+		// 提前打开（悬停预览）的浮层有样式：卡片圆角 12px
+		await lazy.page.locator(".post-list-item .post-title a").first().hover();
+		await lazy.page.waitForSelector("dialog.nspp-post-preview:not([hidden])", { timeout: 5e3 });
+		const radius = await lazy.page.evaluate(() => getComputedStyle(document.querySelector("dialog.nspp-post-preview")).borderRadius);
+		assert.equal(radius, "12px");
+		assert.deepEqual(lazy.errors, []);
+	} finally { await lazy.context.close(); }
+	// 正常模式：不用交互，首帧后空闲时也会自动补上
+	const auto = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await auto.page.waitForFunction(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes(".search-overlay")), null, { timeout: 4e3 });
+		assert.deepEqual(auto.errors, []);
+	} finally { await auto.context.close(); }
 });

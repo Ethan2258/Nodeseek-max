@@ -16,7 +16,10 @@ source = source.replace(/\tvar nsmax_messages_sb = .*;\n/, "");
 source = source.replace("\tfunction mountChat(ctx, account) {", "\tvar nsmax_messages_sb = " + JSON.stringify(messageCss) + ";\n\tfunction mountChat(ctx, account) {");
 const settingsCss = readFileSync(new URL("theme/settings.css", root), "utf8").replace(/\r\n?/g, "\n");
 source = source.replace(/\tvar settings_sb_default = .*;\n/, "");
-source = source.replace("\tvar style_default$1 = ", "\tvar settings_sb_default = " + JSON.stringify(settingsCss) + ";\n\tvar style_default$1 = ");
+// 设置面板样式插在 loading_default 前面（以前插在已删掉的旧常量 style_default$1 前，锚点没了要跟着换）
+const settingsAnchor = "\tvar loading_default = ";
+if (!source.includes(settingsAnchor)) throw new Error("设置面板样式的注入锚点丢了");
+source = source.replace(settingsAnchor, "\tvar settings_sb_default = " + JSON.stringify(settingsCss) + ";\n" + settingsAnchor);
 const themePath = new URL("theme/source.js", root);
 let themeSource;
 if (existsSync(themePath)) themeSource = readFileSync(themePath, "utf8").replace(/\r\n?/g, "\n");
@@ -283,12 +286,15 @@ const pageScopeOf = (selector) => {
 	}
 	return scopes;
 };
+// 需要交互才出现的浮层（弹窗、用户卡、搜索面板、toast、图片预览、阅读进度条……）：首帧用不到，
+// 单独放进 overlay 段。运行时先注入页面段，主内容就绪后的空闲时段再补 overlay；
+// 用户在那之前就移动鼠标 / 按下键 / 打开弹窗时也会先补上（见 ui-runtime 的 nsmaxEnsureOverlayCss）。
+const overlaySelector = /(^|[\s>+~,(])(?:dialog|\.nspp-post-preview|\.nspp-user-hover|\.hover-user-card|\.nsmax-person-pop|\.nsmax-pop|\.nsmax-toast|\.nsmax-picker|\.nsmax-shortcuts|\.nsmax-mobile-nav|\.nsmax-mobile-menu|\.nsmax-lightbox|\.nspp-image-preview|\.search-overlay|\.nsmax-progress|\.nsmax-ruling-dialog|\.nsmax-lucky-dialog)/;
 const chunkOfRule = (rule) => {
+	// 所有选择器都是「交互才出现」的浮层时，整条规则进 overlay 段
+	if (rule.selectors.every((selector) => overlaySelector.test(selector))) return "overlay";
 	const chunks = new Set();
 	for (const selector of rule.selectors) {
-		// 弹窗（dialog）和全局悬浮层在哪个页面都可能打开：一键抽奖在发帖页、管理记录在个人空间和各处……，
-		// 只要选择器里提到 dialog / 这些全局弹层，整条规则留在 base，不跟着所在页面的段落走
-		if (/dialog|nsmax-person-pop|nsmax-shortcuts|nsmax-toast/.test(selector)) return "base";
 		const scopes = pageScopeOf(selector);
 		if (scopes.size > 1) return "base";
 		if (scopes.size === 1) { chunks.add([...scopes][0]); continue; }

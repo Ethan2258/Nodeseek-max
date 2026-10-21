@@ -37,6 +37,16 @@
 		nsmaxThemeCss.cache = css;
 		return css;
 	}
+	// 浮层样式（弹窗、用户卡、搜索面板、toast、图片预览……）按需注入：首帧只注入页面本体需要的段，
+	// 主内容就绪后的空闲时段再补这段；用户提前交互（移动 / 按键 / 打开弹窗）时也会先补上，不会出现没样式的浮层。
+	function nsmaxEnsureOverlayCss() {
+		if (nsmaxEnsureOverlayCss.done) return;
+		nsmaxEnsureOverlayCss.done = true;
+		let css = "";
+		for (const [name, text] of nsmax_theme_segments) if (name === "overlay") css += text;
+		// 构建时已经短名化 / 压缩过，按「编译后样式」注入，跳过运行时再优化一遍
+		if (css) _css(css, true);
+	}
 	function nsmaxSetAttr(el, name, value = "") {
 		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
 	}
@@ -3353,6 +3363,8 @@
 	var nsmaxToastFrame = 0;
 	function nsmaxToast(text, options = {}) {
 		if (!document.body) return;
+		// toast 的样式在按需注入的 overlay 段里：弹提示前先确保注入（自动签到之类的提示可能早于第一次交互）
+		try { nsmaxEnsureOverlayCss(); } catch {}
 		let toast = document.querySelector("body > .nsmax-toast");
 		if (!toast) {
 			toast = document.createElement("div");
