@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.22");
+	assert.equal(packageJson.version, "1.8.23");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5544,8 +5544,16 @@ test("第二十批（2026-10-21）：加载状态不再是一条白色扫光—�
 		assert.equal(loading.spin, "nsmax-spin", "加载中是一个小转圈");
 		assert.equal(loading.skeleton, "nsmax-skeleton-sweep", "骨架条自己在扫");
 		assert.notEqual(loading.skeletonBg, "rgba(0, 0, 0, 0)");
+		const skeletonBox = await page.evaluate(() => {
+			const box = document.querySelector("dialog.nspp-post-preview .nspp-preview-skeleton");
+			return box ? { lines: box.querySelectorAll(".nsmax-skeleton-line").length, widths: [...box.children].map((line) => line.style.width), height: Math.round(box.getBoundingClientRect().height) } : null;
+		});
+		assert.equal(skeletonBox.lines, 4, "正文没到时先摆 4 行骨架，不是一片空白");
+		assert.deepEqual(skeletonBox.widths, ["92%", "100%", "76%", "48%"]);
+		assert.ok(skeletonBox.height >= 70, JSON.stringify(skeletonBox));
 		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
 		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nsmax-spinner")), false, "加载完转圈收掉");
+		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nspp-preview-skeleton")), false, "加载完骨架收掉");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -5580,6 +5588,61 @@ test("第二十一批（2026-10-21）：不存在的帖子站点只回 text/plai
 		assert.equal(state.heroBg, "rgb(255, 208, 47)", "左边是黄底");
 		assert.equal(state.border, "1px", "主题样式注入进来了");
 		assert.equal(state.searchAction, "/search");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第二十二批（2026-10-21）：楼主信息右边的操作胶囊（引用 回复 编辑 举报）和正文右边缘对齐——经典 / 简洁两种布局、宽窄两种窗口都是，四个胶囊都不会越出正文", async () => {
+	for (const simple of [false, true]) {
+		for (const width of [1280, 1600]) {
+			const init = simple ? "if(window.top===window)try{localStorage.setItem('nsmax:post-layout','simple')}catch{}" : "";
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width, height: 900 }, init });
+			try {
+				await page.waitForSelector(".nsmax-op-actions");
+				const state = await page.evaluate(() => {
+					const op = document.querySelector(".nsk-post > .content-item");
+					const actions = op.querySelector(".nsmax-op-actions");
+					// 自己的帖子会多一个「编辑」（站点菜单里有编辑按钮时由脚本补进来）
+					if (!actions.querySelector(".nsmax-op-edit")) {
+						const edit = document.createElement("a");
+						edit.className = "nsmax-op-action nsmax-op-edit";
+						edit.textContent = "编辑";
+						actions.append(edit);
+					}
+					const content = op.querySelector(".post-content").getBoundingClientRect();
+					const rect = actions.getBoundingClientRect();
+					const pills = [...actions.children].map((pill) => pill.getBoundingClientRect());
+					return {
+						layout: document.documentElement.getAttribute("data-nsmax-post-layout"),
+						rows: new Set(pills.map((pill) => Math.round(pill.top))).size,
+						count: pills.length,
+						gapFromContent: Math.round(content.right - rect.right),
+						pillsLeftOfContent: pills.every((pill) => pill.right <= content.right + 1 && pill.left >= content.left - 1),
+						aboveContent: rect.top < content.top
+					};
+				});
+				assert.equal(state.layout, simple ? "simple" : "classic");
+				assert.equal(state.count, 4);
+				assert.equal(state.rows, 1, "四个胶囊在一行");
+				assert.ok(Math.abs(state.gapFromContent) <= 1, `${state.layout} ${width}: 和正文右边缘差 ${state.gapFromContent}px`);
+				assert.equal(state.pillsLeftOfContent, true, "胶囊不越出正文");
+				assert.equal(state.aboveContent, true, "操作胶囊在正文上面（楼主信息那一行）");
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+	}
+});
+
+test("第二十三批（2026-10-21）：私信里粘贴图片——上传成功提示 1.6 秒后自己消失，不会一直挂在编辑器上", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: nativeTalkPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nspp-messages textarea:visible");
+		await page.locator('.nspp-message-editor input[type="file"][accept="image/*"]').setInputFiles({ name: "shot.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64") });
+		await page.waitForFunction(() => /图片已插入草稿/.test(document.querySelector(".nspp-message-editor-status")?.textContent || ""), null, { timeout: 5e3 });
+		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nspp-message-editor-status")).display), "block");
+		assert.match(await page.locator(".nspp-messages textarea").inputValue(), /!\[image\]\(<https:\/\/api\.nodeimage\.com/);
+		await page.waitForFunction(() => (document.querySelector(".nspp-message-editor-status")?.textContent || "") === "", null, { timeout: 4e3 });
+		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nspp-message-editor-status")).display), "none", "提示消失后不占高度");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
