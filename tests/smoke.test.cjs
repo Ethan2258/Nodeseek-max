@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.18");
+	assert.equal(packageJson.version, "1.8.19");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5419,4 +5419,46 @@ test("第十五批（2026-10-20）：代码高亮对象键用 sb.sb 的颜色、
 		assert.ok(state.offHidden === null || state.offHidden === true, "禁用的上一页 / 下一页不留空胶囊");
 		assert.deepEqual(wrap.errors, []);
 	} finally { await wrap.context.close(); }
+});
+
+test("悬停预览（2026-10-21）：读到主帖 </article> 就渲染，不等后面的回复；前几张图不等可见判定、直接高优先级开取", async () => {
+	// 站点把主帖和整页回复塞在同一份 HTML 里；这里让回复永远「还在路上」，预览仍要马上出正文
+	const head = '<!doctype html><html><head><title>NodeSeek</title></head><body><section id="nsk-frame"><div id="nsk-body-left"><div class="nsk-post"><article class="post-content"><p>主帖正文，只有这一段。</p><img src="/avatar/1.png" alt="a"><img src="/avatar/2.png" alt="b"><img src="/avatar/3.png" alt="c"><img src="/avatar/4.png" alt="d"></article>';
+	const init = `(() => {
+		const real = window.fetch.bind(window);
+		window.__previewStream = { opened: 0, cancelled: 0 };
+		window.fetch = (input, options) => {
+			const raw = input && input.url ? input.url : String(input);
+			let path = raw;
+			try { path = new URL(raw, location.href).pathname; } catch {}
+			if (path !== "/post-1000-1") return real(input, options);
+			window.__previewStream.opened++;
+			const stream = new ReadableStream({
+				start(controller) { controller.enqueue(new TextEncoder().encode(${JSON.stringify(head)})); },
+				cancel() { window.__previewStream.cancelled++; }
+			});
+			return Promise.resolve(new Response(stream, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } }));
+		};
+	})();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.locator(".post-list-item .post-title a").first().hover();
+		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
+		const state = await page.evaluate(() => {
+			const content = document.querySelector("dialog.nspp-post-preview .nspp-preview-content");
+			return {
+				text: content.textContent.trim(),
+				images: [...content.querySelectorAll("img")].map((image) => ({ loading: image.loading, priority: image.fetchPriority, decoding: image.decoding })),
+				stream: window.__previewStream
+			};
+		});
+		assert.match(state.text, /主帖正文/, "读到 </article> 就渲染，不等整页回复");
+		assert.equal(state.stream.opened, 1);
+		assert.equal(state.stream.cancelled, 1, "读到主帖后要取消后面的回复下载");
+		assert.deepEqual(state.images.slice(0, 3).map((image) => [image.loading, image.priority]), [["eager", "high"], ["eager", "high"], ["eager", "high"]]);
+		assert.equal(state.images[3].loading, "lazy", "后面的图仍然懒加载");
+		assert.equal(state.images[0].decoding, "async");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });

@@ -1484,11 +1484,12 @@
 	// 都是低优先级请求，同一篇只准备一次；省流量模式下不做。帖子网页本身同一篇只取一次（以前预览一篇要取两遍）。
 	// priority：预览卡要马上显示的那篇用 "auto"（2026-10-20：以前也是 "low"，页面上图片多时卡片要排在图片后面）
 	var nsmaxPostHtmlCache = new Map();
-	function nsmaxPostHtml(request, href, priority = "low") {
+	function nsmaxPostHtml(request, href, priority = "low", options = {}) {
 		const key = String(href).replace(/#.*$/, "");
 		const hit = nsmaxPostHtmlCache.get(key);
 		if (hit && Date.now() - hit.at < 3e5) return hit.promise;
-		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority }) };
+		// options 透传给 request：悬停预览用 { until: "</article>" }，读到主帖就停，后面的回复不用下
+		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority, ...options }) };
 		nsmaxPostHtmlCache.set(key, entry);
 		entry.promise.catch(() => {
 			if (nsmaxPostHtmlCache.get(key) === entry) nsmaxPostHtmlCache.delete(key);
@@ -1507,7 +1508,7 @@
 		link.href = origin;
 		(document.head || document.documentElement).append(link);
 	}
-	function nsmaxWarmImage(src, base) {
+	function nsmaxWarmImage(src, base, priority = "low") {
 		let url;
 		try { url = new URL(src, base); } catch { return; }
 		if (!/^https?:$/.test(url.protocol)) return;
@@ -1515,18 +1516,18 @@
 		if (nsmaxWarmImages.some((image) => image.src === url.href)) return;
 		const image = new Image();
 		image.decoding = "async";
-		image.fetchPriority = "low";
+		image.fetchPriority = priority;
 		image.src = url.href;
 		nsmaxWarmImages.push(image);
 		if (nsmaxWarmImages.length > 40) nsmaxWarmImages.shift();
 	}
-	// doc：DOMParser 解析好的帖子页
-	function nsmaxWarmPost(href, doc) {
+	// doc：DOMParser 解析好的帖子页。priority：悬停预览用 "high"（图片早点出来），点开前预热用默认的 "low"
+	function nsmaxWarmPost(href, doc, priority = "low") {
 		const key = String(href).replace(/#.*$/, "");
 		if (!doc || nsmaxWarmedPosts.has(key) || navigator.connection?.saveData) return;
 		nsmaxWarmedPosts.add(key);
 		const op = doc.querySelector(".nsk-post article.post-content");
-		for (const image of Array.from(op?.querySelectorAll("img:not(.sticker)") || []).slice(0, 3)) nsmaxWarmImage(image.getAttribute("src"), key);
+		for (const image of Array.from(op?.querySelectorAll("img:not(.sticker)") || []).slice(0, 3)) nsmaxWarmImage(image.getAttribute("src"), key, priority);
 		for (const article of Array.from(doc.querySelectorAll("ul.comments > li.content-item > article.post-content")).slice(0, 2)) {
 			const image = article.querySelector("img:not(.sticker)");
 			if (image) nsmaxWarmImage(image.getAttribute("src"), key);

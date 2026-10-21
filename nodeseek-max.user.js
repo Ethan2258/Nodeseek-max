@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.8.18
+// @version      1.8.19
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -897,7 +897,7 @@ var nsmaxRedirecting = false;
 	if (nsmaxRedirecting || !/^www\.(nodeseek|deepflood)\.com$/.test(location.hostname)) return;
 	// 站点直接返回 JSON 的地址（没登录打开发帖页时是 {"message":"USER NOT FOUND"}，浏览器按 JSON 显示）不是论坛页面：不套主题、不加按钮
 	if (!/html/i.test(document.contentType || "text/html")) return;
-	var NSMAX_VERSION = "1.8.18";
+	var NSMAX_VERSION = "1.8.19";
 	var NSMAX_BOOT_REGIONS = Object.freeze(["header", "left", "right"]);
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
@@ -19760,8 +19760,10 @@ var nsmaxRedirecting = false;
 		viewer.show();
 		return close;
 	}
-	function readingContent(source, base) {
+	// eagerImages：前几张图不等可见判定、直接按高优先级开取（帖子悬停预览用）；其它场景仍是懒加载
+	function readingContent(source, base, { eagerImages = 0 } = {}) {
 		const fragment = document.createDocumentFragment();
+		let imageCount = 0;
 		const allowed = new Set([
 			"P",
 			"BR",
@@ -19822,7 +19824,11 @@ var nsmaxRedirecting = false;
 				}
 				if (el instanceof HTMLImageElement) {
 					el.alt = sourceElement.getAttribute("alt") || "";
-					el.loading = "lazy";
+					const eager = imageCount < eagerImages;
+					imageCount++;
+					el.loading = eager ? "eager" : "lazy";
+					el.decoding = "async";
+					if (eager) el.fetchPriority = "high";
 					el.tabIndex = 0;
 					el.setAttribute("role", "button");
 					el.setAttribute("aria-label", el.alt ? `查看大图：${el.alt}` : "查看大图");
@@ -19941,19 +19947,22 @@ var nsmaxRedirecting = false;
 		});
 		const resize = typeof ResizeObserver === "function" ? new ResizeObserver(position) : void 0;
 		resize?.observe(view);
-		// 取帖子网页：悬停一开始（prefetch）和 80ms 后打开卡片（load）共用一份（以前没取回来时会再取一遍，一次悬停取两遍），
-		// 和「点开之前先备好」（warm：鼠标停留 0.25 秒以上才准备图片和作者资料）也共用（nsmaxPostHtml）
+		// 取帖子网页：只读到主帖的 </article> 就停（站点把整页回复也塞在同一份 HTML 里，预览只要主帖），
+		// 卡片 80ms 打开时和「点开之前先备好」共用这一份（nsmaxPostHtml 按 URL 缓存）。
+		// 卡片要显示，用普通优先级；「点开之前先备好」的预热也直接用这份解析好的 doc，不再解析第二遍
 		const parsedArticles = new Map();
+		const parsedDocs = new Map();
 		const articleFor = (url) => {
 			let promise = parsedArticles.get(url.href);
 			if (promise) return promise;
-			// 卡片马上要显示，用普通优先级（不和后台准备的请求一起排在图片后面）
-			promise = nsmaxPostHtml(ctx.request, url.href, "auto").then((html) => {
+			promise = nsmaxPostHtml(ctx.request, url.href, "auto", { until: "</article>" }).then((html) => {
 				const doc = new DOMParser().parseFromString(html, "text/html");
+				parsedDocs.set(url.href, doc);
 				const body = doc.querySelector(".nsk-post .post-content, .nsk-post .nsk-content, .post-content, .nsk-post .markdown-body, .nsk-content");
 				if (!body) throw new Error("未找到正文");
 				const article = document.createElement("article");
-				article.append(readingContent(body, url.href));
+				// 前 3 张图不等可见判定、直接高优先级开取（以前一律 loading=lazy，卡片弹出后还要等一帧可见判定才发请求）
+				article.append(readingContent(body, url.href, { eagerImages: 3 }));
 				nsmaxTagImageLinks(article);
 				postPreviewCache.set(url.href, article);
 				return article;
@@ -20018,10 +20027,13 @@ var nsmaxRedirecting = false;
 				}
 				position();
 			},
-			// 点开之前先备好这篇帖子的前几张图、作者头像和资料（nsmaxWarmPost）
+			// 点开之前先备好这篇帖子的前几张图、作者头像和资料（nsmaxWarmPost）。
+			// 卡片已经解析过这份网页就复用那份 doc，不再把同一份 HTML 用 DOMParser 解析第二遍
 			warm(link) {
 				const url = new URL(link.href, location.origin);
 				if (url.origin !== location.origin || !/^\/post-\d+(?:-\d+)?(?:\.html)?\/?$/.test(url.pathname)) return;
+				const doc = parsedDocs.get(url.href);
+				if (doc) { nsmaxWarmPost(url.href, doc, "high"); return; }
 				nsmaxPostHtml(ctx.request, url.href).then((html) => nsmaxWarmPost(url.href, new DOMParser().parseFromString(html, "text/html"))).catch(() => {});
 			},
 			keepOpen,
@@ -29314,11 +29326,12 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 	// 都是低优先级请求，同一篇只准备一次；省流量模式下不做。帖子网页本身同一篇只取一次（以前预览一篇要取两遍）。
 	// priority：预览卡要马上显示的那篇用 "auto"（2026-10-20：以前也是 "low"，页面上图片多时卡片要排在图片后面）
 	var nsmaxPostHtmlCache = new Map();
-	function nsmaxPostHtml(request, href, priority = "low") {
+	function nsmaxPostHtml(request, href, priority = "low", options = {}) {
 		const key = String(href).replace(/#.*$/, "");
 		const hit = nsmaxPostHtmlCache.get(key);
 		if (hit && Date.now() - hit.at < 3e5) return hit.promise;
-		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority }) };
+		// options 透传给 request：悬停预览用 { until: "</article>" }，读到主帖就停，后面的回复不用下
+		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority, ...options }) };
 		nsmaxPostHtmlCache.set(key, entry);
 		entry.promise.catch(() => {
 			if (nsmaxPostHtmlCache.get(key) === entry) nsmaxPostHtmlCache.delete(key);
@@ -29337,7 +29350,7 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 		link.href = origin;
 		(document.head || document.documentElement).append(link);
 	}
-	function nsmaxWarmImage(src, base) {
+	function nsmaxWarmImage(src, base, priority = "low") {
 		let url;
 		try { url = new URL(src, base); } catch { return; }
 		if (!/^https?:$/.test(url.protocol)) return;
@@ -29345,18 +29358,18 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 		if (nsmaxWarmImages.some((image) => image.src === url.href)) return;
 		const image = new Image();
 		image.decoding = "async";
-		image.fetchPriority = "low";
+		image.fetchPriority = priority;
 		image.src = url.href;
 		nsmaxWarmImages.push(image);
 		if (nsmaxWarmImages.length > 40) nsmaxWarmImages.shift();
 	}
-	// doc：DOMParser 解析好的帖子页
-	function nsmaxWarmPost(href, doc) {
+	// doc：DOMParser 解析好的帖子页。priority：悬停预览用 "high"（图片早点出来），点开前预热用默认的 "low"
+	function nsmaxWarmPost(href, doc, priority = "low") {
 		const key = String(href).replace(/#.*$/, "");
 		if (!doc || nsmaxWarmedPosts.has(key) || navigator.connection?.saveData) return;
 		nsmaxWarmedPosts.add(key);
 		const op = doc.querySelector(".nsk-post article.post-content");
-		for (const image of Array.from(op?.querySelectorAll("img:not(.sticker)") || []).slice(0, 3)) nsmaxWarmImage(image.getAttribute("src"), key);
+		for (const image of Array.from(op?.querySelectorAll("img:not(.sticker)") || []).slice(0, 3)) nsmaxWarmImage(image.getAttribute("src"), key, priority);
 		for (const article of Array.from(doc.querySelectorAll("ul.comments > li.content-item > article.post-content")).slice(0, 2)) {
 			const image = article.querySelector("img:not(.sticker)");
 			if (image) nsmaxWarmImage(image.getAttribute("src"), key);
