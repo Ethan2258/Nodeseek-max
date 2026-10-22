@@ -96,7 +96,7 @@ test("帖子页：SB Theme UI 正文、代码块、回复流和操作块生效",
 	assert.equal(state.page, "post");
 	assert.equal(state.entry, 1);
 	assert.equal(state.comments, 3);
-	assert.equal(state.code, "8px");
+	assert.equal(state.code, "0px");
 	assert.equal(state.actions, true);
 	assert.equal(state.editor, true);
 	assert.equal(state.fastNav, "block");
@@ -158,7 +158,7 @@ test("通知页：按需加载 SB 消息中心，原站列表隐藏且不请求�
 	assert.equal(state.page, "notification");
 	assert.equal(state.tabs, 3);
 	assert.equal(state.rows, 2);
-	assert.equal(state.rowRadius, "12px");
+	assert.equal(state.rowRadius, "0px");
 	assert.equal(state.tools, null);
 	assert.equal(state.messages, true);
 	assert.equal(await page.locator(".nspp-messages").isVisible(),true);
@@ -190,10 +190,10 @@ test("设置页：单栏 SB Theme UI 表单，不加载右栏和工具条", asyn
 	assert.equal(state.page, "setting");
 	assert.equal(state.right, null);
 	assert.equal(state.tools, null);
-	assert.equal(state.panel, "12px");
-	assert.equal(state.side, "12px");
+	assert.equal(state.panel, "0px");
+	assert.equal(state.side, "0px");
 	assert.equal(state.order, true);
-	assert.equal(state.input, "8px");
+	assert.equal(state.input, "0px");
 	assert.equal(state.nav, 8);
 	assert.equal(state.fields, 4);
 	assert.equal(state.save, true);
@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.29");
+	assert.equal(packageJson.version, "1.8.30");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -830,7 +830,7 @@ test("帖子悬停预览：SB 卡片表面与标题色、按需读取、Escape �
 			await page.waitForSelector('dialog.nspp-post-preview article');
 			const style=await page.locator('dialog.nspp-post-preview').evaluate(e=>({bg:getComputedStyle(e).backgroundColor,radius:getComputedStyle(e).borderRadius,title:getComputedStyle(e.querySelector('header>a')).color}));
 			assert.equal(style.bg,dark?'rgb(20, 21, 28)':'rgb(255, 255, 255)');
-			assert.equal(style.radius,'12px');
+			assert.equal(style.radius,'0px');
 			assert.equal(style.title,dark?'rgb(242, 243, 248)':'rgb(28, 28, 30)');
 			await page.keyboard.press('Escape');
 			assert.equal(await page.locator('dialog.nspp-post-preview').isVisible(),false);
@@ -965,7 +965,7 @@ test("列表图标与抽奖：五项单图标、SB 悬停色、抽奖标签唯�
 		await row.hover();
 		await page.waitForFunction(()=>getComputedStyle(document.querySelector('ul.post-list>li')).backgroundColor==='rgb(242, 244, 247)');
 		assert.equal(await page.locator('.topic-carousel-wrapper').isVisible(),false);
-		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderRadius),'12px');
+		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderRadius),'0px');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });
@@ -986,7 +986,7 @@ test("评论操作小字、楼主蓝色热评红色、楼中楼透明、预览�
 	}finally{await context.close();}
 });
 
-test("回复框：统一圆角、左侧回复按钮、拖动与键盘可调整高度",async()=>{
+test("回复框：直角模式（照 sb.sb 线上 --r-scale:0）、左侧回复按钮、拖动与键盘可调整高度",async()=>{
 	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:postPage()});
 	try{
 		await page.waitForSelector('.nsmax-editor-resize');
@@ -1000,7 +1000,7 @@ test("回复框：统一圆角、左侧回复按钮、拖动与键盘可调整�
 		assert.equal(await page.locator('.md-editor button.submit').innerText(),'回复楼主');
 		const button=await page.locator('.md-editor button.submit').boundingBox(),editor=await page.locator('.md-editor').boundingBox();
 		assert.ok(Math.abs(button.x-editor.x-17)<2);
-		assert.equal(await page.locator('.md-editor').evaluate(e=>getComputedStyle(e).borderRadius),'12px');
+		assert.equal(await page.locator('.md-editor').evaluate(e=>getComputedStyle(e).borderRadius),'0px');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
 });
@@ -1748,7 +1748,7 @@ test("v1.7.19 极致细节复刻：主帖无#0楼号、标题栏双统计、OP�
 		});
 		assert.equal(controlerStyle.display, "flex");
 		assert.equal(controlerStyle.height, "49.5px");
-		assert.equal(controlerStyle.borderRadius, "12px");
+		assert.equal(controlerStyle.borderRadius, "0px");
 		assert.notEqual(controlerStyle.backgroundColor, "rgba(0, 0, 0, 0)");
 
 		// 验证没有遮罩
@@ -2047,7 +2047,7 @@ test("v1.8.1 账簿：sb.sb 积分账本表格、页码挪到表格下方居中�
 			});
 			assert.equal(layout.gap, 20, "页码应在表格下方 20px");
 			assert.ok(layout.centerDiff <= 1, `页码应与表格居中对齐（偏 ${layout.centerDiff}px）`);
-			assert.equal(layout.radius, "12px");
+			assert.equal(layout.radius, "0px");
 			assert.deepEqual(layout.signs, ["plus", "plus", "minus", "plus", "plus"]);
 			assert.equal(layout.plusBefore, '"+"');
 			assert.notEqual(layout.minusColor, layout.plusColor);
@@ -2076,7 +2076,7 @@ test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动立即保存、搜索�
 			assert.deepEqual(modules.filter((m) => !m.title), [], "不能有没名字的空白开关");
 			for (const id of ["sb-page-controls", "post-status-style"]) assert.ok(!modules.some((m) => m.id === id), `${id} 不进面板`);
 			const box = await host.locator("dialog").evaluate((d) => ({ radius: getComputedStyle(d).borderTopLeftRadius, width: d.getBoundingClientRect().width }));
-			assert.equal(box.radius, "12px");
+			assert.equal(box.radius, "0px");
 			assert.ok(box.width <= 720, `弹窗宽 ${box.width}`);
 			// 只保留圆角：面板里没有圆角 / 直角选项
 			assert.equal(await host.getByRole("radio", { name: "直角" }).count(), 0);
@@ -2136,17 +2136,18 @@ test("v1.8.1 用户备注：名字后面的胶囊标签；2026-10-18 起「本�
 		assert.equal(state.note, "测试备注");
 		assert.equal(state.title, "备注：测试备注");
 		assert.equal(state.height, 16);
-		assert.ok(state.radius >= 8, `圆角 ${state.radius}`);
+		assert.ok(state.radius <= 0.5, `直角 ${state.radius}`);
 		assert.equal(state.noteAuthor, "user0");
 		assert.equal(state.friends, 0, "本地好友删掉了");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
 
-test("v1.8.1 只保留圆角：旧设置里保存的「直角」不再生效", async () => {
+
+test("v1.8.30 照 sb.sb 线上直角模式：--r-scale 是 0（旧设置里保存的圆角值不再生效）", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
 		html: listPage(),
-		seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { enabled: true, radius: "square" } } }
+		seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { enabled: true, radius: "large" } } }
 	});
 	try {
 		await wait(page);
@@ -2154,12 +2155,16 @@ test("v1.8.1 只保留圆角：旧设置里保存的「直角」不再生效", a
 			attr: document.documentElement.getAttribute("data-nsmax-radius"),
 			scale: getComputedStyle(document.body).getPropertyValue("--r-scale").trim(),
 			card: getComputedStyle(document.querySelector(".post-list-controler")).borderTopLeftRadius,
-			input: getComputedStyle(document.querySelector("#search-site")).borderTopLeftRadius
+			input: getComputedStyle(document.querySelector("#search-site")).borderTopLeftRadius,
+			radius: getComputedStyle(document.body).getPropertyValue("--r").trim(),
+			pill: getComputedStyle(document.body).getPropertyValue("--r-pill").trim()
 		}));
-		assert.equal(state.attr, "large");
-		assert.equal(state.scale, "1");
-		assert.equal(state.card, "12px");
-		assert.equal(state.input, "8px");
+		assert.equal(state.attr, "square", "属性跟线上一致是 square");
+		assert.equal(state.scale, "0", "sb.sb 线上根变量 --r-scale 是 0");
+		assert.equal(state.card, "0px");
+		assert.equal(state.input, "0px");
+		assert.equal(state.radius, "calc(12px * 0)");
+		assert.equal(state.pill, "calc(9999px * 0)");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -2336,7 +2341,7 @@ test("v1.8.0 折叠超长回复（胶囊按钮、底部渐隐）与关键词屏�
 		const style = await toggle.evaluate((b) => ({ text: b.textContent, height: b.getBoundingClientRect().height, radius: parseFloat(getComputedStyle(b).borderTopLeftRadius), mask: getComputedStyle(b.previousElementSibling).maskImage }));
 		assert.equal(style.text, "展开全文");
 		assert.equal(style.height, 28);
-		assert.ok(style.radius >= 14, `胶囊圆角 ${style.radius}`);
+		assert.ok(style.radius <= 0.5, `直角 ${style.radius}`);
 		assert.match(style.mask, /linear-gradient/);
 		await toggle.click();
 		assert.ok((await folded.boundingBox()).height > 720);
@@ -3133,8 +3138,8 @@ test("2026-10-17 第二批：未读数是 16px 小圆、今日热门标题下不
 			};
 		});
 		assert.equal(state.text.length, 1);
-		assert.deepEqual(state.size, [16, 16], "一位数的未读数是 16px 小圆（以前 24×16 的椭圆）");
-		assert.equal(state.radius, true);
+		assert.deepEqual(state.size, [16, 16], "一位数的未读数是 16px 小方块（sb.sb 线上直角模式；以前是 24×16 的椭圆）");
+		assert.equal(state.radius, false);
 		assert.deepEqual(state.titleMargin, ["0px", "0px"], "「今日热门」标题不再额外留外边距");
 		assert.equal(state.hoverCard, "none", "站点旧版资料卡（点头像弹出）不显示，资料卡只用 sb.sb 样式那张");
 		assert.deepEqual(errors, []);
@@ -3234,7 +3239,7 @@ test("帖子页经典布局（2026-10-17 图七）：每层左边作者栏（88p
 			assert.equal(state.level, "Lv.3");
 			assert.deepEqual(state.stats, ["帖子", "鸡腿", "星辰"]);
 			assert.equal(state.pill.border, "solid", "楼层操作是细线框小胶囊");
-			assert.ok(state.pill.radius >= 9, "胶囊圆角");
+			assert.ok(state.pill.radius <= 0.5, "直角");
 			assert.equal(state.headName, "none", "右边头部不再重复名字");
 			assert.equal(state.sig, '"个性签名"');
 			assert.equal(state.toggle, "简洁模式");
@@ -3643,10 +3648,10 @@ test("第五批（2026-10-18）：置顶回复的绿色图钉换成墨色「置�
 			};
 		});
 		assert.equal(state.badge, "none", "站点的绿色圆底图钉藏起来");
-		assert.deepEqual(state.pin, { text: "置顶", bg: "rgb(28, 28, 30)", radius: true }, "墨色小标（和黄色的「楼主」分得清）");
+		assert.deepEqual(state.pin, { text: "置顶", bg: "rgb(28, 28, 30)", radius: false }, "墨色小标（和黄色的「楼主」分得清）");
 		assert.equal(state.br, "none", "「@某某 #楼号」后面的换行藏起来");
 		assert.equal(state.sameLine, true, "内容接在「名字：」后面，不掉到下一行");
-		assert.deepEqual(state.alert, { left: 0, right: 0, top: "12px", accent: "3px", radius: "8px" }, "温馨提醒和正文左右对齐，左边 3px 警示色");
+		assert.deepEqual(state.alert, { left: 0, right: 0, top: "12px", accent: "3px", radius: "0px" }, "温馨提醒和正文左右对齐，左边 3px 警示色");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -3732,7 +3737,7 @@ test("第五批（2026-10-18）：点「回复」时页面不跳；清空草稿�
 	try {
 		await draft.page.waitForFunction(() => document.querySelector(".nsmax-toast")?.textContent === "已恢复未发出的草稿", null, { timeout: 5e3 });
 		const toast = await draft.page.evaluate(() => { const t = document.querySelector(".nsmax-toast"); const cs = getComputedStyle(t); return { bottom: cs.bottom, radius: cs.borderTopLeftRadius, size: cs.fontSize, padding: cs.padding }; });
-		assert.deepEqual(toast, { bottom: "24px", radius: "12px", size: "13.5px", padding: "9px 16px" }, "sb.sb .toast：屏幕下方 24px、12px 圆角、13.5px、9px 16px");
+		assert.deepEqual(toast, { bottom: "24px", radius: "0px", size: "13.5px", padding: "9px 16px" }, "sb.sb .toast：屏幕下方 24px、12px 圆角、13.5px、9px 16px");
 		assert.deepEqual(draft.errors, []);
 	} finally { await draft.context.close(); }
 });
@@ -4531,7 +4536,7 @@ test("第十一批（2026-10-19）：正文折叠块（<details>）换成 sb.sb 
 					gray: s.backgroundColor === "rgb(59, 59, 59)"
 				};
 			});
-			assert.deepEqual(state, { bg: true, border: "1px solid", radius: "8px", weight: "500", closedLine: "none", openLine: "solid", gray: false }, dark ? "深色" : "浅色");
+			assert.deepEqual(state, { bg: true, border: "1px solid", radius: "0px", weight: "500", closedLine: "none", openLine: "solid", gray: false }, dark ? "深色" : "浅色");
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
@@ -4909,7 +4914,7 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 			assert.equal(state.magnifier, true, "框里左边一个放大镜");
 			// 框和按钮的圆角是同一个：框 8px 圆角 + overflow:hidden，按钮自己没有圆角、贴着右沿，
 			// 右边两个角由框裁出来（以前按钮是 9999px 小胶囊，和框的圆角对不上）
-			assert.equal(state.groupRadius, "8px");
+			assert.equal(state.groupRadius, "0px");
 			assert.equal(state.groupOverflow, "hidden");
 			assert.equal(state.buttonRadius, "0px");
 			assert.equal(state.buttonFlushRight, true, "「搜索」贴着框的右沿");
@@ -5148,7 +5153,7 @@ test("第十四批（2026-10-19）：正文 Markdown 再对一遍 sb.sb——站
 			assert.equal(state.before, "none", "站点 li::before 的「•」去掉");
 			assert.equal(state.marker, true, "方块符号是品牌色");
 			assert.equal(state.codeSize, "13.125px", "行内代码 0.875em");
-			assert.deepEqual(state.card, ["3px", "8px", "14px"], "卡片：左边 3px 类型色、输入框圆角");
+			assert.deepEqual(state.card, ["3px", "0px", "14px"], "卡片：左边 3px 类型色、输入框圆角");
 			assert.equal(state.mention, true, "@用户：正文强调色");
 			assert.equal(state.floorLink, true, "楼层链接还是链接色");
 			assert.deepEqual(errors, []);
@@ -5768,7 +5773,7 @@ test("v1.8.28 提速：浮层样式（弹窗 / 用户卡 / 搜索面板 / toast�
 		await preview.page.locator(".post-list-item .post-title a").first().hover();
 		await preview.page.waitForSelector("dialog.nspp-post-preview:not([hidden])", { timeout: 5e3 });
 		const radius = await preview.page.evaluate(() => getComputedStyle(document.querySelector("dialog.nspp-post-preview")).borderRadius);
-		assert.equal(radius, "12px");
+		assert.equal(radius, "0px");
 		const css = await readCss(preview.page);
 		assert.equal(css.includes(".nspp-post-preview"), true, "悬停预览的浮层样式已注入");
 		assert.deepEqual(preview.errors, []);
@@ -5922,6 +5927,39 @@ test("v1.8.29 自动翻页 + 楼中楼 + 回复：接上来的下一页当场收
 		assert.equal(reply.afterList, true, "回复框还在评论区下面");
 		assert.equal(reply.floors, 3, "顶层楼层：原来的 3 条 + 第 4 楼已收进楼中楼");
 		assert.equal(reply.total, 4);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.30 主帖头部：站点原生的纯文字「编辑」收起（只留操作胶囊里那个）；时间 / 编辑于 / 编辑 同一行 12.5px", async () => {
+	let html = postPage();
+	// 模拟站点真实的登录态主帖头部：content-info 里有一个纯文字「编辑」链接；comment-menu 里也有一个编辑按钮
+	html = html.replace(/<div class="content-info">/, '<div class="content-info"><a href="/edit-discussion/1000" class="edit-link">编辑</a>');
+	html = html.replace(/<div class="comment-menu">/, '<div class="comment-menu"><a class="menu-item" data-nsmax-action="edit" title="编辑">编辑</a>');
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-op-edit");
+		const state = await page.evaluate(() => {
+			const meta = document.querySelector(".nsk-post > .content-item > .nsk-content-meta-info");
+			const info = meta?.querySelector(".content-info");
+			const inline = info?.querySelector("a.edit-link");
+			const pill = meta?.querySelector(".nsmax-op-edit");
+			const sizes = [...(info?.children || [])].filter((el) => el.getBoundingClientRect().height > 0).map((el) => ({ text: el.textContent.trim().slice(0, 8), size: getComputedStyle(el).fontSize, top: Math.round(el.getBoundingClientRect().top) }));
+			return {
+				inlineDisplay: inline ? getComputedStyle(inline).display : "missing",
+				pillText: pill?.textContent?.trim(),
+				pillVisible: !!pill && getComputedStyle(pill).display !== "none",
+				visibleEdits: [...document.querySelectorAll(".nsk-post > .content-item a, .nsk-post > .content-item button")].filter((el) => el.textContent.trim() === "编辑" && getComputedStyle(el).display !== "none").length,
+				sizes,
+				rowTops: [...new Set(sizes.map((item) => item.top))].length
+			};
+		});
+		assert.equal(state.inlineDisplay, "none", "站点自带的纯文字「编辑」要收起来");
+		assert.equal(state.pillVisible, true);
+		assert.equal(state.pillText, "编辑");
+		assert.equal(state.visibleEdits, 1, "整块头部只留一个「编辑」");
+		assert.ok(state.sizes.every((item) => item.size === "12.5px"), JSON.stringify(state.sizes));
+		assert.equal(state.rowTops, 1, "时间 / 编辑于 / 编辑 在同一基线上");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

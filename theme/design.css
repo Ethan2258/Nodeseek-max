@@ -86,8 +86,9 @@ html[data-nsmax-theme] body {
   --code-name: #e45649;
   /* 主色上的文字：浅色主色是墨色 → 白字；深色主色是黄色 → 墨字（sb.sb 没有这个变量，按它的用法补上） */
   --on-brand: #ffffff;
-  /* 形状与尺寸：只用 sb.sb 的圆角模式（卡片 12px、输入框 8px、按钮与标签胶囊；直角模式已删除）。半径都乘 --r-scale，固定为 1。 */
-  --r-scale: 1;
+  /* 形状与尺寸：照 sb.sb 当前线上默认的「直角模式」——它的根变量 --r-scale 是 0，卡片 / 输入框 / 按钮 / 胶囊的半径都乘这个数。
+     2026-10-22 起 sb.sb 默认直角，这里跟着改成 0（以前固定为 1 的圆角模式和线上不一样）。 */
+  --r-scale: 0;
   --nav-ctl: 34px;
   --r-xs: calc(4px * var(--r-scale));
   --r-sm: calc(6px * var(--r-scale));
@@ -10160,6 +10161,22 @@ html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left :is(.nsk
   padding: 0 0 10px !important;
   border-bottom: 1px dashed var(--line) !important;
 }
+/* 站点在楼主信息行里还有一个纯文字「编辑」链接：sb.sb 主帖的编辑在操作胶囊里（上面那个），这里把站点原生的收起来，
+   不然同一行出现两个「编辑」 */
+html[data-nsmax-theme] #nsk-body-left [data-nsmax-op-moved]:is(#nsmax-lv, *) {
+  display: none !important;
+}
+/* 楼主信息行：时间 / 「编辑于 …」 / 「编辑」统一成 12.5px、同一基线（以前时间一行大一号，几段字大小和位置都不齐） */
+html[data-nsmax-theme] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .nsk-content-meta-info .content-info:is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  align-items: baseline !important;
+  gap: 2px 7px !important;
+}
+html[data-nsmax-theme] #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > .nsk-content-meta-info .content-info:is(#nsmax-lv, *) :is(span, a, time, div) {
+  font-size: 12.5px !important;
+  line-height: 1.75 !important;
+}
 /* 楼层操作（回复层）和主帖的「引用 回复 举报」：头部一行最右边 */
 html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *),
 html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post > .content-item > .nsk-content-meta-info > .nsmax-op-actions:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -13560,4 +13577,14 @@ html[data-nsmax-theme] dialog.nspp-post-preview > header > a:is(#nsmax-lv, *) {
   -webkit-box-orient: vertical !important;
   -webkit-line-clamp: 2 !important;
   overflow-wrap: anywhere !important;
+}
+
+/* 通知列表外层：跟 sb.sb 直角模式（旧 Claude 主题层留了 12px 白圆角，和现场其他直角不一致） */
+html[data-nsmax-theme] .nsk-notification .reply-container:is(#nsmax-lv, *) {
+  border-radius: var(--r) !important;
+  overflow: hidden !important;
+}
+/* 顶栏搜索框：跟 sb.sb 直角模式（旧规则留了 8px 圆角，和现场其他直角不一致） */
+html[data-nsmax-theme] #search-site:is(#nsmax-lv, *) {
+  border-radius: var(--r-input) !important;
 }

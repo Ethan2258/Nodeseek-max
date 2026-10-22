@@ -1398,7 +1398,7 @@
 				edit.addEventListener("click", () => item.querySelector(":scope > .nsmax-floor-actions .menu-item[data-nsmax-action='edit']")?.click());
 				info.append(edit);
 			} else if (!nativeEdit && edit) edit.remove();
-			if (nativeEdit && info) nsmaxSetAttr(nativeEdit, "data-nsmax-op-moved");
+			if (nativeEdit) nsmaxSetAttr(nativeEdit, "data-nsmax-op-moved");
 			for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
 				const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报|编辑)$/.test(text));
 				if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
@@ -2898,6 +2898,11 @@ function nsmaxTagStructure() {
 				else opBar.append(editLink);
 			} else if (!nativeEdit && editLink) editLink.remove();
 			if (nativeEdit) nsmaxSetAttr(nativeEdit, "data-nsmax-op-moved");
+			// 站点在楼主信息行里还留了一个纯文字「编辑」链接（和上面补的胶囊重复）：收起来，只保留胶囊里的那个
+			if (editLink) for (const link of opPost.querySelectorAll(".content-info a, .nsk-content-meta-info a")) {
+				if (link === editLink || link.classList.contains("nsmax-op-edit") || link.classList.contains("nsmax-floor-edit")) continue;
+				if (/^编辑$/.test(link.textContent.trim())) nsmaxSetAttr(link, "data-nsmax-op-moved");
+			}
 		}
 
 		// 4. 清理主帖底部 comment-menu 内的“引用”和“回复”
