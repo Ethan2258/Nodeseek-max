@@ -289,10 +289,14 @@ const pageScopeOf = (selector) => {
 // 需要交互才出现的浮层（弹窗、用户卡、搜索面板、toast、图片预览、阅读进度条……）：首帧用不到，
 // 单独放进 overlay 段。运行时先注入页面段，主内容就绪后的空闲时段再补 overlay；
 // 用户在那之前就移动鼠标 / 按下键 / 打开弹窗时也会先补上（见 ui-runtime 的 nsmaxEnsureOverlayCss）。
-const overlaySelector = /(^|[\s>+~,(])(?:dialog|\.nspp-post-preview|\.nspp-user-hover|\.hover-user-card|\.nsmax-person-pop|\.nsmax-pop|\.nsmax-toast|\.nsmax-picker|\.nsmax-shortcuts|\.nsmax-mobile-nav|\.nsmax-mobile-menu|\.nsmax-lightbox|\.nspp-image-preview|\.search-overlay|\.nsmax-progress|\.nsmax-ruling-dialog|\.nsmax-lucky-dialog)/;
+// 顶栏的 ≡（.nsmax-mobile-menu）不是浮层：它在顶栏里，「版块放得下时藏起来」那条也在这些规则里。2026-10-23 以前它也算浮层，
+// 首帧之后才补上样式，≡ 先露出来把搜索框往左挤 48px、过一会儿再藏回去（顶栏晃一下）；手机上顶栏按钮的样式也跟着晚到
+const overlaySelector = /(^|[\s>+~,(])(?:dialog|\.nspp-post-preview|\.nspp-user-hover|\.hover-user-card|\.nsmax-person-pop|\.nsmax-pop|\.nsmax-toast|\.nsmax-picker|\.nsmax-shortcuts|\.nsmax-mobile-nav|\.nsmax-lightbox|\.nspp-image-preview|\.search-overlay|\.nsmax-progress|\.nsmax-ruling-dialog|\.nsmax-lucky-dialog)/;
+// :not(浮层) 说的是「不是浮层的元素」，不能因为里面写了浮层的类名就把整条规则当浮层
+const withoutNot = (selector) => selector.replace(/:not\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\)/g, "");
 const chunkOfRule = (rule) => {
 	// 所有选择器都是「交互才出现」的浮层时，整条规则进 overlay 段
-	if (rule.selectors.every((selector) => overlaySelector.test(selector))) return "overlay";
+	if (rule.selectors.every((selector) => overlaySelector.test(withoutNot(selector)))) return "overlay";
 	const chunks = new Set();
 	for (const selector of rule.selectors) {
 		const scopes = pageScopeOf(selector);

@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.34");
+	assert.equal(packageJson.version, "1.8.35");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5758,7 +5758,11 @@ test("v1.8.28 提速：浮层样式（弹窗 / 用户卡 / 搜索面板 / toast�
 		await wait(off.page, 300);
 		const css = await readCss(off.page);
 		assert.equal(css.includes(".search-overlay"), false, "关掉浮层注入时，浮层段确实没有注入");
-		assert.equal(css.includes(".nspp-post-preview"), false);
+		// 正文样式里有「不在预览卡里」的 :not(.nspp-post-preview …)，那是首帧样式；预览卡本身的样式都写成 dialog.nspp-post-preview
+		assert.equal(css.includes("dialog.nspp-post-preview"), false);
+		// 2026-10-23：顶栏的 ≡、正文代码块的样式不算浮层（以前被误放进浮层段，首帧之后才补上：≡ 先露出来再藏、代码块变一下样子）
+		assert.equal(css.includes(".nsmax-mobile-menu"), true, "顶栏 ≡ 的样式在首帧样式里");
+		assert.equal(await off.page.evaluate(() => getComputedStyle(document.querySelector("#nsk-head .nsmax-mobile-menu")).display), "none", "版块放得下：≡ 不显示");
 		assert.deepEqual(off.errors, []);
 	} finally { await off.context.close(); }
 	// 2) 正常页面：没有交互，首帧后空闲时也会自动补上浮层段
@@ -5874,31 +5878,30 @@ test("v1.8.29 私信不用刷新：面板开着时自动读到新消息（轮询
 	} finally { await context.close(); }
 });
 
-test("v1.8.29 资料页不再闪：站点整块重画主栏时先遮一帧再显示，整理完恢复", async () => {
+test("v1.8.29 资料页不再闪：站点整块重画主栏时，换上来的原样资料卡在下一帧之前就改好（2026-10-23 起不用再遮一帧）", async () => {
+	// 站点原样的主栏（还没被脚本整理过）
+	const native = nativeSpacePage().match(/<section id="nsk-frame">([\s\S]*?)<\/section>/)[1];
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage(), viewport: { width: 1280, height: 900 } });
 	try {
 		await page.waitForSelector(".nsmax-space-top");
-		await page.evaluate(() => {
-			window.__swap = { set: 0, removed: 0, at: 0, visibleAt: 0 };
-			new MutationObserver(() => {
-				const state = window.__swap;
-				if (document.documentElement.hasAttribute("data-nsmax-space-swap")) {
-					if (!state.set) {
-						state.set = performance.now();
-						state.visibleAt = getComputedStyle(document.querySelector("#nsk-frame")).opacity;
-					}
-				} else if (state.set && !state.removed) state.removed = performance.now();
-			}).observe(document.documentElement, { attributes: true, attributeFilter: ["data-nsmax-space-swap"] });
-			// 模拟站点水合：主栏里的整块内容被换掉（原来的节点被移除、新的节点加进来）
-			const container = document.querySelector("#nsk-frame > .nsk-container");
-			container.replaceChildren(...Array.from(container.cloneNode(true).children));
-		});
-		await page.waitForFunction(() => window.__swap.removed > 0, null, { timeout: 3e3 });
-		const state = await page.evaluate(() => window.__swap);
-		assert.ok(state.set > 0, "检测到整块重画时应先遮住");
-		assert.equal(state.visibleAt, "0", "遮住的那一帧主栏是不可见的");
-		assert.ok(state.removed - state.set <= 1200, `遮住的时间 ${Math.round(state.removed - state.set)}ms，应很快恢复`);
-		assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-space-swap")), false);
+		await wait(page, 300);
+		const state = await page.evaluate((html) => new Promise((resolve) => {
+			// 模拟站点水合：主栏整块换成站点原样画的（原来的节点被移除、新的节点加进来）
+			const frame = document.querySelector("#nsk-frame");
+			const fresh = document.createElement("template");
+			fresh.innerHTML = html;
+			frame.replaceChildren(...fresh.content.childNodes);
+			requestAnimationFrame(() => resolve({
+				top: !!document.querySelector(".head-container > .nsmax-space-top"),
+				raw: !!document.querySelector(".head-container > img"),
+				masked: document.documentElement.hasAttribute("data-nsmax-space-swap"),
+				opacity: getComputedStyle(frame).opacity
+			}));
+		}), native);
+		assert.equal(state.top, true, "下一帧之前就是 sb.sb 资料卡");
+		assert.equal(state.raw, false, "原样的头像不露出来");
+		assert.equal(state.masked, false, "已经改好了，不用遮");
+		assert.equal(state.opacity, "1");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -6024,6 +6027,264 @@ test("v1.8.33 楼中楼一条的头部：时间 / #楼号 / 回复引用点赞�
 		assert.deepEqual(state.lines, ["21px"]);
 		assert.ok(Math.max(...state.tops) - Math.min(...state.tops) <= 1, "同一基线：" + JSON.stringify(state.tops));
 		assert.deepEqual(state.heights, [21]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.35 列表页资料卡：帖子外面也有 Telegram（从他最近一篇主帖 / 回复的签名里找到，记住 30 天，换页不再查）；关注 / 私信 / Telegram / 主页 四个按钮排一行", async () => {
+	// user0（10）：发过主帖，签名里有 t.me 链接；user1（11）：没发过主帖，最近一条回复在第 12 楼（第 2 页），签名是纯文字「电报：@buyer_tg」
+	const opPost = postPage().replace("签名：机器不跑路", '联系 <a href="https://t.me/seller_tg">Telegram</a> ');
+	const replyPage = postPage().replace('<li class="content-item" id="1">', '<li class="content-item" id="12">').replace("<p>收了，私信你</p></article>", '<p>收了，私信你</p></article><div class="signature">电报：@buyer_tg</div>');
+	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(),
+		pages: { "/post-2000-1": opPost, "/post-3000-2": replyPage },
+		viewport: { width: 1280, height: 900 },
+		api: {
+			"/api/content/list-discussions": [{ status: 200, body: { success: true, discussions: [{ rank: 0, title: "出一台小鸡", post_id: 2000 }] } }, { status: 200, body: { success: true, discussions: [] } }],
+			"/api/content/list-comments": [{ status: 200, body: { success: true, comments: [{ post_id: 3000, title: "收一台小鸡", rank: 0, floor_id: 12, text: "收了，私信你" }] } }]
+		}
+	});
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const hover = async (index) => {
+			await page.mouse.move(5, 5);
+			await page.waitForFunction(() => !document.querySelector(".nsmax-person-pop:not([hidden])"), null, { timeout: 3e3 }).catch(() => {});
+			await page.locator(".post-list > li").nth(index).locator("a[href*='/space/']").first().hover();
+			await page.waitForSelector(".nsmax-person-pop .nsmax-person-tg-btn", { timeout: 5e3 });
+			return page.locator(".nsmax-person-pop .nsmax-person-tg-btn").getAttribute("href");
+		};
+		assert.equal(await hover(0), "https://t.me/seller_tg", "主帖签名里的 Telegram");
+		const row = await page.evaluate(() => {
+			const items = [...document.querySelectorAll(".nsmax-person-pop .nsmax-person-actions > :is(a, button)")];
+			return { order: items.map((el) => el.textContent.trim()), rows: new Set(items.map((el) => Math.round(el.getBoundingClientRect().top))).size, clipped: items.filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.textContent.trim()), heights: [...new Set(items.map((el) => Math.round(el.getBoundingClientRect().height)))] };
+		});
+		assert.deepEqual(row.order, ["关注", "私信", "Telegram", "主页"]);
+		assert.equal(row.rows, 1, "四个按钮在同一行，不再 3 + 1 换行");
+		assert.deepEqual(row.clipped, [], "按钮里的字完整显示");
+		assert.equal(row.heights.length, 1, "四个按钮一样高");
+		assert.equal(await hover(1), "https://t.me/buyer_tg", "没发过主帖的：读最近一条回复所在那一页的签名");
+		// 记下来了（localStorage），换一页再悬停不再查
+		await page.waitForFunction(() => { const saved = JSON.parse(localStorage.getItem("nsmax:telegram") || "{}"); return saved["10"]?.c?.length === 1 && saved["11"]?.c?.length === 1; }, null, { timeout: 3e3 });
+		const before = { discussions: calls["/api/content/list-discussions"], comments: calls["/api/content/list-comments"] };
+		assert.deepEqual(before, { discussions: 2, comments: 1 });
+		await page.goto("https://www.nodeseek.com/", { waitUntil: "domcontentloaded" });
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		assert.equal(await hover(0), "https://t.me/seller_tg");
+		assert.deepEqual({ discussions: calls["/api/content/list-discussions"], comments: calls["/api/content/list-comments"] }, before, "记住的不再请求");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.35 编辑增强：Ctrl+B / I / K / E（再按取消、能撤回）；列表、引用回车续行，空行回车结束；列表行 Tab 缩进；选中文字粘贴网址变链接；输入 @ 提示这一页的人；Ctrl+Enter 提交", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const input = page.locator(".md-editor textarea").first();
+		const value = () => input.inputValue();
+		const select = (start, end) => input.evaluate((ta, [a, b]) => ta.setSelectionRange(a, b), [start, end]);
+		await input.click();
+		// 加粗：没选字时插入 **粗体** 并选中「粗体」，直接打字替换；选中带标记的字再按一次去掉
+		await page.keyboard.press("Control+b");
+		assert.equal(await value(), "**粗体**");
+		await page.keyboard.type("重点");
+		assert.equal(await value(), "**重点**");
+		await select(2, 4);
+		await page.keyboard.press("Control+b");
+		assert.equal(await value(), "重点");
+		await page.keyboard.press("Control+z");
+		assert.equal(await value(), "**重点**", "Ctrl+Z 撤回");
+		// 斜体 / 行内代码 / 链接
+		await input.fill("看这里");
+		await select(0, 3);
+		await page.keyboard.press("Control+i");
+		assert.equal(await value(), "*看这里*");
+		await input.fill("npm i");
+		await select(0, 5);
+		await page.keyboard.press("Control+e");
+		assert.equal(await value(), "`npm i`");
+		await input.fill("文档");
+		await select(0, 2);
+		await page.keyboard.press("Control+k");
+		assert.equal(await value(), "[文档](https://)");
+		assert.equal(await input.evaluate((ta) => ta.value.slice(ta.selectionStart, ta.selectionEnd)), "https://", "选中 https:// 方便直接粘贴网址");
+		// 列表续行：- / 1. / 任务列表；只有符号的空行回车结束列表
+		await input.fill("");
+		await page.keyboard.type("- 第一项");
+		await page.keyboard.press("Enter");
+		await page.keyboard.type("第二项");
+		assert.equal(await value(), "- 第一项\n- 第二项");
+		await page.keyboard.press("Tab");
+		assert.equal(await value(), "- 第一项\n  - 第二项", "列表行 Tab 缩进");
+		await page.keyboard.press("Shift+Tab");
+		assert.equal(await value(), "- 第一项\n- 第二项");
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Enter");
+		assert.equal(await value(), "- 第一项\n- 第二项\n", "空的列表行回车：结束列表");
+		await input.fill("");
+		await page.keyboard.type("1. 甲");
+		await page.keyboard.press("Enter");
+		await page.keyboard.type("乙");
+		await page.keyboard.press("Enter");
+		assert.equal(await value(), "1. 甲\n2. 乙\n3. ");
+		await input.fill("");
+		await page.keyboard.type("- [x] 做完了");
+		await page.keyboard.press("Enter");
+		assert.equal(await value(), "- [x] 做完了\n- [ ] ");
+		await input.fill("");
+		await page.keyboard.type("> 引用一句");
+		await page.keyboard.press("Enter");
+		assert.equal(await value(), "> 引用一句\n> ");
+		// 代码块里回车照常
+		await input.fill("```\n- 不是列表");
+		await page.keyboard.press("End");
+		await page.keyboard.press("Enter");
+		assert.equal(await value(), "```\n- 不是列表\n");
+		// 选中文字粘贴网址：变成 [文字](网址)
+		await input.fill("项目主页");
+		await select(0, 4);
+		await input.evaluate((ta) => { const data = new DataTransfer(); data.setData("text/plain", "https://example.com/repo"); ta.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true })); });
+		assert.equal(await value(), "[项目主页](https://example.com/repo)");
+		// @ 提示：这一页出现过的人（楼主排第一，不含自己），上下键选，回车填进去
+		await input.fill("");
+		await page.keyboard.type("谢谢 @");
+		await page.waitForSelector(".nsmax-mention:not([hidden]) .nsmax-mention-item");
+		const menu = await page.evaluate(() => {
+			const box = document.querySelector(".nsmax-mention").getBoundingClientRect();
+			const ta = document.querySelector(".md-editor textarea").getBoundingClientRect();
+			return { names: [...document.querySelectorAll(".nsmax-mention-item")].map((item) => item.textContent.trim()), inside: box.left >= ta.left - 1 && box.top >= ta.top, position: getComputedStyle(document.querySelector(".nsmax-mention")).position };
+		});
+		assert.equal(menu.names[0], "seller", "楼主排第一");
+		assert.ok(menu.names.includes("buyer") && !menu.names.includes("tester"), JSON.stringify(menu.names));
+		assert.equal(menu.inside, true, "提示框在光标下面");
+		assert.equal(menu.position, "fixed");
+		await page.keyboard.type("bu");
+		await page.waitForFunction(() => [...document.querySelectorAll(".nsmax-mention-item")].map((item) => item.textContent.trim()).join() === "buyer");
+		await page.keyboard.press("Enter");
+		assert.equal(await value(), "谢谢 @buyer ");
+		assert.equal(await page.locator(".nsmax-mention").isHidden(), true);
+		await page.keyboard.type("@pa");
+		await page.waitForSelector(".nsmax-mention:not([hidden])");
+		await page.keyboard.press("Escape");
+		assert.equal(await page.locator(".nsmax-mention").isHidden(), true, "Esc 只关提示框");
+		assert.equal(await input.isVisible(), true, "回复框还在");
+		// Ctrl+Enter 提交（点站点自己的「发布评论」）
+		await input.fill("测试回复内容");
+		await page.keyboard.press("Control+Enter");
+		assert.equal(await page.locator(".nsmax-editor-status").innerText(), "提交中");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+// 2026-10-23 第二十二批：新页面打开后不卡
+test("v1.8.35 打开页面不卡：列表首屏预取不再逐个读标题位置（content-visibility 的行不被逼着当场排版）；滚动把标题带到鼠标下面时不弹预览、不预取，鼠标真的动了才弹", async () => {
+	const pages = {};
+	for (let index = 0; index < 30; index++) pages[`/post-${1000 + index}-1`] = postPage();
+	// 数一数脚本对列表标题读了几次位置
+	const init = `(() => { if (window.top !== window) return; window.__titleRects = 0; const original = Element.prototype.getBoundingClientRect; Element.prototype.getBoundingClientRect = function () { if (this.matches && this.matches(".post-list-item .post-title a")) window.__titleRects++; return original.call(this); }; })();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ count: 30 }), pages, init, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		// 标题带「抽奖」的另有后台核对也会取帖子，专门等首屏第一篇
+		await page.waitForFunction(() => performance.getEntriesByType("resource").some((entry) => /\/post-1000-1(?:\.html)?$/.test(entry.name)), null, { timeout: 5e3 });
+		await wait(page, 300);
+		const prefetched = await page.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\/post-\d+-1(?:\.html)?$/.test(entry.name)).map((entry) => new URL(entry.name).pathname));
+		assert.ok(prefetched.includes("/post-1000-1"), `首屏第一篇预取了：${prefetched}`);
+		// 标题带「抽奖」的（每 6 篇一篇）另有后台核对，不算；其余屏幕外的不预取
+		const offscreen = prefetched.filter((path) => { const index = Number(path.match(/post-(\d+)/)[1]) - 1000; return index >= 8 && index % 6 !== 3; });
+		assert.deepEqual(offscreen, [], "只预取首屏那几篇");
+		assert.equal(await page.evaluate(() => window.__titleRects), 0, "预取不读标题位置");
+		// 鼠标放在第 2 篇标题上（真的移过去）：预览打开；按 Esc 收起（鼠标还停在标题上）
+		const titles = page.locator("ul.post-list > li.post-list-item .post-title a");
+		const box = await titles.nth(1).boundingBox();
+		await page.mouse.move(box.x + 20, box.y + box.height / 2, { steps: 4 });
+		await page.waitForSelector("dialog.nspp-post-preview:not([hidden])", { timeout: 3e3 });
+		await page.keyboard.press("Escape");
+		await page.waitForSelector("dialog.nspp-post-preview", { state: "hidden", timeout: 3e3 });
+		const opened = () => page.evaluate(() => { const dialog = document.querySelector("dialog.nspp-post-preview"); return !!dialog && !dialog.hidden; });
+		const fetched = () => page.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\/post-1002-1$/.test(entry.name)).length);
+		const before = await fetched();
+		// 鼠标不动，页面往下滚一行：第 3 篇的标题滑到鼠标下面——不算悬停，不弹预览、不去取它
+		const step = await page.evaluate(() => { const links = document.querySelectorAll("ul.post-list > li.post-list-item .post-title a"); return links[2].getBoundingClientRect().top - links[1].getBoundingClientRect().top; });
+		await page.evaluate((dy) => window.scrollBy({ top: dy, behavior: "instant" }), step);
+		await wait(page, 700);
+		const hovered = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest(".post-title a")?.getAttribute("href"), [box.x + 20, box.y + box.height / 2]);
+		assert.equal(hovered, "/post-1002-1", "鼠标下面换成了第 3 篇");
+		assert.equal(await opened(), false, "滚动带过来的不弹预览");
+		assert.equal(await fetched(), before, "也不预取");
+		// 鼠标在上面真的动一下：弹出第 3 篇的预览
+		await page.mouse.move(box.x + 24, box.y + box.height / 2);
+		await page.waitForSelector("dialog.nspp-post-preview:not([hidden])", { timeout: 3e3 });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.35 打开页面不卡：抽奖帖的抽奖卡片、代码块「复制」那一条第一帧就在（以前第一帧之后才插进正文，整篇往下一推）；顶栏 ≡ 在版块放得下时一开始就不显示（以前先露出来、把搜索框挤开再藏回去）", async () => {
+	let html = postPage().replace("</article>", '<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=1893456000000&amp;count=2">开奖</a></p></article>');
+	// 站点 index.js：页面加载后给 pre > code 加 button.code-copy-btn（.always：站点偏好「一直显示」）
+	html = html.replace("</body>", `<script>document.addEventListener("DOMContentLoaded", () => setTimeout(() => { for (const code of document.querySelectorAll("article.post-content pre > code")) { const pre = code.parentElement; pre.classList.add("code-copy-wrapper"); const button = document.createElement("button"); button.className = "code-copy-btn always"; button.type = "button"; pre.append(button); } }, 300));</script></body>`);
+	// 页面一解析完（DOMContentLoaded，第一帧之前）就记下正文里有什么；之后记下第一帧之后的布局跳动
+	const init = `(() => { if (window.top !== window) return; window.__shifts = []; new PerformanceObserver((list) => { for (const entry of list.getEntries()) window.__shifts.push({ t: entry.startTime, v: entry.value }); }).observe({ type: "layout-shift", buffered: true }); document.addEventListener("DOMContentLoaded", () => { const pre = document.querySelector(".nsk-post article pre"); window.__atDcl = { lottery: !!document.querySelector(".nsk-post article.post-content .nsmax-lottery"), copy: !!pre && pre.hasAttribute("data-nsmax-copy") && pre.hasAttribute("data-nsmax-copy-always"), pad: pre ? getComputedStyle(pre).paddingTop : "" }; }); })();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1?nsmax-no-lazy-overlay", { html, init, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.waitForSelector(".nsk-post .nsmax-code [data-nspp-copy]");
+		await wait(page, 600);
+		const state = await page.evaluate(() => {
+			const fcp = performance.getEntriesByType("paint").find((entry) => entry.name === "first-contentful-paint")?.startTime || 0;
+			const menu = document.querySelector("#nsk-head .nsmax-mobile-menu");
+			return { atDcl: window.__atDcl, pad: getComputedStyle(document.querySelector(".nsk-post article pre")).paddingTop, shifts: window.__shifts.filter((entry) => entry.t > fcp).reduce((sum, entry) => sum + entry.v, 0), menu: menu ? getComputedStyle(menu).display : "missing", overflow: document.getElementById("nsk-head").hasAttribute("data-nsmax-nav-overflow") };
+		});
+		assert.equal(state.atDcl.lottery, true, "抽奖卡片第一帧就在正文里");
+		assert.equal(state.atDcl.copy, true, "代码块第一帧就标好「复制」一直显示");
+		assert.equal(state.atDcl.pad, "38px", "代码块顶上放「复制」的那一条第一帧就留好");
+		assert.equal(state.pad, "38px", "站点的按钮加上以后还是那一条");
+		// 抽奖卡片晚插进来、「复制」那一条晚留出来，都是 0.05 以上的跳动
+		assert.ok(state.shifts < 0.005, `第一帧之后正文不跳：${state.shifts}`);
+		assert.equal(state.overflow, false);
+		assert.equal(state.menu, "none", "版块放得下：≡ 不显示（浮层样式还没补上也一样）");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.35 打开页面不卡：模块启动时顶栏版块、分页的标记按差异改（结果一样就一个属性都不动，以前先全清掉再打上，整排重算样式）", async () => {
+	// 页面解析完以后，顶栏版块和分页上的这些属性有没有被删了又加
+	const init = `(() => { if (window.top !== window) return; window.__churn = []; document.addEventListener("readystatechange", () => { if (document.readyState !== "interactive") return; new MutationObserver((records) => { for (const record of records) window.__churn.push(record.attributeName + ":" + record.oldValue + "→" + record.target.getAttribute(record.attributeName)); }).observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["data-nsmax-header-cat", "data-nsmax-header-hide", "data-nsmax-header-cat-on", "data-nsmax-pg", "data-nsmax-pg-cur", "data-nsmax-pg-wrap", "data-nsmax-pager"] }); }); })();`;
+	for (const url of ["https://www.nodeseek.com/", "https://www.nodeseek.com/post-1000-1"]) {
+		const { context, page, errors } = await open(browser, url, { html: url.endsWith("/") ? listPage() : postPage(), init, viewport: { width: 1440, height: 900 } });
+		try {
+			await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+			await wait(page, 800);
+			assert.equal(await page.locator("#nsk-head [data-nsmax-header-cat]").count() > 0, true, "版块标好了");
+			// 页面解析完时第一次打上（从无到有）可以；已经打上的又被删掉、重打一遍就不行
+			const churn = await page.evaluate(() => window.__churn);
+			assert.deepEqual(churn.filter((record) => !record.includes(":null→")), [], `${url}：已经打上的标记不再删了重打`);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("v1.8.35 打开页面不卡：个人主页的资料卡是站点前端画的——画出来的那一帧就改成 sb.sb 资料卡（以前原样先露一下）；站点写着「没有找到readme」时第一帧就不放「介绍」标签（以前等接口回来才藏，标签栏跳一下）；画出来之前页脚不贴在顶栏下面", async () => {
+	// 照真站：服务器只给空的主栏，站点脚本拿到资料后（这里 DOMContentLoaded 后 300ms）才把资料卡画进去
+	const html = nativeSpacePage().replace(/<section id="nsk-frame">([\s\S]*?)<\/section>/, (match, inner) => `<section id="nsk-frame"><template id="later">${inner}</template></section>`)
+		.replace("</body>", `<script>document.addEventListener("DOMContentLoaded", () => setTimeout(() => { const later = document.getElementById("later"); later.replaceWith(later.content.cloneNode(true)); }, 300));</script></body>`);
+	const init = `(() => { if (window.top !== window) return; document.addEventListener("DOMContentLoaded", () => { const footer = document.querySelector("footer.footer"); window.__pending = { attr: document.documentElement.hasAttribute("data-nsmax-space-pending"), footerTop: footer ? footer.getBoundingClientRect().top : -1 }; }); new MutationObserver((records, observer) => { if (!document.querySelector(".head-container")) return; observer.disconnect(); requestAnimationFrame(() => { const intro = document.querySelector('.selector a.select-item[data-nsmax-tab="general"]'); window.__first = { top: !!document.querySelector(".head-container > .nsmax-space-top"), raw: !!document.querySelector(".head-container > img"), intro: !!intro && !intro.hidden && getComputedStyle(intro).display !== "none", pending: document.documentElement.hasAttribute("data-nsmax-space-pending") }; }); }).observe(document, { childList: true, subtree: true }); })();`;
+	// 资料接口慢（2 秒才回）：「介绍」标签要靠站点画出来的「没有找到readme」判断
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", {
+		html, init, viewport: { width: 1440, height: 900 },
+		beforeNavigate: (p) => p.route("**/api/account/getInfo/**", async (route) => {
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+			await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, detail: { member_id: 10, member_name: "Steve", rank: 3, coin: 1257, nPost: 100, nComment: 873, created_at: new Date(Date.now() - 659 * 864e5).toISOString() } }) });
+		})
+	});
+	try {
+		await page.waitForFunction(() => window.__first, null, { timeout: 5e3 });
+		const state = await page.evaluate(() => ({ pending: window.__pending, first: window.__first }));
+		assert.equal(state.pending.attr, true, "资料卡画出来之前给主栏留一屏高");
+		assert.ok(state.pending.footerTop >= 900, `页脚在屏幕外（${state.pending.footerTop}）`);
+		assert.equal(state.first.top, true, "画出来的那一帧就是 sb.sb 资料卡");
+		assert.equal(state.first.raw, false, "原样的头像不再露出来");
+		assert.equal(state.first.intro, false, "没写介绍：第一帧就不放「介绍」标签");
+		assert.equal(state.first.pending, false, "画出来就撤掉留的高度");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

@@ -69,6 +69,45 @@
 		const me = unsafeWindow$1.__config__?.user?.member_id;
 		return !!id && me !== undefined && String(me) === id;
 	}
+	// 个人主页的资料：带上 readme=1（站点自己也这样请求），顺便知道这个人有没有写介绍，决定「介绍」标签显示与否；同一个人只请求一次。
+	// 页面一开始解析就先发出去（见 nsmaxWatchSpace）：站点画出资料卡时多半已经回来了，「介绍」标签第一帧就是对的
+	// （2026-10-23：以前等资料卡画出来才请求，回来后「介绍」标签藏起来，标签栏左移一截、下面换成「主题」，整块跳一下）
+	function nsmaxSpaceInfo(uid) {
+		if (!window.__nsmax_space_api_cache) window.__nsmax_space_api_cache = new Map();
+		let reqPromise = window.__nsmax_space_api_cache.get(uid);
+		if (reqPromise) return reqPromise;
+		reqPromise = fetch("/api/account/getInfo/" + uid + "?readme=1", { headers: { "Accept": "application/json" } })
+			.then(res => res.json())
+			.then(data => data?.detail || data?.data || {})
+			.catch(() => ({}));
+		window.__nsmax_space_api_cache.set(uid, reqPromise);
+		reqPromise.then(info => {
+			nsmaxSpaceIntro.set(uid, typeof info?.readme === "string" ? info.readme.trim().length > 0 : false);
+			nsmaxPrepareSpace();
+			// 资料卡里的 Telegram 联系方式：接口返回的签名 / 简介里有就补一个和「私信」一样的按钮（放在它后面）
+			try {
+				const addTelegram = (contacts) => {
+					const topRow = document.querySelector(".head-container > .nsmax-space-top");
+					if (!topRow || !contacts?.length || topRow.querySelector(".nsmax-space-tg-btn")) return;
+					const link = document.createElement("a");
+					link.className = "btn nsmax-space-tg-btn";
+					link.href = contacts[0].href;
+					link.target = "_blank";
+					link.rel = "noopener noreferrer";
+					link.textContent = "Telegram";
+					link.title = contacts[0].handle ? "Telegram：@" + contacts[0].handle : "在 Telegram 里打开";
+					const pm = topRow.querySelector(":scope > a.btn");
+					if (pm) pm.after(link); else topRow.append(link);
+				};
+				const contacts = nsmaxTelegramContacts(info?.signature || info?.sign || info?.signature_html || info?.bio || info?.readme || info?.intro || "");
+				if (contacts.length) {
+					nsmaxTelegramCache.set(uid, contacts);
+					addTelegram(contacts);
+				} else nsmaxLookupTelegram(uid).then(addTelegram);
+			} catch {}
+		});
+		return reqPromise;
+	}
 	function nsmaxPrepareSpace() {
 		if (!/^\/space\/\d+/.test(location.pathname)) return;
 		// 资料卡里那一组统计由下面的 renderStatsAndProgress 管，这里只标记原站其余位置的过时统计
@@ -76,15 +115,20 @@
 			if (item.closest(".head-container")) continue;
 			item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
 		}
-		const hasIntro = nsmaxSpaceIntro.get(location.pathname.match(/\/space\/(\d+)/)?.[1]);
+		const spaceId = location.pathname.match(/\/space\/(\d+)/)?.[1];
+		const hasIntro = nsmaxSpaceIntro.get(spaceId);
 		for (const readme of document.querySelectorAll(".readme")) {
 			const text = readme.textContent.trim();
 			const hasWatermark = !!readme.querySelector("img[src*='logo'], img[src*='nodeseek'], svg");
 			// 接口说写了介绍就照常显示（介绍可能只有一张图）；站点写着「没有找到readme」或还没渲染出来时不显示
-			const isEmpty = !text && !readme.querySelector("img") || /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)/i.test(text) || hasIntro !== true && hasWatermark && text.length < 20;
+			const placeholder = /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)/i.test(text);
+			const isEmpty = !text && !readme.querySelector("img") || placeholder || hasIntro !== true && hasWatermark && text.length < 20;
 			readme.toggleAttribute("data-nsmax-empty-readme", isEmpty);
 			if (isEmpty) nsmaxHideEl(readme);
 			else nsmaxShowEl(readme);
+			// 站点画出来的介绍就能说明写没写（写着「没有找到readme」= 没写；有正文 = 写了），不用等接口：「介绍」标签第一帧就对
+			// （2026-10-23：以前等接口回来才知道，站点先画好的话「介绍」标签过一会儿才藏起来，标签栏和下面的内容跳一下）
+			if (spaceId && hasIntro === undefined && (placeholder || !isEmpty && text.length >= 20)) nsmaxSpaceIntro.set(spaceId, !placeholder);
 		}
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
 		if (!head) return;
@@ -291,37 +335,8 @@
 			renderStatsAndProgress(parsedLevel, parsedCoin, parsedPost, parsedComment);
 		}
 
-		// 2. 通过 API 保证异步获取完整数据（支持直达非概况页面）。带上 readme=1（站点自己也这样请求）：顺便知道这个人有没有写介绍，
-		//    决定「介绍」标签显示与否（见下面的标签部分）
-		if (!window.__nsmax_space_api_cache) window.__nsmax_space_api_cache = new Map();
-		let reqPromise = uid ? window.__nsmax_space_api_cache.get(uid) : null;
-		if (uid && !reqPromise) {
-			reqPromise = fetch("/api/account/getInfo/" + uid + "?readme=1", { headers: { "Accept": "application/json" } })
-				.then(res => res.json())
-				.then(data => data?.detail || data?.data || {})
-				.catch(() => ({}));
-			window.__nsmax_space_api_cache.set(uid, reqPromise);
-			reqPromise.then(info => {
-				nsmaxSpaceIntro.set(uid, typeof info?.readme === "string" ? info.readme.trim().length > 0 : false);
-				nsmaxPrepareSpace();
-				// 资料卡里的 Telegram 联系方式：接口返回的签名 / 简介里有就补一个和「私信」一样的按钮（放在它后面）
-				try {
-					const topRow = document.querySelector(".head-container > .nsmax-space-top");
-					const contacts = nsmaxTelegramContacts(info?.signature || info?.sign || info?.signature_html || info?.bio || info?.readme || info?.intro || "");
-					if (topRow && contacts.length && !topRow.querySelector(".nsmax-space-tg-btn")) {
-						const link = document.createElement("a");
-						link.className = "btn nsmax-space-tg-btn";
-						link.href = contacts[0].href;
-						link.target = "_blank";
-						link.rel = "noopener noreferrer";
-						link.textContent = "Telegram";
-						link.title = contacts[0].handle ? "Telegram：@" + contacts[0].handle : "在 Telegram 里打开";
-						const pm = topRow.querySelector(":scope > a.btn");
-						if (pm) pm.after(link); else topRow.append(link);
-					}
-				} catch {}
-			});
-		}
+		// 2. 通过 API 保证异步获取完整数据（支持直达非概况页面），见 nsmaxSpaceInfo
+		const reqPromise = uid ? nsmaxSpaceInfo(uid) : null;
 		if (uid && (parsedLevel === undefined || !head.querySelector(".nsmax-space-progress"))) {
 			reqPromise.then(info => {
 				if (!info || typeof info !== "object") return;
@@ -2175,9 +2190,80 @@ function nsmaxCopyText(text) {
 	else fallback();
 }
 var NSMAX_TELEGRAM_ICON = "M21.5 4.3 2.9 11.5c-.9.3-.9 1.5 0 1.8l4.6 1.5 1.8 5.4c.3.8 1.3 1 1.9.4l2.5-2.4 4.5 3.3c.7.5 1.7.1 1.9-.7l3.1-14.3c.2-.9-.7-1.6-1.7-1.2ZM9.6 14.2l7.6-5.6-5.5 6.3-.2 3.1-1.9-3.8Z";
-// 页面上见到的 Telegram 联系方式按用户记下来（uid → [{href, handle}]）：悬停在作者身上时资料卡直接拿来用，
-// 不用等接口返回签名，也不用再翻他的楼层签名。
-var nsmaxTelegramCache = new Map();
+// 页面上见到的 Telegram 联系方式按用户记在本机（uid → {at, c: [{href, handle}]}，最多 1500 人）：悬停在作者身上时资料卡直接拿来用。
+// 2026-10-23：以前只记在当前页面里，资料接口又不返回签名，所以只有在帖子里（签名渲染出来了）才看得到 Telegram，
+// 列表页、个人主页的资料卡都没有。现在记在本机（有的记 30 天，没有的也记 3 天、不重复去查），没见过的人由 nsmaxLookupTelegram 去查
+var NSMAX_TELEGRAM_KEY = "nsmax:telegram";
+var nsmaxTelegramStore;
+var nsmaxTelegramSaving = 0;
+function nsmaxTelegramMap() {
+	if (nsmaxTelegramStore) return nsmaxTelegramStore;
+	nsmaxTelegramStore = new Map();
+	try {
+		for (const [uid, entry] of Object.entries(JSON.parse(localStorage.getItem(NSMAX_TELEGRAM_KEY) || "{}"))) if (entry && Array.isArray(entry.c) && Number.isFinite(entry.at)) nsmaxTelegramStore.set(uid, entry);
+	} catch {}
+	return nsmaxTelegramStore;
+}
+var nsmaxTelegramCache = {
+	// 记下过、还没过期：返回联系方式（可能是空数组，表示查过、没有）；没记下或过期：undefined
+	get(uid) {
+		const entry = nsmaxTelegramMap().get(String(uid));
+		if (!entry) return undefined;
+		return Date.now() - entry.at > (entry.c.length ? 30 : 3) * 864e5 ? undefined : entry.c;
+	},
+	set(uid, contacts) {
+		const key = String(uid || "");
+		if (!/^\d+$/.test(key)) return;
+		const map = nsmaxTelegramMap();
+		const list = (contacts || []).slice(0, 3).map(({ href, handle }) => ({ href, handle }));
+		const old = map.get(key);
+		if (old && JSON.stringify(old.c) === JSON.stringify(list) && Date.now() - old.at < 864e5) return;
+		map.delete(key);
+		map.set(key, { at: Date.now(), c: list });
+		while (map.size > 1500) map.delete(map.keys().next().value);
+		if (!nsmaxTelegramSaving) nsmaxTelegramSaving = setTimeout(() => {
+			nsmaxTelegramSaving = 0;
+			try { localStorage.setItem(NSMAX_TELEGRAM_KEY, JSON.stringify(Object.fromEntries(nsmaxTelegramMap()))); } catch {}
+		}, 600);
+	}
+};
+// 没见过的人：读他最近一篇主帖（只读到主帖的签名为止），签名里有 Telegram 就记下；一篇主帖都没发过的，读他最近一条回复所在的那一页。
+// 只在登录后查（没登录时站点不给签名）；同一个人同时只查一次，查到的、没有的都记下
+var nsmaxTelegramLookups = new Map();
+function nsmaxLookupTelegram(uid) {
+	uid = String(uid || "");
+	const known = nsmaxTelegramCache.get(uid);
+	if (known) return Promise.resolve(known);
+	if (!/^\d+$/.test(uid) || !unsafeWindow$1.__config__?.user) return Promise.resolve([]);
+	const pending = nsmaxTelegramLookups.get(uid);
+	if (pending) return pending;
+	const json = (url) => fetch(url, { credentials: "same-origin", priority: "low" }).then((response) => response.ok ? response.json() : null);
+	const ownerOf = (root) => root?.querySelector(".nsk-content-meta-info .author-info a[href*='/space/']")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
+	const promise = (async () => {
+		let contacts = [];
+		const discussions = await json(`/api/content/list-discussions?uid=${uid}&page=1`);
+		const postId = discussions?.discussions?.[0]?.post_id;
+		if (postId) {
+			const response = await fetch(`/post-${postId}-1`, { credentials: "same-origin", priority: "low" });
+			const html = response.ok && response.body ? await readUntil(response, "comment-menu-mount") : "";
+			const op = new DOMParser().parseFromString(html, "text/html").querySelector(".nsk-post > .content-item");
+			if (op && ownerOf(op) === uid) contacts = nsmaxTelegramContacts(op.querySelector(".signature") || "");
+		} else {
+			const comment = (await json(`/api/content/list-comments?uid=${uid}&page=1`))?.comments?.[0];
+			const floor = Number(comment?.floor_id);
+			if (comment?.post_id && floor > 0) {
+				const perPage = Number(unsafeWindow$1.__config__?.commmentPerPage) || 10;
+				const response = await fetch(`/post-${comment.post_id}-${Math.floor((floor - 1) / perPage) + 1}`, { credentials: "same-origin", priority: "low" });
+				const item = new DOMParser().parseFromString(response.ok ? await response.text() : "", "text/html").querySelector(`ul.comments > li.content-item[id="${floor}"]`);
+				if (item && ownerOf(item) === uid) contacts = nsmaxTelegramContacts(item.querySelector(".signature") || "");
+			}
+		}
+		nsmaxTelegramCache.set(uid, contacts);
+		return contacts;
+	})().catch(() => []).finally(() => nsmaxTelegramLookups.delete(uid));
+	nsmaxTelegramLookups.set(uid, promise);
+	return promise;
+}
 function nsmaxTelegramContacts(source) {
 	const list = [];
 	const pushHref = (href) => {
@@ -2250,6 +2336,17 @@ function nsmaxDecorateSignatures() {
 		const ownerLink = signature.closest(".content-item, .post-list-item, .user-head, .user-card")?.querySelector('a[href*="/space/"]');
 		const uid = ownerLink?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
 		if (uid) nsmaxTelegramCache.set(uid, contacts);
+	}
+	// 帖子数据里这一页每位作者的签名（登录后才有）：有 Telegram 的、没有的都记下，以后在列表页悬停时不用再去查
+	const config = unsafeWindow$1.__config__;
+	if (config?.user && Array.isArray(config.postData?.comments)) {
+		for (const comment of config.postData.comments) {
+			const uid = comment?.poster?.uid;
+			if (!uid || typeof comment.signature !== "string") continue;
+			const contacts = nsmaxTelegramContacts(comment.signature);
+			// 签名（页面上渲染出来的）里认出来过的，不被这里的「没有」盖掉
+			if (contacts.length || !nsmaxTelegramCache.get(uid)?.length) nsmaxTelegramCache.set(uid, contacts);
+		}
 	}
 }
 function nsmaxTagStructure() {
@@ -2650,22 +2747,46 @@ function nsmaxTagStructure() {
 		nsmaxWrapCodeBlocks(parsed);
 		// 统计（浏览数、回复数）要等评论区解析完才准，不然先显示一个偏小的回复数再变
 		const comments = document.querySelector(".comment-container");
-		if (!parsed || document.readyState !== "loading" || comments && parsed(comments)) nsmaxDecoratePostDetail();
+		if (!parsed || document.readyState !== "loading" || comments && parsed(comments)) {
+			nsmaxDecoratePostDetail();
+			// 抽奖帖：开奖链接换成的抽奖卡片在第一帧就放好（参与人要等评论区解析完才全，和统计同一时机）。
+			// 2026-10-23：以前等模块启动才插进正文，第一帧画出来之后整篇正文被往下推三百多像素
+			nsmaxPrepareLottery();
+		}
 	}
 	// 正文代码块包进 .nsmax-code（对应 sb.sb 的 .code-block）：「内容增强」的复制按钮放在外层右上角，
 	// 代码横向滚动时按钮不跟着跑。页面解析阶段就包好，之后放进按钮不会让内容跳动。
 	function nsmaxWrapCodeBlocks(parsed) {
+		let copy;
 		for (const pre of document.querySelectorAll("article.post-content pre:not(.nsmax-code > pre)")) {
 			if (parsed && !parsed(pre)) continue;
 			// NodeSeek 会把 ANSI 输出（code.language-ansi）整块换成 xterm 终端，这种不包
 			if (pre.querySelector(":scope > code.language-ansi")) continue;
 			const wrap = document.createElement("div");
 			wrap.className = "nsmax-code";
-			const copy = pre.querySelector(":scope > [data-nspp-copy]");
+			const button = pre.querySelector(":scope > [data-nspp-copy]");
 			pre.before(wrap);
 			wrap.append(pre);
-			if (copy) wrap.append(copy);
+			if (button) wrap.append(button);
+			// 「内容增强」的「复制」等会儿才加上（模块启动时），代码块顶上放按钮的那一条现在就留好（2026-10-23：以前加按钮时
+			// 才留出来，后面的正文在第一帧之后被往下推一截）。站点偏好「一直显示复制按钮」要等站点读完偏好才知道，先按上次看到的
+			copy ??= nsmaxEarlyCopyState();
+			if (!copy.enabled) continue;
+			if (!pre.hasAttribute("data-nsmax-copy")) pre.setAttribute("data-nsmax-copy", "");
+			if (copy.always && !pre.hasAttribute("data-nsmax-copy-always")) pre.setAttribute("data-nsmax-copy-always", "");
 		}
+	}
+	// 「复制」按钮会不会加、站点的复制按钮上次是不是「一直显示」（内容增强看到站点的按钮时记在本机：nsmax:copy-always；
+	// 还没见过时按站点的默认「一直显示」）
+	function nsmaxEarlyCopyState() {
+		let enabled = false;
+		let always = true;
+		try {
+			const options = GM_getValue$1(SETTINGS_KEY, {})?.["reading-content"] || {};
+			enabled = options.enabled !== false && options.copyCode !== false;
+			always = localStorage.getItem("nsmax:copy-always") !== "0";
+		} catch {}
+		return { enabled, always };
 	}
 	function nsmaxUpdateNavEssence() {
 		// 手机版顶栏的 ul.nav-menu 是 ≡ / 标志 / 搜索 / 深浅色那一排，版块在 header > ul.mobile-nav：「精华」加进版块那一排
@@ -3793,11 +3914,40 @@ function nsmaxTagStructure() {
 		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxFansWatching = false; }, { once: true });
 		try { nsmaxPrepareFans(); } catch {}
 	}
+	// 个人主页：资料卡是站点前端画的（页面解析完以后才画，切「主题帖 / 评论」或水合时整块重画）。页面整理要在页面变化后 100ms 以上才跑，
+	// 原版资料卡会先在屏幕上露一下，再变成 sb.sb 的资料卡，页脚跟着跳一截（2026-10-23，真站重放 4 倍降速下露 0.3 秒）。
+	// 和关注页一样单独盯着：站点一画出来，就在同一轮微任务里（浏览器画下一帧之前）改好。自己改出来的那些变化不再处理
+	// 资料卡画出来之前主栏是空的，页脚紧贴在顶栏下面，资料卡一出来页脚被推下去一大截：先给主栏留一屏高（data-nsmax-space-pending），
+	// 画出来就撤掉；最多留 4 秒
+	var nsmaxSpaceWatching = false;
+	function nsmaxWatchSpace(ctx) {
+		const uid = location.pathname.match(/^\/space\/(\d+)/)?.[1];
+		if (nsmaxSpaceWatching || !uid || !document.body) return;
+		nsmaxSpaceWatching = true;
+		try { nsmaxSpaceInfo(uid); } catch {}
+		const root = document.documentElement;
+		const drawn = () => !!document.querySelector(".head-container");
+		if (!drawn()) {
+			root.setAttribute("data-nsmax-space-pending", "");
+			setTimeout(() => root.removeAttribute("data-nsmax-space-pending"), 4e3);
+		}
+		const relevant = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container, .card-block, .readme, .selector") || !!node.querySelector(".head-container, .card-block, .readme"));
+		const observer = new MutationObserver((records) => {
+			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
+			try { nsmaxPrepareSpace(); } catch {}
+			if (drawn()) root.removeAttribute("data-nsmax-space-pending");
+			observer.takeRecords();
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
+		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxSpaceWatching = false; }, { once: true });
+		try { nsmaxPrepareSpace(); } catch {}
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		nsmaxActionFeedback(ctx);
 		nsmaxWatchMsc(ctx);
 		nsmaxWatchFans(ctx);
+		nsmaxWatchSpace(ctx);
 		const scan = () => {
 			const currentPage = nsmaxPageKind();
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
@@ -3910,23 +4060,17 @@ function nsmaxTagStructure() {
 						}
 						cm.focus();
 					} else if (input) {
+						// 2026-10-23：都当成一次输入写进去（Ctrl+Z 能撤回）；引用、列表、标题按选中的每一行加前缀，
+						// 加粗、斜体、行内代码再点一次取消，链接选中网址就直接包成链接（见 nsmaxPrefixLines / nsmaxToggleWrap / nsmaxInsertLink）
+						if (!suffix && ["> ", "- ", "1. ", "### "].includes(prefix)) return nsmaxPrefixLines(input, prefix);
+						if (prefix && prefix === suffix) return nsmaxToggleWrap(input, prefix, defaultText);
+						if (prefix === "[" && suffix === "](https://)") return nsmaxInsertLink(input);
 						const start = input.selectionStart || 0;
 						const end = input.selectionEnd || 0;
-						const text = input.value || "";
-						const selection = text.slice(start, end);
-						const replacement = selection ? `${prefix}${selection}${suffix}` : `${prefix}${defaultText}${suffix}`;
-						const newText = text.slice(0, start) + replacement + text.slice(end);
-						const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
-						setter?.call(input, newText);
-						input.dispatchEvent(new Event("input", { bubbles: true }));
-						input.focus();
-						if (selection) {
-							input.setSelectionRange(start + prefix.length, end + prefix.length);
-						} else if (defaultText) {
-							input.setSelectionRange(start + prefix.length, start + prefix.length + defaultText.length);
-						} else {
-							input.setSelectionRange(start + replacement.length, start + replacement.length);
-						}
+						const selection = input.value.slice(start, end);
+						nsmaxInsertText(input, selection ? `${prefix}${selection}${suffix}` : `${prefix}${defaultText}${suffix}`);
+						if (selection) input.setSelectionRange(start + prefix.length, end + prefix.length);
+						else if (defaultText) input.setSelectionRange(start + prefix.length, start + prefix.length + defaultText.length);
 					}
 				};
 
@@ -4285,11 +4429,12 @@ function nsmaxTagStructure() {
 					alerts.observe(document.body, { childList: true });
 					ctx.signal.addEventListener("abort", () => alerts.disconnect(), { once: true });
 				}
+				// 写了字时状态字换成「已写 N 字」（2026-10-23），清空回到「说两句」；提交中、已回复照旧
 				const syncDraft = () => {
 					const value = (cm ? cm.getValue() : input?.value || "").trim();
 					if (draftClear) draftClear.hidden = !value;
 					if (status.textContent === "提交中" && !value) setStatus("已回复");
-					else if (status.textContent === "已回复" && value) setStatus("说两句");
+					else if (status.textContent !== "提交中" && !(status.textContent === "已回复" && !value)) setStatus(value ? `已写 ${[...value].length} 字` : "说两句");
 					nsmaxSyncEditorMode();
 				};
 				// 站点会把这个帖子没发出去的草稿放回编辑器：照 sb.sb 提示一句「已恢复未发出的草稿」。
@@ -4819,6 +4964,22 @@ function nsmaxTagStructure() {
 		else dialog.setAttribute("open", "");
 		return dialog;
 	}
+	// 鼠标没动、是页面滚动把链接带到鼠标下面的（浏览器补发的 pointerover / mouseenter）不算悬停（2026-10-23）：
+	// 鼠标上一次真的移动以来页面滚过，就是滚动带过来的。比的是滚动位置，不看事件先后（补发的悬停可能比 scroll 事件还早到）。
+	// 以前一边滚一边弹预览卡、资料卡，还预取滑过的每个链接，滚动时一下一下地卡。鼠标真的动了再算。
+	// 各个悬停功能挂载时先调一次，记下那时的位置（打开页面后鼠标一直没动、只滚了滚轮的也算滚动带过来的）
+	var nsmaxHoverState = null;
+	function nsmaxHoverFromScroll() {
+		if (!nsmaxHoverState) {
+			const state = nsmaxHoverState = { x: scrollX, y: scrollY };
+			document.addEventListener("pointermove", (event) => {
+				if (!event.movementX && !event.movementY) return;
+				state.x = scrollX;
+				state.y = scrollY;
+			}, { capture: true, passive: true });
+		}
+		return Math.abs(scrollY - nsmaxHoverState.y) > 1 || Math.abs(scrollX - nsmaxHoverState.x) > 1;
+	}
 	var personHoverFeature = { id: "sb-person-hover", defaults: { enabled: true }, mount(ctx) {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
 		const matches = target => {
@@ -5009,22 +5170,28 @@ function nsmaxTagStructure() {
 				}
 				// Telegram 联系方式：优先用页面上这个人的签名里见到的，其次看接口返回的签名 / 简介里有没有 t.me 链接；
 			// 有就放进资料卡底部一行（和「管理记录 / 屏蔽」同一排，点名字直接打开 Telegram，点「复制」拷到剪贴板）
-			const tgContacts = nsmaxTelegramCache.get(String(id)) || nsmaxTelegramContacts(data.signature || data.sign || data.signature_html || data.bio || data.readme || data.intro || "");
-			if (tgContacts.length) {
-				nsmaxTelegramCache.set(String(id), tgContacts);
-				if (!actions.querySelector(".nsmax-person-tg-btn")) {
-					const tgLink = document.createElement("a");
-					tgLink.className = "nsmax-person-tg-btn";
-					tgLink.href = tgContacts[0].href;
-					tgLink.target = "_blank";
-					tgLink.rel = "noopener noreferrer";
-					tgLink.textContent = "Telegram";
-					tgLink.title = tgContacts[0].handle ? "Telegram：@" + tgContacts[0].handle : "在 Telegram 里打开";
-					const home = Array.from(actions.querySelectorAll("a")).find((item) => item.textContent.trim() === "主页");
-					if (home) home.before(tgLink); else actions.append(tgLink);
-					actions.dataset.count = String(actions.childElementCount);
-				}
-			}
+			const addTelegram = (contacts) => {
+				if (!contacts?.length || actions.querySelector(".nsmax-person-tg-btn")) return;
+				const tgLink = document.createElement("a");
+				tgLink.className = "nsmax-person-tg-btn";
+				tgLink.href = contacts[0].href;
+				tgLink.target = "_blank";
+				tgLink.rel = "noopener noreferrer";
+				tgLink.textContent = "Telegram";
+				tgLink.title = contacts[0].handle ? "Telegram：@" + contacts[0].handle : "在 Telegram 里打开";
+				const home = Array.from(actions.querySelectorAll("a")).find((item) => item.textContent.trim() === "主页");
+				if (home) home.before(tgLink); else actions.append(tgLink);
+				actions.dataset.count = String(actions.childElementCount);
+				place();
+			};
+			const fromInfo = nsmaxTelegramContacts(data.signature || data.sign || data.signature_html || data.bio || data.readme || data.intro || "");
+			const knownContacts = nsmaxTelegramCache.get(String(id));
+			if (fromInfo.length) {
+				nsmaxTelegramCache.set(String(id), fromInfo);
+				addTelegram(fromInfo);
+			} else if (knownContacts) addTelegram(knownContacts);
+			// 本机还没记下这个人（列表页、个人主页里常见）：去读他最近一篇主帖的签名，读到了卡片还开着就补上按钮（2026-10-23）
+			else nsmaxLookupTelegram(id).then((contacts) => { if (ticket === serial && pop?.isConnected) addTelegram(contacts); });
 			if (data.bio && String(data.bio).trim()) { const bio = document.createElement("p"); bio.className = "nsmax-person-bio"; bio.textContent = String(data.bio).trim(); header.after(bio); }
 				if (follow) { setFollowed(!!data.followed); follow.disabled = false; }
 				const fmt = value => value === undefined || value === null ? "—" : Number(value) >= 1e5 ? (Number(value) / 1e3).toFixed(Number(value) >= 1e6 ? 0 : 1) + "K" : String(value);
@@ -5057,7 +5224,20 @@ function nsmaxTagStructure() {
 			if (cache.size > 256) cache.delete(cache.keys().next().value);
 			return promise;
 		}
+		// 页面滚动把头像、名字带到鼠标下面的不弹（见 nsmaxHoverFromScroll）：鼠标在上面真的动一下再弹
+		nsmaxHoverFromScroll();
+		let pendingOver = false;
 		document.addEventListener("pointerover",event => {
+			if (event.pointerType === "touch") return;
+			pendingOver = nsmaxHoverFromScroll();
+			if (!pendingOver) over(event);
+		}, { signal:ctx.signal });
+		document.addEventListener("pointermove",event => {
+			if (!pendingOver || !(event.movementX || event.movementY) || event.pointerType === "touch") return;
+			pendingOver = false;
+			over(event);
+		}, { passive:true, signal:ctx.signal });
+		const over = event => {
 			// 手指点按也会触发 pointerover：手机上点头像、名字是要打开主页，不弹资料卡（也不白白请求一次资料）
 			if (event.pointerType === "touch") return;
 			const link=matches(event.target);
@@ -5068,7 +5248,7 @@ function nsmaxTagStructure() {
 			const match = link.href.match(/\/space\/(\d+)/);
 			if (match) personInfo(match[1]).catch(() => {});
 			opening=setTimeout(()=>show(link),60);
-		}, { signal:ctx.signal });
+		};
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
 		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });

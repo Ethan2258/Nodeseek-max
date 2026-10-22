@@ -3580,6 +3580,10 @@ html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-swap] #nsk-fram
   opacity: 0 !important;
   transition: none !important;
 }
+/* 资料卡还没画出来（站点前端拿到资料后才画）：主栏先留一屏高，页脚不先贴在顶栏下面、再被资料卡推下去一大截（见 nsmaxWatchSpace） */
+html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-pending] #nsk-frame {
+  min-height: 100vh !important;
+}
 html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container {
   box-sizing: border-box !important;
   width: 100% !important;
@@ -13729,4 +13733,70 @@ html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions[data-count="4"]:i
 /* 个人主页资料卡：Telegram 按钮跟在「私信」后面，留一点间距 */
 html[data-nsmax-theme] .head-container > .nsmax-space-top > .nsmax-space-tg-btn:is(#nsmax-lv, *) {
   margin-left: 8px !important;
+}
+/* ---------- 69. 2026-10-23 第二十二批：资料卡四个按钮一排、编辑增强的 @ 提示框 ---------- */
+/* 资料卡「关注 / 私信 / Telegram / 主页」四个按钮一排：以前四列那条规则少了一层优先级，被三列的规则盖掉，「主页」掉到第二行；
+   四个按钮时字小半号、左右内边距收窄，320px 的卡片里「Telegram」也不会被省略号截掉 */
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions[data-count="4"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions[data-count="4"] > :is(a, button):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding: 4px 3px !important;
+  font-size: 12.5px !important;
+  white-space: nowrap !important;
+}
+/* @ 提示框：输入 @ 时在光标下面列出这一页出现过的人（sb.sb 下拉菜单样式：面板底、细线框、输入框圆角、轻阴影；选中行次底色） */
+html[data-nsmax-theme] .nsmax-mention:is(#nsmax-lv, *) {
+  position: fixed !important;
+  z-index: 2147483000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 160px !important;
+  max-width: 260px !important;
+  max-height: 280px !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  overflow-y: auto !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+html[data-nsmax-theme] .nsmax-mention[hidden]:is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-mention > .nsmax-mention-item:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-height: 32px !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  border: 0 !important;
+  border-radius: calc(var(--r-input) - 2px) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] .nsmax-mention > .nsmax-mention-item:is([aria-selected="true"], :hover):is(#nsmax-lv, *) {
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-mention > .nsmax-mention-item > img:is(#nsmax-lv, *) {
+  flex: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+  border-radius: var(--r-xs) !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] .nsmax-mention > .nsmax-mention-item > span:is(#nsmax-lv, *) {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
