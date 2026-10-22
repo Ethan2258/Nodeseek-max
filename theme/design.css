@@ -2091,7 +2091,7 @@ html[data-nsmax-theme] .signature > .nsmax-signature-contacts {
   padding: 0 !important;
   line-height: 1.4 !important;
 }
-html[data-nsmax-theme] .signature .nsmax-tg {
+html[data-nsmax-theme] .nsmax-tg {
   display: inline-flex !important;
   align-items: center !important;
   gap: 4px !important;
@@ -2105,22 +2105,22 @@ html[data-nsmax-theme] .signature .nsmax-tg {
   line-height: 1 !important;
   white-space: nowrap !important;
 }
-html[data-nsmax-theme] .signature .nsmax-tg > svg {
+html[data-nsmax-theme] .nsmax-tg > svg {
   width: 13px !important;
   height: 13px !important;
   fill: var(--brand) !important;
   flex: none !important;
 }
-html[data-nsmax-theme] .signature .nsmax-tg-open {
+html[data-nsmax-theme] .nsmax-tg-open {
   color: var(--text-muted) !important;
   text-decoration: none !important;
   font-weight: 500 !important;
 }
-html[data-nsmax-theme] .signature .nsmax-tg-open:hover {
+html[data-nsmax-theme] .nsmax-tg-open:hover {
   color: var(--brand) !important;
   text-decoration: none !important;
 }
-html[data-nsmax-theme] .signature .nsmax-tg-copy {
+html[data-nsmax-theme] .nsmax-tg-copy {
   height: 20px !important;
   padding: 0 8px !important;
   border: 0 !important;
@@ -2131,7 +2131,7 @@ html[data-nsmax-theme] .signature .nsmax-tg-copy {
   font-size: 11.5px !important;
   cursor: pointer !important;
 }
-html[data-nsmax-theme] .signature .nsmax-tg-copy:hover {
+html[data-nsmax-theme] .nsmax-tg-copy:hover {
   background: var(--brand-soft) !important;
 }
 
@@ -13587,4 +13587,29 @@ html[data-nsmax-theme] .nsk-notification .reply-container:is(#nsmax-lv, *) {
 /* 顶栏搜索框：跟 sb.sb 直角模式（旧规则留了 8px 圆角，和现场其他直角不一致） */
 html[data-nsmax-theme] #search-site:is(#nsmax-lv, *) {
   border-radius: var(--r-input) !important;
+}
+/* 资料卡 / 个人主页卡片里的 Telegram 联系方式：和签名里的同一颗小标签，卡片里略小一号、放在按钮栏或名字下面 */
+html[data-nsmax-theme] .nsmax-person-tg:is(#nsmax-lv, *),
+html[data-nsmax-theme] .nsmax-space-tg:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-person-tg:is(#nsmax-lv, *) {
+  padding: 0 14px 10px !important;
+}
+html[data-nsmax-theme] .nsmax-person-tg .nsmax-tg:is(#nsmax-lv, *) {
+  height: 28px !important;
+  padding: 0 2px 0 8px !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .nsmax-space-tg:is(#nsmax-lv, *) {
+  margin-top: 8px !important;
+}
+html[data-nsmax-theme] .nsmax-space-tg .nsmax-tg:is(#nsmax-lv, *) {
+  height: 26px !important;
+  border-color: var(--line) !important;
+  background: var(--panel) !important;
 }

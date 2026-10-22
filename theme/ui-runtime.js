@@ -304,6 +304,19 @@
 			reqPromise.then(info => {
 				nsmaxSpaceIntro.set(uid, typeof info?.readme === "string" ? info.readme.trim().length > 0 : false);
 				nsmaxPrepareSpace();
+				// 资料卡里的 Telegram 联系方式：接口返回的签名 / 简介里有 t.me 链接就补在名字下面（点名字打开、点复制拷走）
+				try {
+					const topRow = document.querySelector(".head-container > .nsmax-space-top");
+					const contacts = nsmaxTelegramContacts(info?.signature || info?.sign || info?.signature_html || info?.bio || info?.readme || "");
+					if (topRow && contacts.length && !topRow.querySelector(".nsmax-space-tg")) {
+						const row = document.createElement("div");
+						row.className = "nsmax-space-tg";
+						for (const contact of contacts.slice(0, 2)) row.append(nsmaxTelegramChip(contact));
+						const identity = topRow.querySelector(":scope > .nsmax-space-identity");
+						if (identity) identity.append(row);
+						else topRow.append(row);
+					}
+				} catch {}
 			});
 		}
 		if (uid && (parsedLevel === undefined || !head.querySelector(".nsmax-space-progress"))) {
@@ -2159,55 +2172,77 @@ function nsmaxCopyText(text) {
 	else fallback();
 }
 var NSMAX_TELEGRAM_ICON = "M21.5 4.3 2.9 11.5c-.9.3-.9 1.5 0 1.8l4.6 1.5 1.8 5.4c.3.8 1.3 1 1.9.4l2.5-2.4 4.5 3.3c.7.5 1.7.1 1.9-.7l3.1-14.3c.2-.9-.7-1.6-1.7-1.2ZM9.6 14.2l7.6-5.6-5.5 6.3-.2 3.1-1.9-3.8Z";
+// 页面上见到的 Telegram 联系方式按用户记下来（uid → [{href, handle}]）：悬停在作者身上时资料卡直接拿来用，
+// 不用等接口返回签名，也不用再翻他的楼层签名。
+var nsmaxTelegramCache = new Map();
+function nsmaxTelegramContacts(source) {
+	const list = [];
+	const push = (href) => {
+		if (!href || !/^(?:https?:)?\/\/[^/]*(?:t|telegram)\.me\//i.test(href)) return;
+		const normalized = href.startsWith("//") ? "https:" + href : href;
+		if (list.some((item) => item.href === normalized)) return;
+		const handle = (normalized.match(/t(?:elegram)?\.me\/([A-Za-z0-9_]+)/i)?.[1] || "").replace(/^@/, "");
+		list.push({ href: normalized, handle });
+	};
+	if (typeof source === "string") {
+		for (const match of source.matchAll(/(?:https?:)?\/\/[^"'\s<>]*(?:t|telegram)\.me\/[A-Za-z0-9_]+/gi)) push(match[0]);
+	} else if (source && typeof source.querySelectorAll === "function") {
+		for (const link of source.querySelectorAll("a[href]")) push(link.href || link.getAttribute("href"));
+	}
+	return list;
+}
+// 小标签：图标 + @名字（点了打开 Telegram）+ 复制（拷到剪贴板，不跳走）
+function nsmaxTelegramChip(contact) {
+	const chip = document.createElement("span");
+	chip.className = "nsmax-tg";
+	const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+	icon.setAttribute("viewBox", "0 0 24 24");
+	icon.setAttribute("aria-hidden", "true");
+	const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	path.setAttribute("d", NSMAX_TELEGRAM_ICON);
+	icon.append(path);
+	const handle = contact.handle || "";
+	const open = document.createElement("a");
+	open.className = "nsmax-tg-open";
+	open.href = contact.href;
+	open.target = "_blank";
+	open.rel = "noopener noreferrer";
+	open.textContent = handle ? `@${handle}` : "Telegram";
+	open.title = "在 Telegram 里打开";
+	open.addEventListener("click", (event) => event.stopPropagation());
+	const copy = document.createElement("button");
+	copy.type = "button";
+	copy.className = "nsmax-tg-copy";
+	copy.textContent = "复制";
+	copy.title = `复制 Telegram 联系方式${handle ? `：@${handle}` : ""}`;
+	copy.setAttribute("aria-label", copy.title);
+	copy.addEventListener("click", (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		nsmaxCopyText(handle ? `@${handle}` : contact.href);
+	});
+	chip.append(icon, open, copy);
+	return chip;
+}
 function nsmaxDecorateSignatures() {
 	for (const signature of document.querySelectorAll(".signature")) {
-		const links = [...signature.querySelectorAll("a[href]")].filter((link) => /^(?:https?:)?\/\/[^/]*(?:t|telegram)\.me\//i.test(link.getAttribute("href") || ""));
+		const contacts = nsmaxTelegramContacts(signature);
 		const old = signature.querySelector(":scope > .nsmax-signature-contacts");
-		if (!links.length) {
+		if (!contacts.length) {
 			old?.remove();
 			continue;
 		}
-		const key = links.map((link) => link.href).join("|");
+		// 记下这层作者的联系方式：悬停资料卡里直接显示（签名在楼层里已经渲染出来了，不用等接口）
+		const ownerLink = signature.closest(".content-item, .post-list-item, .user-head, .user-card")?.querySelector('a[href*="/space/"]');
+		const uid = ownerLink?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
+		if (uid) nsmaxTelegramCache.set(uid, contacts);
+		const key = contacts.map((contact) => contact.href).join("|");
 		if (old && old.getAttribute("data-nsmax-contacts") === key) continue;
 		old?.remove();
 		const row = document.createElement("div");
 		row.className = "nsmax-signature-contacts";
 		row.setAttribute("data-nsmax-contacts", key);
-		const seen = new Set();
-		for (const link of links) {
-			const href = link.href;
-			if (seen.has(href)) continue;
-			seen.add(href);
-			const handle = (href.match(/t(?:elegram)?\.me\/([A-Za-z0-9_]+)/i)?.[1] || "").replace(/^@/, "");
-			const chip = document.createElement("span");
-			chip.className = "nsmax-tg";
-			const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-			icon.setAttribute("viewBox", "0 0 24 24");
-			icon.setAttribute("aria-hidden", "true");
-			const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-			path.setAttribute("d", NSMAX_TELEGRAM_ICON);
-			icon.append(path);
-			const open = document.createElement("a");
-			open.className = "nsmax-tg-open";
-			open.href = href;
-			open.target = "_blank";
-			open.rel = "noopener noreferrer";
-			open.textContent = handle ? `@${handle}` : "Telegram";
-			open.title = "在 Telegram 里打开";
-			const copy = document.createElement("button");
-			copy.type = "button";
-			copy.className = "nsmax-tg-copy";
-			copy.textContent = "复制";
-			copy.title = `复制 Telegram 联系方式${handle ? `：@${handle}` : ""}`;
-			copy.setAttribute("aria-label", copy.title);
-			copy.addEventListener("click", (event) => {
-				event.preventDefault();
-				event.stopPropagation();
-				nsmaxCopyText(handle ? `@${handle}` : href);
-			});
-			chip.append(icon, open, copy);
-			row.append(chip);
-		}
+		for (const contact of contacts) row.append(nsmaxTelegramChip(contact));
 		// 签名原来限高 3 行、超出裁掉（见 design.css 签名规则）：加了联系方式这一行就不要再裁
 		signature.style.setProperty("max-height", "none", "important");
 		signature.append(row);
@@ -4968,7 +5003,22 @@ function nsmaxTagStructure() {
 					const d = new Date(created); age.title = `注册于 ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 					meta.append(age);
 				}
-				if (data.bio && String(data.bio).trim()) { const bio = document.createElement("p"); bio.className = "nsmax-person-bio"; bio.textContent = String(data.bio).trim(); header.after(bio); }
+				// Telegram 联系方式：优先用页面上这个人的签名里见到的，其次看接口返回的签名 / 简介里有没有 t.me 链接；
+			// 有就放进资料卡底部一行（和「管理记录 / 屏蔽」同一排，点名字直接打开 Telegram，点「复制」拷到剪贴板）
+			const tgContacts = nsmaxTelegramCache.get(String(id)) || nsmaxTelegramContacts(data.signature || data.sign || data.signature_html || data.bio || data.readme || "");
+			if (tgContacts.length) {
+				nsmaxTelegramCache.set(String(id), tgContacts);
+				if (!pop.querySelector(".nsmax-person-tg")) {
+					const tg = document.createElement("div");
+					tg.className = "nsmax-person-tg";
+					tg.setAttribute("aria-label", "Telegram 联系方式");
+					for (const contact of tgContacts.slice(0, 2)) tg.append(nsmaxTelegramChip(contact));
+					const footRow = pop.querySelector(".nsmax-person-foot");
+					if (footRow) pop.insertBefore(tg, footRow);
+					else pop.append(tg);
+				}
+			}
+			if (data.bio && String(data.bio).trim()) { const bio = document.createElement("p"); bio.className = "nsmax-person-bio"; bio.textContent = String(data.bio).trim(); header.after(bio); }
 				if (follow) { setFollowed(!!data.followed); follow.disabled = false; }
 				const fmt = value => value === undefined || value === null ? "—" : Number(value) >= 1e5 ? (Number(value) / 1e3).toFixed(Number(value) >= 1e6 ? 0 : 1) + "K" : String(value);
 				for (const [key, cell] of Object.entries(cells)) cell.textContent = fmt(data[key]);
