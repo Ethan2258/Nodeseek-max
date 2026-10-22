@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.33");
+	assert.equal(packageJson.version, "1.8.34");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5801,29 +5801,34 @@ test("发布产物压缩（2026-10-22）：用户脚本头部原样保留、注�
 		fs.rmSync(target, { force: true });
 	}
 });
-test("v1.8.29 签名里的 Telegram：后面补 @名字 + 复制按钮，点复制拷到剪贴板、弹 toast、不跳走", async () => {
-	const html = postPage().replace("</body>", '<div class="content-item"><div class="signature">联系我 <a href="https://t.me/nodeseekmax">Telegram</a></div></div></body>');
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
+test("v1.8.34 Telegram 放在资料卡「私信」旁边（同一个按钮样式）：帖子里签名不再重复插标签", async () => {
+	const html = postPage().replace("签名：机器不跑路", "联系我 tg: @nodeseekmax 或 ");
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
 	try {
-		await page.waitForSelector(".nsmax-signature-contacts");
-		const chip = page.locator(".nsmax-tg").first();
-		assert.equal(await chip.locator(".nsmax-tg-open").innerText(), "@nodeseekmax");
-		assert.equal(await chip.locator(".nsmax-tg-open").getAttribute("href"), "https://t.me/nodeseekmax");
-		assert.equal(await chip.locator(".nsmax-tg-open").getAttribute("target"), "_blank");
-		await page.evaluate(() => {
-			window.__copied = [];
-			Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text) => { window.__copied.push(text); } } });
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		// 签名里不再多插一行（以前会重复）
+		assert.equal(await page.locator(".signature .nsmax-signature-contacts, .signature .nsmax-tg").count(), 0, "签名里不再插 Telegram 标签");
+		const author = page.locator(".nsk-post .nsmax-author-col a[href*='/space/']").first();
+		await author.hover();
+		await page.waitForSelector(".nsmax-person-pop .nsmax-person-tg-btn", { timeout: 5e3 });
+		const tg = page.locator(".nsmax-person-pop .nsmax-person-tg-btn");
+		assert.equal((await tg.innerText()).trim(), "Telegram");
+		assert.equal(await tg.getAttribute("href"), "https://t.me/nodeseekmax");
+		// 顺序：关注 / 私信 / Telegram / 主页；和「私信」同一个按钮样式（同高同字号同 padding）
+		const layout = await page.evaluate(() => {
+			const pop = document.querySelector(".nsmax-person-pop");
+			const items = [...pop.querySelectorAll(".nsmax-person-actions > a, .nsmax-person-actions > button")];
+			const tg = pop.querySelector(".nsmax-person-tg-btn");
+			const dm = items.find((item) => item.textContent.trim() === "私信");
+			const style = (el) => { const cs = getComputedStyle(el); const box = el.getBoundingClientRect(); return { height: Math.round(box.height), font: cs.fontSize, pad: cs.padding, radius: cs.borderTopLeftRadius }; };
+			return { order: items.map((item) => item.textContent.trim()), tg: tg ? style(tg) : null, dm: dm ? style(dm) : null, rowLeft: pop.querySelector(".nsmax-person-tg") ? 1 : 0 };
 		});
-		await chip.locator(".nsmax-tg-copy").click();
-		await page.waitForFunction(() => window.__copied.length > 0);
-		assert.deepEqual(await page.evaluate(() => window.__copied), ["@nodeseekmax"]);
-		await page.waitForSelector(".nsmax-toast[data-nsmax-shown]");
-		assert.ok((await page.locator(".nsmax-toast").innerText()).includes("@nodeseekmax"));
-		assert.equal(page.url().includes("t.me"), false);
+		assert.deepEqual(layout.order, ["关注", "私信", "Telegram", "主页"]);
+		assert.deepEqual(layout.tg, layout.dm, "Telegram 和私信按钮样式一致");
+		assert.equal(layout.rowLeft, 0, "不再有统计和底栏之间那一行（不会多一条分割线）");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
-
 test("v1.8.29 列表预览提速：页面空下来先把首屏可见的几篇主帖取好，悬停时直接用、不再等请求", async () => {
 	const pages = {};
 	for (let index = 0; index < 4; index++) pages[`/post-${1000 + index}-1`] = postPage();
@@ -5965,28 +5970,19 @@ test("v1.8.30 主帖头部：站点原生的纯文字「编辑」收起（只留
 	} finally { await context.close(); }
 });
 
-test("v1.8.31 Telegram 快捷联系：悬停资料卡 / 个人主页资料卡里直接显示 @名字 + 复制", async () => {
-	// 1) 帖子页：作者的签名里有 t.me 链接，鼠标停在楼主名字上，资料卡底部直接给出 Telegram
-	const html = postPage().replace("签名：机器不跑路", "联系我 tg: @nodeseekmax 或 ");
-	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
+test("v1.8.34 列表页悬停 / 个人主页资料卡：接口返回的纯文字 Telegram 也能直接打开（与私信同排按钮）", async () => {
+	const post = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(),
+		viewport: { width: 1280, height: 900 },
+		api: { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail: { member_id: 10, member_name: "user0", rank: 3, coin: 100, nPost: 2, nComment: 3, signature: "电报：@iamvicliu", created_at: new Date(Date.now() - 864e5 * 30).toISOString() } } }] }
+	});
 	try {
-		await post.page.waitForSelector(".nsmax-signature-contacts");
-		await post.page.evaluate(() => {
-			window.__copied = [];
-			Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text) => { window.__copied.push(text); } } });
-		});
-		const author = post.page.locator(".nsk-post .nsmax-author-col a[href*=\"/space/\"]").first();
-		await author.hover();
-		await post.page.waitForSelector(".nsmax-person-pop .nsmax-person-tg", { timeout: 5e3 });
-		const tg = post.page.locator(".nsmax-person-pop .nsmax-person-tg .nsmax-tg-open").first();
-		assert.equal(await tg.innerText(), "@nodeseekmax");
-		assert.equal(await tg.getAttribute("href"), "https://t.me/nodeseekmax");
-		await post.page.locator(".nsmax-person-pop .nsmax-person-tg .nsmax-tg-copy").first().click();
-		await post.page.waitForFunction(() => window.__copied.length > 0);
-		assert.deepEqual(await post.page.evaluate(() => window.__copied), ["@nodeseekmax"]);
+		const avatar = post.page.locator(".post-list > li").first().locator("a[href*='/space/']").first();
+		await avatar.hover();
+		await post.page.waitForSelector(".nsmax-person-pop .nsmax-person-tg-btn", { timeout: 5e3 });
+		assert.equal(await post.page.locator(".nsmax-person-pop .nsmax-person-tg-btn").getAttribute("href"), "https://t.me/iamvicliu");
 		assert.deepEqual(post.errors, []);
 	} finally { await post.context.close(); }
-	// 2) 个人主页资料卡：接口返回的签名里有 t.me 链接，名字下面直接出现 Telegram
 	const space = await open(browser, "https://www.nodeseek.com/space/10", {
 		html: nativeSpacePage(),
 		viewport: { width: 1440, height: 900 },
@@ -5994,9 +5990,11 @@ test("v1.8.31 Telegram 快捷联系：悬停资料卡 / 个人主页资料卡里
 	});
 	try {
 		await space.page.waitForSelector(".nsmax-space-top");
-		await space.page.waitForSelector(".nsmax-space-tg .nsmax-tg-open", { timeout: 5e3 });
-		assert.equal(await space.page.locator(".nsmax-space-tg .nsmax-tg-open").first().innerText(), "@steve_tg");
-		assert.equal(await space.page.locator(".nsmax-space-tg .nsmax-tg-open").first().getAttribute("href"), "https://t.me/steve_tg");
+		await space.page.waitForSelector(".nsmax-space-tg-btn", { timeout: 5e3 });
+		const btn = space.page.locator(".nsmax-space-tg-btn");
+		assert.equal(await btn.getAttribute("href"), "https://t.me/steve_tg");
+		const prev = await btn.evaluate((el) => el.previousElementSibling?.textContent?.trim() || "");
+		assert.equal(prev, "私信", "Telegram 紧跟「私信」按钮");
 		assert.deepEqual(space.errors, []);
 	} finally { await space.context.close(); }
 });

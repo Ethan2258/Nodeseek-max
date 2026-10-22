@@ -304,17 +304,20 @@
 			reqPromise.then(info => {
 				nsmaxSpaceIntro.set(uid, typeof info?.readme === "string" ? info.readme.trim().length > 0 : false);
 				nsmaxPrepareSpace();
-				// 资料卡里的 Telegram 联系方式：接口返回的签名 / 简介里有 t.me 链接就补在名字下面（点名字打开、点复制拷走）
+				// 资料卡里的 Telegram 联系方式：接口返回的签名 / 简介里有就补一个和「私信」一样的按钮（放在它后面）
 				try {
 					const topRow = document.querySelector(".head-container > .nsmax-space-top");
 					const contacts = nsmaxTelegramContacts(info?.signature || info?.sign || info?.signature_html || info?.bio || info?.readme || info?.intro || "");
-					if (topRow && contacts.length && !topRow.querySelector(".nsmax-space-tg")) {
-						const row = document.createElement("div");
-						row.className = "nsmax-space-tg";
-						for (const contact of contacts.slice(0, 2)) row.append(nsmaxTelegramChip(contact));
-						const identity = topRow.querySelector(":scope > .nsmax-space-identity");
-						if (identity) identity.append(row);
-						else topRow.append(row);
+					if (topRow && contacts.length && !topRow.querySelector(".nsmax-space-tg-btn")) {
+						const link = document.createElement("a");
+						link.className = "btn nsmax-space-tg-btn";
+						link.href = contacts[0].href;
+						link.target = "_blank";
+						link.rel = "noopener noreferrer";
+						link.textContent = "Telegram";
+						link.title = contacts[0].handle ? "Telegram：@" + contacts[0].handle : "在 Telegram 里打开";
+						const pm = topRow.querySelector(":scope > a.btn");
+						if (pm) pm.after(link); else topRow.append(link);
 					}
 				} catch {}
 			});
@@ -2239,27 +2242,14 @@ function nsmaxTelegramChip(contact) {
 	return chip;
 }
 function nsmaxDecorateSignatures() {
+	// 签名只用来「收集」这个人的 Telegram 联系方式（资料卡上显示成和「私信」一样的按钮）；
+	// 签名下面不再额外插标签：帖子里签名本来就会写出来，再插一行是重复的（2026-10-22）。
 	for (const signature of document.querySelectorAll(".signature")) {
 		const contacts = nsmaxTelegramContacts(signature);
-		const old = signature.querySelector(":scope > .nsmax-signature-contacts");
-		if (!contacts.length) {
-			old?.remove();
-			continue;
-		}
-		// 记下这层作者的联系方式：悬停资料卡里直接显示（签名在楼层里已经渲染出来了，不用等接口）
+		if (!contacts.length) continue;
 		const ownerLink = signature.closest(".content-item, .post-list-item, .user-head, .user-card")?.querySelector('a[href*="/space/"]');
 		const uid = ownerLink?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
 		if (uid) nsmaxTelegramCache.set(uid, contacts);
-		const key = contacts.map((contact) => contact.href).join("|");
-		if (old && old.getAttribute("data-nsmax-contacts") === key) continue;
-		old?.remove();
-		const row = document.createElement("div");
-		row.className = "nsmax-signature-contacts";
-		row.setAttribute("data-nsmax-contacts", key);
-		for (const contact of contacts) row.append(nsmaxTelegramChip(contact));
-		// 签名原来限高 3 行、超出裁掉（见 design.css 签名规则）：加了联系方式这一行就不要再裁
-		signature.style.setProperty("max-height", "none", "important");
-		signature.append(row);
 	}
 }
 function nsmaxTagStructure() {
@@ -5022,14 +5012,17 @@ function nsmaxTagStructure() {
 			const tgContacts = nsmaxTelegramCache.get(String(id)) || nsmaxTelegramContacts(data.signature || data.sign || data.signature_html || data.bio || data.readme || data.intro || "");
 			if (tgContacts.length) {
 				nsmaxTelegramCache.set(String(id), tgContacts);
-				if (!pop.querySelector(".nsmax-person-tg")) {
-					const tg = document.createElement("div");
-					tg.className = "nsmax-person-tg";
-					tg.setAttribute("aria-label", "Telegram 联系方式");
-					for (const contact of tgContacts.slice(0, 2)) tg.append(nsmaxTelegramChip(contact));
-					const footRow = pop.querySelector(".nsmax-person-foot");
-					if (footRow) pop.insertBefore(tg, footRow);
-					else pop.append(tg);
+				if (!actions.querySelector(".nsmax-person-tg-btn")) {
+					const tgLink = document.createElement("a");
+					tgLink.className = "nsmax-person-tg-btn";
+					tgLink.href = tgContacts[0].href;
+					tgLink.target = "_blank";
+					tgLink.rel = "noopener noreferrer";
+					tgLink.textContent = "Telegram";
+					tgLink.title = tgContacts[0].handle ? "Telegram：@" + tgContacts[0].handle : "在 Telegram 里打开";
+					const home = Array.from(actions.querySelectorAll("a")).find((item) => item.textContent.trim() === "主页");
+					if (home) home.before(tgLink); else actions.append(tgLink);
+					actions.dataset.count = String(actions.childElementCount);
 				}
 			}
 			if (data.bio && String(data.bio).trim()) { const bio = document.createElement("p"); bio.className = "nsmax-person-bio"; bio.textContent = String(data.bio).trim(); header.after(bio); }

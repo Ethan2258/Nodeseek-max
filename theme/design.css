@@ -13721,3 +13721,12 @@ html[data-nsmax-theme] .nsmax-space-tg .nsmax-tg-open:is(#nsmax-lv, *)::before {
   color: var(--text-subtle) !important;
   font-weight: 400 !important;
 }
+
+/* 资料卡四个按钮一排（关注 / 私信 / Telegram / 主页）：和三个按钮同一套样式，只是均分四列 */
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions[data-count="4"]:is(#nsmax-lv, *) {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+/* 个人主页资料卡：Telegram 按钮跟在「私信」后面，留一点间距 */
+html[data-nsmax-theme] .head-container > .nsmax-space-top > .nsmax-space-tg-btn:is(#nsmax-lv, *) {
+  margin-left: 8px !important;
+}
