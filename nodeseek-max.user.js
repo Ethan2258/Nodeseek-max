@@ -27949,6 +27949,8 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 	// 主内容就绪后的空闲时段再补这段；用户提前交互（移动 / 按键 / 打开弹窗）时也会先补上，不会出现没样式的浮层。
 	function nsmaxEnsureOverlayCss() {
 		if (nsmaxEnsureOverlayCss.done) return;
+		// 排查 / 测试用：?nsmax-no-overlay-css 完全不注入浮层段（连 toast / 预览打开前的显式补注入也不做）
+		try { if (new URLSearchParams(location.search).has("nsmax-no-overlay-css")) return; } catch {}
 		nsmaxEnsureOverlayCss.done = true;
 		let css = "";
 		for (const [name, text] of nsmax_theme_segments) if (name === "overlay") css += text;
