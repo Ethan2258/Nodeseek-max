@@ -4694,6 +4694,7 @@ var nsmaxRedirecting = false;
 				// 否则会先平铺画出来，等页面变化监听 100ms 后再收进楼中楼，看起来就是一跳
 				if (comments) {
 					try {
+						nsmaxGroupFloorActions();
 						nsmaxGroupNestedReplies();
 						nsmaxDecorateFloorBoxes();
 						nsmaxMarkPinnedReplies();
