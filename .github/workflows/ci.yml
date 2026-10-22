@@ -11,7 +11,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
 
@@ -38,4 +38,14 @@ jobs:
       - name: Smoke tests
         env:
           NSMAX_FONT_DIR: ${{ github.workspace }}/.fonts/package/files
+        run: npm test
+
+      # Release 发布的是压缩后的脚本（仓库里保留可读源码）：压缩产物再跑一遍完整测试，确保行为和源码一致
+      - name: Minify release artifact
+        run: node scripts/minify.mjs --out dist/nodeseek-max.user.js
+
+      - name: Smoke tests (minified artifact)
+        env:
+          NSMAX_FONT_DIR: ${{ github.workspace }}/.fonts/package/files
+          NSMAX_SCRIPT_PATH: ${{ github.workspace }}/dist/nodeseek-max.user.js
         run: npm test

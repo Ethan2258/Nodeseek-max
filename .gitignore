@@ -5,3 +5,7 @@ package-lock.json
 test-results/
 *.log
 .DS_Store
+dist/
+
+nodeseek-max.min.user.js
+

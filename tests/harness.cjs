@@ -5,7 +5,8 @@ const path = require("node:path");
 const { chromium } = require("playwright");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPT = fs.readFileSync(path.join(ROOT, "nodeseek-max.user.js"), "utf8");
+// NSMAX_SCRIPT_PATH：CI 里拿压缩后的发布产物再跑一遍完整测试（默认测源码）
+const SCRIPT = fs.readFileSync(process.env.NSMAX_SCRIPT_PATH ? path.resolve(process.env.NSMAX_SCRIPT_PATH) : path.join(ROOT, "nodeseek-max.user.js"), "utf8");
 
 const hotPosts = (kind) => ({
 	updated_at: Math.floor(Date.now() / 1e3) - 120,

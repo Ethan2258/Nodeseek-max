@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.27");
+	assert.equal(packageJson.version, "1.8.28");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -2001,6 +2001,8 @@ test("v1.8.1 我的关注 / 粉丝：sb.sb 成员卡片、按钮挪进卡片、�
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/fans", { html: fansPage({ dark }), colorScheme: dark ? "dark" : "light" });
 		try {
 			await page.waitForSelector(".nsmax-member");
+			// 浮层样式按需注入：先动一下鼠标，保证量原生资料卡之前已经注入
+			await page.mouse.move(8, 8);
 			assert.equal(await page.locator(".nsmax-member").count(), 5);
 			assert.deepEqual(await page.locator(".fans-switcher > a.switcher-item").allInnerTexts(), ["我的关注", "我的粉丝"]);
 			assert.equal(await page.locator(".nsmax-member").first().locator(".nsmax-member-actions > .btn").count(), 3);
@@ -4254,6 +4256,8 @@ test("第九批（2026-10-18）：脚本里其他弹窗、面板里的 header / 
 	const { context, page } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 800 } });
 	try {
 		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		// 弹窗 / 面板的样式是首帧后按需注入的（overlay 段）：这里手动造弹窗，先等它注入完再量
+		await page.waitForFunction(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes(".nspp-post-preview")), null, { timeout: 4e3 });
 		const state = await page.evaluate(() => Array.from(["nspp-monitor", "nspp-history", "nspp-post-preview", "nsmax-other"], (className) => {
 			const dialog = document.createElement("dialog");
 			dialog.className = className;
@@ -4861,6 +4865,7 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: searchOverlayPage({ dark, mobile: width < 700 }), viewport: { width, height: 760 }, colorScheme: dark ? "dark" : "light" });
 		try {
 			await page.waitForSelector(".search-overlay .glass-card");
+			await page.mouse.move(8, 8);
 			await wait(page, 400);
 			const state = await page.evaluate(() => {
 				const card = document.querySelector(".search-overlay .glass-card");
@@ -5762,4 +5767,25 @@ test("v1.8.27 提速：浮层样式（弹窗 / 用户卡 / 搜索面板 / toast�
 		await auto.page.waitForFunction(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes(".search-overlay")), null, { timeout: 4e3 });
 		assert.deepEqual(auto.errors, []);
 	} finally { await auto.context.close(); }
+});
+test("发布产物压缩（2026-10-22）：用户脚本头部原样保留、注释和空白去掉、语法合法、体积至少小 10%", async () => {
+	const fs = require("node:fs");
+	const os = require("node:os");
+	const path = require("node:path");
+	const { execFileSync } = require("node:child_process");
+	const root = path.join(__dirname, "..");
+	const target = path.join(os.tmpdir(), `nsmax-min-${process.pid}-${Date.now()}.user.js`);
+	execFileSync(process.execPath, [path.join(root, "scripts", "minify.mjs"), "--out", target], { cwd: root, stdio: "pipe" });
+	try {
+		const source = fs.readFileSync(path.join(root, "nodeseek-max.user.js"), "utf8");
+		const minified = fs.readFileSync(target, "utf8");
+		const header = (content) => content.slice(content.indexOf("// ==UserScript=="), content.indexOf("// ==/UserScript==") + "// ==/UserScript==".length);
+		assert.equal(header(minified), header(source), "用户脚本头部要原样保留（Tampermonkey 靠它识别脚本）");
+		assert.ok(minified.length < source.length * 0.9, `压缩后 ${minified.length} 字节，应小于源码的 90%（${source.length}）`);
+		assert.equal(minified.includes("=== 侧栏热榜"), false, "正文里的注释要去掉");
+		// 语法合法
+		new (require("node:vm").Script)(minified);
+	} finally {
+		fs.rmSync(target, { force: true });
+	}
 });

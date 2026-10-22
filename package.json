@@ -1,29 +1,31 @@
 {
-  "name": "nodeseek-max",
-  "version": "1.8.27",
-  "private": true,
-  "description": "NodeSeek 全能增强用户脚本：融合 NodeSeek++、外链跳转、黑名单通知屏蔽、侧栏热榜与现代化主题",
-  "license": "GPL-3.0-only",
-  "homepage": "https://github.com/Ethan2258/Nodeseek-max#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Ethan2258/Nodeseek-max.git"
-  },
-  "scripts": {
-    "meta": "node scripts/build-meta.mjs",
-    "check": "node --check nodeseek-max.user.js && node scripts/build-sb.mjs --check && node scripts/build-meta.mjs --check",
-    "sb": "node scripts/build-sb.mjs",
-    "test": "node --test --test-concurrency=1 tests/smoke.test.cjs",
-    "screenshots": "node tests/ui-audit.cjs",
-    "performance": "node tests/performance.cjs",
-    "upstream": "node scripts/upstream.mjs"
-  },
-  "devDependencies": {
-    "playwright": "1.64.1",
-    "postcss": "8.5.30",
-    "postcss-selector-parser": "7.1.6"
-  },
-  "engines": {
-    "node": ">=20"
-  }
+	"name": "nodeseek-max",
+	"version": "1.8.28",
+	"private": true,
+	"description": "NodeSeek 全能增强用户脚本：融合 NodeSeek++、外链跳转、黑名单通知屏蔽、侧栏热榜与现代化主题",
+	"license": "GPL-3.0-only",
+	"homepage": "https://github.com/Ethan2258/Nodeseek-max#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Ethan2258/Nodeseek-max.git"
+	},
+	"scripts": {
+		"meta": "node scripts/build-meta.mjs",
+		"check": "node --check nodeseek-max.user.js && node scripts/build-sb.mjs --check && node scripts/build-meta.mjs --check",
+		"sb": "node scripts/build-sb.mjs",
+		"test": "node --test --test-concurrency=1 tests/smoke.test.cjs",
+		"screenshots": "node tests/ui-audit.cjs",
+		"performance": "node tests/performance.cjs",
+		"upstream": "node scripts/upstream.mjs",
+		"minify": "node scripts/minify.mjs"
+	},
+	"devDependencies": {
+		"playwright": "1.64.1",
+		"postcss": "8.5.30",
+		"postcss-selector-parser": "7.1.6",
+		"terser": "5.51.2"
+	},
+	"engines": {
+		"node": ">=20"
+	}
 }
