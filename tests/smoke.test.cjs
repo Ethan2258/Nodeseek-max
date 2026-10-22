@@ -4261,7 +4261,9 @@ test("第九批（2026-10-18）：脚本里其他弹窗、面板里的 header / 
 	try {
 		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
 		// 弹窗 / 面板的样式是首帧后按需注入的（overlay 段）：这里手动造弹窗，先等它注入完再量
+			await page.mouse.move(8, 8);
 		await page.waitForFunction(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes(".nspp-post-preview")), null, { timeout: 4e3 });
+			await page.waitForFunction(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes("nspp-history")), null, { timeout: 4e3 });
 		const state = await page.evaluate(() => Array.from(["nspp-monitor", "nspp-history", "nspp-post-preview", "nsmax-other"], (className) => {
 			const dialog = document.createElement("dialog");
 			dialog.className = className;

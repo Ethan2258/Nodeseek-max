@@ -307,7 +307,7 @@
 				// 资料卡里的 Telegram 联系方式：接口返回的签名 / 简介里有 t.me 链接就补在名字下面（点名字打开、点复制拷走）
 				try {
 					const topRow = document.querySelector(".head-container > .nsmax-space-top");
-					const contacts = nsmaxTelegramContacts(info?.signature || info?.sign || info?.signature_html || info?.bio || info?.readme || "");
+					const contacts = nsmaxTelegramContacts(info?.signature || info?.sign || info?.signature_html || info?.bio || info?.readme || info?.intro || "");
 					if (topRow && contacts.length && !topRow.querySelector(".nsmax-space-tg")) {
 						const row = document.createElement("div");
 						row.className = "nsmax-space-tg";
@@ -2177,17 +2177,31 @@ var NSMAX_TELEGRAM_ICON = "M21.5 4.3 2.9 11.5c-.9.3-.9 1.5 0 1.8l4.6 1.5 1.8 5.4
 var nsmaxTelegramCache = new Map();
 function nsmaxTelegramContacts(source) {
 	const list = [];
-	const push = (href) => {
+	const pushHref = (href) => {
 		if (!href || !/^(?:https?:)?\/\/[^/]*(?:t|telegram)\.me\//i.test(href)) return;
 		const normalized = href.startsWith("//") ? "https:" + href : href;
 		if (list.some((item) => item.href === normalized)) return;
 		const handle = (normalized.match(/t(?:elegram)?\.me\/([A-Za-z0-9_]+)/i)?.[1] || "").replace(/^@/, "");
 		list.push({ href: normalized, handle });
 	};
+	const pushHandle = (handle) => {
+		const clean = String(handle || "").replace(/^@/, "");
+		if (!/^[A-Za-z0-9_]{4,32}$/.test(clean)) return;
+		pushHref("https://t.me/" + clean);
+	};
+	// 纯文字（签名 / 简介可能是「电报：@xxx」「TG: @xxx」「t.me/xxx」这种，不是链接）：只认 telegram / tg / 电报 / 纸飞机 后面的 @名字
+	const scanText = (value) => {
+		if (!value) return;
+		const plain = String(value).replace(/<[^>]+>/g, " ");
+		for (const match of plain.matchAll(/(?:https?:\/\/)?(?:www\.)?(?:t|telegram)\.me\/([A-Za-z0-9_]{4,32})/gi)) pushHandle(match[1]);
+		for (const match of plain.matchAll(/(?:telegram|电报|纸飞机|\btg\b)\s*[:：\-]?\s*@([A-Za-z0-9_]{4,32})/gi)) pushHandle(match[1]);
+	};
 	if (typeof source === "string") {
-		for (const match of source.matchAll(/(?:https?:)?\/\/[^"'\s<>]*(?:t|telegram)\.me\/[A-Za-z0-9_]+/gi)) push(match[0]);
+		for (const match of source.matchAll(/(?:https?:)?\/\/[^"'\s<>]*(?:t|telegram)\.me\/[A-Za-z0-9_]+/gi)) pushHref(match[0]);
+		scanText(source);
 	} else if (source && typeof source.querySelectorAll === "function") {
-		for (const link of source.querySelectorAll("a[href]")) push(link.href || link.getAttribute("href"));
+		for (const link of source.querySelectorAll("a[href]")) pushHref(link.href || link.getAttribute("href"));
+		scanText(source.textContent || "");
 	}
 	return list;
 }
@@ -5005,7 +5019,7 @@ function nsmaxTagStructure() {
 				}
 				// Telegram 联系方式：优先用页面上这个人的签名里见到的，其次看接口返回的签名 / 简介里有没有 t.me 链接；
 			// 有就放进资料卡底部一行（和「管理记录 / 屏蔽」同一排，点名字直接打开 Telegram，点「复制」拷到剪贴板）
-			const tgContacts = nsmaxTelegramCache.get(String(id)) || nsmaxTelegramContacts(data.signature || data.sign || data.signature_html || data.bio || data.readme || "");
+			const tgContacts = nsmaxTelegramCache.get(String(id)) || nsmaxTelegramContacts(data.signature || data.sign || data.signature_html || data.bio || data.readme || data.intro || "");
 			if (tgContacts.length) {
 				nsmaxTelegramCache.set(String(id), tgContacts);
 				if (!pop.querySelector(".nsmax-person-tg")) {
@@ -5038,7 +5052,7 @@ function nsmaxTagStructure() {
 			let entry = cache.get(id);
 			if (entry && Date.now() - entry.at < 6e5) return entry.promise;
 			const stored = nsmaxPersonCached(id);
-			const promise = stored ? Promise.resolve(stored) : fetch("/api/account/getInfo/" + id, { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
+			const promise = stored ? Promise.resolve(stored) : fetch("/api/account/getInfo/" + id + "?readme=1", { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
 				const data = json?.detail || json?.data || {};
 				if (json?.success === false || !data || typeof data !== "object") throw new Error(json?.message || "读取失败");
 				nsmaxPersonStore(id, data);

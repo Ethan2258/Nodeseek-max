@@ -10528,7 +10528,7 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies >
   gap: 8px !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 3px 0 0 !important;
+  padding: 1.5px 0 0 !important;
   color: var(--text-subtle) !important;
   font-size: 12px !important;
   line-height: 21px !important;
@@ -13612,4 +13612,112 @@ html[data-nsmax-theme] .nsmax-space-tg .nsmax-tg:is(#nsmax-lv, *) {
   height: 26px !important;
   border-color: var(--line) !important;
   background: var(--panel) !important;
+}
+/* ---------- 2026-10-22 第四批：楼中楼一条的时间 / 楼号 / 操作同一基线；资料卡 Telegram 快捷联系重排 ---------- */
+/* 楼中楼一条的头部：时间、#楼号、回复/引用/点赞/鸡腿/反对 全部 12px、行高 21px、同一顶部（以前 .comment-menu 自带外边距，
+   菜单项比时间低 3px，看起来一高一低） */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *) > .comment-menu:is(#nsmax-lv, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *) > .floor-link-wrapper:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  height: 21px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 10px !important;
+  line-height: 21px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *) > .comment-menu > .menu-item:is(#nsmax-lv, *),
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *) .floor-link:is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 21px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info:is(#nsmax-lv, *) {
+  height: 24px !important;
+  padding: 1.5px 0 0 !important;
+  line-height: 21px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info:is(#nsmax-lv, *) :is(time, span, a, .date-created):is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 21px !important;
+  font-size: 12px !important;
+  line-height: 21px !important;
+}
+/* 资料卡里的 Telegram：整行一条按钮（图标 + @名字 + 右侧复制），和资料卡其他行同宽同圆角；
+   位置放在统计下面、底栏上面，比之前夹在数字和按钮之间更清楚 */
+html[data-nsmax-theme] .nsmax-person-tg:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 10px 14px 0 !important;
+}
+html[data-nsmax-theme] .nsmax-person-tg .nsmax-tg:is(#nsmax-lv, *) {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 34px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 4px 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nsmax-person-tg .nsmax-tg > svg:is(#nsmax-lv, *) {
+  width: 15px !important;
+  height: 15px !important;
+}
+html[data-nsmax-theme] .nsmax-person-tg .nsmax-tg-open:is(#nsmax-lv, *) {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-person-tg .nsmax-tg-open:is(#nsmax-lv, *)::before {
+  content: "Telegram " !important;
+  color: var(--text-subtle) !important;
+  font-weight: 400 !important;
+}
+html[data-nsmax-theme] .nsmax-person-tg .nsmax-tg-copy:is(#nsmax-lv, *) {
+  flex: none !important;
+  height: 26px !important;
+  padding: 0 10px !important;
+  border-radius: var(--r-sm) !important;
+  font-size: 12px !important;
+}
+/* 个人主页资料卡：名字下面的 Telegram 也排成一条按钮 */
+html[data-nsmax-theme] .nsmax-space-tg:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 10px 0 0 !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .nsmax-space-tg .nsmax-tg:is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 32px !important;
+  padding: 0 4px 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] .nsmax-space-tg .nsmax-tg-open:is(#nsmax-lv, *)::before {
+  content: "Telegram " !important;
+  color: var(--text-subtle) !important;
+  font-weight: 400 !important;
 }
