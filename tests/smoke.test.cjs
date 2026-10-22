@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.32");
+	assert.equal(packageJson.version, "1.8.33");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5965,7 +5965,7 @@ test("v1.8.30 主帖头部：站点原生的纯文字「编辑」收起（只留
 
 test("v1.8.31 Telegram 快捷联系：悬停资料卡 / 个人主页资料卡里直接显示 @名字 + 复制", async () => {
 	// 1) 帖子页：作者的签名里有 t.me 链接，鼠标停在楼主名字上，资料卡底部直接给出 Telegram
-	const html = postPage().replace("签名：机器不跑路", '联系我 Telegram：<a href="https://t.me/nodeseekmax">@nodeseekmax</a> 或 ');
+	const html = postPage().replace("签名：机器不跑路", "联系我 tg: @nodeseekmax 或 ");
 	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
 	try {
 		await post.page.waitForSelector(".nsmax-signature-contacts");
@@ -5988,7 +5988,7 @@ test("v1.8.31 Telegram 快捷联系：悬停资料卡 / 个人主页资料卡里
 	const space = await open(browser, "https://www.nodeseek.com/space/10", {
 		html: nativeSpacePage(),
 		viewport: { width: 1440, height: 900 },
-		api: { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail: { member_id: 10, member_name: "Steve", rank: 3, coin: 100, nPost: 2, nComment: 3, signature: 'Telegram: <a href="https://t.me/steve_tg">@steve_tg</a>', created_at: new Date(Date.now() - 864e5 * 30).toISOString() } } }] }
+		api: { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail: { member_id: 10, member_name: "Steve", rank: 3, coin: 100, nPost: 2, nComment: 3, signature: "电报：@steve_tg", created_at: new Date(Date.now() - 864e5 * 30).toISOString() } } }] }
 	});
 	try {
 		await space.page.waitForSelector(".nsmax-space-top");
@@ -5997,4 +5997,33 @@ test("v1.8.31 Telegram 快捷联系：悬停资料卡 / 个人主页资料卡里
 		assert.equal(await space.page.locator(".nsmax-space-tg .nsmax-tg-open").first().getAttribute("href"), "https://t.me/steve_tg");
 		assert.deepEqual(space.errors, []);
 	} finally { await space.context.close(); }
+});
+test("v1.8.33 楼中楼一条的头部：时间 / #楼号 / 回复引用点赞… 同一行同一基线，字号行高一致", async () => {
+	const first = postPage().replaceAll("/page-2", "/post-1000-2");
+	const second = postPage().replace('id="1"', 'id="4"').replace('id="2"', 'id="5"').replace('id="3"', 'id="6"').replace("收了，私信你", '<a href="/space/11">@buyer</a> <a href="/post-1000-1#1">#1</a> 本地楼中楼').replaceAll('class="pager-pos pager-cur">1', 'class="pager-pos pager-cur">2').replace(/<a[^>]*class="pager-next"[^>]*>.*?<\/a>/, "");
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: first, pages: { "/post-1000-2": second }, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector("button.nspp-action");
+		await page.locator("button.nspp-action").filter({ hasText: "加载下一页" }).click({ force: true });
+		await page.waitForSelector('li[id="1"]>.nsmax-floor-box>.nsmax-nested-replies>li[id="4"]');
+		await page.waitForTimeout(400);
+		const state = await page.evaluate(() => {
+			const row = document.querySelector('li[id="1"]>.nsmax-floor-box>.nsmax-nested-replies>li[id="4"]');
+			const parts = [row.querySelector(".content-info time"), row.querySelector(".nsmax-floor-actions .floor-link"), ...row.querySelectorAll(".nsmax-floor-actions .comment-menu .menu-item")].filter(Boolean);
+			const box = (el) => el.getBoundingClientRect();
+			return {
+				count: parts.length,
+				fonts: [...new Set(parts.map((el) => getComputedStyle(el).fontSize))],
+				lines: [...new Set(parts.map((el) => getComputedStyle(el).lineHeight))],
+				tops: parts.map((el) => Math.round(box(el).top * 10) / 10),
+				heights: [...new Set(parts.map((el) => Math.round(box(el).height)))]
+			};
+		});
+		assert.ok(state.count >= 7, "时间 + #楼号 + 5 个操作都量到");
+		assert.deepEqual(state.fonts, ["12px"]);
+		assert.deepEqual(state.lines, ["21px"]);
+		assert.ok(Math.max(...state.tops) - Math.min(...state.tops) <= 1, "同一基线：" + JSON.stringify(state.tops));
+		assert.deepEqual(state.heights, [21]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });
