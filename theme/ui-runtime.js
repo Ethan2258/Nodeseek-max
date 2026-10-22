@@ -2135,7 +2135,85 @@
 			if (has !== a.hasAttribute("data-nsmax-imglink")) a.toggleAttribute("data-nsmax-imglink", has);
 		}
 	}
-	function nsmaxTagStructure() {
+	// 签名里的 Telegram 联系方式（t.me / telegram.me 链接）：在签名下面补一行小标签——
+// 点「@名字」在 Telegram 里打开，点「复制」把联系方式拷到剪贴板（不跳走，复制完弹 toast）。
+// sb.sb 没有签名，这里跟签名的次要信息样式一致：细线小字，不抢正文。
+function nsmaxCopyText(text) {
+	const done = () => {
+		try { nsmaxToast(`已复制：${text}`); } catch {}
+	};
+	const fallback = () => {
+		try {
+			const area = document.createElement("textarea");
+			area.value = text;
+			area.setAttribute("readonly", "");
+			area.style.cssText = "position:fixed;left:-9999px;top:0";
+			document.body.append(area);
+			area.select();
+			document.execCommand("copy");
+			area.remove();
+			done();
+		} catch {}
+	};
+	if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
+	else fallback();
+}
+var NSMAX_TELEGRAM_ICON = "M21.5 4.3 2.9 11.5c-.9.3-.9 1.5 0 1.8l4.6 1.5 1.8 5.4c.3.8 1.3 1 1.9.4l2.5-2.4 4.5 3.3c.7.5 1.7.1 1.9-.7l3.1-14.3c.2-.9-.7-1.6-1.7-1.2ZM9.6 14.2l7.6-5.6-5.5 6.3-.2 3.1-1.9-3.8Z";
+function nsmaxDecorateSignatures() {
+	for (const signature of document.querySelectorAll(".signature")) {
+		const links = [...signature.querySelectorAll("a[href]")].filter((link) => /^(?:https?:)?\/\/[^/]*(?:t|telegram)\.me\//i.test(link.getAttribute("href") || ""));
+		const old = signature.querySelector(":scope > .nsmax-signature-contacts");
+		if (!links.length) {
+			old?.remove();
+			continue;
+		}
+		const key = links.map((link) => link.href).join("|");
+		if (old && old.getAttribute("data-nsmax-contacts") === key) continue;
+		old?.remove();
+		const row = document.createElement("div");
+		row.className = "nsmax-signature-contacts";
+		row.setAttribute("data-nsmax-contacts", key);
+		const seen = new Set();
+		for (const link of links) {
+			const href = link.href;
+			if (seen.has(href)) continue;
+			seen.add(href);
+			const handle = (href.match(/t(?:elegram)?\.me\/([A-Za-z0-9_]+)/i)?.[1] || "").replace(/^@/, "");
+			const chip = document.createElement("span");
+			chip.className = "nsmax-tg";
+			const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			icon.setAttribute("viewBox", "0 0 24 24");
+			icon.setAttribute("aria-hidden", "true");
+			const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+			path.setAttribute("d", NSMAX_TELEGRAM_ICON);
+			icon.append(path);
+			const open = document.createElement("a");
+			open.className = "nsmax-tg-open";
+			open.href = href;
+			open.target = "_blank";
+			open.rel = "noopener noreferrer";
+			open.textContent = handle ? `@${handle}` : "Telegram";
+			open.title = "在 Telegram 里打开";
+			const copy = document.createElement("button");
+			copy.type = "button";
+			copy.className = "nsmax-tg-copy";
+			copy.textContent = "复制";
+			copy.title = `复制 Telegram 联系方式${handle ? `：@${handle}` : ""}`;
+			copy.setAttribute("aria-label", copy.title);
+			copy.addEventListener("click", (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				nsmaxCopyText(handle ? `@${handle}` : href);
+			});
+			chip.append(icon, open, copy);
+			row.append(chip);
+		}
+		// 签名原来限高 3 行、超出裁掉（见 design.css 签名规则）：加了联系方式这一行就不要再裁
+		signature.style.setProperty("max-height", "none", "important");
+		signature.append(row);
+	}
+}
+function nsmaxTagStructure() {
 		// 页码外层：列表页底部、帖子评论区上下（底部那个会被移到评论区外面）、个人空间列表下方
 		for (const pager of document.querySelectorAll(".nsk-pager")) {
 			const box = pager.parentElement;
@@ -2156,6 +2234,7 @@
 			if (span.hasAttribute("data-nsmax-pinned") && span.parentElement.firstElementChild !== span) span.parentElement.prepend(span);
 		}
 		nsmaxTagImageLinks();
+	nsmaxDecorateSignatures();
 		// 页面骨架：左栏是否为空、是否帖子页；右栏是否为空
 		const body = document.querySelector("#nsk-body");
 		if (body) {

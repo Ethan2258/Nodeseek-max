@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.28");
+	assert.equal(packageJson.version, "1.8.29");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -5794,4 +5794,134 @@ test("发布产物压缩（2026-10-22）：用户脚本头部原样保留、注�
 	} finally {
 		fs.rmSync(target, { force: true });
 	}
+});
+test("v1.8.29 签名里的 Telegram：后面补 @名字 + 复制按钮，点复制拷到剪贴板、弹 toast、不跳走", async () => {
+	const html = postPage().replace("</body>", '<div class="content-item"><div class="signature">联系我 <a href="https://t.me/nodeseekmax">Telegram</a></div></div></body>');
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-signature-contacts");
+		const chip = page.locator(".nsmax-tg").first();
+		assert.equal(await chip.locator(".nsmax-tg-open").innerText(), "@nodeseekmax");
+		assert.equal(await chip.locator(".nsmax-tg-open").getAttribute("href"), "https://t.me/nodeseekmax");
+		assert.equal(await chip.locator(".nsmax-tg-open").getAttribute("target"), "_blank");
+		await page.evaluate(() => {
+			window.__copied = [];
+			Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text) => { window.__copied.push(text); } } });
+		});
+		await chip.locator(".nsmax-tg-copy").click();
+		await page.waitForFunction(() => window.__copied.length > 0);
+		assert.deepEqual(await page.evaluate(() => window.__copied), ["@nodeseekmax"]);
+		await page.waitForSelector(".nsmax-toast[data-nsmax-shown]");
+		assert.ok((await page.locator(".nsmax-toast").innerText()).includes("@nodeseekmax"));
+		assert.equal(page.url().includes("t.me"), false);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.29 列表预览提速：页面空下来先把首屏可见的几篇主帖取好，悬停时直接用、不再等请求", async () => {
+	const pages = {};
+	for (let index = 0; index < 4; index++) pages[`/post-${1000 + index}-1`] = postPage();
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		// 空闲时预取（最多 4 篇）：不用悬停就已经发出主帖请求
+		await page.waitForFunction(() => performance.getEntriesByType("resource").filter((entry) => /\/post-\d+-1(?:\.html)?$/.test(entry.name)).length > 0, null, { timeout: 5e3 });
+		const prefetched = await page.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\/post-\d+-1(?:\.html)?$/.test(entry.name)).length);
+		assert.ok(prefetched <= 4, `预取 ${prefetched} 篇，应不超过 4 篇`);
+		// 悬停第一篇：卡片内容直接出来，同一篇不会再请求第二次
+		const target = page.locator(".post-list-item .post-title a").first();
+		const started = Date.now();
+		await target.hover();
+		await page.waitForSelector("dialog.nspp-post-preview:not([hidden]) .nspp-preview-content article", { timeout: 5e3 });
+		assert.ok(Date.now() - started < 1500, "悬停到预览正文出现应在 1.5 秒内");
+		const again = await page.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\/post-1000-1(?:\.html)?$/.test(entry.name)).length);
+		assert.equal(again, 1, "同一篇只取一次网页");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.29 私信不用刷新：面板开着时自动读到新消息（轮询间隔可用 ?nsmax-msg-poll=1 缩短）", async () => {
+	const old = { id: 21, sender_id: 10, receiver_id: 1, sender_name: "friend", receiver_name: "tester", content: "在吗？", viewed: 1, created_at: new Date(Date.now() - 36e5).toISOString() };
+	const fresh = { id: 24, sender_id: 10, receiver_id: 1, sender_name: "friend", receiver_name: "tester", content: "刚发的新消息", viewed: 0, created_at: new Date().toISOString() };
+	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/notification?nsmax-msg-poll=1#/message?mode=talk&to=10", {
+		html: nativeTalkPage(),
+		viewport: { width: 1280, height: 900 },
+		api: {
+			"/api/notification/message/with/10": [
+				{ status: 200, body: { success: true, talkTo: { member_id: 10, member_name: "friend" }, msgArray: [old] } },
+				{ status: 200, body: { success: true, talkTo: { member_id: 10, member_name: "friend" }, msgArray: [old, fresh] } }
+			]
+		}
+	});
+	try {
+		await page.waitForSelector(".nspp-messages textarea:visible");
+		await page.waitForFunction(() => (document.querySelector(".nspp-messages-thread")?.textContent || "").includes("在吗"));
+		// 不刷新、不点击：等自动轮询把新消息读进来
+		await page.waitForFunction(() => (document.querySelector(".nspp-messages-thread")?.textContent || "").includes("刚发的新消息"), null, { timeout: 8e3 });
+		assert.ok(calls["/api/notification/message/with/10"] >= 2, "轮询确实又请求了一次会话");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.29 资料页不再闪：站点整块重画主栏时先遮一帧再显示，整理完恢复", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-space-top");
+		await page.evaluate(() => {
+			window.__swap = { set: 0, removed: 0, at: 0, visibleAt: 0 };
+			new MutationObserver(() => {
+				const state = window.__swap;
+				if (document.documentElement.hasAttribute("data-nsmax-space-swap")) {
+					if (!state.set) {
+						state.set = performance.now();
+						state.visibleAt = getComputedStyle(document.querySelector("#nsk-frame")).opacity;
+					}
+				} else if (state.set && !state.removed) state.removed = performance.now();
+			}).observe(document.documentElement, { attributes: true, attributeFilter: ["data-nsmax-space-swap"] });
+			// 模拟站点水合：主栏里的整块内容被换掉（原来的节点被移除、新的节点加进来）
+			const container = document.querySelector("#nsk-frame > .nsk-container");
+			container.replaceChildren(...Array.from(container.cloneNode(true).children));
+		});
+		await page.waitForFunction(() => window.__swap.removed > 0, null, { timeout: 3e3 });
+		const state = await page.evaluate(() => window.__swap);
+		assert.ok(state.set > 0, "检测到整块重画时应先遮住");
+		assert.equal(state.visibleAt, "0", "遮住的那一帧主栏是不可见的");
+		assert.ok(state.removed - state.set <= 1200, `遮住的时间 ${Math.round(state.removed - state.set)}ms，应很快恢复`);
+		assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-space-swap")), false);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+test("v1.8.29 自动翻页 + 楼中楼 + 回复：接上来的下一页当场收进楼中楼，回复框不被卷进去", async () => {
+	const first = postPage().replaceAll("/page-2", "/post-1000-2");
+	// 第二页：一条回复第 1 层的楼中楼（站点原文是「@某某 #1」两个链接），没有下一页
+	let second = postPage();
+	const start = second.indexOf('<ul class="comments">') + '<ul class="comments">'.length;
+	second = second.slice(0, start) + '<li class="content-item" id="4"><div class="nsk-content-meta-info"><div class="avatar-wrapper"><a href="/space/14"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjY2NjIi8+PC9zdmc+" alt="replier" class="avatar-normal"></a></div><div><div class="author-info"><a href="/space/14" class="author-name">replier</a></div></div></div><article class="post-content"><p><a href="/post-1000-1#1">@buyer</a> <a href="/post-1000-1#1">#1</a> 我也是</p></article></li>' + second.slice(second.indexOf("</ul>", start));
+	second = second.replace(/<div class="nsk-pager post-top-pager">[\s\S]*?<\/div>/, '<div class="nsk-pager post-top-pager"></div>').replace(/<div class="nsk-pager post-bottom-pager">[\s\S]*?<\/div>/, '<div class="nsk-pager post-bottom-pager"></div>');
+	const requested = [];
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: first, viewport: { width: 1280, height: 500 }, pages: { "/post-1000-2": second }, beforeNavigate: async (browserPage) => { browserPage.on("request", (request) => { if (/\/post-\d+-\d+$/.test(new URL(request.url()).pathname)) requested.push(new URL(request.url()).pathname); }); } });
+	try {
+		await page.waitForSelector("button.nspp-action");
+		await page.waitForFunction(() => document.readyState === "complete");
+		await wait(page, 2200);
+		await page.evaluate(() => window.scrollTo({ top: 80, behavior: "instant" }));
+		await page.waitForSelector('li[id="4"]', { state: "attached", timeout: 5e3 });
+		// 接上来时就已在楼中楼里：不是先平铺、过一会儿再收
+		assert.equal(await page.locator('ul.comments > li.content-item[id="4"]').count(), 0, "第 4 楼应直接进楼中楼");
+		assert.equal(await page.locator('li.content-item[id="1"] > .nsmax-floor-box .nsmax-nested-replies > li.content-item[id="4"]').count(), 1);
+		assert.equal(await page.locator('li.content-item[id="1"] > .nsmax-floor-box .nsmax-fb-count').first().innerText(), "共 1 条回复");
+		// 回复框仍在评论区底部，没有被楼中楼或自动翻页卷进去
+		const reply = await page.evaluate(() => {
+			const editor = document.querySelector(".md-editor, textarea");
+			if (!editor) return { found: false };
+			const list = document.querySelector("ul.comments");
+			return { found: true, inNested: !!editor.closest(".nsmax-nested-replies"), afterList: !!(list && (list.compareDocumentPosition(editor) & Node.DOCUMENT_POSITION_FOLLOWING)), floors: document.querySelectorAll("ul.comments > li.content-item").length, total: document.querySelectorAll("ul.comments li.content-item").length };
+		});
+		assert.equal(reply.found, true);
+		assert.equal(reply.inNested, false);
+		assert.equal(reply.afterList, true, "回复框还在评论区下面");
+		assert.equal(reply.floors, 3, "顶层楼层：原来的 3 条 + 第 4 楼已收进楼中楼");
+		assert.equal(reply.total, 4);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
 });
