@@ -250,11 +250,15 @@ if (leftoverHas.length) throw new Error("主题里不能再有 :has()（会让 N
 const pageMarkers = [
 	["post", /\.nsk-post\b|ul\.comments\b|\.content-item\b|\.nsmax-author-col\b|\.nsk-content-meta-info\b|\.nsmax-floor\b|\.nsmax-op-|\.nsmax-post-stats\b|\.nsmax-title-stats\b|\.comment-container\b|\.reply-panel\b|\.nsmax-nested\b|\.nsmax-reply\b|\.topic-warning\b|\.post-table\b/],
 	["editor", /\.md-editor\b|\.nsmax-editor\b|\.nsmax-compose\b|\.CodeMirror\b/],
-	["notification", /\.nspp-messages\b|\.nsmax-notice\b|\.nsmax-message\b|\.nspp-message\b|\.dm-/],
+	["notification", /\.nspp-messages\b|\.nsmax-notice\b|\.nsmax-message\b|\.nspp-message\b|\.dm-|\.nsk-notification\b|\.app-switch\b|\.talk-list\b|\.talk-item\b|\.message-wrapper\b|\.message-item\b|\.message-input\b/],
 	["setting", /#user-setting-panel\b|\.nsmax-setting\b/],
 	["auth", /\.nsmax-auth\b|\[data-nsmax-auth|\.nsmax-password-toggle\b/],
 	["fans", /\.nsmax-member\b|\.user-card-wrapper\b|\.fans-switcher\b|\.nsmax-fans\b/],
-	["board", /\.nsmax-board\b|\.rank-row\b|\.top-rank\b|\.nsmax-checkin\b/],
+	["board", /\.nsmax-board\b|\.rank-row\b|\.top-rank\b|\.nsmax-checkin\b|\.board-container\b|\.board-list\b|\.board-item\b/],
+	// 帖子列表（首页、版块、精华、搜索……都算 list 页）：这些结构只在列表页出现（帖子页、个人主页、通知页的网页里都没有，脚本也不在别处造），
+	// 2026-10-23 起单独一段，别的页面不再解析这近 40KB
+	["list", /ul\.post-list\b|\.post-list-item\b|\.post-list-controler\b|\.post-list-content\b|\.info-author\b|\.info-views\b|\.info-comments-count\b|\.info-last-commenter\b|\.info-last-comment-time\b|\.topic-carousel|\.nsmax-kind-tab|\.nsmax-inline-category\b|\.nsmax-meta-icon\b|\.post-category\b|\[data-nsmax-lottery-view\]/],
+	["ruling", /\.ruling-log\b|\.nsmax-ruling\b/],
 	["lucky", /\.sample-panel\b|\.nsmax-lucky\b|\.lucky-|\.nsmax-draw\b/],
 	["space", /\.discussion-wrapper\b|\.nsmax-space\b|\.head-container\b|\.profile-head\b/],
 	["search", /\.nsmax-search\b/],

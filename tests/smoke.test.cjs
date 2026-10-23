@@ -441,7 +441,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.35");
+	assert.equal(packageJson.version, "1.8.36");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -946,7 +946,8 @@ test("搜索入口：不显示 Google，搜索弹层保留帖子和用户入口"
 			overlay.innerHTML = '<div class="glass-tabs"><button class="tab-btn">帖子</button><button class="tab-btn">用户</button><button class="tab-btn googleSearch">谷歌</button></div>';
 			document.body.append(overlay);
 		});
-		await page.waitForTimeout(80);
+		// 藏掉「谷歌」的样式在首帧之后才补注入的浮层段里（真实使用时点搜索框那一下就先补上了）：等它补上，不按固定的几十毫秒算
+		await page.waitForFunction(() => ![...document.querySelectorAll(".search-overlay .googleSearch")].some((el) => el.getClientRects().length), null, { timeout: 3e3 });
 		assert.equal(await page.locator(".search-overlay .googleSearch:visible").count(), 0);
 		assert.deepEqual(await page.locator(".search-overlay .tab-btn:visible").allTextContents(), ["帖子", "用户"]);
 		assert.deepEqual(errors, []);
@@ -6285,6 +6286,76 @@ test("v1.8.35 打开页面不卡：个人主页的资料卡是站点前端画的
 		assert.equal(state.first.raw, false, "原样的头像不再露出来");
 		assert.equal(state.first.intro, false, "没写介绍：第一帧就不放「介绍」标签");
 		assert.equal(state.first.pending, false, "画出来就撤掉留的高度");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+// 2026-10-23 第二十三批：打开页面更快（脚本启动少做事、样式按页面拆得更细）
+test("v1.8.36 打开页面更快：看图库（Viewer.js）和它的样式等第一次点开图片才加载——打开页面时不注入，点开帖子里的图片照常看大图，Esc 关掉", async () => {
+	const html = postPage().replace("</article>", '<p><img src="/avatar/77.png" alt="帖子配图" width="320" height="200"></p></article>');
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await wait(page, 500);
+		const viewerCss = () => page.evaluate(() => [...document.querySelectorAll("style")].some((tag) => (tag.textContent || "").includes("Viewer.js v1.14.0")));
+		assert.equal(await viewerCss(), false, "打开页面时不注入看图样式");
+		await page.locator(".nsk-post article.post-content img[alt='帖子配图']").click();
+		await page.waitForSelector("dialog.nspp-image-preview[open] .viewer-container", { timeout: 5e3 });
+		assert.equal(await viewerCss(), true, "点开图片时才注入");
+		await page.waitForSelector("dialog.nspp-image-preview .viewer-canvas img", { timeout: 5e3 });
+		await page.keyboard.press("Escape");
+		await page.waitForSelector("dialog.nspp-image-preview", { state: "detached", timeout: 3e3 });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.36 中文时间（不再走 date-fns 的通用格式化，结果和以前逐字一样）：刚刚 / N 分钟前 / N 小时前 / N 天前；超过 30 天和将来的时间显示完整时间", async () => {
+	const now = Date.now();
+	const iso = (ms) => new Date(now - ms).toISOString();
+	const full = (ms) => { const d = new Date(now - ms); const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+	const cases = [[20e3, "刚刚"], [90e3, "1 分钟前"], [30 * 6e4 + 15e3, "30 分钟前"], [61 * 6e4, "1 小时前"], [5 * 36e5 + 10 * 6e4, "5 小时前"], [864e5 + 36e5, "1 天前"], [3 * 864e5 + 2 * 36e5, "3 天前"], [40 * 864e5, null], [-5 * 6e4, null]];
+	const html = postPage().replace("</article>", cases.map(([ms], i) => `<p><time id="t${i}" datetime="${iso(ms)}">x</time></p>`).join("") + "</article>");
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const texts = await page.evaluate((n) => Array.from({ length: n }, (_, i) => document.getElementById("t" + i).textContent), cases.length);
+		assert.deepEqual(texts, cases.map(([ms, text]) => text ?? full(ms)));
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.36 主题样式按页面拆得更细：只在列表页用的那段（帖子列表、列表工具条）帖子页不再解析，列表页照常有", async () => {
+	const themeCss = (page) => page.evaluate(() => [...document.querySelectorAll("style")].map((tag) => tag.textContent || "").filter((text) => text.includes("data-nsmax-theme")).join(""));
+	const post = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await post.page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const css = await themeCss(post.page);
+		assert.equal(css.includes("nsmax-kind-tab"), false, "帖子页没有列表工具条的样式");
+		assert.equal(css.includes(".nsk-post"), true, "帖子页自己的样式在");
+		assert.deepEqual(post.errors, []);
+	} finally { await post.context.close(); }
+	const list = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await list.page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		assert.equal((await themeCss(list.page)).includes("nsmax-kind-tab"), true, "列表页有列表工具条的样式");
+		assert.deepEqual(list.errors, []);
+	} finally { await list.context.close(); }
+});
+
+test("v1.8.36 签到成功：右下角的签到按钮先弹一下再往上淡出、收起（改用浏览器自带的动画，不再打包 GSAP）", async () => {
+	// 按钮的标题变成「已签到」的那一刻（和开始动画在同一段代码里），记下它身上的动画
+	const init = `(() => { if (window.top !== window) return; new MutationObserver((records) => { for (const record of records) { const el = record.target; if (el.title === "已签到" && !window.__checkin) window.__checkin = { animations: el.getAnimations().map((a) => a.playState), hidden: el.hidden }; } }).observe(document, { subtree: true, attributes: true, attributeFilter: ["title"] }); })();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
+		html: listPage(), init, viewport: { width: 1280, height: 900 },
+		api: { "/api/attendance": [{ status: 200, body: { success: true, message: "签到成功，获得 5 个鸡腿", gain: 5 } }] }
+	});
+	try {
+		await page.waitForFunction(() => window.__checkin, null, { timeout: 5e3 });
+		// 点下去那一下的回弹（0.2 秒）可能还没放完，所以可能有两个
+		const state = await page.evaluate(() => window.__checkin);
+		assert.equal(state.hidden, false);
+		assert.ok(state.animations.includes("running"), `显示「已签到」时正在播放动画：${JSON.stringify(state.animations)}`);
+		await page.waitForFunction(() => { const el = document.querySelector("#nspp-tools .nspp-tool-icon[title='已签到']"); return el && el.hidden && el.getAnimations().length === 0; }, null, { timeout: 4e3 });
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

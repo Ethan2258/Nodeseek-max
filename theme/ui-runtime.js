@@ -20,6 +20,7 @@
 		if (kind === "list") {
 			if (location.pathname === "/search") keys.add("search");
 			if (/^\/credit(?:\/|$)/.test(location.pathname)) keys.add("credit");
+			if (/^\/ruling(?:\/|$)/.test(location.pathname)) keys.add("ruling");
 		}
 		try {
 			// 自测 / 排查：地址上带 ?nsmax-all-css（或在页面里设 window.__NSMAX_ALL_CSS）时注入全部段
@@ -1333,6 +1334,9 @@
 	// 不需要改时返回 null。页面解析阶段（nsmaxApplyChineseTimes）和「内容增强」模块共用。
 	function nsmaxChineseTimeText(el) {
 		const old = el.textContent;
+		// 能按时间算出来的（几乎所有）直接用；算不出来才去翻译原文里的英文
+		const computed = forumTime(el.getAttribute("datetime") || old || "")?.text;
+		if (computed) return old !== computed ? computed : null;
 		const units = {
 			y: "年",
 			mo: "月",
@@ -1341,9 +1345,8 @@
 			min: "分钟",
 			s: "秒"
 		};
-				const translated = (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
-		const value = forumTime(el.getAttribute("datetime") || old || "")?.text || translated;
-		return old !== value ? value : null;
+		const translated = (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
+		return old !== translated ? translated : null;
 	}
 	// 页面解析阶段就把时间改成中文（设置里关掉「中文时间」或「内容增强」时不改）；原文字记在 data-nsmax-time-orig，
 	// 模块启动后据此登记还原。parsed 判断元素是否已经完整解析（文字没解析完时先不动）。
