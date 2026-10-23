@@ -644,10 +644,6 @@ html[data-nsmax-theme] #nsk-body-left .comment-menu [data-nsmax-action=star] {--
 html[data-nsmax-theme] #nsk-body-left .comment-menu [data-nsmax-action=quote] {--nsmax-action-icon:var(--nsmax-icon-quote);}
 html[data-nsmax-theme] #nsk-body-left .comment-menu [data-nsmax-action=reply] {--nsmax-action-icon:var(--nsmax-icon-reply);}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info .info-last-commenter::before {display:none!important;content:none!important;}
-html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info .nsmax-meta-icon {display:inline-block!important;width:13px!important;height:13px!important;flex:none!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;color:var(--text-disabled)!important;}
-html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info .info-last-commenter>svg.nsmax-meta-icon {display:inline-block!important;visibility:visible!important;width:13px!important;height:13px!important;}
-html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info .nsmax-inline-category>svg.nsmax-meta-icon {display:inline-block!important;visibility:visible!important;width:13px!important;height:13px!important;}
-html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info svg[data-nsmax-meta-original] {display:none!important;width:0!important;height:0!important;}
 html[data-nsmax-theme] [hidden] {display:none!important;}
 html[data-nsmax-theme]:root:root:root #nsk-body-left .post-list>li[hidden],
 html[data-nsmax-theme]:root:root:root #nsk-body-left .comments>li[hidden] {display:none!important;}

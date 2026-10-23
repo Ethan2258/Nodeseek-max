@@ -168,6 +168,11 @@ html[data-nsmax-theme] body {
   --nsmax-icon-drumstick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 3.5a6 6 0 0 1 4.24 10.24c-1.62 1.62-3.9 2.1-5.9 1.45l-2.6 2.6'/%3E%3Cpath d='M14.5 3.5a6 6 0 0 0-6.2 7.86l-2.6 2.6'/%3E%3Cpath d='M10.24 17.79a2 2 0 1 1-2.83 2.83 2 2 0 1 1-2.83-2.83 2 2 0 1 1 2.83-2.83'/%3E%3C/svg%3E");
   --nsmax-icon-quote: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 6.5h15'/%3E%3Cpath d='M9.5 12h10'/%3E%3Cpath d='M9.5 17.5h10'/%3E%3Cpath d='M4.5 11v7.5'/%3E%3C/svg%3E");
   --nsmax-icon-reply: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11.5c0 4.14-3.58 7.5-8 7.5-1.13 0-2.2-.22-3.18-.62L4 19.5l1.3-3.6A7.12 7.12 0 0 1 4 11.5C4 7.36 7.58 4 12 4s8 3.36 8 7.5Z'/%3E%3C/svg%3E");
+  /* 列表元信息图标（作者 / 版块 / 浏览 / 回复，见「元信息图标」）：和脚本以前插的 svg 同一套线条图标、2px 线宽 */
+  --nsmax-icon-meta-user: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 11.5a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5ZM5 20c0-3.6 3.1-6 7-6s7 2.4 7 6'/%3E%3C/svg%3E");
+  --nsmax-icon-meta-board: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v14H4ZM8 9h8M8 13h5'/%3E%3C/svg%3E");
+  --nsmax-icon-meta-eye: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.75 12S6.25 5.75 12 5.75 21.25 12 21.25 12 17.75 18.25 12 18.25 2.75 12 2.75 12ZM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z'/%3E%3C/svg%3E");
+  --nsmax-icon-meta-comment: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 6v9a1.5 1.5 0 0 1-1.5 1.5h-9l-4 3.5v-3.5A1.5 1.5 0 0 1 4 15Z'/%3E%3C/svg%3E");
   --nsmax-row-x: 14px;
   --nsmax-list-title: var(--sb-title);
   --main-color: var(--brand) !important;
@@ -904,6 +909,36 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-inf
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .info-item a:hover,
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > a.info-item:not(.post-category):hover {
   color: var(--link-hover) !important;
+}
+/* 元信息图标（2026-10-23 起由这里画，不再给每一项插 svg：一页 95 行要新建近 500 个，手机上首帧前要多花几十毫秒）。
+   和以前插进去的 svg 一模一样：13px 线条图标、2px 线宽；作者 / 浏览 / 回复 / 最后回复人右边距 4px、--text-subtle，
+   行内版块和字间隔 3px（容器的 gap）、--text-disabled。站点原来的 iconpark 图标由适配层藏起来 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > :is(.info-author, .info-last-commenter) {
+  --nsmax-meta-icon: var(--nsmax-icon-meta-user);
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .info-views {
+  --nsmax-meta-icon: var(--nsmax-icon-meta-eye);
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .info-comments-count {
+  --nsmax-meta-icon: var(--nsmax-icon-meta-comment);
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .nsmax-inline-category {
+  --nsmax-meta-icon: var(--nsmax-icon-meta-board);
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > :is(.info-author, .info-views, .info-comments-count, .info-last-commenter, .nsmax-inline-category):is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "" !important;
+  display: block !important;
+  flex: none !important;
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 4px 0 0 !important;
+  background: var(--text-subtle) !important;
+  -webkit-mask: var(--nsmax-meta-icon) center / 13px 13px no-repeat !important;
+  mask: var(--nsmax-meta-icon) center / 13px 13px no-repeat !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .nsmax-inline-category:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  margin: 0 !important;
+  background: var(--text-disabled) !important;
 }
 /* 版块标签：sb.sb .post-forum-badge——行右侧垂直居中，2px 8px、1px 细线框、次底色、12px 弱化字 */
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .post-category {
@@ -11358,6 +11393,26 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-lottery-status[data-nsmax-busy]:is(
 @keyframes nsmax-spin {
   to { transform: rotate(360deg); }
 }
+/* 抽奖页的页码（2026-10-23）：识别中先不显示（不夹在一行行冒出来的帖子中间跟着往下跳）；最后那个「… 100」是搜索结果的
+   总页数，不是抽奖帖有几页，不显示（运行时标 data-nsmax-lottery-far） */
+html[data-nsmax-theme][data-nsmax-lottery-view][data-nsmax-lottery-pending] #nsk-body-left :is(.nsk-pager, [data-nsmax-pagerbox]):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsk-pager [data-nsmax-lottery-far]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+/* 没能识别的几篇：一行字后面一个 sb.sb 细线小胶囊「重试」 */
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsmax-lottery-retry:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 3px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font: 500 12.5px/1.6 var(--font-sans) !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsmax-lottery-retry:hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--panel-hover) !important;
+}
 /* 提示条（sb.sb .toast）：用 popover 放进顶层后，去掉浏览器给 popover 的默认样式（铺满、居中、边框、内边距）；
    出错时红底（sb.sb .toast.is-error）；进出场时间、缓动和 sb.sb 一样（出现 200ms、消失 140ms） */
 html[data-nsmax-theme] .nsmax-toast:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -13090,10 +13145,21 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats[data
   html[data-nsmax-theme] .nsk-pager :is(a.pager-prev, a.pager-next):is(#nsmax-lv, *):is(#nsmax-b, *) {
     font-size: 0 !important;
   }
+  /* 2026-10-23：箭头就是这个字符。旧版「现代主题」层（source.js 分页）给 [data-nsmax-pg=prev/next]::before 套了 16px 遮罩、
+     currentColor 底色，叠在字符上——行内框里遮罩上下重复，iPhone 上箭头上下各多出一道线。这里把遮罩、底色、尺寸都清掉；
+     行高和数字页码一样（22.75px），箭头那颗不再比数字高 2px */
   html[data-nsmax-theme] .nsk-pager :is(a.pager-prev, a.pager-next):is(#nsmax-lv, *):is(#nsmax-b, *)::before {
-    display: inline !important;
+    display: inline-block !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    background: none !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+    color: inherit !important;
     font-size: 15px !important;
-    line-height: 1 !important;
+    line-height: 22.75px !important;
+    vertical-align: top !important;
   }
   html[data-nsmax-theme] .nsk-pager a.pager-prev:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
     content: "‹" !important;
