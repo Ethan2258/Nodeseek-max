@@ -95,7 +95,9 @@
 					link.href = contacts[0].href;
 					link.target = "_blank";
 					link.rel = "noopener noreferrer";
-					link.textContent = "Telegram";
+					// 按钮上只写「TG」（2026-10-24：写全「Telegram」，和「私信」「关注」排在一排太挤），全名在悬停提示和读屏标签里
+					link.textContent = "TG";
+					link.setAttribute("aria-label", "Telegram");
 					link.title = contacts[0].handle ? "Telegram：@" + contacts[0].handle : "在 Telegram 里打开";
 					const pm = topRow.querySelector(":scope > a.btn");
 					if (pm) pm.after(link); else topRow.append(link);
@@ -640,16 +642,16 @@
 		return null;
 	}
 	var nsmaxSpecialQueue = [];
-	// 标题不像抽奖的（2026-10-23：有的抽奖帖标题里不写全「抽奖」、或者故意不写）：也按内容查，排在标题像的后面、慢一点
-	var nsmaxSpecialQuietQueue = [];
 	var nsmaxSpecialBusy = false;
-	var nsmaxSpecialBudget = 30;
-	var nsmaxSpecialQuietBudget = 60;
-	var nsmaxSpecialRecheckBudget = 8;
+	// 2026-10-24：一页最多查 12 篇（以前 30 篇，v1.8.37 还给标题不像抽奖的另加 60 篇，十秒里取二十多篇，站点开始限流，
+	// 页面、图片跟着变慢）。标题不像抽奖的不在列表页后台查：点开它时按内容认（见 nsmaxPrizeBadges），
+	// 「抽奖」分类页里再在后台慢慢找（见 nsmaxCrawlNewPosts）
+	var nsmaxSpecialBudget = 12;
+	var nsmaxSpecialRecheckBudget = 4;
 	var nsmaxSpecialQueued = new Set();
 	function nsmaxVerifySpecialPosts(ctx) {
-		// 「抽奖」分类页有自己的识别（见 nsmaxLotteryView），这里不再重复查
-		if (nsmaxIsLotteryView()) return;
+		// 「抽奖」分类页有自己的识别（见 nsmaxLotteryView），这里不再重复查；站点限流过、后台暂停中也不查
+		if (nsmaxIsLotteryView() || nsmaxBackgroundPaused()) return;
 		const links = document.querySelectorAll(".post-list-item .post-title > a[href*='/post-']");
 		if (!links.length) return;
 		const known = nsmaxSpecialPostMap(), checked = nsmaxSpecialChecked(), times = nsmaxLotteryTimes(), ended = nsmaxLotteryEnded(), rows = nsmaxLotteryRows();
@@ -657,7 +659,6 @@
 			const id = (link.getAttribute("href") || "").match(/\/post-(\d+)/)?.[1];
 			if (!id || nsmaxSpecialQueued.has(id)) continue;
 			const lottery = (known.get(id) || "").split(",").includes("lottery");
-			let quiet = false;
 			if (lottery) {
 				// 早就认出来、但还没记下列表上样子的抽奖帖：顺手记下（「抽奖」分类里没有它时并进去）
 				if (!rows.has(id)) nsmaxRememberLotteryRow(link.closest("li.post-list-item"));
@@ -669,13 +670,11 @@
 			} else {
 				// 这次打开页面已经查过没查成的（删帖、要登录、站点限流……）不再反复查，下次打开页面再说
 				if (known.has(id) || checked.has(id) || nsmaxSpecialFailed.has(id)) continue;
-				quiet = !NSMAX_LOTTERY_HINT.test(link.textContent || "");
-				if (quiet ? nsmaxSpecialQuietBudget <= 0 : nsmaxSpecialBudget <= 0) continue;
-				if (quiet) nsmaxSpecialQuietBudget--;
-				else nsmaxSpecialBudget--;
+				if (!NSMAX_LOTTERY_HINT.test(link.textContent || "") || nsmaxSpecialBudget <= 0) continue;
+				nsmaxSpecialBudget--;
 			}
 			nsmaxSpecialQueued.add(id);
-			(quiet ? nsmaxSpecialQuietQueue : nsmaxSpecialQueue).push(id);
+			nsmaxSpecialQueue.push(id);
 		}
 		nsmaxRunSpecialQueue(ctx);
 	}
@@ -722,31 +721,21 @@
 		nsmaxMarkSpecialChecked(id);
 	}
 	async function nsmaxRunSpecialQueue(ctx) {
-		if (nsmaxSpecialBusy || !nsmaxSpecialQueue.length && !nsmaxSpecialQuietQueue.length) return;
+		if (nsmaxSpecialBusy || !nsmaxSpecialQueue.length) return;
 		nsmaxSpecialBusy = true;
-		// 等页面自己的活（站点脚本、首屏图片）忙完、主线程空下来再开始查（最多等 0.8 秒），查的请求也是低优先级：不和页面抢（2026-10-20）
-		await new Promise((resolve) => typeof requestIdleCallback === "function" ? requestIdleCallback(resolve, { timeout: 800 }) : setTimeout(resolve, 200));
-		// 标题不像的那些在省流量模式、2G 网络下不查
-		const quietOk = !navigator.connection?.saveData && !/2g/.test(navigator.connection?.effectiveType || "");
-		const worker = async () => {
-			while (!ctx.signal.aborted) {
-				const quiet = !nsmaxSpecialQueue.length;
-				if (quiet && (!quietOk || !nsmaxSpecialQuietQueue.length)) break;
+		// 等页面自己加载完（图片、站点脚本）、主线程空下来再开始查；一篇查完再查下一篇（请求队列里后台请求同时只走一个、
+		// 前后隔开，见 NSMAX_BG_SPACING）。2026-10-24：以前三篇一起、间隔 0.15 秒，和页面自己的图片抢网速
+		await nsmaxPageLoaded();
+		await new Promise((resolve) => typeof requestIdleCallback === "function" ? requestIdleCallback(resolve, { timeout: 2000 }) : setTimeout(resolve, 200));
+		try {
+			while (nsmaxSpecialQueue.length && !ctx.signal.aborted && !nsmaxBackgroundPaused()) {
 				if (document.hidden) {
 					await new Promise((resolve) => document.addEventListener("visibilitychange", resolve, { once: true }));
 					continue;
 				}
-				const id = (quiet ? nsmaxSpecialQuietQueue : nsmaxSpecialQueue).shift();
-				try {
-					await nsmaxCheckSpecialPost(ctx, id);
-					nsmaxLotteryRefresh();
-				} catch {}
-				// 标题像抽奖的连着查；不像的在后台慢慢来
-				await new Promise((resolve) => setTimeout(resolve, quiet ? 300 : 150));
+				await nsmaxCheckSpecialPost(ctx, nsmaxSpecialQueue.shift());
+				nsmaxLotteryRefresh();
 			}
-		};
-		try {
-			await Promise.all([worker(), worker(), worker()]);
 		} finally {
 			nsmaxSpecialBusy = false;
 		}
@@ -829,17 +818,20 @@
 				status.setAttribute("role", "status");
 				list.after(status);
 			}
-			// 没查成的（网络出错、站点限流）：说一声，给一个「重试」，不再一声不响地当成「不是」
-			const text = pending ? `正在识别抽奖帖 ${total - pending} / ${total}` : failed.length ? `有 ${failed.length} 篇没能识别（网络或站点限流）` : shown ? "" : "这一页没有抽奖帖";
+			// 没查成的（网络出错、站点限流）：说一声，给一个「重试」，不再一声不响地当成「不是」。
+			// 站点限流过（后台暂停 10 分钟，见 NSMAX_BG_PAUSE_KEY）：还没查的先停着，「重试」马上接着查
+			const paused = (pending > 0 || failed.length > 0) && nsmaxBackgroundPaused();
+			const text = paused ? "站点限流，识别先停一会儿" : pending ? `正在识别抽奖帖 ${total - pending} / ${total}` : failed.length ? `有 ${failed.length} 篇没能识别（网络或站点限流）` : shown ? "" : "这一页没有抽奖帖";
 			if (status.dataset.nsmaxText !== text) {
 				status.dataset.nsmaxText = text;
 				const parts = [text];
-				if (!pending && failed.length) {
+				if (paused || !pending && failed.length) {
 					const retry = document.createElement("button");
 					retry.type = "button";
 					retry.className = "nsmax-lottery-retry";
 					retry.textContent = "重试";
 					retry.addEventListener("click", () => {
+						nsmaxResumeBackground();
 						for (const id of nsmaxLotteryFailedIds) nsmaxSpecialFailed.delete(id);
 						if (nsmaxLotteryCtx) nsmaxLotteryView(nsmaxLotteryCtx);
 					});
@@ -847,7 +839,7 @@
 				}
 				status.replaceChildren(...parts);
 			}
-			nsmaxFlag(status, "data-nsmax-busy", pending > 0);
+			nsmaxFlag(status, "data-nsmax-busy", pending > 0 && !paused);
 			nsmaxFlag(status, "hidden", !pending && !failed.length && shown > 0);
 		}
 		return pending;
@@ -882,7 +874,8 @@
 		// 顶栏搜索框不填「抽奖」：这一页是分类，不是搜索结果
 		for (const input of document.querySelectorAll("header input[name=q], #search-site2")) if (input.value.trim() === NSMAX_LOTTERY_QUERY) input.value = "";
 		// 本机按内容认出来、但搜索（只搜标题）没搜到的抽奖帖并进来
-		nsmaxMergeLotteryRows();
+		// 并进来的行马上挂上「抽奖」（这一轮整理里挂标签在这之前，不等下一轮）
+		if (nsmaxMergeLotteryRows()) nsmaxPrizeBadges();
 		nsmaxMarkLotteryPager();
 		const pending = nsmaxFilterLotteryRows();
 		if (nsmaxLotteryViewBusy) return;
@@ -894,10 +887,10 @@
 		try {
 			const checked = nsmaxSpecialChecked();
 			const ids = Array.from(document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item[data-nsmax-lottery='wait'] .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]).filter((id, index, all) => id && !checked.has(id) && !nsmaxSpecialFailed.has(id) && all.indexOf(id) === index);
-			// 2026-10-23：六篇一起查、查完一篇马上接下一篇（以前三篇一起、每篇之间还停 0.15 秒，一页 100 篇要半分钟左右）。
-			// 请求照样走统一的请求队列：总并发有上限，站点限流时自动等冷却再试
+			// 请求走统一的请求队列（后台请求同时只走一个、前后隔开，见 NSMAX_BG_SPACING）；两个人轮着排：一篇在下载时另一篇在解析。
+			// 2026-10-24：以前六篇一起查，十秒里取几十篇，站点回 429，整个站点都跟着慢；站点限流时停下（状态行给「重试」）
 			const worker = async () => {
-				while (ids.length && !ctx.signal.aborted) {
+				while (ids.length && !ctx.signal.aborted && !nsmaxBackgroundPaused()) {
 					if (document.hidden) {
 						await new Promise((resolve) => document.addEventListener("visibilitychange", resolve, { once: true }));
 						continue;
@@ -906,7 +899,7 @@
 					nsmaxLotteryRefresh();
 				}
 			};
-			await Promise.all(Array.from({ length: 6 }, worker));
+			await Promise.all([worker(), worker()]);
 		} finally {
 			nsmaxLotteryViewBusy = false;
 			cancelAnimationFrame(nsmaxLotteryRefreshQueued);
@@ -916,12 +909,12 @@
 		}
 		// 这一页查完了：下一页在后台先查掉，点「下一页」时直接显示
 		const next = document.querySelector("#nsk-body-left .nsk-pager a.pager-next[href]");
-		if (next && !ctx.signal.aborted) nsmaxWhenIdle("lottery-next", () => nsmaxPrefetchLotteryPage(ctx, next.getAttribute("href")));
+		if (next && !ctx.signal.aborted && !nsmaxBackgroundPaused()) nsmaxWhenIdle("lottery-next", () => nsmaxPrefetchLotteryPage(ctx, next.getAttribute("href")));
 		nsmaxLotteryCrawlLater(ctx);
 	}
-	// 抽奖页上：「新帖子」列表也在后台按内容查一遍（和别的页面共用「30 分钟最多一次」），标题里没写「抽奖」的抽奖帖认出来就并进这一页
+	// 抽奖页上：「新帖子」列表也在后台按内容查一遍（30 分钟最多一次），标题里没写「抽奖」的抽奖帖认出来就并进这一页
 	function nsmaxLotteryCrawlLater(ctx) {
-		if (ctx.signal.aborted || !nsmaxLotteryIndexDue()) return;
+		if (ctx.signal.aborted || nsmaxBackgroundPaused() || !nsmaxLotteryIndexDue()) return;
 		nsmaxWhenIdle("lottery-crawl", () => nsmaxCrawlNewPosts(ctx));
 	}
 	// 后台提前识别到时间了没有（30 分钟最多一次，本机记时间）；到了就记下这一次
@@ -935,12 +928,12 @@
 			return false;
 		}
 	}
-	// 后台提前识别抽奖帖（2026-10-23）：把搜索「抽奖」某一页里没查过的帖子在后台低优先级查掉——别的页面上空闲时查第一页
-	// （30 分钟最多一次，本机记时间），抽奖页查完当前页后查下一页。点开「抽奖」、翻到下一页时大多已经有结论，直接显示。
-	// 一次最多查 50 篇（新的在前）。站内搜索要登录，没登录不查；省流量模式、2G 网络下不查；页面切到后台就停
+	// 抽奖页查完当前页后，把下一页里没查过的帖子在后台低优先级查掉，翻到下一页时大多已经有结论，直接显示。一次最多查 25 篇。
+	// 站内搜索要登录，没登录不查；省流量模式、2G 网络下不查；页面切到后台、站点限流过（后台暂停中）就停。
+	// 2026-10-24：别的页面上不再每 30 分钟在后台查一遍「抽奖」搜索第一页和「新帖子」列表（一次几十篇，站点开始限流）
 	var NSMAX_LOTTERY_INDEX_KEY = "nsmax:lottery-index-at";
 	async function nsmaxPrefetchLotteryPage(ctx, url) {
-		if (!unsafeWindow$1.__config__?.user || navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "") || ctx.signal.aborted || document.hidden) return;
+		if (!unsafeWindow$1.__config__?.user || navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "") || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
 		let html = "";
 		try {
 			html = await ctx.request(url, { responseType: "text", signal: ctx.signal, priority: "low" });
@@ -949,21 +942,14 @@
 		}
 		const doc = new DOMParser().parseFromString(html, "text/html");
 		const checked = nsmaxSpecialChecked(), known = nsmaxSpecialPostMap();
-		const ids = [...new Set(Array.from(doc.querySelectorAll("ul.post-list > li.post-list-item .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]))].filter((id) => id && !checked.has(id) && !known.has(id)).slice(0, 50);
-		const worker = async () => {
-			while (ids.length && !ctx.signal.aborted && !document.hidden) await nsmaxCheckSpecialPost(ctx, ids.shift());
-		};
-		await Promise.all([worker(), worker()]);
+		const ids = [...new Set(Array.from(doc.querySelectorAll("ul.post-list > li.post-list-item .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]))].filter((id) => id && !checked.has(id) && !known.has(id)).slice(0, 25);
+		while (ids.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) await nsmaxCheckSpecialPost(ctx, ids.shift());
 	}
-	function nsmaxRefreshLotteryIndex(ctx) {
-		if (nsmaxIsLotteryView() || !nsmaxLotteryIndexDue()) return;
-		nsmaxPrefetchLotteryPage(ctx, "/search?q=" + encodeURIComponent(NSMAX_LOTTERY_QUERY)).then(() => nsmaxCrawlNewPosts(ctx));
-	}
-	// 按内容找抽奖帖（2026-10-23）：标题里不写「抽奖」的抽奖帖，站内搜索（只搜标题）找不到。和上面一起（登录后、30 分钟最多一次）
-	// 读「新帖子」列表第一页，把没查过的帖子在后台低优先级查掉（主帖、第一页评论里有没有指向这一篇的开奖链接），一次最多 60 篇；
-	// 认出来的记下它在列表上的样子，并进「抽奖」分类（见 nsmaxMergeLotteryRows）
+	// 按内容找抽奖帖（2026-10-23）：标题里不写「抽奖」的抽奖帖，站内搜索（只搜标题）找不到。只在「抽奖」分类页上（登录后、30 分钟最多一次）
+	// 读「新帖子」列表第一页，把没查过的帖子在后台低优先级一篇一篇查掉（主帖、第一页评论里有没有指向这一篇的开奖链接），一次最多 20 篇；
+	// 认出来的记下它在列表上的样子，并进「抽奖」分类（见 nsmaxMergeLotteryRows）。平时点开的帖子也会按内容认（见 nsmaxPrizeBadges）
 	async function nsmaxCrawlNewPosts(ctx) {
-		if (ctx.signal.aborted || document.hidden || navigator.connection?.saveData) return;
+		if (ctx.signal.aborted || document.hidden || navigator.connection?.saveData || nsmaxBackgroundPaused()) return;
 		let html = "";
 		try {
 			html = await ctx.request("/?sortBy=postTime", { responseType: "text", signal: ctx.signal, priority: "low" });
@@ -978,18 +964,14 @@
 			if (!id) continue;
 			if ((known.get(id) || "").split(",").includes("lottery")) {
 				if (!rows.has(id)) nsmaxRememberLotteryRow(item);
-			} else if (!checked.has(id) && !known.has(id) && todo.length < 60) todo.push([id, item]);
+			} else if (!checked.has(id) && !known.has(id) && todo.length < 20) todo.push([id, item]);
 		}
-		const worker = async () => {
-			while (todo.length && !ctx.signal.aborted && !document.hidden) {
-				const [id, item] = todo.shift();
-				await nsmaxCheckSpecialPost(ctx, id, item);
-				// 正在看「抽奖」分类：认出来就并进列表
-				if (nsmaxIsLotteryView() && nsmaxMergeLotteryRows()) nsmaxLotteryRefresh();
-				await new Promise((resolve) => setTimeout(resolve, 300));
-			}
-		};
-		await Promise.all([worker(), worker()]);
+		while (todo.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) {
+			const [id, item] = todo.shift();
+			await nsmaxCheckSpecialPost(ctx, id, item);
+			// 正在看「抽奖」分类：认出来就并进列表
+			if (nsmaxIsLotteryView() && nsmaxMergeLotteryRows()) nsmaxLotteryRefresh();
+		}
 	}
 	// 认出来的抽奖帖在列表上的样子（标题、作者、版块、浏览 / 回复数、最后回复、时间），记在本机，最多 200 篇（编号最大的那些）
 	var NSMAX_LOTTERY_ROWS_KEY = "nsmax:lottery-rows";
@@ -1748,20 +1730,8 @@
 			const hot = actions.querySelector(".hot-badge");
 			const author = item.querySelector(":scope > .nsk-content-meta-info .author-info");
 			if (hot && author) author.append(hot);
-			// 自己楼层的「编辑」挪到时间后面的小字里（和主帖一样）：操作行每层都是同样几个槽位，各楼图标上下对齐
-			const nativeEdit = actions.querySelector(".comment-menu > .menu-item[data-nsmax-action='edit']");
-			const info = item.querySelector(":scope > .nsk-content-meta-info .content-info");
-			let edit = info?.querySelector(":scope > .nsmax-floor-edit");
-			if (nativeEdit && info && !edit) {
-				edit = document.createElement("a");
-				edit.className = "nsmax-floor-edit";
-				edit.setAttribute("role", "button");
-				edit.title = "编辑这条回复";
-				edit.textContent = "编辑";
-				edit.addEventListener("click", () => item.querySelector(":scope > .nsmax-floor-actions .menu-item[data-nsmax-action='edit']")?.click());
-				info.append(edit);
-			} else if (!nativeEdit && edit) edit.remove();
-			if (nativeEdit) nsmaxSetAttr(nativeEdit, "data-nsmax-op-moved");
+			// 自己楼层的「编辑」就留在操作胶囊里（sb.sb 的编辑也在这一排）。2026-10-23：以前另在时间后面补一个小字「编辑」、
+			// 再把胶囊里的藏起来；后来胶囊样式加了权重，藏不住，同一层出现两个「编辑」
 			for (const action of actions.querySelectorAll(".menu-item:not([data-nsmax-compact-action])")) {
 				const label = action.title || Array.from(action.querySelectorAll("span")).map(span => span.textContent.trim()).find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|举报|编辑)$/.test(text));
 				if (label) { if (!action.title) action.title = label; if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label); }
@@ -1867,6 +1837,7 @@
 		try {
 			if (GM_getValue$1(COOLDOWN_KEY(), 0) > Date.now()) return Promise.reject(new Error("站点限流中"));
 		} catch {}
+		if (priority === "low" && nsmaxBackgroundPaused()) return Promise.reject(nsmaxRateLimitedError());
 		return new Promise((resolve, reject) => {
 			const run = () => {
 				nsmaxEarlyFetchActive++;
@@ -2125,10 +2096,19 @@
 		box.append(replies, foot);
 		return box;
 	}
+	// 每一层第一次出现时在页面上的先后（站点把热评排在最前面）：简洁模式下把楼中楼摊平回去时按这个顺序排（见 nsmaxFlattenNestedReplies）
+	var nsmaxFloorOrder = new WeakMap();
+	var nsmaxFloorSeq = 0;
 	function nsmaxGroupNestedReplies(parsed) {
 		if (!/^\/post-\d+/.test(location.pathname)) return;
 		const list = document.querySelector("#nsk-body-left ul.comments");
 		if (!list) return;
+		for (const item of list.children) if (!nsmaxFloorOrder.has(item) && item.matches("li.content-item[id]")) nsmaxFloorOrder.set(item, nsmaxFloorSeq++);
+		// 简洁模式照 sb.sb：没有楼中楼，一层一层按顺序排（2026-10-24；以前简洁模式里楼中楼照样收在框里）
+		if (document.documentElement.dataset.nsmaxPostLayout === "simple") {
+			nsmaxFlattenNestedReplies(list);
+			return;
+		}
 		const floors = new Map(Array.from(list.querySelectorAll("li.content-item[id]"), (item) => [item.id, item]));
 		const post = location.pathname.match(/^\/post-(\d+)-/)?.[1];
 		// 按楼号从小到大处理：站点把热评排在评论最前面，热评又常常是楼中楼回复。按页面顺序处理时，回复会比它回复的那一层先被收起来，
@@ -2137,8 +2117,11 @@
 		for (const [id, item] of order) {
 			if (nsmaxNestedMoved.has(item) || parsed && !parsed(item)) continue;
 			const paragraph = item.querySelector(":scope > article.post-content > p:first-child");
-			if (!paragraph || !/^\s*@/.test(paragraph.textContent)) continue;
+			// 简洁模式下摊平过的回复：开头还留着楼中楼那一行的「名字：」（见 nsmaxDecorateFloorBoxes），判断、找楼号时跳过它
+			const who = paragraph?.querySelector(":scope > .nsmax-fb-who");
+			if (!paragraph || !/^\s*@/.test(who ? paragraph.textContent.slice(paragraph.textContent.indexOf(who.textContent) + who.textContent.length) : paragraph.textContent)) continue;
 			const link = Array.from(paragraph.querySelectorAll("a[href]")).find((anchor) => {
+				if (who?.contains(anchor)) return false;
 				try { const url = new URL(anchor.href, location.href); return url.origin === location.origin && /^\/post-\d+-\d+$/.test(url.pathname) && /^#\d+$/.test(url.hash); } catch { return false; }
 			});
 			if (!link) continue;
@@ -2174,6 +2157,24 @@
 			item.querySelector(":scope > .nsmax-author-col")?.remove();
 			nsmaxNestedMoved.add(item);
 		}
+	}
+	// 简洁模式：楼中楼框里的回复摊平回一层一层（按第一次出现时的先后，热评还在最前面），框去掉；只在有框时动 DOM。
+	// 摊平的回复正文里留着楼中楼那一行的「名字：」（样式里不在框里时不显示），换回默认排法时 nsmaxGroupNestedReplies 再收进去
+	function nsmaxFlattenNestedReplies(list) {
+		const boxes = list.querySelectorAll(":scope > li.content-item > .nsmax-floor-box");
+		if (!boxes.length) return;
+		const nested = Array.from(list.querySelectorAll(":scope > li.content-item > .nsmax-floor-box > .nsmax-nested-replies > li.content-item"));
+		for (const item of nested) nsmaxNestedMoved.delete(item);
+		const rank = (item) => nsmaxFloorOrder.has(item) ? nsmaxFloorOrder.get(item) : Infinity;
+		const floors = Array.from(list.children).filter((item) => item.matches("li.content-item[id]")).concat(nested).sort((a, b) => rank(a) - rank(b) || Number(a.id) - Number(b.id));
+		let prev = null;
+		for (const item of floors) {
+			if (prev) {
+				if (prev.nextElementSibling !== item) prev.after(item);
+			} else if (item.parentElement !== list) list.prepend(item);
+			prev = item;
+		}
+		for (const box of boxes) box.remove();
 	}
 	// 楼中楼按楼号排（sb.sb 楼中楼按时间先后）：插在第一条楼号比它大的前面
 	function nsmaxNestInto(nested, item) {
@@ -2227,6 +2228,13 @@
 				self.href = name.getAttribute("href") || "#";
 				self.textContent = name.textContent.trim();
 				who.append(self);
+				// 楼主自己的回复：名字后面一个「楼主」小标签（sb.sb .post-user-group--op）。2026-10-23：以前楼中楼里名字那一行整个收起，楼主标签跟着没了
+				if (item.querySelector(":scope > .nsk-content-meta-info .author-info > .is-poster")) {
+					const op = document.createElement("span");
+					op.className = "nsmax-fb-op";
+					op.textContent = "楼主";
+					who.append(op);
+				}
 				if (lead && floorLink && parentId && parentId !== rootFloor?.id) {
 					const to = document.createElement("span");
 					to.className = "nsmax-fb-to";
@@ -2883,6 +2891,131 @@ function nsmaxTagStructure() {
 		}
 		return { streak, complete: !record.oldest || day >= record.oldest };
 	}
+	// 等级进度（站点 /progress「NodeSeek进度系统」）照 sb.sb「我的烧饼」（/points/）排：一张卡片，上面鸡腿、等级两个大数字和升级进度条
+	// （Lv.5 —— 百分比 —— Lv.6，下面一行还差多少鸡腿），细线下面「今日鸡腿」四项小进度条（发帖、评论、签到、免费投喂）。
+	// 数据是站点前端（progress.js）读完 /api/progress/today 和签到接口后画进 #progress-mount 的：卡片第一帧就放好（数字先是「—」），
+	// 站点画好以后从它画的那块读数（「4531 / 3600」「Lv5」……），站点那块不显示。等级的上下限照站点的算法：Lv.n 是 n² × 100 个鸡腿。
+	// 2026-10-24：用户转来的反馈——找不到看每天鸡腿进度的地方（资料卡的等级小标签现在也链到这里）
+	function nsmaxProgressPage() {
+		if (location.pathname !== "/progress") return;
+		const left = document.querySelector("#nsk-body-left");
+		if (!left) return;
+		const make = (tag, className, text) => {
+			const el = document.createElement(tag);
+			if (className) el.className = className;
+			if (text !== undefined) el.textContent = text;
+			return el;
+		};
+		const bar = (small) => {
+			const track = make("div", small ? "nsmax-progress-bar is-sm" : "nsmax-progress-bar");
+			track.setAttribute("role", "progressbar");
+			track.setAttribute("aria-valuemin", "0");
+			track.setAttribute("aria-valuemax", "100");
+			track.append(make("div", "nsmax-progress-fill"));
+			return track;
+		};
+		let panel = left.querySelector(":scope > .nsmax-progress");
+		if (!panel) {
+			panel = make("section", "nsmax-progress");
+			const counters = make("div", "nsmax-progress-counters");
+			for (const [key, label] of [["coin", "鸡腿"], ["level", "等级"]]) {
+				const counter = make("div", "nsmax-progress-counter");
+				counter.dataset.key = key;
+				counter.append(make("span", "nsmax-progress-counter-label", label), make("span", "nsmax-progress-counter-value", "—"));
+				counters.append(counter);
+			}
+			const level = make("div", "nsmax-progress-level");
+			const head = make("div", "nsmax-progress-head");
+			head.append(make("span", "nsmax-progress-from", "—"), make("span", "nsmax-progress-pct", "—"), make("span", "nsmax-progress-to", "—"));
+			const levelBar = bar(false);
+			levelBar.setAttribute("aria-label", "升级进度");
+			level.append(head, levelBar, make("p", "nsmax-progress-note", "正在读取……"));
+			const daily = make("div", "nsmax-progress-daily");
+			const dailyHead = make("div", "nsmax-progress-daily-head");
+			dailyHead.append(make("h3", "nsmax-progress-daily-title", "今日鸡腿"), make("span", "nsmax-progress-daily-total", "—"));
+			const list = make("ul", "nsmax-progress-daily-list");
+			for (const [key, label] of [["post", "发帖"], ["comment", "评论"], ["checkin", "签到"], ["feed", "免费投喂额度"]]) {
+				const item = make("li", "nsmax-progress-item");
+				item.dataset.key = key;
+				const row = make("div", "nsmax-progress-item-row");
+				row.append(make("span", "nsmax-progress-item-label", label), make("span", "nsmax-progress-item-num", "—"));
+				const itemBar = bar(true);
+				itemBar.setAttribute("aria-label", label);
+				item.append(row, itemBar);
+				list.append(item);
+			}
+			daily.append(dailyHead, list);
+			panel.append(make("h2", "nsmax-progress-title", "等级进度"), counters, level, daily, make("p", "nsmax-progress-foot", "每天发帖、评论能得的鸡腿有上限；签到的鸡腿每天随机。"));
+			const mount = left.querySelector(":scope > #progress-mount");
+			if (mount) mount.before(panel);
+			else left.append(panel);
+		}
+		// 站点画好的那块：h1「NodeSeek进度系统」+ 一组 h2 / 进度条
+		const native = Array.from(left.children).find((el) => el !== panel && el.querySelector(":scope > h1")?.textContent.includes("进度系统"));
+		if (!native) return;
+		nsmaxSetAttr(native, "data-nsmax-progress-native");
+		const sections = new Map();
+		for (const h2 of native.querySelectorAll("h2")) {
+			const wrapper = h2.nextElementSibling?.matches(".progress-wrapper") ? h2.nextElementSibling : null;
+			const pair = wrapper?.querySelector(".progress-text")?.textContent.match(/(-?\d+)\s*\/\s*(-?\d+)/);
+			if (!pair) continue;
+			const ends = Array.from(wrapper.querySelectorAll(":scope > div:last-child > div"), (el) => el.textContent.trim());
+			sections.set(h2.textContent.trim(), { current: Number(pair[1]), max: Number(pair[2]), left: ends[0] || "", right: ends[1] || "" });
+		}
+		if (!sections.size) return;
+		const setBar = (track, ratio) => {
+			const pct = Math.max(0, Math.min(100, Math.round(ratio * 1000) / 10));
+			nsmaxSetAttr(track, "aria-valuenow", String(Math.round(pct)));
+			const fill = track.querySelector(".nsmax-progress-fill");
+			const width = pct + "%";
+			if (fill.style.width !== width) fill.style.width = width;
+			nsmaxFlag(track, "data-full", pct >= 100);
+			return pct;
+		};
+		// 等级：站点按 min(等级, 5) 算上下限（Lv.6 是最高级，进度条会超过 100%），这里封顶，满级时说「已是最高等级」
+		const rank = sections.get("等级进度");
+		if (rank) {
+			const from = Number(rank.left.match(/\d+/)?.[0] ?? NaN), to = Number(rank.right.match(/\d+/)?.[0] ?? NaN);
+			const userRank = Number(unsafeWindow$1.__config__?.user?.rank);
+			const levelNow = Number.isFinite(userRank) ? userRank : rank.current >= rank.max ? to : from;
+			const top = levelNow >= 6;
+			const min = Number.isFinite(from) ? from * from * 100 : 0;
+			nsmaxSetText(panel.querySelector('[data-key="coin"] > .nsmax-progress-counter-value'), String(rank.current));
+			const badge = panel.querySelector('[data-key="level"] > .nsmax-progress-counter-value');
+			if (badge.getAttribute("data-nsmax-level") !== String(levelNow)) nsmaxApplyLevel(badge, levelNow);
+			const pct = setBar(panel.querySelector(".nsmax-progress-level > .nsmax-progress-bar"), top ? 1 : (rank.current - min) / Math.max(1, rank.max - min));
+			nsmaxSetText(panel.querySelector(".nsmax-progress-from"), top ? "Lv.6" : `Lv.${from}`);
+			nsmaxSetText(panel.querySelector(".nsmax-progress-to"), top ? "最高等级" : `Lv.${to}`);
+			nsmaxSetText(panel.querySelector(".nsmax-progress-pct"), `${Math.floor(pct)}%`);
+			nsmaxSetText(panel.querySelector(".nsmax-progress-note"), top ? `已是最高等级 Lv.6（${rank.current} 个鸡腿）` : `距离 Lv.${to} 还差 ${Math.max(0, rank.max - rank.current)} 个鸡腿（${rank.current} / ${rank.max}）`);
+		}
+		let gained = 0;
+		const item = (key, data, num) => {
+			const el = panel.querySelector(`.nsmax-progress-item[data-key="${key}"]`);
+			if (!el || !data) return;
+			nsmaxSetText(el.querySelector(".nsmax-progress-item-num"), num);
+			setBar(el.querySelector(".nsmax-progress-bar"), data.max > 0 ? data.current / data.max : 0);
+		};
+		const post = sections.get("今日发帖可得鸡腿");
+		if (post) {
+			gained += post.current;
+			item("post", post, `${post.current / 5} / ${post.max / 5} 帖 · +${post.current} / ${post.max}`);
+		}
+		const comment = sections.get("今日评论可得鸡腿");
+		if (comment) {
+			gained += comment.current;
+			item("comment", comment, `${comment.current} / ${comment.max} 条 · +${comment.current} / ${comment.max}`);
+		}
+		const checkin = sections.get("今日签到获得鸡腿");
+		if (checkin) {
+			gained += checkin.current;
+			item("checkin", checkin, checkin.current > 0 ? `已签到 · +${checkin.current}` : "未签到");
+		}
+		const feed = sections.get("今日免费投喂鸡腿额度");
+		if (feed) item("feed", feed, `${feed.current} / ${feed.max} 次`);
+		nsmaxSetText(panel.querySelector(".nsmax-progress-daily-total"), `+${gained}`);
+		nsmaxFlag(panel, "data-ready", true);
+	}
 	var nsmaxCheckinState = { loading: false, board: null };
 	function nsmaxCheckinPage() {
 		const board = document.querySelector("section#nsk-frame > .board");
@@ -3083,6 +3216,7 @@ function nsmaxTagStructure() {
 		nsmaxApplyChineseTimes(parsed);
 		nsmaxTidySidebar();
 		if (/^\/board(?:\/|$)/.test(location.pathname)) nsmaxCheckinPage();
+		if (location.pathname === "/progress") nsmaxProgressPage();
 		// 「抽奖」页：查过的抽奖帖首屏就显示、别的先不显示（没查过的等模块启动后在后台查）
 		if (nsmaxIsLotteryView()) nsmaxFilterLotteryRows();
 		if (!/^\/post-\d+/.test(location.pathname)) return;
@@ -3093,6 +3227,8 @@ function nsmaxTagStructure() {
 		nsmaxBuildAuthorColumns(parsed);
 		nsmaxClassifyPostImages(parsed);
 		nsmaxWrapCodeBlocks(parsed);
+		nsmaxDecorateQuotes(parsed);
+		nsmaxReserveMoreRow(parsed);
 		// 统计（浏览数、回复数）要等评论区解析完才准，不然先显示一个偏小的回复数再变
 		const comments = document.querySelector(".comment-container");
 		if (!parsed || document.readyState !== "loading" || comments && parsed(comments)) {
@@ -3101,6 +3237,114 @@ function nsmaxTagStructure() {
 			// 2026-10-23：以前等模块启动才插进正文，第一帧画出来之后整篇正文被往下推三百多像素
 			nsmaxPrepareLottery();
 		}
+	}
+	// 引用（站点「引用」按钮插进回复里的格式：> @某某 [#楼号](地址) 发布于 时间，编辑于 时间，下面是被引用的内容）排成引用卡片。
+	// sb.sb 没有对应的东西：照它通知里的引用卡片（.notify-quote-card：次底色、左边 3px 细线、右边小圆角）和楼号悬停卡片的头
+	// （.quote-hover-head：小字），头上一行「名字 · #楼号 · 时间 · 编辑过」，下面是被引用的内容（弱化字）；内容超过 8 行先收起，
+	// 头上右边给「展开」（放在头里，量出来是长的才显示，不会把下面的内容往下推）。2026-10-24，用户：NS 的引用要好好设计
+	var nsmaxQuoteSeen = new WeakSet();
+	var nsmaxQuoteObserver = null;
+	function nsmaxDecorateQuotes(parsed) {
+		const pad = (n) => String(n).padStart(2, "0");
+		for (const quote of document.querySelectorAll("#nsk-body-left article.post-content blockquote")) {
+			if (nsmaxQuoteSeen.has(quote) || parsed && !parsed(quote)) continue;
+			nsmaxQuoteSeen.add(quote);
+			const first = quote.firstElementChild;
+			const mention = first?.matches("p") ? first.firstElementChild : null;
+			const floor = mention?.nextElementSibling;
+			if (!mention?.matches("a") || !/^@/.test(mention.textContent.trim()) || mention.previousSibling?.textContent.trim()) continue;
+			if (!floor?.matches("a") || !/^#\d+$/.test(floor.textContent.trim()) || mention.nextSibling !== floor && mention.nextSibling?.textContent.trim()) continue;
+			// 楼号后面到第一个换行为止是「发布于 …，编辑于 …」
+			const meta = [];
+			let node = floor.nextSibling;
+			while (node && node.nodeName !== "BR") {
+				meta.push(node);
+				node = node.nextSibling;
+			}
+			const text = meta.map((item) => item.textContent).join("").trim();
+			if (!/^发布于/.test(text)) continue;
+			const [posted, edited] = text.split(/[，,]\s*(?=编辑于)/).map((part) => part.replace(/^(发布于|编辑于)\s*/, "").trim());
+			const when = Date.parse(posted);
+			const head = document.createElement("div");
+			head.className = "nsmax-quote-head";
+			const name = document.createElement("a");
+			name.className = "nsmax-quote-name";
+			name.href = mention.getAttribute("href") || "#";
+			name.textContent = mention.textContent.trim().replace(/^@/, "");
+			const number = document.createElement("a");
+			number.className = "nsmax-quote-floor";
+			number.href = floor.getAttribute("href") || "#";
+			number.textContent = floor.textContent.trim();
+			const time = document.createElement("time");
+			time.className = "nsmax-quote-time";
+			if (Number.isFinite(when)) {
+				const date = new Date(when);
+				time.dateTime = date.toISOString();
+				time.textContent = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+			} else time.textContent = posted;
+			time.title = text;
+			head.append(name, number, time);
+			if (edited) {
+				const mark = document.createElement("span");
+				mark.className = "nsmax-quote-edited";
+				mark.textContent = "编辑过";
+				mark.title = "编辑于 " + edited;
+				head.append(mark);
+			}
+			const toggle = document.createElement("button");
+			toggle.type = "button";
+			toggle.className = "nsmax-quote-toggle";
+			toggle.textContent = "展开";
+			toggle.setAttribute("aria-expanded", "false");
+			toggle.addEventListener("click", () => {
+				const open = !quote.hasAttribute("data-nsmax-quote-open");
+				quote.toggleAttribute("data-nsmax-quote-open", open);
+				toggle.textContent = open ? "收起" : "展开";
+				toggle.setAttribute("aria-expanded", String(open));
+			});
+			head.append(toggle);
+			// 原来那一行（@某某 #楼号 发布于…）拿掉，剩下的内容包进 .nsmax-quote-body（收起时限高）
+			for (const item of [mention, floor, ...meta, node]) item?.remove();
+			if (!first.textContent.trim() && !first.querySelector("img")) first.remove();
+			else if (first.firstChild?.nodeType === 3) first.firstChild.data = first.firstChild.data.replace(/^\s+/, "");
+			const body = document.createElement("div");
+			body.className = "nsmax-quote-body";
+			body.append(...quote.childNodes);
+			quote.append(head, body);
+			quote.setAttribute("data-nsmax-quote", "");
+			// 长不长等它排好版、离屏幕不远时再量（不在打开页面时逼浏览器当场排版）
+			if (typeof IntersectionObserver === "function") {
+				nsmaxQuoteObserver ||= new IntersectionObserver((entries) => {
+					for (const entry of entries) {
+						if (!entry.isIntersecting) continue;
+						nsmaxQuoteObserver.unobserve(entry.target);
+						const box = entry.target.querySelector(":scope > .nsmax-quote-body");
+						if (box && box.scrollHeight > box.clientHeight + 4) entry.target.setAttribute("data-nsmax-quote-long", "");
+					}
+				}, { rootMargin: "600px 0px" });
+				nsmaxQuoteObserver.observe(quote);
+			}
+		}
+	}
+	// 评论自动翻页「加载下一页」那一行（模块启动后 infinite 才放到评论列表下面）：有下一页、开着评论自动翻页时，第一帧就把同样的按钮放好，
+	// infinite 接着用它（2026-10-24，用户：进页面底下伸缩一下——以前第一帧之后才插进来，页脚往下一撑 45px）
+	function nsmaxReserveMoreRow(parsed) {
+		const list = document.querySelector("#nsk-body-left ul.comments");
+		const pager = document.querySelector(".post-bottom-pager");
+		if (!list || !pager || parsed && !parsed(pager) || !pager.querySelector("a.pager-next")) return;
+		if (list.nextElementSibling?.matches("button.nspp-action")) return;
+		let on = true;
+		try {
+			const options = GM_getValue$1(`nspp:settings:${location.hostname}`, {})?.["infinite-scroll"];
+			on = options?.enabled !== false && options?.comments !== false;
+		} catch {}
+		if (!on) return;
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "nspp-action";
+		button.setAttribute("data-nsmax-early", "");
+		button.textContent = "加载下一页";
+		list.after(button);
 	}
 	// 正文代码块包进 .nsmax-code（对应 sb.sb 的 .code-block）：「内容增强」的复制按钮放在外层右上角，
 	// 代码横向滚动时按钮不跟着跑。页面解析阶段就包好，之后放进按钮不会让内容跳动。
@@ -3241,9 +3485,10 @@ function nsmaxTagStructure() {
 			return here;
 		}
 		const cached = nsmaxReplyCounts().get(id);
-		if ((!cached || Date.now() - cached[1] > 10 * 60e3) && !nsmaxReplyFetching.has(id) && pages > 1) {
+		if ((!cached || Date.now() - cached[1] > 10 * 60e3) && !nsmaxReplyFetching.has(id) && pages > 1 && !nsmaxBackgroundPaused()) {
 			nsmaxReplyFetching.add(id);
-			fetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" }).then((response) => response.ok ? response.text() : "").then((html) => {
+			// 等页面自己加载完再取（2026-10-24：不和正文图片抢网速）
+			nsmaxPageLoaded().then(() => fetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" })).then((response) => response.ok ? response.text() : "").then((html) => {
 				if (!html) return;
 				const doc = new DOMParser().parseFromString(html, "text/html");
 				const last = Array.from(doc.querySelectorAll("ul.comments li.content-item[id]"), (li) => Number(li.id)).filter(Number.isFinite);
@@ -3900,16 +4145,13 @@ function nsmaxTagStructure() {
 			bio.className = "nsmax-member-bio";
 			bio.textContent = joined ? `加入 ${joined[1]} 天` : metaText;
 			if (metaText) bio.title = metaText;
+			// 统计一行等宽小字（sb.sb .member-row-value），一行放不下就省略：鸡腿 · 粉丝 · 主题（2026-10-24：以前五项各占一格，
+			// 窄的卡片折成两行，一排卡片高矮不齐）。五项全的写在悬停提示里
 			const line = document.createElement("span");
 			line.className = "nsmax-member-stats";
-			for (const [label, value] of [["鸡腿", stats.coin], ["星辰", stats.star], ["主题", stats.post], ["评论", stats.comment], ["粉丝", stats.fans]]) {
-				if (value === undefined) continue;
-				const item = document.createElement("span");
-				const b = document.createElement("b");
-				b.textContent = value;
-				item.append(label + " ", b);
-				line.append(item);
-			}
+			const pairs = [["鸡腿", stats.coin], ["粉丝", stats.fans], ["主题", stats.post], ["评论", stats.comment], ["星辰", stats.star]].filter(([, value]) => value !== undefined);
+			line.textContent = pairs.slice(0, 3).map(([label, value]) => `${label} ${value}`).join(" · ");
+			line.title = pairs.map(([label, value]) => `${label} ${value}`).join("　");
 			body.append(title);
 			if (bio.textContent) body.append(bio);
 			body.append(line);
@@ -4335,6 +4577,7 @@ function nsmaxTagStructure() {
 			if (/^\/space\/\d+/.test(path)) nsmaxPrepareSpace();
 			nsmaxPrepareBoard();
 			if (/^\/board(?:\/|$)/.test(path)) nsmaxCheckinPage();
+			if (path === "/progress") nsmaxProgressPage();
 			if (/^\/fans(?:\/|$)/.test(path)) nsmaxPrepareFans();
 			if (/^\/credit(?:\/|$)/.test(path)) nsmaxPrepareCredit();
 			if (/^\/setting(?:\/|$)/.test(path)) nsmaxPrepareSetting();
@@ -4875,15 +5118,13 @@ function nsmaxTagStructure() {
 			if (!isPost) return;
 			nsmaxGroupNestedReplies();
 			nsmaxDecorateFloorBoxes();
+			nsmaxDecorateQuotes();
 			nsmaxBuildAuthorColumns();
 			nsmaxLoadAuthorStats(ctx);
 			nsmaxSetupComposer(ctx);
 			nsmaxHandleReplyArrival();
 		};
 		const stop = ctx.watch(scan);
-		// 页面安顿下来以后（5 秒后、浏览器空闲时）在后台提前识别抽奖帖，见 nsmaxRefreshLotteryIndex
-		const lotteryIndexTimer = setTimeout(() => nsmaxWhenIdle("lottery-index", () => nsmaxRefreshLotteryIndex(ctx)), 5000);
-		ctx.signal.addEventListener("abort", () => clearTimeout(lotteryIndexTimer), { once: true });
 		window.addEventListener("popstate", scan, { signal: ctx.signal });
 		window.addEventListener("hashchange", scan, { signal: ctx.signal });
 		let origPush, origReplace;
@@ -5542,7 +5783,8 @@ function nsmaxTagStructure() {
 				tgLink.href = contacts[0].href;
 				tgLink.target = "_blank";
 				tgLink.rel = "noopener noreferrer";
-				tgLink.textContent = "Telegram";
+				tgLink.textContent = "TG";
+				tgLink.setAttribute("aria-label", "Telegram");
 				tgLink.title = contacts[0].handle ? "Telegram：@" + contacts[0].handle : "在 Telegram 里打开";
 				const home = Array.from(actions.querySelectorAll("a")).find((item) => item.textContent.trim() === "主页");
 				if (home) home.before(tgLink); else actions.append(tgLink);

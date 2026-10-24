@@ -161,7 +161,9 @@ const spaceCollectionsPage = (options = {}) => shell("Steve 的主页 - NodeSeek
 // delayed（毫秒）：照真站——服务器只给 #fans-mount（转圈图 + Loading），站点脚本拿到数据后整块换成列表（Vue $mount）；
 // 换上去的那个任务里排一个 requestAnimationFrame，记下浏览器画这一帧之前每张卡片是不是已经改好（window.__fansFirstFrame）
 const fansMount = (list, delay) => `<div id="fans-mount"><img src="${AVATAR}" alt class="loading-img"><span>Loading</span></div><script>setTimeout(() => { const root = document.createElement("div"); root.innerHTML = ${JSON.stringify(list)}; document.getElementById("fans-mount").replaceWith(root); requestAnimationFrame(() => { window.__fansFirstFrame = [...document.querySelectorAll(".user-card-wrapper > .user-card")].map((card) => !!card.querySelector(".nsmax-member")); }); }, ${Number(delay) || 0});</script>`;
-const fansList = () => `<div class="member-list nsk-container"><div class="fans-switcher"><a href="/fans?type=follow" class="switcher-item selected">我的关注🔭</a><a href="/fans?type=fans" class="switcher-item">我的粉丝❤️</a></div><div class="user-card-wrapper-container">${fanMembers.map(fanCard).join("")}</div></div>`;
+// 关注 / 粉丝列表（fans.*.js 画的）：带上真站这个组件的作用域样式（2026-10-24 在 nodeseek.com 上读到的，去掉了 data-v-c602bc02）——
+// 网格 justify-items: center、卡片 max-width 270px、margin 20px，以前夹具里没有，卡片宽窄不一的问题测不出来
+const fansList = () => `<style>.member-list{margin-top:20px;overflow:hidden;border-radius:6px;min-height:calc(-60px + 100vh);background-color:rgba(0,0,0,.05);backdrop-filter:blur(3px);height:100%}@media screen and (max-width:500px){.member-list{border-radius:3px}}.user-card-wrapper-container{display:grid;grid-template-columns:repeat(auto-fill,260px);column-gap:10px;justify-items:center;width:100%;padding:0 5px;box-sizing:border-box}@media screen and (max-width:500px){.user-card-wrapper-container{display:flex;justify-content:center;flex-wrap:wrap}}.user-card-wrapper{width:100%;margin:20px;max-width:270px;box-shadow:rgba(0,0,0,.1) 0 9px 30px;background-color:var(--bg-main-color);padding:6px;box-sizing:border-box;border-radius:4px;overflow:hidden}</style><div class="member-list nsk-container"><div class="fans-switcher"><a href="/fans?type=follow" class="switcher-item selected">我的关注🔭</a><a href="/fans?type=fans" class="switcher-item">我的粉丝❤️</a></div><div class="user-card-wrapper-container">${fanMembers.map(fanCard).join("")}</div></div>`;
 const fansPage = (options = {}) => shell("NodeSeek", `<div></div>${options.delayed ? fansMount(fansList(), options.delayed) : `<div>${fansList()}</div>`}<div data-v-9796effc class="user-card hover-user-card" style="position: fixed; display: none; width: 260px; top: 0px; left: 0px; border-radius: 5px; box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 3px; overflow: hidden;"><div>loading...</div><div class="closeBtn"></div></div>`, { ...options, standalone: true });
 
 // 账簿（/credit）：真实结构——页码和表格在同一个 div 里，页码在表格上方、写死 max-width 1300px 和 margin-bottom 16px
@@ -187,6 +189,15 @@ const rulingPager = `<div class="rulling-log-head"><div class="nsk-pager">${page
 const rulingPage = (options = {}) => shell("NodeSeek-管理记录", `<div id="nsk-frame-block"></div><div class="ruling-log">${options.error ? `<div data-v-3ae870dc style="margin: 4rem; padding: 1rem; border: 1px solid red; text-align: center; color: red; font-size: 2rem;">
         ${options.error}
     </div>` : `<div>${rulingPager}<table><thead><tr><th>ID</th><th>用户</th><th>操作</th><th>管理员</th><th>时间</th></tr></thead><tbody>${rulingRows}</tbody></table>${rulingPager}</div>`}</div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
+// 等级进度（/progress，2026-10-24 在 nodeseek.com 上读到的结构）：服务器只给一个空的 #progress-mount，站点的 progress.js（Vue 2）
+// 读完 /api/progress/today 和签到接口后整块换成「h1 NodeSeek进度系统 + 一组 h2 / 进度条」。等级的上下限：Lv.n 是 n² × 100 个鸡腿，
+// 站点按 min(等级, 5) 算（满级 Lv6 的进度条超过 100%）。delay：多久以后画出来
+const progressNative = ({ coin = 4531, rank = 6, posts = 0, maxPosts = 4, comments = 8, maxComments = 20, checkin = 6, feed = 0, maxFeed = 5 } = {}) => {
+	const r = Math.min(rank, 5), low = r * r * 100, high = (r + 1) * (r + 1) * 100;
+	const bar = (current, min, max, left, right) => `<div data-v-e7f754d8="" data-v-1868a938="" class="progress-wrapper p-bar"><div data-v-e7f754d8="" class="progress-bar"><div data-v-e7f754d8="" class="inside-bar" style="width: ${(current - min) / (max - min) * 100}%;"><div data-v-e7f754d8="" class="progress-text"> ${current} / ${max} </div></div></div> <div data-v-e7f754d8="" style="display: flex; justify-content: space-between;"><div data-v-e7f754d8=""> ${left} </div> <div data-v-e7f754d8=""> ${right} </div></div></div>`;
+	return `<div data-v-1868a938=""><h1 data-v-1868a938="" style="text-align: center; color: rgb(235, 70, 28);"><img data-v-1868a938="" src="/static/image/award.svg" alt="奖杯icon" style="max-width: 40px; vertical-align: middle;"> NodeSeek进度系统 </h1> <div data-v-1868a938="" style="max-width: 600px; margin: 10px auto; padding: 6px;"><h2 data-v-1868a938="">等级进度</h2> ${bar(coin, low, high, "Lv" + r, "Lv" + (r + 1))} <h2 data-v-1868a938="">今日发帖可得鸡腿</h2> ${bar(posts * 5, 0, maxPosts * 5, "贴子 x 0", "贴子 x 4")} <h2 data-v-1868a938="">今日评论可得鸡腿</h2> ${bar(comments, 0, maxComments, "评论 x 0", "评论 x 20")} <h2 data-v-1868a938="">今日签到获得鸡腿</h2> ${bar(checkin, 0, checkin || 20, "未签到", "已签到")} <h2 data-v-1868a938="">今日免费投喂鸡腿额度</h2> ${bar(feed, 0, maxFeed, "投喂 x 0", "投喂 x " + maxFeed)}</div></div>`;
+};
+const progressPage = (options = {}) => shell("NodeSeek-进度", `<div id="nsk-body-left" class="forum-main main-panel"><div id="nsk-body-left-block"></div> <div id="progress-mount"></div><script>setTimeout(() => { const root = document.createElement("div"); root.innerHTML = ${JSON.stringify(progressNative(options))}; document.getElementById("progress-mount").replaceWith(root.firstElementChild); }, ${options.delay ?? 300});</script></div>${sidebar}`, options);
 const boardRealPage = (options = {}) => shell("NodeSeek-签到", `<div id="nsk-frame-block"></div><div class="board"><div class="head-info"><div>${options.guest ? `<a href="/signIn.html">登录</a>后签到 ` : "今日签到获得鸡腿2个，当前排名第11872"}</div></div><div><h1>今日签到鸡腿排行榜</h1>${Array.from({ length: 12 }, (_, i) => `<div class="rank-row"><div>${i + 1}</div><img class="avatar" src="${AVATAR}" alt="m${i}"><div class="member-name">member${i}</div><div class="coins">${16 - Math.floor(i / 3)}</div></div>`).join("")}</div></div><div id="search-panel-mount"></div>`, { ...options, standalone: true });
 
 // 抽奖页（/lucky）：站点独立的 Vue 小页面（static/js/lucky.*.js），没有站点顶栏、左右栏和页脚；结构照真站模板，
@@ -335,5 +346,6 @@ module.exports = {
 	smsSignInPage,
 	registerPage,
 	rulingPage,
-	boardRealPage
+	boardRealPage,
+	progressPage
 };

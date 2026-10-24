@@ -815,7 +815,9 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   text-underline-offset: 3px !important;
   text-decoration-color: currentColor !important;
 }
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a:is(:visited, .nspp-read) {
+/* 看过的帖子：sb.sb 的列表不分看没看过（2026-10-24 起不再按浏览器的 :visited 调灰，浅色下一片灰标题像配色错了）；
+   .nspp-read 是 NodeSeek++ 的已读标记（阅读历史模块，默认不启动） */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a.nspp-read {
   color: var(--text-subtle) !important;
 }
 /* 等级限制（原站在标题后放一个行内粉色 span：锁图标 + 最低等级）：紧跟标题的 12px 小字；
@@ -13865,4 +13867,773 @@ html[data-nsmax-theme] .nsmax-mention > .nsmax-mention-item > span:is(#nsmax-lv,
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+}
+
+/* ---------- 70. 2026-10-24 第二十五批：签到页、关注 / 粉丝页照 sb.sb 再对一遍 ---------- */
+/* 签到页（sb.sb /checkin/，用户：浅色模式下和 sb.sb 完全不一样——sb.sb 浅色是黑白的）：
+   - 一张卡片（sb.sb .form-panel.signin-panel，18px 内边距）：标题 17px/600 → 大字连续天数 + 签到按钮 → 四格统计（上下细线）→
+     本月日历 → 一条细线下面是排行榜（sb.sb .signin-board：上方 24px、细线、再 18px）。以前「每日签到」和排行榜是两张卡片；
+   - 日历是方格（aspect-ratio 1、6px 圆角、等宽 13px、次底色弱化字）；签过的日子 --brand 底 + --action-text 字（浅色墨黑底白字、
+     深色亮黄底黑字），今天 2px 内描边 --brand；以后的日子和没签的日子一样是次底色（以前浅色、深色都是黄格子，以后的日子是虚线框）；
+   - 连续天数 52px --brand（浅色墨黑、深色亮黄；以前是 --mark-soft-text 的橄榄金）；
+   - 按钮照 sb.sb：主按钮 8px 20px 墨色胶囊，「今日已签到」是 sb.sb 的禁用按钮（次底色、细线、--text-disabled）；
+   - 排行榜每人得到的鸡腿照 sb.sb .signin-chip-coin（#fff3d6 底 #8a5a00 字，两种模式一样）；
+   - 「Load More」换成 sb.sb 的细线胶囊按钮（button.alt）「加载更多」，居中，上方 16px */
+html[data-nsmax-theme][data-nsmax-page="board"] section#nsk-frame > .board:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding: 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board > .nsmax-checkin:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] section#nsk-frame > .board > div:not(.head-info):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] section#nsk-frame > .board > .nsmax-checkin ~ div:not(.head-info):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 24px 0 0 !important;
+  padding: 18px 0 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+html[data-nsmax-theme] .nsmax-checkin > .nsmax-checkin-title:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0 0 16px !important;
+  color: var(--text-strong) !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-top:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 20px !important;
+  padding: 20px 0 6px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  gap: 6px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak > b:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--brand) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 52px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-streak > span:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-side:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  gap: 8px !important;
+  max-width: 30em !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  justify-content: center !important;
+  min-width: 132px !important;
+  padding: 8px 20px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+  transition: background-color .12s ease, border-color .12s ease, transform 100ms var(--ease-out, ease-out) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):hover {
+  border-color: var(--line) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button.primary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button.primary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):hover {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):active {
+  transform: translateY(1px) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:disabled:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-disabled) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-note:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  gap: 12px !important;
+  margin: 20px 0 !important;
+  padding: 16px 0 !important;
+  border-top: 1px solid var(--line) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats > div:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  gap: 4px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats dd:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--text-strong) !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats dt:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-month:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0 0 10px !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-weekday:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding: 0 0 4px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  gap: 3px !important;
+  height: auto !important;
+  aspect-ratio: 1 !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-mono) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > b:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > i:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  font-family: var(--font-mono) !important;
+  font-size: 10.5px !important;
+  line-height: 1 !important;
+  opacity: .78 !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-signed]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  background: var(--brand) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-today]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  outline: 2px solid var(--brand) !important;
+  outline-offset: -2px !important;
+  color: var(--text-strong) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-today][data-signed]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-future]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border: 0 !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board h1:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0 0 8px !important;
+  color: var(--text-strong) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  background: #fff3d6 !important;
+  color: #8a5a00 !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .load-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: flex !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  margin: 16px auto 0 !important;
+  padding: 7px 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: background-color .12s ease, border-color .12s ease, transform 100ms var(--ease-out, ease-out) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .load-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::before {
+  content: "加载更多" !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.75 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .load-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):hover {
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .load-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):active {
+  transform: translateY(1px) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="board"] .board .load-more > svg:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: none !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme][data-nsmax-page="board"] section#nsk-frame > .board:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    padding: 16px 14px !important;
+  }
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > i:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    display: none !important;
+  }
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-calendar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    gap: 4px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):active,
+  html[data-nsmax-theme] .board .load-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):active {
+    transform: none !important;
+  }
+}
+/* 关注 / 粉丝页（/fans）照 sb.sb .member-rows / .member-row 再对一遍（用户：页面成了什么鬼样子）：
+   站点给网格写的 justify-items: center 以前没盖掉，每张卡片按内容宽窄不一；统计五项折成两行的卡片高一截，一排高矮不齐。
+   现在：网格每格撑满（一列至少 500px，宽屏三列，窄了两列、一列），一排卡片一样高；卡片照 sb.sb .member-row——48px 圆头像、
+   名字 15px/600 + 等级、一行签名或加入天数（12.5px 次级字）、一行等宽小字统计（sb.sb .member-row-value，放不下省略）；
+   右边是 sb.sb .member-row-msg 细线小胶囊（取关 / 私信 / 转账，悬停变墨色实底，取关悬停浅红），手机上挪到名字下面一行 */
+html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > .user-card-wrapper-container:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  grid-template-columns: repeat(auto-fill, minmax(min(500px, 100%), 1fr)) !important;
+  justify-items: stretch !important;
+  align-items: stretch !important;
+  gap: 14px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .user-card-wrapper:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-page="fans"] .user-card-wrapper > .user-card[data-nsmax-fan-rebuilt]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: grid !important;
+  justify-self: stretch !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) auto !important;
+  grid-template-areas: "avatar body actions" !important;
+  align-items: center !important;
+  gap: 0 12px !important;
+  min-width: 0 !important;
+  height: auto !important;
+  padding: 14px 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member-avatar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  grid-area: avatar !important;
+  align-self: center !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  grid-area: body !important;
+  gap: 2px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member-bio:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: block !important;
+  min-width: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member-stats:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12.5px !important;
+  line-height: 1.4 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  grid-area: actions !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn[data-nsmax-unfollow]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):hover {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn[data-nsmax-unfollow]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):hover {
+  border-color: var(--danger-border) !important;
+  background: var(--danger-soft) !important;
+  color: var(--danger-soft-text) !important;
+}
+@media (max-width: 640px) {
+  html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > .user-card-wrapper-container:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    grid-template-areas: "avatar body" ". actions" !important;
+    gap: 10px 12px !important;
+    padding: 12px 14px !important;
+  }
+}
+/* 回复框照 sb.sb .reply-panel 再量一遍（2026-10-24，用户：比例、圆角、拖动角、选中颜色、光标都和 sb.sb 不一样）：
+   - 间距：工具按钮下面 8px 是输入框（sb.sb .grid 里按钮、输入框之间 8px）；输入框下面 22px 是发送按钮（sb.sb .grid 外边距 14px，
+     加上 textarea 是行内块、底下多出约 8px 行高）；按钮下面 16px（sb.sb .reply-panel form 14px 16px 16px）。以前三处都是 14px；
+   - 聚焦时圆角 6px：sb.sb 全局 :focus-visible 写了 border-radius: var(--r-sm)，输入框一聚焦就是 6px，不聚焦 8px；
+   - 右下角拖动角画成原生 textarea 的样子：两道短斜线贴着右下角、次级文字色、不透明（以前两道长斜纹、半透明，看着发虚）；
+   - Markdown 编辑器（CodeMirror）里选中的底色用 --selection-editor（浅色亮黄、深色暗金，sb.sb .CodeMirror-selected），
+     以前是 --selection：深色下亮黄底配浅色字，选中的字看不清；
+   - 光标照原生输入框：和字一样高（1.2em），在行里上下居中。CodeMirror 默认和整行一样高（23.8px），看着又长又突兀 */
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor .nsmax-editor-controls:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor .nsmax-custom-mde-toolbar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin-bottom: 8px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding-bottom: 22px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .submit-row:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding-bottom: 16px !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane]:focus-within:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-radius: var(--r-sm) !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-resize:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  right: 2px !important;
+  bottom: 2px !important;
+  width: 11px !important;
+  height: 11px !important;
+  background: var(--text-subtle) !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 11'%3E%3Cpath d='M10 2.5 2.5 10M10 6.5 6.5 10' fill='none' stroke='%23000' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E") center / 11px 11px no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 11'%3E%3Cpath d='M10 2.5 2.5 10M10 6.5 6.5 10' fill='none' stroke='%23000' stroke-width='1.15' stroke-linecap='round'/%3E%3C/svg%3E") center / 11px 11px no-repeat !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-resize:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(:hover, :focus-visible) {
+  background: var(--text) !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror-selected:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  background: var(--selection-editor) !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror-cursor:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  height: 1.2em !important;
+  margin-top: .25em !important;
+  border-left: 1px solid var(--text) !important;
+}
+/* 输入框、文本框里选中的字：和页面上一样亮黄底深色字（sb.sb ::selection）。高亮继承进不了有的浏览器的表单控件，单独写一条
+   （只按标签名匹配，不拖慢整页重算） */
+html[data-nsmax-theme] textarea::selection {
+  background: var(--selection);
+  color: var(--mark-text);
+}
+html[data-nsmax-theme] input::selection {
+  background: var(--selection);
+  color: var(--mark-text);
+}
+/* 提示字（写下你的回复…）聚焦时照样显示：sb.sb 是原生 textarea，空着的时候光标停在提示字前面。以前一聚焦就藏起来，
+   因为 CodeMirror 的光标和整行一样高、压在字上；现在光标和字一样高（见上一条），不再压字 */
+html[data-nsmax-theme] .md-editor .CodeMirror-focused .CodeMirror-placeholder:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  visibility: visible !important;
+}
+html[data-nsmax-theme] .md-editor textarea:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::placeholder {
+  color: var(--text-muted) !important;
+}
+/* 楼中楼里楼主自己的回复：名字后面的「楼主」小标签（sb.sb .floor-box-op：.post-user-group--op 黄底 #f5c518、#1a1a1a 字，
+   框里缩成 0 5px、10.5px、行高 1.7、往上提 1px）。以前楼中楼里名字那一行没有这个标签 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box .nsmax-fb-who > .nsmax-fb-op:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: inline-block !important;
+  margin: 0 2px 0 5px !important;
+  padding: 0 5px !important;
+  border-radius: var(--r-pill) !important;
+  background: #f5c518 !important;
+  color: #1a1a1a !important;
+  font-size: 10.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.7 !important;
+  vertical-align: 1px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box .nsmax-fb-who > .nsmax-fb-op:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::selection {
+  background: var(--mark-text);
+  color: var(--mark);
+}
+/* 回复区标题栏里几个开关之间 10px（sb.sb .reply-head:has(.bot-toggle) gap:10px；以前 6px） */
+html[data-nsmax-theme] #nsk-body-left .comment-container :is(div[data-nsmax-pagerbox], .nsmax-reply-head):first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  gap: 10px !important;
+}
+/* 简洁模式照 sb.sb 再对一遍（2026-10-24）：
+   - 没有楼中楼：回复一层一层按顺序排（见 nsmaxFlattenNestedReplies）。摊平出来的回复正文里还留着楼中楼那一行的「名字：」，
+     不在楼中楼框里时不显示（楼层自己的头部有名字），开头站点的「@某某 #楼号」照常显示；
+   - 每层头部一行 25.5px（名字 17px、行高 25.5px），右边操作一排也是 25.5px 高、字间 8px：以前这一排 32px 高，
+     把名字往下挤了 3px，正文也晚 6.5px 开始；
+   - 名字后面的「楼主」等小标签照 sb.sb .post-user-group：1px 8px、行高 1.6 */
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > article.post-content .nsmax-fb-who:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="simple"] #nsk-body-left .nsk-post > .content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-post-layout="simple"] #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  height: 25.5px !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="simple"] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  height: 25.5px !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="simple"] #nsk-body-left .content-item > .nsk-content-meta-info .author-info > .role-tag:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding: 1px 8px !important;
+  line-height: 1.6 !important;
+}
+/* 简洁模式：头像占两行（头部那一行 + 正文），头部那一行只有 25.5px 高（sb.sb .post-item：头像 32px 和名字那一行顶边对齐，
+   正文紧接着名字下面 4px 开始）。以前头部那一行最少 32px（跟着头像），名字在里面上下居中，往下挪了 3px */
+html[data-nsmax-theme][data-nsmax-post-layout="simple"] #nsk-body-left :is(.nsk-post, ul.comments) > .content-item > .nsk-content-meta-info > .avatar-wrapper:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  grid-row: 1 / span 2 !important;
+}
+html[data-nsmax-theme][data-nsmax-post-layout="simple"] #nsk-body-left :is(.nsk-post, ul.comments) > .content-item > .nsk-content-meta-info > div:not(.avatar-wrapper):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  min-height: 25.5px !important;
+}
+/* 帖子页楼层「只画看得见的」（content-visibility）再收一收（2026-10-24，用户：进页面底下伸缩一下）：
+   以前第 4 层起先按 260px 占位，第一帧之后首屏附近的几层真排出来只有 240px（简洁模式才 90 多 px），页面底部跟着往上缩一截。
+   现在从第 9 层起才这样（首屏和首屏下面一点的楼层第一帧就排好），占位按排法估：经典 240px、简洁 100px */
+html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.comments > li.content-item:nth-child(-n+8):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: visible !important;
+  contain-intrinsic-size: none !important;
+}
+html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  contain-intrinsic-size: auto 240px !important;
+}
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-post-layout="simple"] #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  contain-intrinsic-size: auto 100px !important;
+}
+/* 等级进度（/progress）照 sb.sb「我的烧饼」（/points/：.form-panel.points-summary）：一张卡片（18px 内边距），标题 17px/600；
+   两个大数字（12.5px 弱化字小标题、24px 等宽 600 数字，间距 28px）；升级进度条 12px 高（次底色、内阴影，填充 --brand 到青色渐变），
+   上面一行「Lv.5 —— 百分比 —— Lv.6」，下面一行还差多少；细线下面「今日鸡腿」四项，每项一行字 + 7px 细进度条（满了换青色），
+   宽屏三列、窄了两列一列（sb.sb .points-daily-list minmax(300px, 1fr)）。站点自己画的那块（橙红标题、黄条）不显示 */
+html[data-nsmax-theme] #nsk-body-left > #progress-mount,
+html[data-nsmax-theme] #nsk-body-left > [data-nsmax-progress-native] {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .nsmax-progress:is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-progress > .nsmax-progress-title:is(#nsmax-lv, *) {
+  margin: 0 0 16px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text-strong) !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html[data-nsmax-theme] .nsmax-progress-counters:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 28px !important;
+  margin: 14px 0 18px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-counter:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-counter-label:is(#nsmax-lv, *) {
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-counter-value:is(#nsmax-lv, *) {
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  line-height: 32px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-counter-value[data-nsmax-level]:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-self: flex-start !important;
+  gap: 5px !important;
+  height: 32px !important;
+  padding: 0 14px 0 11px !important;
+  font-size: 15px !important;
+  line-height: 30px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-counter-value[data-nsmax-level]:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  width: 16px !important;
+  height: 16px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-head:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 8px !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-pct:is(#nsmax-lv, *) {
+  color: var(--brand) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nsmax-progress-bar:is(#nsmax-lv, *) {
+  position: relative !important;
+  height: 12px !important;
+  overflow: hidden !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .08) !important;
+}
+html[data-nsmax-theme] .nsmax-progress-bar > .nsmax-progress-fill:is(#nsmax-lv, *) {
+  width: 0;
+  height: 100% !important;
+  border-radius: var(--r-pill) !important;
+  background: linear-gradient(90deg, var(--brand) 0%, var(--accent-teal-text) 100%) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .15) inset !important;
+  transition: width .6s cubic-bezier(.22, 1, .36, 1) !important;
+}
+html[data-nsmax-theme] .nsmax-progress-bar.is-sm:is(#nsmax-lv, *) {
+  height: 7px !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .nsmax-progress-bar.is-sm > .nsmax-progress-fill:is(#nsmax-lv, *) {
+  background: var(--brand) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme] .nsmax-progress-bar.is-sm[data-full] > .nsmax-progress-fill:is(#nsmax-lv, *) {
+  background: var(--accent-teal-text) !important;
+}
+html[data-nsmax-theme] .nsmax-progress-note:is(#nsmax-lv, *) {
+  margin: 8px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-daily:is(#nsmax-lv, *) {
+  margin: 22px 0 0 !important;
+  padding: 18px 0 0 !important;
+  border-top: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-progress-daily-head:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 10px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-daily-title:is(#nsmax-lv, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nsmax-progress-daily-total:is(#nsmax-lv, *) {
+  color: var(--text-strong) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] .nsmax-progress-daily-list:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)) !important;
+  gap: 14px 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] .nsmax-progress-daily-list > .nsmax-progress-item:is(#nsmax-lv, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+html[data-nsmax-theme] .nsmax-progress-daily-list > .nsmax-progress-item:is(#nsmax-lv, *)::before {
+  content: none !important;
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-progress-item-row:is(#nsmax-lv, *) {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin: 0 0 5px !important;
+  font-size: 12.5px !important;
+}
+html[data-nsmax-theme] .nsmax-progress-item-label:is(#nsmax-lv, *) {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-progress-item-num:is(#nsmax-lv, *) {
+  color: var(--text-muted) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-progress-foot:is(#nsmax-lv, *) {
+  margin: 14px 0 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 12.5px !important;
+}
+@media (max-width: 760px) {
+  html[data-nsmax-theme] #nsk-body-left > .nsmax-progress:is(#nsmax-lv, *) {
+    padding: 14px !important;
+  }
+  html[data-nsmax-theme] .nsmax-progress-head:is(#nsmax-lv, *) {
+    flex-wrap: wrap !important;
+    gap: 2px 10px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme] .nsmax-progress-bar > .nsmax-progress-fill:is(#nsmax-lv, *) {
+    transition: none !important;
+  }
+}
+/* 资料卡的等级小标签链到等级进度（/progress）：样子不变，悬停稍微淡一点 */
+html[data-nsmax-theme] a.nsmax-account-rank:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: opacity .12s ease !important;
+}
+html[data-nsmax-theme] a.nsmax-account-rank:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  opacity: .8 !important;
+}
+/* Markdown 编辑器只留脚本自己那一排工具（.nsmax-custom-mde-toolbar，照 sb.sb 编辑器工具栏）：站点自己的工具栏（.mde-toolbar：
+   加粗、删除线、撤销……）和 CodeMirror 的行号一律不显示。以前切到 Markdown 时把站点那排也放了出来，有人站点设置里开着工具栏和行号，
+   就成了两排工具栏、左边一列 1 2 3 4 5（2026-10-24 用户转来的反馈截图） */
+html[data-nsmax-theme] .md-editor .mde-toolbar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .md-editor :is(.CodeMirror-gutters, .CodeMirror-gutter-wrapper):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .md-editor .CodeMirror-sizer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin-left: 0 !important;
+}
+/* 发送按钮那一行在 #editor-body 里面的结构（编辑器的另一种模板）：输入框下面照样 22px、按钮下面 16px */
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > #editor-body:last-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding-bottom: 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > #editor-body > .nsmax-editor-surface ~ .submit-row:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin-top: 22px !important;
+}
+/* 引用卡片（见 nsmaxDecorateQuotes）：照 sb.sb .notify-quote-card——次底色、左边 3px 细线、右边 6px 圆角、8px 11px，弱化字；
+   头上一行照 .quote-hover-head：名字（正文色 600）、#楼号（等宽）、时间、「编辑过」，右边「展开 / 收起」（量出来超过 8 行才显示）；
+   收起时内容最高 8 行，底下渐隐 */
+html[data-nsmax-theme] #nsk-body-left article.post-content blockquote[data-nsmax-quote]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0.7em 0 !important;
+  padding: 8px 11px !important;
+  border: 0 !important;
+  border-left: 3px solid var(--line-strong) !important;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0 !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: baseline !important;
+  gap: 2px 8px !important;
+  margin: 0 0 4px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > .nsmax-quote-name:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > .nsmax-quote-floor:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > .nsmax-quote-time:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > .nsmax-quote-edited:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-disabled) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > .nsmax-quote-toggle:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  visibility: hidden !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote][data-nsmax-quote-long] > .nsmax-quote-head > .nsmax-quote-toggle:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  visibility: visible !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-head > .nsmax-quote-toggle:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--link-hover) !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  max-height: calc(8lh + 4px) !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote][data-nsmax-quote-long]:not([data-nsmax-quote-open]) > .nsmax-quote-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5em), transparent) !important;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5em), transparent) !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote][data-nsmax-quote-open] > .nsmax-quote-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  max-height: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-body > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-body > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-bottom: 0 !important;
 }
