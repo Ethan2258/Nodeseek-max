@@ -5073,7 +5073,7 @@ function nsmaxTagStructure() {
 						setTimeout(() => document.querySelector("#editor .md-editor button.submit, #editor .md-editor .submit.btn")?.click(), 60);
 					});
 					update();
-					if (typeof dialog.showModal === "function") dialog.showModal();
+					if (typeof dialog.showModal === "function") nsmaxShowDialog(dialog);
 					else dialog.setAttribute("open", "");
 					prize.focus();
 				}
@@ -5791,7 +5791,7 @@ function nsmaxTagStructure() {
 			}).catch((error) => { status.textContent = `读取失败：${error?.message || "请稍后再试"}`; });
 		} else scan(10);
 		more.addEventListener("click", () => scan(10));
-		if (typeof dialog.showModal === "function") dialog.showModal();
+		if (typeof dialog.showModal === "function") nsmaxShowDialog(dialog);
 		else dialog.setAttribute("open", "");
 		return dialog;
 	}
@@ -5800,16 +5800,22 @@ function nsmaxTagStructure() {
 	// 以前一边滚一边弹预览卡、资料卡，还预取滑过的每个链接，滚动时一下一下地卡。鼠标真的动了再算。
 	// 各个悬停功能挂载时先调一次，记下那时的位置（打开页面后鼠标一直没动、只滚了滚轮的也算滚动带过来的）
 	var nsmaxHoverState = null;
-	function nsmaxHoverFromScroll() {
+	// 滚动位置从鼠标事件本身算（pageY − clientY，事件发出时就定了）：以前在每次鼠标移动、划过时读 scrollX / scrollY，
+	// 页面刚改过的话浏览器得当场排一遍版（2026-10-24 量到：切换编辑器后鼠标一动，划过处理里强制排版 440ms，CPU 4 倍降速），
+	// 页面加载、整理期间鼠标一动就一帧排好几次版。只在第一次调用（模块启动）时读一次
+	function nsmaxHoverFromScroll(event) {
+		const offset = (e) => e ? [e.pageX - e.clientX, e.pageY - e.clientY] : [scrollX, scrollY];
 		if (!nsmaxHoverState) {
-			const state = nsmaxHoverState = { x: scrollX, y: scrollY };
-			document.addEventListener("pointermove", (event) => {
-				if (!event.movementX && !event.movementY) return;
-				state.x = scrollX;
-				state.y = scrollY;
+			const [x, y] = offset(event);
+			const state = nsmaxHoverState = { x, y };
+			document.addEventListener("pointermove", (e) => {
+				if (!e.movementX && !e.movementY) return;
+				[state.x, state.y] = offset(e);
 			}, { capture: true, passive: true });
 		}
-		return Math.abs(scrollY - nsmaxHoverState.y) > 1 || Math.abs(scrollX - nsmaxHoverState.x) > 1;
+		if (!event) return false;
+		const [x, y] = offset(event);
+		return Math.abs(y - nsmaxHoverState.y) > 1 || Math.abs(x - nsmaxHoverState.x) > 1;
 	}
 	var personHoverFeature = { id: "sb-person-hover", defaults: { enabled: true }, mount(ctx) {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
@@ -6061,7 +6067,7 @@ function nsmaxTagStructure() {
 		let pendingOver = false;
 		document.addEventListener("pointerover",event => {
 			if (event.pointerType === "touch") return;
-			pendingOver = nsmaxHoverFromScroll();
+			pendingOver = nsmaxHoverFromScroll(event);
 			if (!pendingOver) over(event);
 		}, { signal:ctx.signal });
 		document.addEventListener("pointermove",event => {

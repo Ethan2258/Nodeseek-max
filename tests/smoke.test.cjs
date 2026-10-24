@@ -445,7 +445,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.39");
+	assert.equal(packageJson.version, "1.8.40");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4471,16 +4471,22 @@ test("第九批（2026-10-18）：脚本里其他弹窗、面板里的 header / 
 
 test("第九批（2026-10-18）：我的关注 / 粉丝——站点数据到之前是骨架占位（2026-10-21 改成列表骨架，不再是转圈 gif）；站点画出卡片的那一帧就已经是 sb.sb 成员卡片（不先闪原版再跳）；2026-10-24 起照 sb.sb .member-row：卡片一样宽一样高，按钮在卡片右边一排（手机上在名字下面一行）", async () => {
 	for (const [width, mobile] of [[1440, false], [390, true]]) {
-		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/fans?type=follow", { html: fansPage({ delayed: 900, mobile }), viewport: { width, height: 900 } });
+		// 占位被站点换成卡片的那一刻，在页面里记下它的样子（以前等占位出现后再过 0.3 秒去看，全量跑时页面慢，0.9 秒的占位已经换掉了，偶尔失败）
+		const init = `(() => {
+			const replaceWith = Element.prototype.replaceWith;
+			Element.prototype.replaceWith = function (...args) {
+				if (this.id === "fans-mount" && !window.__fansLoading) {
+					const skeleton = this.querySelector(".nsmax-fans-skeleton");
+					const line = skeleton?.querySelector(".nsmax-skeleton-line");
+					window.__fansLoading = { rows: skeleton ? skeleton.querySelectorAll(".nsmax-fans-skeleton-row").length : 0, gif: this.querySelector(".loading-img") ? getComputedStyle(this.querySelector(".loading-img")).display : "removed", height: Math.round(this.getBoundingClientRect().height), animation: line ? getComputedStyle(line).animationName : "" };
+				}
+				return replaceWith.apply(this, args);
+			};
+		})();`;
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/fans?type=follow", { html: fansPage({ delayed: 900, mobile }), init, viewport: { width, height: 900 } });
 		try {
-			await page.waitForSelector("#fans-mount");
-			await wait(page, 300);
-			const loading = await page.evaluate(() => {
-				const mount = document.querySelector("#fans-mount");
-				const skeleton = mount?.querySelector(".nsmax-fans-skeleton");
-				const line = skeleton?.querySelector(".nsmax-skeleton-line");
-				return mount ? { rows: skeleton ? skeleton.querySelectorAll(".nsmax-fans-skeleton-row").length : 0, gif: mount.querySelector(".loading-img") ? getComputedStyle(mount.querySelector(".loading-img")).display : "removed", height: Math.round(mount.getBoundingClientRect().height), animation: line ? getComputedStyle(line).animationName : "" } : null;
-			});
+			await page.waitForFunction(() => window.__fansLoading);
+			const loading = await page.evaluate(() => window.__fansLoading);
 			assert.ok(loading, "数据到之前还在加载占位");
 			assert.equal(loading.rows, 6, "骨架行数");
 			assert.equal(loading.gif, "removed", "站点的转圈 gif 不再出现");
@@ -6993,5 +6999,79 @@ test("2026-10-24 楼号悬停预览（sb.sb .quote-hover）：帖子里「#楼�
 		await page.waitForTimeout(500);
 		assert.equal(await page.locator(".nsmax-floor-hover:not([hidden])").count(), 0, "移开收起");
 		assert.deepEqual(errors.filter((e) => !/404|Failed to load resource/.test(e)), []);
+	} finally { await context.close(); }
+});
+
+// 2026-10-24 第二十七批：小动作更快（对话框、鼠标划过、整页重算样式）
+test("v1.8.40 对话框不用 showModal（模态会让整页每个元素重算一次样式）：设置面板以弹出层打开，照样有 open、在最上层；Esc 关掉，焦点回到设置按钮", async () => {
+	const init = `(() => { window.__modalCalls = 0; const orig = HTMLDialogElement.prototype.showModal; HTMLDialogElement.prototype.showModal = function (...a) { window.__modalCalls++; return orig.apply(this, a); }; })();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1280, height: 800 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const button = page.locator(".nsmax-header-action[data-nsmax-own-header='settings']").first();
+		await button.click();
+		await page.waitForFunction(() => document.getElementById("nspp-settings")?.shadowRoot?.querySelector("dialog")?.open);
+		const opened = await page.evaluate(() => {
+			const dialog = document.getElementById("nspp-settings").shadowRoot.querySelector("dialog");
+			const box = dialog.getBoundingClientRect();
+			const top = document.elementFromPoint(box.left + box.width / 2, box.top + 20);
+			return { popover: dialog.matches(":popover-open"), modal: dialog.matches(":modal"), open: dialog.open, attr: dialog.hasAttribute("open"), onTop: top === document.getElementById("nspp-settings"), focusInside: document.activeElement === document.getElementById("nspp-settings"), modalCalls: window.__modalCalls };
+		});
+		assert.deepEqual(opened, { popover: true, modal: false, open: true, attr: true, onTop: true, focusInside: true, modalCalls: 0 });
+		await page.keyboard.press("Escape");
+		await page.waitForFunction(() => !document.getElementById("nspp-settings").shadowRoot.querySelector("dialog").open);
+		const closed = await page.evaluate(() => {
+			const dialog = document.getElementById("nspp-settings").shadowRoot.querySelector("dialog");
+			return { popover: dialog.matches(":popover-open"), visible: dialog.getClientRects().length > 0, focusBack: document.activeElement?.matches(".nsmax-header-action[data-nsmax-own-header='settings']") ?? false };
+		});
+		assert.deepEqual(closed, { popover: false, visible: false, focusBack: true }, "Esc 关掉、焦点回到设置按钮");
+		// 再开一次照样能开
+		await button.click();
+		await page.waitForFunction(() => document.getElementById("nspp-settings").shadowRoot.querySelector("dialog").open);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.40 鼠标在标题、头像上划过时不读 scrollX / scrollY（页面刚改过时会逼浏览器当场排版）：滚动位置从鼠标事件里算", async () => {
+	const init = `(() => {
+		window.__scrollReads = 0; window.__countScroll = false;
+		for (const key of ["scrollX", "scrollY", "pageXOffset", "pageYOffset"]) {
+			const desc = Object.getOwnPropertyDescriptor(window, key);
+			Object.defineProperty(window, key, { ...desc, get() { if (window.__countScroll) window.__scrollReads++; return desc.get.call(this); } });
+		}
+	})();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init: CHECKED_INIT + init, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await wait(page, 600);
+		await page.evaluate(() => { window.__countScroll = true; });
+		for (let i = 2; i <= 5; i++) {
+			const title = page.locator(`ul.post-list > li.post-list-item:nth-child(${i}) .post-title > a`).first();
+			const box = await title.boundingBox();
+			await page.mouse.move(box.x + 5, box.y + box.height / 2, { steps: 4 });
+			await page.mouse.move(box.x + 30, box.y + box.height / 2, { steps: 4 });
+		}
+		await wait(page, 300);
+		assert.equal(await page.evaluate(() => window.__scrollReads), 0, "划过的时候一次都没读");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.40 页面切换动画的伪元素规则都写上 html（不写的话每次重算样式页面上每个元素都要试一遍）；列表信息行、正文选项卡里没有「每个元素都要试」的旧规则", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const selectors = await page.evaluate(() => {
+			const out = [];
+			const walk = (rules) => { for (const rule of rules) { if (rule.cssRules && !rule.selectorText) walk(rule.cssRules); else if (rule.selectorText) out.push(rule.selectorText); } };
+			for (const sheet of document.styleSheets) { try { walk(sheet.cssRules); } catch {} }
+			return out;
+		});
+		const transitions = selectors.filter((s) => s.includes("::view-transition"));
+		assert.ok(transitions.length >= 3, "有过渡规则");
+		assert.deepEqual(transitions.filter((s) => s.split(",").some((part) => !/^\s*html::view-transition/.test(part))), [], "都以 html 开头");
+		assert.deepEqual(selectors.filter((s) => /\.post-info \*?::(before|after)\s*$/.test(s) || /\.post-info \*::(before|after)/.test(s)), [], "列表信息行没有 *::before / *::after");
+		assert.deepEqual(selectors.filter((s) => /nsmax-tabs-container/.test(s)), [], "没有给 .tabs / .tabset 的旧规则");
+		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

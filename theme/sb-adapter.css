@@ -574,8 +574,8 @@ html[data-nsmax-theme] #nsk-body-left :is(.nsk-post .post-content,ul.comments li
 html[data-nsmax-theme] #nsk-body-left .nsk-post .post-title h1 {font:600 21px/1.45 var(--font-sans)!important;}
 html[data-nsmax-theme] #nsk-body-left :is(.nsk-post,ul.comments) .post-content a {color:var(--link)!important;text-decoration-color:color-mix(in srgb,var(--link) 50%,transparent)!important;}
 html[data-nsmax-theme] #nsk-body-left :is(.nsk-post,ul.comments) .post-content blockquote {border-left-color:var(--line)!important;background:transparent!important;}
-html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info *::before {content:none!important;display:none!important;}
-html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info *::after {content:none!important;display:none!important;}
+/* 列表信息行里以前有两条 .post-info *::before / *::after {content:none}：站点和主题都不再往这里放伪元素（真站首页实测删掉后没有任何伪元素出现），
+   而最右边是 *::before 的规则每次重算样式都要拿页面上每个元素试一遍，2026-10-24 删掉 */
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info svg:not(.nsmax-meta-icon) {display:none!important;width:0!important;height:0!important;}
 @media(max-width:700px){html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-controls {flex-wrap:wrap!important;gap:6px!important;}html[data-nsmax-theme] #nsk-body-left .md-editor.nsmax-compact-reply .nsmax-editor-controls button{padding:3px 8px!important;font-size:12px!important;}}
 
@@ -658,7 +658,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item .post-title
 html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item .post-title a {display:inline-block!important;flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
 html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item .post-title>span:not([data-nsmax-pinned]) {flex:none!important;display:inline-flex!important;align-items:center!important;gap:3px!important;margin:0!important;}
 html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item .post-info {min-width:0!important;overflow:hidden!important;white-space:nowrap!important;gap:8px!important;margin-top:2px!important;font-size:12px!important;line-height:18px!important;}
-html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item .post-info>* {min-width:0!important;}
+html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item .post-info>:is(.info-item,.nsmax-inline-category,.nspp-user-badges) {min-width:0!important;}
 html[data-nsmax-theme]:root:root:root[data-nsmax-page=post] #nsk-body-left .md-editor.nsmax-compact-reply .submit-row {display:flex!important;align-items:center!important;justify-content:flex-start!important;column-gap:0!important;text-align:left!important;}
 html[data-nsmax-theme]:root:root:root[data-nsmax-page=post] #nsk-body-left .md-editor.nsmax-compact-reply .submit-row>.nspp-compose {flex:0 0 auto!important;width:auto!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-hot-list>li>a {grid-template-columns:18px minmax(0,1fr) auto!important;gap:8px!important;min-height:30px!important;height:30px!important;padding:4px 0!important;}
@@ -1520,82 +1520,8 @@ html[data-nsmax-theme] .nsk-post .nsmax-post-stat-item svg {
    Markdown 全套排版深度优化（对齐 sb.sb 风格）：Tabs、代码块、跑分报告、表格与引用
    ========================================================================== */
 
-/* 1. Markdown 选项卡（Tabs）现代卡片式布局与动效 */
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container, [class*='tab-set']) {
-  display: block !important;
-  margin: 16px 0 !important;
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
-  border-radius: 10px !important;
-  background: var(--panel, #18191c) !important;
-  overflow: hidden !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) > :is(.tabs-nav, .tab-nav, .tab-list, .nsmax-tabs-nav, ul, div:first-child) {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 8px 10px !important;
-  margin: 0 !important;
-  list-style: none !important;
-  background: var(--panel-alt, #1e2026) !important;
-  border-bottom: 1px solid var(--line-soft, rgba(255, 255, 255, 0.06)) !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) > :is(.tabs-nav, .tab-nav, .tab-list, .nsmax-tabs-nav, ul, div:first-child) > :is(button, a, li, .tab-item, [role="tab"]) {
-  box-sizing: border-box !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  height: 32px !important;
-  padding: 0 12px !important;
-  border-radius: 6px !important;
-  border: 1px solid transparent !important;
-  background: transparent !important;
-  color: var(--text-muted, rgba(255, 255, 255, 0.65)) !important;
-  font: 500 13px/1 var(--font-sans, system-ui, sans-serif) !important;
-  text-decoration: none !important;
-  cursor: pointer !important;
-  transition: all 0.16s ease !important;
-  user-select: none !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) > :is(.tabs-nav, .tab-nav, .tab-list, .nsmax-tabs-nav, ul, div:first-child) > :is(button, a, li, .tab-item):hover {
-  color: var(--text, #fff) !important;
-  background: var(--panel-hover, rgba(255, 255, 255, 0.06)) !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) > :is(.tabs-nav, .tab-nav, .tab-list, .nsmax-tabs-nav, ul, div:first-child) > :is(.active, .is-active, [aria-selected="true"]) {
-  color: var(--text, #fff) !important;
-  background: var(--panel, #18191c) !important;
-  border-color: var(--line, rgba(255, 255, 255, 0.12)) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
-  font-weight: 600 !important;
-}
-
-/* 选项卡面板容器与单项显示/隐藏（支持直属面板与嵌套 panels 容器） */
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) :is(.tab-panels, .tab-content, .tabs-content) {
-  display: block !important;
-  padding: 16px 18px !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) :is(.tab-panel, .tab-pane, [role='tabpanel']):not(.active):not(.is-active) {
-  display: none !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) :is(.tab-panel, .tab-pane, [role='tabpanel']):is(.active, .is-active) {
-  display: block !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) > :not(:is(.tabs-nav, .tab-nav, .tab-list, .nsmax-tabs-nav, ul, div:first-child, .tab-panels, .tab-content, .tabs-content)):not(.active):not(.is-active) {
-  display: none !important;
-}
-
-html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) :is(.tabs, .tabset, .nsmax-tabs-container) > :not(:is(.tabs-nav, .tab-nav, .tab-list, .nsmax-tabs-nav, ul, div:first-child, .tab-panels, .tab-content, .tabs-content)):is(.active, .is-active) {
-  display: block !important;
-  padding: 16px 18px !important;
-}
+/* 1. Markdown 选项卡：NodeSeek 的选项卡是 .nsk-magic-tabs（design.css 里有专门的样式）。这里以前还有一整段给 .tabs / .tabset /
+   .nsmax-tabs-container 的规则，站点和脚本都不产生这些写法；其中两条最右边是 > :not(…)，每次重算样式页面上每个元素都要试一遍，2026-10-24 删掉 */
 
 /* 2. 代码块与终端跑分报告（pre / code） */
 html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) pre {
@@ -2067,7 +1993,8 @@ html[data-nsmax-theme] :is(
   text-align: center !important;
 }
 
-html[data-nsmax-theme] :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category) > * {
+/* 子元素只会是图标或文字（以前写 > *，每次重算样式页面上每个元素都要试一遍，2026-10-24） */
+html[data-nsmax-theme] :is(.role-tag, .nsk-badge, .badge, .nspp-user-badges > *, .post-category) > :is(svg, img, span, i) {
   line-height: 1 !important;
   vertical-align: middle !important;
 }
