@@ -125,6 +125,8 @@ async function open(browser, url, { html, seed, fontFiles, colorScheme = "light"
 			if (key.startsWith("/api/")) {
 				calls[key] = (calls[key] || 0) + 1;
 				const scripted = api[key]?.[calls[key] - 1];
+				// delay：接口晚一点回来（毫秒），看接口回来之前页面先显示什么
+				if (scripted?.delay) await new Promise((resolve) => setTimeout(resolve, scripted.delay));
 				if (scripted) return route.fulfill({ status: scripted.status, headers: { "content-type": "application/json", ...scripted.headers }, body: JSON.stringify(scripted.body ?? {}) });
 				const body = Object.entries(apiResponses).find(([prefix]) => key === prefix || key.startsWith(`${prefix}`))?.[1] ?? { success: true, data: [] };
 				return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });

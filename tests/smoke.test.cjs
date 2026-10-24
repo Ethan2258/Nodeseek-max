@@ -445,7 +445,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.38");
+	assert.equal(packageJson.version, "1.8.39");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -788,7 +788,7 @@ test("个人空间：去除黑底、注册天数、空统计和空介绍，主�
 		const {context,page,errors}=await open(browser,'https://www.nodeseek.com/space/10',{html:nativeSpacePage({dark}),colorScheme:dark?'dark':'light'});
 		try{
 			await page.waitForSelector('[data-nsmax-obsolete-stat]',{state:'attached'});
-			assert.equal(await page.locator('.card-block>.card-item:visible').count(),4);
+			assert.equal(await page.locator('.head-container .card-block>.nsmax-user-stat:visible').count(),9);
 			assert.equal(await page.locator('.readme').isVisible(),false);
 			assert.equal(await page.locator('.nsmax-space-progress').count(),1);
 			assert.equal(await page.locator('.nsmax-space-progress>i>b').count(),1);
@@ -1078,7 +1078,7 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').innerText(), 'UID 10');
-		assert.equal(await pageSpace.locator('.head-container .card-block>.card-item:visible').count(), 4);
+		assert.equal(await pageSpace.locator('.head-container .card-block>.nsmax-user-stat:visible').count(), 9);
 		const progress = pageSpace.locator('.nsmax-space-progress');
 		assert.equal(await progress.getAttribute('data-nsmax-level-max') !== null, true);
 		assert.equal(await progress.locator('.nsmax-space-progress-level').innerText(), 'Lv.6 登峰造极');
@@ -1104,8 +1104,8 @@ test('用户新需求：个人空间对齐sb.sb、悬停预览尺寸与加速、
 		assert.equal(await pageSpace.locator('.nsmax-space-online').count(), 0);
 
 		// Stats labels are cleaned: "鸡腿" not "鸡腿数目"
-		const chickenItem = pageSpace.locator('.card-block>.card-item').filter({hasText: '4192'});
-		const chickenLabel = await chickenItem.first().locator(':scope > div').first().innerText();
+		const chickenItem = pageSpace.locator('.head-container .card-block>.nsmax-user-stat').filter({hasText: '4192'});
+		const chickenLabel = await chickenItem.first().locator('.nsmax-user-stat-label').innerText();
 		assert.equal(chickenLabel, '鸡腿');
 
 		// All SVGs in card-block items are hidden
@@ -1115,9 +1115,9 @@ test('用户新需求：个人空间对齐sb.sb、悬停预览尺寸与加速、
 			assert.equal(svgDisplay, 'none');
 		}
 
-		// Lv.6 marking in stats
-		const lv6Stat = pageSpace.locator('.card-item[data-nsmax-lv6-stat]');
-		assert.equal(await lv6Stat.count() > 0, true);
+		// 等级一格写「Lv.6」（2026-10-24 九格统计，以前四格里单独标记 Lv6）
+		const levelStat = pageSpace.locator('.head-container .card-block>.nsmax-user-stat').filter({hasText: '等级'});
+		assert.equal(await levelStat.locator('.nsmax-user-stat-value').innerText(), 'Lv.6');
 		assert.deepEqual(errorsSpace, []);
 	} finally { await ctxSpace.close(); }
 
@@ -1420,7 +1420,7 @@ test("v1.7.14 极致精细化：统一两处 Level 6 标签且皇冠垂直居中
 	try {
 		await wait(pageSpace);
 		// 顶栏仅保留一组统计
-		assert.equal(await pageSpace.locator(".head-container .card-block>.card-item:visible").count(), 4);
+		assert.equal(await pageSpace.locator(".head-container .card-block>.nsmax-user-stat:visible").count(), 9);
 		// selector 下的重复卡片和水印 readme 彻底隐藏
 		assert.equal(await pageSpace.locator(".selector .card-block:visible").count(), 0);
 		assert.equal(await pageSpace.locator(".selector-right-side > .card-block:visible").count(), 0);
@@ -3822,18 +3822,161 @@ test("第六批（2026-10-18）：资料卡里有「管理记录」和「屏蔽�
 	} finally { await context.close(); }
 });
 
-test("第六批（2026-10-18）：我的回复——帖子页记下自己的楼层，评论区最上面列出「我的回复 #1」，点了就地跳过去；列表里这一篇下面也有一行", async () => {
+test("v1.8.39 个人主页加右栏（照 sb.sb /u/…/）：主栏 + 260px 右栏（自己的资料卡、今日热门），顶边和资料卡对齐；手机上不显示右栏、不撑出横向滚动", async () => {
+	for (const width of [1440, 390]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage(), viewport: { width, height: 900 } });
+		try {
+			await page.waitForSelector(".nsmax-space-top");
+			await page.waitForSelector("#nsk-right-panel-container .user-card", { state: "attached" });
+			if (width === 1440) await page.waitForSelector("#nsk-right-panel-container .nsmax-hot-panel");
+			const layout = await page.evaluate(() => {
+				const box = (el) => el.getBoundingClientRect();
+				const side = document.getElementById("nsk-right-panel-container"), main = document.querySelector("#nsk-frame > .nsk-container"), head = document.querySelector(".head-container");
+				return {
+					visible: getComputedStyle(side).display !== "none",
+					sideWidth: Math.round(box(side).width),
+					gap: Math.round(box(side).left - box(main).right),
+					topAligned: Math.abs(box(side).top - box(head).top) <= 1,
+					card: side.querySelector(".user-card .Username")?.textContent,
+					overflow: document.documentElement.scrollWidth - innerWidth
+				};
+			});
+			if (width === 1440) {
+				assert.equal(layout.visible, true);
+				assert.equal(layout.sideWidth, 260);
+				assert.equal(layout.gap, 20, "主栏和右栏之间 20px");
+				assert.equal(layout.topAligned, true, "右栏顶边和资料卡对齐");
+				assert.equal(layout.card, "tester", "右栏是自己的资料卡（sb.sb 一样）");
+			} else assert.equal(layout.visible, false, "手机上不显示右栏");
+			assert.equal(layout.overflow, 0);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("v1.8.39 个人主页统计照 sb.sb .user-stats：九格三列靠左，自己的主页能点进关注、粉丝、账簿、星辰明细、等级进度；等级进度按鸡腿算", async () => {
+	const detail = { member_id: 1, member_name: "Steve", rank: 3, coin: 1257, stardust: 26, nPost: 100, nComment: 873, follows: 11, fans: 155, collectionCount: 42, created_at: new Date(Date.now() - 659 * 864e5 - 6e5).toISOString() };
+	const read = () => {
+		const block = document.querySelector(".head-container > .card-block");
+		const cells = Array.from(block.children);
+		return {
+			cells: cells.map((c) => [c.querySelector(".nsmax-user-stat-label")?.textContent, c.querySelector(".nsmax-user-stat-value")?.textContent, c.getAttribute("href")]),
+			columns: new Set(cells.map((c) => Math.round(c.getBoundingClientRect().left))).size,
+			// 靠左：每格的数字从格子左边开始（格子比数字宽得多）
+			left: cells.every((c) => { const value = c.querySelector(".nsmax-user-stat-value").getBoundingClientRect(), box = c.getBoundingClientRect(); return Math.abs(value.left - box.left) <= 1 && box.width > value.width + 20; }),
+			progress: [".nsmax-space-progress-level", ".nsmax-space-progress-percent", ".nsmax-space-progress-next"].map((s) => document.querySelector(s).textContent),
+			bar: document.querySelector(".nsmax-space-progress > i > b").style.width
+		};
+	};
+	// 自己的主页（测试里登录的是 1 号）
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/1", { html: nativeSpacePage(), api: { "/api/account/getInfo/1": [{ status: 200, body: { success: true, detail } }] } });
+		try {
+			await page.waitForFunction(() => document.querySelector(".head-container .card-block .nsmax-user-stat-value")?.textContent === "11");
+			const stats = await page.evaluate(read);
+			assert.deepEqual(stats.cells, [
+				["关注", "11", "/fans?type=follow"], ["粉丝", "155", "/fans?type=fans"], ["鸡腿", "1257", "/credit"],
+				["星辰", "26", "/stardust/list"], ["主题", "100", "#/discussions"], ["回帖", "873", "#/comments"],
+				["收藏", "42", "#/collections"], ["等级", "Lv.3", "/progress"], ["注册天数", "659", null]
+			]);
+			assert.equal(stats.columns, 3, "九格排三列");
+			assert.equal(stats.left, true, "每格靠左（sb.sb .user-stat）");
+			assert.deepEqual(stats.progress, ["Lv.3 渐入佳境", "51%", "Lv.4 小有成就 还差 343"], "Lv.3 要 900、Lv.4 要 1600：1257 走了 51%");
+			assert.equal(stats.bar, "51%");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	// 别人的主页：只有主题、回帖能点（关注列表、账簿、星辰明细、等级进度站点只给看自己的）；接口没回来之前页面上有的五个数先写上
+	{
+		// 页面里记下九格第一次画出来时的样子（不靠测试轮询的时机：全量跑时页面慢，轮询到的时候接口可能已经回来了）
+		const init = `(() => {
+			window.__firstStats = null;
+			new MutationObserver((records, observer) => {
+				const cells = document.querySelectorAll(".head-container > .card-block > .nsmax-user-stat");
+				if (!cells.length) return;
+				window.__firstStats = Array.from(cells, (c) => [c.querySelector(".nsmax-user-stat-label").textContent, c.querySelector(".nsmax-user-stat-value").textContent]);
+				observer.disconnect();
+			}).observe(document, { childList: true, subtree: true });
+		})();`;
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage(), init, api: { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail: { ...detail, member_id: 10 } }, delay: 1500 }] } });
+		try {
+			await page.waitForFunction(() => window.__firstStats);
+			assert.deepEqual(await page.evaluate(() => window.__firstStats), [["关注", "—"], ["粉丝", "—"], ["鸡腿", "1257"], ["星辰", "—"], ["主题", "100"], ["回帖", "873"], ["收藏", "—"], ["等级", "Lv.3"], ["注册天数", "659"]], "九格一开始就排好，没有的先写「—」");
+			await page.waitForFunction(() => document.querySelector(".head-container .card-block .nsmax-user-stat-value")?.textContent === "11");
+			const stats = await page.evaluate(read);
+			assert.deepEqual(stats.cells.filter(([, , href]) => href).map(([label, , href]) => [label, href]), [["主题", "#/discussions"], ["回帖", "#/comments"]]);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("v1.8.39 列表里「我的回复」那一行第一帧就在：页面解析时按本机记录放好，不等模块启动（以前第一帧之后才插，回复过的那几篇高出一截，下面整列往下跳）", async () => {
+	const html = listPage();
+	const ids = [...new Set(Array.from(html.matchAll(/href="\/post-(\d+)-1"/g), (m) => m[1]))].slice(0, 6);
+	const seed = { "nspp:state:www.nodeseek.com:sb-my-replies": { "posts:1": { [ids[0]]: [3], [ids[2]]: [5, 12] } } };
+	const init = `(() => {
+		window.__atPrimary = -1;
+		const mark = performance.mark.bind(performance);
+		performance.mark = (name, ...rest) => { if (name === "nsmax:primary-ready") window.__atPrimary = document.querySelectorAll("ul.post-list .nsmax-my-replies").length; return mark(name, ...rest); };
+		window.__shifts = [];
+		new PerformanceObserver((list) => { for (const e of list.getEntries()) if (!e.hadRecentInput) window.__shifts.push({ t: e.startTime, v: e.value }); }).observe({ type: "layout-shift", buffered: true });
+	})();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, seed, init, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForFunction(() => window.__atPrimary >= 0 && document.querySelectorAll("ul.post-list .nsmax-my-replies").length === 2);
+		await page.waitForTimeout(600);
+		const result = await page.evaluate(() => {
+			const fcp = performance.getEntriesByType("paint").find((p) => p.name === "first-contentful-paint")?.startTime || 0;
+			return {
+				atPrimary: window.__atPrimary,
+				rows: Array.from(document.querySelectorAll("ul.post-list .nsmax-my-replies"), (el) => [el.closest("li.post-list-item").querySelector(".post-title a").getAttribute("href"), el.textContent]),
+				shifts: window.__shifts.filter((s) => s.t > fcp).reduce((sum, s) => sum + s.v, 0)
+			};
+		});
+		assert.equal(result.atPrimary, 2, "模块启动之前（页面解析阶段）就放好了");
+		assert.deepEqual(result.rows, [[`/post-${ids[0]}-1`, "我的回复#3"], [`/post-${ids[2]}-1`, "我的回复#5#12"]]);
+		assert.equal(result.shifts, 0, "第一帧之后列表不再跳");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("第六批（2026-10-18）：我的回复——帖子页记下自己的楼层，回复区标题栏「N 条回复」后面列出「我的回复 #1」，点了就地跳过去；列表里这一篇下面也有一行", async () => {
 	const post = postPage().replaceAll('href="/space/11"', 'href="/space/1"');
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: post, viewport: { width: 1440, height: 900 }, pages: { "/": listPage() } });
 	try {
-		await page.waitForSelector(".comment-container > .nsmax-my-replies a");
+		await page.waitForSelector(".comment-container .nsmax-reply-title + .nsmax-my-replies a");
 		const bar = await page.evaluate(() => {
-			const row = document.querySelector(".comment-container > .nsmax-my-replies");
-			return { text: row.textContent, links: Array.from(row.querySelectorAll("a"), (a) => a.getAttribute("href")), afterHead: row.parentElement.querySelector(":scope > .nsmax-reply-head") ? row.previousElementSibling?.classList.contains("nsmax-reply-head") : row === row.parentElement.firstElementChild };
+			const row = document.querySelector(".comment-container .nsmax-my-replies");
+			const head = row.parentElement, title = head.querySelector(":scope > .nsmax-reply-title");
+			const box = (el) => el.getBoundingClientRect();
+			const buttons = Array.from(head.querySelectorAll(":scope > :is(button, a.nsmax-jump-reply)"));
+			return {
+				text: row.textContent, links: Array.from(row.querySelectorAll("a"), (a) => a.getAttribute("href")),
+				count: document.querySelectorAll(".nsmax-my-replies").length,
+				inHead: head.matches(".comment-container > :first-child") && row.previousElementSibling === title,
+				// 和标题同一行、紧跟在标题后面（标题栏的间距 10px），开关按钮还在最右边
+				sameLine: Math.abs((box(row).top + box(row).bottom) / 2 - (box(title).top + box(title).bottom) / 2) <= 2,
+				gap: Math.round(box(row).left - box(title).right),
+				buttonsRight: buttons.every((button) => box(button).left > box(row).right + 40),
+				headHeight: Math.round(box(head).height)
+			};
 		});
 		assert.equal(bar.text, "我的回复#1");
 		assert.deepEqual(bar.links, ["#1"], "这一楼已经在页面上：就地跳");
-		assert.equal(bar.afterHead, true, "在评论区最上面（有标题栏时在标题栏下面）");
+		assert.equal(bar.count, 1);
+		assert.equal(bar.inHead, true, "在回复区标题栏里，接在「N 条回复」后面（2026-10-24：以前单独一行夹在两张卡片中间）");
+		assert.equal(bar.sameLine, true, "和标题在同一行");
+		assert.equal(bar.gap, 10);
+		assert.equal(bar.buttonsRight, true, "只看楼主、直达底部、简洁模式还在右边");
+		assert.ok(bar.headHeight <= 52, `标题栏没有被撑高：${bar.headHeight}px`);
+		await page.setViewportSize({ width: 390, height: 844 });
+		const narrow = await page.evaluate(() => {
+			const row = document.querySelector(".comment-container .nsmax-my-replies"), head = row.parentElement;
+			const box = (el) => el.getBoundingClientRect();
+			return { inside: box(row).right <= box(head).right + 0.5 && box(row).left >= box(head).left - 0.5, overflow: head.scrollWidth - head.clientWidth, below: box(row).top >= box(head.querySelector(":scope > .nsmax-reply-title")).bottom };
+		});
+		assert.deepEqual(narrow, { inside: true, overflow: 0, below: true }, "手机上标题栏放不下：「我的回复」换到下面一行，不撑出横向滚动");
+		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto("https://www.nodeseek.com/", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector("ul.post-list .nsmax-my-replies a");
 		const row = await page.evaluate(() => {
@@ -4082,6 +4225,8 @@ test("第七批（2026-10-18）：一键抽奖发出去以后，新帖子里自�
 	try {
 		for (let i = 0; i < 60 && !posted.length; i++) await wait(page, 100);
 		assert.equal(posted.length, 1, "只编辑一次");
+		// 补完以后 0.6 秒刷新：等那次刷新真的发生再检查（以前固定等 0.8 秒，新页面加载慢一点就正好撞上刷新）
+		const reloaded = page.waitForEvent("domcontentloaded", { timeout: 8000 });
 		const { body, token } = posted[0];
 		assert.equal(body.mode, "edit-discussion");
 		assert.equal(body.postId, 1000);
@@ -4090,7 +4235,7 @@ test("第七批（2026-10-18）：一键抽奖发出去以后，新帖子里自�
 		assert.ok(body.content.includes(`- **开奖链接**：[查看开奖](https://www.nodeseek.com/lucky?post=1000&time=${time}&count=3&start=1&duplicate=false)`), body.content);
 		assert.ok(!body.content.includes("发布后自动生成"));
 		assert.match(token, /^[0-9a-f]{16}$/, "和站点编辑器一样带一个随机的 csrf-token");
-		await page.waitForLoadState("domcontentloaded");
+		await reloaded;
 		await wait(page, 800);
 		assert.equal(await page.evaluate(() => localStorage.getItem("nsmax:lucky:pending")), null, "补完就清掉，不会重复编辑");
 		assert.equal(posted.length, 1);
@@ -6796,5 +6941,57 @@ test("2026-10-24 引用排成引用卡片：头上一行「名字 · #楼号 · 
 		const opened = await page.evaluate(() => { const body = document.querySelector("li[id='3'] .nsmax-quote-body"); return { clipped: body.scrollHeight > body.clientHeight + 4, label: document.querySelector("li[id='3'] .nsmax-quote-toggle").textContent }; });
 		assert.deepEqual(opened, { clipped: false, label: "收起" });
 		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("2026-10-24 列表帖子页码（sb.sb .topic-pages）：回复两页以上的帖子标题后面一排小页码，超过 6 页写 2、3、…、最后三页（正好 6 页全列出来），点了直接进那一页；一页以内的不加；悬停小页码不弹帖子预览", async () => {
+	// 第 1 篇 35 条回复（4 页），第 2 篇 95 条（10 页），第 3 篇 10 条（1 页），第 4 篇 58 条（6 页）
+	let n = 0;
+	const counts = [35, 95, 10, 58];
+	const html = listPage().replace(/<span title="\d+ comments" class="info-item info-comments-count">([\s\S]*?)<span title="\d+ comments">\d+<\/span>/g, (match, mid) => {
+		const count = counts[n++] ?? 0;
+		return `<span title="${count} comments" class="info-item info-comments-count">${mid}<span title="${count} comments">${count}</span>`;
+	});
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, init: CHECKED_INIT, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-topic-pages");
+		const rows = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).slice(0, 4).map((li) => {
+			const pages = li.querySelector(".post-title > .nsmax-topic-pages");
+			return pages ? { text: pages.textContent, hrefs: Array.from(pages.querySelectorAll("a"), (a) => a.getAttribute("href")), sameLine: Math.abs(pages.getBoundingClientRect().top - li.querySelector(".post-title > a").getBoundingClientRect().top) < 12 } : null;
+		}));
+		assert.deepEqual(rows[0], { text: "234", hrefs: ["/post-1000-2", "/post-1000-3", "/post-1000-4"], sameLine: true });
+		assert.equal(rows[1].text, "23…8910");
+		assert.deepEqual(rows[1].hrefs, ["/post-1001-2", "/post-1001-3", "/post-1001-8", "/post-1001-9", "/post-1001-10"]);
+		assert.equal(rows[2], null, "一页以内的不加");
+		assert.equal(rows[3].text, "23456", "正好 6 页：中间没有跳过的页，全列出来、不写省略号");
+		await page.locator("ul.post-list > li.post-list-item .nsmax-topic-pages a").first().hover();
+		await page.waitForTimeout(600);
+		assert.equal(await page.locator("dialog.nspp-post-preview:not([hidden])").count(), 0, "悬停小页码不弹帖子预览");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("2026-10-24 楼号悬停预览（sb.sb .quote-hover）：帖子里「#楼号」停一下弹出那一层「#楼号 作者」和正文；不在这一页的去取那一页；找不到的写已被删除；移开收起", async () => {
+	const third = postPage().replace('id="1"', 'id="21"').replace('id="2"', 'id="22"').replace('id="3"', 'id="23"');
+	const html = postPage().replace("<p>价格不错，帮顶</p>", '<p>看 <a href="/post-1000-1#1">#1</a> 说的，还有 <a href="/post-1000-3#22">#22</a>，以及 <a href="/post-1000-9#88">#88</a></p>');
+	const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 }, pages: { "/post-1000-3": third } });
+	try {
+		await page.waitForSelector(".nsmax-editor-controls");
+		const hover = async (text) => {
+			const link = page.locator("li[id='2'] article a", { hasText: text });
+			await link.scrollIntoViewIfNeeded();
+			await link.hover();
+			await page.waitForFunction((no) => { const card = document.querySelector(".nsmax-floor-hover"); return card && !card.hidden && card.querySelector(".nsmax-floor-hover-head").textContent.startsWith(no); }, text, { timeout: 5e3 });
+			return page.evaluate(() => { const card = document.querySelector(".nsmax-floor-hover"); return { head: card.querySelector(".nsmax-floor-hover-head").textContent, body: card.querySelector(".nsmax-floor-hover-body").textContent, below: card.getBoundingClientRect().top > 0 }; });
+		};
+		assert.deepEqual(await hover("#1"), { head: "#1 buyer", body: "收了，私信你", below: true });
+		const far = await hover("#22");
+		assert.equal(far.head, "#22 passerby", "不在这一页的取第 3 页");
+		assert.equal(far.body, "价格不错，帮顶");
+		assert.deepEqual(await hover("#88"), { head: "#88", body: "这一层不存在或已被删除", below: true });
+		await page.mouse.move(5, 5);
+		await page.waitForTimeout(500);
+		assert.equal(await page.locator(".nsmax-floor-hover:not([hidden])").count(), 0, "移开收起");
+		assert.deepEqual(errors.filter((e) => !/404|Failed to load resource/.test(e)), []);
 	} finally { await context.close(); }
 });

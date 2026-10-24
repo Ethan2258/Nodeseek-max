@@ -3726,10 +3726,11 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-bio
   font-size: 13px !important;
   line-height: 1.6 !important;
 }
-/* 统计：sb.sb .user-stats——上细线、12px 0 2px、四列、gap 10px 6px；标签 12px 弱化字，数字 15px/600 等宽 */
+/* 统计：sb.sb .user-stats——上细线、12px 0 2px、gap 10px 6px；五格以上三列（.user-stats:has(>:nth-child(5))，这里固定九格就直接三列）。
+   九格：关注 粉丝 鸡腿 / 星辰 主题 回帖 / 收藏 等级 注册天数（见 nsmaxPrepareSpace），每格靠左，标签 12px 弱化字在上，数字 15px/600 等宽在下 */
 html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 10px 6px !important;
   height: auto !important;
   min-height: 0 !important;
@@ -3741,7 +3742,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block {
   background: transparent !important;
   box-shadow: none !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item {
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > :is(.card-item, .nsmax-user-stat) {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
@@ -3757,7 +3758,11 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > 
   background: transparent !important;
   box-shadow: none !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item > .nsmax-stat-label {
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .nsmax-user-stat {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .nsmax-user-stat > .nsmax-user-stat-label {
   margin: 0 !important;
   color: var(--text-muted) !important;
   font-family: var(--font-sans) !important;
@@ -3765,7 +3770,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > 
   font-weight: 400 !important;
   line-height: 1.75 !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item > .nsmax-stat-val {
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .nsmax-user-stat > .nsmax-user-stat-value {
   margin: 0 !important;
   color: var(--text-strong) !important;
   font-family: var(--font-mono) !important;
@@ -3773,6 +3778,10 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > 
   font-weight: 600 !important;
   line-height: 1.2 !important;
   font-variant-numeric: normal !important;
+}
+/* 能点的格子（sb.sb a.user-stat:hover .user-stat-value）：悬停数字变链接色 */
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > a.nsmax-user-stat:hover > .nsmax-user-stat-value {
+  color: var(--link-hover) !important;
 }
 /* 等级进度：sb.sb .points-level-block——上方 14px；一行「Lv.6 称号 · 百分比 · 下一级」，下面 7px 胶囊进度条（品牌色填充） */
 html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .nsmax-space-progress {
@@ -9343,11 +9352,6 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-messages-unrea
   border-radius: 50% !important;
   background: #f5c518 !important;
 }
-/* 个人空间资料卡的四格统计（等级 / 鸡腿 / 主题 / 回帖）：每格内容居中，四格在整行里均匀排开（以前都靠左，最后一格右边空一大块） */
-html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .card-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  align-items: center !important;
-  text-align: center !important;
-}
 
 /* ---------- 44. 投票、抽奖（2026-10-17）：照 sb.sb .topic-badge.poll-badge / .poll-widget / .lottery-widget ---------- */
 /* 标题前「投票」：sb.sb .topic-badge.poll-badge——#3b6fe0 底白字，和「抽奖」同一款小胶囊（1px 8px、11px/500） */
@@ -14636,4 +14640,128 @@ html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quot
 }
 html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quote-body > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin-bottom: 0 !important;
+}
+
+/* ---------- 71. 2026-10-24 第二十六批：列表帖子页码、楼号悬停预览 ---------- */
+/* 列表标题后面的小页码（sb.sb .topic-pages）：标题后 6px，一个页面图标 + 细线框小胶囊数字（11.5px 等宽、次要色），间距 3px；
+   悬停时边框换成品牌边框色、字变链接悬停色；「…」用 --text-disabled */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  margin: 0 0 0 6px !important;
+  color: var(--text-subtle) !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  vertical-align: 2px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "" !important;
+  display: inline-block !important;
+  flex: none !important;
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 1px 0 0 !important;
+  background: currentColor !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 4h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z'/%3E%3Cpath d='M9.5 9h6m-6 3.5h6M9.5 16H13'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 4h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z'/%3E%3Cpath d='M9.5 9h6m-6 3.5h6M9.5 16H13'/%3E%3C/svg%3E") center / contain no-repeat !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-block !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: none !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--brand-border) !important;
+  color: var(--link-hover) !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > .nsmax-topic-pages-gap:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text-disabled) !important;
+}
+/* 楼号悬停预览（sb.sb .quote-hover）：最宽 460px、最高 260px 可滚，10px 12px，细线框、卡片圆角、面板底、浮层阴影；
+   头上「#楼号 作者」等宽 12px 次级字，下面正文 13.5px、行高 1.7、保留换行 */
+html[data-nsmax-theme] .nsmax-floor-hover:is(#nsmax-lv, *) {
+  position: absolute !important;
+  z-index: 60 !important;
+  box-sizing: border-box !important;
+  max-width: min(460px, calc(100vw - 32px)) !important;
+  max-height: 260px !important;
+  overflow-y: auto !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: var(--shadow-medium) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-floor-hover[hidden]:is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-floor-hover > .nsmax-floor-hover-head:is(#nsmax-lv, *) {
+  margin: 0 0 6px !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] .nsmax-floor-hover > .nsmax-floor-hover-body:is(#nsmax-lv, *) {
+  color: var(--text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.7 !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+/* 71b. 帖子页的「我的回复」收进回复区标题栏（2026-10-24 反馈）：接在「N 条回复」后面，同一行、间距照标题栏的 10px；
+   以前单独一行夹在标题栏和回复列表两张卡片中间（透明底 + 下边线），看着像断开的一截灰条。
+   标题栏里第一个开关本来靠标题的 margin-right:auto 推到右边，这一行在时换成它来推（标题栏上的 data-nsmax-my-replies 由 nsmaxMyRepliesRender 打，
+   主题里不能用 :has()） */
+html[data-nsmax-theme] #nsk-body-left .comment-container > [data-nsmax-my-replies] > .nsmax-reply-title + .nsmax-my-replies:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  margin: 0 auto 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  gap: 4px 8px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container > [data-nsmax-my-replies] > .nsmax-reply-title:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin-right: 0 !important;
+}
+/* 手机上标题栏一行放不下（标题 + 三个开关已经占满）：这一行换到标题栏第二行，不撑出横向滚动 */
+@media (max-width: 700px) {
+  html[data-nsmax-theme] #nsk-body-left .comment-container > [data-nsmax-my-replies]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    flex-wrap: wrap !important;
+    row-gap: 8px !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .comment-container > [data-nsmax-my-replies] > .nsmax-reply-title + .nsmax-my-replies:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    order: 1 !important;
+    flex: 1 1 100% !important;
+    margin: 0 !important;
+  }
+  html[data-nsmax-theme] #nsk-body-left .comment-container > [data-nsmax-my-replies] > .nsmax-reply-title:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    margin-right: auto !important;
+  }
+}
+/* 71c. 个人主页加右栏（2026-10-24，照 sb.sb /u/…/ 的 .forum-layout：主栏 + 260px 右栏——资料卡、今日热门、最近浏览）。
+   和签到、管理记录一样由 nsmaxPrepareSidePage 补右栏、整块放进 1600px 版心；站点的个人主页挂在 #user-space-mount
+   （拿到资料后换成 .nsk-container），放进左边一栏，自己不再留版心和内边距（外面的版心已经留了） */
+html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-container, #user-space-mount):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }

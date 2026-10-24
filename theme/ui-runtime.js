@@ -64,6 +64,9 @@
 	}
 	// 个人空间：这个人有没有写个人介绍（uid → true / false；接口没回来时没有这一项）
 	const nsmaxSpaceIntro = new Map();
+	// 个人空间资料卡的九格统计（uid → 接口读到的数字，见 nsmaxPrepareSpace）；已经在等接口的 uid
+	const nsmaxSpaceStats = new Map();
+	const nsmaxSpaceStatsWaiting = new Set();
 	// 是不是自己的个人空间（没登录、或者站点配置还没出来时按「别人的」处理）
 	function nsmaxIsOwnSpace() {
 		const id = location.pathname.match(/^\/space\/(\d+)/)?.[1];
@@ -242,38 +245,46 @@
 		}
 		for (const extraCard of document.querySelectorAll(".selector .card-block, .selector-right-side .card-block")) nsmaxHideEl(extraCard);
 
-		const renderStatsAndProgress = (lvl, coin, nPost, nComment) => {
+		// 统计照 sb.sb 个人页 .user-stats（三列、标签在上数字在下，上面一条细线，2026-10-24）：
+		// 关注 粉丝 鸡腿 / 星辰 主题 回帖 / 收藏 等级 注册天数。站点页面上有的四个（等级、鸡腿、主题、回帖）第一帧就写上，
+		// 别的先「—」、接口回来补齐（九格一开始就排好，不跳）。主题、回帖点了进下面的标签；自己的主页里关注 / 粉丝进站点的关注页，
+		// 鸡腿进账簿，星辰进星辰明细，等级进等级进度（这几页站点只给看自己的）。以前只有等级、鸡腿、主题、回帖四格居中排
+		const self = nsmaxIsOwnSpace();
+		const renderStatsAndProgress = (info) => {
 			if (!headStats) return;
 			nsmaxDropAttr(headStats, "style");
-			const levelVal = lvl !== undefined ? Number(lvl) : 1;
-			const statItems = [
-				["等级", lvl !== undefined ? String(lvl) : "—", levelVal >= 6],
-				["鸡腿", coin !== undefined ? String(coin) : "—", false],
-				["主题", nPost !== undefined ? String(nPost) : "—", false],
-				["回帖", nComment !== undefined ? String(nComment) : "—", false]
+			const levelVal = info.rank !== undefined && Number.isFinite(Number(info.rank)) ? Number(info.rank) : 1;
+			const value = (v) => v === undefined || v === null || v === "" || !Number.isFinite(Number(v)) ? "—" : String(Number(v));
+			const created = Date.parse(info.created_at || "");
+			const days = info.days ?? (Number.isFinite(created) ? Math.max(0, Math.floor((Date.now() - created) / 864e5)) : undefined);
+			const cells = [
+				["关注", value(info.follows), self ? "/fans?type=follow" : ""],
+				["粉丝", value(info.fans), self ? "/fans?type=fans" : ""],
+				["鸡腿", value(info.coin), self ? "/credit" : ""],
+				["星辰", value(info.stardust), self ? "/stardust/list" : ""],
+				["主题", value(info.nPost), "#/discussions"],
+				["回帖", value(info.nComment), "#/comments"],
+				["收藏", value(info.collectionCount), self ? "#/collections" : ""],
+				["等级", info.rank !== undefined ? `Lv.${value(info.rank)}` : "—", self ? "/progress" : ""],
+				["注册天数", value(days), ""]
 			];
-			let existingItems = Array.from(headStats.querySelectorAll(":scope > .card-item"));
-			if (existingItems.length < 4) {
-				headStats.innerHTML = "";
-				for (let i = 0; i < 4; i++) {
-					const item = document.createElement("div");
-					item.className = "card-item";
-					headStats.append(item);
-				}
-				existingItems = Array.from(headStats.querySelectorAll(":scope > .card-item"));
-			}
-			for (let i = 0; i < 4; i++) {
-				const item = existingItems[i];
-				const [label, val, isLv6] = statItems[i];
-				const html = `<div class="nsmax-stat-label">${label}</div><div class="nsmax-stat-val">${val}</div>`;
-				if (item.innerHTML !== html) item.innerHTML = html;
-				item.toggleAttribute("data-nsmax-lv6-stat", isLv6);
-				nsmaxDropAttr(item, "data-nsmax-obsolete-stat");
-				nsmaxShowEl(item);
-			}
-			for (let i = 4; i < existingItems.length; i++) {
-				nsmaxSetAttr(existingItems[i], "data-nsmax-obsolete-stat", "true");
-				nsmaxHideEl(existingItems[i]);
+			const signature = cells.map((cell) => cell.join("|")).join("\n");
+			nsmaxSetAttr(headStats, "data-nsmax-user-stats");
+			if (headStats.getAttribute("data-nsmax-sig") !== signature) {
+				headStats.setAttribute("data-nsmax-sig", signature);
+				headStats.replaceChildren(...cells.map(([label, text, href]) => {
+					const cell = document.createElement(href ? "a" : "div");
+					cell.className = "nsmax-user-stat";
+					if (href) cell.href = href;
+					const name = document.createElement("span");
+					name.className = "nsmax-user-stat-label";
+					name.textContent = label;
+					const number = document.createElement("span");
+					number.className = "nsmax-user-stat-value";
+					number.textContent = text;
+					cell.append(name, number);
+					return cell;
+				}));
 			}
 
 			// 渲染等级进度条
@@ -332,21 +343,29 @@
 				if (progress.classList.contains("nsmax-space-progress-max")) progress.classList.remove("nsmax-space-progress-max");
 				const cur = titles[levelVal]?.[0] || "当前等级";
 				const nxt = titles[levelVal]?.[1] || "下一等级";
-				const percent = Math.max(10, Math.min(100, (levelVal % 10) * 10 || 50));
+				// 真实进度（2026-10-24，以前按等级凑的 等级 × 10%）：站点的等级按鸡腿算，Lv.n 要 n² × 100 个（站点 /progress 同一个算法）；
+				// 右边照 sb.sb 写「Lv.N+1 称号 还差 X」
+				const coin = Number(info.coin);
+				const min = levelVal * levelVal * 100, max = (levelVal + 1) * (levelVal + 1) * 100;
+				const known = info.coin !== undefined && Number.isFinite(coin);
+				const percent = known ? Math.max(0, Math.min(100, Math.floor((coin - min) / (max - min) * 100))) : 0;
 				setLevelLabel(levelVal, cur);
-				nsmaxSetText(progress.querySelector(".nsmax-space-progress-percent"), `${percent}%`);
-				nsmaxSetText(progress.querySelector(".nsmax-space-progress-next"), `Lv.${levelVal + 1} ${nxt}`);
+				nsmaxSetText(progress.querySelector(".nsmax-space-progress-percent"), known ? `${percent}%` : "—");
+				nsmaxSetText(progress.querySelector(".nsmax-space-progress-next"), `Lv.${levelVal + 1} ${nxt}${known ? ` 还差 ${Math.max(0, max - coin)}` : ""}`);
 				setBar(`${percent}%`);
 			}
 		};
 
-		// 1. 从已有 DOM 中读取统计数字
-		let parsedLevel, parsedCoin, parsedPost, parsedComment;
-		const parseSource = headStats || origStats || stats;
+		// 1. 从已有 DOM 中读取统计数字（站点的概况页有加入天数、等级、鸡腿、主题帖、评论数；资料卡里的已经换成九格，从站点原来那组读）
+		let parsedLevel, parsedCoin, parsedPost, parsedComment, parsedDays;
+		const parseSource = origStats || headStats || stats;
 		if (parseSource) {
 			for (const item of parseSource.querySelectorAll(".card-item")) {
 				const t = item.textContent.trim();
-				if (/等级/.test(t)) {
+				if (/加入|注册/.test(t)) {
+					const m = t.match(/\d+/);
+					if (m) parsedDays = Number(m[0]);
+				} else if (/等级/.test(t)) {
 					const m = t.match(/\d+/);
 					if (m) parsedLevel = Number(m[0]);
 				} else if (/鸡腿/.test(t)) {
@@ -361,20 +380,27 @@
 				}
 			}
 		}
-		if (parsedLevel !== undefined) {
-			renderStatsAndProgress(parsedLevel, parsedCoin, parsedPost, parsedComment);
+		// 页面上的数字和接口的数字记在一处（这个人的九格）：页面上有的（等级、鸡腿、主题、回帖、注册天数）用页面上的，
+		// 接口补页面上没有的（关注、粉丝、星辰、收藏）。站点换标签时会把概况那组统计拿掉，记下来的照样能画
+		const known = nsmaxSpaceStats.get(uid) || {};
+		for (const [key, value] of [["rank", parsedLevel], ["coin", parsedCoin], ["nPost", parsedPost], ["nComment", parsedComment], ["days", parsedDays]]) {
+			if (value !== undefined) known[key] = value;
 		}
+		if (uid && Object.keys(known).length) nsmaxSpaceStats.set(uid, known);
+		if (Object.keys(known).length) renderStatsAndProgress(known);
 
 		// 2. 通过 API 保证异步获取完整数据（支持直达非概况页面），见 nsmaxSpaceInfo
 		const reqPromise = uid ? nsmaxSpaceInfo(uid) : null;
-		if (uid && (parsedLevel === undefined || !head.querySelector(".nsmax-space-progress"))) {
+		if (uid && !nsmaxSpaceStatsWaiting.has(uid)) {
+			nsmaxSpaceStatsWaiting.add(uid);
 			reqPromise.then(info => {
-				if (!info || typeof info !== "object") return;
-				const l = info.rank !== undefined ? Number(info.rank) : (parsedLevel || 1);
-				const c = info.coin !== undefined ? Number(info.coin) : (parsedCoin || 0);
-				const p = info.nPost !== undefined ? Number(info.nPost) : (parsedPost || 0);
-				const cm = info.nComment !== undefined ? Number(info.nComment) : (parsedComment || 0);
-				renderStatsAndProgress(l, c, p, cm);
+				if (!info || typeof info !== "object" || Array.isArray(info)) return;
+				const entry = nsmaxSpaceStats.get(uid) || {};
+				for (const key of ["rank", "coin", "stardust", "nPost", "nComment", "follows", "fans", "collectionCount", "created_at"]) {
+					if (entry[key] === undefined && info[key] !== undefined && info[key] !== null && info[key] !== "") entry[key] = info[key];
+				}
+				nsmaxSpaceStats.set(uid, entry);
+				nsmaxPrepareSpace();
 			});
 		}
 		// 加入日期：站点页面上没有时（上面先藏着），用接口的注册时间补上
@@ -1440,6 +1466,41 @@
 	// 由主题 CSS 画（::before 遮罩，见 design.css「列表元信息图标」）：以前给每一项插一个 svg，一页 95 行要新建、插入近 500 个，
 	// 手机上首帧前要多花几十毫秒；站点原来的 iconpark 图标留在原处，由 CSS 藏起来
 	const nsmaxProcessedRows = new WeakSet();
+	// 回复多的帖子，标题后面一排小页码（sb.sb .topic-pages：「2 3 … 5 6 7」，直接点进第几页，不用先进第 1 页再翻）。
+	// 回复数用列表上的（站点列表的回复数就是最后一楼的楼号），一页 10 楼；两页以上才有，超过 6 页写 2、3、…、最后三页
+	// （正好 6 页时中间没有跳过的页，不写省略号）。
+	// 新标签页打开跟着标题走（站点偏好）。2026-10-24
+	var NSMAX_FLOORS_PER_PAGE = 10;
+	function nsmaxTopicPages(row) {
+		const title = row.querySelector(".post-title");
+		const link = title?.querySelector(":scope > a[href*='/post-']");
+		const id = link?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1];
+		const box = row.querySelector(".info-comments-count");
+		if (!id || !box || title.querySelector(":scope > .nsmax-topic-pages")) return;
+		const count = Number((box.getAttribute("title") || "").match(/^(\d+)\s*comments?/i)?.[1] ?? box.textContent.replace(/\D/g, ""));
+		const pages = Math.ceil(count / NSMAX_FLOORS_PER_PAGE);
+		if (!Number.isFinite(pages) || pages < 2) return;
+		const holder = document.createElement("span");
+		holder.className = "nsmax-topic-pages";
+		holder.title = `共 ${pages} 页`;
+		for (const n of pages <= 6 ? Array.from({ length: pages - 1 }, (_, i) => i + 2) : [2, 3, 0, pages - 2, pages - 1, pages]) {
+			if (!n) {
+				const gap = document.createElement("span");
+				gap.className = "nsmax-topic-pages-gap";
+				gap.textContent = "…";
+				holder.append(gap);
+				continue;
+			}
+			const page = document.createElement("a");
+			page.href = `/post-${id}-${n}`;
+			page.textContent = String(n);
+			page.setAttribute("aria-label", `第 ${n} 页`);
+			if (link.target) page.target = link.target;
+			if (link.rel) page.rel = link.rel;
+			holder.append(page);
+		}
+		link.after(holder);
+	}
 	function nsmaxProcessPostListRows() {
 		for (const row of document.querySelectorAll("ul.post-list:not(.topic-carousel-panel)>li.post-list-item")) {
 			if (nsmaxProcessedRows.has(row)) continue;
@@ -1447,6 +1508,7 @@
 			// 还没解析完的那一行（.post-info 还没出来、或者还在往里写）先不动，下一遍再来（以前先记成处理过，解析到一半的那行就再也不整理了）
 			if (!info || !nsmaxParsedPast(row)) continue;
 			nsmaxProcessedRows.add(row);
+			nsmaxTopicPages(row);
 			if (row.hasAttribute("data-nsmax-meta-ordered")) continue;
 			let author, time, views, count, last, category, siteCategory;
 			for (const child of info.children) {
@@ -3219,6 +3281,7 @@ function nsmaxTagStructure() {
 		if (location.pathname === "/progress") nsmaxProgressPage();
 		// 「抽奖」页：查过的抽奖帖首屏就显示、别的先不显示（没查过的等模块启动后在后台查）
 		if (nsmaxIsLotteryView()) nsmaxFilterLotteryRows();
+		nsmaxEarlyMyReplies(parsed);
 		if (!/^\/post-\d+/.test(location.pathname)) return;
 		nsmaxGroupFloorActions(parsed);
 		nsmaxGroupNestedReplies(parsed);
@@ -3237,6 +3300,104 @@ function nsmaxTagStructure() {
 			// 2026-10-23：以前等模块启动才插进正文，第一帧画出来之后整篇正文被往下推三百多像素
 			nsmaxPrepareLottery();
 		}
+	}
+	// 楼号悬停预览（照 sb.sb .quote-hover）：帖子正文里指向这一帖某一层的链接——「#12」、引用卡片头上的「#0」、楼中楼里的「回复 某某」——
+	// 鼠标停 0.14 秒弹出一张小卡片：头上「#楼号 作者」，下面那一层的正文（纯文字，最高 260px，长了可以滚）。这一页上有那一层就直接用；
+	// 不在这一页的按楼号算出在第几页（一页 10 楼），取那一页（同一页只取一次）；找不到写「这一层不存在或已被删除」。
+	// 移开 0.18 秒收起（移进卡片里不收），Esc、滚动页面收起；键盘移到链接上也会弹出。2026-10-24
+	var nsmaxFloorHoverBound = false;
+	function nsmaxFloorHover(ctx) {
+		if (nsmaxFloorHoverBound || !/^\/post-\d+/.test(location.pathname)) return;
+		nsmaxFloorHoverBound = true;
+		const postId = location.pathname.match(/^\/post-(\d+)/)[1];
+		const pages = new Map();
+		let card = null, timer = 0, current = null;
+		const target = (node) => {
+			const a = node instanceof Element ? node.closest("#nsk-body-left article.post-content a[href], #nsk-body-left .nsmax-fb-who > a.nsmax-fb-target") : null;
+			if (!a || !(/^#\d+$/.test(a.textContent.trim()) || a.matches(".nsmax-fb-target, .nsmax-quote-floor"))) return null;
+			let url;
+			try { url = new URL(a.getAttribute("href"), location.href); } catch { return null; }
+			if (url.origin !== location.origin || !/^#\d+$/.test(url.hash)) return null;
+			const path = url.pathname.match(/^\/post-(\d+)(?:-(\d+))?/);
+			if (path ? path[1] !== postId : url.pathname !== location.pathname) return null;
+			return { a, no: Number(url.hash.slice(1)), page: path?.[2] ? Number(path[2]) : 0 };
+		};
+		const pick = (doc, no) => {
+			const item = no === 0 ? doc.querySelector(".nsk-post > .content-item, .nsk-post .content-item") : doc.querySelector(`ul.comments li.content-item[id="${no}"]`);
+			const body = item?.querySelector(":scope > article.post-content");
+			if (!body) return null;
+			const copy = body.cloneNode(true);
+			for (const extra of copy.querySelectorAll(".nsmax-fb-who, [data-nsmax-fb-lead], .nsmax-quote-head, .nsmax-lottery, script, style")) extra.remove();
+			for (const br of copy.querySelectorAll("br")) br.replaceWith("\n");
+			for (const block of copy.querySelectorAll("p, li, pre, blockquote, h1, h2, h3, h4, h5, h6, tr")) block.append("\n");
+			for (const image of copy.querySelectorAll("img:not(.sticker, [class*=emoji])")) image.replaceWith("[图片]");
+			const text = copy.textContent.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+			const author = item.querySelector(":scope > .nsk-content-meta-info .author-info > a.author-name, :scope > .nsk-content-meta-info .author-info > a[href*='/space/']")?.textContent.trim() || "";
+			return { no, author, text: text.length > 1200 ? text.slice(0, 1200) + "……" : text };
+		};
+		const hide = () => {
+			clearTimeout(timer);
+			timer = 0;
+			if (card) card.hidden = true;
+			current = null;
+		};
+		const show = (a, data) => {
+			if (!card) {
+				card = document.createElement("div");
+				card.className = "nsmax-floor-hover";
+				card.setAttribute("role", "tooltip");
+				card.addEventListener("mouseenter", () => { clearTimeout(timer); timer = 0; });
+				card.addEventListener("mouseleave", hide);
+				document.body.append(card);
+			}
+			const head = document.createElement("div");
+			head.className = "nsmax-floor-hover-head";
+			head.textContent = `#${data.no}${data.author ? " " + data.author : ""}`;
+			const body = document.createElement("div");
+			body.className = "nsmax-floor-hover-body";
+			body.textContent = data.text || "（这一层没有文字）";
+			card.replaceChildren(head, body);
+			card.hidden = false;
+			const link = a.getBoundingClientRect(), box = card.getBoundingClientRect();
+			const width = document.documentElement.clientWidth, height = document.documentElement.clientHeight;
+			const left = Math.min(Math.max(8, link.left + scrollX), scrollX + width - box.width - 8);
+			const below = link.bottom + scrollY + 6, above = link.top + scrollY - box.height - 6;
+			card.style.left = left + "px";
+			card.style.top = (height - link.bottom < box.height + 16 && above > scrollY ? above : below) + "px";
+		};
+		const open = async (hit) => {
+			current = hit.a;
+			let data = pick(document, hit.no);
+			if (!data) {
+				const page = hit.page || (hit.no === 0 ? 1 : Math.ceil(hit.no / NSMAX_FLOORS_PER_PAGE));
+				const href = `/post-${postId}-${page}`;
+				if (!pages.has(href)) pages.set(href, ctx.request(href, { responseType: "text", signal: ctx.signal }).then((html) => new DOMParser().parseFromString(html, "text/html")).catch(() => null));
+				const doc = await pages.get(href);
+				if (current !== hit.a) return;
+				data = doc ? pick(doc, hit.no) : null;
+			}
+			show(hit.a, data || { no: hit.no, author: "", text: "这一层不存在或已被删除" });
+		};
+		const options = { signal: ctx.signal };
+		document.addEventListener("mouseover", (event) => {
+			const hit = target(event.target);
+			if (!hit || hit.a === current) return;
+			clearTimeout(timer);
+			timer = setTimeout(() => open(hit), 140);
+		}, options);
+		document.addEventListener("mouseout", (event) => {
+			if (!target(event.target)) return;
+			clearTimeout(timer);
+			timer = setTimeout(hide, 180);
+		}, options);
+		document.addEventListener("focusin", (event) => {
+			const hit = target(event.target);
+			if (hit) open(hit);
+		}, options);
+		document.addEventListener("focusout", (event) => { if (target(event.target)) hide(); }, options);
+		document.addEventListener("keydown", (event) => { if (event.key === "Escape") hide(); }, options);
+		window.addEventListener("scroll", () => { if (current || card && !card.hidden) hide(); }, { passive: true, signal: ctx.signal });
+		ctx.signal.addEventListener("abort", () => card?.remove(), { once: true });
 	}
 	// 引用（站点「引用」按钮插进回复里的格式：> @某某 [#楼号](地址) 发布于 时间，编辑于 时间，下面是被引用的内容）排成引用卡片。
 	// sb.sb 没有对应的东西：照它通知里的引用卡片（.notify-quote-card：次底色、左边 3px 细线、右边小圆角）和楼号悬停卡片的头
@@ -3900,8 +4061,9 @@ function nsmaxTagStructure() {
 	}, { passive: true });
 	// 签到排行（/board）、管理记录（/ruling）是没有右栏的独立页面：照列表页补一个右栏（资料卡、今日热门、最近浏览），
 	// 主栏和右栏一起放进 1600px 版心，左右和顶栏的站标、齿轮对齐。资料卡用页面配置里的当前用户信息拼出原生资料卡的结构，交给 nsmaxBuildAccountCard 排版
+	// 个人主页也补（2026-10-24，照 sb.sb /u/…/：资料卡下面是主栏，右边资料卡、今日热门、最近浏览）
 	function nsmaxSidePage(path = location.pathname) {
-		return /^\/(?:board|ruling)(?:\/|$)/.test(path);
+		return /^\/(?:board|ruling)(?:\/|$)|^\/space\/\d+/.test(path);
 	}
 	// 发帖页也有右栏（照 sb.sb /t/new/：表单 + 右边资料卡、今日热门、最近浏览，2026-10-18 第七批）
 	function nsmaxNewPostPage(path = location.pathname) {
@@ -3997,7 +4159,9 @@ function nsmaxTagStructure() {
 		if (known && !early) nsmaxRefreshSideAccount(id);
 	}
 	function nsmaxRefreshSideAccount(id) {
-		fetch(`/api/account/getInfo/${id}`, { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
+		// 自己的个人主页上，主页资料卡已经在读同一个人的资料（nsmaxSpaceInfo）：共用那一次，不再多发一个请求
+		const own = location.pathname.match(/^\/space\/(\d+)/)?.[1] === String(id);
+		(own ? nsmaxSpaceInfo(String(id)).then((detail) => ({ detail })) : fetch(`/api/account/getInfo/${id}`, { credentials: "same-origin" }).then((res) => res.json())).then((json) => {
 			const data = json?.detail || json?.data;
 			if (!data || json?.success === false) return;
 			const values = { "等级": data.rank !== undefined ? `Lv ${data.rank}` : undefined, "鸡腿": data.coin, "星辰": data.stardust, "主题帖": data.nPost, "评论数": data.nComment };
@@ -4548,6 +4712,7 @@ function nsmaxTagStructure() {
 		nsmaxWatchMsc(ctx);
 		nsmaxWatchFans(ctx);
 		nsmaxWatchSpace(ctx);
+		nsmaxFloorHover(ctx);
 		const scan = () => {
 			const currentPage = nsmaxPageKind();
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
@@ -4933,6 +5098,14 @@ function nsmaxTagStructure() {
 				while (pane.parentElement && pane.parentElement !== body && pane.parentElement !== editor) pane = pane.parentElement;
 				if (pane !== body && pane !== editor) { pane.setAttribute("data-nsmax-editor-pane", ""); pane.before(surface); surface.append(pane, preview); }
 				else { body.append(surface); surface.append(preview); }
+				// 挪进外框以后每行的左右内边距从 CodeMirror 自带的 4px 变成 0（主题第 34 节），可它早先量好、缓存着的光标位置还按 4px 算：
+				// 空着点进去，光标压在提示字「写」上（2026-10-24 反馈，真站上量到光标比提示字靠右 4px）。挪完让它按现在的样式重新量一次，
+				// 第一次聚焦时再量一次兜底（站点晚一步改了样式也不怕）
+				if (cm) {
+					requestAnimationFrame(() => cm.refresh());
+					const remeasure = () => { cm.off("focus", remeasure); cm.refresh(); };
+					cm.on("focus", remeasure);
+				}
 				const resize = document.createElement("div");
 				resize.className = "nsmax-editor-resize"; resize.tabIndex = 0;
 				resize.setAttribute("role","separator"); resize.setAttribute("aria-label","调整输入框高度"); resize.setAttribute("aria-orientation","horizontal");
@@ -5255,10 +5428,106 @@ function nsmaxTagStructure() {
 	// （已经加载出来的楼层就地滚过去）。哪几楼是自己的：看帖子时把这一页里作者是自己的楼层（含楼中楼）记下来，
 	// 另外每 10 分钟最多查一次自己最新一页评论（/api/content/list-comments，15 条）合并进来，更早的回帖每分钟往后补一页。
 	// 按账号存在本机，最多记 3000 篇帖子
+	function nsmaxMyRepliesPost() {
+		return Number(location.pathname.match(/^\/post-(\d+)/)?.[1]) || 0;
+	}
+	// 一行「我的回复 #4 #22 #32」：已经有了、内容也一样就不动
+	function nsmaxMyRepliesRow(host, post, floors, before) {
+		let el = host.querySelector(":scope > .nsmax-my-replies");
+		if (!floors?.length) {
+			el?.remove();
+			return;
+		}
+		const here = post === nsmaxMyRepliesPost();
+		const loaded = (floor) => here && !!document.getElementById(String(floor))?.matches("li.content-item");
+		const sig = floors.join(",") + "|" + floors.filter(loaded).join(",");
+		if (el?.dataset.sig === sig) return;
+		if (!el) {
+			el = document.createElement("div");
+			el.className = "nsmax-my-replies";
+			host.insertBefore(el, before?.parentNode === host ? before : null);
+		}
+		el.dataset.sig = sig;
+		const label = document.createElement("span");
+		label.className = "nsmax-my-replies-label";
+		label.textContent = "我的回复";
+		const links = floors.slice(0, 12).map((floor) => {
+			const a = document.createElement("a");
+			a.href = loaded(floor) ? "#" + floor : `/post-${post}-${Math.max(1, Math.ceil(floor / 10))}#${floor}`;
+			a.textContent = "#" + floor;
+			a.title = `我在第 ${floor} 楼的回复`;
+			return a;
+		});
+		el.replaceChildren(label, ...links);
+		if (floors.length > 12) {
+			const more = document.createElement("span");
+			more.className = "nsmax-my-replies-more";
+			more.textContent = `等 ${floors.length} 处`;
+			el.append(more);
+		}
+	}
+	// 列表里每一篇下面、帖子回复区标题栏里各画一行。parsed：页面解析阶段只动已经解析完的列表行
+	// （往还在解析的行里插，站点后面的内容会接在这一行后面）
+	function nsmaxMyRepliesRender(posts, parsed) {
+		for (const item of document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item")) {
+			if (parsed && !parsed(item)) continue;
+			const post = Number(item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1]);
+			nsmaxMyRepliesRow(item.querySelector(".post-list-content") || item, post, posts[post]);
+		}
+		const post = nsmaxMyRepliesPost();
+		const container = document.querySelector("#nsk-body-left .comment-container");
+		if (!post || !container) return;
+		// 放进回复区标题栏，接在「N 条回复」后面（2026-10-24 反馈）：以前单独一行夹在标题栏和回复列表两张卡片中间，
+		// 透明底加一条下边线，看着像断开的一截灰条。评论有好几页时标题在上面那排页码里，一样接在标题后面
+		const heading = container.querySelector(".nsmax-reply-title");
+		if (parsed && !heading) return;
+		const host = heading?.parentElement || container;
+		for (const stray of container.querySelectorAll(".nsmax-my-replies")) if (stray.parentElement !== host) stray.remove();
+		const floors = (posts[post] || []).slice();
+		// 解析阶段：这一页里作者是自己的楼层也先算上（模块启动后会记下来）
+		if (parsed) {
+			const uid = nsmaxMyRepliesUid();
+			for (const li of document.querySelectorAll("#nsk-body-left ul.comments li.content-item[id]")) {
+				const floor = Number(li.id);
+				if (floor > 0 && !floors.includes(floor) && li.querySelector(":scope > .nsk-content-meta-info .author-info a[href*='/space/']")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1] === uid) floors.push(floor);
+			}
+			floors.sort((a, b) => a - b);
+		}
+		nsmaxMyRepliesRow(host, post, floors, heading ? heading.nextSibling : container.firstChild);
+		const el = heading && host.querySelector(":scope > .nsmax-my-replies");
+		if (el && el.previousElementSibling !== heading) heading.after(el);
+		// 标题栏里有这一行时换一种排法（主题 71b；主题里不能用 :has()，会让站点的终端渲染卡死整页）
+		if (heading) nsmaxFlag(host, "data-nsmax-my-replies", !!el);
+	}
+	// 当前账号：站点配置在页面最后才有，解析阶段先用记下的自己的资料（nsmaxStoredAccount）
+	function nsmaxMyRepliesUid() {
+		return String(unsafeWindow$1.__config__?.user?.member_id || nsmaxStoredAccount().id || "");
+	}
+	// 页面解析阶段就画（2026-10-24 反馈「加载一卡一卡、卡一下动一下」）：以前等模块启动（第一帧之后）才插，
+	// 列表里回复过的那几篇每篇高出 25px，下面整列往下跳一下；手机上帖子页标题栏放不下、这一行换到第二行，回复列表也跟着跳。
+	// 记录只读一次（几千篇帖子的记录，每解析一段就读一遍太费）
+	var nsmaxMyRepliesEarly;
+	function nsmaxEarlyMyReplies(parsed) {
+		if (nsmaxMyRepliesEarly === undefined) {
+			nsmaxMyRepliesEarly = null;
+			try {
+				const uid = nsmaxMyRepliesUid();
+				if (uid && typeof myRepliesFeature === "object" && featureEnabled(myRepliesFeature).enabled) {
+					const posts = GM_getValue$1(`nspp:state:${location.hostname}:sb-my-replies`, {})?.["posts:" + uid];
+					if (posts && typeof posts === "object" && !Array.isArray(posts)) nsmaxMyRepliesEarly = posts;
+				}
+			} catch {}
+		}
+		if (nsmaxMyRepliesEarly) nsmaxMyRepliesRender(nsmaxMyRepliesEarly, parsed);
+	}
 	var myRepliesFeature = {
 		id: "sb-my-replies", defaults: { enabled: true }, mount(ctx) {
 			const uid = String(unsafeWindow$1.__config__?.user?.member_id || "");
-			if (!uid) return;
+			// 没登录：解析阶段按记下的账号先画了的话收掉
+			if (!uid) {
+				for (const el of document.querySelectorAll(".nsmax-my-replies")) el.remove();
+				return;
+			}
 			const key = "posts:" + uid;
 			let posts = ctx.get(key);
 			if (!posts || typeof posts !== "object" || Array.isArray(posts)) posts = {};
@@ -5275,10 +5544,9 @@ function nsmaxTagStructure() {
 				list.sort((a, b) => a - b);
 				return true;
 			};
-			const currentPost = () => Number(location.pathname.match(/^\/post-(\d+)/)?.[1]) || 0;
 			// 这一页里作者是自己的楼层
 			const collect = () => {
-				const post = currentPost();
+				const post = nsmaxMyRepliesPost();
 				if (!post) return false;
 				let added = false;
 				for (const li of document.querySelectorAll("#nsk-body-left ul.comments li.content-item[id]")) {
@@ -5287,52 +5555,9 @@ function nsmaxTagStructure() {
 				}
 				return added;
 			};
-			const row = (host, post, floors, before) => {
-				let el = host.querySelector(":scope > .nsmax-my-replies");
-				if (!floors?.length) {
-					el?.remove();
-					return;
-				}
-				const here = post === currentPost();
-				const loaded = (floor) => here && !!document.getElementById(String(floor))?.matches("li.content-item");
-				const sig = floors.join(",") + "|" + floors.filter(loaded).join(",");
-				if (el?.dataset.sig === sig) return;
-				if (!el) {
-					el = document.createElement("div");
-					el.className = "nsmax-my-replies";
-					host.insertBefore(el, before?.parentNode === host ? before : null);
-				}
-				el.dataset.sig = sig;
-				const label = document.createElement("span");
-				label.className = "nsmax-my-replies-label";
-				label.textContent = "我的回复";
-				const links = floors.slice(0, 12).map((floor) => {
-					const a = document.createElement("a");
-					a.href = loaded(floor) ? "#" + floor : `/post-${post}-${Math.max(1, Math.ceil(floor / 10))}#${floor}`;
-					a.textContent = "#" + floor;
-					a.title = `我在第 ${floor} 楼的回复`;
-					return a;
-				});
-				el.replaceChildren(label, ...links);
-				if (floors.length > 12) {
-					const more = document.createElement("span");
-					more.className = "nsmax-my-replies-more";
-					more.textContent = `等 ${floors.length} 处`;
-					el.append(more);
-				}
-			};
 			const render = () => {
 				if (collect()) save();
-				for (const item of document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item")) {
-					const post = Number(item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1]);
-					row(item.querySelector(".post-list-content") || item, post, posts[post]);
-				}
-				const post = currentPost();
-				const container = document.querySelector("#nsk-body-left .comment-container");
-				if (post && container) {
-					const head = container.querySelector(":scope > .nsmax-reply-head");
-					row(container, post, posts[post], head ? head.nextSibling : container.firstChild);
-				}
+				nsmaxMyRepliesRender(posts);
 			};
 			const sync = async () => {
 				if (document.hidden || ctx.signal.aborted) return;
