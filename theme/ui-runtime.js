@@ -523,9 +523,14 @@
 			});
 		}
 	}
+	// 整理过、内容（按钮和上面的数字）没变的菜单不再动（2026-10-25）：以前解析阶段每一步、之后每轮整理都把每一层的每个按钮
+	// 重写一遍属性和行内样式，写的值一样也算一次改动，浏览器每次都要重算这些按钮的样式。点赞数变了文字跟着变，照样会重新整理
+	var nsmaxCleanedMenus = new WeakMap();
 	function nsmaxCleanPostActions() {
 		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"], "edit": ["编辑","edit"] };
 		for (const menu of document.querySelectorAll(".comment-menu")) {
+			const signature = menu.childElementCount + "|" + menu.textContent;
+			if (nsmaxCleanedMenus.get(menu) === signature) continue;
 			const seen = new Set();
 			for (const action of Array.from(menu.querySelectorAll(":scope > .menu-item"))) {
 			const href = action.querySelector("svg use")?.getAttribute("href")?.slice(1);
@@ -534,18 +539,22 @@
 			if (!icon) continue;
 			if (seen.has(icon)) { action.remove(); continue; }
 			seen.add(icon);
-			action.dataset.nsmaxAction = icon;
+			if (action.dataset.nsmaxAction !== icon) action.dataset.nsmaxAction = icon;
 			if (!action.title) action.title = label;
 			if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label",label);
-			for (const svg of action.querySelectorAll(":scope > svg")) { svg.setAttribute("data-nsmax-action-original",""); svg.style.setProperty("display","none","important"); }
+			for (const svg of action.querySelectorAll(":scope > svg")) {
+				nsmaxSetAttr(svg, "data-nsmax-action-original");
+				nsmaxHideEl(svg);
+			}
 			for (const span of action.querySelectorAll(":scope > span")) {
 				const text = span.textContent.trim();
 				if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) {
-					span.setAttribute("data-nsmax-action-count", "");
+					nsmaxSetAttr(span, "data-nsmax-action-count");
 					span.toggleAttribute("hidden", /^0+(?:\.0+)?$/.test(text.replace(/[kKwW万千]/gi, "")));
-				} else span.setAttribute("data-nsmax-action-label", "");
+				} else nsmaxSetAttr(span, "data-nsmax-action-label");
 			}
 			}
+			nsmaxCleanedMenus.set(menu, menu.childElementCount + "|" + menu.textContent);
 		}
 	}
 	// 投票 / 抽奖帖（2026-10-17，照 sb.sb .topic-badge.poll-badge / .lottery-badge、.poll-widget、.lottery-widget）。
@@ -3322,6 +3331,43 @@ function nsmaxTagStructure() {
 			nsmaxPrepareLottery();
 		}
 	}
+	// 列表行在空闲时排好（2026-10-25，样式见主题第 72 节）：首屏照旧用 content-visibility:auto 先不排屏幕外的行
+	// （CPU 4 倍降速下首帧早 0.6 秒多）；页面整理完 1.5 秒后，每次浏览器空闲排 8 行（打上 data-nsmax-cv-done，改成 visible），
+	// 往下滚的时候这些行已经排好，不用在滚动的那一帧里现排——4 倍降速下一打开就往下滚，以前中位每帧 180ms 以上。
+	// 自动接上来的下一页也照这样排（每轮整理时调用 nsmaxPrerenderKick）
+	var nsmaxPrerenderKick = null;
+	var NSMAX_PRERENDER_ROWS = "#nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:not([data-nsmax-cv-done])";
+	function nsmaxPrerenderRows(ctx) {
+		const root = document.documentElement;
+		if (!root.hasAttribute("data-nsmax-cv") || nsmaxPrerenderKick) return;
+		const idle = (fn) => typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(() => fn({ timeRemaining: () => 8 }), 200);
+		let running = false;
+		const step = (deadline) => {
+			if (ctx.signal.aborted || !root.hasAttribute("data-nsmax-cv")) {
+				running = false;
+				return;
+			}
+			let done = 0;
+			for (const row of document.querySelectorAll(NSMAX_PRERENDER_ROWS)) {
+				row.setAttribute("data-nsmax-cv-done", "");
+				if (++done >= 8 || deadline.timeRemaining() < 4) break;
+			}
+			if (done) idle(step);
+			else running = false;
+		};
+		const timer = setTimeout(() => {
+			nsmaxPrerenderKick = () => {
+				if (running || ctx.signal.aborted) return;
+				running = true;
+				idle(step);
+			};
+			nsmaxPrerenderKick();
+		}, 1500);
+		ctx.signal.addEventListener("abort", () => {
+			clearTimeout(timer);
+			nsmaxPrerenderKick = null;
+		}, { once: true });
+	}
 	// 楼号悬停预览（照 sb.sb .quote-hover）：帖子正文里指向这一帖某一层的链接——「#12」、引用卡片头上的「#0」、楼中楼里的「回复 某某」——
 	// 鼠标停 0.14 秒弹出一张小卡片：头上「#楼号 作者」，下面那一层的正文（纯文字，最高 260px，长了可以滚）。这一页上有那一层就直接用；
 	// 不在这一页的按楼号算出在第几页（一页 10 楼），取那一页（同一页只取一次）；找不到写「这一层不存在或已被删除」。
@@ -4734,6 +4780,7 @@ function nsmaxTagStructure() {
 		nsmaxWatchFans(ctx);
 		nsmaxWatchSpace(ctx);
 		nsmaxFloorHover(ctx);
+		nsmaxPrerenderRows(ctx);
 		const scan = () => {
 			const currentPage = nsmaxPageKind();
 			if (document.documentElement.dataset.nsmaxPage !== currentPage) {
@@ -4756,6 +4803,8 @@ function nsmaxTagStructure() {
 			nsmaxEnsureNqEntry();
 			nsmaxTidyPagers();
 			nsmaxProcessPostListRows();
+			// 新接上来的列表行（自动翻页）也在空闲时排好
+			if (nsmaxPrerenderKick && document.querySelector(NSMAX_PRERENDER_ROWS)) nsmaxPrerenderKick();
 			// 只属于某一页的整理，调用前先按地址判断（和各函数开头的判断一样）：别的页面上不调用，浏览器也就不用编译这些大函数
 			// （2026-10-23：列表页第一次扫描时光编译这些用不上的函数就要 6ms，CPU 4 倍降速下）
 			const path = location.pathname;

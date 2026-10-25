@@ -445,7 +445,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.41");
+	assert.equal(packageJson.version, "1.8.42");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -4043,6 +4043,11 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 		assert.equal(before.size, "auto 73px");
 		assert.equal(before.first, true, "屏幕上的行照常画");
 		assert.equal(before.last, false, "最下面的行先不画");
+		// 2026-10-25：页面整理完以后在浏览器空闲时一批批排好（不用滚过去），往下滚的时候不用在那一帧里现排
+		await page.waitForFunction(() => !document.querySelector("#nsk-body-left ul.post-list > li.post-list-item:not([data-nsmax-cv-done])"), null, { timeout: 15e3 });
+		const idle = await rowsState();
+		assert.equal(idle.last, true, "没滚过去，最下面的行也在空闲时排好了");
+		assert.equal(await page.evaluate(() => scrollY), 0);
 		await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
 		await wait(page, 300);
 		const after = await rowsState();

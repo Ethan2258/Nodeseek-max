@@ -14765,3 +14765,10 @@ html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-contai
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* ---------- 72. 2026-10-25：列表行在空闲时排好 ---------- */
+/* 首屏照旧用 content-visibility:auto 先不排屏幕外的行（第 53 节）；页面整理完以后脚本在浏览器空闲时一批批给行打上
+   data-nsmax-cv-done（见 nsmaxPrerenderRows），这些行改回 visible、提前排好：往下滚的时候不用在滚动的那一帧里现排 */
+html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: visible !important;
+}
