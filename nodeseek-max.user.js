@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.8.44
+// @version      1.8.45
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -897,7 +897,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.8.44";
+	var NSMAX_VERSION = "1.8.45";
 	var NSMAX_BOOT_REGIONS = Object.freeze(["header", "left", "right"]);
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
@@ -1259,9 +1259,10 @@ var nsmaxRedirecting = false;
 	};
 	var requestSettings$1 = {
 		id: "request-settings",
+		alwaysEnabled: true,
 		title: "网络请求",
 		group: "网络",
-		description: "脚本读取站内接口（资料卡、热榜、通知等）时的排队方式；遇到站点限流会自动冷却后继续。",
+		description: "控制脚本站内数据补全的请求节奏；浏览器预加载、站点自身请求和跨站热榜不受此项控制。遇到限流时自动冷却。",
 		defaults: {
 			enabled: true,
 			pace: "standard"
@@ -1501,7 +1502,14 @@ var nsmaxRedirecting = false;
 				const candidate = Object.hasOwn(source, key) ? source[key] : void 0;
 				const choices = feature.fields?.[key]?.options;
 				options[key] = typeof candidate === typeof fallback && (typeof candidate !== "number" || Number.isFinite(candidate)) && (typeof candidate !== "string" || candidate.length <= 1e5) && (!choices || choices.some((option) => option.value === candidate)) ? candidate : fallback;
+				if (typeof fallback === "number") {
+					const field = feature.fields?.[key];
+					if (field?.step === 1) options[key] = Math.trunc(options[key]);
+					if (Number.isFinite(field?.min)) options[key] = Math.max(field.min, options[key]);
+					if (Number.isFinite(field?.max)) options[key] = Math.min(field.max, options[key]);
+				}
 			}
+			if (feature.alwaysEnabled) options.enabled = true;
 			result[feature.id] = options;
 		}
 		return result;
@@ -1532,7 +1540,10 @@ var nsmaxRedirecting = false;
 	function saveSettings(features, settings) {
 		if (!hasStorage()) throw new Error("油猴存储未就绪，请重新安装脚本后刷新");
 		const normalized = normalizeSettings(features, settings);
-		GM_setValue$1(SETTINGS_KEY, { ...GM_getValue$1(SETTINGS_KEY, {}), ...normalized });
+		const previous = GM_getValue$1(SETTINGS_KEY, {});
+		const next = { ...previous, ...normalized };
+		// input / change 会对同一次编辑各保存一遍；值没变时不再写油猴存储、重新注册整个脚本。
+		if (JSON.stringify(previous) !== JSON.stringify(next)) GM_setValue$1(SETTINGS_KEY, next);
 		if (nsmaxActiveSettings) {
 			for (const [id, opts] of Object.entries(normalized)) {
 				if (nsmaxActiveSettings[id] && typeof opts === "object") {
@@ -1547,14 +1558,23 @@ var nsmaxRedirecting = false;
 		for (const [id, matches] of [
 			["hot-rankings", (key) => key.startsWith("snapshot:")],
 			["user-level", (key) => key === "profiles"],
-			["notification-categories", (key) => key.startsWith("counts:")],
-			["footprints", (key) => key.startsWith("records:")]
+			["notification-categories", (key) => key.startsWith("counts:")]
 		]) {
 			// 缓存在 localStorage 里（旧版本留在油猴存储里的也一起清）
 			const { key, gm, local } = nsmaxReadFeatureState(id);
 			const keep = (state) => Object.fromEntries(Object.entries(state).filter(([name]) => !matches(name)));
 			if (Object.keys(local).some(matches)) nsmaxLocalWrite(key, keep(local));
 			if (Object.keys(gm).some(matches)) GM_setValue$1(key, keep(gm));
+		}
+		// 只清可重新下载或重新统计的数据，不碰设置、备注、最近浏览、我的回复、草稿和限流冷却。
+		const exact = new Set(["nsmax:members", "nsmax:telegram", "nsmax:reply-counts", "nsmax:prefetched", "nsmax:prefetch-stats"]);
+		for (const storage of [localStorage, sessionStorage]) {
+			const keys = Array.from({length: storage.length}, (_, i) => storage.key(i));
+			for (const key of keys) if (exact.has(key) || key?.startsWith("nsmax:person:") || key?.startsWith("nsmax:font:")) storage.removeItem(key);
+		}
+		for (const font of NSMAX_WEB_FONTS) {
+			const key = `nsmax:font:${font.sha256.slice(0, 16)}`;
+			if (GM_getValue$1(key, "")) GM_setValue$1(key, "");
 		}
 	}
 	// 运行中出错的位置与信息（最多 20 条），写进诊断信息，方便定位真实站点上才出现的问题。
@@ -2257,7 +2277,7 @@ var nsmaxRedirecting = false;
 	// 不在这里的模块不进面板：主题骨架（sb-page-controls）、并入主题的「紧凑帖子状态」，以及对 sb.sb 布局已经没有作用的旧选项
 	// （信息密度、顶栏与侧栏去重：sb.sb 顶栏模式下侧栏不显示版块，两者都不起作用）。
 	var NSMAX_SETTINGS_LAYOUT = {
-		"modern-theme": { tab: "appearance", title: "主题样式", description: "全站按 sb.sb 重做（圆角模式）。这里调整列表标题字号、字体和深浅色，改完点「保存并刷新」。", master: false, fields: ["fontSize", "font", "colorMode"] },
+		"modern-theme": { tab: "appearance", title: "主题样式", description: "全站按 sb.sb 重做（圆角模式）。这里调整列表标题字号、字体和深浅色；改动自动保存，刷新页面后应用。", master: false, fields: ["fontSize", "font", "colorMode"] },
 		"sidebar-nav": { tab: "appearance", title: "顶栏版块", description: "顶栏按 sb.sb 只放版块标签；下面列出的版块和入口不显示。", master: false, fields: ["hidden"] },
 		"hot-rankings": { tab: "appearance", title: "今日热门", description: "右侧栏的单行日榜，使用缓存，页面可见时按需刷新。", linked: ["sidebar"], fields: ["sidebarCount"] },
 		"sb-recent-visits": { tab: "appearance", title: "最近浏览", description: "右侧栏列出最近打开过的 10 个帖子，只保存在本机。" },
@@ -2268,7 +2288,6 @@ var nsmaxRedirecting = false;
 		"sb-person-hover": { tab: "reading", title: "悬停资料卡", description: "鼠标停在头像或用户名上时弹出资料卡：等级、鸡腿、星辰、主题与评论数、关注与粉丝、注册时长，可以直接关注或私信。" },
 		"post-preview": { tab: "reading" },
 		"code-highlight": { tab: "reading", description: "帖子和回复里带语言标记的代码块按语言着色；页面里有代码块时才加载。" },
-		"list-interactions": { tab: "reading" },
 		"discussion-stats": { tab: "reading" },
 		"instant-pages": { tab: "reading" },
 		"content-filter": { tab: "people" },
@@ -2277,7 +2296,7 @@ var nsmaxRedirecting = false;
 		"attendance": { tab: "tools" },
 		"compose": { tab: "tools" },
 		"image-upload": { tab: "tools" },
-		"notification-categories": { tab: "tools" },
+		"notification-categories": { tab: "tools", title: "通知未读提醒", description: "更新资料卡的通知角标；收到新的回复、@ 或私信时提醒。消息中心原有分类始终保留。" },
 		"request-settings": { tab: "network", master: false }
 	};
 	// 选项少、名字短的下拉框改成 sb.sb .tree-toggle 那样一排小胶囊：值 → 胶囊上的短名（完整说明显示在下面）
@@ -2357,7 +2376,7 @@ var nsmaxRedirecting = false;
 		const exportButton = element$1("button", "导出配置");
 		const importButton = element$1("button", "导入配置");
 		const clearCache = element$1("button", "清空缓存");
-		clearCache.title = "清除当前站点的插件用户资料、通知计数和回帖足迹缓存并刷新页面；保留配置、阅读历史和监控记录。";
+		clearCache.title = "清除当前站点的热榜、资料、通知、字体和预取诊断缓存并刷新；保留设置、备注、最近浏览、我的回复和草稿。";
 		const reset = element$1("button", "恢复默认");
 		reset.title = "所有设置恢复成默认值（立即保存），刷新后生效。";
 		for (const button of [exportButton, importButton, clearCache, reset]) {
@@ -2396,7 +2415,12 @@ var nsmaxRedirecting = false;
 		});
 		const byId = new Map(features.map((feature) => [feature.id, feature]));
 		const persist = () => {
-			if (hasStorage()) saveSettings(features, draft);
+			if (hasStorage()) {
+				saveSettings(features, draft);
+				draft = loadSettings(features);
+				save.textContent = "刷新应用设置";
+				save.title = "改动已保存到本机，刷新后所有选项按新设置运行。";
+			}
 		};
 		// 「主标签（补充说明）」拆成主标签和下面一行小号说明
 		const splitLabel = (text) => {
@@ -2477,10 +2501,10 @@ var nsmaxRedirecting = false;
 						});
 						button.addEventListener("keydown", (event) => {
 							const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
-							if (!step) return;
+							if (!step && !["Home", "End"].includes(event.key)) return;
 							event.preventDefault();
 							const list = Array.from(group.children);
-							const next = list[(list.indexOf(button) + step + list.length) % list.length];
+							const next = list[event.key === "Home" ? 0 : event.key === "End" ? list.length - 1 : (list.indexOf(button) + step + list.length) % list.length];
 							next.click();
 							next.focus();
 						});
@@ -2501,9 +2525,9 @@ var nsmaxRedirecting = false;
 				control = element$1("input");
 				control.type = typeof fallback === "number" ? "number" : NSMAX_SECRET_KEY.test(key) ? "password" : "text";
 				if (control.type === "number") {
-					const range = { sidebarCount: [5, 50] }[key];
-					if (range) [control.min, control.max] = range.map(String);
-					control.step = "1";
+					if (Number.isFinite(meta.min)) control.min = String(meta.min);
+					if (Number.isFinite(meta.max)) control.max = String(meta.max);
+					control.step = String(meta.step || 1);
 				}
 				if (control.type === "password") control.autocomplete = "off";
 				control.value = String(value ?? "");
@@ -2513,11 +2537,13 @@ var nsmaxRedirecting = false;
 			control.dataset.key = key;
 			if (!control.hidden) control.setAttribute("aria-label", main);
 			const commit = () => {
-				draft[feature.id][key] = typeof fallback === "number" ? Number(control.value) : control.value;
+				if (typeof fallback === "number" && !Number.isFinite(control.valueAsNumber)) return;
+				draft[feature.id][key] = typeof fallback === "number" ? control.valueAsNumber : control.value;
 				persist();
 			};
 			control.addEventListener("input", commit);
-			control.addEventListener("change", commit);
+			control.addEventListener("change", () => { commit(); if (typeof fallback === "number") control.value = String(draft[feature.id][key]); });
+			if (typeof fallback === "number") control.addEventListener("blur", () => { control.value = String(draft[feature.id][key]); });
 			field.append(control);
 			return field;
 		}
@@ -2620,10 +2646,10 @@ var nsmaxRedirecting = false;
 				});
 				button.addEventListener("keydown", (event) => {
 					const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
-					if (!step) return;
+					if (!step && !["Home", "End"].includes(event.key)) return;
 					event.preventDefault();
 					const index = NSMAX_SETTINGS_TABS.findIndex(([name]) => name === activeTab);
-					selectTab(NSMAX_SETTINGS_TABS[(index + step + NSMAX_SETTINGS_TABS.length) % NSMAX_SETTINGS_TABS.length][0], true);
+					selectTab(NSMAX_SETTINGS_TABS[event.key === "Home" ? 0 : event.key === "End" ? NSMAX_SETTINGS_TABS.length - 1 : (index + step + NSMAX_SETTINGS_TABS.length) % NSMAX_SETTINGS_TABS.length][0], true);
 				});
 				tabButtons.set(tab, button);
 				tabBar.append(button);
@@ -2694,7 +2720,7 @@ var nsmaxRedirecting = false;
 			draft = normalizeSettings(features, {});
 			persist();
 			render();
-			notify("已恢复默认设置，点「保存并刷新」生效。", "success");
+			notify("已恢复默认设置，刷新页面后全部生效。", "success");
 		});
 		clearCache.addEventListener("click", () => {
 			clearCache.disabled = true;
@@ -2733,7 +2759,7 @@ var nsmaxRedirecting = false;
 				draft = parseSettings(features, await selected.text());
 				persist();
 				render();
-				notify("已导入配置，点「保存并刷新」生效。", "success");
+				notify("已导入配置，刷新页面后全部生效。", "success");
 			} catch (error) {
 				notify(error instanceof Error ? error.message : "导入失败", "error");
 			} finally {
@@ -5310,7 +5336,7 @@ var nsmaxRedirecting = false;
 					type: "text"
 				},
 				chineseTime: {
-					label: "中文时间",
+					label: "中文时间与列表时间刷新",
 					type: "text"
 				}
 			},
@@ -17380,8 +17406,8 @@ var nsmaxRedirecting = false;
 		id: "discussion-stats",
 		title: "主题帖浏览与评论数",
 		group: "阅读",
-		description: "个人主页主题帖列表显示浏览数和评论数；按可见行加载，每帖最多读取两页，结果缓存 5 分钟。",
-		defaults: { enabled: true },
+		description: "个人主页主题帖列表补全浏览数和评论数；默认关闭，开启后仅对可见行额外读取帖子，每帖最多两页，结果缓存 5 分钟。",
+		defaults: { enabled: false },
 		mount(ctx) {
 			if (!/^\/space\/\d+\/?$/.test(location.pathname)) return;
 			const cache = new Map();
@@ -17399,6 +17425,7 @@ var nsmaxRedirecting = false;
 					const id = href.match(/\/post-(\d+)-1$/)[1];
 					const page = async (url) => discussionStats(new DOMParser().parseFromString(await ctx.request(url, {
 						responseType: "text",
+						priority: "low",
 						signal
 					}), "text/html"), id);
 					const first = await page(href);
@@ -21513,7 +21540,8 @@ var nsmaxRedirecting = false;
 			},
 			sidebarCount: {
 				label: "侧栏默认显示条数（5–50）",
-				type: "number"
+				type: "number",
+				min: 5, max: 50, step: 1
 			}
 		},
 		mount(ctx) {
@@ -23192,6 +23220,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 	}
 	var sidebarNav = {
 		id: "sidebar-nav",
+		alwaysEnabled: true,
 		title: "侧栏版块导航",
 		description: "整理版块导航，去掉顶栏与侧栏重复项；版块统一放进 sb.sb 风格的顶栏。",
 		group: "导航",
@@ -23501,6 +23530,7 @@ input[data-nsmax-header-search]:focus{background:var(--nsmax-card,#fff)!importan
 `;
 	var modernTheme = {
 		id: "modern-theme",
+		alwaysEnabled: true,
 		title: "现代化主题",
 		description: "全站按 sb.sb 重做：56px 顶栏、分隔行列表、卡片式帖子页、胶囊导航、统一线条图标、同款加载和动效。",
 		group: "外观",
@@ -30810,7 +30840,7 @@ function nsmaxTagStructure() {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
 		const matches = target => {
 			const link = target instanceof Element ? target.closest('a[href*="/space/"]:not(.nsmax-person-head a):not(.nsmax-person-foot a):not(#fast-nav-button-group a),.avatar-wrapper a,.info-author a[href*="/space/"],.info-last-commenter a[href*="/space/"],.author-name[href*="/space/"],.post-author[href*="/space/"]') : null;
-			if (!link || link.closest(".nsmax-person-pop, .hover-user-card, #fast-nav-button-group, .nsmax-sb-account, #nsk-right-panel-container, .user-card, .nspp-user-card, .head-container")) return null;
+			if (!link || link.closest(".nsmax-person-pop, .hover-user-card, #fast-nav-button-group, .nsmax-sb-account, #nsk-right-panel-container, .nspp-user-card, .head-container")) return null;
 			try { const url = new URL(link.href,location.href); return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) ? link : null; } catch { return null; }
 		};
 		const hide = () => { clearTimeout(opening); clearTimeout(closing); serial++; pop?.remove(); pop = null; anchor = null; document.documentElement.removeAttribute("data-nsmax-person-open"); };
@@ -31103,6 +31133,8 @@ function nsmaxTagStructure() {
 		if (isSide) try { nsmaxPrepareSidePage(); } catch {}
 		const isNotification = page === "/notification";
 		const isSetting = /^\/setting(?:\/|$)/.test(page);
+		const isSpace = /^\/space\/\d+\/?$/.test(page);
+		const isPeople = isSpace || /^\/fans\/?$/.test(page);
 		if (!isNotification && !isSetting) document.body.append(tools);
 		const features = [
 			requestSettings$1,
@@ -31113,12 +31145,13 @@ function nsmaxTagStructure() {
 			...actionFeatures.filter((feature) => feature.id === "attendance" ? !(isNotification || isSetting) : isEditor ? ["compose", "image-upload"].includes(feature.id) : false),
 			...(isForum ? [hotRankings, recentVisitsFeature, personHoverFeature, myRepliesFeature] : isSide ? [hotRankings, recentVisitsFeature, personHoverFeature] : []),
 			...(isNotification ? [messagesFeature, personHoverFeature] : []),
+			...(isPeople && !isSide ? [personHoverFeature] : []),
 			...serviceFeatures.filter((feature) => feature.id === "instant-pages" ? isForum : !(isNotification || isSetting)),
 			...(!(isNotification || isSetting) ? relationshipFeatures : []),
 			...(isEditor ? [codeHighlight] : []),
 			...(!/^\/(?:new|edit)-discussion/.test(page) && !isNotification && !isSetting ? [postPreview] : []),
 			...(isForum ? [listInteractions] : []),
-			...(isForum && !isPost ? [discussionStatsFeature] : []),
+			...(isSpace ? [discussionStatsFeature] : []),
 			sidebarNav
 		];
 		if (new Set(features.map((feature) => feature.id)).size !== features.length) throw new Error("重复功能 ID");
@@ -31134,7 +31167,6 @@ function nsmaxTagStructure() {
 			...relationshipFeatures,
 			codeHighlight,
 			postPreview,
-			listInteractions,
 			discussionStatsFeature,
 			sidebarNav,
 			leanUiFeature,
@@ -31164,6 +31196,8 @@ function nsmaxTagStructure() {
 		if (!settingsButton.isConnected) document.getElementById("nsk-head")?.append(settingsButton);
 		GM_registerMenuCommand$1("NodeSeek Max：复制导航诊断信息", () => copyDiagnostics(ui.notify));
 		const settings = loadSettings(features);
+		// 列表时间刷新并入「中文时间」，旧的独立开关不再覆盖用户当前的选择。
+		if (settings["list-interactions"]) settings["list-interactions"].enabled = settings["reading-content"]?.enabled !== false && settings["reading-content"]?.chineseTime !== false;
 		if (settings["modern-theme"]) settings["modern-theme"] = themeOptions();
 		const stop = startFeatures(features, settings, ui.notify);
 		requestAnimationFrame(revealAll);

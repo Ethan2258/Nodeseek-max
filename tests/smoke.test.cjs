@@ -445,7 +445,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.44");
+	assert.equal(source.match(/var NSMAX_VERSION = "([^"]+)";/)[1], packageJson.version);
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -2291,7 +2291,7 @@ test("v1.8.0 设置项重做：图片上传只剩开关、网络请求三档节�
 		await host.locator("dialog").waitFor({ state: "visible" });
 		const controls = (id) => host.locator(`.module[data-feature="${id}"]`).evaluate((m) => Array.from(m.querySelectorAll("input, select, textarea"), (c) => `${c.tagName.toLowerCase()}:${c.type || ""}:${c.dataset.key}`));
 		assert.deepEqual(await controls("image-upload"), ["input:checkbox:enabled"], "图床协议、地址、Token 都去掉了");
-		assert.deepEqual(await controls("list-interactions"), ["input:checkbox:enabled"], "自动预读互动计数去掉了");
+		assert.equal(await host.locator('.module[data-feature="list-interactions"]').count(), 0, "时间刷新并入中文时间，重复开关移除");
 		assert.deepEqual(await controls("reading-focus"), ["input:checkbox:enabled"], "只看楼主、折叠高度不再是全局设置");
 		const filter = await controls("content-filter");
 		assert.ok(filter.includes("input:checkbox:lockedAbove"), filter.join());

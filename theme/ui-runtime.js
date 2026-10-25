@@ -5891,7 +5891,7 @@ function nsmaxTagStructure() {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
 		const matches = target => {
 			const link = target instanceof Element ? target.closest('a[href*="/space/"]:not(.nsmax-person-head a):not(.nsmax-person-foot a):not(#fast-nav-button-group a),.avatar-wrapper a,.info-author a[href*="/space/"],.info-last-commenter a[href*="/space/"],.author-name[href*="/space/"],.post-author[href*="/space/"]') : null;
-			if (!link || link.closest(".nsmax-person-pop, .hover-user-card, #fast-nav-button-group, .nsmax-sb-account, #nsk-right-panel-container, .user-card, .nspp-user-card, .head-container")) return null;
+			if (!link || link.closest(".nsmax-person-pop, .hover-user-card, #fast-nav-button-group, .nsmax-sb-account, #nsk-right-panel-container, .nspp-user-card, .head-container")) return null;
 			try { const url = new URL(link.href,location.href); return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) ? link : null; } catch { return null; }
 		};
 		const hide = () => { clearTimeout(opening); clearTimeout(closing); serial++; pop?.remove(); pop = null; anchor = null; document.documentElement.removeAttribute("data-nsmax-person-open"); };
