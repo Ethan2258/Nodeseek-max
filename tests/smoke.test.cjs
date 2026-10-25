@@ -7266,7 +7266,8 @@ test("v1.8.44 新标签页也能统计预取复用；无统计 API、过期或�
 		})();`;
 		const {context,page,errors} = await open(browser,"https://www.nodeseek.com/post-1000-1",{html:postPage(),init});
 		try {
-			await page.waitForFunction(() => performance.getEntriesByName("nsmax:primary-ready").length > 0);
+			// primary-ready 只代表首屏模块已齐，预取模块还在下一帧之后挂载；压缩版更快时会先读到旧统计。
+			await page.waitForFunction(() => performance.getEntriesByName("nsmax:deferred-start").length > 0 && !document.documentElement.hasAttribute("data-nsmax-mounting"));
 			const recent = await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:prefetch-stats")).recent);
 			assert.deepEqual(recent,kind === "shared" ? [0,0,1] : [0,0],kind);
 			if (kind === "shared") assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:prefetched")).length),0);
