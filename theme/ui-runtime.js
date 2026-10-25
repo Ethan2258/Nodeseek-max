@@ -1927,7 +1927,7 @@
 	var nsmaxEarlyFetchActive = 0;
 	function nsmaxEarlyJson(url, priority = "auto") {
 		try {
-			if (GM_getValue$1(COOLDOWN_KEY(), 0) > Date.now()) return Promise.reject(new Error("站点限流中"));
+			if (nsmaxLocalGet(COOLDOWN_KEY(), 0) > Date.now()) return Promise.reject(new Error("站点限流中"));
 		} catch {}
 		if (priority === "low" && nsmaxBackgroundPaused()) return Promise.reject(nsmaxRateLimitedError());
 		return new Promise((resolve, reject) => {
@@ -5583,7 +5583,7 @@ function nsmaxTagStructure() {
 			try {
 				const uid = nsmaxMyRepliesUid();
 				if (uid && typeof myRepliesFeature === "object" && featureEnabled(myRepliesFeature).enabled) {
-					const posts = GM_getValue$1(`nspp:state:${location.hostname}:sb-my-replies`, {})?.["posts:" + uid];
+					const posts = featureState("sb-my-replies")["posts:" + uid];
 					if (posts && typeof posts === "object" && !Array.isArray(posts)) nsmaxMyRepliesEarly = posts;
 				}
 			} catch {}

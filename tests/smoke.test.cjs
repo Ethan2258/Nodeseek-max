@@ -445,7 +445,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.42");
+	assert.equal(packageJson.version, "1.8.43");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -6718,7 +6718,7 @@ test("2026-10-24 站点限流（429 / 503）时后台的活马上停下：不重
 		assert.ok(left > 9 * 60e3 && left <= 10 * 60e3, "后台停 10 分钟：" + left);
 		// 「重试」：马上接着查（站点的冷却过了以后）
 		limited = false;
-		await page.evaluate(() => localStorage.removeItem("__gm__:nspp:request-cooldown:www.nodeseek.com"));
+		await page.evaluate(() => localStorage.removeItem("nspp:request-cooldown:www.nodeseek.com"));
 		await page.locator(".nsmax-lottery-status .nsmax-lottery-retry").click();
 		await page.waitForFunction(() => document.querySelector(".nsmax-lottery-status")?.hidden === true, null, { timeout: 25e3 });
 		const visible = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.querySelector(".post-title a").getAttribute("href")));
@@ -7115,6 +7115,56 @@ test("v1.8.41 普通列表页查抽奖帖让着头像和图片：页面加载完
 		assert.ok(started.length - before <= 1, `滚动的 2.5 秒里最多一篇（发出去的那一篇）：${started.length - before}`);
 		// 停下来以后接着查完
 		await page.waitForFunction((n) => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= n; } catch { return false; } }, titles.length, { timeout: 20000 });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.43 平时浏览不写油猴存储：热榜、未读数、签到、各种锁这些缓存和运行状态都在站点的 localStorage（油猴「UserScripts API Dynamic」模式下每写一次油猴存储，浏览器就丢掉往返缓存里的页面，返回上一页只能整页重新加载）", async () => {
+	// 脚本同步启动之后的每一次 localStorage 写入（油猴存储在测试里是 __gm__: 开头的键）
+	const init = `(() => { const set = Storage.prototype.setItem; window.__writes = []; Storage.prototype.setItem = function (key, value) { window.__writes.push(String(key)); return set.call(this, key, value); }; })();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.waitForFunction(() => window.__writes.some((key) => key.startsWith("nspp:lock:www.nodeseek.com:unread:")) && window.__writes.includes("nspp:state:www.nodeseek.com:hot-rankings"), null, { timeout: 15000 });
+		await wait(page, 1500);
+		const writes = await page.evaluate(() => window.__writes);
+		assert.deepEqual(writes.filter((key) => key.startsWith("__gm__:")), [], "没写油猴存储");
+		for (const key of ["nspp:state:www.nodeseek.com:hot-rankings", "nspp:state:www.nodeseek.com:notification-categories"]) assert.ok(writes.includes(key), "写在 localStorage：" + key);
+		const state = await page.evaluate(() => ({
+			hot: Object.keys(JSON.parse(localStorage.getItem("nspp:state:www.nodeseek.com:hot-rankings") || "{}")),
+			locks: Object.keys(localStorage).filter((key) => key.startsWith("nspp:lock:")).length
+		}));
+		assert.ok(state.hot.includes("snapshot:daily"), "热榜缓存在 localStorage：" + state.hot);
+		assert.ok(state.locks >= 1, "锁的记录在 localStorage");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.43 旧版本存在油猴里的功能状态第一次读到时搬到 localStorage：油猴里的缓存搬走，功能照常用上旧缓存；锁、限流冷却也改在 localStorage", async () => {
+	const posts = Array.from({ length: 12 }, (_, i) => ({ id: 3000 + i, title: `旧缓存热帖 ${i + 1}`, author: `a${i}`, views: 900 - i * 10, comments: 5, score: 1000 - i }));
+	const seed = {
+		"nspp:state:www.nodeseek.com:hot-rankings": { "snapshot:daily": { posts, fetched: Date.now() - 6e4, updated: Date.now() - 6e4 }, sidebarTab: "daily" },
+		"nspp:lock:www.nodeseek.com:unread:1": { started: 1, until: 0, owner: "old" }
+	};
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".nsmax-hot-panel:not([data-nsmax-hot-early])");
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await wait(page, 500);
+		const state = await page.evaluate(() => {
+			const read = (key) => JSON.parse(localStorage.getItem(key) || "null");
+			return {
+				first: document.querySelector(".nsmax-hot-text")?.textContent,
+				gmHot: read("__gm__:nspp:state:www.nodeseek.com:hot-rankings"),
+				localHot: read("nspp:state:www.nodeseek.com:hot-rankings"),
+				lock: read("nspp:lock:www.nodeseek.com:unread:1")
+			};
+		});
+		assert.equal(state.first, "旧缓存热帖 1", "用上了旧缓存，没有重新等网络");
+		assert.deepEqual(state.gmHot, {}, "热榜缓存从油猴存储里搬走了");
+		assert.equal(state.localHot?.["snapshot:daily"]?.posts?.length, 12, "热榜缓存搬到了 localStorage");
+		assert.equal(state.localHot?.sidebarTab, "daily", "热榜停在哪个标签也搬过去了");
+		assert.ok(state.lock?.started > 1, "未读数的锁记在 localStorage（油猴里的旧记录不挡着）");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
