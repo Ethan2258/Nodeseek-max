@@ -1,15 +1,17 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.45**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角），保留论坛原生编辑与提交。
+NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.46**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角），保留论坛原生编辑与提交。
 
 ## 安装
 
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey。
+1. 电脑安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey；iPhone Safari 可使用 [Userscripts](https://github.com/quoid/userscripts)。
 2. [安装最新版脚本](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)。
 3. 停用其他 NodeSeek 增强脚本，避免重复注入。
 4. Tampermonkey 用户：管理面板 → 设置，「配置模式」选「高级」，把「Content Script API」改成「UserScripts API Dynamic」并保存。
    默认的注入方式要先从后台取脚本，脚本比页面晚运行，打开页面时会先闪一下站点原来的样子；改了以后脚本在页面画出来之前运行，首屏直接是整理好的完整页面。
    脚本设置「关于」里能看到当前页面是不是注入晚了。
+
+iPhone Safari + Userscripts：打开上面的安装链接，在 Safari 的扩展菜单里打开 Userscripts，确认安装或更新，再刷新论坛页面。保持默认注入方式；无需 Tampermonkey 的高级设置。设置通过 Userscripts 的异步 GM 接口保存，保存完成后才能刷新；读取失败时会保留原配置并提示。页面限制编辑器桥接时保留论坛原生编辑器。
 
 [版本与安装文件](https://github.com/Ethan2258/Nodeseek-max/releases)
 
@@ -48,6 +50,7 @@ NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.45**。界面按 [sb.sb](
 - 深浅色支持浅色、深色、跟随系统和跟随站点；跟随系统只响应操作系统主题。
 - 脚本设置按 sb.sb 重做：外观、浏览、用户、工具、网络、关于六个分页，支持搜索、恢复默认、清空缓存、导入导出配置和检查更新，改动立即保存；修改后底部显示「刷新应用设置」，刷新后所有选项按新设置运行。
 - 设置已逐项核对：21 组设置、45 个字段和开关；「中文时间」统一控制列表时间刷新，重复的「原生列表增强」开关移除。个人主页主题帖统计可按需开启（默认关闭，需要额外读取帖子），粉丝页也支持用户资料卡。
+- iPhone 触屏布局：主要操作至少 44px，正文与输入区 16px；顶栏搜索点开后展开、列表空白处也可打开帖子，回复工具一行排列。设置占满可用屏幕，菜单和弹层独立滚动，关闭时恢复原位置；触屏关闭鼠标悬停预取、资料卡和普通列表被动抽奖扫描。
 
 移除信用分、信任分、旧阅读历史模块、帖子监控、回帖足迹（由「我的回复」代替）、本地好友、重复资料卡及旧工具条。默认字体与 sb.sb 相同：系统字体 + Space Mono 数字（首次在线下载后缓存）；不想联网下载可在设置里改为「系统字体」。
 
@@ -63,7 +66,7 @@ npm run screenshots  # 桌面浅色、深色与手机布局
 npm run performance  # 与 v1.7.2 比较本地 fixture，三次中位数
 ```
 
-测试需要 Chromium；可通过 `NSMAX_CHROMIUM` 指向已有 Chrome。sb.sb 1:1 复刻层在 `theme/design.css`（最后注入、优先级最高）；`theme/sb-suite.css` 只作对照快照，不再整份注入；适配在 `theme/sb-adapter.css`，回复与分页桥接在 `theme/ui-runtime.js`，消息与关于弹窗样式在 `theme/messages.css`、`theme/settings.css`。
+测试需要 Chromium 和 WebKit（`npx playwright install chromium webkit`）；可通过 `NSMAX_CHROMIUM` 指向已有 Chrome。手机专项使用 iPhone 触屏配置，Userscripts 专项覆盖异步存储和页面隔离；WebKit 模拟不等于 iPhone 真机测试。sb.sb 1:1 复刻层在 `theme/design.css`（最后注入、优先级最高）；`theme/sb-suite.css` 只作对照快照，不再整份注入；适配在 `theme/sb-adapter.css`，回复与分页桥接在 `theme/ui-runtime.js`，消息与关于弹窗样式在 `theme/messages.css`、`theme/settings.css`。
 
 浏览器回归使用真实结构的本地模拟页面；耗时数据不能代表论坛服务器或用户网络速度。原生接口、验证码和权限由站点处理。
 

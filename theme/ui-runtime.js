@@ -687,6 +687,8 @@
 	function nsmaxVerifySpecialPosts(ctx) {
 		// 「抽奖」分类页有自己的识别（见 nsmaxLotteryView），这里不再重复查；站点限流过、后台暂停中也不查
 		if (nsmaxIsLotteryView() || nsmaxBackgroundPaused()) return;
+		// 触屏普通列表先服务阅读和图片；点进帖子或主动打开「抽奖」分类时再按内容识别。
+		if (matchMedia("(hover: none) and (pointer: coarse)").matches) return;
 		const links = document.querySelectorAll(".post-list-item .post-title > a[href*='/post-']");
 		if (!links.length) return;
 		const known = nsmaxSpecialPostMap(), checked = nsmaxSpecialChecked(), times = nsmaxLotteryTimes(), ended = nsmaxLotteryEnded(), rows = nsmaxLotteryRows();
@@ -2433,9 +2435,11 @@
 		md.scrollIntoView = function (...args) {
 			if (args.length) return Element.prototype.scrollIntoView.apply(this, args);
 			const rect = this.getBoundingClientRect();
-			const top = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-			if (rect.top >= top && rect.bottom <= innerHeight) return;
-			Element.prototype.scrollIntoView.call(this, { block: rect.height > innerHeight - top ? "start" : "nearest", behavior: "smooth" });
+			const viewport = nsmaxTouchLayout() ? window.visualViewport : null;
+			const offset = viewport?.offsetTop || 0, bottom = offset + (viewport?.height || innerHeight);
+			const top = offset + (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0);
+			if (rect.top >= top && rect.bottom <= bottom) return;
+			Element.prototype.scrollIntoView.call(this, { block: rect.height > bottom - top ? "start" : "nearest", behavior: nsmaxTouchLayout() ? "auto" : "smooth" });
 		};
 		const floating = window.matchMedia("(max-width: 700px), (hover: none)");
 		let cancel = null;
@@ -3447,6 +3451,7 @@ function nsmaxTagStructure() {
 		};
 		const options = { signal: ctx.signal };
 		document.addEventListener("mouseover", (event) => {
+			if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 			const hit = target(event.target);
 			if (!hit || hit.a === current) return;
 			clearTimeout(timer);
@@ -3458,6 +3463,7 @@ function nsmaxTagStructure() {
 			timer = setTimeout(hide, 180);
 		}, options);
 		document.addEventListener("focusin", (event) => {
+			if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 			const hit = target(event.target);
 			if (hit) open(hit);
 		}, options);
@@ -4773,8 +4779,161 @@ function nsmaxTagStructure() {
 		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxSpaceWatching = false; }, { once: true });
 		try { nsmaxPrepareSpace(); } catch {}
 	}
+	// Userscripts 的 content world 不能直接读页面 expando。桥只访问论坛配置和编辑器；不暴露任何 GM API 或存储。
+	function nsmaxCreateUserscriptsBridge() {
+		const token = "nsmax-us-" + Math.random().toString(36).slice(2), requestEvent = token + "-request", changeEvent = token + "-change";
+		let node = null, config = null, configAt = 0, parsedText = "", parsedConfig = null, sequence = 0;
+		const methods = new Set(["getValue","setValue","getSelection","getCursor","setCursor","setSelection","replaceSelection","replaceRange","lineCount","getLine","getRange","indexFromPos","posFromIndex","getOption","setOption","refresh","focus","somethingSelected","getScrollInfo"]);
+		const call = payload => {
+			if (!node?.isConnected || node.getAttribute("data-ready") !== "1") return undefined;
+			node.setAttribute("data-request", JSON.stringify(payload)); node.removeAttribute("data-result"); node.dispatchEvent(new Event(requestEvent));
+			const raw = node.getAttribute("data-result"); if (!raw) return undefined;
+			const result = JSON.parse(raw); if (!result.ok) throw new Error(result.error || "无法读取论坛编辑器");
+			return result.value;
+		};
+		const bindEditors = () => {
+			for (const element of document.querySelectorAll(".CodeMirror")) {
+				if (element.CodeMirror) continue;
+				let id = element.getAttribute("data-nsmax-cm-id"); if (!id) { id = token + "-" + (++sequence); element.setAttribute("data-nsmax-cm-id",id); }
+				try { if (!call({op:"probe",id})) continue; } catch { continue; }
+				const handlers = new Map(), keyMaps = new Map(); let proxy;
+				element.addEventListener(changeEvent,event=>{try{const data=JSON.parse(event.detail);for(const callback of [...(handlers.get(data.type)||[])])callback(proxy,data.change);}catch{}});
+				proxy = new Proxy({}, {get(_,name) {
+					if(name==="getWrapperElement")return()=>element;
+					if(name==="getInputField")return()=>element.querySelector("textarea");
+					if(name==="getScrollerElement")return()=>element.querySelector(".CodeMirror-scroll");
+					if(name==="getDoc")return()=>proxy;
+					if(name==="on")return(type,callback)=>{let list=handlers.get(type);if(!list)handlers.set(type,list=new Set());list.add(callback);};
+					if(name==="off")return(type,callback)=>handlers.get(type)?.delete(callback);
+					if(name==="addKeyMap")return keys=>{const listener=event=>{const key=(event.altKey?"Alt-":"")+(event.ctrlKey?"Ctrl-":"")+(event.metaKey?"Cmd-":"")+(event.shiftKey&&event.key.length>1?"Shift-":"")+(event.key.length===1?event.key.toUpperCase():event.key);if(typeof keys[key]==="function"){event.preventDefault();keys[key](proxy);}};keyMaps.set(keys,listener);element.addEventListener("keydown",listener,true);};
+					if(name==="removeKeyMap")return keys=>{const listener=keyMaps.get(keys);if(listener)element.removeEventListener("keydown",listener,true);keyMaps.delete(keys);};
+					if(methods.has(name))return(...args)=>call({op:"cm",id,method:name,args});
+				}});
+				try{Object.defineProperty(element,"CodeMirror",{configurable:true,value:proxy});}catch{}
+			}
+		};
+		whenRoot(root=>{
+			node=document.createElement("script");node.id=token;
+			const nonce=document.querySelector("script[nonce]")?.nonce;if(nonce)node.nonce=nonce;
+			try { node.textContent="("+function(node,requestEvent,changeEvent){
+				const methods=new Set(["getValue","setValue","getSelection","getCursor","setCursor","setSelection","replaceSelection","replaceRange","lineCount","getLine","getRange","indexFromPos","posFromIndex","getOption","setOption","refresh","focus","somethingSelected","getScrollInfo"]);
+				const bound=new WeakSet();
+				const config=()=>typeof __config__!=="undefined"?__config__:window.__config__;
+				node.addEventListener(requestEvent,()=>{try{
+					const p=JSON.parse(node.getAttribute("data-request")||"{}"),element=[...document.querySelectorAll(".CodeMirror")].find(e=>e.getAttribute("data-nsmax-cm-id")===p.id),cm=element?.CodeMirror;
+					let value;
+					if(p.op==="config")value=config();
+					else if(p.op==="probe"){
+						value=!!cm;
+						if(cm&&typeof cm.on==="function"&&!bound.has(cm)){bound.add(cm);for(const type of ["change","focus","blur","cursorActivity"])cm.on(type,(_,change)=>element.dispatchEvent(new CustomEvent(changeEvent,{detail:JSON.stringify({type,change:change?{from:change.from,to:change.to,text:change.text,removed:change.removed,origin:change.origin}:undefined})})));}
+					}else if(p.op==="cm"&&cm&&methods.has(p.method)&&typeof cm[p.method]==="function"&&Array.isArray(p.args))value=cm[p.method](...p.args);
+					node.setAttribute("data-result",JSON.stringify({ok:true,value}));
+				}catch(error){node.setAttribute("data-result",JSON.stringify({ok:false,error:String(error?.message||error)}));}});
+				node.setAttribute("data-ready","1");
+			}.toString()+")(document.currentScript,"+JSON.stringify(requestEvent)+","+JSON.stringify(changeEvent)+");";
+			(document.head||root).append(node); } catch {}
+			bindEditors();
+			new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.(".CodeMirror")||n.querySelector?.(".CodeMirror")))||r.target.closest?.(".CodeMirror")&&!r.target.closest(".CodeMirror").CodeMirror))bindEditors();}).observe(root,{childList:true,subtree:true});
+		});
+		document.addEventListener("DOMContentLoaded",bindEditors,{once:true});window.addEventListener("load",bindEditors,{once:true});
+		return {get available(){return node?.getAttribute("data-ready")==="1";},config(){
+			if(config&&performance.now()-configAt<1000)return config;
+			try{const value=call({op:"config"});if(value&&typeof value==="object"){config=value;configAt=performance.now();return config;}}catch{}
+			const text=document.getElementById("temp-script")?.textContent?.trim();if(!text)return config;
+			if(text===parsedText)return parsedConfig;
+			try{parsedConfig=JSON.parse(text.startsWith("{")?text:new TextDecoder().decode(Uint8Array.from(atob(text),c=>c.charCodeAt(0))));parsedText=text;}catch{}
+			return parsedConfig||config;
+		}};
+	}
+	function nsmaxMountTouchUi(ctx) {
+		const root = document.documentElement;
+		const media = matchMedia("(pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-width: 960px) and (max-height: 600px)");
+		const bound = new WeakSet();
+		let panel = null, panelMask = null, nativeSearch = null;
+		const openRow = event => {
+			if (!media.matches || event.button !== 0 || event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || getSelection()?.isCollapsed === false) return;
+			const target = event.target instanceof Element ? event.target : null;
+			if (!target || target.closest("a,button,input,textarea,select,[role=button],[contenteditable=true]")) return;
+			event.currentTarget.querySelector(".post-title > a")?.click();
+		};
+		const closeSearch = (focusBack = false) => {
+			root.removeAttribute("data-nsmax-search-open");
+			if (focusBack) document.getElementById("search-site2")?.blur();
+		};
+		const closeMenu = () => {
+			const mask = panelMask;
+			mask?.click();
+			if (panel && parseFloat(panel.style.left) === 0) panel.style.left = "-100%";
+			if (mask) mask.style.display = "none";
+			sync();
+			document.querySelector("#toggle-left-panel > a")?.focus({ preventScroll: true });
+		};
+		const sync = () => {
+			if (root.hasAttribute("data-nsmax-touch") !== media.matches) root.toggleAttribute("data-nsmax-touch", media.matches);
+			if (!media.matches) {
+				closeSearch();
+				for (const owner of [...nsmaxMobileScrollOwners]) nsmaxMobileLock(owner, false);
+				return;
+			}
+			nsmaxSyncOverlayViewport();
+			for (const owner of [...nsmaxMobileScrollOwners]) if (!owner?.isConnected) nsmaxMobileLock(owner, false);
+			const nextPanel = document.getElementById("left-slide-panel");
+			if (panel && panel !== nextPanel) { nsmaxMobileLock(panel, false); if (panelMask?.isConnected) panelMask.style.display = "none"; }
+			panel = nextPanel;
+			panelMask = panel?.parentElement?.querySelector(".global-mask") || null;
+			if (panel && !panel.querySelector(":scope > .nsmax-drawer-head")) {
+				const head = document.createElement("div"); head.className = "nsmax-drawer-head";
+				const label = document.createElement("strong"); label.textContent = "菜单";
+				const close = document.createElement("button"); close.type = "button"; close.setAttribute("aria-label", "关闭菜单"); close.append(toolIcon("close"));
+				close.addEventListener("click", closeMenu, { signal: ctx.signal });
+				head.append(label, close); panel.prepend(head);
+				panel.addEventListener("click", event => { if (event.target.closest("a[href]")) closeMenu(); }, { signal: ctx.signal });
+			}
+			if (panel) {
+				const open = parseFloat(panel.style.left) === 0, firstOpen = open && !nsmaxMobileScrollOwners.has(panel);
+				panel.inert = !open;
+				for (const [name,value] of [["role","dialog"],["aria-label","站点菜单"],["aria-modal",String(open)]]) if (panel.getAttribute(name) !== value) panel.setAttribute(name,value);
+				const toggle = document.querySelector("#toggle-left-panel > a");
+				if (toggle) for (const [name,value] of [["role","button"],["aria-label","打开菜单"],["aria-expanded",String(open)]]) if (toggle.getAttribute(name) !== value) toggle.setAttribute(name,value);
+				nsmaxMobileLock(panel, open);
+				if (firstOpen) panel.querySelector(".nsmax-drawer-head button")?.focus({ preventScroll: true });
+			}
+			const search = document.querySelector(".search-overlay");
+			if (nativeSearch && nativeSearch !== search) nsmaxMobileLock(nativeSearch, false);
+			nativeSearch = search;
+			if (search) nsmaxMobileLock(search, !!search.getClientRects().length && getComputedStyle(search).visibility !== "hidden");
+			// iOS 对非交互节点不一定派发兼容 click；把监听器绑定到列表行本身，保留行内真实链接的原生行为。
+			for (const row of document.querySelectorAll("ul.post-list > li.post-list-item:not(.topic-carousel-item)")) if (!bound.has(row)) { bound.add(row); row.addEventListener("click", openRow, { signal: ctx.signal }); }
+			for (const image of document.querySelectorAll("#nsk-body-left article.post-content img")) if (!bound.has(image)) { bound.add(image); image.addEventListener("click", () => {}, { signal: ctx.signal }); }
+			const input = document.getElementById("search-site2"), form = input?.closest("form");
+			if (!form || bound.has(form)) return;
+			bound.add(form);
+			input.enterKeyHint = "search"; input.autocapitalize = "none"; input.setAttribute("aria-label", "搜索帖子或用户");
+			const close = document.createElement("button"); close.type = "button"; close.className = "nsmax-search-close"; close.setAttribute("aria-label", "关闭搜索"); close.append(toolIcon("close"));
+			close.addEventListener("click", () => closeSearch(true), { signal: ctx.signal }); form.append(close);
+			input.addEventListener("focus", () => { if (media.matches) root.setAttribute("data-nsmax-search-open", ""); }, { signal: ctx.signal });
+			input.addEventListener("blur", () => { setTimeout(() => { if (!form.contains(document.activeElement)) closeSearch(); }, 0); }, { signal: ctx.signal });
+			form.addEventListener("submit", event => {
+				if (!media.matches) return;
+				event.preventDefault(); event.stopImmediatePropagation();
+				const query = input.value.trim();
+				if (query) location.assign("/search?q=" + encodeURIComponent(query));
+			}, { capture: true, signal: ctx.signal });
+		};
+		const observer = new MutationObserver(records => {
+			if (records.some(r => r.type === "attributes" ? r.target.matches?.("#left-slide-panel,.global-mask,.search-overlay") : [...r.addedNodes,...r.removedNodes].some(n => n.nodeType === 1 && (n.matches?.("#left-slide-panel,.search-overlay") || n.querySelector?.("#left-slide-panel,.search-overlay")))) || [...nsmaxMobileScrollOwners].some(owner => !owner?.isConnected)) sync();
+		});
+		const observe = () => { observer.disconnect(); if (media.matches) observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] }); };
+		observe();
+		media.addEventListener("change", () => { observe(); sync(); }, { signal: ctx.signal });
+		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
+		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
+		const stop = ctx.watch(sync);
+		return () => { stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head").forEach(e=>e.remove()); };
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
+		const stopTouchUi = nsmaxMountTouchUi(ctx);
 		nsmaxActionFeedback(ctx);
 		nsmaxWatchMsc(ctx);
 		nsmaxWatchFans(ctx);
@@ -4843,6 +5002,7 @@ function nsmaxTagStructure() {
 			}
 			for (const editor of document.querySelectorAll(".md-editor")) {
 				if (editors.has(editor)) continue;
+				if (nsmaxUserscriptsBridge && !nsmaxUserscriptsBridge.available) { editor.setAttribute("data-nsmax-native-editor", ""); continue; }
 				const body = editor.querySelector("#editor-body") || editor;
 				const cm = editor.querySelector(".CodeMirror")?.CodeMirror;
 				const input = editor.querySelector("textarea:not(.CodeMirror textarea)");
@@ -5389,6 +5549,7 @@ function nsmaxTagStructure() {
 			stop();
 			if (origPush) history.pushState = origPush;
 			if (origReplace) history.replaceState = origReplace;
+			stopTouchUi();
 			for (const dispose of editors.values()) dispose();
 			editors.clear();
 		};

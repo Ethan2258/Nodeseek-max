@@ -24,7 +24,7 @@ const hotPosts = (kind) => ({
 });
 
 // 油猴 API 垫片：存储落到 localStorage，跨域请求只放行热榜与更新检查。
-const gmShim = (seed, fontFiles) => `(() => {
+const gmShim = (seed, fontFiles, manager) => `(() => {
 	const PREFIX = "__gm__:";
 	const seed = ${JSON.stringify(seed || {})};
 	for (const [key, value] of Object.entries(seed)) if (localStorage.getItem(PREFIX + key) === null) localStorage.setItem(PREFIX + key, JSON.stringify(value));
@@ -68,6 +68,23 @@ const gmShim = (seed, fontFiles) => `(() => {
 		return { abort() {} };
 	};
 	window.__hotPosts = ${hotPosts.toString()};
+	const manager = ${JSON.stringify(manager || null)};
+	if (manager?.type === "userscripts") {
+		const get = window.GM_getValue, set = window.GM_setValue, xhr = window.GM_xmlhttpRequest;
+		const pause = () => new Promise(resolve => setTimeout(resolve, manager.delay || 0));
+		window.GM_info = { scriptHandler: "Userscripts", version: "test" };
+		window.__userscriptsWrites = [];
+		window.GM = {
+			info: window.GM_info,
+			async getValue(key, fallback) { await pause(); if (manager.failRead) throw new Error("存储读取失败"); return get(key, fallback); },
+			async listValues() { await pause(); if (manager.failRead) throw new Error("存储读取失败"); return Object.keys(localStorage).filter(key => key.startsWith(PREFIX)).map(key => key.slice(PREFIX.length)); },
+			async setValue(key, value) { await pause(); if (window.__userscriptsFailSettings && key.startsWith("nspp:settings:")) throw new Error("存储暂时不可用"); window.__userscriptsWrites.push(key); set(key, value); },
+			xmlHttpRequest(details) { let handle; const task = new Promise((resolve,reject) => { handle = xhr({ ...details, onload(value) { details.onload?.(value); resolve(value); }, onerror(error) { details.onerror?.(error); reject(error); } }); }); task.abort = () => handle?.abort(); return task; }
+		};
+		delete window.GM_getValue; delete window.GM_setValue; delete window.GM_addStyle;
+		delete window.GM_registerMenuCommand; delete window.GM_notification; delete window.unsafeWindow;
+		if (manager.legacyXhr === false) delete window.GM_xmlhttpRequest;
+	}
 })();`;
 
 const apiResponses = {
@@ -105,11 +122,11 @@ async function launch() {
 // api：按接口路径给出依次返回的响应 [{ status, headers, body }]，用完后回到默认模拟数据；calls 记录每个接口被请求的次数。
 // injectWhenRoot：等 <html> 元素出现后再执行脚本（Tampermonkey 在 Chrome 上的实际注入时机），默认在文档创建时执行。
 // injectAfterPaint：页面画出第一帧之后才执行脚本（油猴默认的「Content Script API」注入得晚时就是这样）。
-async function open(browser, url, { html, seed, fontFiles, colorScheme = "light", viewport = { width: 1280, height: 900 }, pages = {}, script = true, css = "", api = {}, init = "", injectWhenRoot = false, injectAfterPaint = false, beforeNavigate, scriptSource = SCRIPT } = {}) {
+async function open(browser, url, { html, seed, fontFiles, manager, colorScheme = "light", viewport = { width: 1280, height: 900 }, device = {}, pages = {}, script = true, css = "", api = {}, init = "", injectWhenRoot = false, injectAfterPaint = false, beforeNavigate, scriptSource = SCRIPT } = {}) {
 	const calls = {};
-	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1 });
+	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1, ...device });
 	const errors = [];
-	const body = `${gmShim(seed, fontFiles)}\n;(function () {\n${scriptSource}\n})();`;
+	const body = `${gmShim(seed, fontFiles, manager)}\n;(function () {\n${scriptSource}\n})();`;
 	const run = `const run = () => { try { (0, eval)(${JSON.stringify(body)}); } catch (error) { window.__injectError = String(error); throw error; } };`;
 	if (script) await context.addInitScript({ content: injectAfterPaint
 		? `(() => { if (window.top !== window) return; ${run} new PerformanceObserver((list, observer) => { if (!list.getEntries().some((entry) => entry.name === "first-contentful-paint")) return; observer.disconnect(); setTimeout(run, 0); }).observe({ type: "paint", buffered: true }); })();`
