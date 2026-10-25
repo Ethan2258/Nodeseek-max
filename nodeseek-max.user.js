@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.8.43
+// @version      1.8.44
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -897,7 +897,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.8.43";
+	var NSMAX_VERSION = "1.8.44";
 	var NSMAX_BOOT_REGIONS = Object.freeze(["header", "left", "right"]);
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
@@ -1926,7 +1926,7 @@ var nsmaxRedirecting = false;
 		}
 		return svg;
 	}
-	var settings_sb_default = ":host{all:initial;color-scheme:light;\n--s-panel:var(--panel,#fff);--s-panel-alt:var(--panel-alt,#fafbfc);--s-panel-hover:var(--panel-hover,#f2f4f7);\n--s-line:var(--line,#e0e2e8);--s-line-soft:var(--line-soft,#eef0f3);--s-line-strong:var(--line-strong,#c7cad5);\n--s-text:var(--text,#1c1c1e);--s-text-strong:var(--text-strong,#1c1c1e);--s-muted:var(--text-muted,#555a6a);--s-subtle:var(--text-subtle,#6b6f7e);\n--s-brand:var(--brand,#33408f);--s-link:var(--link,#2f4fd0);--s-link-hover:var(--link-hover,#2440a8);\n--s-action:var(--action,#1c1c1e);--s-action-hover:var(--action-hover,#2c2c34);--s-action-text:var(--action-text,#fff);--s-action-border:var(--action-border,#1c1c1e);\n--s-field-focus:var(--field-focus,#e0a800);--s-field-ring:var(--field-ring,rgb(255 208 47/.18));\n--s-warning-soft:var(--warning-soft,#fff4c4);--s-warning-text:var(--warning-soft-text,#746019);\n--s-inverse:var(--inverse,#1c1c1e);--s-inverse-text:var(--inverse-text,#fff);--s-danger-fill:var(--danger-fill,#cf2b2b);--s-on-danger:var(--on-danger-fill,#fff);\n--s-backdrop:var(--backdrop,rgb(5 0 56/.42));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(5 0 56/.12));\n--s-r:var(--r,12px);--s-r-input:var(--r-input,8px);--s-r-pill:var(--r-pill,9999px);--s-r-sm:var(--r-sm,6px);--s-r-scale:var(--r-scale,1);\n--s-font:var(--font-sans,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Hiragino Sans GB\",\"Microsoft YaHei\",sans-serif);\n--s-mono:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);\n--s-ease:var(--ease-out,cubic-bezier(.23,1,.32,1))}\n:host([data-dark]){color-scheme:dark;\n--s-panel:var(--panel,#14151c);--s-panel-alt:var(--panel-alt,#1a1b24);--s-panel-hover:var(--panel-hover,#20222c);\n--s-line:var(--line,#2a2c38);--s-line-soft:var(--line-soft,#20222c);--s-line-strong:var(--line-strong,#3a3d4c);\n--s-text:var(--text,#e7e8ef);--s-text-strong:var(--text-strong,#f2f3f8);--s-muted:var(--text-muted,#a8abbb);--s-subtle:var(--text-subtle,#8b8fa1);\n--s-brand:var(--brand,#9aa6e8);--s-link:var(--link,#9aa6e8);--s-link-hover:var(--link-hover,#bcc4f0);\n--s-action:var(--action,#eef0f6);--s-action-hover:var(--action-hover,#fff);--s-action-text:var(--action-text,#14151c);--s-action-border:var(--action-border,#eef0f6);\n--s-field-focus:var(--field-focus,#ffd02f);--s-field-ring:var(--field-ring,rgb(255 208 47/.10));\n--s-warning-soft:var(--warning-soft,#2e2717);--s-warning-text:var(--warning-soft-text,#ffd977);\n--s-inverse:var(--inverse,#e7e8ef);--s-inverse-text:var(--inverse-text,#0d0e14);\n--s-backdrop:var(--backdrop,rgb(3 2 12/.66));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(0 0 0/.62))}\n*,*::before,*::after{box-sizing:border-box;letter-spacing:0}\n[hidden]{display:none!important}\n.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}\n:focus-visible{outline:2px solid var(--s-brand);outline-offset:2px}\nbutton{font:inherit;color:inherit;cursor:pointer}\nbutton:disabled{opacity:.6;cursor:default}\n/* 弹窗：sb.sb .modal-panel——细线框、卡片圆角、面板底、中号阴影；遮罩 --backdrop，不模糊；出现时 0.97 → 1 */\ndialog{position:fixed;inset:0;width:min(720px,calc(100vw - 32px));height:min(720px,calc(100dvh - 48px));max-width:none;max-height:none;margin:auto;padding:0;border:1px solid var(--s-line);border-radius:var(--s-r);background:var(--s-panel);color:var(--s-text);box-shadow:var(--s-shadow);font:14px/1.6 var(--s-font);overflow:hidden}\ndialog[open]{display:flex;flex-direction:column;animation:nspp-panel-in 180ms var(--s-ease)}\ndialog::backdrop{background:var(--s-backdrop)}\n@keyframes nspp-panel-in{from{opacity:0;transform:scale(.97)}}\nform{display:flex;flex:1;flex-direction:column;min-height:0;margin:0}\n/* 标题栏：sb.sb .modal-head——12px 16px、line-soft 细线；站点标志 + 名称 + 版本，右侧「检查更新」文字按钮和关闭 */\n.head{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--s-line-soft)}\n.brand{display:flex;align-items:center;gap:8px;min-width:0;margin-right:auto}\n.mark{flex:none;width:24px;height:24px;border-radius:calc(24px * 14 / 64 * var(--s-r-scale));background:var(--nsmax-logo-icon,none) center/100% 100% no-repeat}\n:host([data-dark]) .mark{filter:invert(1)}\nh2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-height:1.4;white-space:nowrap}\n.version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11.5px/20px var(--s-mono)}\n.link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap}\n.link:hover{text-decoration:underline}\n.close{display:grid;place-items:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle)}\n.close:hover{background:var(--s-panel-hover);color:var(--s-text)}\n.close svg{display:block;width:16px;height:16px}\n/* 分页：sb.sb .tab-bar / .tab——12px 4px、14px 弱化字，当前页正文色 500 + 底部 2px 墨色线；右侧搜索框 */\n.tabs-row{display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--s-line)}\n.tab-bar{display:flex;flex:1;align-items:center;gap:14px;min-width:0;overflow-x:auto;scrollbar-width:none}\n.tab-bar::-webkit-scrollbar{display:none}\n.tab{position:relative;flex:none;padding:12px 4px;border:0;border-radius:0;background:none;color:var(--s-muted);font-size:14px;line-height:1.6;white-space:nowrap}\n.tab:hover{color:var(--s-text)}\n.tab[aria-selected=true]{color:var(--s-text);font-weight:500}\n.tab[aria-selected=true]::after{content:\"\";position:absolute;right:0;bottom:0;left:0;height:2px;border-radius:calc(1px * var(--s-r-scale));background:var(--s-action)}\n.tab:focus-visible{outline-offset:-2px}\n/* 存储不可用的提示：sb.sb 警示色浅底 */\n.status{margin:0;padding:8px 16px;border-bottom:1px solid var(--s-line-soft);background:var(--s-warning-soft);color:var(--s-warning-text);font-size:12.5px}\n.status:empty{display:none}\n/* 内容区：每个模块一段，段与段之间 line-soft 细线；搜索时按分页加小标题 */\n.body{flex:1;min-height:0;padding:0 20px 8px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--s-line-strong) transparent}\n.page-title{margin:18px 0 0;color:var(--s-subtle);font-size:12.5px;font-weight:500;line-height:1.6}\n.module{padding:18px 0;border-top:1px solid var(--s-line-soft)}\n.page>.module:first-child,.page-title+.module{border-top:0}\n.module-head{display:flex;flex-direction:column;gap:2px}\n.module-title{margin:0;color:var(--s-text-strong);font-size:14px;font-weight:600;line-height:1.5}\n/* 模块说明：sb.sb .settings-section-lead——12.5px 弱化字、行高 1.7 */\n.lead{margin:0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.module[data-master] .lead,.module[data-master] .module-fields{padding-left:21px}\n.module-fields{display:grid;gap:14px;margin-top:12px}\n.module[data-off] .module-fields{opacity:.5}\n/* 勾选：sb.sb .check——15px 勾选框（品牌色）+ 13.5px 文字，间距 6px */\n.check{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;color:var(--s-text);font-size:13.5px;line-height:1.6;cursor:pointer}\n.check small{margin-left:2px;color:var(--s-subtle);font-size:12.5px}\n.module-toggle{gap:6px}\n.module-toggle .module-title{cursor:pointer}\ninput[type=checkbox]{flex:none;width:15px;height:15px;margin:0;accent-color:var(--s-brand);cursor:pointer}\n/* 字段：sb.sb .grid——标签 13.5px/500，下面 12.5px 弱化说明，最宽 520px */\n.grid{display:block;max-width:520px}\n.label{display:block;margin-bottom:5px;color:var(--s-text);font-size:13.5px;font-weight:500;line-height:1.6}\n.label small{display:block;margin-top:2px;color:var(--s-muted);font-size:12.5px;font-weight:400;line-height:1.6}\n/* 输入框：sb.sb——7px 10px、深一级细线、输入框圆角、面板底、14px；聚焦黄色描边 + 3px 浅黄光圈 */\ninput:not([type=checkbox]):not([type=file]),select,textarea{display:block;width:100%;min-width:0;margin:0;padding:7px 10px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-input);background:var(--s-panel);color:var(--s-text);font:inherit;font-size:14px;line-height:1.5;box-shadow:none}\ninput::placeholder,textarea::placeholder{color:var(--s-muted)}\ntextarea{min-height:96px;line-height:1.7;resize:vertical}\nselect{appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--s-muted) 50%),linear-gradient(135deg,var(--s-muted) 50%,transparent 50%);background-position:right 16px top 55%,right 11px top 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;cursor:pointer}\ninput:not([type=checkbox]):focus,select:focus,textarea:focus{border-color:var(--s-field-focus);outline:3px solid var(--s-field-ring);outline-offset:0}\n/* 搜索框、数字框：写在通用输入框规则后面、权重相同，覆盖它的整行宽度 */\n.tabs-row input.search{flex:none;width:200px;margin:8px 0;padding:5px 10px;font-size:13px}\n.grid input[type=number]{width:160px}\n/* 分段选择：sb.sb .tree-toggle——4px 11px 小胶囊、细线框、12px/500 弱化字；选中墨色实底 */\n.segments{display:flex;flex-wrap:wrap;gap:6px}\n.segments button{padding:4px 11px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12px;font-weight:500;line-height:1.6;white-space:nowrap}\n.segments button:hover{border-color:var(--s-line-strong);background:var(--s-panel-hover);color:var(--s-text)}\n.segments button[aria-checked=true],.segments button[aria-checked=true]:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.segment-note{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.6}\n.empty{margin:28px 0;color:var(--s-muted);font-size:13.5px;text-align:center}\n/* 底部：sb.sb .settings-actions——line-soft 细线；左边细线框小胶囊工具按钮，右边墨色实底主按钮 */\n.foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--s-line-soft)}\n.foot-tools{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto}\nbutton.alt{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500;line-height:1.6;white-space:nowrap}\nbutton.alt:hover{background:var(--s-panel-hover)}\nbutton.primary{padding:7px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:14px;font-weight:500;line-height:1.5;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}\nbutton.primary:hover{border-color:var(--s-action-hover);background:var(--s-action-hover)}\nbutton:not(:disabled):active{transform:translateY(1px)}\n/* 关于：标题 + 版本、说明、链接、功能列表、检查更新 */\n.about-content{padding:18px 0;font-size:13.5px;line-height:1.7}\n.about-heading{display:flex;align-items:baseline;gap:8px}\n.about-heading>strong{color:var(--s-text-strong);font-size:15px;font-weight:600}\n.about-version{color:var(--s-muted);font:400 12px var(--s-mono)}\n.about-content>p{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.about-content>p.about-timing[data-late]{color:var(--s-warning-text)}\n.about-links{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}\n.about-links a{padding:3px 12px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12.5px;text-decoration:none}\n.about-links a:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.about-features{margin:0 0 16px;padding-left:18px;color:var(--s-muted);font-size:12.5px;line-height:1.75}\n.about-content>button{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500}\n.about-content>button:hover{background:var(--s-panel-hover)}\n/* 提示：sb.sb .toast——底部居中、反色底、卡片圆角、13.5px；出错用危险色实底 */\n.toast{position:fixed;inset:auto auto 24px 50%;z-index:2147483646;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);margin:0;padding:9px 10px 9px 16px;border:0;border-radius:var(--s-r);background:var(--s-inverse);color:var(--s-inverse-text);font:13.5px/1.5 var(--s-font);box-shadow:var(--s-shadow);transform:translateX(-50%)}\n.toast[data-type=error]{background:var(--s-danger-fill);color:var(--s-on-danger)}\n.toast-icon{display:flex;flex:none}\n.toast-icon svg{display:block;width:16px;height:16px}\n.toast-close{display:grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:inherit;opacity:.7}\n.toast-close:hover{opacity:1}\n.toast-close svg{display:block;width:13px;height:13px}\n@media(max-width:640px){\ndialog{width:calc(100vw - 16px);height:calc(100dvh - 24px)}\n.head{gap:10px;padding:10px 12px}\n.version{display:none}\n.tabs-row{flex-wrap:wrap;gap:0;padding:0 12px}\n.tabs-row input.search{order:-1;width:100%;margin:10px 0 2px}\n.tab-bar{flex:1 1 100%}\n.body{padding:0 14px 8px}\n.foot{flex-wrap:wrap;padding:10px 12px}\n.foot-tools{gap:6px}\nbutton.primary{margin-left:auto}\n}\n@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}\n";
+	var settings_sb_default = ":host{all:initial;color-scheme:light;\n--s-panel:var(--panel,#fff);--s-panel-alt:var(--panel-alt,#fafbfc);--s-panel-hover:var(--panel-hover,#f2f4f7);\n--s-line:var(--line,#e0e2e8);--s-line-soft:var(--line-soft,#eef0f3);--s-line-strong:var(--line-strong,#c7cad5);\n--s-text:var(--text,#1c1c1e);--s-text-strong:var(--text-strong,#1c1c1e);--s-muted:var(--text-muted,#555a6a);--s-subtle:var(--text-subtle,#6b6f7e);\n--s-brand:var(--brand,#33408f);--s-link:var(--link,#2f4fd0);--s-link-hover:var(--link-hover,#2440a8);\n--s-action:var(--action,#1c1c1e);--s-action-hover:var(--action-hover,#2c2c34);--s-action-text:var(--action-text,#fff);--s-action-border:var(--action-border,#1c1c1e);\n--s-field-focus:var(--field-focus,#e0a800);--s-field-ring:var(--field-ring,rgb(255 208 47/.18));\n--s-warning-soft:var(--warning-soft,#fff4c4);--s-warning-text:var(--warning-soft-text,#746019);\n--s-inverse:var(--inverse,#1c1c1e);--s-inverse-text:var(--inverse-text,#fff);--s-danger-fill:var(--danger-fill,#cf2b2b);--s-on-danger:var(--on-danger-fill,#fff);\n--s-backdrop:var(--backdrop,rgb(5 0 56/.42));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(5 0 56/.12));\n--s-r:var(--r,12px);--s-r-input:var(--r-input,8px);--s-r-pill:var(--r-pill,9999px);--s-r-sm:var(--r-sm,6px);--s-r-scale:var(--r-scale,1);\n--s-font:var(--font-sans,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Hiragino Sans GB\",\"Microsoft YaHei\",sans-serif);\n--s-mono:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);\n--s-ease:var(--ease-out,cubic-bezier(.23,1,.32,1))}\n:host([data-dark]){color-scheme:dark;\n--s-panel:var(--panel,#14151c);--s-panel-alt:var(--panel-alt,#1a1b24);--s-panel-hover:var(--panel-hover,#20222c);\n--s-line:var(--line,#2a2c38);--s-line-soft:var(--line-soft,#20222c);--s-line-strong:var(--line-strong,#3a3d4c);\n--s-text:var(--text,#e7e8ef);--s-text-strong:var(--text-strong,#f2f3f8);--s-muted:var(--text-muted,#a8abbb);--s-subtle:var(--text-subtle,#8b8fa1);\n--s-brand:var(--brand,#9aa6e8);--s-link:var(--link,#9aa6e8);--s-link-hover:var(--link-hover,#bcc4f0);\n--s-action:var(--action,#eef0f6);--s-action-hover:var(--action-hover,#fff);--s-action-text:var(--action-text,#14151c);--s-action-border:var(--action-border,#eef0f6);\n--s-field-focus:var(--field-focus,#ffd02f);--s-field-ring:var(--field-ring,rgb(255 208 47/.10));\n--s-warning-soft:var(--warning-soft,#2e2717);--s-warning-text:var(--warning-soft-text,#ffd977);\n--s-inverse:var(--inverse,#e7e8ef);--s-inverse-text:var(--inverse-text,#0d0e14);\n--s-backdrop:var(--backdrop,rgb(3 2 12/.66));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(0 0 0/.62))}\n*,*::before,*::after{box-sizing:border-box;letter-spacing:0}\n[hidden]{display:none!important}\n.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}\n:focus-visible{outline:2px solid var(--s-brand);outline-offset:2px}\nbutton{font:inherit;color:inherit;cursor:pointer}\nbutton:disabled{opacity:.6;cursor:default}\n/* 弹窗：sb.sb .modal-panel——细线框、卡片圆角、面板底、中号阴影；遮罩 --backdrop，不模糊；出现时 0.97 → 1 */\ndialog{position:fixed;inset:0;width:min(720px,calc(100vw - 32px));height:min(720px,calc(100dvh - 48px));max-width:none;max-height:none;margin:auto;padding:0;border:1px solid var(--s-line);border-radius:var(--s-r);background:var(--s-panel);color:var(--s-text);box-shadow:var(--s-shadow);font:14px/1.6 var(--s-font);overflow:hidden}\ndialog[open]{display:flex;flex-direction:column;animation:nspp-panel-in 180ms var(--s-ease)}\ndialog::backdrop{background:var(--s-backdrop)}\n@keyframes nspp-panel-in{from{opacity:0;transform:scale(.97)}}\nform{display:flex;flex:1;flex-direction:column;min-height:0;margin:0}\n/* 标题栏：sb.sb .modal-head——12px 16px、line-soft 细线；站点标志 + 名称 + 版本，右侧「检查更新」文字按钮和关闭 */\n.head{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--s-line-soft)}\n.brand{display:flex;align-items:center;gap:8px;min-width:0;margin-right:auto}\n.mark{flex:none;width:24px;height:24px;border-radius:calc(24px * 14 / 64 * var(--s-r-scale));background:var(--nsmax-logo-icon,none) center/100% 100% no-repeat}\n:host([data-dark]) .mark{filter:invert(1)}\nh2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-height:1.4;white-space:nowrap}\n.version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11.5px/20px var(--s-mono)}\n.link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap}\n.link:hover{text-decoration:underline}\n.close{display:grid;place-items:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle)}\n.close:hover{background:var(--s-panel-hover);color:var(--s-text)}\n.close svg{display:block;width:16px;height:16px}\n/* 分页：sb.sb .tab-bar / .tab——12px 4px、14px 弱化字，当前页正文色 500 + 底部 2px 墨色线；右侧搜索框 */\n.tabs-row{display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--s-line)}\n.tab-bar{display:flex;flex:1;align-items:center;gap:14px;min-width:0;overflow-x:auto;scrollbar-width:none}\n.tab-bar::-webkit-scrollbar{display:none}\n.tab{position:relative;flex:none;padding:12px 4px;border:0;border-radius:0;background:none;color:var(--s-muted);font-size:14px;line-height:1.6;white-space:nowrap}\n.tab:hover{color:var(--s-text)}\n.tab[aria-selected=true]{color:var(--s-text);font-weight:500}\n.tab[aria-selected=true]::after{content:\"\";position:absolute;right:0;bottom:0;left:0;height:2px;border-radius:calc(1px * var(--s-r-scale));background:var(--s-action)}\n.tab:focus-visible{outline-offset:-2px}\n/* 存储不可用的提示：sb.sb 警示色浅底 */\n.status{margin:0;padding:8px 16px;border-bottom:1px solid var(--s-line-soft);background:var(--s-warning-soft);color:var(--s-warning-text);font-size:12.5px}\n.status:empty{display:none}\n/* 内容区：每个模块一段，段与段之间 line-soft 细线；搜索时按分页加小标题 */\n.body{flex:1;min-height:0;padding:0 20px 8px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--s-line-strong) transparent}\n.page-title{margin:18px 0 0;color:var(--s-subtle);font-size:12.5px;font-weight:500;line-height:1.6}\n.module{padding:18px 0;border-top:1px solid var(--s-line-soft)}\n.page>.module:first-child,.page-title+.module{border-top:0}\n.module-head{display:flex;flex-direction:column;gap:2px}\n.module-title{margin:0;color:var(--s-text-strong);font-size:14px;font-weight:600;line-height:1.5}\n/* 模块说明：sb.sb .settings-section-lead——12.5px 弱化字、行高 1.7 */\n.lead{margin:0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.module[data-master] .lead,.module[data-master] .module-fields{padding-left:21px}\n.module-fields{display:grid;gap:14px;margin-top:12px}\n.module[data-off] .module-fields{opacity:.5}\n/* 勾选：sb.sb .check——15px 勾选框（品牌色）+ 13.5px 文字，间距 6px */\n.check{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;color:var(--s-text);font-size:13.5px;line-height:1.6;cursor:pointer}\n.check small{margin-left:2px;color:var(--s-subtle);font-size:12.5px}\n.module-toggle{gap:6px}\n.module-toggle .module-title{cursor:pointer}\ninput[type=checkbox]{flex:none;width:15px;height:15px;margin:0;accent-color:var(--s-brand);cursor:pointer}\n/* 字段：sb.sb .grid——标签 13.5px/500，下面 12.5px 弱化说明，最宽 520px */\n.grid{display:block;max-width:520px}\n.label{display:block;margin-bottom:5px;color:var(--s-text);font-size:13.5px;font-weight:500;line-height:1.6}\n.label small{display:block;margin-top:2px;color:var(--s-muted);font-size:12.5px;font-weight:400;line-height:1.6}\n/* 输入框：sb.sb——7px 10px、深一级细线、输入框圆角、面板底、14px；聚焦黄色描边 + 3px 浅黄光圈 */\ninput:not([type=checkbox]):not([type=file]),select,textarea{display:block;width:100%;min-width:0;margin:0;padding:7px 10px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-input);background:var(--s-panel);color:var(--s-text);font:inherit;font-size:14px;line-height:1.5;box-shadow:none}\ninput::placeholder,textarea::placeholder{color:var(--s-muted)}\ntextarea{min-height:96px;line-height:1.7;resize:vertical}\nselect{appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--s-muted) 50%),linear-gradient(135deg,var(--s-muted) 50%,transparent 50%);background-position:right 16px top 55%,right 11px top 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;cursor:pointer}\ninput:not([type=checkbox]):focus,select:focus,textarea:focus{border-color:var(--s-field-focus);outline:3px solid var(--s-field-ring);outline-offset:0}\n/* 搜索框、数字框：写在通用输入框规则后面、权重相同，覆盖它的整行宽度 */\n.tabs-row input.search{flex:none;width:200px;margin:8px 0;padding:5px 10px;font-size:13px}\n.grid input[type=number]{width:160px}\n/* 分段选择：sb.sb .tree-toggle——4px 11px 小胶囊、细线框、12px/500 弱化字；选中墨色实底 */\n.segments{display:flex;flex-wrap:wrap;gap:6px}\n.segments button{padding:4px 11px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12px;font-weight:500;line-height:1.6;white-space:nowrap}\n.segments button:hover{border-color:var(--s-line-strong);background:var(--s-panel-hover);color:var(--s-text)}\n.segments button[aria-checked=true],.segments button[aria-checked=true]:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.segment-note{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.6}\n.empty{margin:28px 0;color:var(--s-muted);font-size:13.5px;text-align:center}\n/* 底部：sb.sb .settings-actions——line-soft 细线；左边细线框小胶囊工具按钮，右边墨色实底主按钮 */\n.foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--s-line-soft)}\n.foot-tools{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto}\nbutton.alt{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500;line-height:1.6;white-space:nowrap}\nbutton.alt:hover{background:var(--s-panel-hover)}\nbutton.primary{padding:7px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:14px;font-weight:500;line-height:1.5;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}\nbutton.primary:hover{border-color:var(--s-action-hover);background:var(--s-action-hover)}\nbutton:not(:disabled):active{transform:translateY(1px)}\n/* 关于：标题 + 版本、说明、链接、功能列表、检查更新 */\n.about-content{padding:18px 0;font-size:13.5px;line-height:1.7}\n.about-heading{display:flex;align-items:baseline;gap:8px}\n.about-heading>strong{color:var(--s-text-strong);font-size:15px;font-weight:600}\n.about-version{color:var(--s-muted);font:400 12px var(--s-mono)}\n.about-content>p{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.about-content>p.about-timing[data-late]{color:var(--s-warning-text)}\n.about-content>p.about-preload[data-miss]{color:var(--s-warning-text)}\n.about-links{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}\n.about-links a{padding:3px 12px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12.5px;text-decoration:none}\n.about-links a:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.about-features{margin:0 0 16px;padding-left:18px;color:var(--s-muted);font-size:12.5px;line-height:1.75}\n.about-content>button{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500}\n.about-content>button:hover{background:var(--s-panel-hover)}\n/* 提示：sb.sb .toast——底部居中、反色底、卡片圆角、13.5px；出错用危险色实底 */\n.toast{position:fixed;inset:auto auto 24px 50%;z-index:2147483646;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);margin:0;padding:9px 10px 9px 16px;border:0;border-radius:var(--s-r);background:var(--s-inverse);color:var(--s-inverse-text);font:13.5px/1.5 var(--s-font);box-shadow:var(--s-shadow);transform:translateX(-50%)}\n.toast[data-type=error]{background:var(--s-danger-fill);color:var(--s-on-danger)}\n.toast-icon{display:flex;flex:none}\n.toast-icon svg{display:block;width:16px;height:16px}\n.toast-close{display:grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:inherit;opacity:.7}\n.toast-close:hover{opacity:1}\n.toast-close svg{display:block;width:13px;height:13px}\n@media(max-width:640px){\ndialog{width:calc(100vw - 16px);height:calc(100dvh - 24px)}\n.head{gap:10px;padding:10px 12px}\n.version{display:none}\n.tabs-row{flex-wrap:wrap;gap:0;padding:0 12px}\n.tabs-row input.search{order:-1;width:100%;margin:10px 0 2px}\n.tab-bar{flex:1 1 100%}\n.body{padding:0 14px 8px}\n.foot{flex-wrap:wrap;padding:10px 12px}\n.foot-tools{gap:6px}\nbutton.primary{margin-left:auto}\n}\n@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}\n";
 	var loading_default = "[aria-busy=true],.nspp-sweep-shine{-webkit-text-fill-color:currentColor;cursor:progress;background-image:linear-gradient(110deg,#0000 35%,#ffffff80 50%,#0000 65%);background-repeat:no-repeat;background-size:250% 100%;animation:1.8s linear infinite nspp-busy-feedback;opacity:1!important}@keyframes nspp-busy-feedback{0%{background-position:150% 0}to{background-position:-150% 0}}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:transparent;background-image:linear-gradient(110deg,currentColor 35%,#ffffff80 50%,currentColor 65%);-webkit-background-clip:text;background-clip:text}.nspp-action[aria-busy=true]>svg{transform-origin:50%;animation:.7s ease-in-out infinite nspp-attendance-working}@keyframes nspp-attendance-working{0%,to{transform:translateY(0)rotate(-8deg)}50%{transform:translateY(-3px)rotate(8deg)}}@media (prefers-reduced-motion:reduce){[aria-busy=true],.nspp-sweep-shine,.nspp-action[aria-busy=true]>svg{background-image:none;animation:none}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:currentColor;background-image:none}}";
 	// 锁的记录（上次什么时候跑、谁在跑）放 localStorage（见 nsmaxLocalWrite）：每读一次未读数都要写两次，以前写油猴存储
 	async function withTabLock(name, intervalMs, task) {
@@ -2183,6 +2183,16 @@ var nsmaxRedirecting = false;
 		timing.textContent = nsmaxLateInjection
 			? "这一页打开时，脚本在页面画出来之后才运行（油猴注入得晚），所以会先闪一下站点原来的样子：按下面最后一条改一下油猴设置。"
 			: "这一页打开时，脚本在页面画出来之前就运行了：首屏直接是整理好的页面。";
+		// 悬停预加载最近有没有用上（见 nsmaxRecordPrefetchUse）
+		const preload = document.createElement("p");
+		preload.className = "about-preload";
+		const recent = nsmaxPrefetchRecent();
+		const hits = recent.filter(Boolean).length;
+		preload.hidden = !recent.length;
+		preload.toggleAttribute("data-miss", recent.length >= 3 && !hits);
+		preload.textContent = hits || recent.length < 3
+			? `悬停预加载：最近点开的 ${recent.length} 个页面里，${hits} 个是鼠标停上去时就提前下载好的。`
+			: `悬停预加载：最近点开的 ${recent.length} 个页面一个都没用上提前下载的网页。可检查 Chrome 设置 → 性能里的「预加载网页」和节能模式；也可能是点得太快、预取尚未完成，或浏览器没有采用这次预取。`;
 		const links = document.createElement("div");
 		links.className = "about-links";
 		for (const [label, href] of [
@@ -2230,7 +2240,7 @@ var nsmaxRedirecting = false;
 			item.textContent = text;
 			features.append(item);
 		}
-		content.append(heading, summary, timing, links, features, button);
+		content.append(heading, summary, timing, preload, links, features, button);
 		return content;
 	}
 	var element$1 = (tag, text) => {
@@ -8568,6 +8578,47 @@ var nsmaxRedirecting = false;
 			};
 		}
 	}];
+	// 悬停预加载有没有用上（2026-10-25）：sessionStorage 保留本标签页记录，localStorage 共享给新标签页（noopener 不会复制 sessionStorage）。
+	// 就看浏览器是不是拿的那份预取（deliveryType）。最近 20 次记在 localStorage（nsmax:prefetch-stats），设置 → 关于里显示：
+	// 一个都没用上多半是 Chrome 的「预加载网页」关了或开着节能模式，脚本自己看不到这两个设置
+	function nsmaxPrefetchRecent() {
+		try {
+			const recent = JSON.parse(localStorage.getItem("nsmax:prefetch-stats") || "{}")?.recent;
+			return Array.isArray(recent) ? recent.filter(value => value === 0 || value === 1).slice(-20) : [];
+		} catch {
+			return [];
+		}
+	}
+	function nsmaxPrefetchEntries(storage) {
+		try {
+			const list = JSON.parse(storage.getItem("nsmax:prefetched") || "[]");
+			return Array.isArray(list) ? list.filter(entry => typeof entry?.href === "string" && Number.isFinite(entry.at) && Date.now() - entry.at >= 0 && Date.now() - entry.at < 3e5).slice(-20) : [];
+		} catch { return []; }
+	}
+	function nsmaxRememberPrefetch(href) {
+		for (const storage of [sessionStorage, localStorage]) try {
+			const list = nsmaxPrefetchEntries(storage).filter(entry => entry.href !== href).slice(-19);
+			list.push({ href, at: Date.now() });
+			storage.setItem("nsmax:prefetched", JSON.stringify(list));
+		} catch {}
+	}
+	function nsmaxRecordPrefetchUse() {
+		try {
+			const nav = performance.getEntriesByType("navigation")[0];
+			const here = location.href.split("#")[0];
+			let found = false;
+			for (const storage of [sessionStorage, localStorage]) try {
+				const list = nsmaxPrefetchEntries(storage);
+				if (!list.some(item => item.href === here)) continue;
+				found = true;
+				storage.setItem("nsmax:prefetched", JSON.stringify(list.filter(item => item.href !== here)));
+			} catch {}
+			// 不支持 deliveryType 的浏览器不把「无法判断」算成「没用上」；刷新、前进后退不重复记。
+			if (!found || nav?.type !== "navigate" || typeof nav.deliveryType !== "string") return;
+			const recent = [...nsmaxPrefetchRecent(), nav.deliveryType === "navigational-prefetch" ? 1 : 0].slice(-20);
+			localStorage.setItem("nsmax:prefetch-stats", JSON.stringify({ recent, at: Date.now() }));
+		} catch {}
+	}
 	var serviceFeatures = [
 		{
 			id: "notification-categories",
@@ -8808,6 +8859,7 @@ var nsmaxRedirecting = false;
 			group: "导航",
 			defaults: { enabled: true },
 			mount(ctx) {
+				nsmaxRecordPrefetchUse();
 				if (navigator.connection?.saveData) return;
 				const seen = new Set();
 				const nodes = [];
@@ -8846,6 +8898,8 @@ var nsmaxRedirecting = false;
 					}
 					(document.head || document.documentElement).append(node);
 					nodes.push(node);
+					// <link rel=prefetch> 进的是 HTTP 缓存，点开时不算「预取」（deliveryType 不一样），不记
+					if (native) nsmaxRememberPrefetch(href);
 				};
 				let hovered = null;
 				let timer;
@@ -24219,6 +24273,7 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 	// 页面解析完浏览器自动放行，不会一直挡着。浏览器只认 body 出现之前插进来的这种标记：脚本注入得晚时用不上，退回「先藏主体」（startEarlyPass）
 	// 网络很慢、站点的脚本迟迟下不来时最多等 1.2 秒，之后照常边解析边画，不让人对着旧页面或白屏干等
 	var nsmaxRenderHeld = false;
+	var nsmaxReleaseRender = null;
 	function nsmaxHoldFirstPaint() {
 		if (nsmaxRenderHeld || document.body || !document.documentElement) return false;
 		try {
@@ -24232,8 +24287,12 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 			try { performance.mark("nsmax:render-hold"); } catch {}
 			const release = () => {
 				clearTimeout(timer);
+				document.removeEventListener("DOMContentLoaded", release);
 				link.remove();
+				nsmaxReleaseRender = null;
+				try { performance.mark("nsmax:render-release"); } catch {}
 			};
+			nsmaxReleaseRender = release;
 			const timer = setTimeout(release, 1200);
 			document.addEventListener("DOMContentLoaded", release, { once: true });
 		} catch {}
@@ -24712,6 +24771,18 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			// 帖子页楼层对齐：每解析出一段楼层就标记（见 nsmaxMarkPostLayout），首屏就是对齐好的样子，不会先错开再跳回来。
 			if (root.dataset.nsmaxPage === "post") nsmaxMarkPostLayout();
 			nsmaxEarlyVisuals(parsed);
+			// 页尾之后还有同步脚本（如 Cloudflare 邮件解码）。正文、侧栏和页尾都齐了且整理好就画，
+			// 不必等这些脚本下载完；资料卡还是骨架时继续等，最多仍由 1.2 秒兜底放行。
+			if (nsmaxReleaseRender && !document.querySelector("#usercard-me.skeleton")) {
+				const footer = document.querySelector("body > footer, #nsk-frame > footer");
+				if (footer && parsed(footer)) {
+					// 手机等页面本来就没有侧栏；解析到页尾之后不再等不存在的区域。
+					for (const name of pending) revealRegion(name);
+					pending.clear();
+					releaseBody();
+					nsmaxReleaseRender();
+				}
+			}
 			if (!pending.size && listSeen && document.readyState !== "loading") observer.disconnect();
 		};
 		let listSeen = false;
@@ -24725,6 +24796,16 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		}, 2500);
 		let queued = 0;
 		const observer = new MutationObserver(() => {
+			// render hold 会一起挡住 rAF：页面尾部已齐时同步做最后一轮，才能在慢脚本之前放行。
+			if (nsmaxReleaseRender && !document.querySelector("#usercard-me.skeleton")) {
+				const footer = document.querySelector("body > footer, #nsk-frame > footer");
+				if (footer && parsed(footer)) {
+					cancelAnimationFrame(queued);
+					queued = 0;
+					step();
+					return;
+				}
+			}
 			if (!queued) queued = requestAnimationFrame(() => { queued = 0; step(); });
 		});
 		observer.observe(document, {
@@ -30998,6 +31079,8 @@ function nsmaxTagStructure() {
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
 		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });
+		// 往返缓存会连同 DOM 和计时器一起保留；离开时收起卡片、取消尚未完成的弹出，返回后保留原页但不留浮层。
+		window.addEventListener("pagehide",hide,{signal:ctx.signal});
 		window.addEventListener("scroll",hide,{passive:true,signal:ctx.signal}); window.addEventListener("resize",place,{passive:true,signal:ctx.signal});
 		return hide;
 	} };

@@ -7168,3 +7168,109 @@ test("v1.8.43 旧版本存在油猴里的功能状态第一次读到时搬到 lo
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+test("v1.8.44 离开页面进入往返缓存时关闭用户资料卡，返回后不残留；尚未弹出的卡片也取消", async () => {
+	const {context,page,errors} = await open(browser,"https://www.nodeseek.com/",{html:listPage(),viewport:{width:1440,height:900}});
+	try {
+		const author = page.locator(".post-list-item a.info-author, .post-list-item .info-author > a").first();
+		await author.hover();
+		await page.waitForSelector(".nsmax-person-pop");
+		await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pagehide",{persisted:true})));
+		assert.equal(await page.locator(".nsmax-person-pop").count(),0);
+		assert.equal(await page.locator("html[data-nsmax-person-open]").count(),0);
+		await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true})));
+		await page.mouse.move(1,1);
+		await author.hover();
+		await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pagehide",{persisted:true})));
+		await wait(page,300);
+		assert.equal(await page.locator(".nsmax-person-pop").count(),0,"离开前安排的弹出和异步资料请求都不能重新打开卡片");
+		assert.deepEqual(errors,[]);
+	} finally {await context.close();}
+});
+
+test("v1.8.44 首屏内容齐了就放行，不再等页尾的慢脚本；正文和侧栏在第一帧前整理好", async () => {
+	const html = listPage().replace("</footer>", '</footer><script src="/slow-tail.js"></script>');
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
+		html, viewport: { width: 1440, height: 900 },
+		init: `new PerformanceObserver((list) => {
+			if (!list.getEntries().some(e => e.name === "first-contentful-paint")) return;
+			window.__firstFrame = { rows: document.querySelectorAll(".post-item").length, card: !!document.querySelector(".nsmax-account-head"), hot: !!document.querySelector(".nsmax-hot-panel") };
+		}).observe({ type: "paint", buffered: true });`,
+		beforeNavigate: p => p.route("**/slow-tail.js", async route => {
+			await new Promise(resolve => setTimeout(resolve, 2500));
+			await route.fulfill({ status: 200, contentType: "application/javascript", body: "window.__tailLoaded = performance.now();" });
+		})
+	});
+	try {
+		await page.waitForFunction(() => window.__firstFrame && window.__tailLoaded);
+		const state = await page.evaluate(() => ({ first: window.__firstFrame, hold: performance.getEntriesByName("nsmax:render-hold")[0].startTime, fcp: performance.getEntriesByName("first-contentful-paint")[0].startTime, tail: window.__tailLoaded }));
+		assert.ok(state.fcp - state.hold < 1000, `正文已齐就放行：${Math.round(state.fcp - state.hold)}ms`);
+		assert.ok(state.fcp < state.tail);
+		assert.equal(state.first.rows, 6);
+		assert.equal(state.first.card, true);
+		assert.equal(state.first.hot, true);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.44 设置「关于」里说悬停预加载最近有没有用上：上一页预取过的地址这一页打开时记一次；连着几次都没用上时提示查 Chrome 的「预加载网页」和节能模式", async () => {
+	// 上一页预取过这一页（sessionStorage 里的记录），之前已经两次没用上
+	const seed = (deliveryType) => `(() => {
+		if (window.top !== window || sessionStorage.getItem("__seeded")) return;
+		sessionStorage.setItem("__seeded", "1");
+		sessionStorage.setItem("nsmax:prefetched", JSON.stringify([{ href: location.href.split("#")[0], at: Date.now() }]));
+		localStorage.setItem("nsmax:prefetch-stats", JSON.stringify({ recent: [0, 0] }));
+		${deliveryType ? `const get = Performance.prototype.getEntriesByType;
+		Performance.prototype.getEntriesByType = function (type) {
+			const list = get.call(this, type);
+			return type === "navigation" && list[0] ? [new Proxy(list[0], { get: (target, key) => key === "deliveryType" ? ${JSON.stringify(deliveryType)} : Reflect.get(target, key) })] : list;
+		};` : ""}
+	})();`;
+	const about = async (page) => {
+		await page.waitForFunction(() => { try { return JSON.parse(localStorage.getItem("nsmax:prefetch-stats")).recent.length === 3; } catch { return false; } }, null, { timeout: 15000 });
+		await page.getByRole("button", { name: "NodeSeek Max 设置", exact: true }).click();
+		const host = page.locator("#nspp-settings");
+		await host.getByRole("tab", { name: "关于" }).click();
+		const line = host.locator(".about-preload");
+		return { text: await line.innerText(), miss: await line.evaluate((element) => element.hasAttribute("data-miss")), sessionLeft: await page.evaluate(() => JSON.parse(sessionStorage.getItem("nsmax:prefetched")).length) };
+	};
+	const miss = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), init: seed(""), viewport: { width: 1440, height: 900 } });
+	try {
+		const state = await about(miss.page);
+		assert.match(state.text, /最近点开的 3 个页面一个都没用上/);
+		assert.match(state.text, /预加载网页/);
+		assert.equal(state.miss, true, "没用上时用提醒色");
+		assert.equal(state.sessionLeft, 0, "用过的预取记录删掉，刷新不重复算");
+		assert.deepEqual(miss.errors, []);
+	} finally { await miss.context.close(); }
+	const hit = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), init: seed("navigational-prefetch"), viewport: { width: 1440, height: 900 } });
+	try {
+		const state = await about(hit.page);
+		assert.match(state.text, /最近点开的 3 个页面里，1 个是鼠标停上去时就提前下载好的/);
+		assert.equal(state.miss, false);
+		assert.deepEqual(hit.errors, []);
+	} finally { await hit.context.close(); }
+});
+
+test("v1.8.44 新标签页也能统计预取复用；无统计 API、过期或损坏的记录不误报", async () => {
+	for (const kind of ["shared", "unsupported", "expired", "malformed"]) {
+		const init = `(() => {
+			if (window.top !== window) return;
+			localStorage.setItem("nsmax:prefetched", ${JSON.stringify(kind === "malformed" ? '{"invalid":true}' : "")} || JSON.stringify([{href:location.href,at:Date.now()${kind === "expired" ? "-6e5" : ""}}]));
+			localStorage.setItem("nsmax:prefetch-stats", JSON.stringify({recent:[0,0]}));
+			const get = Performance.prototype.getEntriesByType;
+			Performance.prototype.getEntriesByType = function(type) {
+				const list = get.call(this,type);
+				return type === "navigation" && list[0] ? [new Proxy(list[0], {get:(target,key) => key === "deliveryType" ? ${kind === "unsupported" ? "undefined" : '"navigational-prefetch"'} : Reflect.get(target,key)})] : list;
+			};
+		})();`;
+		const {context,page,errors} = await open(browser,"https://www.nodeseek.com/post-1000-1",{html:postPage(),init});
+		try {
+			await page.waitForFunction(() => performance.getEntriesByName("nsmax:primary-ready").length > 0);
+			const recent = await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:prefetch-stats")).recent);
+			assert.deepEqual(recent,kind === "shared" ? [0,0,1] : [0,0],kind);
+			if (kind === "shared") assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:prefetched")).length),0);
+			assert.deepEqual(errors,[]);
+		} finally {await context.close();}
+	}
+});
