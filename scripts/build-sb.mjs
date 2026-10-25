@@ -185,6 +185,95 @@ ast.walkRules(rule => {
   if (!rule.selector.includes(":is(")) return;
   rule.selector = optimize.nsmaxSplitTop(rule.selector, c=>c===",").flatMap(part=>optimize.nsmaxExpandSelector(part.trim()) || [part.trim()]).join(",");
 });
+// 祖先位置的多参数 :is() 拆开（2026-10-24）：浏览器给每个元素配规则时，先用「祖先里有没有这些类名 / ID / 标签」的布隆过滤器快速排除，
+// 写在祖先位置的 :is(A, B, C) 它不认识，只能每个元素都往上一层层对（真站首页 192 条这样的规则占了选择器匹配时间的四分之一）。
+// 拆成 A…、B…、C… 几条以后每条都能被快速排除。只在完全等价时拆：
+//   - 这一段（两个组合符之间）整个就是 :is(…)：选项是复合选择器时直接替换；选项带组合符（#nsk-body-left article.post-content）时
+//     只有前面就是开头的 html… 一段加后代空格才等价（html 是所有元素的祖先）；
+//   - 拆出来的每一条都补回原来的特异度（:is 取选项里最大的；垫片 :is(…, *) 接在最右边一段、伪元素前面，什么都匹配、只加特异度），
+//     补不平（某一项得减）就整条不拆；第一段（html… 和特异度垫片）、带 * 的 :is（垫片）、:where 都不动；拆出来超过 8 条不拆
+function selectorTokens(selector) {
+  const parts = [];
+  let depth = 0, quote = "", buf = "";
+  for (let i = 0; i < selector.length; i++) {
+    const c = selector[i];
+    if (quote) { buf += c; if (c === "\\") buf += selector[++i] ?? ""; else if (c === quote) quote = ""; continue; }
+    if (c === "\"" || c === "'") { quote = c; buf += c; continue; }
+    if (c === "\\") { buf += c + (selector[++i] ?? ""); continue; }
+    if (c === "(" || c === "[") depth++;
+    if (c === ")" || c === "]") depth--;
+    if (depth === 0 && /[\s>+~]/.test(c)) {
+      let j = i, comb = " ";
+      while (j < selector.length && /\s/.test(selector[j])) j++;
+      if (/[>+~]/.test(selector[j])) { comb = selector[j]; j++; while (j < selector.length && /\s/.test(selector[j])) j++; }
+      if (buf) { parts.push(buf, comb); buf = ""; }
+      else if (parts.length && comb !== " ") parts[parts.length - 1] = comb;
+      i = j - 1;
+      continue;
+    }
+    buf += c;
+  }
+  if (buf) parts.push(buf);
+  return parts;
+}
+const joinSelectorTokens = (parts) => parts.map((part, i) => i % 2 ? (part === " " ? " " : part) : part).join("");
+function wholeIsArgs(compound) {
+  if (!compound.startsWith(":is(")) return null;
+  let depth = 0;
+  for (let i = 3; i < compound.length; i++) {
+    if (compound[i] === "(") depth++;
+    else if (compound[i] === ")" && --depth === 0) return i === compound.length - 1 ? compound.slice(4, i) : null;
+  }
+  return null;
+}
+function expandAncestorIs(selector) {
+  const parts = selectorTokens(selector);
+  if (parts.length < 3) return null;
+  // 最右边一段带类名 / ID / 属性的：浏览器本来就只拿带这个类名（ID、属性）的少数元素来试，拆了几乎没用，只多出规则；
+  // 只拆最右边是标签（a、svg、li…）或通配的——这些要拿页面上每个同名标签（或每个元素）试一遍
+  if (/[.#[]/.test(optimize.nsmaxStripParens(parts[parts.length - 1]))) return null;
+  const total = optimize.nsmaxSpecificity(selector);
+  let variants = [parts];
+  let changed = false;
+  for (let k = 2; k < parts.length - 1; k += 2) {
+    const inner = wholeIsArgs(parts[k]);
+    if (inner === null) continue;
+    const args = optimize.nsmaxSplitTop(inner, c => c === ",").map(arg => arg.trim());
+    if (args.length < 2 || args.some(arg => !arg || arg === "*" || /^[>+~]/.test(arg) || arg.includes("&") || /nsmax-(?:s|u|lv|b|c|a)\b/.test(arg))) continue;
+    const complex = args.some(arg => selectorTokens(arg).length > 1);
+    if (complex && !(k === 2 && /^html(?=[[:.#]|$)/.test(parts[0]) && parts[1] === " ")) continue;
+    const next = [];
+    for (const variant of variants) for (const arg of args) {
+      const copy = variant.slice();
+      copy[k] = arg;
+      next.push(copy);
+    }
+    if (next.length > 8) return null;
+    variants = next;
+    changed = true;
+  }
+  if (!changed) return null;
+  const out = [];
+  for (const variant of variants) {
+    const spec = optimize.nsmaxSpecificity(joinSelectorTokens(variant));
+    const pad = [total[0] - spec[0], total[1] - spec[1], total[2] - spec[2]];
+    if (pad.some(n => n < 0)) return null;
+    if (pad.some(n => n > 0)) {
+      const last = variant.length - 1;
+      const at = variant[last].search(/::|:(?:before|after|first-line|first-letter)(?![\w-])/);
+      const padText = optimize.nsmaxSpecificityPad(pad);
+      variant[last] = at >= 0 ? variant[last].slice(0, at) + padText + variant[last].slice(at) : variant[last] + padText;
+    }
+    const text = joinSelectorTokens(variant);
+    if (optimize.nsmaxSpecificity(text).join() !== total.join()) return null;
+    out.push(text);
+  }
+  return out;
+}
+ast.walkRules(rule => {
+  if (!rule.selector.includes(":is(")) return;
+  rule.selector = optimize.nsmaxSplitTop(rule.selector, c => c === ",").flatMap(part => expandAncestorIs(part.trim()) || [part.trim()]).join(",");
+});
 // 三个相同的 :is() 合为一个，匹配范围仍为 :root 或同一 ID，
 // 参数里重复三次 ID 保持原来的三份 ID 特异度；不改变层叠顺序。
 ast.walkRules(rule => {

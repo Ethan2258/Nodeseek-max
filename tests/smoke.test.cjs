@@ -445,7 +445,7 @@ test("版本和生成产物同步", () => {
 	const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 	assert.equal(source.match(/@version\s+(\S+)/)[1], packageJson.version);
 	assert.equal(meta.match(/@version\s+(\S+)/)[1], packageJson.version);
-	assert.equal(packageJson.version, "1.8.40");
+	assert.equal(packageJson.version, "1.8.41");
 });
 
 test("真实私信：灰色硬编码被覆盖、计数固定高度、图片不撑破页面",async()=>{
@@ -6849,10 +6849,18 @@ test("2026-10-24 简洁模式照 sb.sb：没有楼中楼，回复一层一层按
 
 test("2026-10-24 等级进度（/progress）照 sb.sb「我的烧饼」：第一帧就是卡片（数字先是「—」），站点画好以后读数——鸡腿、等级、升级进度（满级封顶、写「已是最高等级」）、今日四项小进度条；站点自己那块（橙红标题、黄条）不显示；资料卡的等级小标签链到这里", async () => {
 	for (const dark of [false, true]) {
-		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/progress", { html: progressPage({ dark, delay: 800 }), viewport: { width: 1440, height: 900 }, colorScheme: dark ? "dark" : "light" });
+		// 站点把 #progress-mount 换成画好的内容那一刻，在页面里记下卡片的样子（以前等卡片出现后再去看占位，全量跑时页面慢，0.8 秒的占位已经换掉了，偶尔失败）
+		const init = `(() => {
+			const replaceWith = Element.prototype.replaceWith;
+			Element.prototype.replaceWith = function (...args) {
+				if (this.id === "progress-mount" && !window.__progressBefore) window.__progressBefore = { coin: document.querySelector('.nsmax-progress [data-key="coin"] .nsmax-progress-counter-value')?.textContent ?? null, mount: true };
+				return replaceWith.apply(this, args);
+			};
+		})();`;
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/progress", { html: progressPage({ dark, delay: 800 }), init, viewport: { width: 1440, height: 900 }, colorScheme: dark ? "dark" : "light" });
 		try {
-			await page.waitForSelector(".nsmax-progress");
-			const early = await page.evaluate(() => ({ coin: document.querySelector('.nsmax-progress [data-key="coin"] .nsmax-progress-counter-value').textContent, mount: !!document.querySelector("#progress-mount") }));
+			await page.waitForFunction(() => window.__progressBefore);
+			const early = await page.evaluate(() => window.__progressBefore);
 			assert.deepEqual(early, { coin: "—", mount: true }, "站点还没画出来时卡片已经在了");
 			await page.waitForSelector(".nsmax-progress[data-ready]", { timeout: 5e3 });
 			const state = await page.evaluate(() => {
@@ -7072,6 +7080,36 @@ test("v1.8.40 页面切换动画的伪元素规则都写上 html（不写的话�
 		assert.deepEqual(transitions.filter((s) => s.split(",").some((part) => !/^\s*html::view-transition/.test(part))), [], "都以 html 开头");
 		assert.deepEqual(selectors.filter((s) => /\.post-info \*?::(before|after)\s*$/.test(s) || /\.post-info \*::(before|after)/.test(s)), [], "列表信息行没有 *::before / *::after");
 		assert.deepEqual(selectors.filter((s) => /nsmax-tabs-container/.test(s)), [], "没有给 .tabs / .tabset 的旧规则");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.8.41 普通列表页查抽奖帖让着头像和图片：页面加载完先等 3 秒才开始，用户在滚动时停一停，停下来再接着查", async () => {
+	const titles = ["抽奖送 VPS 一台", "抽 3 个鸡腿红包", "新人抽奖 送年付小鸡", "抽奖：签到领鸡腿", "抽奖抽两个 Plus", "抽奖 送 Netcup"];
+	const html = listPage({ count: 40 }).replace(/(<div role="heading" aria-level="3" class="post-title"><a href="\/post-(\d+)-1"[^>]*>)[^<]*/g, (match, head, id) => head + (titles[Number(id) - 1000] ?? `普通帖子 ${id}`));
+	const pages = Object.fromEntries(titles.map((_, i) => [`/post-${1000 + i}-1`, postPage()]));
+	const started = [];
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, seed: NO_PREVIEW, viewport: { width: 1440, height: 700 }, pages, beforeNavigate: (p) => p.on("request", (request) => { if (/^\/post-10\d\d-1$/.test(new URL(request.url()).pathname)) started.push(Date.now()); }) });
+	try {
+		await page.waitForLoadState("load");
+		const loadedAt = Date.now();
+		await wait(page, 2500);
+		assert.equal(started.length, 0, "页面加载完 2.5 秒内一篇都没查");
+		await page.waitForFunction(() => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= 1; } catch { return false; } }, null, { timeout: 15000 });
+		assert.ok(started[0] - loadedAt >= 2900, `加载完约 3 秒后才开始：${started[0] - loadedAt}ms`);
+		// 一直在滚：滚动期间不再开新的查询（滚之前已经发出去的那一篇照常回来）
+		await page.mouse.move(700, 400);
+		const before = started.length;
+		const scrollUntil = Date.now() + 2500;
+		while (Date.now() < scrollUntil) {
+			await page.mouse.wheel(0, 60);
+			await wait(page, 120);
+			await page.mouse.wheel(0, -60);
+			await wait(page, 120);
+		}
+		assert.ok(started.length - before <= 1, `滚动的 2.5 秒里最多一篇（发出去的那一篇）：${started.length - before}`);
+		// 停下来以后接着查完
+		await page.waitForFunction((n) => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= n; } catch { return false; } }, titles.length, { timeout: 20000 });
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

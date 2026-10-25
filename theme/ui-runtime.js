@@ -746,12 +746,32 @@
 		}
 		nsmaxMarkSpecialChecked(id);
 	}
+	// 页面在滚动（最近 1.5 秒内滚过）时先不发后台请求：滚动时新露出来的头像、图片正在下，等停下来再说
+	var nsmaxLastScrollAt = 0;
+	function nsmaxScrollQuiet(ms = 1500) {
+		if (!nsmaxScrollQuiet.bound) {
+			nsmaxScrollQuiet.bound = true;
+			addEventListener("scroll", () => { nsmaxLastScrollAt = performance.now(); }, { passive: true, capture: true });
+		}
+		return new Promise((resolve) => {
+			const check = () => {
+				const wait = nsmaxLastScrollAt + ms - performance.now();
+				if (wait <= 0) resolve();
+				else setTimeout(check, wait);
+			};
+			check();
+		});
+	}
 	async function nsmaxRunSpecialQueue(ctx) {
 		if (nsmaxSpecialBusy || !nsmaxSpecialQueue.length) return;
 		nsmaxSpecialBusy = true;
 		// 等页面自己加载完（图片、站点脚本）、主线程空下来再开始查；一篇查完再查下一篇（请求队列里后台请求同时只走一个、
 		// 前后隔开，见 NSMAX_BG_SPACING）。2026-10-24：以前三篇一起、间隔 0.15 秒，和页面自己的图片抢网速
 		await nsmaxPageLoaded();
+		// 普通列表页再多等 3 秒、滚动时停一停（2026-10-24 反馈「加载慢、图片慢」）：站点慢的时候一张头像要一秒多，
+		// 刚打开页面那几秒、往下翻的时候，网让给头像和图片。「抽奖」分类页不等（那里的行要查完才显示）
+		const quiet = !nsmaxIsLotteryView();
+		if (quiet) await new Promise((resolve) => setTimeout(resolve, 3000));
 		await new Promise((resolve) => typeof requestIdleCallback === "function" ? requestIdleCallback(resolve, { timeout: 2000 }) : setTimeout(resolve, 200));
 		try {
 			while (nsmaxSpecialQueue.length && !ctx.signal.aborted && !nsmaxBackgroundPaused()) {
@@ -759,6 +779,7 @@
 					await new Promise((resolve) => document.addEventListener("visibilitychange", resolve, { once: true }));
 					continue;
 				}
+				if (quiet) await nsmaxScrollQuiet();
 				await nsmaxCheckSpecialPost(ctx, nsmaxSpecialQueue.shift());
 				nsmaxLotteryRefresh();
 			}
