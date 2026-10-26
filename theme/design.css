@@ -3215,7 +3215,7 @@ html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-sep {
   margin: 0 2px !important;
   background: var(--line) !important;
 }
-/* 输入区：深一级细线、面板底、7px 10px、14px、最少 150px；内层为直角，聚焦时黄色边框与内容边缘对齐。 */
+/* 输入区：圆角外框负责边线和焦点，内部文字绘制区保持直角，避免选区色块的角被一并裁圆。 */
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface {
   position: relative !important;
   margin: 0 !important;
@@ -3238,7 +3238,7 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pan
   margin: 0 !important;
   padding: 7px 10px !important;
   border: 1px solid var(--line-strong) !important;
-  border-radius: 0 !important;
+  border-radius: var(--r-input) !important;
   background: var(--panel) !important;
   box-shadow: none !important;
   color: var(--text) !important;
@@ -3275,11 +3275,21 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pan
 }
 /* 发帖模板在外框里还包了一层原生 textarea；文字留白由外框提供，内层不再重复加圆角和内边距。 */
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] textarea:not(.CodeMirror textarea):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
   border-radius: 0 !important;
   padding: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;
   resize: none !important;
+  background: transparent !important;
+  line-height: inherit !important;
+  overflow-y: auto !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-preview {
   border: 1px solid var(--line) !important;
@@ -9638,6 +9648,9 @@ html[data-nsmax-theme] #nsk-body-left article.post-content .vote-panel form > di
    倒计时条（.lottery-countdown：面板底细线框，数字 19px/600 等宽、单位 11.5px；一小时内品牌浅底，五分钟内红色浅底），
    开奖时间 / 中奖人数 / 起始楼层（12.5px 弱化字），「查看开奖」墨色实底按钮 + 「回复参与」细线框按钮 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery:is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   margin: 12px 0 !important;
   padding: 14px 16px !important;
   border: 1px solid var(--line) !important;
@@ -9688,6 +9701,8 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-clock:is(#nsmax-lv, *) {
   display: flex !important;
+  flex-wrap: wrap !important;
+  min-width: 0 !important;
   align-items: baseline !important;
   gap: 8px !important;
   color: var(--text-strong) !important;
@@ -9742,10 +9757,14 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   border-collapse: collapse !important;
   border-radius: 0 !important;
   background: transparent !important;
-  table-layout: auto !important;
+  table-layout: fixed !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
   overflow: visible !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) table.nsmax-lottery-table :is(th, td):is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
   padding: 8px 12px !important;
   border: 0 !important;
   border-bottom: 1px solid var(--line-soft) !important;
@@ -9756,14 +9775,19 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   line-height: 1.5 !important;
   text-align: left !important;
   white-space: normal !important;
+  overflow-wrap: anywhere !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) table.nsmax-lottery-table th:is(#nsmax-lv, *) {
   color: var(--text-muted) !important;
   font-size: 12.5px !important;
 }
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) table.nsmax-lottery-table :is(th, td):is(:nth-child(2), :nth-child(3)):is(#nsmax-lv, *) {
-  width: 1% !important;
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) table.nsmax-lottery-table :is(th, td):nth-child(2):is(#nsmax-lv, *) {
+  width: 4em !important;
   white-space: nowrap !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) table.nsmax-lottery-table :is(th, td):nth-child(3):is(#nsmax-lv, *) {
+  width: 5.5em !important;
+  white-space: normal !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) table.nsmax-lottery-table tbody tr:last-child td:is(#nsmax-lv, *) {
   border-bottom: 0 !important;
@@ -12249,6 +12273,9 @@ html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-check > input:is(#nsmax-
 }
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-preview:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin: 6px 0 0 !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-error:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin: 10px 0 0 !important;
@@ -12423,7 +12450,8 @@ html[data-nsmax-theme] dialog.nsmax-lucky-dialog:is(#nsmax-lv, *):is(#nsmax-b, *
 }
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-dialog-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 320px !important;
+  min-width: 0 !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 320px) !important;
   align-items: start !important;
   gap: 0 24px !important;
   padding: 18px 20px !important;
@@ -12438,6 +12466,7 @@ html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-side:is(#nsmax-lv, *):is
   flex-direction: column !important;
   gap: 8px !important;
   min-width: 0 !important;
+  max-width: 100% !important;
 }
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-side > .nsmax-lucky-intro:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   margin: 2px 0 0 !important;
@@ -12502,6 +12531,9 @@ html[data-nsmax-theme] .nsmax-lucky-side .nsmax-lottery[data-nsmax-preview] .nsm
   }
   html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-side:is(#nsmax-lv, *):is(#nsmax-b, *) {
     position: static !important;
+  }
+  html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) table.nsmax-lottery-table :is(th, td):is(#nsmax-lv, *) {
+    padding: 6px !important;
   }
 }
 /* 管理记录：说明一行小字，下面一条一块；空的时候一句居中的话；脚栏左边是查到哪儿了，右边按钮 */
@@ -14231,7 +14263,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions 
 /* 回复框照 sb.sb .reply-panel 再量一遍（2026-10-24，用户：比例、圆角、拖动角、选中颜色、光标都和 sb.sb 不一样）：
    - 间距：工具按钮下面 8px 是输入框（sb.sb .grid 里按钮、输入框之间 8px）；输入框下面 22px 是发送按钮（sb.sb .grid 外边距 14px，
      加上 textarea 是行内块、底下多出约 8px 行高）；按钮下面 16px（sb.sb .reply-panel form 14px 16px 16px）。以前三处都是 14px；
-   - 编辑输入区常态和聚焦统一直角，避免选中文本与黄色边框之间出现圆弧缺口；
+   - 外框常态 8px、聚焦 6px；内部选区绘制层独立使用直角；
    - 右下角拖动角画成原生 textarea 的样子：两道短斜线贴着右下角、次级文字色、不透明（以前两道长斜纹、半透明，看着发虚）；
    - Markdown 编辑器（CodeMirror）里选中的底色用 --selection-editor（浅色亮黄、深色暗金，sb.sb .CodeMirror-selected），
      以前是 --selection：深色下亮黄底配浅色字，选中的字看不清；
@@ -14249,7 +14281,7 @@ html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .submit-row:is(#nsma
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane]:focus-within:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  border-radius: 0 !important;
+  border-radius: var(--r-sm) !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-resize:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   right: 2px !important;
@@ -14267,6 +14299,8 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-resize:i
 }
 html[data-nsmax-theme] .md-editor .CodeMirror-selected:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   background: var(--selection-editor) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 html[data-nsmax-theme] .md-editor .CodeMirror-cursor:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   height: 1.2em !important;

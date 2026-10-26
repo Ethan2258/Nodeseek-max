@@ -24,6 +24,7 @@ Linux 安装浏览器系统依赖时可用 `npx playwright install --with-deps c
 | theme/ui-runtime.js | 主题界面整理、编辑器和手机侧栏逻辑；对应脚本中的 SB_RUNTIME 块 |
 | theme/design.css | 最后覆盖的主题规则，包含响应式适配 |
 | theme/mobile.css | iPhone 触屏、手机菜单与 Safari 适配，按顺序接在设计层后构建 |
+| theme/sb-mobile-reference.json | 实测 sb.sb 圆角手机版的样式来源、尺寸、圆角与适配差异 |
 | theme/sb-adapter.css | 原站结构与主题之间的适配 |
 | theme/messages.css / settings.css | 消息中心、设置面板样式 |
 | theme/source.js | 主题基底及构建维护的样式内容；仅修改基底时直接编辑，构建更新的部分保留生成结果 |
@@ -56,6 +57,7 @@ check 验证版本、锁文件、本地文档链接、脚本语法、主题构�
 | npm run test:settings | 设置操作、持久化、开关与输入校验 |
 | npm run test:mobile | Chromium / WebKit 的 iPhone 触屏布局与操作 |
 | npm run test:userscripts | 异步 GM API、失败重试、隔离世界编辑与原生回退 |
+| npm run test:lottery | 长网址预览、表格边界与开奖链接参数 |
 
 设置 `NSMAX_SCRIPT_PATH` 可用同一套测试验证压缩文件。CI 将源码和压缩产物放在两个并行任务中，二者都成功后，统一 test 检查才通过。
 

@@ -12,12 +12,30 @@ for(const engine of engines) {
  let browser;
  test.before(async()=>{if(!browser)browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
- test(`${engine} iPhone 侧栏：两列导航与当前版块，大按钮，脚本设置入口可用`,async()=>{
+ test(`${engine} 手机圆角设计：52px 顶栏、12px 卡片、紧凑视觉与完整触控区`,async()=>{
+  for(const [kind,url,render] of [["list","/",P.listPage],["post","/post-1000-1",P.postPage],["new","/new-discussion",P.newPostPage],["space","/space/10",P.nativeSpacePage],["fans","/fans?type=follow",P.fansPage],["notification","/notification",P.notificationPage],["talk","/notification#/message?mode=talk&to=10",P.nativeTalkPage],["signin","/signIn.html",P.signInPage]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...mobile(),html:render({mobile:true})});
+   try{await ready(page);const layout=await page.evaluate(()=>{const h=document.getElementById("nsk-head"),s=getComputedStyle(h);return{height:h.getBoundingClientRect().height,position:s.position,overflow:document.documentElement.scrollWidth>innerWidth+1,radius:getComputedStyle(document.body).getPropertyValue("--r").trim(),fields:[...document.querySelectorAll("input:not([type=checkbox]):not([type=radio]),select,textarea")].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=="hidden").map(e=>parseFloat(getComputedStyle(e).fontSize))};});assert.equal(layout.height,52,kind);assert.equal(layout.position,"fixed",kind);assert.equal(layout.overflow,false,kind);assert.equal(layout.radius,"12px",kind);assert.ok(layout.fields.every(size=>size>=16),JSON.stringify({kind,layout}));
+    if(kind==="list"){assert.equal(await page.locator(".post-title>a").first().evaluate(e=>getComputedStyle(e).fontSize),"15px");const a=await page.locator(".post-list-item>a:first-child img").first().boundingBox();assert.equal(a.width,24);assert.equal(await page.locator(".post-list-controler").evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"12px");assert.equal(await page.locator("#nsk-head .nsmax-header-action").last().evaluate(e=>getComputedStyle(e,"::before").borderTopWidth),"1px");}
+    if(kind==="post"){assert.equal(await page.locator(".nsk-post h1").evaluate(e=>getComputedStyle(e).fontSize),"19px");assert.equal((await page.locator(".nsmax-author-col img").first().boundingBox()).width,40);assert.equal(await page.locator(".nsmax-editor-surface>[data-nsmax-editor-pane]").evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"8px");}
+    if(kind==="new"){const aligned=await page.evaluate(()=>{const title=document.querySelector(".title-input input").getBoundingClientRect(),surface=document.querySelector(".nsmax-editor-surface").getBoundingClientRect();return Math.abs(title.left-surface.left)<2;});assert.equal(aligned,true,"标题与编辑区采用同一条左边线");}
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 手机隐藏入口：原关键词按钮可用，切换宽屏与手机不丢功能`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(375),html:P.listPage({mobile:true,count:30})});
+  try{await ready(page);const button=page.locator(".post-list-controler .nsmax-mobile-filter");await button.tap();const pop=page.locator('.nsmax-pop[data-kind=keywords]');await pop.getByRole("textbox",{name:"要屏蔽的关键词",exact:true}).fill("香港");await pop.getByRole("button",{name:"添加",exact:true}).click();await page.waitForFunction(()=>getComputedStyle(document.querySelector(".post-list-item")).display==="none");await page.keyboard.press("Escape");
+   await page.setViewportSize({width:1100,height:900});await page.waitForFunction(()=>document.querySelector('#nsk-head [data-nsmax-own-header=keywords]')&&!document.documentElement.hasAttribute("data-nsmax-touch"));
+   await page.setViewportSize({width:375,height:844});await page.waitForSelector(".post-list-controler .nsmax-mobile-filter");await button.tap();assert.equal(await pop.isVisible(),true);assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} iPhone 侧栏：单列文字导航与当前版块，大触控区，脚本设置入口可用`,async()=>{
   for(const guest of [false,true]) {
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/categories/tech",{...mobile(320),html:P.listPage({mobile:true,guest})});
    try {await ready(page);await page.getByRole("button",{name:"打开菜单",exact:true}).tap();const drawer=page.locator("#left-slide-panel");
-    const layout=await drawer.evaluate(el=>({overflow:el.scrollWidth>el.clientWidth+1,columns:getComputedStyle(el.querySelector(".category-mobile > div")).gridTemplateColumns.split(" ").length,small:[...el.querySelectorAll(".nsmax-account-menu > a,.nsmax-account-compose,.welcome-new a.btn,.category-mobile a")].filter(a=>a.getClientRects().length&&a.getBoundingClientRect().height<43).map(a=>a.textContent)}));
-    assert.equal(layout.overflow,false);assert.equal(layout.columns,2);assert.deepEqual(layout.small,[]);
+    const layout=await drawer.evaluate(el=>({overflow:el.scrollWidth>el.clientWidth+1,display:getComputedStyle(el.querySelector(".category-mobile > div")).display,small:[...el.querySelectorAll(".nsmax-account-menu > a,.nsmax-account-compose,.welcome-new a.btn,.category-mobile a")].filter(a=>a.getClientRects().length&&a.getBoundingClientRect().height<43).map(a=>a.textContent)}));
+    assert.equal(layout.overflow,false);assert.equal(layout.display,"block");assert.deepEqual(layout.small,[]);
     assert.equal(await drawer.locator('a[href="/categories/tech"]').getAttribute("aria-current"),"page");
     assert.equal(await drawer.locator('a[href="/"]').count(),1);
     await drawer.getByRole("button",{name:"脚本设置",exact:true}).tap();assert.equal(await drawer.getAttribute("aria-modal"),"false");
@@ -67,7 +85,8 @@ for(const engine of engines) {
    await ready(page);
    const sizes=await page.evaluate(()=>({touch:matchMedia("(pointer: coarse)").matches,body:parseFloat(getComputedStyle(document.querySelector(".nsk-post article.post-content")).fontSize),input:parseFloat(getComputedStyle(document.querySelector(".md-editor textarea")).fontSize),buttons:[...document.querySelectorAll("#nsk-head > .nsmax-header-action,.nsmax-editor-controls button,.nsmax-op-actions a,.nsmax-owner-only,.nsmax-layout-toggle,.nsmax-jump-reply,.nsmax-code>[data-nspp-copy]")].filter(e=>e.getClientRects().length).map(e=>({name:e.getAttribute("aria-label")||e.textContent.trim(),height:e.getBoundingClientRect().height})),rows:[...document.querySelectorAll(".nsmax-editor-controls button")].map(e=>Math.round(e.getBoundingClientRect().top)),clipped:[...document.querySelectorAll(".nsmax-editor-controls button")].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.textContent),overflow:document.documentElement.scrollWidth>innerWidth+1}));
    assert.equal(sizes.touch,true);assert.ok(sizes.body>=16,JSON.stringify(sizes));assert.ok(sizes.input>=16);
-   assert.equal(await page.locator(".md-editor .nsmax-editor-surface > textarea").evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"0px");
+   assert.equal(await page.locator(".md-editor .nsmax-editor-surface > [data-nsmax-editor-pane]").evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"8px");
+   assert.equal(await page.locator(".md-editor .nsmax-editor-surface textarea:not(.CodeMirror textarea)").evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"0px");
    assert.ok(sizes.buttons.every(b=>b.height>=43),JSON.stringify(sizes.buttons));
    assert.equal(new Set(sizes.rows).size,1,"工具栏不再换成两行");assert.deepEqual(sizes.clipped,[],"工具文字不会挤到相邻按钮上");assert.equal(sizes.overflow,false);assert.deepEqual(errors,[]);
   } finally {await context.close();}
@@ -78,7 +97,7 @@ for(const engine of engines) {
   try {
    await ready(page);
    const input=page.locator("#search-site2");
-   assert.equal(await input.evaluate(e=>getComputedStyle(e,"::placeholder").opacity),"0","收起时只有搜索图标，没有半截文字");
+   assert.equal(await input.evaluate(e=>getComputedStyle(e,"::placeholder").opacity),"1","像参照站一样保留紧凑搜索输入");
    await input.tap();
    assert.ok((await input.boundingBox()).width>=280);
    assert.ok(await input.evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=16));
@@ -123,13 +142,13 @@ for(const engine of engines) {
    assert.equal(await page.locator('script[type="speculationrules"]').count(),0);assert.deepEqual(errors,[]);
   } finally {await context.close();}
  });
- test(`${engine} iPhone：列表收起次要元信息，点整行空白也能进入帖子`,async()=>{
+ test(`${engine} iPhone：列表按参照站显示元信息，点整行空白也能进入帖子`,async()=>{
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true}),pages:{"/post-1000-1":P.postPage({mobile:true})}});
   try {
    await ready(page);const row=page.locator("ul.post-list > li.post-list-item").first();
    const fonts=await page.evaluate(()=>{const root=document.documentElement,old=root.getAttribute('data-nsmax-size');const sizes=['standard','large','xlarge'].map(size=>{root.setAttribute('data-nsmax-size',size);return parseFloat(getComputedStyle(document.querySelector('.post-title > a')).fontSize);});root.setAttribute('data-nsmax-size',old);return sizes;});
    assert.deepEqual(fonts,[15,17,18],'手机列表的标准、大、特大字号均真实生效');
-   assert.equal(await row.locator(".info-last-commenter").isVisible(),false);assert.equal(await row.locator(".info-views").isVisible(),false);
+   assert.equal(await row.locator(".info-last-commenter").isVisible(),true);assert.equal(await row.locator(".info-views").isVisible(),true);
    const r=await row.boundingBox();await page.touchscreen.tap(r.x+r.width-5,r.y+r.height-5);await page.waitForURL(/\/post-1000-1$/);assert.deepEqual(errors,[]);
   } finally {await context.close();}
  });

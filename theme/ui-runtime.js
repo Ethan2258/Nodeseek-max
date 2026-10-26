@@ -1242,6 +1242,13 @@
 			duplicate: url.searchParams.get("duplicate") === "true"
 		};
 	}
+	function nsmaxLuckyViewHref(href) {
+		const params = nsmaxLuckyParams(href);
+		if (!params) return href;
+		params.url.searchParams.delete("mode");
+		params.url.searchParams.append("mode", "view");
+		return params.url.href;
+	}
 	function nsmaxLotteryTimeOf(op) {
 		for (const link of op.querySelectorAll('a[href*="/lucky?"]')) {
 			const params = nsmaxLuckyParams(link.getAttribute("href") || "");
@@ -1310,7 +1317,7 @@
 		}
 		nsmaxLuckyFinishing = true;
 		try { localStorage.removeItem(NSMAX_LUCKY_PENDING); } catch {}
-		const url = `${location.origin}/lucky?post=${postId}&time=${pending.time}&count=${pending.count}&start=${pending.start}&duplicate=${pending.duplicate ? "true" : "false"}`;
+		const url = nsmaxLuckyViewHref(`${location.origin}/lucky?post=${postId}&time=${pending.time}&count=${pending.count}&start=${pending.start}&duplicate=${pending.duplicate ? "true" : "false"}`);
 		const line = `- **开奖链接**：[查看开奖](${url})`;
 		const content = /- \*\*开奖链接\*\*：发布后自动生成/.test(markdown) ? markdown.replace(/- \*\*开奖链接\*\*：发布后自动生成/, line) : `${markdown.replace(/\s+$/, "")}${String.fromCharCode(10, 10)}${line}`;
 		const token = Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -1450,7 +1457,7 @@
 			join.disabled = true;
 			view.setAttribute("aria-disabled", "true");
 		} else {
-			view.href = href;
+			view.href = nsmaxLuckyViewHref(href);
 			view.target = "_blank";
 			view.rel = "noopener";
 		}
@@ -4910,6 +4917,10 @@ function nsmaxTagStructure() {
 					panel.append(host);
 				}
 				head.after(tabs); drawerView("navigation");
+				const boards = panel.querySelector(":scope > .category-mobile");
+				if (boards) tabs.after(boards);
+				const account = panel.querySelector(":scope > .user-card-container");
+				if (account) { const title = document.createElement("h2"); title.className = "nsmax-drawer-section-title"; title.textContent = "我的菜单"; account.prepend(title); }
 				const category = panel.querySelector(".category-mobile > div");
 				if (category && !category.querySelector('a[href="/"]')) { const all = document.createElement("a"); all.href = "/"; const text = document.createElement("p"); text.textContent = "全部帖子"; all.append(text); category.prepend(all); }
 				const tools = document.createElement("div"); tools.className = "nsmax-drawer-tools";
@@ -4947,9 +4958,14 @@ function nsmaxTagStructure() {
 			for (const row of document.querySelectorAll("ul.post-list > li.post-list-item:not(.topic-carousel-item)")) if (!bound.has(row)) { bound.add(row); row.addEventListener("click", openRow, { signal: ctx.signal }); }
 			for (const image of document.querySelectorAll("#nsk-body-left article.post-content img")) if (!bound.has(image)) { bound.add(image); image.addEventListener("click", () => {}, { signal: ctx.signal }); }
 			const input = document.getElementById("search-site2"), form = input?.closest("form");
+			for (const link of document.querySelectorAll("body > header > ul.mobile-nav a[href]")) {
+				const path = new URL(link.href, location.href).pathname;
+				if (path === location.pathname || path !== "/" && location.pathname.startsWith(path + "/")) nsmaxSetAttr(link, "aria-current", "page");
+				else nsmaxDropAttr(link, "aria-current");
+			}
 			if (!form || bound.has(form)) return;
 			bound.add(form);
-			input.enterKeyHint = "search"; input.autocapitalize = "none"; input.setAttribute("aria-label", "搜索帖子或用户");
+			input.enterKeyHint = "search"; input.autocapitalize = "none"; input.setAttribute("aria-label", "搜索帖子或用户"); input.placeholder = "搜索";
 			const close = document.createElement("button"); close.type = "button"; close.className = "nsmax-search-close"; close.setAttribute("aria-label", "关闭搜索"); close.append(toolIcon("close"));
 			close.addEventListener("click", () => closeSearch(true), { signal: ctx.signal }); form.append(close);
 			input.addEventListener("focus", () => { if (media.matches) root.setAttribute("data-nsmax-search-open", ""); }, { signal: ctx.signal });
@@ -4966,7 +4982,7 @@ function nsmaxTagStructure() {
 		});
 		const observe = () => { observer.disconnect(); if (media.matches) observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] }); };
 		observe();
-		media.addEventListener("change", () => { observe(); sync(); }, { signal: ctx.signal });
+		media.addEventListener("change", () => { observe(); sync(); nsmaxPlaceHeaderButtons(GM_getValue$1(SETTINGS_KEY,{})?.["content-filter"]?.enabled !== false); }, { signal: ctx.signal });
 		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
 		const stop = ctx.watch(sync);
@@ -5367,6 +5383,8 @@ function nsmaxTagStructure() {
 				const nativeInput = editor.querySelector(".CodeMirror") || input;
 				let pane = nativeInput;
 				while (pane.parentElement && pane.parentElement !== body && pane.parentElement !== editor) pane = pane.parentElement;
+				// 外框负责圆角和焦点；原生 textarea 单独保留直角绘制区，选中文字的色块不跟着外框裁成圆角。
+				if (pane === input) { const frame = document.createElement("div"); frame.className = "nsmax-native-editor-frame"; input.before(frame); frame.append(input); pane = frame; }
 				if (pane !== body && pane !== editor) { pane.setAttribute("data-nsmax-editor-pane", ""); pane.before(surface); surface.append(pane, preview); }
 				else { body.append(surface); surface.append(preview); }
 				// 挪进外框以后每行的左右内边距从 CodeMirror 自带的 4px 变成 0（主题第 34 节），可它早先量好、缓存着的光标位置还按 4px 算：

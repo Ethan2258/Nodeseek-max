@@ -1,0 +1,38 @@
+{
+  "url": "https://sb.sb/",
+  "post": "https://sb.sb/t/13428/",
+  "stylesheet": "https://sb.sb/assets/index.773be9ecce.css",
+  "sha256": "773be9ecce25b5ae864a06951eeceb668798c706ee063c9e64cec11ab4f21d23",
+  "checked": "2026-10-26",
+  "viewport": { "width": 390, "height": 844 },
+  "shape": {
+    "mode": "rounded",
+    "method": "Preview the public stylesheet's own --r-scale=1 variable without changing account preferences.",
+    "card": 12,
+    "input": 8,
+    "avatar": 6,
+    "topicAction": 8,
+    "navigation": "pill"
+  },
+  "metrics": {
+    "header": 52,
+    "pageGutter": 12,
+    "listAvatar": 24,
+    "listTitle": 15,
+    "listMetadata": 12.5,
+    "listPadding": "10px 12px",
+    "listGap": 10,
+    "postTitle": 19,
+    "authorAvatar": 40,
+    "drawerWidth": 300,
+    "drawerLink": 14.5,
+    "visibleNavigationControl": 34
+  },
+  "adaptations": [
+    "44px touch areas with smaller 28–34px visual outlines",
+    "16px form inputs to avoid automatic zoom on iPhone Safari",
+    "Preserve saved font-size choices; use 15px for an unconfigured phone",
+    "Keep the editor outer frame rounded and the internal text-selection layer rectangular",
+    "Reuse NodeSeek native actions and script settings"
+  ]
+}

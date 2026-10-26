@@ -33,7 +33,12 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Install Chromium and WebKit
-        run: npx playwright install --with-deps chromium webkit
+        run: |
+          # Azure 软件镜像曾让浏览器依赖安装持续十几分钟；使用 Ubuntu 官方 archive 源。
+          if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
+          fi
+          npx playwright install --with-deps chromium webkit
 
       - name: Fetch pinned fonts for the font cache test
         run: |

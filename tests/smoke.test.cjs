@@ -8,7 +8,7 @@ const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPa
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
 
-test("编辑输入区：回复与发帖的内层四角保持直角，聚焦和选中文字不改变几何尺寸", async () => {
+test("编辑输入区：回复框保留圆角，内部文字选区保持直角且不改变几何尺寸", async () => {
 	for (const dark of [false,true]) for (const compose of [false,true]) {
 		const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+(compose?"/new-discussion":"/post-1000-1"),{html:compose?newPostPage({dark}):postPage({dark}),colorScheme:dark?"dark":"light",viewport:{width:1440,height:900}});
 		try {
@@ -18,7 +18,7 @@ test("编辑输入区：回复与发帖的内层四角保持直角，聚焦和�
 			const read=()=>input.evaluate(e=>{const frame=e.closest("[data-nsmax-editor-pane]")||e,style=getComputedStyle(frame),inner=getComputedStyle(e),box=frame.getBoundingClientRect();return{corners:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],innerCorners:[inner.borderTopLeftRadius,inner.borderTopRightRadius,inner.borderBottomLeftRadius,inner.borderBottomRightRadius],width:box.width,height:box.height,padding:[parseFloat(style.paddingTop),parseFloat(style.paddingLeft)],color:style.borderColor};});
 			await input.evaluate(e=>e.blur());const before=await read();
 			await input.focus();await input.evaluate(e=>e.setSelectionRange(0,e.value.length));const focused=await read();
-			assert.deepEqual(before.corners,["0px","0px","0px","0px"]);assert.deepEqual(focused.corners,before.corners);
+			assert.deepEqual(before.corners,["8px","8px","8px","8px"]);assert.deepEqual(focused.corners,["6px","6px","6px","6px"]);
 			assert.deepEqual(focused.innerCorners,["0px","0px","0px","0px"]);
 			assert.equal(await input.evaluate(e=>e.closest("[data-nsmax-editor-pane]")===e||getComputedStyle(e).outlineWidth==="0px"),true,"聚焦提示只画在输入区外框，不在内层再画一圈");
 			assert.equal(focused.width,before.width);assert.equal(focused.height,before.height);assert.ok(focused.padding[0]>=7&&focused.padding[1]>=10);
@@ -4256,7 +4256,7 @@ test("第七批（2026-10-18）：一键抽奖发出去以后，新帖子里自�
 		assert.equal(body.postId, 1000);
 		assert.equal(body.title, "【抽奖】50 鸡腿");
 		assert.equal(body.rank, 0);
-		assert.ok(body.content.includes(`- **开奖链接**：[查看开奖](https://www.nodeseek.com/lucky?post=1000&time=${time}&count=3&start=1&duplicate=false)`), body.content);
+		assert.ok(body.content.includes(`- **开奖链接**：[查看开奖](https://www.nodeseek.com/lucky?post=1000&time=${time}&count=3&start=1&duplicate=false&mode=view)`), body.content);
 		assert.ok(!body.content.includes("发布后自动生成"));
 		assert.match(token, /^[0-9a-f]{16}$/, "和站点编辑器一样带一个随机的 csrf-token");
 		await reloaded;
@@ -6677,7 +6677,10 @@ test("2026-10-24 「抽奖」分类识别不再把站点刷到限流：同时只
 		await page.waitForFunction(() => document.querySelector(".nsmax-lottery-status")?.hidden === true, null, { timeout: 20e3 });
 		assert.equal(starts.length, 6, "6 篇各取一次（和帖子预览共用一份）");
 		assert.equal(most, 1, "同时只有一个请求在路上");
-		const gaps = starts.slice(1).map((at, i) => at - starts[i]);
+		// 请求节奏按浏览器实际发起时间验证，路由回调只用来检查并发和请求次数。
+		const browserStarts = await page.evaluate(() => performance.getEntriesByType("resource").filter(entry => /\/post-10\d\d-1$/.test(entry.name)).map(entry => entry.startTime).sort((a,b)=>a-b));
+		assert.equal(browserStarts.length,6,"六个真实请求都有浏览器计时记录");
+		const gaps = browserStarts.slice(1).map((at, i) => at - browserStarts[i]);
 		assert.ok(Math.min(...gaps) >= 550, "前后至少隔 0.55 秒：" + gaps.join());
 		const visible = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.querySelector(".post-title a").getAttribute("href")));
 		assert.deepEqual(visible, ["/post-1000-1", "/post-1003-1"]);
