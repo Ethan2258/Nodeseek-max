@@ -1,0 +1,26 @@
+name: 问题反馈
+description: 功能失效、手机体验或界面问题
+title: "[问题] "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 脚本版本
+      placeholder: 在脚本设置“关于”中查看
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 使用环境
+      description: 设备、系统、浏览器、脚本管理器及版本；手机请注明横竖屏。
+      placeholder: iPhone，iOS 版本，Safari，Userscripts 版本
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤与结果
+      description: 页面类型、操作步骤、预期与实际结果；可附截图，请移除敏感信息。
+    validations:
+      required: true

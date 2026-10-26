@@ -73,6 +73,7 @@ test("Userscripts 隔离世界：原生 CodeMirror 可通过工具栏编辑，GM
   await page.waitForSelector(".nsmax-editor-controls");await page.locator(".nsmax-editor-controls").getByRole("button",{name:"Markdown",exact:true}).click();
   await page.locator(".nsmax-custom-mde-toolbar").getByRole("button",{name:"粗体",exact:true}).click();
   assert.equal(await page.evaluate(()=>window.__nativeCM.getValue()),"**原生内容**");assert.equal(await page.evaluate(()=>typeof window.GM),"undefined");
+  const editorPane=page.locator(".nsmax-editor-surface > [data-nsmax-editor-pane]");assert.equal(await editorPane.evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"0px");
   await page.locator(".nsmax-editor-controls").getByRole("button",{name:"预览",exact:true}).click();assert.match(await page.locator(".nsmax-editor-preview").innerText(),/原生内容/);assert.deepEqual(errors,[]);
   await client.detach();
  } finally {await context.close();}

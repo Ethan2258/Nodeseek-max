@@ -1,75 +1,66 @@
 # NodeSeek Max
 
-NodeSeek / DeepFlood 用户脚本，当前版本 **1.8.46**。界面按 [sb.sb](https://sb.sb/) 现版 1:1 复刻（配色、字体、布局、圆角），保留论坛原生编辑与提交。
+为 **NodeSeek / DeepFlood** 提供统一主题、阅读与回复增强。支持电脑浏览器，也适配 **iPhone Safari + Userscripts**；发帖和回复仍由论坛原生表单提交。
+
+[![CI](https://github.com/Ethan2258/Nodeseek-max/actions/workflows/ci.yml/badge.svg)](https://github.com/Ethan2258/Nodeseek-max/actions/workflows/ci.yml)
+[![最新版本](https://img.shields.io/github/v/release/Ethan2258/Nodeseek-max)](https://github.com/Ethan2258/Nodeseek-max/releases/latest)
+
+**[安装 / 更新脚本](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)** · [安装帮助](docs/installation.md) · [使用与设置](docs/usage.md) · [更新日志](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
 
 ## 安装
 
-1. 电脑安装 [Tampermonkey](https://www.tampermonkey.net/) 或 Violentmonkey；iPhone Safari 可使用 [Userscripts](https://github.com/quoid/userscripts)。
-2. [安装最新版脚本](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)。
-3. 停用其他 NodeSeek 增强脚本，避免重复注入。
-4. Tampermonkey 用户：管理面板 → 设置，「配置模式」选「高级」，把「Content Script API」改成「UserScripts API Dynamic」并保存。
-   默认的注入方式要先从后台取脚本，脚本比页面晚运行，打开页面时会先闪一下站点原来的样子；改了以后脚本在页面画出来之前运行，首屏直接是整理好的完整页面。
-   脚本设置「关于」里能看到当前页面是不是注入晚了。
+1. 电脑安装 Tampermonkey 或 Violentmonkey；iPhone Safari 使用 Userscripts。
+2. 打开上面的 **安装 / 更新脚本** 链接，在脚本管理器中确认安装。
+3. 停用其他功能重复的 NodeSeek 增强脚本，刷新论坛页面。
 
-iPhone Safari + Userscripts：打开上面的安装链接，在 Safari 的扩展菜单里打开 Userscripts，确认安装或更新，再刷新论坛页面。保持默认注入方式；无需 Tampermonkey 的高级设置。设置通过 Userscripts 的异步 GM 接口保存，保存完成后才能刷新；读取失败时会保留原配置并提示。页面限制编辑器桥接时保留论坛原生编辑器。
+**iPhone 用户**：打开安装链接后，还需要在 Safari 的扩展菜单中打开 **Userscripts**，确认安装或更新，再刷新页面。[详细步骤与常见问题 →](docs/installation.md#iphone-safari--userscripts)
 
-[版本与安装文件](https://github.com/Ethan2258/Nodeseek-max/releases)
+## 装好后怎么用
 
-| 首页 | 帖子（深色） |
+- 顶栏 **齿轮** 打开脚本设置。改动自动保存，保存完成后点“刷新应用设置”。
+- 手机左上角 **菜单** 集中提供个人入口、版块导航、热榜和最近浏览；点遮罩或关闭按钮返回正文。
+- 帖子下方可切换格式工具、附件、表情和预览；回复某层时，输入框会移到对应楼层下方。
+
+## 主要功能
+
+| 场景 | 提供的功能 |
 | --- | --- |
-| ![首页](docs/screenshots/home-light.png) | ![帖子页深色](docs/screenshots/post-dark.png) |
-| **我的通知** | **脚本设置** |
-| ![我的通知](docs/screenshots/messages-light.png) | ![脚本设置](docs/screenshots/settings-light.png) |
+| 阅读 | sb.sb 风格主题、深浅色、字号与字体、代码复制、图片预览、引用折叠 |
+| 列表 | 版块导航、精华 / 抽奖入口、帖子页码、屏蔽关键词与用户、我的回复标记 |
+| 回复与发帖 | Markdown、附件与图片上传、表情、预览、草稿、快捷键 |
+| 个人与通知 | 个人主页统计、关注 / 粉丝页、用户备注、通知与私信、黑名单通知过滤 |
+| 侧栏 | 个人资料、今日热门、最近浏览；手机在菜单内切换查看 |
+| 设置 | 六个分类、搜索、导入导出、恢复默认、清缓存、更新检查 |
 
-## 当前功能
+鼠标悬停预览与预取仅在有鼠标的设备上启用。手机优先使用点按；额外请求受缓存、并发和限流控制。[功能说明与数据保存方式 →](docs/usage.md)
 
-- 全站 sb.sb 样式，浅色、深色变量与 sb.sb 样式表原值一致；圆角与 sb.sb 相同（卡片 12px、输入框 8px、按钮与标签胶囊）。
-- 打开快、不闪：脚本在页面画出来之前运行时，首帧整页一次画好（资料卡、列表、右栏都整理好）；站内跳转旧页面留到新页面好了才淡入切换。
-  长列表只画看得见的行，整页重算样式和排版少一半左右。
-  进帖子时楼中楼、作者栏、面包屑在第一帧之前就排好，作者的等级和数字先占好位置、读过的人记在本机，第一帧之后页面不再跳；多页评论区提前取好下一页。
-  鼠标在列表标题上停一下，就在后台备好那篇帖子的作者资料、头像和前几张图（先连上图床），点开时直接是完整的；后台请求都是低优先级、同时只走一个，站点一限流就停，不和页面抢网速。
-  打开后不再「卡一下」：抽奖卡片、代码块的「复制」条第一帧就在，个人主页的资料卡站点一画出来就改好，后台预取不逼浏览器当场排版；滚动时鼠标下面滑过的标题、头像不弹卡片。
-  手机上列表的小图标由样式画（不再一行插五个 svg），首屏前少做一大截；分页箭头和数字一样大。
-- 列表工具条：新评论 / 新帖子 / 精华 / 抽奖；顶栏版块标签和纯文字 NQ 入口。回复超过一页的帖子，标题后面带页码小圆点（照 sb.sb），点了直接进那一页。
-  抽奖按内容认：主帖里有开奖链接，或者评论里有指向这一篇的开奖链接（标题里不写「抽奖」的也认得出）；列表页只查标题像抽奖的，「抽奖」分类页上再在后台慢慢找。
-- 右侧栏：个人资料卡（鸡腿、星辰、主题帖、评论数和十个快捷入口，我的通知带未读数）、今日热门、本机最近浏览十条，三张卡片同一帧出现。
-- 帖子页照 sb.sb 经典排法：左边作者栏（头像、UID、等级、帖子 / 鸡腿 / 星辰），楼中楼收进那一层末尾，置顶回复、楼主标签、抽奖和投票卡片。
-- 回复与发帖统一 sb.sb 编辑器，保留 Markdown、附件、表情、预览和粘贴图片（上传到论坛官方图床 NodeImage）；回复某一层时回复框挪到那一层下面，提交仍由原站处理。
-  引用排成引用卡片（名字 · #楼号 · 时间，长的先收起）；鼠标停在「#楼号」上弹出那一层的内容；Markdown 模式只有一排工具。
-  编辑增强：Ctrl / ⌘ + Enter 提交，Ctrl / ⌘ + B / I / K / E 加粗、斜体、链接、代码（再按取消），列表和引用回车续行、Tab 缩进，选中文字粘贴网址变链接，输入 @ 提示这一页的人。
-- 发帖页照 sb.sb（表单 + 右栏）；「一键抽奖」填好奖品、人数、开奖时间直接发帖，发出去后自动生成开奖链接补进正文；帖子里的抽奖卡片照 sb.sb，结束的抽奖标签变灰。
-- 签到页照 sb.sb（浅色黑白、深色亮黄）：连续签到天数、今日获得 / 排名 / 本月签到 / 签到人数、本月方格日历，同一张卡片里的排行榜「+N 鸡腿」和「加载更多」。
-- 等级进度（资料卡的等级小标签点进去）照 sb.sb「我的烧饼」：鸡腿、等级、升级进度条，今日发帖 / 评论 / 签到 / 投喂四项进度。
-- 我的关注 / 粉丝照 sb.sb 成员卡片：一样宽一样高，取关、私信、转账在卡片右边。
-- 个人主页照 sb.sb：主栏 + 右栏（自己的资料卡、今日热门、最近浏览）；九格统计（关注 粉丝 鸡腿 / 星辰 主题 回帖 / 收藏 等级 注册天数），自己的主页能点进对应的页，等级进度按鸡腿算。
-- 帖子页回复区标题栏有「只看楼主」「直达底部」「简洁模式」（照 sb.sb：没有楼中楼，一层一层排）；评论可自动接下一页，帖子列表默认不自动翻页。
-- 我的回复：列表里每篇下面、帖子回复区标题栏里标出自己回复过的楼层（#4 #22 #32），点了直接跳过去；第一帧就在，不会把列表往下推。
-- 头像悬停资料卡：等级、鸡腿、星辰、主题与评论数、关注与粉丝、注册时长；可直接关注、私信、看主页、看管理记录、屏蔽（连站点黑名单）；签名里留了 Telegram 的，「关注 / 私信 / TG / 主页」一排直接打开（列表页也有）。
-- 我的通知：@我 / 回复主题 / 私信一张标签栏，通知整列显示、点一行直接打开那一楼；私信左右两栏。
-- 保留外链直达、关键词与用户屏蔽、黑名单通知过滤、代码复制、用户备注；各种提示统一成 sb.sb 屏幕下方的深色小条。
-- 深浅色支持浅色、深色、跟随系统和跟随站点；跟随系统只响应操作系统主题。
-- 脚本设置按 sb.sb 重做：外观、浏览、用户、工具、网络、关于六个分页，支持搜索、恢复默认、清空缓存、导入导出配置和检查更新，改动立即保存；修改后底部显示「刷新应用设置」，刷新后所有选项按新设置运行。
-- 设置已逐项核对：21 组设置、45 个字段和开关；「中文时间」统一控制列表时间刷新，重复的「原生列表增强」开关移除。个人主页主题帖统计可按需开启（默认关闭，需要额外读取帖子），粉丝页也支持用户资料卡。
-- iPhone 触屏布局：主要操作至少 44px，正文与输入区 16px；顶栏搜索点开后展开、列表空白处也可打开帖子，回复工具一行排列。设置占满可用屏幕，菜单和弹层独立滚动，关闭时恢复原位置；触屏关闭鼠标悬停预取、资料卡和普通列表被动抽奖扫描。
+## 界面预览
 
-移除信用分、信任分、旧阅读历史模块、帖子监控、回帖足迹（由「我的回复」代替）、本地好友、重复资料卡及旧工具条。默认字体与 sb.sb 相同：系统字体 + Space Mono 数字（首次在线下载后缓存）；不想联网下载可在设置里改为「系统字体」。
+<details>
+<summary>展开电脑和手机截图</summary>
+
+| 电脑首页 | 深色帖子 |
+| --- | --- |
+| <img src="docs/screenshots/home-light.png" width="420" alt="电脑首页"> | <img src="docs/screenshots/post-dark.png" width="420" alt="深色帖子"> |
+| 手机菜单 | 手机热榜 |
+| <img src="docs/screenshots/mobile-menu.png" width="240" alt="手机菜单"> | <img src="docs/screenshots/mobile-hot.png" width="240" alt="手机热榜"> |
+
+截图来自本地模拟页面；头像和内容是测试数据。
+
+</details>
 
 ## 开发
 
+使用 Node.js 24，先运行 `npm ci`，再运行 `npx playwright install chromium webkit`。
+
 ```bash
-npm install --no-package-lock
-npm run sb           # 编译套件、适配样式和界面桥接
-npm run meta
-npm run check
-npm test
-npm run screenshots  # 桌面浅色、深色与手机布局
-npm run performance  # 与 v1.7.2 比较本地 fixture，三次中位数
+npm run build       # 更新主题、界面运行时和 meta
+npm run check       # 仓库、语法、文档链接与生成文件一致性
+npm test            # 完整浏览器回归
 ```
 
-测试需要 Chromium 和 WebKit（`npx playwright install chromium webkit`）；可通过 `NSMAX_CHROMIUM` 指向已有 Chrome。手机专项使用 iPhone 触屏配置，Userscripts 专项覆盖异步存储和页面隔离；WebKit 模拟不等于 iPhone 真机测试。sb.sb 1:1 复刻层在 `theme/design.css`（最后注入、优先级最高）；`theme/sb-suite.css` 只作对照快照，不再整份注入；适配在 `theme/sb-adapter.css`，回复与分页桥接在 `theme/ui-runtime.js`，消息与关于弹窗样式在 `theme/messages.css`、`theme/settings.css`。
-
-浏览器回归使用真实结构的本地模拟页面；耗时数据不能代表论坛服务器或用户网络速度。原生接口、验证码和权限由站点处理。
+[开发指南](docs/development.md) 包含目录说明、修改入口、专项测试、截图、性能比较和发布流程；[上游维护说明](upstream/README.md) 介绍基线与合并方法。
 
 ## 许可证
 
-GPL-3.0-only，见 [LICENSE](LICENSE)。基于 NodeSeek++ 等开源组件，第三方许可证声明保留在脚本头部。
+[GPL-3.0-only](LICENSE)。基于 NodeSeek++ 等开源组件，来源与第三方声明保留在脚本头部和 [upstream](upstream/README.md) 中。

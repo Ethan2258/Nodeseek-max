@@ -4850,6 +4850,13 @@ function nsmaxTagStructure() {
 		const media = matchMedia("(pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-width: 960px) and (max-height: 600px)");
 		const bound = new WeakSet();
 		let panel = null, panelMask = null, nativeSearch = null;
+		const drawerView = (view) => {
+			if (!panel) return;
+			nsmaxSetAttr(panel, "data-nsmax-drawer-view", view);
+			for (const button of panel.querySelectorAll(".nsmax-drawer-tabs button")) nsmaxSetAttr(button, "aria-pressed", String(button.dataset.view === view));
+			for (const host of panel.querySelectorAll(":scope > [data-drawer-pane]")) host.hidden = host.dataset.drawerPane !== view;
+			panel.scrollTop = 0;
+		};
 		const openRow = event => {
 			if (!media.matches || event.button !== 0 || event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || getSelection()?.isCollapsed === false) return;
 			const target = event.target instanceof Element ? event.target : null;
@@ -4882,12 +4889,45 @@ function nsmaxTagStructure() {
 			panel = nextPanel;
 			panelMask = panel?.parentElement?.querySelector(".global-mask") || null;
 			if (panel && !panel.querySelector(":scope > .nsmax-drawer-head")) {
+				panel.tabIndex = -1;
 				const head = document.createElement("div"); head.className = "nsmax-drawer-head";
 				const label = document.createElement("strong"); label.textContent = "菜单";
 				const close = document.createElement("button"); close.type = "button"; close.setAttribute("aria-label", "关闭菜单"); close.append(toolIcon("close"));
 				close.addEventListener("click", closeMenu, { signal: ctx.signal });
 				head.append(label, close); panel.prepend(head);
 				panel.addEventListener("click", event => { if (event.target.closest("a[href]")) closeMenu(); }, { signal: ctx.signal });
+				const tabs = document.createElement("div"); tabs.className = "nsmax-drawer-tabs"; tabs.setAttribute("role", "group"); tabs.setAttribute("aria-label", "侧栏内容");
+				const config = GM_getValue$1(SETTINGS_KEY, {});
+				const views = [["navigation", "导航"]];
+				if (location.hostname === "www.nodeseek.com" && config["hot-rankings"]?.enabled !== false && config["hot-rankings"]?.sidebar !== false) views.push(["hot", "热榜"]);
+				if (config["sb-recent-visits"]?.enabled !== false) views.push(["recent", "最近浏览"]);
+				for (const [view, title] of views) {
+					const button = document.createElement("button"); button.type = "button"; button.textContent = title; button.dataset.view = view;
+					button.addEventListener("click", () => drawerView(view), { signal: ctx.signal }); tabs.append(button);
+					if (view === "navigation") continue;
+					const host = document.createElement("div"); host.className = "nsmax-drawer-" + view; host.dataset.drawerPane = view; host.hidden = true;
+					if (view === "recent") { const empty = document.createElement("p"); empty.className = "nsmax-drawer-empty"; empty.textContent = "还没有浏览记录，打开帖子后会保存在这里。"; host.append(empty); }
+					panel.append(host);
+				}
+				head.after(tabs); drawerView("navigation");
+				const category = panel.querySelector(".category-mobile > div");
+				if (category && !category.querySelector('a[href="/"]')) { const all = document.createElement("a"); all.href = "/"; const text = document.createElement("p"); text.textContent = "全部帖子"; all.append(text); category.prepend(all); }
+				const tools = document.createElement("div"); tools.className = "nsmax-drawer-tools";
+				const settings = document.createElement("button"); settings.type = "button"; settings.textContent = "脚本设置"; settings.append(toolIcon("gear"));
+				settings.addEventListener("click", () => { closeMenu(); document.querySelector('[aria-label="NodeSeek Max 设置"]')?.click(); }, { signal: ctx.signal }); tools.append(settings); panel.append(tools);
+				panel.addEventListener("keydown", event => {
+					if (nsmaxLayers.some(layer => layer.open)) return;
+					if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeMenu(); }
+					if (event.key !== "Tab") return;
+					const focusable = [...panel.querySelectorAll('a[href],button:not(:disabled),input,select,textarea,[tabindex="0"]')].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+					const first = focusable[0], last = focusable.at(-1);
+					if (event.shiftKey && (document.activeElement === first || document.activeElement === panel)) { event.preventDefault(); last?.focus(); }
+					else if (!event.shiftKey && (document.activeElement === last || document.activeElement === panel)) { event.preventDefault(); first?.focus(); }
+				}, { signal: ctx.signal });
+				let swipe = null;
+				panel.addEventListener("touchstart", event => { const touch = event.touches[0]; swipe = event.touches.length === 1 && !event.target.closest("input,textarea,select,[contenteditable=true]") ? { x: touch.clientX, y: touch.clientY } : null; }, { passive: true, signal: ctx.signal });
+				panel.addEventListener("touchend", event => { const touch = event.changedTouches[0], start = swipe; swipe = null; if (!start || !touch) return; const dx = touch.clientX - start.x, dy = touch.clientY - start.y; if (dx < -72 && Math.abs(dx) > Math.abs(dy) * 1.5) closeMenu(); }, { passive: true, signal: ctx.signal });
+				panel.addEventListener("touchcancel", () => { swipe = null; }, { passive: true, signal: ctx.signal });
 			}
 			if (panel) {
 				const open = parseFloat(panel.style.left) === 0, firstOpen = open && !nsmaxMobileScrollOwners.has(panel);
@@ -4896,7 +4936,8 @@ function nsmaxTagStructure() {
 				const toggle = document.querySelector("#toggle-left-panel > a");
 				if (toggle) for (const [name,value] of [["role","button"],["aria-label","打开菜单"],["aria-expanded",String(open)]]) if (toggle.getAttribute(name) !== value) toggle.setAttribute(name,value);
 				nsmaxMobileLock(panel, open);
-				if (firstOpen) panel.querySelector(".nsmax-drawer-head button")?.focus({ preventScroll: true });
+				for (const link of panel.querySelectorAll(".category-mobile a[href]")) { const current = new URL(link.href, location.href); const selected = current.pathname === location.pathname && current.search === location.search; if (link.classList.contains("selected") !== selected) link.classList.toggle("selected", selected); if (selected) nsmaxSetAttr(link, "aria-current", "page"); else nsmaxDropAttr(link, "aria-current"); }
+				if (firstOpen) panel.focus({ preventScroll: true });
 			}
 			const search = document.querySelector(".search-overlay");
 			if (nativeSearch && nativeSearch !== search) nsmaxMobileLock(nativeSearch, false);
@@ -4929,7 +4970,7 @@ function nsmaxTagStructure() {
 		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
 		const stop = ctx.watch(sync);
-		return () => { stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head").forEach(e=>e.remove()); };
+		return () => { stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
 	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
@@ -5640,14 +5681,16 @@ function nsmaxTagStructure() {
 			}
 			let panel;
 			const render = () => {
-				const sidebar = document.getElementById("nsk-right-panel-container");
-				if (!sidebar || !records.length) return;
+				const sidebar = document.getElementById("nsk-right-panel-container") || (nsmaxTouchLayout() ? document.querySelector("#left-slide-panel .nsmax-drawer-recent") : null);
+				if (!sidebar) return;
+				if (!records.length) { panel?.remove(); panel = null; nsmaxDropAttr(sidebar, "data-nsmax-recent-ready"); return; }
 				// 页面解析阶段已经画好的面板原地接管
 				panel ||= sidebar.querySelector(":scope > .nsmax-recent-panel") || nsmaxRecentPanel();
 				const hot = sidebar.querySelector(".nsmax-hot-panel");
 				if (hot && hot.nextElementSibling !== panel) hot.after(panel);
 				else if (!panel.isConnected) sidebar.append(panel);
 				nsmaxRenderRecent(panel, records);
+				nsmaxSetAttr(sidebar, "data-nsmax-recent-ready", "");
 			};
 			const stop = ctx.watch(render);
 			window.addEventListener("storage", event => { if (event.key === key) { records = nsmaxRecentRecords(account); render(); } }, { signal: ctx.signal });

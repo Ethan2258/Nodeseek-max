@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const root = new URL("..", import.meta.url);
-const source = readFileSync(new URL("nodeseek-max.user.js", root), "utf8");
+const source = readFileSync(new URL("nodeseek-max.user.js", root), "utf8").replace(/\r\n?/g, "\n");
 const header = source.match(/^\/\/ ==UserScript==\r?\n[\s\S]*?^\/\/ ==\/UserScript==/m)?.[0];
 if (!header) throw new Error("未找到 ==UserScript== 头部");
 
@@ -15,7 +15,7 @@ if (!version || version !== constant) throw new Error(`版本不一致：@versio
 const target = new URL("nodeseek-max.meta.js", root);
 const meta = `${header}\n`;
 if (process.argv.includes("--check")) {
-	if (readFileSync(target, "utf8") !== meta) {
+	if (readFileSync(target, "utf8").replace(/\r\n?/g, "\n") !== meta) {
 		console.error(`${fileURLToPath(target)} 与脚本头部不一致，请运行 npm run meta`);
 		process.exit(1);
 	}

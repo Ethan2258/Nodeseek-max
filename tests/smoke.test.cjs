@@ -7,6 +7,25 @@ const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPa
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
+
+test("编辑输入区：回复与发帖的内层四角保持直角，聚焦和选中文字不改变几何尺寸", async () => {
+	for (const dark of [false,true]) for (const compose of [false,true]) {
+		const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+(compose?"/new-discussion":"/post-1000-1"),{html:compose?newPostPage({dark}):postPage({dark}),colorScheme:dark?"dark":"light",viewport:{width:1440,height:900}});
+		try {
+			await page.waitForSelector(".nsmax-editor-surface textarea:not(.CodeMirror textarea)");
+			const input=page.locator(".nsmax-editor-surface textarea:not(.CodeMirror textarea)");
+			await input.fill("刚刚\n之前冲过一波，你参考下。\nhostsailor\nV.PS\nhostdzire");
+			const read=()=>input.evaluate(e=>{const frame=e.closest("[data-nsmax-editor-pane]")||e,style=getComputedStyle(frame),inner=getComputedStyle(e),box=frame.getBoundingClientRect();return{corners:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],innerCorners:[inner.borderTopLeftRadius,inner.borderTopRightRadius,inner.borderBottomLeftRadius,inner.borderBottomRightRadius],width:box.width,height:box.height,padding:[parseFloat(style.paddingTop),parseFloat(style.paddingLeft)],color:style.borderColor};});
+			await input.evaluate(e=>e.blur());const before=await read();
+			await input.focus();await input.evaluate(e=>e.setSelectionRange(0,e.value.length));const focused=await read();
+			assert.deepEqual(before.corners,["0px","0px","0px","0px"]);assert.deepEqual(focused.corners,before.corners);
+			assert.deepEqual(focused.innerCorners,["0px","0px","0px","0px"]);
+			assert.equal(await input.evaluate(e=>e.closest("[data-nsmax-editor-pane]")===e||getComputedStyle(e).outlineWidth==="0px"),true,"聚焦提示只画在输入区外框，不在内层再画一圈");
+			assert.equal(focused.width,before.width);assert.equal(focused.height,before.height);assert.ok(focused.padding[0]>=7&&focused.padding[1]>=10);
+			assert.notEqual(focused.color,before.color,"黄色聚焦边框仍然可见");assert.match(await input.inputValue(),/hostdzire/);assert.deepEqual(errors,[]);
+		}finally{await context.close();}
+	}
+});
 // 列表里的帖子都当作已经按内容查过抽奖（2026-10-23 起列表里每篇都会在后台查一次）：测预览、预取、请求数的几条用，免得后台查抽奖的请求混进来
 const CHECKED_INIT = `;if (window.top === window) localStorage.setItem("nsmax:special-checked", JSON.stringify(Object.fromEntries(Array.from({ length: 40 }, (_, i) => [String(1000 + i), Date.now()]))));`;
 // 量「后台一篇一篇查」的测试里关掉帖子悬停预览：它在页面空下来时用普通优先级先取首屏 4 篇（和后台查共用一份），不算后台请求

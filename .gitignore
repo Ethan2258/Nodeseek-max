@@ -1,6 +1,5 @@
 node_modules/
 docs/validation/
-package-lock.json
 .fonts/
 test-results/
 *.log
@@ -8,4 +7,5 @@ test-results/
 dist/
 
 nodeseek-max.min.user.js
+upstream/incoming/
 

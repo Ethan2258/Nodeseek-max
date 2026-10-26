@@ -28,5 +28,6 @@ process.stdout.write(`${body}
 
 - 安装：打开 [nodeseek-max.user.js](https://github.com/Ethan2258/Nodeseek-max/releases/download/v${version}/nodeseek-max.user.js)，在 Tampermonkey 等脚本管理器中确认安装。
 - 已安装的用户：在脚本管理器中检查更新，或在 NodeSeek Max 设置顶部点「检查更新」。
+- iPhone Safari + Userscripts：打开安装链接后，在 Safari 的 Userscripts 扩展菜单中确认安装或更新，再刷新论坛页面。
 - 安装后请停用原来的 NodeSeek++、redirect 外链跳转、NodeSeek 热榜插件、NodeSeek 自动屏蔽黑名单用户通知，避免功能重复。
 `);

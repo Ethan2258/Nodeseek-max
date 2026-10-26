@@ -50,3 +50,9 @@ jobs:
             echo "合并步骤见 [upstream/README.md](../blob/main/upstream/README.md)：\`node scripts/upstream.mjs --fetch\` 下载新源码，与 \`upstream/\` 里的基线对比后移植改动。"
           } > issue.md
           gh issue create --title "$title" --label upstream --body-file issue.md
+
+      - name: Report failed upstream checks
+        if: steps.check.outputs.errors != '0'
+        run: |
+          echo "Some upstream sources could not be checked. See the report above."
+          exit 1

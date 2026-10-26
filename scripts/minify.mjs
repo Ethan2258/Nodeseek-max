@@ -34,8 +34,9 @@ for (const must of ["// ==UserScript==", "// @version", "// @name", "// ==/UserS
 if (minified.length >= source.length) throw new Error("压缩后反而更大");
 
 const outIndex = process.argv.indexOf("--out");
+if (outIndex >= 0 && (!process.argv[outIndex + 1] || process.argv[outIndex + 1].startsWith("--"))) throw new Error("--out 后需要输出文件路径");
 const target = outIndex >= 0 ? process.argv[outIndex + 1] : path.join(repo, "nodeseek-max.min.user.js");
 fs.mkdirSync(path.dirname(target), { recursive: true });
 fs.writeFileSync(target, minified);
-const saved = source.length - minified.length;
-console.log(`minified: ${source.length} -> ${minified.length} bytes (-${Math.round(saved / 1024)}KB, -${(100 * saved / source.length).toFixed(1)}%) -> ${path.relative(repo, target)}`);
+const before = Buffer.byteLength(source), after = Buffer.byteLength(minified), saved = before - after;
+console.log(`minified: ${before} -> ${after} bytes (-${Math.round(saved / 1024)}KB, -${(100 * saved / before).toFixed(1)}%) -> ${path.relative(repo, target)}`);

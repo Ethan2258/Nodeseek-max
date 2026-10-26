@@ -12,6 +12,54 @@ for(const engine of engines) {
  let browser;
  test.before(async()=>{if(!browser)browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
+ test(`${engine} iPhone 侧栏：两列导航与当前版块，大按钮，脚本设置入口可用`,async()=>{
+  for(const guest of [false,true]) {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/categories/tech",{...mobile(320),html:P.listPage({mobile:true,guest})});
+   try {await ready(page);await page.getByRole("button",{name:"打开菜单",exact:true}).tap();const drawer=page.locator("#left-slide-panel");
+    const layout=await drawer.evaluate(el=>({overflow:el.scrollWidth>el.clientWidth+1,columns:getComputedStyle(el.querySelector(".category-mobile > div")).gridTemplateColumns.split(" ").length,small:[...el.querySelectorAll(".nsmax-account-menu > a,.nsmax-account-compose,.welcome-new a.btn,.category-mobile a")].filter(a=>a.getClientRects().length&&a.getBoundingClientRect().height<43).map(a=>a.textContent)}));
+    assert.equal(layout.overflow,false);assert.equal(layout.columns,2);assert.deepEqual(layout.small,[]);
+    assert.equal(await drawer.locator('a[href="/categories/tech"]').getAttribute("aria-current"),"page");
+    assert.equal(await drawer.locator('a[href="/"]').count(),1);
+    await drawer.getByRole("button",{name:"脚本设置",exact:true}).tap();assert.equal(await drawer.getAttribute("aria-modal"),"false");
+    assert.equal(await page.locator("#nspp-settings").locator("dialog").isVisible(),true);
+    await page.locator("#nspp-settings").getByRole("button",{name:"关闭",exact:true}).tap();assert.equal(await page.evaluate(()=>document.body.style.position),"");assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} iPhone 侧栏：热榜按需加载，切换视图不重复请求`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true})});
+  try {await ready(page);const requests=()=>page.evaluate(()=>window.__gmRequests.filter(url=>url.includes("api.bimg.eu.org")).length);
+   assert.equal(await requests(),0);await page.getByRole("button",{name:"打开菜单",exact:true}).tap();const drawer=page.locator("#left-slide-panel");
+   await page.waitForTimeout(100);assert.equal(await requests(),0);
+   await drawer.getByRole("button",{name:"热榜",exact:true}).tap();await page.waitForSelector("#left-slide-panel .nsmax-hot-list a");
+   assert.equal(await requests(),1);assert.equal(await drawer.locator(".nsmax-hot-list a").count(),10);assert.equal(await drawer.locator(".category-mobile").first().isVisible(),false);
+   await drawer.getByRole("button",{name:"导航",exact:true}).tap();await drawer.getByRole("button",{name:"热榜",exact:true}).tap();await page.waitForTimeout(100);assert.equal(await requests(),1);assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} iPhone 侧栏：最近浏览真实记录、空状态与功能关闭`,async()=>{
+  for(const enabled of [true,false]) {
+   const options=mobile();options.seed["nspp:settings:www.nodeseek.com"]["sb-recent-visits"]={enabled};options.seed["nspp:settings:www.nodeseek.com"]["hot-rankings"]={enabled};
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...options,html:P.listPage({mobile:true})});
+   try {await ready(page);await page.getByRole("button",{name:"打开菜单",exact:true}).tap();const drawer=page.locator("#left-slide-panel");
+    if(enabled){await drawer.getByRole("button",{name:"最近浏览",exact:true}).tap();assert.equal(await drawer.locator(".nsmax-drawer-empty").isVisible(),true);}
+    else {assert.equal(await drawer.getByRole("button",{name:"最近浏览",exact:true}).count(),0);assert.equal(await drawer.getByRole("button",{name:"热榜",exact:true}).count(),0);}
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true}),init:'localStorage.setItem("nsmax:recent:1",JSON.stringify([{path:"/post-42-1",title:"本机浏览记录"}]));'});
+  try{await ready(page);await page.getByRole("button",{name:"打开菜单",exact:true}).tap();const drawer=page.locator("#left-slide-panel");await drawer.getByRole("button",{name:"最近浏览",exact:true}).tap();const link=drawer.getByRole("link",{name:"本机浏览记录",exact:true});assert.equal(await link.getAttribute("href"),"/post-42-1");assert.equal(await drawer.locator(".nsmax-drawer-empty").isVisible(),false);await page.evaluate(()=>{localStorage.removeItem("nsmax:recent:1");window.dispatchEvent(new StorageEvent("storage",{key:"nsmax:recent:1",newValue:null}));});assert.equal(await drawer.getByRole("link",{name:"本机浏览记录",exact:true}).count(),0);assert.equal(await drawer.locator(".nsmax-drawer-empty").isVisible(),true);assert.deepEqual(errors,[]);}finally{await context.close();}
+ });
+ test(`${engine} iPhone 侧栏：键盘循环、Esc 和横向收起不干扰纵向滚动`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true,count:30})});
+  try{await ready(page);await scrollTo(page,400);await tapVisible(page,page.getByRole("button",{name:"打开菜单",exact:true}));const drawer=page.locator("#left-slide-panel");
+   await page.keyboard.press("Tab");assert.equal(await drawer.getByRole("button",{name:"关闭菜单",exact:true}).evaluate(e=>e===document.activeElement),true);
+   await page.keyboard.press("Shift+Tab");assert.equal(await drawer.getByRole("button",{name:"脚本设置",exact:true}).evaluate(e=>e===document.activeElement),true);
+   await page.keyboard.press("Escape");assert.equal(await drawer.getAttribute("aria-modal"),"false");
+   await tapVisible(page,page.getByRole("button",{name:"打开菜单",exact:true}));
+   await drawer.dispatchEvent("touchstart",{touches:[{identifier:0,clientX:200,clientY:300}]});await drawer.dispatchEvent("touchend",{changedTouches:[{identifier:0,clientX:190,clientY:100}]});assert.equal(await drawer.getAttribute("aria-modal"),"true");
+   await drawer.dispatchEvent("touchstart",{touches:[{identifier:0,clientX:200,clientY:300}]});await drawer.dispatchEvent("touchend",{changedTouches:[{identifier:0,clientX:80,clientY:310}]});await page.waitForFunction(()=>document.body.style.position!=="fixed");assert.ok(Math.abs(await page.evaluate(()=>scrollY)-400)<3);assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
  test(`${engine} iPhone：正文与输入区可读，主要操作 44px，编辑工具一行排开`,async()=>{
   for(const width of [390,320]) {
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...mobile(width),html:P.postPage({mobile:true})});
@@ -19,6 +67,7 @@ for(const engine of engines) {
    await ready(page);
    const sizes=await page.evaluate(()=>({touch:matchMedia("(pointer: coarse)").matches,body:parseFloat(getComputedStyle(document.querySelector(".nsk-post article.post-content")).fontSize),input:parseFloat(getComputedStyle(document.querySelector(".md-editor textarea")).fontSize),buttons:[...document.querySelectorAll("#nsk-head > .nsmax-header-action,.nsmax-editor-controls button,.nsmax-op-actions a,.nsmax-owner-only,.nsmax-layout-toggle,.nsmax-jump-reply,.nsmax-code>[data-nspp-copy]")].filter(e=>e.getClientRects().length).map(e=>({name:e.getAttribute("aria-label")||e.textContent.trim(),height:e.getBoundingClientRect().height})),rows:[...document.querySelectorAll(".nsmax-editor-controls button")].map(e=>Math.round(e.getBoundingClientRect().top)),clipped:[...document.querySelectorAll(".nsmax-editor-controls button")].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.textContent),overflow:document.documentElement.scrollWidth>innerWidth+1}));
    assert.equal(sizes.touch,true);assert.ok(sizes.body>=16,JSON.stringify(sizes));assert.ok(sizes.input>=16);
+   assert.equal(await page.locator(".md-editor .nsmax-editor-surface > textarea").evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"0px");
    assert.ok(sizes.buttons.every(b=>b.height>=43),JSON.stringify(sizes.buttons));
    assert.equal(new Set(sizes.rows).size,1,"工具栏不再换成两行");assert.deepEqual(sizes.clipped,[],"工具文字不会挤到相邻按钮上");assert.equal(sizes.overflow,false);assert.deepEqual(errors,[]);
   } finally {await context.close();}

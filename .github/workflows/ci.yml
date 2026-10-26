@@ -8,19 +8,29 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  browser-tests:
+    name: Browser tests (${{ matrix.artifact }})
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        artifact: [source, minified]
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Install Chromium and WebKit
         run: npx playwright install --with-deps chromium webkit
@@ -35,17 +45,23 @@ jobs:
       - name: Check script and metadata
         run: npm run check
 
-      - name: Smoke tests
-        env:
-          NSMAX_FONT_DIR: ${{ github.workspace }}/.fonts/package/files
-        run: npm test
-
-      # Release 发布的是压缩后的脚本（仓库里保留可读源码）：压缩产物再跑一遍完整测试，确保行为和源码一致
       - name: Minify release artifact
+        if: matrix.artifact == 'minified'
         run: node scripts/minify.mjs --out dist/nodeseek-max.user.js
 
-      - name: Smoke tests (minified artifact)
+      - name: Complete browser regression
         env:
           NSMAX_FONT_DIR: ${{ github.workspace }}/.fonts/package/files
-          NSMAX_SCRIPT_PATH: ${{ github.workspace }}/dist/nodeseek-max.user.js
+          NSMAX_SCRIPT_PATH: ${{ matrix.artifact == 'minified' && format('{0}/dist/nodeseek-max.user.js', github.workspace) || '' }}
         run: npm test
+
+  # 保留统一的 test 检查：源码和安装包都通过后，CI 才成功并触发发布。
+  test:
+    if: always()
+    needs: browser-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require both artifacts to pass
+        env:
+          RESULT: ${{ needs.browser-tests.result }}
+        run: test "$RESULT" = success

@@ -82,7 +82,7 @@ themeSource = themeSource.replace(endMarker, "\n${nsmax_sb_adapter_default}" + e
 // v1.8.0 设计层（theme/design.css，按 sb.sb 现版 1:1 复刻）：放在适配层之后，是最终外观。适配层里有带两三个 ID 的选择器（如
 // section#nsk-frame>#nsk-body.nsk-container），只叠 :root 压不过；这里给开头的 html 叠三个 :is(:root,#nsmax-u)——
 // 实际只匹配 :root，但特异度按参数里最大的 ID 计，相当于多了三个 ID。
-const design = readFileSync(new URL("theme/design.css", root), "utf8").replace(/\r\n?/g, "\n")
+const design = ["theme/design.css", "theme/mobile.css"].map(name=>readFileSync(new URL(name, root), "utf8").replace(/\r\n?/g, "\n")).join("\n")
   .replaceAll("html[data-nsmax-theme]", "html[data-nsmax-theme]:is(:root,#nsmax-u):is(:root,#nsmax-u):is(:root,#nsmax-u)");
 const designLine = "\tvar nsmax_design_default = " + JSON.stringify(design) + ";\n";
 themeSource = themeSource.replace(/\tvar nsmax_design_default = .*;\n/, "");

@@ -69,6 +69,7 @@ if (args.includes("--markdown")) {
 	console.log(lines.join("\n"));
 	if (process.env.GITHUB_OUTPUT) {
 		appendFileSync(process.env.GITHUB_OUTPUT, `updates=${outdated.length}\n`);
+		appendFileSync(process.env.GITHUB_OUTPUT, `errors=${results.filter(result => result.status === "error").length}\n`);
 		appendFileSync(process.env.GITHUB_OUTPUT, `title=上游更新：${outdated.map(({ source, latest }) => `${source.name} ${source.version} → ${latest}`).join("，")}\n`);
 	}
 	process.exit(0);
@@ -78,4 +79,4 @@ for (const { source, latest, status, error } of results) {
 	const text = { current: `已是最新（${source.version}）`, outdated: `有更新：${source.version} → ${latest}`, untracked: `${source.version}，无发布地址，不检查`, error: `检查失败：${error}` }[status];
 	console.log(`${source.name}：${text}`);
 }
-process.exit(outdated.length ? 10 : 0);
+process.exit(results.some(result => result.status === "error") ? 1 : outdated.length ? 10 : 0);

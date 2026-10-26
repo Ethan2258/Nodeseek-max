@@ -3215,7 +3215,7 @@ html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-sep {
   margin: 0 2px !important;
   background: var(--line) !important;
 }
-/* 输入区：sb.sb textarea——深一级细线、面板底、7px 10px、14px、最少 150px；聚焦时品牌黄边框 + 3px 光圈 */
+/* 输入区：深一级细线、面板底、7px 10px、14px、最少 150px；内层为直角，聚焦时黄色边框与内容边缘对齐。 */
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface {
   position: relative !important;
   margin: 0 !important;
@@ -3238,7 +3238,7 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pan
   margin: 0 !important;
   padding: 7px 10px !important;
   border: 1px solid var(--line-strong) !important;
-  border-radius: var(--r-input) !important;
+  border-radius: 0 !important;
   background: var(--panel) !important;
   box-shadow: none !important;
   color: var(--text) !important;
@@ -3266,11 +3266,20 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pan
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
+  border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--text) !important;
   font-family: var(--font-sans) !important;
   font-size: 14px !important;
+}
+/* 发帖模板在外框里还包了一层原生 textarea；文字留白由外框提供，内层不再重复加圆角和内边距。 */
+html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane] textarea:not(.CodeMirror textarea):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-radius: 0 !important;
+  padding: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  resize: none !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-preview {
   border: 1px solid var(--line) !important;
@@ -14222,7 +14231,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions 
 /* 回复框照 sb.sb .reply-panel 再量一遍（2026-10-24，用户：比例、圆角、拖动角、选中颜色、光标都和 sb.sb 不一样）：
    - 间距：工具按钮下面 8px 是输入框（sb.sb .grid 里按钮、输入框之间 8px）；输入框下面 22px 是发送按钮（sb.sb .grid 外边距 14px，
      加上 textarea 是行内块、底下多出约 8px 行高）；按钮下面 16px（sb.sb .reply-panel form 14px 16px 16px）。以前三处都是 14px；
-   - 聚焦时圆角 6px：sb.sb 全局 :focus-visible 写了 border-radius: var(--r-sm)，输入框一聚焦就是 6px，不聚焦 8px；
+   - 编辑输入区常态和聚焦统一直角，避免选中文本与黄色边框之间出现圆弧缺口；
    - 右下角拖动角画成原生 textarea 的样子：两道短斜线贴着右下角、次级文字色、不透明（以前两道长斜纹、半透明，看着发虚）；
    - Markdown 编辑器（CodeMirror）里选中的底色用 --selection-editor（浅色亮黄、深色暗金，sb.sb .CodeMirror-selected），
      以前是 --selection：深色下亮黄底配浅色字，选中的字看不清；
@@ -14240,7 +14249,7 @@ html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .submit-row:is(#nsma
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane]:focus-within:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  border-radius: var(--r-sm) !important;
+  border-radius: 0 !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-resize:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   right: 2px !important;
@@ -14772,95 +14781,3 @@ html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-contai
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: visible !important;
 }
-
-/* 73. iPhone / 触屏：保留桌面样式，手机独立处理点击、阅读和输入。 */
-.nsmax-search-close, .nsmax-drawer-head { display: none !important; }
-html[data-nsmax-mobile-lock] { overflow: hidden !important; overscroll-behavior: none !important; }
-html[data-nsmax-theme][data-nsmax-touch] { -webkit-text-size-adjust: 100%; scroll-padding-top: 68px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  height: 56px !important; min-height: 56px !important; gap: 4px !important; padding: 0 max(8px,env(safe-area-inset-right)) 0 max(8px,env(safe-area-inset-left)) !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head :is(.site-title,.logo-link):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  min-width: 0 !important; flex-shrink: 1 !important; overflow: hidden !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head .logo-link > span:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; font-size: 16px !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head .logo-link::before { width: 24px !important; height: 24px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head :is(.nsmax-header-action,#toggle-left-panel > a):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important; width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; flex: 0 0 44px !important; padding: 0 !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head :is(.nsmax-header-action,#toggle-left-panel > a) svg { width: 18px !important; height: 18px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head .nsmax-header-action[data-nsmax-own-header="keywords"]:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { display: none !important; }
-/* 常态只占一个搜索图标的位置；点按输入后展开，原生帖子 / 用户搜索入口仍保留。 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head > form.search-form:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  display: flex !important; flex: 0 0 44px !important; box-sizing: border-box !important; width: 44px !important; min-width: 44px !important; height: 44px !important; margin-left: auto !important; border-radius: 999px !important; background: var(--panel) !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head #search-site2:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  min-width: 0 !important; width: 100% !important; height: 44px !important; padding: 0 !important; font-size: 16px !important; color: transparent !important; caret-color: transparent !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head #search-site2:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*)::placeholder { opacity: 0 !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head > form.search-form > :is(svg,.nsmax-icon):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { display: none !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head > form.search-form:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*)::before {
-  content: "" !important; position: absolute !important; width: 18px !important; height: 18px !important; top: 13px !important; left: 13px !important; pointer-events: none !important; background-color: var(--text-muted) !important;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E") center/contain no-repeat;
-}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-search-open] #nsk-head > form.search-form:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  position: absolute !important; z-index: 20 !important; inset: 6px max(8px,env(safe-area-inset-right)) auto max(8px,env(safe-area-inset-left)) !important; width: auto !important; margin: 0 !important; border-radius: var(--r-input) !important; background: var(--panel) !important; box-shadow: var(--shadow-small) !important;
-}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-search-open] #nsk-head #search-site2:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { padding: 0 48px 0 12px !important; color: var(--text) !important; caret-color: auto !important; }
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-search-open] #nsk-head #search-site2:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*)::placeholder { opacity: 1 !important; }
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-search-open] #nsk-head > form.search-form:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*)::before { display: none !important; }
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-search-open] #nsk-head > form.search-form > :is(svg,.nsmax-icon):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { display: none !important; }
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-search-open] #nsk-head .nsmax-search-close:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  display: grid !important; place-items: center !important; position: absolute !important; right: 0 !important; top: 0 !important; width: 44px !important; height: 44px !important; border: 0 !important; background: transparent !important; color: var(--text-muted) !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head .search-hint { top: 48px !important; }
-html[data-nsmax-theme][data-nsmax-touch] body > header > ul.mobile-nav > li > a:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { min-height: 44px !important; height: 44px !important; padding: 0 12px !important; }
-/* 列表保留作者、时间、版块和回复数，去掉每行重复的浏览数、最后回复人。 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list > li.post-list-item:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { padding: 12px 14px !important; min-height: 84px !important; cursor: pointer !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item :is(.info-views,.info-last-commenter):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { display: none !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { font-size: 13px !important; row-gap: 4px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-title:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { font-size: var(--sb-title) !important; line-height: 1.45 !important; }
-/* 正文与输入采用可读字号；不限制用户手动缩放。 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left article.post-content:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { font-size: 16px !important; line-height: 1.75 !important; overflow-wrap: anywhere !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left article.post-content :is(p,li,blockquote):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { font-size: inherit !important; line-height: inherit !important; }
-html[data-nsmax-theme][data-nsmax-touch] :is(input:not([type=checkbox]):not([type=radio]),textarea,select,.CodeMirror,.CodeMirror pre):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { font-size: 16px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-op-actions > a,.nsmax-owner-only,.nsmax-layout-toggle,.nsmax-jump-reply,.nsmax-floor-actions .menu-item,.nsmax-floor-actions .floor-link,.nsmax-fb-actions .menu-item,.nsmax-quote-toggle,.nspp-action,.nsmax-fold-toggle):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  min-height: 44px !important; height: auto !important; min-width: 44px !important; padding: 8px !important; box-sizing: border-box !important; font-size: 13px !important; line-height: 24px !important;
-}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-floor-actions,.nsmax-floor-actions .comment-menu):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { height: auto !important; flex-wrap: wrap !important; gap: 4px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container > :is(.nsmax-reply-head,.reply-head,[data-nsmax-reply-head]):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { flex-wrap: wrap !important; gap: 8px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager :is(a,.pager-pos):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { min-width: 44px !important; height: 44px !important; min-height: 44px !important; font-size: 14px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager :is(.pager-next,.pager-prev):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { font-size: 0 !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager .pager-next::before { content: "›" !important; font-size: 20px !important; }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager .pager-prev::before { content: "‹" !important; font-size: 20px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { display: grid !important; grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: 6px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls > button:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { width: 100% !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; padding: 0 4px !important; font-size: 13px !important; gap: 4px !important; justify-content: center !important; white-space: nowrap !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls > button:is(:nth-child(-n+2),:nth-child(4)) .nsmax-action-label:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { font-size: 0 !important; line-height: 20px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls > button:first-child .nsmax-action-label::after { content: "格式" !important; font-size: 13px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls > button:nth-child(2) .nsmax-action-label::after { content: "附件" !important; font-size: 13px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls > button:nth-child(4) .nsmax-action-label::after { content: "预览" !important; font-size: 13px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls > button:nth-child(4)[aria-pressed=true] .nsmax-action-label::after { content: "编辑" !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-custom-mde-toolbar:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { flex-wrap: nowrap !important; overflow-x: auto !important; max-width: 100% !important; scrollbar-width: none !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-custom-mde-toolbar :is(button,a):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { min-width: 44px !important; min-height: 44px !important; flex-shrink: 0 !important; }
-html[data-nsmax-theme][data-nsmax-touch] .md-editor :is(button.submit,button[type=submit],.nsmax-reply-cancel,.nsmax-draft-clear):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { min-height: 44px !important; padding: 10px 18px !important; font-size: 15px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .md-editor:not([data-nsmax-resized]) { --nsmax-editor-height: 200px; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-resize { display: none !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-code > [data-nspp-copy]:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { min-height: 44px !important; padding: 8px 12px !important; font-size: 13px !important; box-sizing: border-box !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-code > pre[data-nsmax-copy]:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { padding-top: 58px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .post-content table:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { display: block !important; max-width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
-html[data-nsmax-theme][data-nsmax-touch] dialog[open] { animation: none !important; }
-/* 原站侧滑菜单：独立滚动，关闭按钮固定可见。 */
-html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) {
-  width: min(340px,calc(100vw - 44px)) !important; top: var(--nsmax-overlay-top,0px) !important; height: var(--nsmax-overlay-height,100dvh) !important; max-height: var(--nsmax-overlay-height,100dvh) !important; z-index: 10001 !important; overflow-y: auto !important; overscroll-behavior: contain !important; padding-bottom: max(16px,env(safe-area-inset-bottom)) !important; -webkit-overflow-scrolling: touch;
-}
-html[data-nsmax-theme][data-nsmax-touch] .global-mask { z-index: 10000 !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-drawer-head:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { position: sticky !important; top: 0 !important; z-index: 2 !important; display: flex !important; align-items: center !important; justify-content: space-between !important; min-height: 52px !important; background: var(--panel) !important; }
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-drawer-head button { display: grid !important; place-items: center !important; width: 44px !important; height: 44px !important; border: 0 !important; background: transparent !important; color: var(--text) !important; }
-html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a > p:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { min-height: 44px !important; font-size: 15px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay { max-height: var(--nsmax-overlay-height,100dvh) !important; overflow-y: auto !important; overscroll-behavior: contain !important; }
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay :is(button,[role=tab]):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { min-height: 44px !important; min-width: 44px !important; font-size: 14px !important; }
-html[data-nsmax-theme][data-nsmax-touch] :is(.viewer-button,.viewer-toolbar>ul>li):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
-html[data-nsmax-theme][data-nsmax-touch] .viewer-toolbar>ul>li::before { margin: 12px !important; }
-html[data-nsmax-theme] .md-editor[data-nsmax-native-editor] :is(.mde-toolbar,.tab-select):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*) { display: flex !important; flex-wrap: wrap !important; }

@@ -4,12 +4,15 @@ const { readFileSync,writeFileSync,mkdirSync } = require("node:fs");
 const path=require("node:path");
 const {launch,open,ROOT}=require("./harness.cjs");
 const {listPage}=require("./fixtures/pages.cjs");
-const baseline=execFileSync("git",["show","v1.7.2:nodeseek-max.user.js"],{cwd:ROOT,encoding:"utf8",maxBuffer:5e6});
+const baselineRef=process.argv.find(arg=>arg.startsWith("--baseline="))?.slice(11)||process.env.NSMAX_PERF_BASELINE||"HEAD";
+let baseline;
+try{baseline=execFileSync("git",["show",baselineRef+":nodeseek-max.user.js"],{cwd:ROOT,encoding:"utf8",maxBuffer:10e6});}
+catch{throw new Error("无法读取基线 "+baselineRef+"。请指定本地存在的提交或标签，例如 --baseline=HEAD。");}
 const current=readFileSync(path.join(ROOT,"nodeseek-max.user.js"),"utf8");
 async function main(){
 	const browser=await launch(),runs=[];
 	try{
-		for(const count of [6,50])for(let run=0;run<3;run++)for(const [version,source]of[["1.7.2",baseline],["current",current]]){
+		for(const count of [6,50])for(let run=0;run<3;run++)for(const [version,source]of[[baselineRef,baseline],["current",current]]){
 			const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html:listPage({count}),viewport:{width:1440,height:900},scriptSource:source,init:`window.__tasks=[];new PerformanceObserver(l=>window.__tasks.push(...l.getEntries().map(e=>e.duration))).observe({type:'longtask',buffered:true});`});
 			try{
 				await page.waitForTimeout(1200);
@@ -18,10 +21,12 @@ async function main(){
 			}finally{await context.close();}
 		}
 	}finally{await browser.close();}
-	const median=values=>values.sort((a,b)=>a-b)[Math.floor(values.length/2)];
-	const report=[6,50].flatMap(count=>["1.7.2","current"].map(version=>{const rows=runs.filter(x=>x.count===count&&x.version===version);return{count,version,fcpMedian:median(rows.map(x=>x.fcp)),maxTaskMedian:median(rows.map(x=>x.maxTask)),errors:rows.flatMap(x=>x.errors)}}));
-	mkdirSync(path.join(ROOT,"docs/validation"),{recursive:true});
-	writeFileSync(path.join(ROOT,"docs/validation/performance.json"),JSON.stringify({report,runs},null,2)+"\n");
+	const median=values=>{const valid=values.filter(Number.isFinite).sort((a,b)=>a-b);return valid.length?valid[Math.floor(valid.length/2)]:null;};
+	const report=[6,50].flatMap(count=>[baselineRef,"current"].map(version=>{const rows=runs.filter(x=>x.count===count&&x.version===version);return{count,version,fcpMedian:median(rows.map(x=>x.fcp)),maxTaskMedian:median(rows.map(x=>x.maxTask)),errors:rows.flatMap(x=>x.errors)}}));
+	const output=process.env.NSMAX_AUDIT_DIR||path.join(ROOT,"docs/validation");
+	mkdirSync(output,{recursive:true});
+	writeFileSync(path.join(output,"performance.json"),JSON.stringify({baseline:baselineRef,report,runs},null,2)+"\n");
 	console.log(JSON.stringify(report,null,2));
+	if(runs.some(run=>run.errors.length))process.exitCode=1;
 }
 main().catch(e=>{console.error(e);process.exitCode=1});
