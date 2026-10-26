@@ -4,7 +4,7 @@
 
 ## 环境与初始化
 
-推荐 Node.js 24（CI 使用同一主版本），最低 Node.js 22。首次克隆后：
+推荐 Node.js 24（CI 使用同一主版本），最低 Node.js 22。云端运行环境固定为 Ubuntu 24.04，避免 latest 镜像迁移改变依赖安装环境。首次克隆后：
 
 ```bash
 npm ci

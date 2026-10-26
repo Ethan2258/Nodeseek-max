@@ -15,7 +15,7 @@ concurrency:
 jobs:
   browser-tests:
     name: Browser tests (${{ matrix.artifact }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -59,7 +59,7 @@ jobs:
   test:
     if: always()
     needs: browser-tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Require both artifacts to pass
         env:
