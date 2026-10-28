@@ -27,11 +27,13 @@ for(const engine of ["chromium","webkit"]){
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html:P.listPage({mobile:true}),seed,device:{...devices["iPhone 13"],viewport:{width:390,height:844}},scriptSource:source,init:`window.__detailViewport=Object.assign(new EventTarget(),{height:844,width:390,offsetTop:0,offsetLeft:0,scale:1});Object.defineProperty(window,"visualViewport",{configurable:true,value:window.__detailViewport});`});
   try{
    await ready(page);const message="保存失败，请检查连接： https://example.com/"+"longpath".repeat(24);
-   await page.evaluate(message=>{__detailViewport.height=430;__detailViewport.offsetTop=90;__detailViewport.dispatchEvent(new Event("resize"));__detailToast(message,{error:true});},message);
+   for(const toastFirst of [false,true]){
+   await page.evaluate(({message,toastFirst})=>{if(toastFirst)__detailToast(message,{error:true});__detailViewport.height=430;__detailViewport.offsetTop=90;__detailViewport.dispatchEvent(new Event("resize"));if(!toastFirst)__detailToast(message,{error:true});},{message,toastFirst});
    await page.waitForSelector(".nsmax-toast[data-nsmax-shown]");const toast=page.locator(".nsmax-toast");await toast.evaluate(e=>Promise.all(e.getAnimations().map(a=>a.finished.catch(()=>{}))));
    const state=await toast.evaluate(e=>{const r=e.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,overflow:e.scrollWidth>e.clientWidth+1,text:e.textContent};});
    assert.ok(state.top>=90&&state.bottom<=520,JSON.stringify(state));assert.ok(state.left>=12&&state.right<=378,JSON.stringify(state));assert.equal(state.overflow,false);assert.equal(state.text,message);assert.notEqual(await page.evaluate(()=>document.body.style.position),"fixed","提示条不锁住页面滚动");
-   await page.evaluate(()=>{__detailViewport.height=844;__detailViewport.offsetTop=0;__detailViewport.dispatchEvent(new Event("resize"));});await page.waitForFunction(()=>document.querySelector(".nsmax-toast").getBoundingClientRect().bottom>800);assert.deepEqual(errors,[]);
+   await page.evaluate(()=>{__detailViewport.height=844;__detailViewport.offsetTop=0;__detailViewport.dispatchEvent(new Event("resize"));});await page.waitForFunction(()=>document.querySelector(".nsmax-toast").getBoundingClientRect().bottom>800);
+   }assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
 }
