@@ -14697,7 +14697,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   font-size: 11.5px !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
-  vertical-align: 2px !important;
+  vertical-align: middle !important;
   white-space: nowrap !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages:is(#nsmax-lv, *):is(#nsmax-b, *)::before {

@@ -58,6 +58,7 @@ check 验证版本、锁文件、本地文档链接、脚本语法、主题构�
 | npm run test:mobile | Chromium / WebKit 的 iPhone 触屏布局与操作 |
 | npm run test:userscripts | 异步 GM API、失败重试、隔离世界编辑与原生回退 |
 | npm run test:lottery | 长网址预览、表格边界与开奖链接参数 |
+| npm run test:pagination | 空末页、请求失败重试与标题小页码居中 |
 
 设置 `NSMAX_SCRIPT_PATH` 可用同一套测试验证压缩文件。CI 将源码和压缩产物放在两个并行任务中，二者都成功后，统一 test 检查才通过。
 

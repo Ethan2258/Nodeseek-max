@@ -192,8 +192,7 @@ for(const engine of engines) {
   try {await ready(page);await tapVisible(page,page.locator("#toggle-left-panel a"));await page.waitForFunction(()=>document.body.style.position==="fixed");await page.evaluate(()=>document.getElementById("left-slide-panel").remove());await page.waitForFunction(()=>document.body.style.position!=="fixed");assert.equal(await page.locator(".global-mask").isVisible(),false);assert.deepEqual(errors,[]);}finally{await context.close();}
  });
  test(`${engine} iPhone：进入帖子再返回列表，恢复阅读滚动位置`,async()=>{
-  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true,count:30}),pages:{"/post-1000-1":P.postPage({mobile:true})}});
-  try {await ready(page);await scrollTo(page,600);await page.goto("https://www.nodeseek.com/post-1000-1");await ready(page);await page.goBack({waitUntil:"domcontentloaded"});await ready(page);await page.waitForFunction(()=>Math.abs(scrollY-600)<4);assert.equal(await page.evaluate(()=>document.body.style.position),"");assert.deepEqual(errors,[]);}finally{await context.close();}
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true,count:30}),pages:{"/post-1000-1":P.postPage({mobile:true})}}); try {await ready(page);for(const y of [600,1200]){await page.keyboard.press("Shift");await scrollTo(page,y);await page.goto("https://www.nodeseek.com/post-1000-1");await ready(page);await page.goBack({waitUntil:"domcontentloaded"});await page.waitForLoadState("load");await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await ready(page);await page.waitForFunction(y=>Math.abs(scrollY-y)<4,y);assert.equal(await page.evaluate(()=>document.body.style.position),"");}assert.deepEqual(errors,[]);}finally{await context.close();}
  });
  test(`${engine} iPhone：触屏样式在解析阶段就生效，不等慢站点脚本回来再跳一次`,async()=>{
   let early;

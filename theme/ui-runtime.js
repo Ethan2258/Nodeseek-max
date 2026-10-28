@@ -1791,12 +1791,13 @@
 			const current = Number(pager.querySelector(".pager-cur,[aria-current=page]:not(a)")?.textContent) || 1;
 			const pages = Array.from(pager.querySelectorAll(".pager-pos"));
 			const number = element => Number(element.textContent.match(/(\d+)\s*$/)?.[1]);
-			const last = Math.max(...pages.map(number).filter(Number.isFinite));
+			const confirmedLast = Number(pager.getAttribute("data-nsmax-last-page"));
+			const last = confirmedLast > 0 ? confirmedLast : Math.max(...pages.map(number).filter(Number.isFinite));
 			let previous;
 			const seenPages = new Set();
 			for (const page of pages) {
 				const n = number(page);
-				const keep = !seenPages.has(n) && (n === 1 || n === last || (current <= 2 ? n <= 3 : Math.abs(n - current) <= 1));
+				const keep = n >= 1 && n <= last && !seenPages.has(n) && (n === 1 || n === last || (current <= 2 ? n <= 3 : Math.abs(n - current) <= 1));
 				seenPages.add(n);
 				page.toggleAttribute("data-nsmax-page-skip", !keep);
 				for (const ellipsis of page.querySelectorAll(".ellipsis")) if (!ellipsis.hidden) ellipsis.hidden = true;
@@ -1804,6 +1805,17 @@
 					const dots = document.createElement("span"); dots.className = "nsmax-pager-ellipsis"; dots.textContent = "…"; page.before(dots);
 				}
 				if (keep) previous = n;
+			}
+			if (confirmedLast > 0) {
+				const visible = pages.filter(page => !page.hasAttribute("data-nsmax-page-skip"));
+				for (const dots of pager.querySelectorAll(".nsmax-pager-ellipsis")) {
+					const after = visible.find(page => dots.compareDocumentPosition(page) & Node.DOCUMENT_POSITION_FOLLOWING);
+					const before = after && visible[visible.indexOf(after) - 1];
+					if (!before || number(after) - number(before) <= 1) dots.remove();
+				}
+				if (current >= last) for (const link of pager.querySelectorAll("a.pager-next")) {
+					link.removeAttribute("href"); link.setAttribute("aria-disabled", "true"); link.setAttribute("data-nsmax-pg-off", "");
+				}
 			}
 			// 站点在 .pager-more 里写死的「..」也收掉：脚本插的是「…」，两个并排会连成「..…」
 			for (const dots of pager.querySelectorAll(".pager-more > span:not([class])")) if (/^\.{2,}$/.test(dots.textContent.trim())) dots.hidden = true;
@@ -4852,9 +4864,68 @@ function nsmaxTagStructure() {
 			return parsedConfig||config;
 		}};
 	}
+	// 手机历史条目各自保存位置；原生回退偶尔会按重排前的锚点上移 80px，等主布局就绪后校正一次。
+	function nsmaxKeepTouchScroll(ctx, media) {
+		if (!media.matches) return () => {};
+		const key = "__nsmaxTouchScroll", root = document.documentElement;
+		const navigation = performance.getEntriesByType("navigation")[0]?.type;
+		let storageKey, previous;
+		try {
+			const state = history.state;
+			if (state !== null && (typeof state !== "object" || Array.isArray(state))) return () => {};
+			let id = navigation !== "navigate" && typeof state?.[key] === "string" ? state[key] : null;
+			if (!id) {
+				id = crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2);
+				history.replaceState({ ...state, [key]: id }, "");
+			}
+			storageKey = "nsmax:touch-scroll:" + id;
+			previous = JSON.parse(sessionStorage.getItem(storageKey) || "null");
+			const indexKey = "nsmax:touch-scroll:index";
+			const stored = JSON.parse(sessionStorage.getItem(indexKey) || "[]");
+			const ids = [...(Array.isArray(stored) ? stored : []).filter(value => typeof value === "string" && value !== id), id];
+			for (const old of ids.slice(0, -80)) sessionStorage.removeItem("nsmax:touch-scroll:" + old);
+			sessionStorage.setItem(indexKey, JSON.stringify(ids.slice(-80)));
+		} catch { return () => {}; }
+		let restoring = media.matches && performance.getEntriesByType("navigation")[0]?.type === "back_forward" && previous?.href === location.href && previous.width === innerWidth && Number.isFinite(previous.y) && previous.y >= 0;
+		let cancelled = false, frame = 0, timer = 0, lastSaved = 0;
+		const save = (leaving = false) => {
+			if ((!leaving && !media.matches) || restoring || root.hasAttribute("data-nsmax-mobile-lock")) return;
+			try {
+				// history.state 只保存条目标识；滚动位置更新单独写入会话缓存。
+				sessionStorage.setItem(storageKey, JSON.stringify({ href: location.href, x: scrollX, y: scrollY, width: innerWidth }));
+				lastSaved = Date.now();
+			} catch {}
+		};
+		nsmaxKeepTouchScroll.save = save;
+		const observer = new MutationObserver(() => schedule());
+		const restore = () => {
+			if (!restoring || cancelled || root.hasAttribute("data-nsmax-mounting")) return;
+			const old = root.style.getPropertyValue("scroll-behavior"), priority = root.style.getPropertyPriority("scroll-behavior");
+			root.style.setProperty("scroll-behavior", "auto", "important");
+			window.scrollTo(Number(previous.x) || 0, previous.y);
+			if (old) root.style.setProperty("scroll-behavior", old, priority); else root.style.removeProperty("scroll-behavior");
+			if (document.readyState === "complete") { restoring = false; observer.disconnect(); save(); }
+		};
+		const schedule = () => {
+			if (!restoring || cancelled || root.hasAttribute("data-nsmax-mounting")) return;
+			cancelAnimationFrame(frame); clearTimeout(timer);
+			frame = requestAnimationFrame(() => { frame = requestAnimationFrame(restore); });
+			timer = setTimeout(restore, 160);
+		};
+		const cancel = event => { cancelled = true; restoring = false; observer.disconnect(); cancelAnimationFrame(frame); clearTimeout(timer); if (event.type === "pointerdown" || event.type === "touchstart" || event.type === "keydown" && (event.key === "Enter" || event.key === " ")) save(); };
+		for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) window.addEventListener(type, cancel, { capture: true, passive: true, signal: ctx.signal });
+		window.addEventListener("scroll", () => { if (Date.now() - lastSaved >= 1000) save(); }, { passive: true, signal: ctx.signal });
+		if (restoring) {
+			observer.observe(root, { attributes: true, attributeFilter: ["data-nsmax-mounting"] });
+			window.addEventListener("load", schedule, { once: true, signal: ctx.signal });
+			schedule();
+		}
+		return () => { if (nsmaxKeepTouchScroll.save === save) delete nsmaxKeepTouchScroll.save; observer.disconnect(); cancelAnimationFrame(frame); clearTimeout(timer); };
+	}
 	function nsmaxMountTouchUi(ctx) {
 		const root = document.documentElement;
 		const media = matchMedia("(pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-width: 960px) and (max-height: 600px)");
+		const stopScroll = nsmaxKeepTouchScroll(ctx, media);
 		const bound = new WeakSet();
 		let panel = null, panelMask = null, nativeSearch = null;
 		const drawerView = (view) => {
@@ -4986,7 +5057,7 @@ function nsmaxTagStructure() {
 		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
 		const stop = ctx.watch(sync);
-		return () => { stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
+		return () => { stopScroll(); stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
 	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
