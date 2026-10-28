@@ -18,7 +18,7 @@
 ## 装好后怎么用
 
 - 顶栏 **齿轮** 打开脚本设置。改动自动保存，保存完成后点“刷新应用设置”。
-- 手机左上角 **菜单** 集中提供个人入口、版块导航、热榜和最近浏览；点遮罩或关闭按钮返回正文。
+- 手机界面参考 [sb.sb](https://sb.sb/) 的圆角模式，使用紧凑顶栏、圆角卡片和单列菜单；左上角 **菜单** 提供版块、个人入口、热榜和最近浏览。
 - 帖子下方可切换格式工具、附件、表情和预览；回复某层时，输入框会移到对应楼层下方。
 
 ## 主要功能
@@ -42,6 +42,8 @@
 | 电脑首页 | 深色帖子 |
 | --- | --- |
 | <img src="docs/screenshots/home-light.png" width="420" alt="电脑首页"> | <img src="docs/screenshots/post-dark.png" width="420" alt="深色帖子"> |
+| 手机首页 | 手机深色帖子 |
+| <img src="docs/screenshots/mobile-home.png" width="240" alt="手机首页"> | <img src="docs/screenshots/mobile-post-dark.png" width="240" alt="手机深色帖子"> |
 | 手机菜单 | 手机热榜 |
 | <img src="docs/screenshots/mobile-menu.png" width="240" alt="手机菜单"> | <img src="docs/screenshots/mobile-hot.png" width="240" alt="手机热榜"> |
 

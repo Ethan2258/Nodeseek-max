@@ -3,7 +3,7 @@ const { mkdirSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 const { webkit, devices } = require("playwright");
 const { launch, open, ROOT } = require("./harness.cjs");
-const { listPage, postPage, notificationPage, settingPage, newPostPage, nativeMessagePage, nativeTalkPage, nativeSpacePage } = require("./fixtures/pages.cjs");
+const { listPage, postPage, notificationPage, settingPage, newPostPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, fansPage, signInPage, registerPage } = require("./fixtures/pages.cjs");
 
 async function main() {
 	const browser = process.env.NSMAX_AUDIT_ENGINE === "webkit" ? await webkit.launch() : await launch();
@@ -13,9 +13,9 @@ async function main() {
 	const selected = process.env.NSMAX_AUDIT_PAGES?.split(",");
 	const settleDrawer = page => page.locator("#left-slide-panel").evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(animation=>animation.effect?.getComputedTiming().iterations!==Infinity).map(animation=>animation.finished.catch(()=>{}))));
 	try {
-		for (const [name, url, render] of [["home", "/", listPage], ["home-50", "/", o=>listPage({...o,count:50})], ["post", "/post-1000-1", postPage], ["notification", "/notification", notificationPage], ["messages", "/notification#/message?mode=list", nativeMessagePage], ["talk", "/notification#/message?mode=talk&to=10", nativeTalkPage], ["setting", "/setting", settingPage], ["new", "/new-discussion", newPostPage], ["space", "/space/10", nativeSpacePage]]) {
+		for (const [name, url, render] of [["home", "/", listPage], ["home-50", "/", o=>listPage({...o,count:50})], ["post", "/post-1000-1", postPage], ["notification", "/notification", notificationPage], ["messages", "/notification#/message?mode=list", nativeMessagePage], ["talk", "/notification#/message?mode=talk&to=10", nativeTalkPage], ["setting", "/setting", settingPage], ["new", "/new-discussion", newPostPage], ["space", "/space/10", nativeSpacePage], ["fans", "/fans?type=follow", fansPage], ["signin", "/signIn.html", signInPage], ["register", "/register.html", registerPage]]) {
 			if (selected && !selected.includes(name)) continue;
-			for (const [width, dark] of [[1440, false], [1440, true], [390, false]]) {
+			for (const [width, dark] of [[1440, false], [1440, true], [390, false], [390, true]]) {
 				const { context, page, errors, calls } = await open(browser, `https://www.nodeseek.com${url}`, {
 					html: render({ dark, mobile: width < 700 }), viewport: { width, height: 900 }, colorScheme: dark ? "dark" : "light",
 					device: width < 700 ? { ...devices["iPhone 13"], viewport: { width, height: 844 } } : {},
@@ -33,6 +33,7 @@ async function main() {
 							longTasks: window.__auditTasks, cls: window.__auditCLS, paints: performance.getEntriesByType("paint").map(e=>({name:e.name,ms:e.startTime})), profileRequests: performance.getEntriesByType("resource").filter(e=>e.name.includes("/api/account/getInfo/")).length,
 							styles: [...document.styleSheets].reduce((n,s)=>{try{return n+s.cssRules.length}catch{return n}},0) };
 					});
+					if(width<700)await page.screenshot({path:path.join(output,`mobile-${name}-${dark?"dark":"light"}.png`)});
 					await page.screenshot({ path: path.join(output, `${name}-${width}-${dark ? "dark" : "light"}.png`), fullPage: true });
 					if (name === "post") await page.locator(".md-editor").screenshot({ path: path.join(output, `reply-${width}-${dark ? "dark" : "light"}.png`), timeout: 1000 }).catch(()=>{});
 					if (name === "post") {
@@ -49,14 +50,14 @@ async function main() {
 							await page.locator("#nspp-settings").getByRole("button",{name:"关闭",exact:true}).tap();
 							await page.getByRole("button",{name:"打开菜单",exact:true}).tap();
 							await settleDrawer(page);
-							await page.screenshot({path:path.join(output,"mobile-menu.png")});
+							await page.screenshot({path:path.join(output,`mobile-menu${dark?"-dark":""}.png`)});
 							await page.locator("#left-slide-panel").getByRole("button",{name:"热榜",exact:true}).tap();
 							await page.waitForSelector("#left-slide-panel .nsmax-hot-list a");
 							await settleDrawer(page);
-							await page.screenshot({path:path.join(output,"mobile-hot.png")});
+							await page.screenshot({path:path.join(output,`mobile-hot${dark?"-dark":""}.png`)});
 							await page.locator("#left-slide-panel").getByRole("button",{name:"最近浏览",exact:true}).tap();
 							await settleDrawer(page);
-							await page.screenshot({path:path.join(output,"mobile-recent.png")});
+							await page.screenshot({path:path.join(output,`mobile-recent${dark?"-dark":""}.png`)});
 						}
 					}
 					reports.push({ name, width, dark, ...state, calls, errors });
