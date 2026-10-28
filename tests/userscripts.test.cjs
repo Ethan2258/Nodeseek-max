@@ -14,7 +14,7 @@ test("Userscripts / WebKit：只有异步 GM API 也能读取设置、保存并�
  try {
   await ready(page);assert.ok((await page.locator(".nspp-user-note").allTextContents()).some(s=>s.includes("手机备注")));
   const host=await settings(page),large=host.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true});
-  assert.equal(await host.getByRole("button",{name:"保存并刷新",exact:true}).isEnabled(),true);
+  assert.equal(await host.getByRole("button",{name:"刷新应用设置",exact:true}).isEnabled(),true);
   await large.tap();await page.waitForFunction(key=>JSON.parse(localStorage.getItem("__gm__:"+key))["modern-theme"]?.fontSize==="xlarge",KEY);
   await page.waitForFunction(()=>document.getElementById("nspp-settings").shadowRoot.querySelector("button.primary").textContent==="刷新应用设置");
   assert.equal(await page.evaluate(key=>localStorage.getItem(key),KEY),null,"偏好留在管理器存储，不复制到网站的 localStorage");
@@ -35,9 +35,9 @@ test("Userscripts：异步保存失败不会刷新丢失改动，重试成功后
   await host.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true}).tap();
   await page.waitForFunction(()=>document.getElementById("nspp-settings").shadowRoot.querySelector("button.primary").textContent.includes("重试"));
   await host.getByRole("button",{name:"重试保存并刷新",exact:true}).tap();
-  await page.waitForFunction(()=>document.getElementById("nspp-settings").shadowRoot.querySelector("button.primary").textContent==="保存并刷新");assert.equal(navigations,0);
+  await page.waitForFunction(()=>document.getElementById("nspp-settings").shadowRoot.querySelector("button.primary").textContent==="重试保存并刷新");assert.equal(navigations,0);
   await page.evaluate(()=>{window.__userscriptsFailSettings=false;});
-  await Promise.all([page.waitForEvent("domcontentloaded"),host.getByRole("button",{name:"保存并刷新",exact:true}).tap()]);await ready(page);
+  await Promise.all([page.waitForEvent("domcontentloaded"),host.getByRole("button",{name:"重试保存并刷新",exact:true}).tap()]);await ready(page);
   assert.equal(await page.locator("html").getAttribute("data-nsmax-size"),"xlarge");assert.deepEqual(errors,[]);
  } finally {await context.close();}
 });
@@ -45,7 +45,7 @@ test("Userscripts：异步保存失败不会刷新丢失改动，重试成功后
 test("Userscripts：存储读取失败保留原数据并明确禁用保存，不用默认值覆盖",async()=>{
  const original={"modern-theme":{fontSize:"xlarge"}};
  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile,manager:{type:"userscripts",failRead:true},html:P.listPage({mobile:true}),seed:{[KEY]:original}});
- try {await ready(page);const host=await settings(page);assert.equal(await host.getByRole("button",{name:"保存并刷新",exact:true}).isDisabled(),true);assert.match(await host.locator(".status").innerText(),/Userscripts 存储未就绪/);assert.deepEqual(await page.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key)),KEY),original);assert.deepEqual(await page.evaluate(()=>window.__userscriptsWrites),[]);assert.deepEqual(errors,[]);}finally{await context.close();}
+ try {await ready(page);const host=await settings(page);assert.equal(await host.getByRole("button",{name:"刷新应用设置",exact:true}).isDisabled(),true);assert.match(await host.locator(".status").innerText(),/Userscripts 存储未就绪/);assert.deepEqual(await page.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key)),KEY),original);assert.deepEqual(await page.evaluate(()=>window.__userscriptsWrites),[]);assert.deepEqual(errors,[]);}finally{await context.close();}
 });
 
 test("Userscripts：站内外链直达开关在异步存储模式下同样生效",async()=>{
@@ -95,7 +95,7 @@ test("Userscripts：页面禁止桥接时保留可用的原生编辑器与设置
   await native.locator('textarea').fill('原生编辑仍然可用');assert.equal(await native.locator('textarea').inputValue(),'原生编辑仍然可用');
   await page.getByRole('button',{name:'NodeSeek Max 设置',exact:true}).click();
   assert.match(await page.locator('#nspp-settings').locator('.status').innerText(),/原生编辑器/);
-  assert.equal(await page.locator('#nspp-settings').getByRole('button',{name:'保存并刷新',exact:true}).isEnabled(),true);
+  assert.equal(await page.locator('#nspp-settings').getByRole('button',{name:'刷新应用设置',exact:true}).isEnabled(),true);
   assert.deepEqual(errors.filter(e=>!/Content Security Policy|violates.*directive|Executing inline script/i.test(e)),[]);
   await client.detach();
  }finally{await context.close();}

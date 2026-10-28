@@ -4476,6 +4476,7 @@ function nsmaxTagStructure() {
 		}
 		const error = !!options.error;
 		toast.textContent = text;
+		if (nsmaxTouchLayout()) nsmaxSyncOverlayViewport(true);
 		toast.classList.toggle("is-error", error);
 		toast.removeAttribute("data-nsmax-shown");
 		if (toast.hasAttribute("popover")) {

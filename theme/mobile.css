@@ -110,7 +110,7 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager :is(.pager-ne
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager .pager-next::before{content:"›"!important;font-size:20px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager .pager-prev::before{content:"‹"!important;font-size:20px!important}
 
-/* 编辑与表单：保留原生输入、预览与上传，统一直角工具和 16px 输入字号。 */
+/* 编辑与表单：保留原生输入、预览与上传，统一圆角工具和 16px 输入字号。 */
 html[data-nsmax-theme][data-nsmax-touch] :is(input:not([type=checkbox]):not([type=radio]),textarea,select,.CodeMirror,.CodeMirror pre){font-size:16px!important}
 html[data-nsmax-theme][data-nsmax-touch] .md-editor .nsmax-editor-head{padding:10px 12px!important}
 html[data-nsmax-theme][data-nsmax-touch] .md-editor>#editor-body{padding-left:12px!important;padding-right:12px!important}
@@ -206,3 +206,20 @@ html[data-nsmax-theme][data-nsmax-touch] .viewer-toolbar>ul>li::before{margin:12
 html[data-nsmax-theme][data-nsmax-touch] dialog[open]{border-radius:var(--r)!important;animation:none!important}
 html[data-nsmax-theme] .md-editor[data-nsmax-native-editor] :is(.mde-toolbar,.tab-select):is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-mobile,*){display:flex!important;flex-wrap:wrap!important}
 @media(prefers-reduced-motion:reduce){html[data-nsmax-theme] #left-slide-panel{transition:none!important}}
+
+/* 弹窗操作：44px 点击区域，边框仍采用紧凑的 28–32px 圆角样式。 */
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-dialog-head{min-height:52px!important;padding:4px 12px!important;gap:8px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-dialog-head>h3{min-width:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-dialog-close{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:var(--r-pill)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-dialog-close:focus-visible{outline-offset:-2px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-dialog-foot{flex-wrap:wrap!important;gap:8px!important;padding:8px 12px max(8px,env(safe-area-inset-bottom))!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog :is(.nsmax-dialog-button,.nsmax-lucky-chip){position:relative!important;isolation:isolate!important;box-sizing:border-box!important;min-width:44px!important;min-height:44px!important;height:44px!important;border:0!important;background:transparent!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog :is(.nsmax-dialog-button,.nsmax-lucky-chip)::before{content:""!important;position:absolute!important;inset:6px 0!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-dialog-button.primary::before{border-color:var(--action-border)!important;background:var(--action)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog .nsmax-lucky-presets{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px 8px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-lucky-chip{padding:0 12px!important;line-height:20px!important;font-size:13px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-lucky-chip::before{inset:8px 0!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog :is(input,select).nsmax-lucky-input:not([type=checkbox]){min-height:44px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog .nsmax-lucky-check{min-height:44px!important;align-items:center!important}
+/* 提示跟随实际可视区域，键盘与视口平移后也留在可见区域内。 */
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-toast{bottom:calc(var(--nsmax-overlay-bottom,0px) + max(16px,env(safe-area-inset-bottom)))!important}

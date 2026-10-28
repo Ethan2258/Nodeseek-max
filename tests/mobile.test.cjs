@@ -127,7 +127,7 @@ for(const engine of engines) {
    assert.ok(await host.getByRole("searchbox",{name:"搜索设置",exact:true}).evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=16));
    await page.setViewportSize({width:390,height:430});
    await page.waitForFunction(()=>Math.abs(parseFloat(document.documentElement.style.getPropertyValue("--nsmax-overlay-height"))-430)<2);
-   const save=await host.getByRole("button",{name:"保存并刷新",exact:true}).boundingBox();assert.ok(save.y+save.height<=431,JSON.stringify(save));
+   const save=await host.getByRole("button",{name:"刷新应用设置",exact:true}).boundingBox();assert.ok(save.y+save.height<=431,JSON.stringify(save));
    await host.getByRole("button",{name:"关闭",exact:true}).tap();await page.waitForFunction(()=>document.body.style.position!=="fixed");
    assert.ok(Math.abs(await page.evaluate(()=>scrollY)-before)<3);assert.deepEqual(errors,[]);
   } finally {await context.close();}

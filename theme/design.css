@@ -11460,6 +11460,7 @@ html[data-nsmax-theme] .nsmax-toast:is(#nsmax-lv, *):is(#nsmax-b, *) {
   width: max-content !important;
   height: auto !important;
   overflow: visible !important;
+  overflow-wrap: anywhere !important;
   transition: opacity 140ms var(--ease-out), transform 140ms var(--ease-out), visibility 0s linear 140ms !important;
 }
 html[data-nsmax-theme] .nsmax-toast[data-nsmax-shown]:is(#nsmax-lv, *):is(#nsmax-b, *) {

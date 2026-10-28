@@ -536,7 +536,7 @@ test("设置弹窗：完整设置、关于说明和检查更新按需打开，�
 		assert.equal(await host.locator('dialog').isVisible(),true);
 		assert.ok(await host.locator('input,select,textarea,.categories,[data-feature]').count()>0);
 		const buttonText=await host.locator('button').allTextContents();
-		for(const label of ['保存并刷新','恢复默认','清空缓存','导出配置','导入配置','关闭','检查更新']) assert.ok(buttonText.includes(label),label);
+		for(const label of ['刷新应用设置','恢复默认','清空缓存','导出配置','导入配置','关闭','检查更新']) assert.ok(buttonText.includes(label),label);
 		assert.equal(await host.getByRole('heading',{name:'NodeSeek Max',exact:true}).count(),1);
 		assert.ok((await host.locator('dialog').boundingBox()).width<=940);
 		assert.deepEqual(await page.locator('#nsk-body').boundingBox(),before);
