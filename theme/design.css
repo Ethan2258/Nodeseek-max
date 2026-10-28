@@ -7001,6 +7001,8 @@ html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .co
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=thumbdown]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "反对" !important; }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=star]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "收藏" !important; }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=edit]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "编辑" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=pin]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "置顶" !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=unpin]:is(#nsmax-lv, *):is(#nsmax-b, *)::before { content: "取消置顶" !important; }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=reply]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 1 !important; }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=quote]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 2 !important; }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=thumbup]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 3 !important; }
@@ -7008,6 +7010,8 @@ html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .co
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=thumbdown]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 5 !important; }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=star]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 6 !important; }
 html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=edit]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 7 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=pin]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 8 !important; }
+html[data-nsmax-theme] #nsk-body-left .content-item > .nsmax-floor-actions > .comment-menu > .menu-item[data-nsmax-action=unpin]:is(#nsmax-lv, *):is(#nsmax-b, *) { order: 8 !important; }
 /* 手机（≤700px）：右上角放不下这一排（会压到名字和时间上）。sb.sb 手机上把 .post-ops 换到名字下面单独一行、靠左和名字对齐，
    和名字那行隔 8px；这里一样，正文接在下面 */
 @media (max-width: 700px) {

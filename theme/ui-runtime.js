@@ -526,35 +526,55 @@
 	// 整理过、内容（按钮和上面的数字）没变的菜单不再动（2026-10-25）：以前解析阶段每一步、之后每轮整理都把每一层的每个按钮
 	// 重写一遍属性和行内样式，写的值一样也算一次改动，浏览器每次都要重算这些按钮的样式。点赞数变了文字跟着变，照样会重新整理
 	var nsmaxCleanedMenus = new WeakMap();
-	function nsmaxCleanPostActions() {
-		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"], "edit": ["编辑","edit"] };
-		for (const menu of document.querySelectorAll(".comment-menu")) {
-			const signature = menu.childElementCount + "|" + menu.textContent;
-			if (nsmaxCleanedMenus.get(menu) === signature) continue;
+	var nsmaxPinMenus = new WeakMap();
+	var nsmaxPinKeys = new WeakSet();
+	function nsmaxCleanPostActions(onlyMenu) {
+		const names = { "good-one": ["点赞","thumbup"], "chicken-leg": ["加鸡腿","drumstick"], "bad-one": ["反对","thumbdown"], "quote": ["引用","quote"], "back": ["回复","reply"], "edit": ["编辑","edit"], "pin": ["置顶","pin"], "unpin": ["取消置顶","unpin"] };
+		const signatureOf = menu => menu.childElementCount + "|" + menu.textContent + "|" + Array.from(menu.querySelectorAll("svg[title]"), svg => svg.getAttribute("title")).join("|");
+		const menus = onlyMenu?.nodeType === 1 && onlyMenu.matches(".comment-menu") ? [onlyMenu] : document.querySelectorAll(".comment-menu");
+		for (const menu of menus) {
+			if (nsmaxCleanedMenus.get(menu) === signatureOf(menu)) continue;
 			const seen = new Set();
 			for (const action of Array.from(menu.querySelectorAll(":scope > .menu-item"))) {
-			const href = action.querySelector("svg use")?.getAttribute("href")?.slice(1);
-			const label = action.title || Array.from(action.querySelectorAll("span")).map(span=>span.textContent.trim()).find(text=>/^(点赞|加鸡腿|反对|收藏|引用|回复|编辑)$/.test(text)) || names[href]?.[0];
-			const icon = ({ "点赞":"thumbup","加鸡腿":"drumstick","反对":"thumbdown","收藏":"star","引用":"quote","回复":"reply","编辑":"edit" })[label];
-			if (!icon) continue;
-			if (seen.has(icon)) { action.remove(); continue; }
-			seen.add(icon);
-			if (action.dataset.nsmaxAction !== icon) action.dataset.nsmaxAction = icon;
-			if (!action.title) action.title = label;
-			if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label",label);
-			for (const svg of action.querySelectorAll(":scope > svg")) {
-				nsmaxSetAttr(svg, "data-nsmax-action-original");
-				nsmaxHideEl(svg);
+				const href = action.querySelector("svg use")?.getAttribute("href")?.slice(1);
+				const texts = Array.from(action.querySelectorAll("span"), span => span.textContent.trim());
+				// 原站把置顶标题放在 SVG 上，外层没有 title；状态更新优先读原生 SVG 标题，避免补出的旧文字卡住取消状态。
+				const pinText = [...Array.from(action.querySelectorAll("svg[title]"), svg => svg.getAttribute("title").trim()), ...texts].find(text => /^(?:取消)?置顶(?:评论)?$/.test(text));
+				const rawLabel = pinText || action.title || texts.find(text => /^(点赞|加鸡腿|反对|收藏|引用|回复|编辑)$/.test(text)) || names[href]?.[0];
+				const label = /^(?:取消)?置顶评论$/.test(rawLabel || "") ? rawLabel.replace(/评论$/, "") : rawLabel;
+				const icon = ({ "点赞":"thumbup","加鸡腿":"drumstick","反对":"thumbdown","收藏":"star","引用":"quote","回复":"reply","编辑":"edit","置顶":"pin","取消置顶":"unpin" })[label];
+				if (!icon) continue;
+				if (seen.has(icon)) { action.remove(); continue; }
+				seen.add(icon);
+				nsmaxSetAttr(action, "data-nsmax-action", icon);
+				if (icon === "pin" || icon === "unpin") {
+					nsmaxSetAttr(action, "title", label);
+					nsmaxSetAttr(action, "aria-label", label + "评论");
+					if (!action.matches("button,a[href],input")) {
+						if (!action.hasAttribute("role")) action.setAttribute("role", "button");
+						if (!action.hasAttribute("tabindex")) action.tabIndex = 0;
+						if (!nsmaxPinKeys.has(action)) {
+							nsmaxPinKeys.add(action);
+							action.addEventListener("keydown", event => { if (!event.defaultPrevented && !event.repeat && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); action.click(); } });
+						}
+					}
+					if (!nsmaxPinMenus.has(menu)) {
+						const observer = new MutationObserver(() => { if (!menu.isConnected) { observer.disconnect(); return; } nsmaxCleanPostActions(menu); nsmaxMarkPinnedReplies(); });
+						observer.observe(menu, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["title"] });
+						nsmaxPinMenus.set(menu, observer);
+					}
+				} else {
+					if (!action.title) action.title = label;
+					if (!action.hasAttribute("aria-label")) action.setAttribute("aria-label", label);
+				}
+				for (const svg of action.querySelectorAll(":scope > svg")) { nsmaxSetAttr(svg, "data-nsmax-action-original"); nsmaxHideEl(svg); }
+				for (const span of action.querySelectorAll(":scope > span")) {
+					const text = span.textContent.trim();
+					if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) { nsmaxSetAttr(span, "data-nsmax-action-count"); span.toggleAttribute("hidden", /^0+(?:\.0+)?$/.test(text.replace(/[kKwW万千]/gi, ""))); }
+					else nsmaxSetAttr(span, "data-nsmax-action-label");
+				}
 			}
-			for (const span of action.querySelectorAll(":scope > span")) {
-				const text = span.textContent.trim();
-				if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) {
-					nsmaxSetAttr(span, "data-nsmax-action-count");
-					span.toggleAttribute("hidden", /^0+(?:\.0+)?$/.test(text.replace(/[kKwW万千]/gi, "")));
-				} else nsmaxSetAttr(span, "data-nsmax-action-label");
-			}
-			}
-			nsmaxCleanedMenus.set(menu, menu.childElementCount + "|" + menu.textContent);
+			nsmaxCleanedMenus.set(menu, signatureOf(menu));
 		}
 	}
 	// 投票 / 抽奖帖（2026-10-17，照 sb.sb .topic-badge.poll-badge / .lottery-badge、.poll-widget、.lottery-widget）。
@@ -2387,6 +2407,10 @@
 	// 置顶的回复（楼主置顶的那一层，站点排在评论最前面）：站点在楼号前放一个绿色圆底、带阴影的图钉（.pined-comment-badge），
 	// 和主题哪里都不搭。换成和列表「置顶」一样的小标，放在头部「楼主」标签那一排；图钉由主题 CSS 藏起来（2026-10-18）
 	function nsmaxMarkPinnedReplies() {
+		for (const tag of document.querySelectorAll("#nsk-body-left li.content-item .nsmax-pin-tag")) {
+			const row = tag.closest("li.content-item");
+			if (!Array.from(row.querySelectorAll(".pined-comment-badge")).some(badge => badge.closest("li.content-item") === row)) tag.remove();
+		}
 		for (const badge of document.querySelectorAll("#nsk-body-left li.content-item .pined-comment-badge")) {
 			const info = badge.closest("li.content-item")?.querySelector(":scope > .nsk-content-meta-info .author-info");
 			if (!info || info.querySelector(":scope > .nsmax-pin-tag")) continue;
