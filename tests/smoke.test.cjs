@@ -4052,6 +4052,8 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 			return {
 				cv: getComputedStyle(rows[0]).contentVisibility,
 				size: getComputedStyle(rows[0]).containIntrinsicHeight,
+				// 预留的是内容高度，整行还要加上下内边距
+				reserved: parseFloat(getComputedStyle(rows[0]).containIntrinsicHeight.split(" ").pop()) + parseFloat(getComputedStyle(rows[0]).paddingTop) + parseFloat(getComputedStyle(rows[0]).paddingBottom),
 				first: drawn(rows[0]),
 				last: drawn(rows[rows.length - 1]),
 				heights: rows.map((li) => Math.round(li.getBoundingClientRect().height))
@@ -4059,7 +4061,8 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 		});
 		const before = await rowsState();
 		assert.equal(before.cv, "auto");
-		assert.equal(before.size, "auto 73px");
+		assert.equal(before.size, "auto 51px");
+		assert.equal(before.reserved, 73, "内容 51px + 上下内边距 22px = 整行 73px");
 		assert.equal(before.first, true, "屏幕上的行照常画");
 		assert.equal(before.last, false, "最下面的行先不画");
 		// 2026-10-25：页面整理完以后在浏览器空闲时一批批排好（不用滚过去），往下滚的时候不用在那一帧里现排
@@ -4071,7 +4074,7 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 		await wait(page, 300);
 		const after = await rowsState();
 		assert.equal(after.last, true, "滚到附近就画出来");
-		assert.ok(after.heights.every((height) => Math.abs(height - 73) <= 4), `行高和预留的 73px 差不多（CI 的 Linux 字体会高一两像素）：${[...new Set(after.heights)]}`);
+		assert.ok(after.heights.every((height) => Math.abs(height - after.reserved) <= 4), `行高和预留的 ${after.reserved}px 差不多（CI 的 Linux 字体会高一两像素）：${[...new Set(after.heights)]}`);
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await page.waitForSelector("html[data-nsmax-theme]");
 		assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-cv")), false, "刷新时不用");

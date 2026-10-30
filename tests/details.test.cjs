@@ -20,6 +20,18 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 打开登录页、设置页和列表页时内容不跳：卡片和页签一开始就排好，帖子行预留高度等于实际行高`,async()=>{
+  const init="window.__shift=0;new PerformanceObserver(l=>{for(const e of l.getEntries())if(!e.hadRecentInput)window.__shift+=e.value}).observe({type:'layout-shift',buffered:true});";
+  for(const [url,render] of [["/signIn.html",P.signInPage],["/setting",P.settingPage],["/",P.listPage]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{html:render({}),viewport:{width:1440,height:900},seed,init});
+   try{
+    await ready(page);await page.waitForTimeout(400);
+    const shift=await page.evaluate(()=>window.__shift);
+    if(engine==="chromium")assert.ok(shift<0.002,`${url} 累计布局偏移 ${shift}`);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
  test(`${engine} 手机主楼：楼主时间和操作同一行，代码块不再空出一整行`,async()=>{
   for(const width of [390,320]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html:P.postPage({mobile:true})});

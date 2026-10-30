@@ -11569,16 +11569,18 @@ html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-b
   cursor: default !important;
 }
 /* 53. 长列表只画看得见的部分（2026-10-18）：帖子行用 content-visibility:auto，屏幕外的行不算样式、不排版、不绘制，
-   滚到附近浏览器再画；第一帧里屏幕上的行照样画出来。没画过的行按实际行高预留（桌面 73px，手机 90px），滚动条不跳。
+   滚到附近浏览器再画；第一帧里屏幕上的行照样画出来。没画过的行按实际行高预留（桌面 73px，手机约 72px），滚动条不跳。
+   预留值只是内容高度，行自己的上下内边距（桌面 11px×2，手机 10px×2）另外加（2026-10-30：以前把整行高度当成内容高度，
+   每行多留 22px，手机多留 43px，50 行的列表先多出一千多像素，滚到附近画出来时滚动条往回缩，首屏的行也先按 95px 排一帧再缩回 71px）
    只在正常打开页面时用（data-nsmax-cv，见 applyThemeAttributes）：刷新、前进后退时浏览器按原来的滚动位置恢复，
    上面没画过的行按预留高度算，标题折行的行多了会停错位置 */
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
   content-visibility: auto !important;
-  contain-intrinsic-size: auto 73px !important;
+  contain-intrinsic-size: auto 51px !important;
 }
 @media (max-width: 700px) {
   html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    contain-intrinsic-size: auto 90px !important;
+    contain-intrinsic-size: auto 52px !important;
   }
 }
 /* ---------- 54. 2026-10-18 第七批：侧栏卡片不被压扁、资料卡重排、管理记录弹窗 ---------- */
