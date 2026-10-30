@@ -1951,6 +1951,10 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   color: var(--code-inline-text) !important;
   font-size: 0.875em !important;
   font-weight: 400 !important;
+  /* 折到下一行时两段各自带完整的边框和圆角（以前第一段右边、第二段左边是断开的），长路径可在任意处换行 */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  overflow-wrap: anywhere !important;
 }
 /* 代码块：sb.sb .code-block——次底色、1px 细线框、12px 14px；复制按钮在右上角，悬停代码块时出现。
    占满正文宽：站点把 .post-content pre 限成 724px，外层 .nsmax-code 又是整行宽，复制按钮跑到代码块外面最右边 */
@@ -11289,6 +11293,12 @@ html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-skeleton .nsmax-hot-line:is(#
   height: 12px !important;
   border-radius: 6px !important;
   background-color: var(--panel-hover) !important;
+}
+/* 原站给顶栏和主体设了 background-color 0.5s 过渡：主题换掉底色时，原站的灰底要用半秒慢慢褪掉——每次打开页面，主体先闪一块灰色圆角卡片
+   （手机和脚本晚注入时最明显）。底色由主题直接给定，不需要过渡；主体淡入的 opacity 过渡在下面单独给 */
+html[data-nsmax-theme] body > header,
+html[data-nsmax-theme] #nsk-body {
+  transition: none !important;
 }
 /* 主栏和右栏一起出现（data-nsmax-boot-body，见 startEarlyPass）：右栏整理好（站点画好资料卡，今日热门、最近浏览也放好）之前
    整个主体先不显示，好了一起淡入 0.16 秒；最多等 1.5 秒，页面解析完、主模块启动时也会撤掉 */

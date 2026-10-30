@@ -99,6 +99,14 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left article.post-content{fon
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left article.post-content :is(p,li,blockquote){font-size:inherit!important;line-height:inherit!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-op-actions>a,.nsmax-owner-only,.nsmax-layout-toggle,.nsmax-jump-reply,.nsmax-floor-actions .menu-item,.nsmax-floor-actions .floor-link,.nsmax-fb-actions .menu-item,.nsmax-quote-toggle,.nspp-action,.nsmax-fold-toggle){box-sizing:border-box!important;min-height:44px!important;min-width:44px!important;height:auto!important;padding:8px!important;border-radius:var(--r-sm)!important;font-size:12.5px!important;line-height:22px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-floor-actions,.nsmax-floor-actions .comment-menu){height:auto!important;flex-wrap:wrap!important;gap:2px 6px!important}
+/* 主帖「点赞 加鸡腿 反对 收藏」平分整行（以前按内容宽靠左，右边空一截） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post .comment-menu.topic-actions{gap:8px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post .comment-menu.topic-actions>.menu-item{flex:1 1 0!important;min-width:0!important;width:auto!important}
+/* 主楼：「楼主 · 时间」和「引用 回复 举报」放在同一行（以前各占一行，正文前多空 54px）；320px 宽放不下时仍分两行 */
+@media (min-width:360px){
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout] #nsk-body-left .nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions{grid-row:2!important;justify-self:end!important;align-self:center!important;margin:0 6px 0 0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout] #nsk-body-left .nsk-post>.content-item>.nsk-content-meta-info>div:not([class]){align-self:center!important;margin-top:0!important;min-height:44px!important}
+}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-op-actions>a,.nsmax-floor-actions .menu-item,.nsmax-floor-actions .floor-link){border:0!important;background:transparent!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container>:is(.nsmax-reply-head,.reply-head,[data-nsmax-reply-head]){flex-wrap:wrap!important;gap:6px 8px!important;padding:10px 12px!important;border-radius:var(--r)!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager :is(a,.pager-pos){display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;box-sizing:border-box!important;min-width:44px!important;min-height:44px!important;height:44px!important;padding:0 8px!important;border-radius:var(--r-pill)!important;font-size:14px!important}
@@ -119,7 +127,7 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button{display:f
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button{position:relative!important;isolation:isolate!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button::before{content:""!important;position:absolute!important;inset:8px 0!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:transparent!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button[aria-pressed=true]::before{background:var(--panel-hover)!important;border-color:var(--line-strong)!important}
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button:is(:nth-child(-n+2),:nth-child(4)) .nsmax-action-label{font-size:0!important;line-height:20px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button:is(:nth-child(-n+2),:nth-child(4)) .nsmax-action-label{display:inline-flex!important;align-items:center!important;height:20px!important;font-size:0!important;line-height:20px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button:first-child .nsmax-action-label::after{content:"格式"!important;font-size:12.5px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button:nth-child(2) .nsmax-action-label::after{content:"附件"!important;font-size:12.5px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-controls>button:nth-child(4) .nsmax-action-label::after{content:"预览"!important;font-size:12.5px!important}
@@ -129,10 +137,20 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-custom-mde-toolbar :is(button,a)
 html[data-nsmax-theme][data-nsmax-touch] .md-editor :is(button.submit,button[type=submit],.nsmax-reply-cancel,.nsmax-draft-clear,.nsmax-lucky-trigger){box-sizing:border-box!important;min-height:44px!important;padding:8px 16px!important;border-radius:var(--r-pill)!important;font-size:14px!important}
 html[data-nsmax-theme][data-nsmax-touch] .md-editor:not([data-nsmax-resized]){--nsmax-editor-height:150px}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-resize{display:none!important}
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>[data-nspp-copy]{box-sizing:border-box!important;min-height:44px!important;padding:8px 12px!important;border-radius:var(--r-sm)!important;font-size:12.5px!important}
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>pre[data-nsmax-copy]{padding-top:58px!important}
+/* 代码复制：44px 触控区贴住右上角，视觉胶囊缩到 30px，代码第一行只让出 44px（以前按钮占满 44px 再空 14px，单行命令要 93px 高）。 */
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>[data-nspp-copy]{top:0!important;right:0!important;isolation:isolate!important;box-sizing:border-box!important;min-height:44px!important;padding:0 16px!important;border:0!important;border-radius:var(--r-pill)!important;background:transparent!important;font-size:12.5px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>[data-nspp-copy]::before{content:""!important;position:absolute!important;inset:7px 6px!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>pre[data-nsmax-copy]{padding-top:44px!important}
 html[data-nsmax-theme][data-nsmax-touch] .post-content table:not(.nsmax-lottery-table){display:block!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
 html[data-nsmax-theme][data-nsmax-touch] :is(.member-list,.nspp-messages,.nspp-notice-workspace,.nspp-messages-bubble,.nspp-messages-peer,.nspp-messages-nav button){border-radius:var(--r)!important;box-shadow:none!important}
+/* 消息中心、关注列表和其他页面同一条边线：以前外面再套 16px / 12px 边距，比列表页窄一圈。 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=notification] :is(.nsk-notification,.nspp-messages-container){width:100%!important;max-width:none!important;margin:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .member-list.nsk-container{padding:12px 0 24px!important}
+/* 消息标签带未读数时放不下「刷新」「全部已读」：标签按内容宽，放不下就把操作换到下一行，不再把「私信」挤出可视区 */
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages>.nspp-messages-top{flex-wrap:wrap!important;row-gap:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs{flex:1 0 auto!important;min-width:max-content!important;overflow:visible!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions{margin-left:auto!important;padding:0 0 6px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs+.nspp-messages-top-actions:only-of-type{padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .head-container{padding:16px 12px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-space-tabs{padding:0 12px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-space-tabs a{min-height:44px!important;font-size:14px!important}

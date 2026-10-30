@@ -61,6 +61,7 @@ check 验证版本、锁文件、本地文档链接、脚本语法、主题构�
 | npm run test:pagination | 空末页、请求失败重试与标题小页码居中 |
 | npm run test:polish | 手机弹窗操作区域、键盘提示与长文本边界 |
 | npm run test:pin | 置顶评论入口、原生事件保留与取消状态 |
+| npm run test:details | 页面打开时的底色过渡、手机主楼操作行、代码复制、消息标签与个人主页回帖 |
 
 设置 `NSMAX_SCRIPT_PATH` 可用同一套测试验证压缩文件。CI 将源码和压缩产物放在两个并行任务中，二者都成功后，统一 test 检查才通过。
 
