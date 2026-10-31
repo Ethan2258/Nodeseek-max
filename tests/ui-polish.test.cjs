@@ -174,7 +174,9 @@ for(const engine of engines){
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true,count:6}),init});
   try{
    await ready(page);
-   assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).webkitTapHighlightColor),"rgba(0, 0, 0, 0)");
+   // Windows 版 WebKit 没有这个属性，只在支持它的引擎上比
+   const tap=await page.evaluate(()=>getComputedStyle(document.documentElement).webkitTapHighlightColor);
+   if(tap!==undefined)assert.equal(tap,"rgba(0, 0, 0, 0)");
    assert.ok(await page.evaluate(()=>window.__touchListeners)>=1,"iOS Safari 需要 touchstart 才会触发 :active");
    const row=page.locator("#nsk-body-left ul.post-list>li.post-list-item").nth(1);
    const box=await row.boundingBox();
