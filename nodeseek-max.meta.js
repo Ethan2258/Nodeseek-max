@@ -87,7 +87,9 @@
 // @connect      api.nodeimage.com
 // @connect      rss.nodeseek.com
 // @connect      api.bimg.eu.org
-// @connect      raw.githubusercontent.com
+// @connect      github.com
+// @connect      release-assets.githubusercontent.com
+// @connect      objects.githubusercontent.com
 // @connect      cdn.jsdelivr.net
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -105,6 +107,6 @@
 // @compatible   chrome Latest
 // @compatible   firefox Latest
 // @compatible   edge Latest
-// @downloadURL  https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js
-// @updateURL    https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.meta.js
+// @downloadURL  https://github.com/Ethan2258/Nodeseek-max/releases/latest/download/nodeseek-max.user.js
+// @updateURL    https://github.com/Ethan2258/Nodeseek-max/releases/latest/download/nodeseek-max.meta.js
 // ==/UserScript==

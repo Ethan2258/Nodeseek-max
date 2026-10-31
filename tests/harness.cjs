@@ -55,7 +55,7 @@ const gmShim = (seed, fontFiles, manager) => `(() => {
 				const bytes = encoded ? Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0)) : new Uint8Array(20000).fill(7);
 				details.onload?.({ status: 200, response: bytes.buffer });
 			}
-			else if (details.url.includes("raw.githubusercontent.com")) details.onload?.({ status: 200, responseText: "// ==UserScript==\\n// @version      1.0.0\\n// ==/UserScript==\\n" });
+			else if (details.url.includes("github.com/Ethan2258/Nodeseek-max/releases/")) details.onload?.({ status: 200, responseText: "// ==UserScript==\\n// @version      1.0.0\\n// ==/UserScript==\\n" });
 			else if (details.url.startsWith("https://api.nodeimage.com/api/user/api-key")) {
 				details.onload?.({ status: 200, response: { api_key: "mock-key" } });
 			}

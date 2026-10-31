@@ -87,7 +87,9 @@
 // @connect      api.nodeimage.com
 // @connect      rss.nodeseek.com
 // @connect      api.bimg.eu.org
-// @connect      raw.githubusercontent.com
+// @connect      github.com
+// @connect      release-assets.githubusercontent.com
+// @connect      objects.githubusercontent.com
 // @connect      cdn.jsdelivr.net
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -105,8 +107,8 @@
 // @compatible   chrome Latest
 // @compatible   firefox Latest
 // @compatible   edge Latest
-// @downloadURL  https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js
-// @updateURL    https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.meta.js
+// @downloadURL  https://github.com/Ethan2258/Nodeseek-max/releases/latest/download/nodeseek-max.user.js
+// @updateURL    https://github.com/Ethan2258/Nodeseek-max/releases/latest/download/nodeseek-max.meta.js
 // ==/UserScript==
 
 /*!
@@ -2083,7 +2085,7 @@ var nsmaxRedirecting = false;
 		if (navigator.locks?.request) return navigator.locks.request(key, { ifAvailable: true }, (lock) => lock ? execute() : false);
 		return execute();
 	}
-	var UPDATE_URL = "https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js";
+	var UPDATE_URL = "https://github.com/Ethan2258/Nodeseek-max/releases/latest/download/nodeseek-max.user.js";
 	var UPDATE_META_URL = UPDATE_URL.replace(/\.user\.js$/, ".meta.js");
 	function readUpdateVersion(source) {
 		const version = (source.match(/^\s*\/\/ ==UserScript==\r?\n([\s\S]*?)^\/\/ ==\/UserScript==/m)?.[1])?.match(/^\/\/\s+@version\s+(\d+(?:\.\d+)+)\s*$/m)?.[1];
