@@ -241,3 +241,70 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog :is(input,select).n
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog .nsmax-lucky-check{min-height:44px!important;align-items:center!important}
 /* 提示跟随实际可视区域，键盘与视口平移后也留在可见区域内。 */
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-toast{bottom:calc(var(--nsmax-overlay-bottom,0px) + max(16px,env(safe-area-inset-bottom)))!important}
+
+/* ---------- 2026-10-31 手机细节：页码、列表行、评论楼层、回复工具条、页脚、边距、私信列表、编辑器、菜单 ---------- */
+/* 页码：手机给每个页码写了 display:inline-flex，把脚本标记要省掉的页码（data-nsmax-page-skip）也显示了出来，
+   帖子底部只有 3 页时成了「1 2 3 3」，翻到中间页时前后多出一串页码 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager :is([data-nsmax-page-skip],.ellipsis[hidden]){display:none!important}
+/* 列表行信息只排一行（≥360px）：以前作者、版块、浏览、评论、最后回复、时间放不下就换行，「28 天前」常常单独占一行，行高忽高忽低。
+   现在放不下时先截短最后回复人，截完还不够再截短作者，时间和数字始终完整。320px 宽截掉的太多，仍然换行 */
+@media (min-width:360px){
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta{flex-wrap:nowrap!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>*{flex-shrink:0!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>.info-last-commenter{flex-shrink:1!important;min-width:0!important;overflow:hidden!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>.info-author{flex-shrink:.001!important;min-width:0!important;overflow:hidden!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>:is(.info-last-commenter,.info-author)>a{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>:is(.info-last-commenter,.info-author)>:not(a){flex-shrink:0!important}
+}
+/* 评论楼层：时间和「回复 引用 点赞 鸡腿 反对」放同一行，楼号挪到作者那一行右边（以前时间、操作各占一行，每层正文前多空 50px）。
+   作者栏右边让出楼号的位置，名字太长时截短。320px 宽放不下，仍按原来分行 */
+@media (min-width:360px){
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item{grid-template-columns:auto minmax(0,1fr)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>*,
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>*{grid-column:1/-1!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>div:not([class]){grid-column:1!important;grid-row:2!important;align-self:center!important;min-height:44px!important;margin:0 0 0 12px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions{display:contents!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu{grid-column:2!important;grid-row:2!important;justify-self:end!important;align-self:center!important;justify-content:flex-end!important;margin:0 6px 0 8px!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.floor-link-wrapper{grid-column:1/-1!important;grid-row:1!important;justify-self:end!important;align-self:center!important;position:relative!important;z-index:1!important;margin:0 4px 0 0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col{padding-right:56px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-who{min-width:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+}
+/* 回复区工具条「只看楼主 直达底部 简洁模式」：和编辑器、页码一样是 44px 点击区 + 28px 细线胶囊（以前是 44px 高的方框，和页面其他按钮不是一套） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){position:relative!important;isolation:isolate!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:8px 12px!important;border:0!important;border-radius:var(--r-pill)!important;background:transparent!important;box-shadow:none!important;color:var(--text-muted)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle)::before{content:""!important;position:absolute!important;inset:8px 0!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-reply-title{flex-shrink:0!important;white-space:nowrap!important}
+@media (max-width:359px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){padding:8px 8px!important}}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-owner-only,.nsmax-layout-toggle)[aria-pressed=true]{color:var(--text)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-owner-only,.nsmax-layout-toggle)[aria-pressed=true]::before{border-color:var(--line-strong)!important;background:var(--panel-hover)!important}
+/* 页脚：手机上原来品牌块、五组链接各占一块，整整一屏半（约 700px）。现在标志和社交图标同一行，每组链接一行（标题在左，链接在右边接着排），
+   约 430px；版权行贴在下面 */
+html[data-nsmax-theme][data-nsmax-touch] body>footer{padding:18px 14px calc(14px + env(safe-area-inset-bottom,0px))!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .contain{grid-template-columns:minmax(0,1fr)!important;gap:0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .nsmax-footer-brand{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:4px 8px!important;margin:0 0 10px!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .nsmax-footer-logo{grid-area:1/1!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .nsmax-footer-social{grid-area:1/2!important;gap:0!important;margin:0 -8px 0 0!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .nsmax-footer-social a{min-width:44px!important;min-height:44px!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .nsmax-footer-about{grid-area:2/1/3/-1!important;margin:0!important;font-size:12.5px!important;line-height:1.7!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .contain>.col:not(.social){display:grid!important;grid-template-columns:64px minmax(0,1fr)!important;align-items:start!important;gap:0 8px!important;padding:3px 0!important;border-top:1px solid var(--line-soft)!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .contain>.col>.group-head-link{margin:0!important;font-size:12.5px!important;line-height:32px!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .contain>.col>ul{display:flex!important;flex-wrap:wrap!important;gap:0 14px!important;min-width:0!important;margin:0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .contain>.col a{display:inline-flex!important;align-items:center!important;min-height:32px!important;max-width:100%!important}
+html[data-nsmax-theme][data-nsmax-touch] body>footer .foot{margin:6px 0 0!important;padding:12px 0 0!important;font-size:12px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-cv] body>footer{contain-intrinsic-size:auto 430px!important}
+/* 设置页、关注 / 粉丝页：外层容器又套了一圈 12px 内边距，卡片比其他页面窄、离顶栏也远一截；和列表页一样贴齐两边 12px */
+html[data-nsmax-theme][data-nsmax-touch] #user-setting-panel.nsk-container{padding:0 0 24px!important}
+html[data-nsmax-theme][data-nsmax-touch] .member-list.nsk-container{padding:0 0 24px!important}
+html[data-nsmax-theme][data-nsmax-touch] .member-list>.user-card-wrapper-container{margin-top:12px!important}
+/* 私信列表：未读圆点放在行尾的固定位置，不再把这一行的时间往左挤（有未读和没未读的行，时间对不齐） */
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer{position:relative!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer>.nspp-messages-unread{position:absolute!important;top:calc(50% + 6px)!important;right:12px!important;margin:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer .nspp-messages-snippet{padding-right:14px!important}
+/* 编辑器：「内容」标题、切换按钮、输入框之间的空白收紧（以前标题下空 30px，按钮下再空 22px） */
+html[data-nsmax-theme][data-nsmax-touch] .md-editor .nsmax-editor-head{margin-bottom:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .md-editor .nsmax-editor-controls{margin-bottom:6px!important}
+/* 菜单「所有板块」「快捷功能区」排成两列：十几个版块以前一行一个，要往下划一屏多才看到「我的菜单」 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile>div{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0 12px!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile>div>a[href="/"]{grid-column:1/-1!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a>p{min-width:0!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a>p>span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
