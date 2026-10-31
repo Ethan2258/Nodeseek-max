@@ -148,7 +148,8 @@ test("主题分段：手机、深色下也和整份注入逐元素一致，手�
     const state=await page.evaluate(()=>{
      // 带参数打开时站点把当前版块的链接标成别的类，只比标签和 ID
      const label=el=>`${el.tagName.toLowerCase()}${el.id?"#"+el.id:""}`;
-     const styles=[...document.body.querySelectorAll("*")].filter(el=>!el.closest("#nspp-tools")).map(el=>{const s=getComputedStyle(el);return[label(el),s.display,s.position,s.color,s.backgroundColor,s.borderTopWidth,s.borderRadius,s.padding,s.margin,s.fontSize,s.fontWeight,s.lineHeight,s.height,s.width,s.overflow,s.boxShadow,s.gap,s.flexDirection,s.visibility].join("|");});
+     // 相对时间的文字两次打开之间可能变（刚刚 → 1 分钟前），宽度跟着变，不比
+     const styles=[...document.body.querySelectorAll("*")].filter(el=>!el.closest("#nspp-tools")&&!el.closest("time")&&!el.querySelector(":scope > time")).map(el=>{const s=getComputedStyle(el);return[label(el),s.display,s.position,s.color,s.backgroundColor,s.borderTopWidth,s.borderRadius,s.padding,s.margin,s.fontSize,s.fontWeight,s.lineHeight,s.height,s.width,s.overflow,s.boxShadow,s.gap,s.flexDirection,s.visibility].join("|");});
      const theme=[...document.querySelectorAll("style")].map(tag=>tag.textContent||"").filter(text=>text.includes("data-nsmax-theme"));
      return{styles,bytes:theme.reduce((n,text)=>n+text.length,0),tokens:theme.some(text=>/[§¶¤`]/.test(text.replace(/"[^"]*"/g,""))),right:theme.join("").split("#nsk-right-panel-container").length};
     });
