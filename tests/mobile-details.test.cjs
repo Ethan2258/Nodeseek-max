@@ -1,5 +1,5 @@
 "use strict";
-// 手机细节回归（2026-10-31）：页码、列表行、评论楼层、回复工具条、页脚、页面边距、私信列表、菜单两列版块
+// 手机细节回归（2026-10-31）：页码、列表行、评论楼层、回复工具条、页脚、页面边距、私信列表、菜单，以及和 sb.sb 圆角手机版对齐的尺寸
 const test=require("node:test"),assert=require("node:assert/strict");
 const {webkit,devices}=require("playwright"),{launch,open}=require("./harness.cjs"),P=require("./fixtures/pages.cjs");
 const ready=p=>p.waitForFunction(()=>performance.getEntriesByName("nsmax:deferred-start").length&&!document.documentElement.hasAttribute("data-nsmax-mounting"));
@@ -21,14 +21,14 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
- test(`${engine} 手机列表：信息一行排下，时间不再单独换行；320px 仍可换行且时间完整`,async()=>{
+ test(`${engine} 手机列表：信息照 sb.sb 隔 10px，放不下整项换行，名字和时间都不截短`,async()=>{
   for(const width of [390,360,320]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(width),html:P.listPage({mobile:true})});
    try{
     await ready(page);
-    const rows=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-meta")].map(m=>{const r=m.getBoundingClientRect(),t=m.querySelector(".info-last-comment-time").getBoundingClientRect();return{height:r.height,timeInside:t.right<=r.right+0.5&&t.width>20,timeTop:t.top-r.top};}));
+    const rows=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-meta")].map(m=>{const r=m.getBoundingClientRect(),t=m.querySelector(".info-last-comment-time").getBoundingClientRect(),c=getComputedStyle(m);return{gap:c.columnGap+"/"+c.rowGap,wrap:c.flexWrap,timeInside:t.right<=r.right+0.5&&t.width>20,cut:[...m.querySelectorAll("a,span")].filter(e=>e.scrollWidth>e.clientWidth+1&&getComputedStyle(e).overflow!=="visible").length};}));
     assert.ok(rows.length>=6);
-    for(const row of rows){assert.ok(row.timeInside,JSON.stringify(rows));if(width>=360){assert.ok(row.height<=24,`${width}px 信息只占一行：${JSON.stringify(rows)}`);}}
+    for(const row of rows){assert.equal(row.gap,"10px/10px",JSON.stringify(row));assert.equal(row.wrap,"wrap");assert.ok(row.timeInside,JSON.stringify(rows));assert.equal(row.cut,0,`${width}px 名字不截短：${JSON.stringify(rows)}`);}
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
@@ -48,14 +48,16 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 手机回复工具条：「只看楼主 直达底部 简洁模式」是细线胶囊，320px 也排在一行`,async()=>{
+ test(`${engine} 手机回复工具条：「只看楼主 直达底部 简洁模式」照 sb.sb 是 31px 细线胶囊，标题栏独立成卡片，320px 也排在一行`,async()=>{
   for(const width of [390,320]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html:P.postPage({mobile:true})});
    try{
     await ready(page);
-    const s=await page.evaluate(()=>{const b=[...document.querySelectorAll("#nsk-body-left :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle)")].filter(e=>e.getClientRects().length);const title=document.querySelector(".nsmax-reply-title");return{title:title.getBoundingClientRect().height,tops:b.map(e=>Math.round(e.getBoundingClientRect().top)),heights:b.map(e=>e.getBoundingClientRect().height),border:b.map(e=>getComputedStyle(e).borderTopWidth),pill:b.map(e=>getComputedStyle(e,"::before").borderTopLeftRadius)};});
+    const s=await page.evaluate(()=>{const b=[...document.querySelectorAll("#nsk-body-left :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle)")].filter(e=>e.getClientRects().length);const title=document.querySelector(".nsmax-reply-title"),head=title.parentElement.getBoundingClientRect(),first=document.querySelector("ul.comments>li").getBoundingClientRect();return{head:head.height,gap:first.top-head.bottom,headRadius:getComputedStyle(title.parentElement).borderBottomLeftRadius,size:b.map(e=>getComputedStyle(e).fontSize),pillHeight:b.map(e=>{const c=getComputedStyle(e,"::before");return parseFloat(c.height)+parseFloat(c.borderTopWidth)*2;}),title:title.getBoundingClientRect().height,tops:b.map(e=>Math.round(e.getBoundingClientRect().top)),heights:b.map(e=>e.getBoundingClientRect().height),border:b.map(e=>getComputedStyle(e).borderTopWidth),pill:b.map(e=>getComputedStyle(e,"::before").borderTopLeftRadius)};});
     assert.equal(s.tops.length,3);assert.equal(new Set(s.tops).size,1,JSON.stringify(s));assert.ok(s.title<=24,"标题不折行");
     assert.ok(s.heights.every(h=>h>=44),"保留 44px 点击区");assert.deepEqual(s.border,["0px","0px","0px"]);assert.ok(s.pill.every(r=>parseFloat(r)>=14),JSON.stringify(s));
+    assert.ok(Math.abs(s.head-55)<1.5,`标题栏和 sb.sb .reply-head 一样高 55px：${JSON.stringify(s)}`);assert.ok(Math.abs(s.gap-10)<1,"和第一条回复隔 10px");assert.ok(parseFloat(s.headRadius)>=10,"标题栏是独立圆角卡片");
+    assert.deepEqual(s.size,["12px","12px","12px"]);assert.ok(s.pillHeight.every(h=>Math.abs(h-31)<1.5),JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
@@ -93,16 +95,35 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
- test(`${engine} 手机菜单：版块两列排，「我的菜单」不用划一屏才看到`,async()=>{
+ test(`${engine} 手机菜单：照 sb.sb 一行一个版块，两边 16px，每行 44px 高`,async()=>{
   for(const width of [390,320]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(width),html:P.listPage({mobile:true})});
    try{
     await ready(page);await page.getByRole("button",{name:"打开菜单",exact:true}).tap();
     const drawer=page.locator("#left-slide-panel");await page.waitForFunction(()=>document.getElementById("left-slide-panel").getBoundingClientRect().left>=-1);
-    const s=await drawer.evaluate(el=>{const links=[...el.querySelector(".category-mobile>div").children].filter(a=>a.getClientRects().length).map(a=>a.getBoundingClientRect());return{all:links[0].width,a:links[1],b:links[2],overflow:el.scrollWidth>el.clientWidth+1,small:links.filter(r=>r.height<44).length};});
-    assert.ok(Math.abs(s.a.top-s.b.top)<1&&s.b.left>s.a.right,JSON.stringify(s));assert.ok(s.all>s.a.width*1.8,"「全部帖子」占一整行");
+    const s=await drawer.evaluate(el=>{const box=el.getBoundingClientRect(),links=[...el.querySelector(".category-mobile>div").children].filter(a=>a.getClientRects().length).map(a=>a.getBoundingClientRect());return{lefts:[...new Set(links.map(r=>Math.round(r.left-box.left)))],widths:[...new Set(links.map(r=>Math.round(r.width)))],title:el.querySelector(".nsmax-drawer-head strong").getBoundingClientRect().left-box.left,stacked:links.every((r,i)=>!i||r.top>=links[i-1].bottom-0.5),overflow:el.scrollWidth>el.clientWidth+1,small:links.filter(r=>r.height<44).length};});
+    assert.deepEqual(s.lefts,[16],JSON.stringify(s));assert.equal(s.widths.length,1,JSON.stringify(s));assert.ok(s.stacked,JSON.stringify(s));assert.ok(Math.abs(s.title-16)<1,JSON.stringify(s));
     assert.equal(s.overflow,false);assert.equal(s.small,0);assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
+ });
+ test(`${engine} 手机顶栏、列表工具条和主楼按钮的尺寸照 sb.sb`,async()=>{
+  for(const width of [390,320]){
+   const list=await open(browser,"https://www.nodeseek.com/",{...phone(width),html:P.listPage({mobile:true})});
+   try{
+    await ready(list.page);
+    const s=await list.page.evaluate(()=>{const bar=document.querySelector(".post-list-controler"),filter=bar.querySelector(".nsmax-mobile-filter"),tab=bar.querySelector(".sorter>a"),fb=getComputedStyle(filter,"::before"),hb=getComputedStyle([...document.querySelectorAll("#nsk-head .nsmax-header-action")].find(e=>e.getClientRects().length),"::before");return{bar:bar.getBoundingClientRect().height,tabText:tab.getBoundingClientRect().left+parseFloat(getComputedStyle(tab).paddingLeft)-bar.getBoundingClientRect().left,filter:filter.getBoundingClientRect().toJSON(),filterPill:parseFloat(fb.height)+parseFloat(fb.borderTopWidth)*2,filterIcon:!!filter.querySelector("svg")?.getClientRects().length,head:parseFloat(hb.height)+parseFloat(hb.borderTopWidth)*2,right:bar.getBoundingClientRect().right,overflow:document.documentElement.scrollWidth>innerWidth+1};});
+    assert.ok(Math.abs(s.bar-50.5)<1,JSON.stringify(s));assert.ok(Math.abs(s.tabText-19)<1,"第一个标签的字离卡片边 19px（14px 内边距 + 4px + 1px 边）");
+    assert.ok(Math.abs(s.filterPill-31)<1.5&&s.filter.height>=44&&!s.filterIcon,JSON.stringify(s));assert.ok(s.filter.right<=s.right-14,JSON.stringify(s));
+    assert.ok(Math.abs(s.head-34)<1,`顶栏圆钮 34px：${JSON.stringify(s)}`);assert.equal(s.overflow,false);assert.deepEqual(list.errors,[]);
+   }finally{await list.context.close();}
+  }
+  const post=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true})});
+  try{
+   await ready(post.page);
+   const s=await post.page.evaluate(()=>{const items=[...document.querySelectorAll(".nsk-post .comment-menu.topic-actions>.menu-item")].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect()),body=document.querySelector(".nsk-post article.post-content").getBoundingClientRect();return{widths:items.map(r=>Math.round(r.width)),first:items[0].left-body.left,gaps:items.slice(1).map((r,i)=>Math.round(r.left-items[i].right)),title:document.querySelector(".nsk-post>.post-title").getBoundingClientRect().height,author:document.querySelector(".nsk-post .nsmax-author-col").getBoundingClientRect().height};});
+   assert.ok(s.widths.length===4&&s.widths.every(w=>w===66),JSON.stringify(s));assert.ok(Math.abs(s.first)<1,"靠左");assert.deepEqual(s.gaps,[8,8,8]);
+   assert.ok(Math.abs(s.title-83.5)<1.5&&Math.abs(s.author-63)<1,JSON.stringify(s));assert.deepEqual(post.errors,[]);
+  }finally{await post.context.close();}
  });
 }

@@ -41,7 +41,7 @@ for(const engine of engines){
     if(width>=360){assert.ok(Math.abs((s.meta.top+s.meta.height/2)-(s.ops.top+s.ops.height/2))<3,JSON.stringify(s));assert.ok(s.ops.left>s.meta.left+100,JSON.stringify(s));}
     else assert.ok(s.ops.top>=s.meta.bottom-1,"窄屏放不下时操作仍换到下一行");
     assert.ok(s.copy.height>=43&&s.copy.width>=44,"复制按钮保留 44px 触控区");assert.ok(s.code<=46,JSON.stringify(s));assert.ok(s.copy.top-s.preTop<2,JSON.stringify(s));
-    assert.equal(new Set(s.items).size,1,JSON.stringify(s.items));assert.ok(s.items.reduce((a,b)=>a+b,0)+8*(s.items.length-1)>=s.menu-4,"点赞一排平分整行");
+    assert.equal(new Set(s.items).size,1,JSON.stringify(s.items));assert.ok(s.items[0]<=66&&s.items.reduce((a,b)=>a+b,0)+8*(s.items.length-1)<=s.menu+s.items.length,"点赞一排照 sb.sb 66px 宽靠左排，窄屏一起收窄不折行");
     assert.equal(s.overflow,false);assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }

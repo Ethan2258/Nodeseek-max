@@ -30,12 +30,12 @@ for(const engine of engines) {
    await page.setViewportSize({width:375,height:844});await page.waitForSelector(".post-list-controler .nsmax-mobile-filter");await button.tap();assert.equal(await pop.isVisible(),true);assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
- test(`${engine} iPhone 侧栏：两列版块导航与当前版块，大触控区，脚本设置入口可用`,async()=>{
+ test(`${engine} iPhone 侧栏：单列文字导航与当前版块，大触控区，脚本设置入口可用`,async()=>{
   for(const guest of [false,true]) {
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/categories/tech",{...mobile(320),html:P.listPage({mobile:true,guest})});
    try {await ready(page);await page.getByRole("button",{name:"打开菜单",exact:true}).tap();const drawer=page.locator("#left-slide-panel");
     const layout=await drawer.evaluate(el=>({overflow:el.scrollWidth>el.clientWidth+1,display:getComputedStyle(el.querySelector(".category-mobile > div")).display,small:[...el.querySelectorAll(".nsmax-account-menu > a,.nsmax-account-compose,.welcome-new a.btn,.category-mobile a")].filter(a=>a.getClientRects().length&&a.getBoundingClientRect().height<43).map(a=>a.textContent)}));
-    assert.equal(layout.overflow,false);assert.equal(layout.display,"grid");assert.deepEqual(layout.small,[]);
+    assert.equal(layout.overflow,false);assert.equal(layout.display,"block");assert.deepEqual(layout.small,[]);
     assert.equal(await drawer.locator('a[href="/categories/tech"]').getAttribute("aria-current"),"page");
     assert.equal(await drawer.locator('a[href="/"]').count(),1);
     await drawer.getByRole("button",{name:"脚本设置",exact:true}).tap();assert.equal(await drawer.getAttribute("aria-modal"),"false");

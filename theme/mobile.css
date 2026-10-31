@@ -30,7 +30,7 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-head #toggle-left-panel>a{
   box-sizing:border-box!important;width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;flex:0 0 44px!important;
   padding:0!important;border:0!important;border-radius:var(--r-pill)!important;background:transparent!important;color:var(--text-muted)!important;box-shadow:none!important;
 }
-html[data-nsmax-theme][data-nsmax-touch] #nsk-head .nsmax-header-action::before{content:""!important;position:absolute!important;inset:6px!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:transparent!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-head .nsmax-header-action::before{content:""!important;position:absolute!important;inset:5px!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:transparent!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-head :is(.nsmax-header-action,#toggle-left-panel>a) svg{width:16px!important;height:16px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-head .nsmax-header-action[data-nsmax-own-header=keywords]{display:none!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-head>form.search-form{
@@ -88,10 +88,10 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter::after{content:"�
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.nsmax-crumb{padding:9px 12px!important;font-size:13px!important;border-radius:var(--r) var(--r) 0 0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important;padding:14px 12px 12px!important;border-radius:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title h1{font-size:19px!important;line-height:1.45!important;font-weight:600!important;letter-spacing:0!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title>.nsmax-post-stats{margin:0!important;font-size:12px!important;line-height:20px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title>.nsmax-post-stats{margin:0!important;padding:0!important;font-size:12px!important;line-height:21px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.comments>li.content-item{border-radius:var(--r)!important;box-shadow:none!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.content-item{border-radius:0 0 var(--r) var(--r)!important;box-shadow:none!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-author-col{padding:12px!important;gap:10px!important;border-radius:0!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-author-col{padding:12px 12px 10px!important;gap:10px!important;border-radius:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-author-col :is(.avatar-normal,.avatar){width:40px!important;height:40px!important;border-radius:var(--r-sm)!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-author-col :is(.author-name,.Username){font-size:14px!important;line-height:21px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.content-item>.nsmax-post-main,.content-item>.nsmax-main){padding:12px!important}
@@ -268,16 +268,8 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-toast{bottom:calc(var(--nsmax-ov
 /* 页码：手机给每个页码写了 display:inline-flex，把脚本标记要省掉的页码（data-nsmax-page-skip）也显示了出来，
    帖子底部只有 3 页时成了「1 2 3 3」，翻到中间页时前后多出一串页码 */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager :is([data-nsmax-page-skip],.ellipsis[hidden]){display:none!important}
-/* 列表行信息只排一行（≥360px）：以前作者、版块、浏览、评论、最后回复、时间放不下就换行，「28 天前」常常单独占一行，行高忽高忽低。
-   现在放不下时先截短最后回复人，截完还不够再截短作者，时间和数字始终完整。320px 宽截掉的太多，仍然换行 */
-@media (min-width:360px){
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta{flex-wrap:nowrap!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>*{flex-shrink:0!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>.info-last-commenter{flex-shrink:1!important;min-width:0!important;overflow:hidden!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>.info-author{flex-shrink:.001!important;min-width:0!important;overflow:hidden!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>:is(.info-last-commenter,.info-author)>a{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta>:is(.info-last-commenter,.info-author)>:not(a){flex-shrink:0!important}
-}
+/* 列表行信息：照 sb.sb 现在的样子，作者、版块、浏览、评论、最后回复、时间之间隔 10px，放不下就整项换到下一行（行距也是 10px），名字不截短 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta{gap:10px!important}
 /* 评论楼层：时间和「回复 引用 点赞 鸡腿 反对」放同一行，楼号挪到作者那一行右边；时间和正文同一条左边线，最后一个按钮的文字和楼号都对齐正文右边线（以前时间、操作各占一行，每层正文前多空 50px）。
    作者栏右边让出楼号的位置，名字太长时截短。320px 宽放不下，仍按原来分行 */
 @media (min-width:360px){
@@ -325,8 +317,29 @@ html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer .nspp-messages-snip
 /* 编辑器：「内容」标题、切换按钮、输入框之间的空白收紧（以前标题下空 30px，按钮下再空 22px） */
 html[data-nsmax-theme][data-nsmax-touch] .md-editor .nsmax-editor-head{margin-bottom:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .md-editor .nsmax-editor-controls{margin-bottom:6px!important}
-/* 菜单「所有板块」「快捷功能区」排成两列：十几个版块以前一行一个，要往下划一屏多才看到「我的菜单」 */
-html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile>div{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0 12px!important}
-html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile>div>a[href="/"]{grid-column:1/-1!important}
-html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a>p{min-width:0!important}
-html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a>p>span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+/* 对照 sb.sb 圆角手机版（2026-10-31 快照）补齐的细节 */
+/* 版块条胶囊左右留 12px 字距，和参照站 .mobile-forum-link（4px 11px + 1px 边）一样宽 */
+html[data-nsmax-theme][data-nsmax-touch] body>header>ul.mobile-nav>li>a{padding:0 14px!important}
+/* 回复区标题「N 条回复」：参照站是独立的一张圆角卡片（.reply-head 高 55px），和下面第一条回复隔 10px，不再和第一楼粘成一块 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .comment-container>:is(div[data-nsmax-pagerbox],.nsmax-reply-head):first-child{margin:0 0 10px!important;border-bottom:1px solid var(--line)!important;border-radius:var(--r)!important}
+/* 「只看楼主 直达底部 简洁模式」：照参照站 .bot-toggle 画成 31px 高、12px 字的细线胶囊；按钮仍有 44px 点击区，上下各收 6.5px 让标题栏保持 55px */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){margin-block:-6.5px!important;padding:0 12px!important;font-size:12px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle)::before{inset:6.5px 0!important}
+@media (max-width:359px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){padding:0 8px!important}}
+/* 主楼「点赞 加鸡腿 反对 收藏」：参照站是 66px 宽、靠左排的小方块（.topic-actions>*：7px 3px 内边距、间隔 8px），不再拉满整行；320px 放不下四个时一起收窄，不折行 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post .comment-menu.topic-actions{flex-wrap:nowrap!important;justify-content:flex-start!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post .comment-menu.topic-actions>.menu-item{flex:0 1 66px!important;min-width:0!important;padding:7px 3px!important}
+/* 列表工具条：照参照站 .topic-toolbar，左右 14px、高 50px；「新评论 新帖子 精华 抽奖」每项左右 4px、相隔 10px */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler{padding:0 14px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler :is(.sorter,.nsmax-kind-tabs){gap:10px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler :is(.sorter>a,.nsmax-kind-tab){min-height:49.5px!important;padding:0 4px!important}
+/* 「隐藏」：参照站是 31px 高的细线胶囊（13px 字），不带漏斗图标；点击区仍是 44px */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler .nsmax-mobile-filter{position:relative!important;isolation:isolate!important;padding:0 13px!important;font:500 13px/20px var(--font-sans)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler .nsmax-mobile-filter svg{display:none!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler .nsmax-mobile-filter::before{content:""!important;position:absolute!important;inset:6.5px 0!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important}
+/* 菜单：照参照站 .mobile-menu-drawer，版块一行一个（之前改成的两列撤回），两边留 16px，分组小标题 12px/500，「菜单」标题加粗；每行仍有 44px 高 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel :is(.nsmax-drawer-head,.nsmax-drawer-tabs){padding-inline:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-drawer-head button{margin-right:-8px!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-drawer-head strong{font-weight:700!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel :is(.category-mobile,.user-card-container,.nsmax-drawer-tools,.nsmax-drawer-hot,.nsmax-drawer-recent){padding-inline:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel :is(.category-mobile h2,.nsmax-drawer-section-title){font-weight:500!important}
