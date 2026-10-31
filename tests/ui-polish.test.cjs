@@ -12,34 +12,38 @@ for(const engine of engines){
  let browser;
  test.before(async()=>{browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
- test(`${engine} 手机楼层操作行：按钮文字和正文同一条左边线，楼号靠右，和按钮同一条中线`,async()=>{
+ test(`${engine} 手机楼层：时间和正文同一条左边线，操作和楼号对齐正文右边线，楼号和头像同一条中线`,async()=>{
+  // 2026-10-31：≥360px 时时间和「回复 引用 点赞 鸡腿 反对」同一行，楼号挪到作者行右边（见 tests/mobile-details.test.cjs）
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true})});
   try{
    await ready(page);
    const s=await page.evaluate(()=>{
-    const li=document.querySelector("ul.comments>li.content-item"),row=li.querySelector(".nsmax-floor-actions"),item=[...row.querySelectorAll(".menu-item")].sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left).find(e=>e.offsetWidth),link=row.querySelector(".floor-link"),body=li.querySelector("article.post-content");
+    const li=document.querySelector("ul.comments>li.content-item"),items=[...li.querySelectorAll(".comment-menu>.menu-item")].filter(e=>e.offsetWidth).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left),last=items[items.length-1],link=li.querySelector(".floor-link"),body=li.querySelector("article.post-content").getBoundingClientRect(),avatar=li.querySelector(".nsmax-author-avatar").getBoundingClientRect();
     const text=(el)=>{const r=document.createRange();r.selectNodeContents(el);return r.getBoundingClientRect();};
-        return{left:item.getBoundingClientRect().left+parseFloat(getComputedStyle(item).paddingLeft),bodyLeft:body.getBoundingClientRect().left,right:text(link).right,bodyRight:body.getBoundingClientRect().right,linkMiddle:(text(link).top+text(link).bottom)/2,itemMiddle:(item.getBoundingClientRect().top+item.getBoundingClientRect().bottom)/2,itemHeight:item.getBoundingClientRect().height};
+    return{timeLeft:text(li.querySelector(".nsk-content-meta-info time")).left,bodyLeft:body.left,lastRight:last.getBoundingClientRect().right-parseFloat(getComputedStyle(last).paddingRight),right:text(link).right,bodyRight:body.right,linkMiddle:(text(link).top+text(link).bottom)/2,avatarMiddle:(avatar.top+avatar.bottom)/2,itemHeight:last.getBoundingClientRect().height};
    });
-   assert.ok(near(s.left,s.bodyLeft,1.5),JSON.stringify(s));
+   assert.ok(near(s.timeLeft,s.bodyLeft,1.5),JSON.stringify(s));
+   assert.ok(near(s.lastRight,s.bodyRight,1.5),JSON.stringify(s));
    assert.ok(near(s.right,s.bodyRight,1.5),JSON.stringify(s));
-   assert.ok(near(s.linkMiddle,s.itemMiddle,1.5),JSON.stringify(s));
+   assert.ok(near(s.linkMiddle,s.avatarMiddle,1.5),JSON.stringify(s));
    assert.ok(s.itemHeight>=44,JSON.stringify(s));
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
- test(`${engine} 页脚：版权文字对比度够，手机上社交图标和标志同一条左边线，链接点按范围够大`,async()=>{
+ test(`${engine} 页脚：版权文字对比度够，手机上社交图标和标志同一行、贴齐右边线，链接点按范围够大`,async()=>{
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true,count:4})});
   try{
    await ready(page);
    await page.evaluate(()=>{document.querySelector("body > footer").scrollIntoView();});
    await page.waitForTimeout(200);
    const s=await page.evaluate(()=>{
-    const logo=document.querySelector(".nsmax-footer-logo").getBoundingClientRect(),icon=document.querySelector(".nsmax-footer-social svg").getBoundingClientRect(),link=document.querySelector("body > footer .footer-links a"),foot=document.querySelector("body > footer .foot > div");
-    const box=link.getBoundingClientRect();
-    return{logo:logo.left,icon:icon.left,linkHeight:box.height,color:foot?getComputedStyle(foot).color:""};
+    const logo=document.querySelector(".nsmax-footer-logo").getBoundingClientRect(),icons=[...document.querySelectorAll(".nsmax-footer-social svg")].map(e=>e.getBoundingClientRect()),about=document.querySelector(".nsmax-footer-about").getBoundingClientRect(),link=document.querySelector("body > footer .footer-links a"),foot=document.querySelector("body > footer .foot > div");
+    const box=link.getBoundingClientRect(),last=icons[icons.length-1];
+    return{logoMiddle:(logo.top+logo.bottom)/2,iconMiddle:(last.top+last.bottom)/2,iconRight:last.right,aboutRight:about.right,linkHeight:box.height,color:foot?getComputedStyle(foot).color:""};
    });
-   assert.ok(near(s.logo,s.icon,2.5),JSON.stringify(s));
+   // 2026-10-31：手机页脚压缩后，社交图标和标志同一行、放在右边（图标本身有内边距，右边留几像素）
+   assert.ok(near(s.logoMiddle,s.iconMiddle,2.5),JSON.stringify(s));
+   assert.ok(s.iconRight<=s.aboutRight+1&&s.iconRight>=s.aboutRight-14,JSON.stringify(s));
    assert.ok(s.linkHeight>=32,JSON.stringify(s));
    assert.notEqual(s.color,"rgb(153, 153, 153)");
    assert.deepEqual(errors,[]);
