@@ -5407,7 +5407,7 @@ test("第十四批（2026-10-19）：进帖子不再一卡一卡——页面一�
 	const moduleScript = `<script type="module">window.__atModule = { crumb: !!document.querySelector(".nsmax-crumb"), nested: !!document.querySelector('li[id="1"] > .nsmax-floor-box li[id="3"]'), cols: document.querySelectorAll(".nsmax-author-col").length, opStats: Array.from(document.querySelectorAll(".nsk-post .nsmax-author-stats b"), (b) => b.textContent).join(","), opLevel: document.querySelector(".nsk-post .nsmax-author-level")?.textContent, pending: document.querySelectorAll(".nsmax-author-level[data-nsmax-pending]").length }; const t0 = performance.now(); while (performance.now() - t0 < 200) {}</script>`;
 	html = (html.slice(0, start) + moduleScript + html.slice(end)).replace("</body>", config + "</body>");
 	const init = `if (window.top === window) {
-		localStorage.setItem("nsmax:members", JSON.stringify({ "10": { at: Date.now(), rank: 5, coin: 2048, stardust: 30, nPost: 12, nComment: 88 } }));
+		localStorage.setItem("nsmax:members", JSON.stringify({ "10": { at: Date.now(), rank: 5, coin: 2048, stardust: 30, nPost: 12, nComment: 88, created_at: "2024-01-01T00:00:00.000Z" } }));
 		window.__shifts = []; window.__fcp = 0;
 		new PerformanceObserver((list) => { for (const e of list.getEntries()) if (e.name === "first-contentful-paint") window.__fcp = e.startTime; }).observe({ type: "paint", buffered: true });
 		new PerformanceObserver((list) => { for (const e of list.getEntries()) window.__shifts.push([e.startTime, e.value]); }).observe({ type: "layout-shift", buffered: true });
