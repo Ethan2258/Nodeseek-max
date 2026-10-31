@@ -4476,7 +4476,11 @@ function nsmaxTagStructure() {
 		}
 		cancelAnimationFrame(nsmaxToastFrame);
 		nsmaxToastFrame = requestAnimationFrame(() => {
-			nsmaxToastFrame = requestAnimationFrame(() => toast.setAttribute("data-nsmax-shown", ""));
+			nsmaxToastFrame = requestAnimationFrame(() => {
+				// 排队的这两帧里键盘可能弹出，这期间的视口变化被跳过了，显示前再对一次
+				if (nsmaxTouchLayout()) nsmaxSyncOverlayViewport(true);
+				toast.setAttribute("data-nsmax-shown", "");
+			});
 		});
 		clearTimeout(nsmaxToastTimer);
 		const millis = Math.min(1e4, 4e3 + Math.max(0, [...String(text || "")].length - 12) * 160);
@@ -5046,6 +5050,8 @@ function nsmaxTagStructure() {
 		observe();
 		media.addEventListener("change", () => { observe(); sync(); nsmaxPlaceHeaderButtons(GM_getValue$1(SETTINGS_KEY,{})?.["content-filter"]?.enabled !== false); }, { signal: ctx.signal });
 		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
+		// iOS Safari 要文档上挂着 touchstart 才会触发 :active，否则手机按下反馈不生效
+		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
 		const stop = ctx.watch(sync);
 		return () => { stopScroll(); stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
