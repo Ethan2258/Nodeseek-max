@@ -4089,8 +4089,8 @@ function nsmaxTagStructure() {
 			}
 			hero.after(tabs);
 		}
-		// 输入框后面紧跟按钮的一组（邮箱 + 发送验证码、验证码 + 登录）排成一行
-		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button, :scope > input + span + button"));
+		// 输入框后面紧跟「发送验证码」的一组排成一行；后面是提交按钮的不算，它本来就另起一行，排成两列只会让输入框短 8px
+		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button[type=button], :scope > input + span + button[type=button]"));
 		nsmaxPasswordToggles(app);
 	}
 	// 登录 / 注册页密码框右侧的「显示 / 隐藏」：sb.sb 登录页在密码框里放了同款文字按钮（2026-10-21）。
@@ -4476,7 +4476,11 @@ function nsmaxTagStructure() {
 		}
 		cancelAnimationFrame(nsmaxToastFrame);
 		nsmaxToastFrame = requestAnimationFrame(() => {
-			nsmaxToastFrame = requestAnimationFrame(() => toast.setAttribute("data-nsmax-shown", ""));
+			nsmaxToastFrame = requestAnimationFrame(() => {
+				// 排队的这两帧里键盘可能弹出，这期间的视口变化被跳过了，显示前再对一次
+				if (nsmaxTouchLayout()) nsmaxSyncOverlayViewport(true);
+				toast.setAttribute("data-nsmax-shown", "");
+			});
 		});
 		clearTimeout(nsmaxToastTimer);
 		const millis = Math.min(1e4, 4e3 + Math.max(0, [...String(text || "")].length - 12) * 160);
@@ -5046,6 +5050,8 @@ function nsmaxTagStructure() {
 		observe();
 		media.addEventListener("change", () => { observe(); sync(); nsmaxPlaceHeaderButtons(GM_getValue$1(SETTINGS_KEY,{})?.["content-filter"]?.enabled !== false); }, { signal: ctx.signal });
 		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
+		// iOS Safari 要文档上挂着 touchstart 才会触发 :active，否则手机按下反馈不生效
+		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
 		const stop = ctx.watch(sync);
 		return () => { stopScroll(); stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };

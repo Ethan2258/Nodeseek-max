@@ -2616,6 +2616,9 @@ html[data-nsmax-theme] body > footer .contain > .col img {
   height: 16px !important;
   vertical-align: -3px !important;
 }
+html[data-nsmax-theme] body > footer .foot > div {
+  color: var(--text-muted) !important;
+}
 html[data-nsmax-theme] body > footer .foot {
   display: flex !important;
   grid-column: 1 / -1 !important;
@@ -4244,6 +4247,12 @@ html[data-nsmax-theme][data-nsmax-page="notification"] :is(.nsk-notification, .n
   max-width: calc(var(--container) - 32px) !important;
   margin-left: auto !important;
   margin-right: auto !important;
+}
+/* 带右栏的通知页：消息中心放在左栏里，左栏已经和顶栏对齐，再缩 16px、往下推 24px（站点的 margin）就和右栏、别的页面错开了 */
+html[data-nsmax-theme][data-nsmax-page="notification"] #nsk-body-left > :is(.nsk-notification, .nspp-messages-container) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
 }
 
 /* ---------- 21. #nsk-frame-block：列表页、帖子页里它是空占位，旧版（v1.7.27 起）一律隐藏；
@@ -6493,7 +6502,7 @@ html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not(
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not([type="button"]):is(#nsmax-lv, *):hover {
   background: var(--action-hover) !important;
 }
-html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset[data-nsmax-auth-row] > button:not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(fieldset[data-nsmax-auth-row] > button, fieldset > input + button):not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin-top: 18px !important;
 }
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] #register > form > button:not([type="button"]) {
@@ -9363,8 +9372,11 @@ html[data-nsmax-theme] .user-card.hover-user-card:is(#nsmax-lv, *) {
 /* 私信会话有未读：sb.sb .dm-unread-line——摘要金色加粗；右边一个 8px 黄点（站点只说有没有未读，不给条数）。
    以前这里是一个空的 .nspp-messages-unread，被「空的未读标记不显示」那条规则藏掉了，系统消息、私信有未读都看不出来 */
 html[data-nsmax-theme] .nspp-messages .nspp-messages-peer[data-unread] .nspp-messages-snippet:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  color: #b8860b !important;
+  color: #8a6400 !important;
   font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-dark] .nspp-messages .nspp-messages-peer[data-unread] .nspp-messages-snippet:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: #e0b040 !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-messages-unread:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: block !important;
@@ -10188,6 +10200,8 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name {
 }
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name:hover {
   color: var(--link-hover) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
 }
 /* UID：sb.sb .post-user-uid——1px 8px 小胶囊、细线框、等宽 11px 弱化字 */
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-uid {
@@ -12162,8 +12176,8 @@ html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-future]:is(#nsmax-
     flex-direction: column !important;
   }
   html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-side:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    align-items: flex-start !important;
-    text-align: left !important;
+    align-items: center !important;
+    text-align: center !important;
   }
   html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats:is(#nsmax-lv, *):is(#nsmax-b, *) {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -13281,6 +13295,8 @@ html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(#login-
   position: relative !important;
 }
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] input[data-nsmax-password]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  /* 「显示」按钮让这一组也算「输入框 + 按钮」的两列，按钮本身是绝对定位，输入框要占满两列，不然比别的输入框窄 8px */
+  grid-column: 1 / -1 !important;
   padding-right: 56px !important;
 }
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button.nsmax-password-toggle[type="button"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -14082,6 +14098,13 @@ html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day:is(#nsmax-lv, *):is(#ns
   color: var(--text-muted) !important;
   font-family: var(--font-mono) !important;
 }
+/* 主栏比 sb.sb 宽得多：方格到 130px 见方，一个月占满两屏；宽屏上固定高度，一屏看完 */
+@media (min-width: 701px) {
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    aspect-ratio: auto !important;
+    height: 64px !important;
+  }
+}
 html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > b:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   font-family: var(--font-mono) !important;
   font-size: 13px !important;
@@ -14592,6 +14615,10 @@ html[data-nsmax-theme] .nsmax-progress-foot:is(#nsmax-lv, *) {
     transition: none !important;
   }
 }
+/* 还不知道等级时（发帖页的侧栏按记下的资料先画）不显示空徽章 */
+html[data-nsmax-theme] a.nsmax-account-rank:empty:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
 /* 资料卡的等级小标签链到等级进度（/progress）：样子不变，悬停稍微淡一点 */
 html[data-nsmax-theme] a.nsmax-account-rank:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *) {
   text-decoration: none !important;
@@ -14851,6 +14878,61 @@ html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=s] #nsk-body-left ul.
 html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=m] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+19):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
 html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=l] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+26):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: hidden !important;
+}
+/* ---------- 74. 2026-10-31：设置页子页（真站各子页走查） ---------- */
+/* 登录 IP 列表：站点给的是半透明黑底，主题把文字换成深色以后几乎看不见 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item:last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-bottom: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item > p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+/* 屏蔽用户：站点的灰底加阴影去掉，和设置页其他区块一样平铺在卡片里 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .block-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 联系方式：修改邮箱里嵌套的表单是 flex 子项，站点固定 300px 宽，和上面 520px 的密码框对不齐 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side form form:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 100% !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 520px !important;
+}
+/* Telegram 绑定：头像原来 320px 大图居中，缩成小头像靠左，名字放在下面 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side img.avatar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: var(--r-input) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side img.avatar + p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 6px 0 0 !important;
+  text-align: left !important;
 }
 /* 页脚在屏幕外时也不算（约 75 个元素），滚到附近再画 */
 html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {

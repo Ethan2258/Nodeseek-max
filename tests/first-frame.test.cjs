@@ -75,7 +75,7 @@ for(const engine of engines){
     await ready(page);
     await page.waitForSelector(".nsmax-message-tabs .nspp-messages-count");
     const state=await page.evaluate(()=>{const top=document.querySelector(".nspp-messages-top").getBoundingClientRect(),tabs=document.querySelector(".nsmax-message-tabs").getBoundingClientRect(),actions=document.querySelector(".nspp-messages-top-actions").getBoundingClientRect();return{top:top.bottom,tabs:tabs.bottom,actions:actions.bottom,actionTop:actions.top,tabTop:tabs.top};});
-    assert.equal(state.actionTop>state.tabTop+10,wrapped,JSON.stringify(state));
+    assert.equal(state.actionTop>(state.tabTop+state.tabs)/2,wrapped,JSON.stringify(state));
     assert.ok(state.top-state.actions>=7,`按钮离卡片底边至少 7px：${JSON.stringify(state)}`);
     if(!wrapped)assert.ok(Math.abs(state.top-state.tabs)<=2,`一行放得下时下划线贴底：${JSON.stringify(state)}`);
     assert.deepEqual(errors,[]);
@@ -143,6 +143,8 @@ test("主题分段：手机、深色下也和整份注入逐元素一致，手�
     if(full)await page.evaluate(()=>localStorage.setItem("nsmax:all-css","1"));
     await page.goto("https://www.nodeseek.com"+path,{waitUntil:"domcontentloaded"});
     await ready(page);
+    // 通知入口要等未读数请求回来才换成带角标的链接，CI 上 900ms 不一定够，两边都等到这一步再比
+    await page.waitForFunction(()=>!document.querySelector(".user-stat")||document.querySelector(".nspp-notification-link"),null,{timeout:8000}).catch(()=>{});
     await page.mouse.move(8,8);
     await page.waitForTimeout(900);
     const state=await page.evaluate(()=>{
