@@ -2,7 +2,7 @@
 
 [返回首页](../README.md) · [开发与发布](../docs/development.md)
 
-NodeSeek Max 合并了下面四个脚本。这里保存的是**已合并版本**的原始源码（基线），上游更新时用来对比改动。
+NodeSeek Max 合并了下面五个脚本。这里保存的是**已合并版本**的原始源码（基线），上游更新时用来对比改动。
 
 | 上游 | 已合并版本 | 发布地址 | 在 nodeseek-max.user.js 中的位置 |
 | --- | --- | --- | --- |
@@ -10,6 +10,7 @@ NodeSeek Max 合并了下面四个脚本。这里保存的是**已合并版本**
 | redirect 外链跳转 | 见 `sources.json` | [Greasy Fork 416338](https://greasyfork.org/scripts/416338) | Part 1（外链跳转），NodeSeek / DeepFlood 的 `/jump` 规则为 NodeSeek Max 改写 |
 | NodeSeek 热榜插件 | 见 `sources.json` | [Greasy Fork 560065](https://greasyfork.org/scripts/560065) | 改写为 Part 2 的侧栏热榜（`mountHotSidebar`）与工具栏热榜弹窗，共用一份缓存 |
 | NodeSeek 自动屏蔽黑名单用户通知 | 2.0 | 无（本地脚本） | 改写为 Part 2 的 `official-blocklist`（`blockedMembers`） |
+| NodeSeek 用户发帖与评论频率 | 1.1.0（MIT） | [NodeSeek 帖子 1022452](https://www.nodeseek.com/post-1022452-1) | 改写为 theme/ui-runtime.js 的活跃度标签（`nsmaxActivity`）：个人主页统计格的日均，另加档位标签 |
 
 ## 检查与合并
 
