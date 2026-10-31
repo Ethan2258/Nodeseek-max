@@ -4248,6 +4248,12 @@ html[data-nsmax-theme][data-nsmax-page="notification"] :is(.nsk-notification, .n
   margin-left: auto !important;
   margin-right: auto !important;
 }
+/* 带右栏的通知页：消息中心放在左栏里，左栏已经和顶栏对齐，再缩 16px、往下推 24px（站点的 margin）就和右栏、别的页面错开了 */
+html[data-nsmax-theme][data-nsmax-page="notification"] #nsk-body-left > :is(.nsk-notification, .nspp-messages-container) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
 
 /* ---------- 21. #nsk-frame-block：列表页、帖子页里它是空占位，旧版（v1.7.27 起）一律隐藏；
    但真实的设置页内容就放在它里面（section#nsk-frame > #nsk-frame-block > div > #user-setting-panel），

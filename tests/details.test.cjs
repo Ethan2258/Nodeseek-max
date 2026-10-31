@@ -78,4 +78,17 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 注册页密码框和别的输入框一样宽；带右栏的通知页消息中心和右栏顶端、列表页左边对齐`,async()=>{
+  const reg=await open(browser,"https://www.nodeseek.com/register.html",{html:P.registerPage({}),viewport:{width:1280,height:900},seed});
+  try{
+   await ready(reg.page);
+   const widths=await reg.page.evaluate(()=>["#stacked-username","#stacked-password","#password-reinput"].map(s=>Math.round(document.querySelector(s).getBoundingClientRect().right)));
+   assert.equal(new Set(widths).size,1,JSON.stringify(widths));
+   assert.deepEqual(reg.errors,[]);
+  }finally{await reg.context.close();}
+  const box=async(url,render)=>{const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{html:render({}),viewport:{width:1280,height:900},seed});try{await ready(page);const r=await page.evaluate(()=>{const left=[...document.querySelectorAll("#nsk-body-left *")].find(e=>e.getBoundingClientRect().width>300).getBoundingClientRect(),right=document.querySelector("#nsk-right-panel-container>*").getBoundingClientRect();return{left:Math.round(left.left),top:Math.round(left.top),rightTop:Math.round(right.top)};});assert.deepEqual(errors,[]);return r;}finally{await context.close();}};
+  const notif=await box("/notification",P.notificationPage),list=await box("/",P.listPage);
+  assert.equal(notif.top,notif.rightTop,JSON.stringify(notif));
+  assert.equal(notif.left,list.left,JSON.stringify({notif,list}));
+ });
 }
