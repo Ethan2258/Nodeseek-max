@@ -38,5 +38,15 @@
 		"meta": null,
 		"code": null,
 		"merged": "nodeseek-max.user.js Part 2 的 official-blocklist（blockedMembers）"
+	},
+	{
+		"id": "user-frequency",
+		"name": "NodeSeek 用户发帖与评论频率",
+		"version": "1.1.0",
+		"license": "MIT",
+		"page": "https://www.nodeseek.com/post-1022452-1",
+		"meta": null,
+		"code": null,
+		"merged": "ui-runtime 的活跃度标签（nsmaxActivity：个人主页日均、名字后面的档位标签）"
 	}
 ]
