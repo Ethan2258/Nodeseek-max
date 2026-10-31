@@ -113,6 +113,36 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 手机侧栏抽屉：第一次搭侧栏不写 scrollTop（不逼整页排版），切换标签仍回到顶部`,async()=>{
+  // 记下每次给 #left-slide-panel 写 scrollTop
+  const init=`window.__panelScrollWrites=0;(()=>{const d=Object.getOwnPropertyDescriptor(Element.prototype,"scrollTop");Object.defineProperty(Element.prototype,"scrollTop",{configurable:true,get(){return d.get.call(this);},set(v){if(this.id==="left-slide-panel")window.__panelScrollWrites++;d.set.call(this,v);}});})();`;
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true,count:20}),init});
+  try{
+   await ready(page);
+   await page.waitForSelector("#left-slide-panel .nsmax-drawer-tabs button");
+   assert.equal(await page.evaluate(()=>window.__panelScrollWrites),0,"搭侧栏时不写 scrollTop");
+   await page.getByRole("button",{name:"打开菜单",exact:true}).tap();
+   const drawer=page.locator("#left-slide-panel");
+   await drawer.getByRole("button",{name:"最近浏览",exact:true}).tap();
+   await page.waitForFunction(()=>document.getElementById("left-slide-panel").dataset.nsmaxDrawerView==="recent");
+   assert.equal(await page.evaluate(()=>window.__panelScrollWrites),1,"切换标签时回到顶部");
+   assert.equal(await page.evaluate(()=>document.getElementById("left-slide-panel").scrollTop),0);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 第一帧画出来之前鼠标就动了：浮层样式等第一帧之后才注入，不压在第一帧上`,async()=>{
+  // 解析到末尾（readyState 变 interactive，第一帧还没画）时发一个 pointermove，再看第一帧（第一个 rAF）时浮层样式在不在页面里
+  const init=`window.__overlayFirstFrame=null;(()=>{const has=()=>[...document.querySelectorAll("style")].some(n=>(n.textContent||"").includes(".search-overlay{--bg-overlay"));document.addEventListener("readystatechange",()=>{if(document.readyState!=="interactive")return;document.dispatchEvent(new PointerEvent("pointermove",{bubbles:true,clientX:20,clientY:20}));requestAnimationFrame(()=>{window.__overlayFirstFrame=has();});},{once:true});})();`;
+  for(const options of [phone(),{viewport:{width:1440,height:900},seed}]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...options,html:P.listPage({mobile:!!options.device,count:20}),init});
+   try{
+    await ready(page);
+    assert.equal(await page.evaluate(()=>window.__overlayFirstFrame),false,"第一帧时还没注入");
+    await page.waitForFunction(()=>[...document.querySelectorAll("style")].some(n=>(n.textContent||"").includes(".search-overlay{--bg-overlay")),null,{timeout:5000});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
  test(`${engine} 页脚屏幕外不算，滚到附近正常显示`,async()=>{
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true,count:40})});
   try{

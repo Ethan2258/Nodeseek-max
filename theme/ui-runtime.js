@@ -4922,12 +4922,13 @@ function nsmaxTagStructure() {
 		const stopScroll = nsmaxKeepTouchScroll(ctx, media);
 		const bound = new WeakSet();
 		let panel = null, panelMask = null, nativeSearch = null;
-		const drawerView = (view) => {
+		// 切到别的标签时回到顶部。第一次搭侧栏时不写 scrollTop：侧栏刚建好、还没滚过，写它会让浏览器当场把整页样式和排版算一遍（手机首页首帧刚画完时约 50–80ms，4 倍降速）
+		const drawerView = (view, resetScroll = true) => {
 			if (!panel) return;
 			nsmaxSetAttr(panel, "data-nsmax-drawer-view", view);
 			for (const button of panel.querySelectorAll(".nsmax-drawer-tabs button")) nsmaxSetAttr(button, "aria-pressed", String(button.dataset.view === view));
 			for (const host of panel.querySelectorAll(":scope > [data-drawer-pane]")) host.hidden = host.dataset.drawerPane !== view;
-			panel.scrollTop = 0;
+			if (resetScroll) panel.scrollTop = 0;
 		};
 		const openRow = event => {
 			if (!media.matches || event.button !== 0 || event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || getSelection()?.isCollapsed === false) return;
@@ -4982,7 +4983,7 @@ function nsmaxTagStructure() {
 					if (view === "recent") { const empty = document.createElement("p"); empty.className = "nsmax-drawer-empty"; empty.textContent = "还没有浏览记录，打开帖子后会保存在这里。"; host.append(empty); }
 					panel.append(host);
 				}
-				head.after(tabs); drawerView("navigation");
+				head.after(tabs); drawerView("navigation", false);
 				const boards = panel.querySelector(":scope > .category-mobile");
 				if (boards) tabs.after(boards);
 				const account = panel.querySelector(":scope > .user-card-container");
@@ -6163,17 +6164,29 @@ function nsmaxTagStructure() {
 	// 滚动位置从鼠标事件本身算（pageY − clientY，事件发出时就定了）：以前在每次鼠标移动、划过时读 scrollX / scrollY，
 	// 页面刚改过的话浏览器得当场排一遍版（2026-10-24 量到：切换编辑器后鼠标一动，划过处理里强制排版 440ms，CPU 4 倍降速），
 	// 页面加载、整理期间鼠标一动就一帧排好几次版。只在第一次调用（模块启动）时读一次
+	// 模块启动时（没有事件）不当场读 scrollX / scrollY：那时页面刚被各模块改过，读一下就要先把整页样式算一遍（手机首帧后约 5ms，4 倍降速）。
+	// 等下一帧画完再读，那时样式和排版都是现成的；这之前就来了悬停事件的话再当场读
 	function nsmaxHoverFromScroll(event) {
 		const offset = (e) => e ? [e.pageX - e.clientX, e.pageY - e.clientY] : [scrollX, scrollY];
 		if (!nsmaxHoverState) {
-			const [x, y] = offset(event);
-			const state = nsmaxHoverState = { x, y };
+			const state = nsmaxHoverState = { x: 0, y: 0, pending: !event };
+			if (event) [state.x, state.y] = offset(event);
+			else requestAnimationFrame(() => setTimeout(() => {
+				if (!state.pending) return;
+				state.pending = false;
+				[state.x, state.y] = offset();
+			}, 0));
 			document.addEventListener("pointermove", (e) => {
 				if (!e.movementX && !e.movementY) return;
+				state.pending = false;
 				[state.x, state.y] = offset(e);
 			}, { capture: true, passive: true });
 		}
 		if (!event) return false;
+		if (nsmaxHoverState.pending) {
+			nsmaxHoverState.pending = false;
+			[nsmaxHoverState.x, nsmaxHoverState.y] = offset();
+		}
 		const [x, y] = offset(event);
 		return Math.abs(y - nsmaxHoverState.y) > 1 || Math.abs(x - nsmaxHoverState.x) > 1;
 	}
