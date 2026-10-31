@@ -149,7 +149,10 @@ for(const engine of engines) {
    const fonts=await page.evaluate(()=>{const root=document.documentElement,old=root.getAttribute('data-nsmax-size');const sizes=['standard','large','xlarge'].map(size=>{root.setAttribute('data-nsmax-size',size);return parseFloat(getComputedStyle(document.querySelector('.post-title > a')).fontSize);});root.setAttribute('data-nsmax-size',old);return sizes;});
    assert.deepEqual(fonts,[15,17,18],'手机列表的标准、大、特大字号均真实生效');
    assert.equal(await row.locator(".info-last-commenter").isVisible(),true);assert.equal(await row.locator(".info-views").isVisible(),true);
-   const r=await row.boundingBox();await page.touchscreen.tap(r.x+r.width-5,r.y+r.height-5);await page.waitForURL(/\/post-1000-1$/);assert.deepEqual(errors,[]);
+   // 点行里离所有链接都最远的空白处（2026-10-31：≥360px 信息排成一行后，右下角紧挨着时间链接，触摸会被吸附到链接上）
+   const blank=await row.evaluate(li=>{const r=li.getBoundingClientRect(),links=[...document.querySelectorAll("a,button")].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect());let best={x:0,y:0,d:-1};
+    for(let x=r.left+4;x<r.right-4;x+=4)for(let y=r.top+4;y<r.bottom-4;y+=2){const d=Math.min(...links.map(b=>Math.hypot(Math.max(b.left-x,0,x-b.right),Math.max(b.top-y,0,y-b.bottom))));if(d>best.d)best={x,y,d};}return best;});
+   assert.ok(blank.d>=16,JSON.stringify(blank));await page.touchscreen.tap(blank.x,blank.y);await page.waitForURL(/\/post-1000-1$/);assert.deepEqual(errors,[]);
   } finally {await context.close();}
  });
  test(`${engine} iPhone：发帖输入和选择框不少于 16px，横屏也没有横向溢出`,async()=>{
