@@ -67,4 +67,15 @@ for(const engine of engines){
   const post=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true})});
   try{await ready(post.page);assert.equal(await post.page.locator("article.post-content :not(pre)>code").first().evaluate(e=>getComputedStyle(e).boxDecorationBreak||getComputedStyle(e).webkitBoxDecorationBreak),"clone");}finally{await post.context.close();}
  });
+ test(`${engine} 上一个页面查未读数时还没等到回应就离开：这一页自己查，不挂着 0 等下一分钟`,async()=>{
+  // 一分钟内别的页面拿到了查询权、但什么都没存下
+  const init=`localStorage.setItem("nspp:lock:www.nodeseek.com:unread:1",JSON.stringify({started:Date.now(),until:Date.now()+12e4,owner:"gone"}));`;
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html:P.listPage({}),viewport:{width:1440,height:900},seed,init});
+  try{
+   await ready(page);
+   await page.waitForFunction(()=>document.querySelectorAll(".nspp-notification-link .nspp-unread-count").length===3,null,{timeout:5000});
+   assert.deepEqual(await page.locator(".nspp-notification-link .nspp-unread-count").allTextContents(),["1","1","1"]);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
 }

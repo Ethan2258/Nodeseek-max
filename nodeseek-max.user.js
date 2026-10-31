@@ -7303,7 +7303,7 @@ var nsmaxRedirecting = false;
 						lastAttempt = Date.now();
 						pending = true;
 						try {
-							await withTabLock(`unread:${uid}`, 6e4, async () => {
+							const refresh = async () => {
 								const result = await ctx.request("/api/notification/unread-count");
 								if (!result.success || !result.unreadCount) throw new Error("Invalid response");
 								const previous = ctx.get(cacheKey);
@@ -7336,7 +7336,9 @@ var nsmaxRedirecting = false;
 									const message = `收到 ${count - before} 条新${label}，当前有 ${count} 条${label}未读`;
 									if (!systemNotify(message, `${location.origin}/notification#/${path}`, `nspp:${location.hostname}:${uid}:${key}`, title)) ctx.notify(message);
 								}
-							});
+							};
+							// 别的页面一分钟内查过就用它存下的结果；它没等到回应就关掉了、什么都没存时自己查，不挂着 0 等下一分钟
+							if (!await withTabLock(`unread:${uid}`, 6e4, refresh) && !ctx.get(cacheKey)) await refresh();
 							render(ctx.get(cacheKey));
 						} catch {
 							if (!ctx.signal.aborted && !failed) ctx.notify("未读消息检查失败，保留上次结果");
