@@ -1778,7 +1778,7 @@ html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag.is-po
   color: #1a1a1a !important;
 }
 html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag.role-admin {
-  background: #e5484d !important;
+  background: var(--danger-fill) !important;
   box-shadow: none !important;
   color: #ffffff !important;
 }
@@ -2489,7 +2489,7 @@ html[data-nsmax-theme] body > footer .contain {
   gap: 32px 24px !important;
   box-sizing: border-box !important;
   width: 100% !important;
-  max-width: min(var(--container), 1180px) !important;
+  max-width: var(--container) !important;
   margin: 0 auto !important;
   padding: 44px 16px 40px !important;
   height: auto !important;
@@ -14779,7 +14779,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   text-decoration: none !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > .nsmax-topic-pages-gap:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  color: var(--text-disabled) !important;
+  color: var(--text-subtle) !important;
 }
 /* 楼号悬停预览（sb.sb .quote-hover）：最宽 460px、最高 260px 可滚，10px 12px，细线框、卡片圆角、面板底、浮层阴影；
    头上「#楼号 作者」等宽 12px 次级字，下面正文 13.5px、行高 1.7、保留换行 */
@@ -14933,6 +14933,28 @@ html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side img.avata
 html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side img.avatar + p:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin: 6px 0 0 !important;
   text-align: left !important;
+}
+/* ---------- 75. 2026-10-31：悬停反馈（全站走查） ---------- */
+/* 浅色主题的链接悬停色和正文同色，这些文字链接悬停时看不出变化：统一加下划线 */
+@media (hover: hover) {
+  html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-meta a:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-name:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-stat:is(#nsmax-lv, *):is(#nsmax-b, *):hover dd,
+  html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel a:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme] #nsk-body-left .content-item .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme] #nsk-body-left .post-title-link:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme] .ruling-log td a:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme][data-nsmax-page="space"] a.nsmax-user-stat:is(#nsmax-lv, *):is(#nsmax-b, *):hover > .nsmax-user-stat-value,
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member-name:is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(.invite-link, fieldset > a):is(#nsmax-lv, *):is(#nsmax-b, *):hover,
+  html[data-nsmax-theme] #nsk-frame > .nsk-container:is(.nsk-providers, .nsk-friends) > p:last-child a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+    text-decoration: underline !important;
+    text-decoration-thickness: 1px !important;
+    text-underline-offset: 3px !important;
+  }
+  html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-head > a:not(.nsmax-account-name):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+    opacity: .8 !important;
+  }
 }
 /* 页脚在屏幕外时也不算（约 75 个元素），滚到附近再画 */
 html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {

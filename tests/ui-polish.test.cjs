@@ -191,6 +191,44 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 电脑页脚和顶栏、主体同一条边线`,async()=>{
+  for(const width of [1280,1920]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,viewport:{width,height:860},html:P.listPage({count:4})});
+   try{
+    await ready(page);
+    await page.evaluate(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:"instant"}));
+    const s=await page.evaluate(()=>{const box=sel=>document.querySelector(sel).getBoundingClientRect();return{main:box("#nsk-body-left").left,foot:box("body > footer .contain > :first-child").left,side:box("#nsk-right-panel-container").right,end:box("body > footer .contain").right};});
+    assert.ok(near(s.main,s.foot),JSON.stringify(s));
+    assert.ok(near(s.side,s.end-16),JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 电脑悬停：浅色主题下文字链接有下划线，右栏头像变淡`,async()=>{
+  const cases=[
+   ["/",P.listPage({count:4}),"#nsk-body-left .post-meta a:not(.nsmax-inline-category)","textDecorationLine","underline"],
+   ["/",P.listPage({count:4}),".nsmax-sb-account .nsmax-account-name","textDecorationLine","underline"],
+   ["/",P.listPage({count:4}),".nsmax-sb-account .nsmax-account-stat","textDecorationLine","underline","dd"],
+   ["/",P.listPage({count:4}),".nsmax-sb-account .nsmax-account-head > a:not(.nsmax-account-name)","opacity","0.8"],
+   ["/post-1000-1",P.postPage({}),"#nsk-body-left .content-item .floor-link","textDecorationLine","underline"],
+   ["/ruling",P.rulingPage({}),".ruling-log td a","textDecorationLine","underline"],
+   ["/fans?type=follow",P.fansPage({}),".nsmax-member-name","textDecorationLine","underline"],
+   ["/register.html",P.registerPage({}),"[data-nsmax-auth-app] .invite-link","textDecorationLine","underline"],
+   ["/providers",P.providersPage({}),".nsk-providers > p:last-child a","textDecorationLine","underline"]
+  ];
+  for(const [url,html,selector,prop,value,child] of cases){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
+   try{
+    await ready(page);
+    const target=page.locator(selector+":visible").first();
+    // 右栏会在未读数回来后重画一次，重画时悬停状态会丢，多悬停几次
+    let got;
+    for(let i=0;i<8&&got!==value;i++){await target.hover();await page.waitForTimeout(120);got=await target.evaluate((el,{prop,child})=>getComputedStyle(child?el.querySelector(child):el)[prop],{prop,child});}
+    assert.equal(got,value,selector);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
  test(`${engine} 手机分页：三位数页码的小胶囊不挤，面包屑和小页码的点按范围够大`,async()=>{
   const credit=await open(browser,"https://www.nodeseek.com/credit",{...phone(),html:P.creditPage({mobile:true})});
   try{
