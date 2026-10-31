@@ -4089,8 +4089,8 @@ function nsmaxTagStructure() {
 			}
 			hero.after(tabs);
 		}
-		// 输入框后面紧跟按钮的一组（邮箱 + 发送验证码、验证码 + 登录）排成一行
-		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button, :scope > input + span + button"));
+		// 输入框后面紧跟「发送验证码」的一组排成一行；后面是提交按钮的不算，它本来就另起一行，排成两列只会让输入框短 8px
+		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button[type=button], :scope > input + span + button[type=button]"));
 		nsmaxPasswordToggles(app);
 	}
 	// 登录 / 注册页密码框右侧的「显示 / 隐藏」：sb.sb 登录页在密码框里放了同款文字按钮（2026-10-21）。

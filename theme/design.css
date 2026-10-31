@@ -6496,7 +6496,7 @@ html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not(
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not([type="button"]):is(#nsmax-lv, *):hover {
   background: var(--action-hover) !important;
 }
-html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset[data-nsmax-auth-row] > button:not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(fieldset[data-nsmax-auth-row] > button, fieldset > input + button):not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin-top: 18px !important;
 }
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] #register > form > button:not([type="button"]) {

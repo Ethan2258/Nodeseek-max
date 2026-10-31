@@ -192,6 +192,7 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-title>.nsmax-topic
 /* 设置页、注册页和别的页面同一条边线（外层版心已经留了 12px，这里不再多留一层） */
 html[data-nsmax-theme][data-nsmax-touch] #user-setting-panel{padding-inline:0!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] #nsk-frame-block[data-nsmax-auth-card]{width:100%!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-frame>:is(.nsk-providers,.nsk-friends,.nsmax-guest-empty[data-nsmax-site-error]){width:100%!important}
 /* 人机验证组件固定 300px 宽，320px 的屏幕放不下：裁掉右边一点，整页不跟着横向滚动 */
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] [data-nsmax-auth-app]{overflow-x:clip!important}
 

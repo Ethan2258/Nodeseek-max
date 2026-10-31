@@ -46,7 +46,7 @@ for(const engine of engines){
   }finally{await context.close();}
  });
  test(`${engine} 手机设置页、注册页和别的页面同一条边线，注册页密码框和其他输入框一样宽`,async()=>{
-  for(const [url,render,selector] of [["/setting",P.settingPage,"#user-setting-panel"],["/register.html",P.registerPage,"#nsk-frame-block"]]){
+  for(const [url,render,selector] of [["/setting",P.settingPage,"#user-setting-panel"],["/register.html",P.registerPage,"#nsk-frame-block"],["/providers",P.providersPage,".nsk-providers"],["/friends",P.friendsPage,".nsk-friends"],["/setting",P.settingGuestPage,".nsmax-guest-empty"],["/notification",P.notificationGuestPage,".nsmax-guest-empty"]]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...phone(),html:render({mobile:true})});
    try{
     await ready(page);
@@ -62,6 +62,15 @@ for(const engine of engines){
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
+ });
+ test(`${engine} 邮箱登录：验证码输入框和登录按钮一样宽，不给空列留间距`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/signIn.html",{...phone(),html:P.emailSignInPage({mobile:true})});
+  try{
+   await ready(page);
+   const s=await page.evaluate(()=>({input:document.querySelector('input[placeholder="Verification Code"]').getBoundingClientRect().right,button:[...document.querySelectorAll("fieldset button")].at(-1).getBoundingClientRect().right}));
+   assert.ok(near(s.input,s.button),JSON.stringify(s));
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
  });
  test(`${engine} 签到页：手机上按钮和说明居中，电脑上日历一屏看得完`,async()=>{
   const mobile=await open(browser,"https://www.nodeseek.com/board",{...phone(),html:P.boardRealPage({mobile:true})});
