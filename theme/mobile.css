@@ -147,8 +147,8 @@ html[data-nsmax-theme][data-nsmax-touch] :is(.member-list,.nspp-messages,.nspp-n
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=notification] :is(.nsk-notification,.nspp-messages-container){width:100%!important;max-width:none!important;margin:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .member-list.nsk-container{padding:12px 0 24px!important}
 /* 消息标签带未读数时放不下「刷新」「全部已读」：标签按内容宽，放不下就把操作换到下一行，不再把「私信」挤出可视区 */
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages>.nspp-messages-top{flex-wrap:wrap!important;row-gap:0!important}
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs{flex:1 0 auto!important;min-width:max-content!important;overflow:visible!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages>.nspp-messages-top{flex-wrap:wrap!important;row-gap:0!important;padding-bottom:8px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs{flex:1 0 auto!important;min-width:max-content!important;margin-bottom:-8px!important;overflow:visible!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions{margin-left:auto!important;padding:0 0 6px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs+.nspp-messages-top-actions:only-of-type{padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .head-container{padding:16px 12px!important}

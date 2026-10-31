@@ -14703,19 +14703,23 @@ html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quot
 }
 
 /* ---------- 71. 2026-10-24 第二十六批：列表帖子页码、楼号悬停预览 ---------- */
-/* 列表标题后面的小页码（sb.sb .topic-pages）：标题后 6px，一个页面图标 + 细线框小胶囊数字（11.5px 等宽、次要色），间距 3px；
+/* 列表标题后面的小页码（sb.sb .topic-pages）：标题后 6px（2026-10-30：间距记在标题链接的右边，页码单独折到下一行时和标题左对齐，不再缩进 6px），一个页面图标 + 细线框小胶囊数字（11.5px 等宽、次要色），间距 3px；
    悬停时边框换成品牌边框色、字变链接悬停色；「…」用 --text-disabled */
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: inline-flex !important;
   align-items: center !important;
   gap: 3px !important;
-  margin: 0 0 0 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   color: var(--text-subtle) !important;
   font-size: 11.5px !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
   vertical-align: middle !important;
   white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a[data-nsmax-paged]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-right: 6px !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
   content: "" !important;
@@ -14831,4 +14835,36 @@ html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-contai
    data-nsmax-cv-done（见 nsmaxPrerenderRows），这些行改回 visible、提前排好：往下滚的时候不用在滚动的那一帧里现排 */
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: visible !important;
+}
+
+/* ---------- 73. 2026-10-30：首帧只算屏幕上的行 ---------- */
+/* content-visibility:auto 的行要先排一遍才知道哪些在屏幕附近，再回头算样式、排第二遍；而且「附近」是上下各一屏半，手机首帧要多算十几行。
+   现在脚本按窗口高度分三档（data-nsmax-fold，见 nsmaxHoldOffscreenRows）：一屏放得下的行直接画，只排一遍；
+   后面的行在第一帧之前完全不算（data-nsmax-cv-hold），第一帧画出来以后再交回第 53 节的 auto。窗口比第三档还高时不分档 */
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-fold=s] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(-n+12):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-fold=m] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(-n+18):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-fold=l] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(-n+25):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: visible !important;
+  contain-intrinsic-size: none !important;
+}
+html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=s] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+13):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=m] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+19):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=l] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+26):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: hidden !important;
+}
+/* 页脚在屏幕外时也不算（约 75 个元素），滚到附近再画 */
+html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: auto !important;
+  contain-intrinsic-size: auto 287px !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 699px !important;
+  }
+}
+/* 站点的图标雪碧图（body 开头一个 172 个图标、560 多个元素的 svg）：只被 <use> 引用，自己不显示。以前站点脚本把它插进来时整段都要算一遍样式，
+   之后每次整页重算还要再算；不显示后 <use> 照样能引用 */
+html[data-nsmax-theme] body > svg[aria-hidden=true][style*="height: 0"]:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] body > svg[aria-hidden=true][style*="height:0"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
 }

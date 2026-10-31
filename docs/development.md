@@ -26,6 +26,7 @@ Linux 安装浏览器系统依赖时可用 `npx playwright install --with-deps c
 | theme/mobile.css | iPhone 触屏、手机菜单与 Safari 适配，按顺序接在设计层后构建 |
 | theme/sb-mobile-reference.json | 实测 sb.sb 圆角手机版的样式来源、尺寸、圆角与适配差异 |
 | theme/sb-adapter.css | 原站结构与主题之间的适配 |
+| theme/tools.css / header.css | 工具条与功能弹窗、精简顶栏的样式；构建时拆好 :is() 后写进脚本，页面打开时不再逐条处理 |
 | theme/messages.css / settings.css | 消息中心、设置面板样式 |
 | theme/source.js | 主题基底及构建维护的样式内容；仅修改基底时直接编辑，构建更新的部分保留生成结果 |
 | theme/sb-suite.css / sb-reference.json | 主题参考快照与来源记录 |
@@ -48,6 +49,8 @@ check 验证版本、锁文件、本地文档链接、脚本语法、主题构�
 
 主题构建会检查分块前后规则顺序和声明一致性，也会拒绝未处理的 :has()。新增结构条件优先通过运行时属性标记表达，避免在大页面上增加昂贵的选择器。
 
+主题样式分段注入：页面专属段之外，body 段只有首页、版块、搜索这几种纯列表页不注入，side 段（右栏）手机版网页不注入，touch 段（手机布局）只给粗指针设备。真用到时 nsmaxThemeRequire 按原段序重写样式。段文本里的高频长串在构建时换成单字符，新增的规则不能用到 scripts/build-sb.mjs 里 themeTokens 占用的字符。
+
 ## 测试
 
 | 命令 | 覆盖 |
@@ -62,6 +65,7 @@ check 验证版本、锁文件、本地文档链接、脚本语法、主题构�
 | npm run test:polish | 手机弹窗操作区域、键盘提示与长文本边界 |
 | npm run test:pin | 置顶评论入口、原生事件保留与取消状态 |
 | npm run test:details | 页面打开时的底色过渡、手机主楼操作行、代码复制、消息标签与个人主页回帖 |
+| npm run test:first-frame | 首帧分档、图标雪碧图、页脚，以及主题分段和整份注入的一致性 |
 
 设置 `NSMAX_SCRIPT_PATH` 可用同一套测试验证压缩文件。CI 将源码和压缩产物放在两个并行任务中，二者都成功后，统一 test 检查才通过。
 
