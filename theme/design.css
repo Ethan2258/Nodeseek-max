@@ -1951,6 +1951,10 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   color: var(--code-inline-text) !important;
   font-size: 0.875em !important;
   font-weight: 400 !important;
+  /* 折到下一行时两段各自带完整的边框和圆角（以前第一段右边、第二段左边是断开的），长路径可在任意处换行 */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  overflow-wrap: anywhere !important;
 }
 /* 代码块：sb.sb .code-block——次底色、1px 细线框、12px 14px；复制按钮在右上角，悬停代码块时出现。
    占满正文宽：站点把 .post-content pre 限成 724px，外层 .nsmax-code 又是整行宽，复制按钮跑到代码块外面最右边 */
@@ -2611,6 +2615,9 @@ html[data-nsmax-theme] body > footer .contain > .col img {
   width: 16px !important;
   height: 16px !important;
   vertical-align: -3px !important;
+}
+html[data-nsmax-theme] body > footer .foot > div {
+  color: var(--text-muted) !important;
 }
 html[data-nsmax-theme] body > footer .foot {
   display: flex !important;
@@ -4240,6 +4247,12 @@ html[data-nsmax-theme][data-nsmax-page="notification"] :is(.nsk-notification, .n
   max-width: calc(var(--container) - 32px) !important;
   margin-left: auto !important;
   margin-right: auto !important;
+}
+/* 带右栏的通知页：消息中心放在左栏里，左栏已经和顶栏对齐，再缩 16px、往下推 24px（站点的 margin）就和右栏、别的页面错开了 */
+html[data-nsmax-theme][data-nsmax-page="notification"] #nsk-body-left > :is(.nsk-notification, .nspp-messages-container) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
 }
 
 /* ---------- 21. #nsk-frame-block：列表页、帖子页里它是空占位，旧版（v1.7.27 起）一律隐藏；
@@ -6489,7 +6502,7 @@ html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not(
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button:not([type="button"]):is(#nsmax-lv, *):hover {
   background: var(--action-hover) !important;
 }
-html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] fieldset[data-nsmax-auth-row] > button:not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(fieldset[data-nsmax-auth-row] > button, fieldset > input + button):not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin-top: 18px !important;
 }
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] #register > form > button:not([type="button"]) {
@@ -9359,8 +9372,11 @@ html[data-nsmax-theme] .user-card.hover-user-card:is(#nsmax-lv, *) {
 /* 私信会话有未读：sb.sb .dm-unread-line——摘要金色加粗；右边一个 8px 黄点（站点只说有没有未读，不给条数）。
    以前这里是一个空的 .nspp-messages-unread，被「空的未读标记不显示」那条规则藏掉了，系统消息、私信有未读都看不出来 */
 html[data-nsmax-theme] .nspp-messages .nspp-messages-peer[data-unread] .nspp-messages-snippet:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  color: #b8860b !important;
+  color: #8a6400 !important;
   font-weight: 600 !important;
+}
+html[data-nsmax-theme][data-nsmax-dark] .nspp-messages .nspp-messages-peer[data-unread] .nspp-messages-snippet:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: #e0b040 !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-peer > .nspp-messages-unread:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: block !important;
@@ -10184,6 +10200,8 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name {
 }
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name:hover {
   color: var(--link-hover) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
 }
 /* UID：sb.sb .post-user-uid——1px 8px 小胶囊、细线框、等宽 11px 弱化字 */
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-uid {
@@ -11290,6 +11308,12 @@ html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-skeleton .nsmax-hot-line:is(#
   border-radius: 6px !important;
   background-color: var(--panel-hover) !important;
 }
+/* 原站给顶栏和主体设了 background-color 0.5s 过渡：主题换掉底色时，原站的灰底要用半秒慢慢褪掉——每次打开页面，主体先闪一块灰色圆角卡片
+   （手机和脚本晚注入时最明显）。底色由主题直接给定，不需要过渡；主体淡入的 opacity 过渡在下面单独给 */
+html[data-nsmax-theme] body > header,
+html[data-nsmax-theme] #nsk-body {
+  transition: none !important;
+}
 /* 主栏和右栏一起出现（data-nsmax-boot-body，见 startEarlyPass）：右栏整理好（站点画好资料卡，今日热门、最近浏览也放好）之前
    整个主体先不显示，好了一起淡入 0.16 秒；最多等 1.5 秒，页面解析完、主模块启动时也会撤掉 */
 html[data-nsmax-theme][data-nsmax-boot-body] #nsk-body {
@@ -11559,16 +11583,18 @@ html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-b
   cursor: default !important;
 }
 /* 53. 长列表只画看得见的部分（2026-10-18）：帖子行用 content-visibility:auto，屏幕外的行不算样式、不排版、不绘制，
-   滚到附近浏览器再画；第一帧里屏幕上的行照样画出来。没画过的行按实际行高预留（桌面 73px，手机 90px），滚动条不跳。
+   滚到附近浏览器再画；第一帧里屏幕上的行照样画出来。没画过的行按实际行高预留（桌面 73px，手机约 72px），滚动条不跳。
+   预留值只是内容高度，行自己的上下内边距（桌面 11px×2，手机 10px×2）另外加（2026-10-30：以前把整行高度当成内容高度，
+   每行多留 22px，手机多留 43px，50 行的列表先多出一千多像素，滚到附近画出来时滚动条往回缩，首屏的行也先按 95px 排一帧再缩回 71px）
    只在正常打开页面时用（data-nsmax-cv，见 applyThemeAttributes）：刷新、前进后退时浏览器按原来的滚动位置恢复，
    上面没画过的行按预留高度算，标题折行的行多了会停错位置 */
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
   content-visibility: auto !important;
-  contain-intrinsic-size: auto 73px !important;
+  contain-intrinsic-size: auto 51px !important;
 }
 @media (max-width: 700px) {
   html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    contain-intrinsic-size: auto 90px !important;
+    contain-intrinsic-size: auto 52px !important;
   }
 }
 /* ---------- 54. 2026-10-18 第七批：侧栏卡片不被压扁、资料卡重排、管理记录弹窗 ---------- */
@@ -12150,8 +12176,8 @@ html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-future]:is(#nsmax-
     flex-direction: column !important;
   }
   html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-side:is(#nsmax-lv, *):is(#nsmax-b, *) {
-    align-items: flex-start !important;
-    text-align: left !important;
+    align-items: center !important;
+    text-align: center !important;
   }
   html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-stats:is(#nsmax-lv, *):is(#nsmax-b, *) {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -13269,6 +13295,8 @@ html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] :is(#login-
   position: relative !important;
 }
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] input[data-nsmax-password]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  /* 「显示」按钮让这一组也算「输入框 + 按钮」的两列，按钮本身是绝对定位，输入框要占满两列，不然比别的输入框窄 8px */
+  grid-column: 1 / -1 !important;
   padding-right: 56px !important;
 }
 html[data-nsmax-theme][data-nsmax-page="auth"] [data-nsmax-auth-app] button.nsmax-password-toggle[type="button"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -14070,6 +14098,13 @@ html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day:is(#nsmax-lv, *):is(#ns
   color: var(--text-muted) !important;
   font-family: var(--font-mono) !important;
 }
+/* 主栏比 sb.sb 宽得多：方格到 130px 见方，一个月占满两屏；宽屏上固定高度，一屏看完 */
+@media (min-width: 701px) {
+  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    aspect-ratio: auto !important;
+    height: 64px !important;
+  }
+}
 html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day > b:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   font-family: var(--font-mono) !important;
   font-size: 13px !important;
@@ -14580,6 +14615,10 @@ html[data-nsmax-theme] .nsmax-progress-foot:is(#nsmax-lv, *) {
     transition: none !important;
   }
 }
+/* 还不知道等级时（发帖页的侧栏按记下的资料先画）不显示空徽章 */
+html[data-nsmax-theme] a.nsmax-account-rank:empty:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
 /* 资料卡的等级小标签链到等级进度（/progress）：样子不变，悬停稍微淡一点 */
 html[data-nsmax-theme] a.nsmax-account-rank:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-b, *) {
   text-decoration: none !important;
@@ -14691,19 +14730,23 @@ html[data-nsmax-theme] #nsk-body-left blockquote[data-nsmax-quote] > .nsmax-quot
 }
 
 /* ---------- 71. 2026-10-24 第二十六批：列表帖子页码、楼号悬停预览 ---------- */
-/* 列表标题后面的小页码（sb.sb .topic-pages）：标题后 6px，一个页面图标 + 细线框小胶囊数字（11.5px 等宽、次要色），间距 3px；
+/* 列表标题后面的小页码（sb.sb .topic-pages）：标题后 6px（2026-10-30：间距记在标题链接的右边，页码单独折到下一行时和标题左对齐，不再缩进 6px），一个页面图标 + 细线框小胶囊数字（11.5px 等宽、次要色），间距 3px；
    悬停时边框换成品牌边框色、字变链接悬停色；「…」用 --text-disabled */
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: inline-flex !important;
   align-items: center !important;
   gap: 3px !important;
-  margin: 0 0 0 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   color: var(--text-subtle) !important;
   font-size: 11.5px !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
   vertical-align: middle !important;
   white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a[data-nsmax-paged]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-right: 6px !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
   content: "" !important;
@@ -14819,4 +14862,91 @@ html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-contai
    data-nsmax-cv-done（见 nsmaxPrerenderRows），这些行改回 visible、提前排好：往下滚的时候不用在滚动的那一帧里现排 */
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: visible !important;
+}
+
+/* ---------- 73. 2026-10-30：首帧只算屏幕上的行 ---------- */
+/* content-visibility:auto 的行要先排一遍才知道哪些在屏幕附近，再回头算样式、排第二遍；而且「附近」是上下各一屏半，手机首帧要多算十几行。
+   现在脚本按窗口高度分三档（data-nsmax-fold，见 nsmaxHoldOffscreenRows）：一屏放得下的行直接画，只排一遍；
+   后面的行在第一帧之前完全不算（data-nsmax-cv-hold），第一帧画出来以后再交回第 53 节的 auto。窗口比第三档还高时不分档 */
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-fold=s] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(-n+12):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-fold=m] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(-n+18):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-fold=l] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(-n+25):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: visible !important;
+  contain-intrinsic-size: none !important;
+}
+html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=s] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+13):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=m] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+19):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-cv-hold][data-nsmax-fold=l] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:nth-child(n+26):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: hidden !important;
+}
+/* ---------- 74. 2026-10-31：设置页子页（真站各子页走查） ---------- */
+/* 登录 IP 列表：站点给的是半透明黑底，主题把文字换成深色以后几乎看不见 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item:last-child:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-bottom: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .ip-list > .ip-item > p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-size: 12.5px !important;
+}
+/* 屏蔽用户：站点的灰底加阴影去掉，和设置页其他区块一样平铺在卡片里 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .block-list:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 联系方式：修改邮箱里嵌套的表单是 flex 子项，站点固定 300px 宽，和上面 520px 的密码框对不齐 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side form form:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 100% !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 520px !important;
+}
+/* Telegram 绑定：头像原来 320px 大图居中，缩成小头像靠左，名字放在下面 */
+html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side img.avatar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: var(--r-input) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="setting"] .selector-right-side img.avatar + p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 6px 0 0 !important;
+  text-align: left !important;
+}
+/* 页脚在屏幕外时也不算（约 75 个元素），滚到附近再画 */
+html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: auto !important;
+  contain-intrinsic-size: auto 287px !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 699px !important;
+  }
+}
+/* 站点的图标雪碧图（body 开头一个 172 个图标、560 多个元素的 svg）：只被 <use> 引用，自己不显示。以前站点脚本把它插进来时整段都要算一遍样式，
+   之后每次整页重算还要再算；不显示后 <use> 照样能引用 */
+html[data-nsmax-theme] body > svg[aria-hidden=true][style*="height: 0"]:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] body > svg[aria-hidden=true][style*="height:0"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
 }

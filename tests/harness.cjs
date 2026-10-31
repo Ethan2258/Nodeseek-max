@@ -55,7 +55,7 @@ const gmShim = (seed, fontFiles, manager) => `(() => {
 				const bytes = encoded ? Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0)) : new Uint8Array(20000).fill(7);
 				details.onload?.({ status: 200, response: bytes.buffer });
 			}
-			else if (details.url.includes("raw.githubusercontent.com")) details.onload?.({ status: 200, responseText: "// ==UserScript==\\n// @version      1.0.0\\n// ==/UserScript==\\n" });
+			else if (details.url.includes("github.com/Ethan2258/Nodeseek-max/releases/")) details.onload?.({ status: 200, responseText: "// ==UserScript==\\n// @version      1.0.0\\n// ==/UserScript==\\n" });
 			else if (details.url.startsWith("https://api.nodeimage.com/api/user/api-key")) {
 				details.onload?.({ status: 200, response: { api_key: "mock-key" } });
 			}
@@ -167,8 +167,17 @@ async function open(browser, url, { html, seed, fontFiles, manager, colorScheme 
 	return { context, page, errors, calls };
 }
 
+// 脚本里的主题样式：把各段拼起来，还原构建时换成单字符的高频长串
+function themeCssOf(source) {
+	const lines = source.split("\n");
+	const value = (name) => JSON.parse(lines.find((line) => line.startsWith(`\tvar ${name} = `)).trimEnd().slice(`\tvar ${name} = `.length, -1));
+	const tokens = value("nsmax_theme_tokens");
+	return value("nsmax_theme_segments").map(([, css]) => css).join("").replace(new RegExp(`[${Object.keys(tokens).join("")}]`, "g"), (token) => tokens[token]);
+}
+
 module.exports = {
 	launch,
 	open,
+	themeCssOf,
 	ROOT
 };

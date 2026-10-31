@@ -15,6 +15,11 @@
 	function nsmaxThemeChunkKeys(kind = nsmaxPageKind()) {
 		const keys = new Set(["base", "error", kind]);
 		if (kind === "post" || kind === "new") keys.add("editor");
+		// 首页、版块、搜索这几种纯列表页没有帖子正文、提醒卡片这些结构（body 段）
+		if (kind !== "list" || !/^\/(?:page-\d+\/?|categories\/.*|search\/?)?$/.test(location.pathname)) keys.add("body");
+		// 手机布局的规则只有粗指针设备用得上；手机版网页没有右栏。判断错了也没事，真用到时 nsmaxThemeRequire 补上
+		if (matchMedia("(pointer: coarse)").matches) keys.add("touch");
+		if (!nsmaxTouchLayout()) keys.add("side");
 		// 抽奖页里嵌了一块排行榜预览（.board .rank-row），这两块要一起给
 		if (kind === "lucky") keys.add("board");
 		if (kind === "list") {
@@ -33,10 +38,24 @@
 	function nsmaxThemeCss(kind) {
 		if (nsmaxThemeCss.cache) return nsmaxThemeCss.cache;
 		const keys = nsmaxThemeChunkKeys(kind);
+		nsmaxThemeCss.cache = nsmaxThemeUnpack(keys);
+		nsmaxThemeCss.keys = keys;
+		return nsmaxThemeCss.cache;
+	}
+	// 把需要的段拼起来，还原构建时换成单字符的高频长串（见 build-sb.mjs 的 themeTokens）
+	function nsmaxThemeUnpack(keys) {
 		let css = "";
 		for (const [name, text] of nsmax_theme_segments) if (keys.has(name)) css += text;
-		nsmaxThemeCss.cache = css;
-		return css;
+		return css.replace(/[`$|&§¶¤]/g, (token) => nsmax_theme_tokens[token]);
+	}
+	// 运行中才发现要用到的段（手机上遇到带右栏的网页、平板切到手机布局）：按原来的段序重新拼好写回去，层叠结果和一开始就注入一样
+	function nsmaxThemeRequire(name) {
+		const keys = nsmaxThemeCss.keys;
+		if (!keys || keys.has(name)) return;
+		keys.add(name);
+		const css = nsmaxThemeCss.cache = nsmaxThemeUnpack(keys);
+		if (nsmaxThemeCss.element?.isConnected) nsmaxThemeCss.element.textContent = css;
+		else _css(css, true);
 	}
 	// 浮层样式（弹窗、用户卡、搜索面板、toast、图片预览……）按需注入：首帧只注入页面本体需要的段，
 	// 主内容就绪后的空闲时段再补这段；用户提前交互（移动 / 按键 / 打开弹窗）时也会先补上，不会出现没样式的浮层。
@@ -45,8 +64,7 @@
 		// 排查 / 测试用：?nsmax-no-overlay-css 完全不注入浮层段（连 toast / 预览打开前的显式补注入也不做）
 		try { if (new URLSearchParams(location.search).has("nsmax-no-overlay-css")) return; } catch {}
 		nsmaxEnsureOverlayCss.done = true;
-		let css = "";
-		for (const [name, text] of nsmax_theme_segments) if (name === "overlay") css += text;
+		const css = nsmaxThemeUnpack(new Set(["overlay"]));
 		// 构建时已经短名化 / 压缩过，按「编译后样式」注入，跳过运行时再优化一遍
 		if (css) _css(css, true);
 	}
@@ -1199,7 +1217,7 @@
 		const known = nsmaxSpecialPostMap();
 		nsmaxQueryEach([".post-list-item .post-title", ".nsk-post>.post-title h1"], (title) => {
 			const link = title.querySelector("a");
-			if (!link) return;
+			if (!link || nsmaxLateRows && title.closest(nsmaxLateRows)) return;
 			const id = (link.getAttribute("href") || "").match(/\/post-(\d+)/)?.[1] || postId;
 			// 只有确认正文里有开奖链接的才挂「抽奖」；投票帖不再挂小标（2026-10-18）
 			const lottery = (id && known.get(id) || "").split(",").includes("lottery");
@@ -1517,6 +1535,7 @@
 	}
 	// 解析器已经越过这个元素了没有（它或者它的某层祖先后面已经有兄弟节点，或者页面已经解析完）
 	function nsmaxParsedPast(el) {
+		if (nsmaxLateRows && el.matches(nsmaxLateRows)) return false;
 		if (document.readyState !== "loading") return true;
 		for (let node = el; node && node !== document.body; node = node.parentElement) if (node.nextSibling) return true;
 		return false;
@@ -1558,6 +1577,7 @@
 			if (link.rel) page.rel = link.rel;
 			holder.append(page);
 		}
+		link.setAttribute("data-nsmax-paged", "");
 		link.after(holder);
 	}
 	function nsmaxProcessPostListRows() {
@@ -1790,7 +1810,7 @@
 		}
 		if (!nsmaxChineseTimeEnabled) return;
 		for (const el of document.querySelectorAll("time:not([data-nsmax-time-orig]), .date-created:not([data-nsmax-time-orig]), .date-updated:not([data-nsmax-time-orig])")) {
-			if (el.children.length || el.hasAttribute("data-nsmax-time-done") || parsed && !parsed(el)) continue;
+			if (el.children.length || el.hasAttribute("data-nsmax-time-done") || parsed && !parsed(el) || nsmaxLateRows && el.closest(nsmaxLateRows)) continue;
 			el.setAttribute("data-nsmax-time-done", "");
 			const value = nsmaxChineseTimeText(el);
 			if (value === null) continue;
@@ -2655,29 +2675,6 @@
 		});
 		for (const a of document.querySelectorAll("a.post-image-link")) tag(a);
 	}
-	// 签名里的 Telegram 联系方式（t.me / telegram.me 链接）：在签名下面补一行小标签——
-// 点「@名字」在 Telegram 里打开，点「复制」把联系方式拷到剪贴板（不跳走，复制完弹 toast）。
-// sb.sb 没有签名，这里跟签名的次要信息样式一致：细线小字，不抢正文。
-function nsmaxCopyText(text) {
-	const done = () => {
-		try { nsmaxToast(`已复制：${text}`); } catch {}
-	};
-	const fallback = () => {
-		try {
-			const area = document.createElement("textarea");
-			area.value = text;
-			area.setAttribute("readonly", "");
-			area.style.cssText = "position:fixed;left:-9999px;top:0";
-			document.body.append(area);
-			area.select();
-			document.execCommand("copy");
-			area.remove();
-			done();
-		} catch {}
-	};
-	if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
-	else fallback();
-}
 var NSMAX_TELEGRAM_ICON = "M21.5 4.3 2.9 11.5c-.9.3-.9 1.5 0 1.8l4.6 1.5 1.8 5.4c.3.8 1.3 1 1.9.4l2.5-2.4 4.5 3.3c.7.5 1.7.1 1.9-.7l3.1-14.3c.2-.9-.7-1.6-1.7-1.2ZM9.6 14.2l7.6-5.6-5.5 6.3-.2 3.1-1.9-3.8Z";
 // 页面上见到的 Telegram 联系方式按用户记在本机（uid → {at, c: [{href, handle}]}，最多 1500 人）：悬停在作者身上时资料卡直接拿来用。
 // 2026-10-23：以前只记在当前页面里，资料接口又不返回签名，所以只有在帖子里（签名渲染出来了）才看得到 Telegram，
@@ -2782,39 +2779,6 @@ function nsmaxTelegramContacts(source) {
 		scanText(source.textContent || "");
 	}
 	return list;
-}
-// 小标签：图标 + @名字（点了打开 Telegram）+ 复制（拷到剪贴板，不跳走）
-function nsmaxTelegramChip(contact) {
-	const chip = document.createElement("span");
-	chip.className = "nsmax-tg";
-	const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-	icon.setAttribute("viewBox", "0 0 24 24");
-	icon.setAttribute("aria-hidden", "true");
-	const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-	path.setAttribute("d", NSMAX_TELEGRAM_ICON);
-	icon.append(path);
-	const handle = contact.handle || "";
-	const open = document.createElement("a");
-	open.className = "nsmax-tg-open";
-	open.href = contact.href;
-	open.target = "_blank";
-	open.rel = "noopener noreferrer";
-	open.textContent = handle ? `@${handle}` : "Telegram";
-	open.title = "在 Telegram 里打开";
-	open.addEventListener("click", (event) => event.stopPropagation());
-	const copy = document.createElement("button");
-	copy.type = "button";
-	copy.className = "nsmax-tg-copy";
-	copy.textContent = "复制";
-	copy.title = `复制 Telegram 联系方式${handle ? `：@${handle}` : ""}`;
-	copy.setAttribute("aria-label", copy.title);
-	copy.addEventListener("click", (event) => {
-		event.preventDefault();
-		event.stopPropagation();
-		nsmaxCopyText(handle ? `@${handle}` : contact.href);
-	});
-	chip.append(icon, open, copy);
-	return chip;
 }
 var nsmaxSignaturesSeen = new WeakSet();
 function nsmaxDecorateSignatures() {
@@ -4125,8 +4089,8 @@ function nsmaxTagStructure() {
 			}
 			hero.after(tabs);
 		}
-		// 输入框后面紧跟按钮的一组（邮箱 + 发送验证码、验证码 + 登录）排成一行
-		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button, :scope > input + span + button"));
+		// 输入框后面紧跟「发送验证码」的一组排成一行；后面是提交按钮的不算，它本来就另起一行，排成两列只会让输入框短 8px
+		for (const set of app.querySelectorAll("fieldset")) nsmaxFlag(set, "data-nsmax-auth-row", !!set.querySelector(":scope > input + button[type=button], :scope > input + span + button[type=button]"));
 		nsmaxPasswordToggles(app);
 	}
 	// 登录 / 注册页密码框右侧的「显示 / 隐藏」：sb.sb 登录页在密码框里放了同款文字按钮（2026-10-21）。
@@ -4229,6 +4193,7 @@ function nsmaxTagStructure() {
 		if (early && !known) return;
 		const side = document.createElement("div");
 		side.id = "nsk-right-panel-container";
+		nsmaxThemeRequire("side");
 		side.className = "nsmax-side-panel";
 		if (known) {
 			const card = document.createElement("div");
@@ -4511,7 +4476,11 @@ function nsmaxTagStructure() {
 		}
 		cancelAnimationFrame(nsmaxToastFrame);
 		nsmaxToastFrame = requestAnimationFrame(() => {
-			nsmaxToastFrame = requestAnimationFrame(() => toast.setAttribute("data-nsmax-shown", ""));
+			nsmaxToastFrame = requestAnimationFrame(() => {
+				// 排队的这两帧里键盘可能弹出，这期间的视口变化被跳过了，显示前再对一次
+				if (nsmaxTouchLayout()) nsmaxSyncOverlayViewport(true);
+				toast.setAttribute("data-nsmax-shown", "");
+			});
 		});
 		clearTimeout(nsmaxToastTimer);
 		const millis = Math.min(1e4, 4e3 + Math.max(0, [...String(text || "")].length - 12) * 160);
@@ -4979,6 +4948,7 @@ function nsmaxTagStructure() {
 			document.querySelector("#toggle-left-panel > a")?.focus({ preventScroll: true });
 		};
 		const sync = () => {
+			if (media.matches) nsmaxThemeRequire("touch");
 			if (root.hasAttribute("data-nsmax-touch") !== media.matches) root.toggleAttribute("data-nsmax-touch", media.matches);
 			if (!media.matches) {
 				closeSearch();
@@ -5080,6 +5050,8 @@ function nsmaxTagStructure() {
 		observe();
 		media.addEventListener("change", () => { observe(); sync(); nsmaxPlaceHeaderButtons(GM_getValue$1(SETTINGS_KEY,{})?.["content-filter"]?.enabled !== false); }, { signal: ctx.signal });
 		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
+		// iOS Safari 要文档上挂着 touchstart 才会触发 :active，否则手机按下反馈不生效
+		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
 		const stop = ctx.watch(sync);
 		return () => { stopScroll(); stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };

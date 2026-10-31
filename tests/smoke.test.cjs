@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { launch, open } = require("./harness.cjs");
+const { launch, open, themeCssOf } = require("./harness.cjs");
 const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage, progressPage } = require("./fixtures/pages.cjs");
 
 let browser;
@@ -2003,8 +2003,7 @@ test("v1.7.27 发帖按钮全宽胶囊与文字完整性、顶栏精华跟随分
 test("v1.8.1 防卡死：主题里没有 :has()，个人空间静止时不再反复改 DOM", async () => {
 	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8");
 	// 主题 CSS 现在是按页面分块（nsmax_theme_segments），拼起来检查
-	const themeLine = source.split("\n").find((line) => line.startsWith("\tvar nsmax_theme_segments = "));
-	const themeCss = JSON.parse(themeLine.slice("\tvar nsmax_theme_segments = ".length, -1)).map(([, css]) => css).join("");
+	const themeCss = themeCssOf(source);
 	assert.equal(themeCss.includes(":has("), false, "主题 CSS 里的 :has() 会让帖子里的终端渲染卡死整页");
 	for (const [render, hash] of [[spaceTopicsPage, "#/discussions"], [spaceCommentsPage, "#/comments"]]) {
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10" + hash, { html: render() });
@@ -3596,8 +3595,7 @@ test("侧栏一起出现（2026-10-18）：脚本在页面解析前运行时，�
 test("页面更顺滑（2026-10-18）：主题里没有最右边是多参数 :is() 的选择器（每次整页重算样式都要拿每个元素试一遍），选中文字颜色只挂在 html 上", async () => {
 	// Windows 上 git（core.autocrlf）检出的文件是 CRLF
 	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8").replace(/\r\n?/g, "\n");
-	const themeLine = source.split("\n").find((line) => line.startsWith("\tvar nsmax_theme_segments = "));
-	const css = JSON.parse(themeLine.slice("\tvar nsmax_theme_segments = ".length, -1)).map(([, part]) => part).join("");
+	const css = themeCssOf(source);
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 } });
 	try {
 		await page.waitForSelector(".nsmax-sb-account");
@@ -4049,17 +4047,24 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 		const rowsState = () => page.evaluate(() => {
 			const rows = Array.from(document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item"));
 			const drawn = (li) => li.querySelector(".post-title a").checkVisibility({ contentVisibilityAuto: true });
+			// 一屏放得下的行直接画（第 73 节，这个窗口高度是前 14 行），后面的行才先不算
+			const later = rows[20];
 			return {
-				cv: getComputedStyle(rows[0]).contentVisibility,
-				size: getComputedStyle(rows[0]).containIntrinsicHeight,
+				firstCv: getComputedStyle(rows[0]).contentVisibility,
+				cv: getComputedStyle(later).contentVisibility,
+				size: getComputedStyle(later).containIntrinsicHeight,
+				// 预留的是内容高度，整行还要加上下内边距
+				reserved: parseFloat(getComputedStyle(later).containIntrinsicHeight.split(" ").pop()) + parseFloat(getComputedStyle(later).paddingTop) + parseFloat(getComputedStyle(later).paddingBottom),
 				first: drawn(rows[0]),
 				last: drawn(rows[rows.length - 1]),
 				heights: rows.map((li) => Math.round(li.getBoundingClientRect().height))
 			};
 		});
 		const before = await rowsState();
+		assert.equal(before.firstCv, "visible");
 		assert.equal(before.cv, "auto");
-		assert.equal(before.size, "auto 73px");
+		assert.equal(before.size, "auto 51px");
+		assert.equal(before.reserved, 73, "内容 51px + 上下内边距 22px = 整行 73px");
 		assert.equal(before.first, true, "屏幕上的行照常画");
 		assert.equal(before.last, false, "最下面的行先不画");
 		// 2026-10-25：页面整理完以后在浏览器空闲时一批批排好（不用滚过去），往下滚的时候不用在那一帧里现排
@@ -4071,7 +4076,7 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 		await wait(page, 300);
 		const after = await rowsState();
 		assert.equal(after.last, true, "滚到附近就画出来");
-		assert.ok(after.heights.every((height) => Math.abs(height - 73) <= 4), `行高和预留的 73px 差不多（CI 的 Linux 字体会高一两像素）：${[...new Set(after.heights)]}`);
+		assert.ok(after.heights.every((height) => Math.abs(height - after.reserved) <= 4), `行高和预留的 ${after.reserved}px 差不多（CI 的 Linux 字体会高一两像素）：${[...new Set(after.heights)]}`);
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await page.waitForSelector("html[data-nsmax-theme]");
 		assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-nsmax-cv")), false, "刷新时不用");
@@ -5613,8 +5618,7 @@ test("元信息（2026-10-20）：@include 都是能解析出站点的写法（�
 
 test("主题 CSS 短名化（2026-10-21）：特异度垫片不再用长名字、样式仍是合法 CSS", () => {
 	const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "nodeseek-max.user.js"), "utf8");
-	const themeLine = source.split("\n").find((line) => line.startsWith("\tvar nsmax_theme_segments = "));
-	const line = JSON.parse(themeLine.slice("\tvar nsmax_theme_segments = ".length, -1)).map(([, css]) => css).join("");
+	const line = themeCssOf(source);
 	assert.equal(/#nsmax-(?:u|lv|b|c|d|s|a|e)\b/.test(line), false, "垫片 ID 要短名化成 #x，不然每条选择器白占几个字节");
 	assert.equal(/\.nsmax-s\b/.test(line), false, "垫片类要短名化成 .x");
 	assert.equal(line.includes("[data-nsmax-palette=claude]"), false, "palette 门控恒真，换成 :root");

@@ -304,12 +304,37 @@ const compiled = ast.toString();
 // .nsmax-s 和类型选择器 nsmax-s 都只是提特异度的垫片——每条都写成 :is(垫片, *)，永远由 * 兜底命中，名字本身没有语义。
 // 换成 #x / .x / x 以后匹配范围不变、特异度的形状（ID / 类 / 类型各几份）不变，只是每条选择器短几个字节。
 // [data-nsmax-palette=claude] 由脚本在根元素上写死（palette 设置已隐藏、恒为 claude），换成 :root 特异度同为 (0,1,0)。
-let shipped = compiled;
 // 只换完整的垫片名：`.nsmax-s` 后面不能再跟字母或连字符，否则会把 .nsmax-space-top、.nsmax-sb-account
 // 这类真类名一起截断（第一次就是这么把个人空间、侧滑资料卡、快捷键的样式改没的）
-shipped = shipped.replace(/#nsmax-(?:u|lv|b|c|d|s|a|e)(?![-\w])/g, "#x").replace(/#nsmax-s([12])(?![-\w])/g, "#x$1");
-shipped = shipped.replace(/\.nsmax-s(?![-\w])/g, ".x").replace(/(?<![#.\w-])nsmax-s(?![-\w])/g, "x");
+const shortenPads = (css) => css
+  .replace(/#nsmax-(?:u|lv|b|c|d|s|a|e)(?![-\w])/g, "#x").replace(/#nsmax-s([12])(?![-\w])/g, "#x$1")
+  .replace(/\.nsmax-s(?![-\w])/g, ".x").replace(/(?<![#.\w-])nsmax-s(?![-\w])/g, "x");
+let shipped = shortenPads(compiled);
 shipped = shipped.replaceAll("[data-nsmax-palette=claude]", ":root");
+// 工具条、精简顶栏两段样式也在构建时拆好 :is()：以前页面每次打开都要在运行时逐条读规则再改回去（CPU 4 倍降速下约 80ms）
+const bootSheet = (name) => {
+  const sheet = postcss.parse(readFileSync(new URL(`theme/${name}.css`, root), "utf8").replace(/\r\n?/g, "\n"));
+  sheet.walkComments((comment) => comment.remove());
+  sheet.walkRules((rule) => {
+    if (rule.parent.type === "atrule" && /keyframes$/.test(rule.parent.name)) return;
+    rule.selector = optimize.nsmaxSplitTop(rule.selector, (c) => c === ",").flatMap((part) => optimize.nsmaxExpandSelector(part.trim()) || [part.trim()]).join(",");
+  });
+  sheet.walk((node) => {
+    node.raws.before = "";
+    if (node.type === "decl") node.raws.between = ":";
+    else if (node.type === "rule" || node.type === "atrule") {
+      node.raws.between = "";
+      node.raws.after = "";
+      node.raws.semicolon = false;
+    }
+  });
+  sheet.raws.after = "";
+  return shortenPads(sheet.toString());
+};
+for (const [variable, name] of [["nsmax_tools_css", "tools"], ["nsmax_header_css", "header"]]) {
+  const compiledSheet = bootSheet(name);
+  source = source.replace(new RegExp(`\\tvar ${variable} = .*;\\n`), () => `\tvar ${variable} = ${JSON.stringify(compiledSheet)};\n`);
+}
 // 校验：垫片换干净了、其它类名和 ID 一个都没变、规则数量没变、仍然是合法 CSS
 const tokenCounts = (css, pattern) => {
   const map = new Map();
@@ -353,7 +378,8 @@ const pageMarkers = [
 	["ruling", /\.ruling-log\b|\.nsmax-ruling\b/],
 	["lucky", /\.sample-panel\b|\.nsmax-lucky\b|\.lucky-|\.nsmax-draw\b/],
 	["space", /\.discussion-wrapper\b|\.nsmax-space\b|\.head-container\b|\.profile-head\b/],
-	["search", /\.nsmax-search\b/],
+	// 手机顶栏的 .nsmax-search-close 每一页都有，不是搜索页专属
+	["search", /\.nsmax-search(?!-close)\b/],
 	["credit", /\.credit-|\.nsmax-credit\b|\.points-/]
 ];
 const anchoredPatternOf = (pattern) => new RegExp("^(?:" + pattern.source + ")");
@@ -405,6 +431,58 @@ const chunkOfRule = (rule) => {
 	}
 	return chunks.size === 1 ? [...chunks][0] : "base";
 };
+// 上面留在 base 的规则再按设备和列表页筛一遍（2026-10-30）：手机首页 47 万字符的样式里，一半的选择器在这一页根本匹配不上。
+// 这几段不改变别的页面看到的规则集合，只有下面说的情况才少注入，所以可以按选择器拆（同一条规则的选择器之间没有先后，声明也一样，拆开层叠结果不变），
+// 类名在 :is() / :where() 里也算数（构建早先拆出来的 :where(.post-content table):is(.x, *) 就是这样）：
+//   body：帖子页、发帖页的结构（页面专属段的 post、editor 标记，加上帖子正文、提醒卡片、楼层操作），首页、版块、搜索这几种纯列表页的网页里都没有，
+//         脚本也不在那里造（悬停预览的正文在 overlay 段）。只有纯列表页不注入，见 nsmaxThemeChunkKeys；
+//   side：右栏，手机版网页（服务器按手机 UA 输出）没有；touch：手机布局，只有粗指针设备用得上。这两段看设备，判断错了运行时能补（nsmaxThemeRequire）
+const wideMarkers = [
+	["body", new RegExp(`${pageMarkers[0][1].source}|${pageMarkers[1][1].source}|\\.post-content(?![\\w-])|\\.comment-content(?![\\w-])|\\.markdown-body(?![\\w-])|\\.nsk-content(?![\\w-])|\\.important-note(?![\\w-])|\\.important-reminder(?![\\w-])|\\.new-discussion-notes(?![\\w-])|\\.warning-block(?![\\w-])|\\.post-bottom-pager(?![\\w-])|\\.comment-menu(?![\\w-])|\\.vote-panel(?![\\w-])|\\.vote-stat(?![\\w-])|\\.nsk-post-wrapper(?![\\w-])|\\.nsmax-lottery-table(?![\\w-])|\\.nsmax-lottery-actions(?![\\w-])|\\.nsmax-lucky-side(?![\\w-])|#login-panel(?![\\w-])|#register-panel(?![\\w-])`)],
+	["side", /#nsk-right-panel-container(?![\w-])/],
+	["touch", /\[data-nsmax-touch\]/]
+];
+// 一个选择器必须匹配的位置上命中了哪些宽段：括号外的类名，加上 :is() / :where()——单个参数就当括号外看，多个参数时每个参数都有的才算
+const wideHits = (selector) => {
+	const hits = new Set();
+	let compound = "";
+	const flush = () => {
+		for (const [name, pattern] of wideMarkers) if (topLevelMatch(compound, pattern)) hits.add(name);
+		compound = "";
+	};
+	for (const node of selector.nodes) {
+		if (node.type === "combinator") flush();
+		else if (node.type === "pseudo" && (node.value === ":is" || node.value === ":where") && node.nodes.length) {
+			const args = node.nodes.map(wideHits);
+			for (const name of args[0]) if (args.every((set) => set.has(name))) hits.add(name);
+		}
+		else compound += node.toString();
+	}
+	flush();
+	return hits;
+};
+const wideChunkOf = (selector) => {
+	if (overlaySelector.test(withoutNot(selector)) || pageScopeOf(selector).size) return "base";
+	const hits = wideHits(selectorParser().astSync(selector).nodes[0]);
+	return wideMarkers.find(([name]) => hits.has(name))?.[0] ?? "base";
+};
+// 一条规则放进哪些段：[[段, 规则文本], …]
+const piecesOfRule = (rule) => {
+	const chunk = chunkOfRule(rule);
+	if (chunk !== "base") return [[chunk, rule.toString()]];
+	const groups = new Map();
+	for (const selector of rule.selectors) {
+		const wide = wideChunkOf(selector);
+		if (!groups.has(wide)) groups.set(wide, []);
+		groups.get(wide).push(selector);
+	}
+	return [...groups].map(([name, selectors]) => {
+		if (groups.size === 1) return [name, rule.toString()];
+		const piece = rule.clone();
+		piece.selector = selectors.join(",");
+		return [name, piece.toString()];
+	});
+};
 const segments = [];
 const pushSegment = (chunk, text) => {
 	const last = segments[segments.length - 1];
@@ -413,7 +491,7 @@ const pushSegment = (chunk, text) => {
 };
 const segmentRoot = postcss.parse(shipped);
 for (const node of segmentRoot.nodes) {
-	if (node.type === "rule") { pushSegment(chunkOfRule(node), node.toString()); continue; }
+	if (node.type === "rule") { for (const [chunk, text] of piecesOfRule(node)) pushSegment(chunk, text); continue; }
 	if (node.type !== "atrule") continue;
 	// @keyframes / @font-face 之类的整块放 base（各页面的动画都可能用到它）
 	if (!["media", "supports"].includes(node.name)) { pushSegment("base", node.toString()); continue; }
@@ -427,9 +505,10 @@ for (const node of segmentRoot.nodes) {
 	for (const child of node.nodes || []) {
 		children++;
 		if (child.type === "rule") {
-			const chunk = chunkOfRule(child);
-			if (run && run.chunk === chunk) run.css += child.toString();
-			else { flush(); run = { chunk, css: child.toString() }; }
+			for (const [chunk, text] of piecesOfRule(child)) {
+				if (run && run.chunk === chunk) run.css += text;
+				else { flush(); run = { chunk, css: text }; }
+			}
 		} else {
 			flush();
 			pushSegment("base", `@${node.name} ${node.params}{${child.toString()}}`);
@@ -438,16 +517,17 @@ for (const node of segmentRoot.nodes) {
 	flush();
 	if (!children) pushSegment("base", node.toString());
 }
-// 校验：拆出来的段按顺序拼起来，规则（连同所在 @media 外壳）、顺序、选择器、声明必须和整份 CSS 完全一致
+// 校验：拆出来的段按顺序拼起来，规则（连同所在 @media 外壳）、顺序、选择器、声明必须和整份 CSS 完全一致；
+// 一条规则拆成的几段紧挨着，选择器合起来正好是原来那些
 const flattenTheme = (css) => {
 	const list = [];
 	const walk = (node, context) => {
 		for (const child of node.nodes || []) {
-			if (child.type === "rule") list.push(JSON.stringify([context, child.selector, child.nodes.map((decl) => decl.prop + ":" + decl.value + (decl.important ? "!" : "")).join(";")]));
+			if (child.type === "rule") list.push({ key: JSON.stringify([context, child.nodes.map((decl) => decl.prop + ":" + decl.value + (decl.important ? "!" : "")).join(";")]), selectors: child.selectors });
 			else if (child.type === "atrule") {
-				if (/keyframes/.test(child.name)) list.push(JSON.stringify([context, "@" + child.name + " " + child.params, child.toString().length]));
+				if (/keyframes/.test(child.name)) list.push({ key: JSON.stringify([context, "@" + child.name + " " + child.params, child.toString().length]), selectors: [] });
 				else if (child.nodes) walk(child, context.concat("@" + child.name + " " + child.params));
-				else list.push(JSON.stringify([context, "@" + child.name + " " + child.params, ""]));
+				else list.push({ key: JSON.stringify([context, "@" + child.name + " " + child.params, ""]), selectors: [] });
 			}
 		}
 	};
@@ -456,12 +536,36 @@ const flattenTheme = (css) => {
 };
 const themeBefore = flattenTheme(shipped);
 const themeAfter = flattenTheme(segments.map(([, css]) => css).join(""));
-if (themeBefore.length !== themeAfter.length) throw new Error(`主题分块后规则数变了（${themeBefore.length} → ${themeAfter.length}）`);
-for (let index = 0; index < themeBefore.length; index++) {
-	if (themeBefore[index] !== themeAfter[index]) throw new Error(`主题分块后第 ${index} 条规则对不上：\n${themeBefore[index]}\n${themeAfter[index]}`);
+let themeCursor = 0;
+for (const [index, rule] of themeBefore.entries()) {
+	// 选择器列表里偶尔有重复的，按个数比
+	const left = rule.selectors.slice();
+	do {
+		const piece = themeAfter[themeCursor++];
+		const taken = piece?.key === rule.key && piece.selectors.every((selector) => {
+			const at = left.indexOf(selector);
+			if (at >= 0) left.splice(at, 1);
+			return at >= 0;
+		});
+		if (!taken) throw new Error(`主题分块后第 ${index} 条规则对不上：\n${JSON.stringify(rule)}\n${JSON.stringify(piece)}`);
+	} while (left.length);
 }
+if (themeCursor !== themeAfter.length) throw new Error(`主题分块后规则数变了（${themeBefore.length} → ${themeAfter.length}）`);
+// 高频长串换成单个字符（2026-10-30）：这几串占了段文本的三成多。油猴注入脚本要等的时间跟着体积走，少几十万字符比注入前多花几毫秒还原划算。
+// 选的都是主题里没出现过的字符，注入前由 nsmaxThemeUnpack 还原
+const themeTokens = [["`", "!important"], ["$", "html[data-nsmax-theme]"], ["|", ":is(:root,#x#x#x)"], ["&", ":is(#x, *)"], ["§", "data-nsmax-"], ["¶", ":root:root:root"], ["¤", "#nsk-body-left"]];
+const packTheme = (css) => {
+  for (const [token] of themeTokens) if (css.includes(token)) throw new Error(`主题里出现了压缩用的字符 ${token}`);
+  return themeTokens.reduce((packed, [token, text]) => packed.replaceAll(text, () => token), css);
+};
+const unpackPattern = `/[${themeTokens.map(([token]) => token).join("")}]/g`;
+if (!source.includes(`css.replace(${unpackPattern},`)) throw new Error(`nsmaxThemeUnpack 的字符集要和 themeTokens 一致：${unpackPattern}`);
+const packedSegments = segments.map(([chunk, css]) => [chunk, packTheme(css)]);
+const unpackTheme = (css) => css.replace(new RegExp(`[${themeTokens.map(([token]) => token).join("")}]`, "g"), (token) => themeTokens.find(([key]) => key === token)[1]);
+for (const [index, [, css]] of packedSegments.entries()) if (unpackTheme(css) !== segments[index][1]) throw new Error(`主题第 ${index} 段压缩后还原不回来`);
+source = source.replace(/\tvar nsmax_theme_tokens = .*;\n/, "");
 source = source.replace(/\tvar (?:modern_theme_compiled|nsmax_theme_segments) = .*;\n/, "");
-source = source.replace("\tvar hot_sidebar_default = `", "\tvar nsmax_theme_segments = " + JSON.stringify(segments) + ";\n\tvar hot_sidebar_default = `");
+source = source.replace("\tvar hot_sidebar_default = `", () => "\tvar nsmax_theme_tokens = " + JSON.stringify(Object.fromEntries(themeTokens)) + ";\n\tvar nsmax_theme_segments = " + JSON.stringify(packedSegments) + ";\n\tvar hot_sidebar_default = `");
 source = source.replace("_css(modern_theme_default);", "_css(nsmaxThemeCss(), true);");
 if (process.argv.includes("--check")) {
   if (source !== original || themeSource !== originalTheme) throw new Error("SB suite or adapter is stale; run npm run sb");

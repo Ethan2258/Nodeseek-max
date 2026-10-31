@@ -5,7 +5,7 @@
 ## 电脑浏览器
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或 [Violentmonkey](https://violentmonkey.github.io/)。
-2. 打开 [安装链接](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)，在管理器中确认安装。
+2. 打开 [安装链接](https://github.com/Ethan2258/Nodeseek-max/releases/latest/download/nodeseek-max.user.js)，在管理器中确认安装。
 3. 停用功能重复的 NodeSeek++、外链跳转、热榜、黑名单通知脚本，再刷新论坛页面。
 
 Tampermonkey 的早期注入可减少主题切换时的闪烁。管理面板 → 设置 → 配置模式“高级”，查找 Content Script API；支持时可选 UserScripts API Dynamic。设置名称取决于管理器版本，不适用于 Userscripts。脚本“关于”页显示本页的注入时机。
@@ -13,7 +13,7 @@ Tampermonkey 的早期注入可减少主题切换时的闪烁。管理面板 →
 ## iPhone Safari + Userscripts
 
 1. 安装并启用 [Userscripts](https://github.com/quoid/userscripts)，按扩展说明设置脚本目录与网站访问权限。
-2. 在 **Safari** 打开 [安装链接](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)。
+2. 在 **Safari** 打开 [安装链接](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)（Release 文件会被 Safari 当成下载，所以首次安装用仓库源码；装好后自动更新到 Release 压缩版）。
 3. 打开 Safari 扩展菜单 → **Userscripts**，确认安装或更新。
 4. 返回 NodeSeek / DeepFlood，重新加载页面。
 
@@ -24,6 +24,7 @@ Tampermonkey 的早期注入可减少主题切换时的闪烁。管理面板 →
 ## 更新与版本
 
 - 设置顶部或“关于”页的“检查更新”可检查新版本。
+- 管理器自动更新和“检查更新”都使用 [最新 Release](https://github.com/Ethan2258/Nodeseek-max/releases/latest) 的压缩版脚本。
 - 也可以重新打开安装链接，确认更新并刷新论坛。
 - 当前已发布版本与历史安装文件见 [Releases](https://github.com/Ethan2258/Nodeseek-max/releases)；每个版本的变化见 [更新日志](../CHANGELOG.md)。
 
