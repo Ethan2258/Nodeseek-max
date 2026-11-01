@@ -6,7 +6,7 @@ NodeSeek Max 合并了下面五个脚本。这里保存的是**已合并版本**
 
 | 上游 | 已合并版本 | 发布地址 | 在 nodeseek-max.user.js 中的位置 |
 | --- | --- | --- | --- |
-| NodeSeek++ | 见 `sources.json` | [Greasy Fork 595488](https://greasyfork.org/scripts/595488) | Part 2（论坛增强），其中加了 NodeSeek Max 的改动 |
+| NodeSeek++ | 见 `sources.json` | [GitHub rirh/nodeseek-plus](https://github.com/rirh/nodeseek-plus)（另发布在 [Greasy Fork 595488](https://greasyfork.org/scripts/595488)） | Part 2（论坛增强），其中加了 NodeSeek Max 的改动 |
 | redirect 外链跳转 | 见 `sources.json` | [Greasy Fork 416338](https://greasyfork.org/scripts/416338) | Part 1（外链跳转），NodeSeek / DeepFlood 的 `/jump` 规则为 NodeSeek Max 改写 |
 | NodeSeek 热榜插件 | 见 `sources.json` | [Greasy Fork 560065](https://greasyfork.org/scripts/560065) | 改写为 Part 2 的侧栏热榜（`mountHotSidebar`）与工具栏热榜弹窗，共用一份缓存 |
 | NodeSeek 自动屏蔽黑名单用户通知 | 2.0 | 无（本地脚本） | 改写为 Part 2 的 `official-blocklist`（`blockedMembers`） |

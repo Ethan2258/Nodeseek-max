@@ -2300,7 +2300,7 @@ const OPT_KEY = "nspp:settings:www.nodeseek.com";
 const ownerPost = () => postPage().replace(/\/space\/12/g, "/space/10").replace(/passerby/g, "seller");
 const longReply = Array.from({ length: 40 }, (_, i) => `第 ${i + 1} 段：晚高峰实测丢包率很低，三网回程都走 CN2 GIA。`).join("</p><p>");
 
-test("v1.8.0 设置项重做：图片上传只剩开关、网络请求三档节奏、关键词屏蔽自动判断等级、列表增强不再预读", async () => {
+test("v1.8.0 设置项重做（v1.9.9 起图床选项按所选图床显示）：网络请求三档节奏、关键词屏蔽自动判断等级、列表增强不再预读", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 } });
 	try {
 		await wait(page);
@@ -2308,7 +2308,18 @@ test("v1.8.0 设置项重做：图片上传只剩开关、网络请求三档节�
 		const host = page.locator("#nspp-settings");
 		await host.locator("dialog").waitFor({ state: "visible" });
 		const controls = (id) => host.locator(`.module[data-feature="${id}"]`).evaluate((m) => Array.from(m.querySelectorAll("input, select, textarea"), (c) => `${c.tagName.toLowerCase()}:${c.type || ""}:${c.dataset.key}`));
-		assert.deepEqual(await controls("image-upload"), ["input:checkbox:enabled"], "图床协议、地址、Token 都去掉了");
+		// v1.9.9 起图床选择回来了（第三方图床改经脚本管理器上传，不再受 CORS 限制）；默认 NodeImage 时地址和自定义项都不显示
+		assert.deepEqual(await controls("image-upload"), ["input:checkbox:enabled", "select:select-one:host", "input:text:hostUrl", "input:text:customField", "textarea:textarea:customHeaders", "input:text:customResult"]);
+		const shown = () => host.locator('.module[data-feature="image-upload"] .module-fields > *').evaluateAll((fields) => fields.filter((f) => getComputedStyle(f).display !== "none").map((f) => f.querySelector("[data-key]").dataset.key));
+		assert.deepEqual(await shown(), ["host"], "NodeImage 不需要地址");
+		await host.getByRole("tab", { name: "工具", exact: true }).click();
+		await host.locator('select[data-key="host"]').selectOption("Custom");
+		await page.waitForTimeout(50);
+		assert.deepEqual(await shown(), ["host", "hostUrl", "customField", "customHeaders", "customResult"]);
+		await host.locator('select[data-key="host"]').selectOption("LskyPro");
+		await page.waitForTimeout(50);
+		assert.deepEqual(await shown(), ["host", "hostUrl"]);
+		await host.locator('select[data-key="host"]').selectOption("NodeImage");
 		assert.equal(await host.locator('.module[data-feature="list-interactions"]').count(), 0, "时间刷新并入中文时间，重复开关移除");
 		assert.deepEqual(await controls("reading-focus"), ["input:checkbox:enabled"], "只看楼主、折叠高度不再是全局设置");
 		const filter = await controls("content-filter");
@@ -2439,6 +2450,60 @@ test("v1.8.0 私信里粘贴图片：没改过设置也走 NodeImage（以前默
 		await page.waitForFunction(() => window.__uploads?.length === 1);
 		assert.match(await page.evaluate(() => window.__uploads[0].url), /^https:\/\/api\.nodeimage\.com\/api\/upload/);
 		await page.waitForFunction(() => document.querySelector(".nspp-messages textarea").value.includes("abc123.png"));
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.9.9 自定义图床：经脚本管理器上传，请求头里的 {key} 换成页面上填的密钥，按设置的路径取图片地址", async () => {
+	const seed = { [OPT_KEY]: { "image-upload": { enabled: true, host: "Custom", hostUrl: "https://img.example.com/api/upload?album=ns", customField: "picture", customHeaders: "Authorization: Bearer {key}\nX-Client: nsmax", customResult: "data.url" } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), seed, viewport: { width: 1440, height: 900 } });
+	try {
+		const key = page.locator(".nspp-upload-status input[type=password]").first();
+		await key.waitFor({ state: "attached" });
+		assert.equal(await page.locator(".nspp-upload-status a", { hasText: "登录 NodeImage" }).count() === 0 || await page.locator(".nspp-upload-status a", { hasText: "登录 NodeImage" }).first().isHidden(), true, "不是 NodeImage 时不提示登录 NodeImage");
+		assert.equal(await key.evaluate((input) => input.hidden), false, "请求头里用了 {key}，就给出密钥输入框");
+		await key.evaluate((input) => { input.value = "secret-1"; input.dispatchEvent(new Event("input", { bubbles: true })); });
+		await page.locator(".nspp-upload-status input[type=file]").first().setInputFiles({ name: "shot.png", mimeType: "image/png", buffer: Buffer.from([137, 80, 78, 71]) });
+		await page.waitForFunction(() => window.__uploads?.length === 1);
+		const upload = await page.evaluate(() => window.__uploads[0]);
+		assert.equal(upload.url, "https://img.example.com/api/upload?album=ns", "自定义接口地址原样使用（可以带查询参数）");
+		assert.equal(upload.headers.Authorization, "Bearer secret-1");
+		assert.equal(upload.headers["X-Client"], "nsmax");
+		assert.equal(upload.anonymous, true, "不带 cookie");
+		assert.deepEqual(upload.fields, ["picture"]);
+		await page.waitForFunction(() => Array.from(document.querySelectorAll(".md-editor textarea, .CodeMirror")).some((node) => (node.CodeMirror ? node.CodeMirror.getValue() : node.value).includes("custom42.png")));
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.9.9 图床：v1.8.0 之前留在存储里的旧 provider 不会重新生效；兰空图床没填密钥时提示中文", async () => {
+	const legacy = { [OPT_KEY]: { "image-upload": { enabled: true, provider: "Telegraph", base: "https://telegra.ph" } } };
+	const old = await open(browser, "https://www.nodeseek.com/notification#/message?mode=talk&to=7", { html: nativeTalkPage(), seed: legacy, viewport: { width: 1440, height: 900 } });
+	try {
+		await old.page.waitForSelector(".nspp-messages textarea:visible");
+		await old.page.locator(".nspp-messages textarea").evaluate((input) => {
+			const data = new DataTransfer();
+			data.items.add(new File([new Uint8Array([137, 80, 78, 71])], "local.png", { type: "image/png" }));
+			input.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: data }));
+		});
+		await old.page.waitForFunction(() => window.__uploads?.length === 1);
+		assert.match(await old.page.evaluate(() => window.__uploads[0].url), /^https:\/\/api\.nodeimage\.com\/api\/upload/, "旧 provider 不读，仍走 NodeImage");
+		assert.deepEqual(old.errors, []);
+	} finally { await old.context.close(); }
+	const lsky = { [OPT_KEY]: { "image-upload": { enabled: true, host: "LskyPro", hostUrl: "https://img.example.com" } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), seed: lsky, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.locator(".nspp-upload-status input[type=file]").first().waitFor({ state: "attached" });
+		await page.locator(".nspp-upload-status input[type=file]").first().setInputFiles({ name: "shot.png", mimeType: "image/png", buffer: Buffer.from([137, 80, 78, 71]) });
+		await page.waitForFunction(() => /API Key/.test(document.querySelector(".nspp-upload-status [role=status]")?.textContent || ""));
+		assert.equal(await page.evaluate(() => (window.__uploads || []).length), 0, "没密钥不发请求");
+		await page.locator(".nspp-upload-status input[type=password]").first().evaluate((input) => { input.value = "tok"; input.dispatchEvent(new Event("input", { bubbles: true })); });
+		await page.locator(".nspp-upload-status input[type=file]").first().setInputFiles({ name: "shot.png", mimeType: "image/png", buffer: Buffer.from([137, 80, 78, 71]) });
+		await page.waitForFunction(() => window.__uploads?.length === 1);
+		const upload = await page.evaluate(() => window.__uploads[0]);
+		assert.equal(upload.url, "https://img.example.com/api/v1/upload");
+		assert.equal(upload.headers.Authorization, "Bearer tok");
+		await page.waitForFunction(() => Array.from(document.querySelectorAll(".md-editor textarea, .CodeMirror")).some((node) => (node.CodeMirror ? node.CodeMirror.getValue() : node.value).includes("lsky42.png")));
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

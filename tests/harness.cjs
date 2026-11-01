@@ -63,6 +63,12 @@ const gmShim = (seed, fontFiles, manager) => `(() => {
 				window.__uploads = (window.__uploads || []).concat({ url: details.url, headers: details.headers, anonymous: details.anonymous });
 				details.onload?.({ status: 200, response: { success: true, links: { direct: "https://api.nodeimage.com/api/i/abc123.png" }, duplicate: false, image: { name: "shot.png", originalUrl: "/api/i/abc123.png" } } });
 			}
+			else if (details.url.startsWith("https://img.example.com/")) {
+				// 第三方 / 自定义图床：记下请求（地址、请求头、表单字段），按自定义接口常见格式返回 data.url
+				const fields = details.data instanceof FormData ? Array.from(details.data.keys()) : [];
+				window.__uploads = (window.__uploads || []).concat({ url: details.url, headers: details.headers, anonymous: details.anonymous, fields });
+				details.onload?.({ status: 200, response: { success: true, data: { url: "https://img.example.com/i/custom42.png", links: { url: "https://img.example.com/i/lsky42.png" } } } });
+			}
 			else details.onerror?.({});
 		}, 30);
 		return { abort() {} };

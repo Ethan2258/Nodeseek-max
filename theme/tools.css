@@ -274,6 +274,7 @@ html[data-nspp-messages-new] #nspp-tools{display:none!important}
 [data-nsmax-submit-row]>.nspp-upload-status{flex:1 1 auto;min-width:0;margin:0;padding:0}
 [data-nsmax-submit-row]>:not(.nspp-upload-status){flex:none}
 [data-nsmax-submit-row] .nspp-upload-status input[type=password]{max-width:200px}
+.nspp-upload-status input[type=password]{box-sizing:border-box;width:200px;max-width:100%;min-width:0;height:30px;padding:0 10px;color:inherit;font:inherit;font-size:12px;background:var(--nsmax-panel-alt,transparent);border:1px solid var(--nsmax-stroke,#d1d9e0);border-radius:var(--nsmax-r-control,8px);outline-offset:2px}
 .nspp-upload-choose svg{fill:none;stroke:currentColor;stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .md-editor .nspp-upload-status{min-width:0;max-width:100%}
 @media (width<=700px),(hover:none){.md-editor .mde-toolbar{flex-wrap:wrap;align-items:center;min-height:40px;padding-right:4px;overflow:visible;height:auto!important;display:flex!important}
