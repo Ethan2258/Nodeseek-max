@@ -131,8 +131,9 @@ for(const engine of engines){
   }finally{await context.close();}
  });
  test(`${engine} 第一帧画出来之前鼠标就动了：浮层样式等第一帧之后才注入，不压在第一帧上`,async()=>{
-  // 解析到末尾（readyState 变 interactive，第一帧还没画）时发一个 pointermove，再看第一帧（第一个 rAF）时浮层样式在不在页面里
-  const init=`window.__overlayFirstFrame=null;(()=>{const has=()=>[...document.querySelectorAll("style")].some(n=>(n.textContent||"").includes(".search-overlay{--bg-overlay"));document.addEventListener("readystatechange",()=>{if(document.readyState!=="interactive")return;document.dispatchEvent(new PointerEvent("pointermove",{bubbles:true,clientX:20,clientY:20}));requestAnimationFrame(()=>{window.__overlayFirstFrame=has();});},{once:true});})();`;
+  // 一有 body 就发一个 pointermove（鼠标本来就停在窗口里），页面一开始就排一个 rAF：它在第一帧里跑，看那时浮层样式在不在页面里。
+  // 以前在 readyState 变 interactive 时才发、看那之后的第一个 rAF，可浏览器有时在解析完之前就画过一帧，那个 rAF 已经不是第一帧
+  const init=`window.__overlayFirstFrame=null;(()=>{const has=()=>[...document.querySelectorAll("style")].some(n=>(n.textContent||"").includes(".search-overlay{--bg-overlay"));requestAnimationFrame(()=>{window.__overlayFirstFrame=has();});const move=()=>document.dispatchEvent(new PointerEvent("pointermove",{bubbles:true,clientX:20,clientY:20}));if(document.body)move();else new MutationObserver((list,observer)=>{if(!document.body)return;observer.disconnect();move();}).observe(document,{childList:true,subtree:true});})();`;
   for(const options of [phone(),{viewport:{width:1440,height:900},seed}]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...options,html:P.listPage({mobile:!!options.device,count:20}),init});
    try{
