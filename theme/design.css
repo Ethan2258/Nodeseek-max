@@ -5393,6 +5393,78 @@ html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-role[data-tone="danger"] 
   color: var(--danger-soft-text) !important;
 }
 
+/* 活跃度标签（见 ui-runtime nsmaxActivity）：个人主页名字后面、悬停资料卡、帖子作者栏，和头衔同一套 18px 胶囊。
+   颜色从冷到热：潜水灰、佛系蓝、正常绿、活跃青、话痨黄、肝帝浅红、人机实心红；新号虚线框，副标签（高产楼主等）细线框 */
+html[data-nsmax-theme] .nsmax-activity-tag {
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  margin: 0 !important;
+  padding: 0 7px !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--r-pill) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 16px !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+  cursor: help !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag:is([data-tone="quiet"], [data-tone="style"]) {
+  border-color: var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="style"] {
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="new"] {
+  border-color: var(--line) !important;
+  border-style: dashed !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="calm"] {
+  background: var(--info-soft) !important;
+  color: var(--info-soft-text) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="normal"] {
+  background: var(--success-soft) !important;
+  color: var(--success-soft-text) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="active"] {
+  background: var(--accent-teal-soft) !important;
+  color: var(--accent-teal-text) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="warm"] {
+  border-color: var(--warning-border) !important;
+  background: var(--warning-soft) !important;
+  color: var(--warning-soft-text) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="hot"] {
+  border-color: var(--danger-border) !important;
+  background: var(--danger-soft) !important;
+  color: var(--danger-soft-text) !important;
+}
+html[data-nsmax-theme] .nsmax-activity-tag[data-tone="bot"] {
+  background: var(--danger-fill) !important;
+  color: var(--on-danger-fill) !important;
+  font-weight: 600 !important;
+}
+/* 个人主页主题、回帖两格数字下面的日均（融合自「用户发帖与评论频率」脚本：12px、弱化） */
+html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > .nsmax-user-stat > .nsmax-user-stat-rate {
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+}
+
 /* 右侧栏随页面一起滚动（sb.sb 的侧栏不吸顶）。以前吸顶在 76px、限高后内部还能单独滚动：切到 Markdown 编辑器这类会让页面
    跳一下的操作后，侧栏跟着往下滑，资料卡上半截被卷进侧栏自己的滚动里 */
 html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container {

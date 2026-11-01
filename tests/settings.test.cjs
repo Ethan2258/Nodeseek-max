@@ -126,7 +126,7 @@ test("全部设置可保存：逐个操作所有可见字段和开关，重新�
   const fields=await host.locator(".module input[data-key],.module select[data-key],.module textarea[data-key]").evaluateAll(nodes=>nodes.map(n=>({feature:n.dataset.feature,key:n.dataset.key,type:n.type,tab:n.closest(".page").dataset.tab,value:n.type==="checkbox"?n.checked:n.value,options:n.tagName==="SELECT"?[...n.options].map(o=>o.value):null})));
   const names={appearance:"外观",reading:"浏览",people:"用户",tools:"工具",network:"网络"};
   const modules=new Set(fields.map(f=>f.feature));
-  assert.equal(modules.size,21,"仅保留实际有作用的设置组");
+  assert.equal(modules.size,22,"仅保留实际有作用的设置组");
   assert.ok(fields.length>=40,"遍历全部可见配置字段");
   t.diagnostic(`逐项核对 ${modules.size} 组设置、${fields.length} 个字段与开关`);
   const expected=[];
