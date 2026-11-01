@@ -4589,6 +4589,27 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor .nsmax-editor-heading {
   font-size: 13.5px !important;
   font-weight: 500 !important;
 }
+/* 精简编辑器要等站点建好 CodeMirror 才搭得起来（2026-11-01）：在那之前原生编辑器先按搭好后的样子占位——收起「内容 / 预览」页签、
+   原生工具栏和表情条，上面空出标题行和工具按钮行（36 + 46px），输入区画成同样高的框，搭好时下面的版块、发布按钮不再往上跳 */
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body {
+  box-sizing: border-box !important;
+  height: calc(var(--nsmax-editor-height, 150px) + 82px) !important;
+  padding: 82px 0 0 !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body > :is(.tab-select, .mde-toolbar, .expression, .exp-container) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body > .content-area {
+  box-sizing: border-box !important;
+  height: var(--nsmax-editor-height, 150px) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  overflow: hidden !important;
+}
 /* 版块、阅读权限：sb.sb /t/new/ 的表单字段——标签 13.5px/500 在上（下方 5px），下面是 40px 高的下拉框（7px 34px 7px 10px、
    深一级细线、输入框圆角）；两项并排各占一半。最后一行是按钮：「发布帖子」在最左，「一键抽奖」跟在后面 */
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select {

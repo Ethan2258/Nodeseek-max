@@ -166,6 +166,7 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-member-bio{white-space:nowrap!im
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=new] #nsk-body-left #editor>.md-editor{padding:14px 12px!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=new] .md-editor>#editor-body{padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=new] .md-editor .nsmax-editor-head{padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=new] .md-editor:not(.nsmax-compact-reply,[data-nsmax-native-editor])>#editor-body{height:calc(var(--nsmax-editor-height,150px) + 78.3px)!important;padding:78.3px 0 0!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-send{height:44px!important;min-height:44px!important;padding:0 16px!important;border-radius:var(--r-pill)!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-nav button{min-height:44px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop{max-width:calc(100vw - 24px)!important;border-radius:var(--r)!important;box-shadow:var(--shadow-base)!important}
