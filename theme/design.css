@@ -15119,14 +15119,25 @@ html[data-nsmax-theme][data-nsmax-page="auth"] #nsk-frame [data-nsmax-auth-app] 
 html[data-nsmax-theme][data-nsmax-page="auth"] #nsk-frame [data-nsmax-auth-app] form input:not([type="checkbox"], [type="radio"], [type="file"], [data-nsmax-password]):is(#nsmax-lv, *):is(#nsmax-b, *) {
   padding-right: 12px !important;
 }
-/* 页脚在屏幕外时也不算（约 75 个元素），滚到附近再画 */
+/* 页脚在屏幕外时也不算（约 75 个元素），滚到附近再画。预留高度要等于画出来的高度（2026-11-01 按现在的页脚重量：
+   宽屏 318px、1000px 以下分两行 462px、760px 以下 732px、手机 432px）：以前还是旧页脚的 287 / 699px，滚到页脚附近时整页突然变长或变短一截 */
 html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: auto !important;
-  contain-intrinsic-size: auto 287px !important;
+  contain-intrinsic-size: auto 318px !important;
+}
+@media (max-width: 1000px) {
+  html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 462px !important;
+  }
+}
+@media (max-width: 760px) {
+  html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 732px !important;
+  }
 }
 @media (max-width: 700px) {
   html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-    contain-intrinsic-size: auto 699px !important;
+    contain-intrinsic-size: auto 432px !important;
   }
 }
 /* 站点的图标雪碧图（body 开头一个 172 个图标、560 多个元素的 svg）：只被 <use> 引用，自己不显示。以前站点脚本把它插进来时整段都要算一遍样式，

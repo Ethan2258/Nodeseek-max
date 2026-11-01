@@ -16,6 +16,10 @@ html[data-nspp-messages-new] #nspp-tools{display:none!important}
 .nspp-discussion-stats>span{align-items:center;gap:4px;display:inline-flex}
 .discussion-wrapper .discussion-item .nspp-discussion-stats .iconpark-icon{color:currentColor;flex:none;width:14px;height:14px}
 .discussion-wrapper .discussion-item .nspp-discussion-stats .iconpark-icon:hover{transform:none}
+.nspp-discussion-stats [data-count]{display:inline-block;text-align:left}
+.nspp-discussion-stats [data-count=views]{min-width:4.2ch}
+.nspp-discussion-stats [data-count=comments]{min-width:3.2ch}
+.nspp-discussion-stats[data-state=loading] [data-count],.nspp-discussion-stats[data-state=failed] [data-count]{opacity:.5}
 #nspp-tools button,[data-nspp-resolve],.nspp-action{font:inherit;border:1px solid var(--border-color,#929a9380);color:var(--text-color,inherit);background:var(--bg-color,Canvas);cursor:pointer;border-radius:.4rem;padding:.35rem .6rem;font-size:.8rem}
 #nspp-tools a,[data-nspp-footprints] a{text-underline-offset:.2em}
 #nspp-tools a:hover,[data-nspp-footprints] a:hover{text-decoration:underline}
