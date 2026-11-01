@@ -25,8 +25,8 @@ test("设置真实生效：个人主页主题帖计数只在开启时读取，�
   try {
    await ready(page);
    if(enabled) {
-    await page.waitForSelector(".nspp-discussion-stats:not([hidden])");
-    assert.match(await page.locator(".nspp-discussion-stats").first().innerText(),/123/);
+    await page.waitForSelector(".nspp-discussion-stats[data-state=done]");
+    assert.match(await page.locator(".nspp-discussion-stats[data-state=done]").first().innerText(),/123/);
     assert.ok(calls.length>0);
    } else {await page.waitForTimeout(800);assert.equal(calls.length,0);assert.equal(await page.locator(".nspp-discussion-stats").count(),0);}
    assert.deepEqual(errors,[]);

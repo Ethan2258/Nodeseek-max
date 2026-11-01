@@ -91,4 +91,45 @@ for(const engine of engines){
   assert.equal(notif.top,notif.rightTop,JSON.stringify(notif));
   assert.equal(notif.left,list.left,JSON.stringify({notif,list}));
  });
+ test(`${engine} 个人主页主题帖的浏览 / 评论胶囊：一开始就占好位，数字到了行不变高、各行一样宽，看得见的几行一起取`,async()=>{
+  const KEY="nspp:settings:www.nodeseek.com",started=[];
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{viewport:{width:1440,height:900},html:P.spaceTopicsPage(),seed:{[KEY]:{...seed[KEY],"discussion-stats":{enabled:true}}},
+   beforeNavigate:p=>p.route(/\/post-\d+-\d+$/,async route=>{
+    const id=Number(new URL(route.request().url()).pathname.match(/post-(\d+)/)[1]);started.push(Date.now());
+    await new Promise(r=>setTimeout(r,400));
+    const data={postData:{postId:id,postPage:1,postPageCount:1,views:[7,1328,286,42,508,96][id%6],comments:[{floorIndex:[0,120,4,3,14,1][id%6]}]}};
+    await route.fulfill({status:200,contentType:"text/html",body:`<!doctype html><html><head><script id="temp-script" type="application/json">${Buffer.from(JSON.stringify(data)).toString("base64")}</script></head><body>${"<p>正文</p>".repeat(200)}</body></html>`});
+   })});
+  try{
+   await page.waitForSelector(".nspp-discussion-stats");
+   const measure=()=>page.evaluate(()=>[...document.querySelectorAll(".discussion-wrapper > .discussion-item")].map(row=>{const stats=row.querySelector(".nspp-discussion-stats");return{row:Math.round(row.getBoundingClientRect().height*10)/10,width:Math.round(stats.getBoundingClientRect().width),state:stats.dataset.state,text:stats.innerText.replace(/\s+/g," ").trim()};}));
+   const before=await measure();
+   assert.ok(before.every(r=>r.state==="loading"&&/–/.test(r.text)),JSON.stringify(before));
+   await page.waitForFunction(()=>[...document.querySelectorAll(".nspp-discussion-stats")].every(s=>s.dataset.state==="done"),null,{timeout:8000});
+   const after=await measure();
+   assert.deepEqual(after.map(r=>r.row),before.map(r=>r.row),"数字到了行高不变");
+   assert.equal(new Set(after.map(r=>r.width)).size,1,`各行胶囊一样宽：${JSON.stringify(after)}`);
+   assert.equal(new Set(before.map(r=>r.width)).size,1);
+   assert.ok(after.some(r=>/1328.*120/.test(r.text)),JSON.stringify(after));
+   // 看得见的六行不是一个接一个、隔 600 毫秒取的
+   assert.ok(started.length>=6&&started[3]-started[0]<300,JSON.stringify(started.map(t=>t-started[0])));
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 发帖页、个人主页打开时右栏一开始就是完整的，页脚预留高度等于实际高度：整页不会突然变长`,async()=>{
+  const init="window.__heights=[];const tick=()=>{if(document.documentElement)window.__heights.push(document.documentElement.scrollHeight);if(performance.now()<3500)requestAnimationFrame(tick);};requestAnimationFrame(tick);";
+  const hot={"nspp:state:www.nodeseek.com:hot-rankings":{"snapshot:daily":{fetched:Date.now(),posts:Array.from({length:10},(_,i)=>({id:900+i,title:`热门帖子 ${i+1}`,views:100+i,comments:i}))}}};
+  for(const [url,render] of [["/new-discussion",P.newPostPage],["/space/10#/discussions",P.spaceTopicsPage]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{html:render(),viewport:{width:1440,height:900},seed:{...seed,...hot},init});
+   try{
+    await ready(page);await page.waitForTimeout(600);
+    const heights=await page.evaluate(()=>window.__heights.filter(h=>h>0));
+    const first=heights.find(h=>h>900)??heights[0],last=heights.at(-1);
+    assert.ok(Math.abs(last-first)<=2,`${url} 整页高度 ${first} → ${last}`);
+    const footer=await page.evaluate(()=>{const f=document.querySelector("body > footer");const placeholder=parseFloat(getComputedStyle(f).containIntrinsicHeight.replace(/^auto\s+/,""));f.style.setProperty("content-visibility","visible","important");return{placeholder,real:f.getBoundingClientRect().height};});
+    assert.ok(Math.abs(footer.placeholder-footer.real)<=2,JSON.stringify(footer));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }

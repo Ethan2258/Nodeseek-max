@@ -4448,6 +4448,13 @@ function nsmaxTagStructure() {
 			side.append(card, box);
 		}
 		host.append(side);
+		// 今日热门、最近浏览也在这里一起放好（有缓存按缓存画，没有画同样高的骨架），模块挂载后原地接管（2026-11-01）：
+		// 以前这几页要等模块挂载才插进来，资料卡下面突然多出两块，整页一下子变长一截（发帖页、个人主页都能看到）
+		if (location.hostname === "www.nodeseek.com") try {
+			const hot = featureEnabled(hotRankings);
+			if (hot.enabled && hot.sidebar) nsmaxEarlyHotPanel(side, hot);
+		} catch (error) { nsmaxRecordError("early:side-hot", error); }
+		try { nsmaxEarlyRecentPanel(side); } catch (error) { nsmaxRecordError("early:side-recent", error); }
 		// 站点配置里没有主题帖、评论数（签到、管理记录、发帖页都没有）：页面解析完读一次自己的资料补上
 		if (known && !early) nsmaxRefreshSideAccount(id);
 	}
@@ -5955,7 +5962,7 @@ function nsmaxTagStructure() {
 	// 页面解析阶段和资料卡、今日热门一起放进右栏（见 startEarlyPass 的 region("right")）：以前要等模块挂载
 	// （真实站点上比其他卡片晚一两秒）才插进来，侧栏一块一块地出现
 	function nsmaxEarlyRecentPanel(sidebar) {
-		if (!nsmaxForumPage() || sidebar.querySelector(".nsmax-recent-panel")) return;
+		if (!nsmaxForumPage() && !nsmaxSidePage() && !nsmaxNewPostPage() || sidebar.querySelector(".nsmax-recent-panel")) return;
 		if (GM_getValue$1(SETTINGS_KEY, {})?.["sb-recent-visits"]?.enabled === false) return;
 		const account = nsmaxRecentAccount(sidebar);
 		if (!account) return;
