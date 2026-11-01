@@ -85,7 +85,7 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter svg{width:14px!imp
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter::after{content:"隐藏"!important}
 
 /* 帖子：标题、作者栏、正文、楼层操作采用同一条 12px 视觉边线。 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.nsmax-crumb{padding:9px 12px!important;font-size:13px!important;border-radius:var(--r) var(--r) 0 0!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.nsmax-crumb{padding:9px 18px!important;font-size:13px!important;border-radius:var(--r) var(--r) 0 0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important;padding:14px 12px 12px!important;border-radius:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title h1{font-size:19px!important;line-height:1.45!important;font-weight:600!important;letter-spacing:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title>.nsmax-post-stats{margin:0!important;padding:0!important;font-size:12px!important;line-height:21px!important}
@@ -343,3 +343,17 @@ html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-drawer-head bu
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-drawer-head strong{font-weight:700!important}
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel :is(.category-mobile,.user-card-container,.nsmax-drawer-tools,.nsmax-drawer-hot,.nsmax-drawer-recent){padding-inline:16px!important}
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel :is(.category-mobile h2,.nsmax-drawer-section-title){font-weight:500!important}
+/* 第二轮对照 sb.sb（2026-11-01） */
+/* 帖子面包屑左右 18px（参照站 .breadcrumb 9px 18px），「首页 / 版块」和标题不再贴得一样近 */
+/* 回复斑马纹：参照站手机上奇数层的作者栏比正文再深一档（品牌浅色 45%），上角跟卡片一起圆；以前手机上作者栏是透明的，整张卡一个颜色 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item:nth-child(odd)>.nsmax-author-col{background:color-mix(in srgb,var(--brand-soft) 45%,var(--panel-alt))!important;border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0!important}
+/* 「楼主」小标签 10.5px、左右 5px；楼层时间和楼号 12px（参照站 .post-user-group / .post-time / .post-reply-no） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-content-meta-info .role-tag.is-poster{padding:0 5px!important;font-size:10.5px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-content-meta-info :is(.content-info,.date-created,time){font-size:12px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .content-item .floor-link{font-size:12px!important}
+/* UID 小胶囊用浅一档的底色（参照站 .post-user-uid 是 panel-alt） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-author-uid{background:var(--panel-alt)!important}
+/* 主楼「点赞 加鸡腿 反对 收藏」字和图标用更淡的灰（参照站 .topic-actions 是 text-disabled），点过的仍按原来的高亮色 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post .comment-menu.topic-actions>.menu-item:not(.active,.selected,.clicked,[aria-pressed=true]){color:var(--text-disabled)!important}
+/* 列表标题：参照站 420px 以下是 14.5px；标准字号的手机以前被手机层盖回 15px。选了「大 / 特大」仍是 17 / 18px，和设置里写的一致 */
+@media (max-width:420px){html[data-nsmax-theme][data-nsmax-touch]:not([data-nsmax-size=large],[data-nsmax-size=xlarge]) #nsk-body-left .post-list-item .post-title{font-size:14.5px!important}}

@@ -126,4 +126,18 @@ for(const engine of engines){
    assert.ok(Math.abs(s.title-83.5)<1.5&&Math.abs(s.author-63)<1,JSON.stringify(s));assert.deepEqual(post.errors,[]);
   }finally{await post.context.close();}
  });
+ test(`${engine} 手机帖子页细节照 sb.sb：面包屑 18px、奇数层作者栏深一档、楼主标签和楼号字号、主楼按钮淡灰、列表标题 14.5px`,async()=>{
+  for(const dark of [false,true]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true,dark}),colorScheme:dark?"dark":"light"});
+   try{
+    await ready(page);
+    const s=await page.evaluate(()=>{const c=(e,p)=>getComputedStyle(e,p),q=x=>document.querySelector(x),li=[...document.querySelectorAll("ul.comments>li.content-item")],probe=document.createElement("i");probe.style.color="var(--text-disabled)";document.body.append(probe);const disabled=c(probe).color;probe.remove();const action=q(".nsk-post .comment-menu.topic-actions>.menu-item:not(.clicked)");return{crumb:c(q(".nsk-post>.nsmax-crumb")).paddingLeft,odd:c(li[0].querySelector(".nsmax-author-col")).backgroundColor,oddBody:c(li[0]).backgroundColor,even:c(li[1].querySelector(".nsmax-author-col")).backgroundColor,tag:c(q(".nsk-post .role-tag.is-poster")).fontSize,floor:c(li[0].querySelector(".floor-link")).fontSize,time:c(q(".nsk-post .nsk-content-meta-info time")).fontSize,action:c(action).color,disabled};});
+    assert.equal(s.crumb,"18px");assert.notEqual(s.odd,s.oddBody,JSON.stringify(s));assert.equal(s.even,"rgba(0, 0, 0, 0)");
+    assert.equal(s.tag,"10.5px");assert.equal(s.floor,"12px");assert.equal(s.time,"12px");assert.equal(s.action,s.disabled,JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  const list=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true})});
+  try{await ready(list.page);assert.equal(await list.page.locator(".post-list-item .post-title").first().evaluate(e=>getComputedStyle(e).fontSize),"14.5px");}finally{await list.context.close();}
+ });
 }
