@@ -309,7 +309,26 @@ const compiled = ast.toString();
 const shortenPads = (css) => css
   .replace(/#nsmax-(?:u|lv|b|c|d|s|a|e)(?![-\w])/g, "#x").replace(/#nsmax-s([12])(?![-\w])/g, "#x$1")
   .replace(/\.nsmax-s(?![-\w])/g, ".x").replace(/(?<![#.\w-])nsmax-s(?![-\w])/g, "x");
-let shipped = shortenPads(compiled);
+// 相邻的几个垫片合成一个（2026-10-31）：:is(#x, *):is(#x, *):is(#x, *) 和 :is(#x#x#x, *) 都是什么都匹配、特异度 (3,0,0)，
+// 但浏览器解析和每次匹配都要把每个 :is() 单独走一遍。一个复合选择器里只能有一个标签，多出来的标签垫片照旧单独写
+// （和 nsmaxSpecificityPad 的写法一样），不引入带组合符的垫片。合并前后逐条比对特异度。
+const mergePads = (css) => css.replace(/(?::is\((?:x|#x|\.x)+, ?\*\)){2,}/g, (run) => {
+  let ids = 0, classes = 0, types = 0;
+  for (const [, pad] of run.matchAll(/:is\(((?:x|#x|\.x)+), ?\*\)/g)) for (const [simple] of pad.matchAll(/#x|\.x|x/g)) simple === "#x" ? ids++ : simple === ".x" ? classes++ : types++;
+  return `:is(${types ? "x" : ""}${"#x".repeat(ids)}${".x".repeat(classes)}, *)` + ":is(x, *)".repeat(Math.max(0, types - 1));
+});
+const checkMergedPads = (before, after, label) => {
+  const selectorsOf = (css) => { const list = []; postcss.parse(css).walkRules((rule) => { if (!(rule.parent.type === "atrule" && /keyframes$/.test(rule.parent.name))) list.push(...optimize.nsmaxSplitTop(rule.selector, (c) => c === ",")); }); return list; };
+  const a = selectorsOf(before), b = selectorsOf(after);
+  if (a.length !== b.length) throw new Error(`${label}：合并垫片后选择器数量变了（${a.length} → ${b.length}）`);
+  for (const [index, selector] of a.entries()) {
+    if (optimize.nsmaxSpecificity(selector.trim()).join() !== optimize.nsmaxSpecificity(b[index].trim()).join()) throw new Error(`${label}：合并垫片改变了特异度：\n${selector}\n${b[index]}`);
+    if (selector.replace(/(?::is\((?:x|#x|\.x)+, ?\*\))+/g, "") !== b[index].replace(/(?::is\((?:x|#x|\.x)+, ?\*\))+/g, "")) throw new Error(`${label}：合并垫片动到了垫片以外的内容：\n${selector}\n${b[index]}`);
+  }
+};
+const shortened = shortenPads(compiled);
+let shipped = mergePads(shortened);
+checkMergedPads(shortened, shipped, "主题");
 shipped = shipped.replaceAll("[data-nsmax-palette=claude]", ":root");
 // 工具条、精简顶栏两段样式也在构建时拆好 :is()：以前页面每次打开都要在运行时逐条读规则再改回去（CPU 4 倍降速下约 80ms）
 const bootSheet = (name) => {
@@ -329,7 +348,9 @@ const bootSheet = (name) => {
     }
   });
   sheet.raws.after = "";
-  return shortenPads(sheet.toString());
+  const short = shortenPads(sheet.toString()), merged = mergePads(short);
+  checkMergedPads(short, merged, name);
+  return merged;
 };
 for (const [variable, name] of [["nsmax_tools_css", "tools"], ["nsmax_header_css", "header"]]) {
   const compiledSheet = bootSheet(name);
