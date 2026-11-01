@@ -26379,6 +26379,10 @@ function nsmaxTagStructure() {
 		if (!root.hasAttribute("data-nsmax-cv") || nsmaxPrerenderKick) return;
 		const idle = (fn) => typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(() => fn({ timeRemaining: () => 8 }), 200);
 		let running = false;
+		// 一批排几行按上一批实际花的时间调（2026-11-01）：打上标记很快，真正的活（算样式、排版、重画）在下一帧里做，
+		// 空闲回调的 timeRemaining 管不到。以前固定 8 行，手机 4 倍降速下离首屏远的行一批要 50–60ms，这一帧里点东西要等。
+		// 现在从 4 行起，上一批那一帧主线程花了 10ms 以上就减半（最少 1 行），不到 4ms 就加倍（最多 16 行）
+		let batch = 4;
 		const step = (deadline) => {
 			if (ctx.signal.aborted || !root.hasAttribute("data-nsmax-cv")) {
 				running = false;
@@ -26387,10 +26391,22 @@ function nsmaxTagStructure() {
 			let done = 0;
 			for (const row of document.querySelectorAll(NSMAX_PRERENDER_ROWS)) {
 				row.setAttribute("data-nsmax-cv-done", "");
-				if (++done >= 8 || deadline.timeRemaining() < 4) break;
+				if (++done >= batch || deadline.timeRemaining() < 4) break;
 			}
-			if (done) idle(step);
-			else running = false;
+			if (!done) {
+				running = false;
+				return;
+			}
+			// 下一帧的 requestAnimationFrame 回调紧挨着算样式、排版；从那里到这一帧之后的第一个任务，就是这一批的开销
+			requestAnimationFrame(() => {
+				const start = performance.now();
+				setTimeout(() => {
+					const cost = performance.now() - start;
+					if (cost > 10) batch = Math.max(1, batch >> 1);
+					else if (cost < 4) batch = Math.min(16, batch * 2);
+					idle(step);
+				}, 0);
+			});
 		};
 		const timer = setTimeout(() => {
 			nsmaxPrerenderKick = () => {
