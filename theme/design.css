@@ -15299,6 +15299,28 @@ html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-skeleton:is(#nsmax
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-skeleton > .nsmax-skeleton-line:is(#nsmax-lv, *):is(#nsmax-b, *) {
   height: 12px !important;
 }
+/* 「网络有点慢」写在骨架最后一行（48% 宽）右边的空处，不另起一行：卡片不因为这句话长高（2026-11-01） */
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-skeleton:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: relative !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-slow:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: absolute !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  max-width: 50% !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-slow > .nsmax-spinner:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 12px !important;
+  height: 12px !important;
+}
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin: 0 !important;
   color: var(--text-subtle) !important;

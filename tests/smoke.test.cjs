@@ -5806,6 +5806,7 @@ test("第二十批（2026-10-21）/ 2026-11-01 改版：悬停预览加载中只
 				busy: view.querySelector(".nspp-preview-content").getAttribute("aria-busy"),
 				lines: box.querySelectorAll(".nsmax-skeleton-line").length,
 				widths: [...box.children].map((item) => item.style.width),
+				card: view.getBoundingClientRect().height,
 				height: Math.round(box.getBoundingClientRect().height),
 				skeleton: style.animationName,
 				skeletonBg: style.backgroundColor,
@@ -5830,12 +5831,17 @@ test("第二十批（2026-10-21）/ 2026-11-01 改版：悬停预览加载中只
 		assert.equal(first.display, "flex");
 		await page.waitForSelector("dialog.nspp-post-preview .nsmax-spinner", { timeout: 5e3 });
 		const loading = await page.evaluate(() => {
-			const status = document.querySelector("dialog.nspp-post-preview .nsmax-loading");
+			const view = document.querySelector("dialog.nspp-post-preview");
+			const status = view.querySelector(".nspp-preview-slow");
 			const style = getComputedStyle(status);
-			return { busy: status.getAttribute("aria-busy"), text: status.textContent, sweep: style.animationName, background: style.backgroundImage, spin: getComputedStyle(status.querySelector(".nsmax-spinner")).animationName };
+			const box = status.getBoundingClientRect(), last = view.querySelector(".nspp-preview-skeleton > .nsmax-skeleton-line:nth-child(4)").getBoundingClientRect(), content = view.querySelector(".nspp-preview-content").getBoundingClientRect();
+			return { role: status.getAttribute("role"), text: status.textContent, sweep: style.animationName, background: style.backgroundImage, spin: getComputedStyle(status.querySelector(".nsmax-spinner")).animationName, card: view.getBoundingClientRect().height, clear: box.left >= last.right, inside: box.right <= content.right + 0.5 && box.bottom <= content.bottom + 0.5 };
 		});
-		assert.equal(loading.busy, "true");
+		assert.equal(loading.role, "status");
 		assert.match(loading.text, /网络有点慢/, "1.2 秒还没到才说一声");
+		assert.ok(Math.abs(loading.card - first.card) < 0.5, `说这句话时卡片不长高：${first.card} → ${loading.card}`);
+		assert.equal(loading.clear, true, "写在骨架最后一行右边的空处，不压着灰条");
+		assert.equal(loading.inside, true);
 		assert.equal(loading.sweep, "none", "加载中的文字上不再有白色扫光");
 		assert.equal(loading.background, "none");
 		assert.equal(loading.spin, "nsmax-spin", "加载中是一个小转圈");
@@ -5850,6 +5856,30 @@ test("第二十批（2026-10-21）/ 2026-11-01 改版：悬停预览加载中只
 			};
 		});
 		assert.deepEqual(done, { spinner: false, skeleton: false, busy: false, time: "3 小时前" }, "加载完转圈、骨架收掉，发帖时间从主帖补上");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("2026-11-01：站点刚限流、悬停预览的请求还在等冷却时，照实说要等几秒，不说「网络有点慢」", async () => {
+	const init = `(() => {
+		localStorage.setItem("nspp:request-cooldown:www.nodeseek.com", JSON.stringify(Date.now() + 20000));
+		const real = window.fetch.bind(window);
+		window.__postFetches = 0;
+		window.fetch = async (input, options) => {
+			const raw = input && input.url ? input.url : String(input);
+			let path = raw; try { path = new URL(raw, location.href).pathname; } catch {}
+			if (path === "/post-1000-1") window.__postFetches++;
+			return real(input, options);
+		};
+	})();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.locator(".post-list-item .post-title a").first().hover();
+		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-slow", { timeout: 5e3 });
+		const state = await page.evaluate(() => ({ text: document.querySelector("dialog.nspp-post-preview .nspp-preview-slow").textContent, fetches: window.__postFetches }));
+		assert.match(state.text, /站点限流中，约 1\d 秒后读取/, JSON.stringify(state));
+		assert.equal(state.fetches, 0, "冷却没过，请求还没发出去");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -5890,8 +5920,10 @@ test("2026-11-01：悬停预览读不到正文时给「重试」；读过的预�
 		assert.equal(state.script, false);
 		assert.equal(state.handler, false, "记下的正文再显示时也过一遍白名单");
 		assert.equal(state.bad, 0);
-		// 刷新后显示用的是记下的那份：显示时不发请求（250ms 后「点开前先备好」的预热才会去取）
+		// 刷新后显示用的是记下的那份：显示时不发请求；250ms 后「点开前先备好」的预热也不为它再取一遍整页（2026-11-01 真站发现）
 		assert.equal(state.fetches, 0, JSON.stringify(state));
+		await page.waitForTimeout(700);
+		assert.equal(await page.evaluate(() => window.__postFetches), 0, "停了 0.7 秒也不发请求");
 		assert.deepEqual(errors.filter((line) => !/500/.test(line)), []);
 	} finally { await context.close(); }
 });
