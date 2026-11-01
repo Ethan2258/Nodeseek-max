@@ -1778,7 +1778,7 @@ html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag.is-po
   color: #1a1a1a !important;
 }
 html[data-nsmax-theme] #nsk-body-left .content-item .author-info .role-tag.role-admin {
-  background: var(--danger-fill) !important;
+  background: #e5484d !important;
   box-shadow: none !important;
   color: #ffffff !important;
 }
@@ -2617,7 +2617,7 @@ html[data-nsmax-theme] body > footer .contain > .col img {
   vertical-align: -3px !important;
 }
 html[data-nsmax-theme] body > footer .foot > div {
-  color: var(--text-muted) !important;
+  color: var(--text-subtle) !important;
 }
 html[data-nsmax-theme] body > footer .foot {
   display: flex !important;
@@ -14782,7 +14782,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   text-decoration: none !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > .nsmax-topic-pages-gap:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  color: var(--text-subtle) !important;
+  color: var(--text-disabled) !important;
 }
 /* 楼号悬停预览（sb.sb .quote-hover）：最宽 460px、最高 260px 可滚，10px 12px，细线框、卡片圆角、面板底、浮层阴影；
    头上「#楼号 作者」等宽 12px 次级字，下面正文 13.5px、行高 1.7、保留换行 */
