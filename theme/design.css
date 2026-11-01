@@ -15135,3 +15135,179 @@ html[data-nsmax-theme] body > svg[aria-hidden=true][style*="height: 0"]:is(#nsma
 html[data-nsmax-theme] body > svg[aria-hidden=true][style*="height:0"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
 }
+/* ---------- 77. 2026-11-01：帖子悬停预览改版 ----------
+   标题下面一行作者（18px 头像 + 名字）· 分类 · 发帖时间，底部浏览 / 回复数和「打开原帖」：卡片一弹出来就有内容，
+   不再是一个标题 + 一片灰条。加载中只有骨架（4 行），慢了才在上面补一句；正文到了淡入，
+   比卡片长时底部渐隐提示还能滚。整张卡片是上下三段（头 / 正文 / 底），正文区自己滚，头和底不跟着滚走。 */
+html[data-nsmax-theme] dialog.nspp-post-preview[open]:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(420px, calc(100vw - 28px)) !important;
+  max-height: min(420px, calc(100dvh - 32px)) !important;
+  overflow: hidden !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > header:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  flex: none !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  padding: 12px 14px 10px !important;
+  background: var(--panel) !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > header > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font: 600 15px/1.45 var(--font-sans) !important;
+  color: var(--text-strong) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > header > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--brand) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-byline:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  min-height: 18px !important;
+  overflow: hidden !important;
+  color: var(--text-subtle) !important;
+  font: 12px/18px var(--font-sans) !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-byline:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-byline > *:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-byline > * + *:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "·" !important;
+  margin: 0 7px !important;
+  color: var(--text-faint, var(--text-subtle)) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-author:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: var(--text-muted, var(--text)) !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-avatar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  flex: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: calc(5px * var(--r-scale, 1)) !important;
+  background: var(--panel-alt) !important;
+  object-fit: cover !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > p[role="status"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex: none !important;
+  margin: 0 !important;
+  padding: 10px 14px 0 !important;
+  color: var(--text-subtle) !important;
+  font: 12px/20px var(--font-sans) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > p[role="status"]:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview button.nspp-preview-retry:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: auto !important;
+  height: 24px !important;
+  margin-left: auto !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font: 500 12px/22px var(--font-sans) !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview button.nspp-preview-retry:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-alt) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 0 1 auto !important;
+  min-height: 0 !important;
+  max-height: 280px !important;
+  padding: 12px 14px 14px !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content[data-more]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent) !important;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent) !important;
+}
+html[data-nsmax-theme][data-nsmax-motion] dialog.nspp-post-preview .nspp-preview-content[data-fresh] > article:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  animation: nsmax-preview-in 180ms var(--ease-out, ease-out) both !important;
+}
+@keyframes nsmax-preview-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-skeleton:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 10px !important;
+  padding: 3px 0 2px !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-skeleton > .nsmax-skeleton-line:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: 12px !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > footer:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex: none !important;
+  gap: 12px !important;
+  min-height: 36px !important;
+  padding: 0 14px !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: var(--panel-alt) !important;
+  font: 12px/20px var(--font-sans) !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-stats:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--text-subtle) !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > footer > a.nspp-preview-open:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  margin-left: auto !important;
+  color: var(--text-muted, var(--text)) !important;
+  font: 500 12px/20px var(--font-sans) !important;
+  text-decoration: none !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > footer > a.nspp-preview-open:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: " →" !important;
+}
+html[data-nsmax-theme] dialog.nspp-post-preview > footer > a.nspp-preview-open:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--brand) !important;
+  text-decoration: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content[data-fresh] > article:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    animation: none !important;
+  }
+}
