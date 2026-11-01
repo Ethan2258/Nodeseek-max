@@ -275,13 +275,16 @@
 			const value = (v) => v === undefined || v === null || v === "" || !Number.isFinite(Number(v)) ? "—" : String(Number(v));
 			const created = Date.parse(info.created_at || "");
 			const days = info.days ?? (Number.isFinite(created) ? Math.max(0, Math.floor((Date.now() - created) / 864e5)) : undefined);
+			// 主题、回帖下面一行小字写日均（按注册天数折算，不满 1 天按 1 天），功能关了不写
+			const span = Number.isFinite(Number(days)) ? Math.max(1, Number(days)) : NaN;
+			const daily = (total, unit) => nsmaxActivityOn() && Number.isFinite(span) && value(total) !== "—" ? `日均 ${nsmaxRateText(Number(total) / span)} ${unit}` : "";
 			const cells = [
 				["关注", value(info.follows), self ? "/fans?type=follow" : ""],
 				["粉丝", value(info.fans), self ? "/fans?type=fans" : ""],
 				["鸡腿", value(info.coin), self ? "/credit" : ""],
 				["星辰", value(info.stardust), self ? "/stardust/list" : ""],
-				["主题", value(info.nPost), "#/discussions"],
-				["回帖", value(info.nComment), "#/comments"],
+				["主题", value(info.nPost), "#/discussions", daily(info.nPost, "帖")],
+				["回帖", value(info.nComment), "#/comments", daily(info.nComment, "条")],
 				["收藏", value(info.collectionCount), self ? "#/collections" : ""],
 				["等级", info.rank !== undefined ? `Lv.${value(info.rank)}` : "—", self ? "/progress" : ""],
 				["注册天数", value(days), ""]
@@ -290,7 +293,7 @@
 			nsmaxSetAttr(headStats, "data-nsmax-user-stats");
 			if (headStats.getAttribute("data-nsmax-sig") !== signature) {
 				headStats.setAttribute("data-nsmax-sig", signature);
-				headStats.replaceChildren(...cells.map(([label, text, href]) => {
+				headStats.replaceChildren(...cells.map(([label, text, href, rate]) => {
 					const cell = document.createElement(href ? "a" : "div");
 					cell.className = "nsmax-user-stat";
 					if (href) cell.href = href;
@@ -301,6 +304,12 @@
 					number.className = "nsmax-user-stat-value";
 					number.textContent = text;
 					cell.append(name, number);
+					if (rate) {
+						const line = document.createElement("span");
+						line.className = "nsmax-user-stat-rate";
+						line.textContent = rate;
+						cell.append(line);
+					}
 					return cell;
 				}));
 			}
@@ -343,6 +352,8 @@
 					titleRow.append(badge);
 				}
 				nsmaxApplyLevel(badge, levelVal);
+				// 等级徽章后面是活跃度标签（悬停看日均和档位说明）
+				nsmaxRenderActivity(titleRow, { ...info, days });
 			}
 			const setBar = (width) => {
 				const bar = progress.querySelector(":scope > i > b");
@@ -1959,12 +1970,16 @@
 		}, 500);
 	}
 	var nsmaxMemberCache = new Map();
+	// 本机记下的作者资料还能直接用：10 分钟内读的，而且带注册时间（活跃度标签要用；2026-10-31 以前记下的没有，重读一次）
+	function nsmaxMemberFresh(stored) {
+		return !!stored && Date.now() - stored.at < NSMAX_MEMBER_TTL && Object.hasOwn(stored, "created_at");
+	}
 	function nsmaxMemberInfo(id, request) {
 		const key = String(id);
 		const hit = nsmaxMemberCache.get(key);
 		if (hit && Date.now() - hit.at < NSMAX_MEMBER_TTL) return hit.promise;
 		const stored = nsmaxMembers().get(key);
-		if (stored && Date.now() - stored.at < NSMAX_MEMBER_TTL) {
+		if (nsmaxMemberFresh(stored)) {
 			const promise = Promise.resolve(stored);
 			nsmaxMemberCache.set(key, { at: stored.at, promise });
 			return promise;
@@ -1973,7 +1988,7 @@
 		const promise = request("/api/account/getInfo/" + key).then((data) => {
 			const detail = data?.detail || data?.data;
 			if (!detail || typeof detail !== "object") throw new Error("资料读取失败");
-			const kept = { rank: detail.rank, coin: detail.coin, stardust: detail.stardust, nPost: detail.nPost, nComment: detail.nComment };
+			const kept = { rank: detail.rank, coin: detail.coin, stardust: detail.stardust, nPost: detail.nPost, nComment: detail.nComment, created_at: detail.created_at ?? "" };
 			nsmaxRememberMember(key, kept);
 			return kept;
 		});
@@ -2075,8 +2090,7 @@
 		for (const id of ids) {
 			// 头像也先下好（作者栏的 88px 头像点开时直接出来）
 			nsmaxWarmImage(`/avatar/${id}.png`, location.href);
-			const stored = nsmaxMembers().get(id);
-			if (stored && Date.now() - stored.at < NSMAX_MEMBER_TTL) continue;
+			if (nsmaxMemberFresh(nsmaxMembers().get(id))) continue;
 			nsmaxMemberInfo(id, (url) => nsmaxEarlyJson(url, "low")).catch(() => {});
 		}
 	}
@@ -2151,7 +2165,7 @@
 	function nsmaxPrefetchAuthor(column) {
 		const id = column.dataset.nsmaxUid;
 		const stored = nsmaxMembers().get(id);
-		if (stored) nsmaxFillAuthor(column, stored, Date.now() - stored.at >= NSMAX_MEMBER_TTL);
+		if (stored) nsmaxFillAuthor(column, stored, !nsmaxMemberFresh(stored));
 		if (column.hasAttribute("data-nsmax-filled") || document.documentElement.dataset.nsmaxPostLayout === "simple") return;
 		if (!nsmaxMemberCache.has(id)) {
 			if (nsmaxAuthorPrefetched >= 5) {
@@ -2218,6 +2232,8 @@
 		const posts = number(detail.nPost), comments = number(detail.nComment);
 		const values = [posts === null && comments === null ? null : (posts || 0) + (comments || 0), number(detail.coin), number(detail.stardust)];
 		const stats = who.querySelector(":scope > .nsmax-author-stats");
+		// 等级徽章后面放活跃度标签（见 nsmaxActivity）；旧记录没有注册时间时先不放，读到新的再补
+		nsmaxRenderActivity(who, detail, stats);
 		if (stats && values.some((value) => value !== null)) nsmaxDropAttr(stats, "data-nsmax-pending");
 		who.querySelectorAll(":scope > .nsmax-author-stats > a > b").forEach((b, index) => {
 			const value = values[index];
@@ -3655,6 +3671,73 @@ function nsmaxTagStructure() {
 		else nsmaxDropAttr(el, "data-nsmax-lv6");
 		nsmaxSetText(el, `Lv.${n}`);
 	}
+	// 活跃度标签（2026-10-31，融合「NodeSeek 用户发帖与评论频率」v1.1.0，MIT）：主题数、回帖数按注册天数折成日均，
+	// 按「主题 + 回帖」的日均分七档，再按发帖习惯最多补一个副标签。个人主页统计格、悬停资料卡、帖子作者栏都用这一份。
+	// 档位：潜水 <0.1（十天不到一次）· 佛系 0.1～0.5 · 正常 0.5～3 · 活跃 3～10 · 话痨 10～25 · 肝帝 25～50 ·
+	// 人机 ≥50（天天每 20 分钟一条，挂机脚本的节奏）。注册不满 30 天的只标「新号」，日均到话痨以上才另外标档位
+	var NSMAX_ACTIVITY_TIERS = [
+		[50, "人机", "bot", "日均 50 条以上，天天每 20 分钟一条，像挂机脚本"],
+		[25, "肝帝", "hot", "日均 25～50 条，几乎整天泡在论坛"],
+		[10, "话痨", "warm", "日均 10～25 条，回帖很勤"],
+		[3, "活跃", "active", "日均 3～10 条，常来常往"],
+		[0.5, "正常", "normal", "日均 0.5～3 条，正常参与"],
+		[0.1, "佛系", "calm", "日均 0.1～0.5 条，偶尔说两句"],
+		[0, "潜水", "quiet", "日均不到 0.1 条，十天不到一次，基本只看不说"]
+	];
+	var nsmaxActivityEnabled;
+	function nsmaxActivityOn() {
+		if (nsmaxActivityEnabled === undefined) {
+			try { nsmaxActivityEnabled = GM_getValue$1(SETTINGS_KEY, {})?.["sb-activity-tags"]?.enabled !== false; } catch { nsmaxActivityEnabled = true; }
+		}
+		return nsmaxActivityEnabled;
+	}
+	function nsmaxRateText(rate) {
+		return rate > 0 && rate < 0.01 ? "<0.01" : rate.toFixed(2);
+	}
+	// info：{ nPost, nComment, days 或 created_at }。缺数字时返回 null（不猜）
+	function nsmaxActivity(info) {
+		if (!info) return null;
+		const num = (value) => value === null || value === undefined || value === "" || !Number.isFinite(Number(value)) ? NaN : Number(value);
+		const created = Date.parse(info.created_at || "");
+		let days = num(info.days);
+		if (!Number.isFinite(days) && Number.isFinite(created)) days = Math.floor((Date.now() - created) / 864e5);
+		const posts = num(info.nPost), comments = num(info.nComment);
+		if (!Number.isFinite(days) || !Number.isFinite(posts) || !Number.isFinite(comments) || days < 0) return null;
+		const span = Math.max(1, days);
+		const postRate = posts / span, commentRate = comments / span, rate = postRate + commentRate;
+		const [, name, tone, hint] = NSMAX_ACTIVITY_TIERS.find(([min]) => rate >= min);
+		const detail = `日均 ${nsmaxRateText(rate)} 条（主题 ${nsmaxRateText(postRate)} + 回帖 ${nsmaxRateText(commentRate)}），注册 ${days} 天`;
+		const tags = [];
+		if (days < 30) {
+			tags.push({ text: "新号", tone: "new", tip: `注册不满 30 天，日均还不稳定。${detail}` });
+			if (rate >= 10) tags.push({ text: name, tone, tip: `${hint}。${detail}` });
+		} else tags.push({ text: name, tone, tip: `${hint}。${detail}` });
+		// 副标签：日均 1 帖以上的高产楼主；主题比回帖还多的只发帖；一帖没发、回帖上百的只回帖
+		const side = postRate >= 1 ? ["高产楼主", "日均发 1 个主题以上"] : posts >= 10 && comments < posts ? ["只发帖", "主题比回帖还多"] : posts === 0 && comments >= 100 ? ["只回帖", "回帖上百，一个主题没发过"] : null;
+		if (side && tags.length < 2) tags.push({ text: side[0], tone: "style", tip: `${side[1]}。${detail}` });
+		return { days, posts, comments, postRate, commentRate, rate, tags };
+	}
+	// 在 host 里放一组活跃度标签（class nsmax-activity-tag）；同样的内容不动 DOM。info 为 null 或功能关了时清掉
+	function nsmaxRenderActivity(host, info, before = null) {
+		if (!host) return;
+		const activity = nsmaxActivityOn() ? nsmaxActivity(info) : null;
+		const tags = activity?.tags || [];
+		const existing = Array.from(host.querySelectorAll(":scope > .nsmax-activity-tag"));
+		const signature = tags.map((tag) => tag.text + "|" + tag.tip).join("\n");
+		if (existing.length === tags.length && existing.map((el) => el.textContent + "|" + el.title).join("\n") === signature) return activity;
+		existing.forEach((el) => el.remove());
+		for (const tag of tags) {
+			const el = document.createElement("span");
+			el.className = "nsmax-activity-tag";
+			el.dataset.tone = tag.tone;
+			el.textContent = tag.text;
+			el.title = tag.tip;
+			if (before && before.parentElement === host) host.insertBefore(el, before);
+			else host.append(el);
+		}
+		return activity;
+	}
+	var activityTagsFeature = { id: "sb-activity-tags", defaults: { enabled: true }, mount() {} };
 	var NSMAX_LEVEL_SELECTORS = [".role-tag", ".nspp-level", ".user-badge", ".badge", ".author-info > span", ".nsk-content-meta-info > span", ".nsmax-account-rank", ".nsmax-person-level", ".nsmax-space-vip"];
 	function nsmaxMarkLevels() {
 		const mark = (el) => {
@@ -6356,6 +6439,8 @@ function nsmaxTagStructure() {
 					role.textContent = text;
 					meta.append(role);
 				}
+				// 活跃度标签（主题 + 回帖按注册天数折成日均，见 nsmaxActivity）
+				nsmaxRenderActivity(meta, data);
 				// 注册时长：created_at → 「注册 N 天 / N 个月 / N 年 M 个月」，悬停显示具体日期
 				const created = Date.parse(data.created_at || "");
 				if (created) {
