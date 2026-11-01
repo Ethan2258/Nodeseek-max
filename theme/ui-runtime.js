@@ -161,6 +161,7 @@
 	}
 	function nsmaxPrepareSpace() {
 		if (!/^\/space\/\d+/.test(location.pathname)) return;
+		nsmaxSpaceSkeleton();
 		// 资料卡里那一组统计由下面的 renderStatsAndProgress 管，这里只标记原站其余位置的过时统计
 		for (const item of document.querySelectorAll(".card-block > .card-item")) {
 			if (item.closest(".head-container")) continue;
@@ -4549,6 +4550,39 @@ function nsmaxTagStructure() {
 			list.append(row);
 		}
 		mount.replaceChildren(list);
+	}
+	// 个人主页第一帧（2026-11-01 反馈：打开别人的主页先闪一下 loading 再出内容）：站点只给 #user-space-mount（一张转圈 gif + 英文 Loading），
+	// 拿到资料后整块换成 .nsk-container。照换上来以后的样子放骨架——资料卡（头像、名字、九格统计、等级条）和下面的标签 + 列表，
+	// 同样的卡片、同样的高度，内容到了直接接上，不再是左上角一个小图加一行 Loading
+	function nsmaxSpaceSkeleton() {
+		const mount = document.querySelector("#nsk-frame #user-space-mount");
+		if (!mount || mount.querySelector(":scope > .nsmax-space-skeleton, .head-container")) return;
+		const line = (className = "") => {
+			const el = document.createElement("span");
+			el.className = "nsmax-skeleton-line" + (className ? " " + className : "");
+			return el;
+		};
+		const box = (className, ...children) => {
+			const el = document.createElement("div");
+			el.className = className;
+			el.append(...children);
+			return el;
+		};
+		const grid = box("nsmax-space-skel-stats");
+		for (let i = 0; i < 9; i++) grid.append(box("nsmax-space-skel-stat", line("nsmax-space-skel-label"), line("nsmax-space-skel-value")));
+		const head = box("nsmax-space-skel-head",
+			box("nsmax-space-skel-top", line("nsmax-space-skel-avatar"), box("nsmax-space-skel-id", line("nsmax-space-skel-name"), line("nsmax-space-skel-meta"))),
+			grid,
+			line("nsmax-space-skel-bar"));
+		const list = box("nsmax-space-skel-list", box("nsmax-space-skel-tabs", line(), line()));
+		for (const width of ["62%", "48%", "70%", "55%", "40%", "66%"]) {
+			const row = box("nsmax-space-skel-row", line());
+			row.firstChild.style.width = width;
+			list.append(row);
+		}
+		const skeleton = box("nsmax-space-skeleton", head, list);
+		skeleton.setAttribute("aria-hidden", "true");
+		mount.prepend(skeleton);
 	}
 	function nsmaxPrepareFans() {
 		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
