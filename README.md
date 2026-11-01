@@ -5,7 +5,7 @@
 [![CI](https://github.com/Ethan2258/Nodeseek-max/actions/workflows/ci.yml/badge.svg)](https://github.com/Ethan2258/Nodeseek-max/actions/workflows/ci.yml)
 [![最新版本](https://img.shields.io/github/v/release/Ethan2258/Nodeseek-max)](https://github.com/Ethan2258/Nodeseek-max/releases/latest)
 
-**[安装 / 更新脚本](https://raw.githubusercontent.com/Ethan2258/Nodeseek-max/main/nodeseek-max.user.js)** · [安装帮助](docs/installation.md) · [使用与设置](docs/usage.md) · [更新日志](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
+**[安装 / 更新脚本](https://github.com/Ethan2258/Nodeseek-max/releases/latest/download/nodeseek-max.user.js)** · [安装帮助](docs/installation.md) · [使用与设置](docs/usage.md) · [更新日志](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
 
 ## 安装
 

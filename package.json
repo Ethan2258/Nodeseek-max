@@ -1,6 +1,6 @@
 {
 	"name": "nodeseek-max",
-	"version": "1.8.50",
+	"version": "1.8.51",
 	"private": true,
 	"description": "NodeSeek 全能增强用户脚本：融合 NodeSeek++、外链跳转、黑名单通知屏蔽、侧栏热榜与现代化主题",
 	"license": "GPL-3.0-only",
@@ -14,7 +14,7 @@
 		"meta": "node scripts/build-meta.mjs",
 		"check": "node scripts/check-repo.mjs && node --check nodeseek-max.user.js && node scripts/build-sb.mjs --check && node scripts/build-meta.mjs --check",
 		"sb": "node scripts/build-sb.mjs",
-		"test": "node --test --test-concurrency=1 tests/smoke.test.cjs tests/settings.test.cjs tests/mobile.test.cjs tests/userscripts.test.cjs tests/lottery.test.cjs tests/pagination.test.cjs tests/polish.test.cjs tests/comment-pin.test.cjs",
+		"test": "node --test --test-concurrency=1 tests/smoke.test.cjs tests/settings.test.cjs tests/mobile.test.cjs tests/userscripts.test.cjs tests/lottery.test.cjs tests/pagination.test.cjs tests/polish.test.cjs tests/comment-pin.test.cjs tests/details.test.cjs tests/first-frame.test.cjs tests/ui-polish.test.cjs",
 		"test:smoke": "node --test --test-concurrency=1 tests/smoke.test.cjs",
 		"test:settings": "node --test --test-concurrency=1 tests/settings.test.cjs",
 		"test:mobile": "node --test --test-concurrency=1 tests/mobile.test.cjs",
@@ -26,7 +26,10 @@
 		"minify": "node scripts/minify.mjs",
 		"test:pagination": "node --test --test-concurrency=1 tests/pagination.test.cjs",
 		"test:polish": "node --test --test-concurrency=1 tests/polish.test.cjs",
-		"test:pin": "node --test --test-concurrency=1 tests/comment-pin.test.cjs"
+		"test:pin": "node --test --test-concurrency=1 tests/comment-pin.test.cjs",
+		"test:details": "node --test --test-concurrency=1 tests/details.test.cjs",
+		"test:first-frame": "node --test --test-concurrency=1 tests/first-frame.test.cjs",
+		"test:ui": "node --test --test-concurrency=1 tests/ui-polish.test.cjs"
 	},
 	"devDependencies": {
 		"playwright": "1.64.1",
