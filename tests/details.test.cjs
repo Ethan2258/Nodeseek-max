@@ -78,6 +78,33 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 未读数（上游 NodeSeek++ 26.1030）：先用页面自带的未读数；别的标签页在消息中心标完已读，资料卡角标马上跟着变`,async()=>{
+  const html=P.listPage({}).replace('member_name: "tester" }','member_name: "tester", unViewedCount: { reply: 2, atMe: 0, message: 5 } }');
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html,viewport:{width:1440,height:900},seed,api:{"/api/notification/unread-count":[{status:200,body:{success:true,unreadCount:{reply:2,atMe:0,message:5}}}]}});
+  try{
+   await ready(page);
+   // 按链接指向的分类读数字（三个链接分在资料卡的两列里，文档顺序不是回复、@我、私信）
+   const counts=()=>page.evaluate(()=>["reply","atMe","message"].map(k=>document.querySelector(`.nspp-notification-link[href*="/notification#/${k}"]`)?.lastElementChild.textContent));
+   await page.waitForFunction(()=>document.querySelectorAll(".nspp-notification-link").length===3,null,{timeout:5000});
+   assert.deepEqual(await counts(),["2","0","5"],"回复、@我、私信");
+   // 另一个标签页的消息中心读完未读数后发到同名频道（同一页面里另开一个频道对象，效果一样）
+   await page.evaluate(()=>{const channel=new BroadcastChannel("nspp:unread:www.nodeseek.com:1");channel.postMessage({counts:{reply:0,atMe:0,message:1}});channel.close();});
+   await page.waitForFunction(()=>["reply","atMe","message"].map(k=>document.querySelector(`.nspp-notification-link[href*="/notification#/${k}"]`)?.lastElementChild.textContent).join()==="0,0,1",null,{timeout:3000});
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 通知链接按站点设置的每页楼数（__config__.commmentPerPage）跳到那一楼所在的页`,async()=>{
+  const atList=[{id:51,post_id:4201,floor_id:9,commenter_id:7,commenter_name:"friend",post_title:"每页 4 楼",content:"<p>@tester 第 9 楼</p>",viewed:1,created_at:new Date().toISOString()}];
+  for(const [perPage,href] of [[4,"/post-4201-3#9"],[0,"/post-4201-1#9"]]){
+   const html=P.nativeTalkPage({}).replace(/member_name: "tester" \}/,perPage?`member_name: "tester" }, commmentPerPage: ${perPage}`:'member_name: "tester" }');
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification#/atMe",{html,viewport:{width:1440,height:900},seed,api:{"/api/notification/at-me/list":[{status:200,body:{success:true,atList}}]}});
+   try{
+    await page.waitForSelector(".nsmax-notice-main",{timeout:8000});
+    assert.equal(await page.locator(".nsmax-notice-main").first().getAttribute("href"),href,perPage?"每页 4 楼：第 9 楼在第 3 页":"没设置时按每页 10 楼");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
  test(`${engine} 注册页密码框和别的输入框一样宽；带右栏的通知页消息中心和右栏顶端、列表页左边对齐`,async()=>{
   const reg=await open(browser,"https://www.nodeseek.com/register.html",{html:P.registerPage({}),viewport:{width:1280,height:900},seed});
   try{
