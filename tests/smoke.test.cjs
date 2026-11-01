@@ -3471,7 +3471,7 @@ test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预
 		await list.page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content img.sticker", { timeout: 5e3 });
 		const preview = await list.page.evaluate(() => {
 			const sticker = document.querySelector("dialog.nspp-post-preview img.sticker");
-			const shot = document.querySelector("dialog.nspp-post-preview img:not(.sticker)");
+			const shot = document.querySelector("dialog.nspp-post-preview .nspp-preview-content img:not(.sticker)");
 			return { sticker: [getComputedStyle(sticker).verticalAlign, getComputedStyle(sticker).maxWidth], shot: [getComputedStyle(shot).display, getComputedStyle(shot).borderTopStyle], br: getComputedStyle(shot.nextElementSibling).display };
 		});
 		assert.deepEqual(preview, { sticker: ["middle", "90px"], shot: ["block", "solid"], br: "none" });
@@ -5777,15 +5777,15 @@ test("第十七批（2026-10-21）：登录 / 注册页密码框右侧的「显�
 	}
 });
 
-test("第二十批（2026-10-21）：加载状态不再是一条白色扫光——悬停预览是「小转圈 + 弱化文字」，骨架条自己扫，aria-busy 的高光关掉", async () => {
-	const head = '<!doctype html><html><head><title>NodeSeek</title></head><body><section id="nsk-frame"><div id="nsk-body-left"><div class="nsk-post"><article class="post-content"><p>正文来了。</p></article>';
+test("第二十批（2026-10-21）/ 2026-11-01 改版：悬停预览加载中只有骨架，慢了才补「小转圈 + 弱化文字」；作者行和浏览回复数一弹出来就有", async () => {
+	const head = '<!doctype html><html><head><title>NodeSeek</title></head><body><section id="nsk-frame"><div id="nsk-body-left"><div class="nsk-post"><div class="content-item"><div class="nsk-content-meta-info"><div class="avatar-wrapper"><a href="/space/12"><img src="/avatar/12.png" class="avatar-normal"></a></div><div><div class="author-info"><a href="/space/12" class="author-name">user0</a></div><div class="content-info"><span class="date-created"><time datetime="' + new Date(Date.now() - 3 * 36e5).toISOString() + '">3h</time></span></div></div></div><article class="post-content"><p>正文来了。</p></article>';
 	const init = `(() => {
 		const real = window.fetch.bind(window);
 		window.fetch = async (input, options) => {
 			const raw = input && input.url ? input.url : String(input);
 			let path = raw; try { path = new URL(raw, location.href).pathname; } catch {}
 			if (path !== "/post-1000-1") return real(input, options);
-			await new Promise((resolve) => setTimeout(resolve, 700));
+			await new Promise((resolve) => setTimeout(resolve, 2000));
 			return new Response(${JSON.stringify(head)}, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
 		};
 	})();`;
@@ -5793,38 +5793,104 @@ test("第二十批（2026-10-21）：加载状态不再是一条白色扫光—�
 	try {
 		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
 		await page.locator(".post-list-item .post-title a").first().hover();
+		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-skeleton", { timeout: 5e3 });
+		const first = await page.evaluate(() => {
+			const view = document.querySelector("dialog.nspp-post-preview");
+			const box = view.querySelector(".nspp-preview-skeleton");
+			const line = box.querySelector(".nsmax-skeleton-line");
+			const style = getComputedStyle(line);
+			return {
+				spinner: !!view.querySelector(".nsmax-spinner"),
+				busy: view.querySelector(".nspp-preview-content").getAttribute("aria-busy"),
+				lines: box.querySelectorAll(".nsmax-skeleton-line").length,
+				widths: [...box.children].map((item) => item.style.width),
+				height: Math.round(box.getBoundingClientRect().height),
+				skeleton: style.animationName,
+				skeletonBg: style.backgroundColor,
+				byline: view.querySelector(".nspp-preview-byline").textContent.replace(/\s+/g, " ").trim(),
+				avatar: !!view.querySelector(".nspp-preview-byline img.nspp-preview-avatar"),
+				stats: view.querySelector(".nspp-preview-stats").textContent,
+				open: view.querySelector("footer a.nspp-preview-open").getAttribute("href"),
+				display: getComputedStyle(view).display
+			};
+		});
+		assert.equal(first.spinner, false, "刚弹出来只有骨架，不再上面一行转圈");
+		assert.equal(first.busy, "true");
+		assert.equal(first.lines, 4, "正文没到时先摆 4 行骨架，不是一片空白");
+		assert.deepEqual(first.widths, ["100%", "92%", "76%", "48%"]);
+		assert.ok(first.height >= 60, JSON.stringify(first));
+		assert.equal(first.skeleton, "nsmax-skeleton-sweep", "骨架条自己在扫");
+		assert.notEqual(first.skeletonBg, "rgba(0, 0, 0, 0)");
+		assert.match(first.byline, /user0/, "作者从列表行直接读，不等网络");
+		assert.equal(first.avatar, true);
+		assert.equal(first.stats, "120 浏览 · 0 回复");
+		assert.match(first.open, /\/post-1000-1$/);
+		assert.equal(first.display, "flex");
 		await page.waitForSelector("dialog.nspp-post-preview .nsmax-spinner", { timeout: 5e3 });
 		const loading = await page.evaluate(() => {
 			const status = document.querySelector("dialog.nspp-post-preview .nsmax-loading");
-			const spinner = status.querySelector(".nsmax-spinner");
 			const style = getComputedStyle(status);
-			const line = document.createElement("span");
-			line.className = "nsmax-skeleton-line";
-			document.body.append(line);
-			const lineStyle = getComputedStyle(line);
-			// 先取值再移除：getComputedStyle 是活的，元素一旦离开文档就读不到动画了
-			const skeleton = lineStyle.animationName;
-			const skeletonBg = lineStyle.backgroundColor;
-			line.remove();
-			return { busy: status.getAttribute("aria-busy"), sweep: style.animationName, background: style.backgroundImage, spin: getComputedStyle(spinner).animationName, skeleton, skeletonBg };
+			return { busy: status.getAttribute("aria-busy"), text: status.textContent, sweep: style.animationName, background: style.backgroundImage, spin: getComputedStyle(status.querySelector(".nsmax-spinner")).animationName };
 		});
 		assert.equal(loading.busy, "true");
+		assert.match(loading.text, /网络有点慢/, "1.2 秒还没到才说一声");
 		assert.equal(loading.sweep, "none", "加载中的文字上不再有白色扫光");
 		assert.equal(loading.background, "none");
 		assert.equal(loading.spin, "nsmax-spin", "加载中是一个小转圈");
-		assert.equal(loading.skeleton, "nsmax-skeleton-sweep", "骨架条自己在扫");
-		assert.notEqual(loading.skeletonBg, "rgba(0, 0, 0, 0)");
-		const skeletonBox = await page.evaluate(() => {
-			const box = document.querySelector("dialog.nspp-post-preview .nspp-preview-skeleton");
-			return box ? { lines: box.querySelectorAll(".nsmax-skeleton-line").length, widths: [...box.children].map((line) => line.style.width), height: Math.round(box.getBoundingClientRect().height) } : null;
-		});
-		assert.equal(skeletonBox.lines, 3, "正文没到时先摆 3 行骨架，不是一片空白");
-		assert.deepEqual(skeletonBox.widths, ["100%", "76%", "48%"]);
-		assert.ok(skeletonBox.height >= 50, JSON.stringify(skeletonBox));
 		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
-		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nsmax-spinner")), false, "加载完转圈收掉");
-		assert.equal(await page.evaluate(() => !!document.querySelector("dialog.nspp-post-preview .nspp-preview-skeleton")), false, "加载完骨架收掉");
+		const done = await page.evaluate(() => {
+			const view = document.querySelector("dialog.nspp-post-preview");
+			return {
+				spinner: !!view.querySelector(".nsmax-spinner"),
+				skeleton: !!view.querySelector(".nspp-preview-skeleton"),
+				busy: view.querySelector(".nspp-preview-content").hasAttribute("aria-busy"),
+				time: view.querySelector(".nspp-preview-byline time")?.textContent
+			};
+		});
+		assert.deepEqual(done, { spinner: false, skeleton: false, busy: false, time: "3 小时前" }, "加载完转圈、骨架收掉，发帖时间从主帖补上");
 		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("2026-11-01：悬停预览读不到正文时给「重试」；读过的预览按会话记下，刷新后再停上去不用再取", async () => {
+	const body = '<!doctype html><html><head><title>NodeSeek</title></head><body><div class="nsk-post"><article class="post-content"><p>记下来的正文。</p><script>window.__bad = 1</script><img src="x" onerror="window.__bad = 2"></article>';
+	const init = `(() => {
+		const real = window.fetch.bind(window);
+		window.__postFetches = 0;
+		window.fetch = async (input, options) => {
+			const raw = input && input.url ? input.url : String(input);
+			let path = raw; try { path = new URL(raw, location.href).pathname; } catch {}
+			if (path !== "/post-1000-1") return real(input, options);
+			window.__postFetches++;
+			if (!sessionStorage.getItem("allow")) return new Response("oops", { status: 500 });
+			return new Response(${JSON.stringify(body)}, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
+		};
+	})();`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const link = page.locator(".post-list-item .post-title a").first();
+		await link.hover();
+		await page.waitForSelector("dialog.nspp-post-preview button.nspp-preview-retry", { timeout: 5e3 });
+		await page.evaluate(() => sessionStorage.setItem("allow", "1"));
+		await page.locator("dialog.nspp-post-preview button.nspp-preview-retry").click();
+		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
+		assert.match(await page.locator("dialog.nspp-post-preview .nspp-preview-content").innerText(), /记下来的正文/);
+		await page.waitForFunction(() => (sessionStorage.getItem("nsmax:post-previews") || "").includes("记下来的正文"), null, { timeout: 4e3 });
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.evaluate(() => { window.__postFetches = 0; });
+		await page.mouse.move(5, 5);
+		await page.locator(".post-list-item .post-title a").first().hover();
+		await page.waitForSelector("dialog.nspp-post-preview .nspp-preview-content p", { timeout: 5e3 });
+		const state = await page.evaluate(() => ({ fetches: window.__postFetches, script: !!document.querySelector("dialog.nspp-post-preview script"), handler: !!document.querySelector("dialog.nspp-post-preview [onerror]"), bad: window.__bad || 0, text: document.querySelector("dialog.nspp-post-preview .nspp-preview-content").textContent }));
+		assert.match(state.text, /记下来的正文/);
+		assert.equal(state.script, false);
+		assert.equal(state.handler, false, "记下的正文再显示时也过一遍白名单");
+		assert.equal(state.bad, 0);
+		// 刷新后显示用的是记下的那份：显示时不发请求（250ms 后「点开前先备好」的预热才会去取）
+		assert.equal(state.fetches, 0, JSON.stringify(state));
+		assert.deepEqual(errors.filter((line) => !/500/.test(line)), []);
 	} finally { await context.close(); }
 });
 

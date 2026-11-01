@@ -2030,9 +2030,14 @@
 	function nsmaxPostHtml(request, href, priority = "low", options = {}) {
 		const key = String(href).replace(/#.*$/, "");
 		const hit = nsmaxPostHtmlCache.get(key);
-		if (hit && Date.now() - hit.at < 3e5) return hit.promise;
+		if (hit && Date.now() - hit.at < 3e5) {
+			// 后台排着队的那份（低优先级、还没发出去）现在有人等着看：提到最前面
+			if (priority !== "low") hit.queue.promote?.();
+			return hit.promise;
+		}
 		// options 透传给 request：悬停预览用 { until: "</article>" }，读到主帖就停，后面的回复不用下
-		const entry = { at: Date.now(), promise: request(key, { responseType: "text", priority, ...options }) };
+		const queue = {};
+		const entry = { at: Date.now(), queue, promise: request(key, { responseType: "text", priority, queue, ...options }) };
 		nsmaxPostHtmlCache.set(key, entry);
 		entry.promise.catch(() => {
 			if (nsmaxPostHtmlCache.get(key) === entry) nsmaxPostHtmlCache.delete(key);
