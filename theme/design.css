@@ -12804,6 +12804,107 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-body > .nsma
 html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-short:is(#nsmax-lv, *) {
   width: 38% !important;
 }
+/* 个人主页第一帧：站点的 #user-space-mount 里只有转圈 gif + 英文 Loading（拿到资料后整块换掉）。
+   照换上来以后的资料卡和标签列表放骨架（见 nsmaxSpaceSkeleton）：卡片、内边距、九格统计和真页面一样，内容到了不跳 */
+html[data-nsmax-theme][data-nsmax-page="space"] #user-space-mount > :is(.loading-img, span):is(#nsmax-lv, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skeleton:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.nsmax-space-skel-head, .nsmax-space-skel-list):is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-head:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  min-height: 350px !important;
+  padding: 18px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-top:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding-bottom: 16px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-avatar:is(#nsmax-lv, *) {
+  flex: none !important;
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: var(--r-sm, 6px) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-id:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  flex: 1 1 auto !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-name:is(#nsmax-lv, *) {
+  width: 140px !important;
+  height: 18px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-meta:is(#nsmax-lv, *) {
+  width: 200px !important;
+  max-width: 100% !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-stats:is(#nsmax-lv, *) {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 22px 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-stat:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-label:is(#nsmax-lv, *) {
+  width: 36px !important;
+  height: 10px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-value:is(#nsmax-lv, *) {
+  width: 48px !important;
+  height: 16px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-bar:is(#nsmax-lv, *) {
+  height: 6px !important;
+  margin-top: auto !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-list:is(#nsmax-lv, *) {
+  min-height: 320px !important;
+  padding: 0 14px 8px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-tabs:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 24px !important;
+  height: 48px !important;
+  margin-bottom: 4px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-tabs > .nsmax-skeleton-line:is(#nsmax-lv, *) {
+  width: 32px !important;
+  height: 14px !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-row:is(#nsmax-lv, *) {
+  display: flex !important;
+  align-items: center !important;
+  height: 44px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-row:is(#nsmax-lv, *):last-child {
+  border-bottom: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-touch] .nsmax-space-skel-head:is(#nsmax-lv, *) {
+  min-height: 346px !important;
+  padding: 16px 12px !important;
+}
 /* 成员卡片里的按钮（取关 / 关注、私信、转账）：以前竖着叠在右边，把卡片撑到 130px，统计那行也被挤得折行。
    改成排在名字下面一行（和名字左对齐），28px 细线小胶囊；资料那几行占满卡片宽度 */
 html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-member:is(#nsmax-lv, *):is(#nsmax-b, *) {
