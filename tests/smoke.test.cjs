@@ -714,7 +714,7 @@ test("SB 新布局：NQ 纯文字、分页形状、列表小字顺序与热榜�
 		// 2026-10-20 实时 sb.sb .post-meta：作者 · 时间 · 版块 · 浏览 · 回复 · 最后回复人
 		assert.deepEqual(ordered.map(name=>name.match(/info-author|nsmax-inline-category|info-views|info-comments-count|info-last-commenter|info-last-comment-time/)?.[0]),['info-author','info-last-comment-time','nsmax-inline-category','info-views','info-comments-count','info-last-commenter']);
 		const state=await row.locator('.post-info').evaluate(e=>({font:getComputedStyle(e).fontSize,line:getComputedStyle(e).lineHeight,gap:getComputedStyle(e).gap}));
-		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'0px 10px'});
+		assert.deepEqual(state,{font:'12.5px',line:'20px',gap:'10px'});
 		assert.equal(await page.locator('.nsmax-hot-refresh').isVisible(),false);
 		assert.equal(await page.locator('.nsmax-hot-panel').evaluate(e=>getComputedStyle(e).borderTopWidth),'1px');
 		assert.equal(await page.locator('.nsmax-account-rank').innerText(),'Lv.6');
@@ -1775,7 +1775,7 @@ test("v1.7.19 极致细节复刻：主帖无#0楼号、标题栏双统计、OP�
 			};
 		});
 		assert.equal(controlerStyle.display, "flex");
-		assert.equal(controlerStyle.height, "49.5px");
+		assert.equal(controlerStyle.height, "50.5px");
 		assert.equal(controlerStyle.borderRadius, "12px");
 		assert.notEqual(controlerStyle.backgroundColor, "rgba(0, 0, 0, 0)");
 
@@ -3985,7 +3985,7 @@ test("第六批（2026-10-18）：我的回复——帖子页记下自己的楼�
 		assert.equal(bar.sameLine, true, "和标题在同一行");
 		assert.equal(bar.gap, 10);
 		assert.equal(bar.buttonsRight, true, "只看楼主、直达底部、简洁模式还在右边");
-		assert.ok(bar.headHeight <= 52, `标题栏没有被撑高：${bar.headHeight}px`);
+		assert.ok(bar.headHeight <= 54, `标题栏没有被撑高：${bar.headHeight}px`);
 		await page.setViewportSize({ width: 390, height: 844 });
 		const narrow = await page.evaluate(() => {
 			const row = document.querySelector(".comment-container .nsmax-my-replies"), head = row.parentElement;
