@@ -699,24 +699,50 @@
 		while (map.size > 5000) map.delete(map.keys().next().value);
 		try { localStorage.setItem(NSMAX_SPECIAL_CHECKED_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
+	// 开奖链接怎么认（2026-11-01 用户：「只要里面有开奖链接，就判定为抽奖帖子」）：本站的 /lucky?…——站点渲染出来的链接、
+	// 写成 nodeseek.com / www.nodeseek.com 完整网址的（以前只认和当前页面同一个域名的，www 和不带 www 混着写的卡片出不来）、
+	// 没被渲染成链接的纯文字网址都算；参数不全（没写开奖时间）的也算抽奖帖，只是画不出倒计时卡片
+	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?nodeseek\.com|(?<![\w.:\/-]))\/lucky\?[^\s<>"'）)\]]+/g;
+	function nsmaxLuckyUrl(href) {
+		let url;
+		try { url = new URL(href, location.href); } catch { return null; }
+		if (url.pathname !== "/lucky" || !url.search) return null;
+		if (url.origin === location.origin) return url;
+		if (!/^(?:www\.)?nodeseek\.com$/.test(url.hostname)) return null;
+		return new URL(url.pathname + url.search + url.hash, location.origin);
+	}
+	// 一段内容里所有开奖链接（链接 + 纯文字网址），卡片自己的「查看开奖」不算
+	function nsmaxLuckyUrlsIn(root) {
+		const urls = [];
+		for (const link of root.querySelectorAll('a[href*="/lucky"]')) {
+			if (link.closest(".nsmax-lottery")) continue;
+			const url = nsmaxLuckyUrl(link.getAttribute("href") || "");
+			if (url) urls.push(url);
+		}
+		const text = root.textContent || "";
+		if (text.includes("/lucky?")) for (const match of text.matchAll(NSMAX_LUCKY_TEXT)) {
+			const url = nsmaxLuckyUrl(match[0]);
+			if (url) urls.push(url);
+		}
+		return urls;
+	}
 	// 主帖正文里有什么：投票、开奖链接
 	function nsmaxSpecialKindsOf(op) {
 		const kinds = [];
 		if (op.querySelector('.vote-panel, a[data-href^="nsapp://vote"], a[href^="nsapp://vote"]') || /nsapp:\/\/vote\?id=\d+/.test(op.textContent || "")) kinds.push("poll");
-		if (op.querySelector('a[href*="/lucky?"]')) kinds.push("lottery");
+		if (nsmaxLuckyUrlsIn(op).length) kinds.push("lottery");
 		return kinds;
 	}
 	// 评论里指向这一篇的开奖链接（/lucky?post=这一篇&…）：有的楼主把开奖链接贴在评论里，标题里也不写「抽奖」（2026-10-23）。
-	// 只认 post 参数是这一篇的（别人贴的别的帖子的开奖链接不算）；没被渲染成链接的纯文字网址也认
+	// 认 post 参数是这一篇的、或者没写 post 的（别人贴的别的帖子的开奖链接不算）；没被渲染成链接的纯文字网址也认。
+	// 返回 { time }（time 没写就是 0）
 	function nsmaxCommentLuckyParams(root, id) {
-		const hrefs = Array.from(root.querySelectorAll('ul.comments a[href*="/lucky?"]'), (link) => link.getAttribute("href") || "");
 		for (const body of root.querySelectorAll("ul.comments article.post-content")) {
-			const text = body.textContent || "";
-			if (text.includes("/lucky?")) for (const match of text.matchAll(/(?:https?:\/\/[^\s/]+)?\/lucky\?[^\s<>"'）)]+/g)) hrefs.push(match[0]);
-		}
-		for (const href of hrefs) {
-			const params = nsmaxLuckyParams(href);
-			if (params && params.url.searchParams.get("post") === String(id)) return params;
+			for (const url of nsmaxLuckyUrlsIn(body)) {
+				const post = url.searchParams.get("post");
+				if (post && post !== String(id)) continue;
+				return { url, time: nsmaxLuckyParams(url.href)?.time || 0 };
+			}
 		}
 		return null;
 	}
@@ -732,6 +758,7 @@
 	// 「抽奖」分类页里再在后台慢慢找（见 nsmaxCrawlNewPosts）
 	var nsmaxSpecialBudget = 12;
 	var nsmaxSpecialRecheckBudget = 4;
+	var nsmaxSpecialStaleBudget = 4;
 	var nsmaxSpecialQueued = new Set();
 	function nsmaxVerifySpecialPosts(ctx) {
 		// 「抽奖」分类页有自己的识别（见 nsmaxLotteryView），这里不再重复查；站点限流过、后台暂停中也不查
@@ -755,9 +782,16 @@
 				nsmaxSpecialRecheckBudget--;
 			} else {
 				// 这次打开页面已经查过没查成的（删帖、要登录、站点限流……）不再反复查，下次打开页面再说
-				if (known.has(id) || checked.has(id) || nsmaxSpecialFailed.has(id)) continue;
-				if (!NSMAX_LOTTERY_HINT.test(link.textContent || "") || nsmaxSpecialBudget <= 0) continue;
-				nsmaxSpecialBudget--;
+				if (known.has(id) || nsmaxSpecialFailed.has(id) || !NSMAX_LOTTERY_HINT.test(link.textContent || "")) continue;
+				if (checked.has(id)) {
+					// 查过不是、但标题像抽奖的：30 分钟以上没查过就再查一次（2026-11-01：楼主常常先发帖、过几分钟再编辑补上开奖链接，
+					// 以前刚发出来时查过一次「不是」就再也不认了）。一页最多 4 篇
+					if (nsmaxSpecialStaleBudget <= 0 || Date.now() - checked.get(id) < 30 * 60e3) continue;
+					nsmaxSpecialStaleBudget--;
+				} else {
+					if (nsmaxSpecialBudget <= 0) continue;
+					nsmaxSpecialBudget--;
+				}
 			}
 			nsmaxSpecialQueued.add(id);
 			nsmaxSpecialQueue.push(id);
@@ -783,20 +817,25 @@
 			nsmaxSpecialFailed.add(id);
 			return;
 		}
-		const kinds = nsmaxSpecialKindsOf(op);
-		let time = nsmaxLotteryTimeOf(op);
-		if (!kinds.includes("lottery") && NSMAX_GIVEAWAY_HINT.test(title + "\n" + (op.textContent || ""))) {
+		let comments = null;
+		if (!nsmaxSpecialKindsOf(op).includes("lottery") && (NSMAX_LOTTERY_HINT.test(title) || NSMAX_GIVEAWAY_HINT.test(title + "\n" + (op.textContent || "")))) {
 			try {
 				const page = new DOMParser().parseFromString(await ctx.request(url, { responseType: "text", signal: ctx.signal, priority: "low" }), "text/html");
-				const params = nsmaxCommentLuckyParams(page, id);
-				if (params) {
-					kinds.push("lottery");
-					time = params.time;
-				}
+				comments = nsmaxCommentLuckyParams(page, id);
 			} catch {
 				nsmaxSpecialFailed.add(id);
 				return;
 			}
+		}
+		nsmaxLearnSpecialPost(id, op, title, comments, row);
+	}
+	// 读到一篇帖子第一页的主帖以后记下它是不是抽奖帖（后台查帖、悬停预览都走这里）。comments：评论里指向这一篇的开奖链接
+	function nsmaxLearnSpecialPost(id, op, title, comments = null, row = null) {
+		const kinds = nsmaxSpecialKindsOf(op);
+		let time = nsmaxLotteryTimeOf(op);
+		if (!kinds.includes("lottery") && comments) {
+			kinds.push("lottery");
+			time = comments.time;
 		}
 		nsmaxRememberSpecialPost(id, kinds);
 		nsmaxRememberLotteryTime(id, time);
@@ -805,6 +844,16 @@
 			nsmaxRememberLotteryRow(row || nsmaxListRowOf(id));
 		}
 		nsmaxMarkSpecialChecked(id);
+		return kinds.includes("lottery");
+	}
+	// 悬停预览读到的帖子（第一页、主帖正文已经完整）：顺手认一下是不是抽奖帖，列表里马上挂上「抽奖」，以后也不用再去后台查。
+	// 主帖里没有开奖链接时不算「查过」（评论没读，留给后台按评论再认）
+	function nsmaxLearnSpecialFromPreview(href, doc) {
+		const id = String(href).match(/\/post-(\d+)-1(?:[?#]|$)/)?.[1];
+		const op = id && doc.querySelector(".nsk-post article.post-content, .nsk-post .post-content");
+		if (!op || !nsmaxSpecialKindsOf(op).includes("lottery")) return;
+		nsmaxLearnSpecialPost(id, op, doc.querySelector(".nsk-post .post-title")?.textContent || "");
+		nsmaxLotteryRefresh();
 	}
 	// 页面在滚动（最近 1.5 秒内滚过）时先不发后台请求：滚动时新露出来的头像、图片正在下，等停下来再说
 	var nsmaxLastScrollAt = 0;
@@ -987,6 +1036,7 @@
 		const pending = nsmaxFilterLotteryRows();
 		if (nsmaxLotteryViewBusy) return;
 		if (!pending) {
+			nsmaxLotteryRecheckStale(ctx);
 			nsmaxLotteryCrawlLater(ctx);
 			return;
 		}
@@ -1017,7 +1067,24 @@
 		// 这一页查完了：下一页在后台先查掉，点「下一页」时直接显示
 		const next = document.querySelector("#nsk-body-left .nsk-pager a.pager-next[href]");
 		if (next && !ctx.signal.aborted && !nsmaxBackgroundPaused()) nsmaxWhenIdle("lottery-next", () => nsmaxPrefetchLotteryPage(ctx, next.getAttribute("href")));
+		nsmaxLotteryRecheckStale(ctx);
 		nsmaxLotteryCrawlLater(ctx);
+	}
+	// 「抽奖」页上查过不是、但 30 分钟以上没再查过的（2026-11-01：楼主常常先发帖、过几分钟才编辑补上开奖链接，刚发出来时查过一次「不是」
+	// 就一直藏着）：在后台再查一遍，一次打开页面最多 6 篇、从上往下。已经显示的行不等它们；认出来就按顺序接上
+	var nsmaxLotteryStaleAt = "";
+	async function nsmaxLotteryRecheckStale(ctx) {
+		if (nsmaxLotteryStaleAt === location.href || ctx.signal.aborted || nsmaxBackgroundPaused()) return;
+		nsmaxLotteryStaleAt = location.href;
+		const checked = nsmaxSpecialChecked(), known = nsmaxSpecialPostMap();
+		const ids = [...new Set(Array.from(document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item[data-nsmax-lottery='no'] .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]))]
+			.filter((id) => id && checked.has(id) && !known.has(id) && Date.now() - checked.get(id) >= 30 * 60e3 && !nsmaxSpecialFailed.has(id)).slice(0, 6);
+		if (!ids.length) return;
+		await nsmaxPageLoaded();
+		while (ids.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) {
+			await nsmaxCheckSpecialPost(ctx, ids.shift());
+			nsmaxLotteryRefresh();
+		}
 	}
 	// 抽奖页上：「新帖子」列表也在后台按内容查一遍（30 分钟最多一次），标题里没写「抽奖」的抽奖帖认出来就并进这一页
 	function nsmaxLotteryCrawlLater(ctx) {
@@ -1279,10 +1346,9 @@
 	}
 	// 开奖链接（/lucky?post=…&time=开奖时间&count=中奖人数&start=起始楼层&duplicate=可否重复中奖）的参数；只认本站的 /lucky
 	function nsmaxLuckyParams(href) {
-		let url;
-		try { url = new URL(href, location.href); } catch { return null; }
-		const time = Number(url.searchParams.get("time"));
-		if (url.origin !== location.origin || url.pathname !== "/lucky" || !Number.isFinite(time) || time <= 0) return null;
+		const url = nsmaxLuckyUrl(href);
+		const time = Number(url?.searchParams.get("time"));
+		if (!url || !Number.isFinite(time) || time <= 0) return null;
 		return {
 			url,
 			time,
@@ -1299,8 +1365,8 @@
 		return params.url.href;
 	}
 	function nsmaxLotteryTimeOf(op) {
-		for (const link of op.querySelectorAll('a[href*="/lucky?"]')) {
-			const params = nsmaxLuckyParams(link.getAttribute("href") || "");
+		for (const url of nsmaxLuckyUrlsIn(op)) {
+			const params = nsmaxLuckyParams(url.href);
 			if (params) return params.time;
 		}
 		return 0;
@@ -1320,9 +1386,24 @@
 			const left = Number(card.dataset.nsmaxTime) - now;
 			const state = left <= 0 ? "done" : left <= 3e5 ? "imminent" : left <= 36e5 ? "soon" : "open";
 			nsmaxSetAttr(card, "data-state", state);
-			nsmaxSetText(card.querySelector(".nsmax-lottery-state"), state === "done" ? "已结束" : "进行中");
+			nsmaxSetText(card.querySelector(".nsmax-lottery-state"), state === "done" ? "已开奖" : state === "open" ? "进行中" : "即将开奖");
 			nsmaxSetText(card.querySelector(".nsmax-lottery-label"), state === "done" ? `已于 ${card.dataset.nsmaxWhen} 开奖` : "距开奖");
-			nsmaxSetText(card.querySelector(".nsmax-lottery-winners"), state === "done" ? "已开奖，点「查看开奖」" : "未开奖");
+			// 中奖者一格：没开奖写「待开奖」；开奖后是一个「查看名单」链接（以前写「已开奖，点「查看开奖」」，格子窄，挤成一字一行）
+			const winners = card.querySelector(".nsmax-lottery-winners");
+			if (winners && winners.dataset.nsmaxState !== (state === "done" ? "done" : "open")) {
+				winners.dataset.nsmaxState = state === "done" ? "done" : "open";
+				const href = card.querySelector(".nsmax-lottery-view")?.getAttribute("href");
+				if (state === "done" && href) {
+					const link = document.createElement("a");
+					link.className = "nsmax-lottery-result";
+					link.href = href;
+					link.target = "_blank";
+					link.rel = "noopener";
+					link.setAttribute("data-nsmax-lottery", "");
+					link.textContent = "查看名单";
+					winners.replaceChildren(link);
+				} else winners.textContent = state === "done" ? "已开奖" : "待开奖";
+			}
 			const parts = left <= 0 ? [0, 0, 0, 0] : [Math.floor(left / 864e5), Math.floor(left / 36e5) % 24, Math.floor(left / 6e4) % 60, Math.floor(left / 1e3) % 60];
 			card.querySelectorAll(".nsmax-lottery-clock > .nsmax-lottery-seg").forEach((seg, i) => {
 				const hidden = i === 0 && parts[0] === 0;
@@ -1385,7 +1466,14 @@
 			try { navigator.clipboard?.writeText(url); } catch {}
 		});
 	}
-	// 奖品：正文里写着「奖品：…」的那一行；没有就用标题（去掉「【抽奖】」「抽奖：」）
+	// 奖品：正文里写着「奖品：…」的那一行；没有就用标题，去掉开头结尾标的「【抽奖】」「抽奖：」「抽奖已结束」「(已开奖)」这类
+	// （2026-11-01：标题「抽奖已结束【出鸡】…」以前整句当成奖品）
+	var NSMAX_PRIZE_TITLE_TAG = /^\s*(?:[【\[（(]\s*(?:抽奖|开奖|已?结束|已?开奖|已抽奖|已截止|完结)\s*[】\]）)]|抽奖\s*(?:已?结束|已?开奖|已截止)|已结束|已开奖|抽奖\s*[:：]?)\s*[:：，,\-—|｜]?\s*/;
+	function nsmaxLotteryPrizeFromTitle(title) {
+		let text = String(title || "").replace(/\s+/g, " ").trim();
+		for (let i = 0; i < 4 && NSMAX_PRIZE_TITLE_TAG.test(text); i++) text = text.replace(NSMAX_PRIZE_TITLE_TAG, "");
+		return text.replace(/\s*[【\[（(]\s*(?:抽奖|已?结束|已?开奖)\s*[】\]）)]\s*$/, "").trim();
+	}
 	function nsmaxLotteryPrize(article) {
 		for (const node of article.querySelectorAll("li, p, td, h2, h3, h4")) {
 			if (node.closest(".nsmax-lottery")) continue;
@@ -1393,7 +1481,7 @@
 			if (match) return match[1].replace(/\s+/g, " ").trim().slice(0, 80);
 		}
 		const title = document.querySelector(".nsk-post > .post-title h1, .post-title h1")?.textContent || "";
-		return title.replace(/^\s*(?:【\s*抽奖\s*】|\[\s*抽奖\s*\]|抽奖\s*[:：])\s*/, "").trim().slice(0, 80) || "见正文";
+		return nsmaxLotteryPrizeFromTitle(title).slice(0, 80) || "见正文";
 	}
 	// 参与人：已经加载出来的楼层里，从起始楼层起回复的人（按楼层先后、同一个人只算一次）
 	function nsmaxLotteryEntrants(start) {
@@ -1423,22 +1511,38 @@
 			const replies = nsmaxPostReplyCount();
 			const entrants = nsmaxLotteryEntrants(start);
 			const { card, join } = nsmaxBuildLotteryCard({ time, count, start, duplicate, prize: nsmaxLotteryPrize(article), href: url.href, replies: replies ?? entrants.length, entrants });
-			join.addEventListener("click", () => {
-				const editor = document.querySelector("#nsk-body-left .md-editor");
-				if (!editor) return;
-				editor.scrollIntoView({ behavior: "smooth", block: "center" });
-				const cm = editor.querySelector(".CodeMirror")?.CodeMirror;
-				setTimeout(() => {
-					if (cm) cm.focus();
-					else editor.querySelector("textarea:not(.CodeMirror textarea)")?.focus({ preventScroll: true });
-				}, 320);
-			});
+			join.addEventListener("click", () => nsmaxLotteryJoin());
 			const block = link.closest("p, li, blockquote") || link;
 			if (block !== link && block.textContent.trim() === link.textContent.trim()) block.setAttribute("data-nsmax-lottery-source", "");
 			else link.setAttribute("data-nsmax-lottery-source", "");
 			block.after(card);
 			nsmaxTrackLottery(card);
 		}
+		// 主帖里开奖链接是纯文字网址（没被渲染成链接）时也画一张卡片，放在主帖正文最后（2026-11-01）
+		const op = document.querySelector(".nsk-post article.post-content");
+		if (op && !op.hasAttribute("data-nsmax-lottery-text") && document.readyState !== "loading" && !op.querySelector(".nsmax-lottery")) {
+			op.setAttribute("data-nsmax-lottery-text", "");
+			const params = nsmaxLuckyUrlsIn(op).map((url) => nsmaxLuckyParams(url.href)).find(Boolean);
+			if (params) {
+				const replies = nsmaxPostReplyCount();
+				const entrants = nsmaxLotteryEntrants(params.start);
+				const { card, join } = nsmaxBuildLotteryCard({ ...params, prize: nsmaxLotteryPrize(op), href: params.url.href, replies: replies ?? entrants.length, entrants });
+				join.addEventListener("click", () => nsmaxLotteryJoin());
+				op.append(card);
+				nsmaxTrackLottery(card);
+			}
+		}
+	}
+	// 「回复参与」：跳到回复框并聚焦
+	function nsmaxLotteryJoin() {
+		const editor = document.querySelector("#nsk-body-left .md-editor");
+		if (!editor) return;
+		editor.scrollIntoView({ behavior: "smooth", block: "center" });
+		const cm = editor.querySelector(".CodeMirror")?.CodeMirror;
+		setTimeout(() => {
+			if (cm) cm.focus();
+			else editor.querySelector("textarea:not(.CodeMirror textarea)")?.focus({ preventScroll: true });
+		}, 320);
 	}
 	// 让卡片的倒计时每秒走（卡片不在页面上了，下一次走的时候自己去掉）
 	function nsmaxTrackLottery(card) {
@@ -1469,7 +1573,8 @@
 			seg.append(make("b", "", "0"), make("i", "nsmax-lottery-unit", unit));
 			clock.append(seg);
 		}
-		countdown.append(make("span", "nsmax-lottery-label", "距开奖"), clock);
+		// 右边写开奖的具体时间（没开奖时；开奖后左边那句「已于 … 开奖」已经写了）
+		countdown.append(make("span", "nsmax-lottery-label", "距开奖"), clock, make("span", "nsmax-lottery-when", `${card.dataset.nsmaxWhen} 开奖`));
 		// 奖品 / 名额 / 中奖者（sb.sb .lottery-prizes 小表）
 		const table = make("table", "nsmax-lottery-table");
 		const thead = make("thead");
@@ -1478,25 +1583,28 @@
 		thead.append(headRow);
 		const tbody = make("tbody");
 		const row = make("tr");
-		row.append(make("td", "nsmax-lottery-prize", prize || "（奖品）"), make("td", "nsmax-lottery-count", String(count)), make("td", "nsmax-lottery-winners", "未开奖"));
+		const prizeCell = make("td", "nsmax-lottery-prize", prize || "（奖品）");
+		prizeCell.title = prizeCell.textContent;
+		row.append(prizeCell, make("td", "nsmax-lottery-count", String(count)), make("td", "nsmax-lottery-winners", "待开奖"));
 		tbody.append(row);
 		table.append(thead, tbody);
-		const note = make("p", "nsmax-lottery-note", `到开奖时间后，站点按回复的楼层抽出中奖者（从 ${start} 楼起，${duplicate ? "可以重复中奖" : "每人最多中一次"}），点「查看开奖」看结果。`);
-		// 「开奖时间 · N 条回复 · 从 1 楼起 · 共 N 个名额」+ 前 12 位参与人
+		// 规则并成一行灰字：「N 条回复 · 从 1 楼起按楼层抽 · 每人最多中一次」（2026-11-01：以前一段说明 + 一行「开奖时间 · 回复 · 起始楼层 · 名额」，
+		// 开奖时间、名额和上面重复）
 		const stat = make("div", "nsmax-lottery-stat");
-		stat.append(make("span", "", `开奖 ${card.dataset.nsmaxWhen}`));
 		if (!preview) {
 			const total = make("span", "", `${replies} 条回复`);
 			total.setAttribute("data-nsmax-replies", "");
 			stat.append(total);
 		}
-		stat.append(make("span", "", `从 ${start} 楼起`), make("span", "", `共 ${count} 个名额`));
+		stat.append(make("span", "", `从 ${start} 楼起按楼层抽`), make("span", "", duplicate ? "可以重复中奖" : "每人最多中一次"));
+		// 参与人：前 12 位小胶囊，多的写「等 N 人」
 		const people = make("div", "nsmax-lottery-people");
 		for (const [floor, name] of entrants.slice(0, 12)) {
 			const chip = make("a", "nsmax-lottery-person", `#${floor} ${name}`);
 			chip.href = `#${floor}`;
 			people.append(chip);
 		}
+		if (entrants.length > 12) people.append(make("span", "nsmax-lottery-more", `等 ${entrants.length} 人`));
 		const actions = make("div", "nsmax-lottery-actions");
 		const view = make("a", "nsmax-lottery-view", "查看开奖");
 		view.setAttribute("data-nsmax-lottery", "");
@@ -1511,7 +1619,7 @@
 			view.rel = "noopener";
 		}
 		actions.append(join, view);
-		card.append(head, countdown, table, note, stat);
+		card.append(head, countdown, table, stat);
 		if (people.childElementCount) card.append(people);
 		card.append(actions);
 		return { card, join, view };

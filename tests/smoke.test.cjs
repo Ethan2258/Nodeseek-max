@@ -3100,17 +3100,18 @@ test("抽奖帖（2026-10-17）：开奖链接换成 sb.sb .lottery-widget 抽�
 			view: { href: document.querySelector(".nsmax-lottery-view").getAttribute("href"), target: document.querySelector(".nsmax-lottery-view").target },
 			soonBg: getComputedStyle(document.querySelectorAll(".nsmax-lottery-countdown")[1]).backgroundColor,
 			imminentBg: getComputedStyle(document.querySelectorAll(".nsmax-lottery-countdown")[2]).backgroundColor,
-			primary: Array.from(document.querySelectorAll(".nsmax-lottery"), (card) => getComputedStyle(card.querySelector(".nsmax-lottery-join")).backgroundColor === "rgb(28, 28, 30)" ? "join" : "view")
+			primary: Array.from(document.querySelectorAll(".nsmax-lottery"), (card) => getComputedStyle(card.querySelector(".nsmax-lottery-join")).backgroundColor === "rgb(28, 28, 30)" ? "join" : "view"),
+			doneJoin: getComputedStyle(document.querySelectorAll(".nsmax-lottery-join")[3]).display
 		}));
 		assert.equal(state.cards, 4, "每个开奖链接一张卡片");
 		assert.equal(state.nested, 0, "卡片里的「查看开奖」不能再生成卡片");
 		assert.deepEqual(state.states, ["open", "soon", "imminent", "done"]);
-		assert.deepEqual(state.label, ["进行中", "进行中", "进行中", "已结束"]);
+		assert.deepEqual(state.label, ["进行中", "即将开奖", "即将开奖", "已开奖"]);
 		assert.deepEqual(state.clock.map((text) => text.replace(/\d+/, "N")), ["N天", "N时", "N分", "N秒"], "单位照 sb.sb 用中文（2026-10-18）");
 		assert.match(state.clock[1], /^02时$/);
-		assert.match(state.stat, /开奖 \d{4}-\d{2}-\d{2} \d{2}:\d{2}.*从 2 楼起.*共 3 个名额/);
+		assert.match(state.stat, /条回复.*从 2 楼起按楼层抽.*每人最多中一次/);
 		assert.doesNotMatch(state.stat, /#2/, "起始楼层不写 #（用户 2026-10-18）");
-		assert.deepEqual(state.table.slice(1), ["3", "未开奖"], "奖品 / 名额 / 中奖者");
+		assert.deepEqual(state.table.slice(1), ["3", "待开奖"], "奖品 / 名额 / 中奖者");
 		assert.match(state.doneLabel, /^已于 \d{4}-\d{2}-\d{2} \d{2}:\d{2} 开奖$/);
 		assert.equal(state.doneClock, "none", "到了开奖时间倒计时条只留一句「已于 … 开奖」");
 		assert.deepEqual(state.sourceHidden, ["none", "none", "none", "none"], "原来只有一个链接的段落收起");
@@ -3119,6 +3120,7 @@ test("抽奖帖（2026-10-17）：开奖链接换成 sb.sb .lottery-widget 抽�
 		assert.equal(state.soonBg, "rgb(255, 244, 196)", "一小时内：品牌浅底");
 		assert.equal(state.imminentBg, "rgb(251, 212, 212)", "五分钟内：红色浅底");
 		assert.deepEqual(state.primary, ["join", "join", "join", "view"], "没开奖时「回复参与」是主按钮，开奖后换成「查看开奖」");
+		assert.equal(state.doneJoin, "none", "开奖以后「回复参与」收起");
 		// 倒计时每秒走（只改文字，不整块重建）
 		const seconds = () => page.evaluate(() => document.querySelectorAll(".nsmax-lottery")[0].querySelectorAll(".nsmax-lottery-seg b")[3].textContent);
 		const before = await seconds();
