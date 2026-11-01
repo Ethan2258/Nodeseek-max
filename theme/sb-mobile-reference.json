@@ -1,9 +1,9 @@
 {
   "url": "https://sb.sb/",
   "post": "https://sb.sb/t/13428/",
-  "stylesheet": "https://sb.sb/assets/index.773be9ecce.css",
-  "sha256": "773be9ecce25b5ae864a06951eeceb668798c706ee063c9e64cec11ab4f21d23",
-  "checked": "2026-10-26",
+  "stylesheet": "https://sb.sb/assets/index.1f1456ab94.css",
+  "sha256": "1f1456ab94c4635936f487ce2a244c13f9facb099c9d27fb5d16793b7ecf73fa",
+  "checked": "2026-11-01",
   "viewport": { "width": 390, "height": 844 },
   "shape": {
     "mode": "rounded",
@@ -18,7 +18,7 @@
     "header": 52,
     "pageGutter": 12,
     "listAvatar": 24,
-    "listTitle": 15,
+    "listTitle": 14.5,
     "listMetadata": 12.5,
     "listPadding": "10px 12px",
     "listGap": 10,
@@ -26,12 +26,18 @@
     "authorAvatar": 40,
     "drawerWidth": 300,
     "drawerLink": 14.5,
-    "visibleNavigationControl": 34
+    "visibleNavigationControl": 34,
+    "listToolbar": 50.5,
+    "replyHead": 55,
+    "replyToggle": 31,
+    "topicAction": "66x50.5",
+    "drawerGutter": 16,
+    "breadcrumbPadding": "9px 18px"
   },
   "adaptations": [
     "44px touch areas with smaller 28–34px visual outlines",
     "16px form inputs to avoid automatic zoom on iPhone Safari",
-    "Preserve saved font-size choices; use 15px for an unconfigured phone",
+    "Preserve saved font-size choices; an unconfigured phone gets 15px, shown 0.5px smaller in the list at 420px and below like the reference",
     "Keep the editor outer frame rounded and the internal text-selection layer rectangular",
     "Reuse NodeSeek native actions and script settings"
   ]
