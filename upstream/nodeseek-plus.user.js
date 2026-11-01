@@ -1,15 +1,26 @@
 // ==UserScript==
 // @name         NodeSeek++
 // @namespace    nodeseek-plus-plus
-// @version      26.917.1446
-// @description  模块化论坛增强：阅读、过滤、回复、签到、交易与关键词监控，一个功能一套实现。
+// @version      26.1030.1015
+// @description  模块化论坛增强：阅读、过滤、回复、签到、交易与关键词监控，一个功能一套实现；摸鱼模式另支持 linux.do 与 V2EX。
 // @license      GPL-3.0-only
+// @homepageURL  https://github.com/rirh/nodeseek-plus
+// @downloadURL  https://raw.githubusercontent.com/rirh/nodeseek-plus/main/dist/nodeseek-plus-plus.user.js
+// @updateURL    https://raw.githubusercontent.com/rirh/nodeseek-plus/main/dist/nodeseek-plus-plus.meta.js
 // @match        https://www.nodeseek.com/*
 // @match        https://www.deepflood.com/*
+// @match        https://linux.do/*
+// @match        https://www.v2ex.com/*
+// @match        https://v2ex.com/*
 // @connect      api.nodeimage.com
 // @connect      rss.nodeseek.com
 // @connect      api.bimg.eu.org
-// @connect      update.greasyfork.org
+// @connect      raw.githubusercontent.com
+// @connect      *
+// @grant        GM.getValue
+// @grant        GM.listValues
+// @grant        GM.setValue
+// @grant        GM.xmlHttpRequest
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_notification
@@ -19,133 +30,9 @@
 // @grant        unsafeWindow
 // @run-at       document-end
 // @noframes
-// @downloadURL https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.user.js
-// @updateURL https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.meta.js
 // ==/UserScript==
 
 /*!
-# Third-party notices
-
-NodeSeek++ uses the following third-party libraries. Their respective license
-terms apply to those components.
-
-## date-fns 4.4.0
-
-Source: https://github.com/date-fns/date-fns
-
-MIT License
-
-Copyright (c) 2021 Sasha Koss and Lesha Koss https://kossnocorp.mit-license.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-## GSAP 3.15.0
-
-Source: https://gsap.com/
-License: Standard "no charge" license, https://gsap.com/standard-license
-See the copyright and license notices retained in the bundled GSAP source.
-
-## highlight.js 11.12.0
-
-Source: https://github.com/highlightjs/highlight.js
-License: BSD 3-Clause.
-The full license is preserved in references/highlight.js.LICENSE and appended
-to this notice in the generated userscript banner by vite.config.ts.
-
-## Viewer.js 1.14.0
-
-Source: https://github.com/fengyuanchen/viewerjs
-
-The MIT License (MIT)
-
-Copyright 2015-present Chen Fengyuan
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-
-## Marked 18.0.13
-
-Source: https://github.com/markedjs/marked
-
-# License information
-
-## Contribution License Agreement
-
-If you contribute code to this project, you are implicitly allowing your code
-to be distributed under the MIT license. You are also implicitly verifying that
-all code is your original work. `</legalese>`
-
-## Marked
-
-Copyright (c) 2018+, MarkedJS (https://github.com/markedjs/)
-Copyright (c) 2011-2018, Christopher Jeffrey (https://github.com/chjj/)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-## Markdown
-
-Copyright © 2004, John Gruber
-http://daringfireball.net/
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name “Markdown” nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
-This software is provided by the copyright holders and contributors “as is” and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the copyright owner or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
-
-
-
 BSD 3-Clause License
 
 Copyright (c) 2006, Ivan Sagalaev.
@@ -209,6 +96,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		value: mod,
 		enumerable: true
 	}) : target, mod));
+	var _GM = (() => typeof GM != "undefined" ? GM : void 0)();
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_notification = (() => typeof GM_notification != "undefined" ? GM_notification : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
@@ -219,22 +107,64 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	var memory = new Map();
 	var getter = () => typeof _GM_getValue === "function" ? _GM_getValue : _monkeyWindow.GM_getValue;
 	var setter = () => typeof _GM_setValue === "function" ? _GM_setValue : _monkeyWindow.GM_setValue;
+	var syncStorage = () => typeof getter() === "function" && typeof setter() === "function";
+	var gm = () => _GM || _monkeyWindow.GM;
+	var asyncStorage = () => {
+		const api = gm();
+		return typeof api?.getValue === "function" && typeof api.setValue === "function" && typeof api.listValues === "function" ? api : void 0;
+	};
+	var backend = "memory";
+	async function prepareStorage() {
+		if (syncStorage()) {
+			backend = "sync";
+			return;
+		}
+		const api = asyncStorage();
+		if (api) try {
+			const keys = await api.listValues();
+			const values = await Promise.all(keys.map((key) => api.getValue(key)));
+			keys.forEach((key, index) => {
+				if (values[index] !== void 0) memory.set(key, values[index]);
+			});
+			backend = "async";
+		} catch {}
+	}
+	function needsStoragePreparation() {
+		return !syncStorage();
+	}
 	var unsafeWindow$1 = _unsafeWindow || _monkeyWindow.unsafeWindow || window;
 	function hasStorage() {
-		return typeof getter() === "function" && typeof setter() === "function";
+		return syncStorage() || backend === "async";
 	}
 	function GM_getValue$1(key, fallback) {
 		const get = getter();
-		return typeof get === "function" ? get(key, fallback) : memory.has(key) ? structuredClone(memory.get(key)) : fallback;
+		if (typeof get === "function") return get(key, fallback);
+		return memory.has(key) ? structuredClone(memory.get(key)) : fallback;
 	}
 	function GM_setValue$1(key, value) {
 		const set = setter();
-		if (typeof set === "function") set(key, value);
-		else memory.set(key, structuredClone(value));
+		if (typeof set === "function") {
+			set(key, value);
+			return;
+		}
+		const copy = structuredClone(value);
+		memory.set(key, copy);
+		if (backend === "async") asyncStorage()?.setValue(key, copy).catch(() => {});
 	}
 	function GM_registerMenuCommand$1(label, callback) {
 		const register = typeof _GM_registerMenuCommand === "function" ? _GM_registerMenuCommand : _monkeyWindow.GM_registerMenuCommand;
 		if (typeof register === "function") register(label, callback);
+	}
+	function hasRequest() {
+		return typeof _GM_xmlhttpRequest === "function" || typeof gm()?.xmlHttpRequest === "function";
+	}
+	function gmRequest(details) {
+		if (typeof _GM_xmlhttpRequest === "function") return _GM_xmlhttpRequest(details);
+		const request = gm()?.xmlHttpRequest;
+		if (typeof request !== "function") throw new Error("GM.xmlHttpRequest unavailable");
+		const handle = request(details);
+		handle?.catch?.(() => {});
+		return { abort: () => handle?.abort?.() };
 	}
 	function hasSystemNotifications() {
 		return typeof _GM_notification === "function" || typeof _monkeyWindow.GM_notification === "function";
@@ -254,6 +184,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		} catch {
 			return false;
 		}
+	}
+	function commentsPerPage() {
+		const config = unsafeWindow$1.__config__;
+		const value = Number(config?.commmentPerPage ?? config?.commentPerPage);
+		return Number.isSafeInteger(value) && value > 0 ? value : void 0;
 	}
 	var requestSettings$1 = {
 		id: "request-settings",
@@ -527,7 +462,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		svg.setAttribute("stroke-linejoin", "round");
 		svg.setAttribute("aria-hidden", "true");
 		const path = document.createElementNS(svg.namespaceURI, "path");
-		path.setAttribute("d", name === "hot" ? "M13 2c1 6-5 6-2 11 2-1 3-3 3-5 4 3 6 6 4 10a7 7 0 0 1-13-4c0-4 5-6 8-12Z" : name === "ai" ? "M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3M20 2v4M18 4h4" : name === "play" ? "M8 5l11 7-11 7V5" : name === "stop" ? "M6 6h12v12H6V6" : name === "close" ? "M6 6l12 12M18 6 6 18" : name === "refresh" ? "M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1" : name === "footprints" ? "M4 4h16v12H9l-5 4V4M8 8h8M8 12h5" : name === "monitor" ? "M3 12h4l3-8 4 16 3-8h4" : name === "messages" ? "M3 5h18v14H3V5m0 0 9 7 9-7" : name === "history" ? "M3 11a9 9 0 1 1 2.6 7M3 4v7h7M12 7v5l3 2" : name === "attendance" ? "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2M8 16l3 3 5-6" : "M4 7h16M4 17h16M8 4v6M16 14v6");
+		path.setAttribute("d", name === "trash" ? "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" : name === "edit" ? "M4 20h4L19 9l-4-4L4 16v4M13.5 6.5l4 4" : name === "undo" ? "M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" : name === "plus" ? "M12 5v14M5 12h14" : name === "left" ? "M15 6l-6 6 6 6" : name === "right" ? "M9 6l6 6-6 6" : name === "clear-day" ? "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2M10 14l4 4M14 14l-4 4" : name === "share" ? "M18 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5M6 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5M18 21.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5M8.2 13.3l7.6 4.4M15.8 6.3l-7.6 4.4" : name === "up" ? "M6 15l6-6 6 6" : name === "down" ? "M6 9l6 6 6-6" : name === "back" ? "M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" : name === "hot" ? "M13 2c1 6-5 6-2 11 2-1 3-3 3-5 4 3 6 6 4 10a7 7 0 0 1-13-4c0-4 5-6 8-12Z" : name === "ai" ? "M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3M20 2v4M18 4h4" : name === "play" ? "M8 5l11 7-11 7V5" : name === "stop" ? "M6 6h12v12H6V6" : name === "close" ? "M6 6l12 12M18 6 6 18" : name === "refresh" ? "M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1" : name === "footprints" ? "M4 4h16v12H9l-5 4V4M8 8h8M8 12h5" : name === "monitor" ? "M3 12h4l3-8 4 16 3-8h4" : name === "messages" ? "M3 5h18v14H3V5m0 0 9 7 9-7" : name === "history" ? "M3 11a9 9 0 1 1 2.6 7M3 4v7h7M12 7v5l3 2" : name === "attendance" ? "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2M8 16l3 3 5-6" : "M4 7h16M4 17h16M8 4v6M16 14v6");
 		if (name === "monitor") {
 			path.setAttribute("pathLength", "100");
 			path.classList.add("nspp-ecg-trace");
@@ -540,8 +475,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		}
 		return svg;
 	}
-	var style_default$1 = ":host{all:initial;--surface:#fff;--text:#1f2328;--muted:#59636e;--line:#d1d9e0;--accent:#1f883d;--link:#0969da;--soft:#f6f8fa;--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif}*,:before,:after{box-sizing:border-box}[hidden]{display:none!important}button,input,textarea,select{font:inherit;letter-spacing:normal;accent-color:var(--link)}button{cursor:pointer;border:1px solid var(--line);background:var(--soft);min-height:28px;color:var(--text);white-space:nowrap;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:500;line-height:20px;box-shadow:0 1px #1f23280a}button:hover{background:var(--line)}button:disabled{opacity:.6;cursor:wait}:focus-visible{outline:2px solid var(--link);outline-offset:2px}dialog{width:min(760px,100vw - 32px);max-width:none;max-height:min(82dvh,760px);color:var(--text);background:var(--surface);border:1px solid var(--line);text-align:left;border-radius:8px;margin:auto;padding:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;overflow:hidden;box-shadow:0 8px 28px #1f232833}dialog[open]{flex-direction:column;display:flex}dialog::backdrop{background:#1f232866}header{border-bottom:1px solid var(--line);background:var(--soft);flex:none;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;display:flex}.heading{white-space:nowrap;align-items:baseline;gap:6px;display:flex}.heading .check-update{min-height:24px;color:var(--link);box-shadow:none;background:0 0;border:0;padding:2px 5px;font-size:11px}.about-content{padding:8px 0 12px;font-size:12px}.about-heading{align-items:baseline;gap:8px;display:flex}.about-heading>strong{font-size:15px}.about-version{color:var(--muted);font-size:11px}.about-links{flex-wrap:wrap;gap:6px 14px;margin:12px 0;display:flex}.about-links a{color:var(--link);overflow-wrap:anywhere;text-decoration:none}.about-links a:hover{text-decoration:underline}.about-content ol{color:var(--muted);margin:10px 0 12px;padding-left:18px;line-height:1.7}.about-content li+li{margin-top:6px}h2{margin:0;font-size:14px;font-weight:600;line-height:22px}header p{font-size:12px}p{color:var(--muted);overflow-wrap:anywhere;margin:3px 0 0}.search-bar{border-bottom:1px solid var(--line);flex:none;padding:6px 12px}form{flex-direction:column;min-height:0;margin:0;display:flex}.content{overscroll-behavior:contain;scrollbar-gutter:stable;padding:0 16px 8px;overflow-y:auto}section{margin:0}h3{z-index:1;background:var(--surface);border-bottom:1px solid var(--line);color:var(--muted);margin:0;padding:8px 0;font-size:12px;font-weight:600;line-height:18px;position:sticky;top:0}section+section{margin-top:6px}article{border-bottom:1px solid var(--line);padding:9px 0;position:relative}article:last-child{border-bottom:0}.feature-heading{cursor:pointer;justify-content:space-between;align-items:center;gap:12px;min-height:20px;display:flex}article>p{padding-right:28px;font-size:12px;line-height:18px}input[type=checkbox]{cursor:pointer;flex-shrink:0;width:15px;height:15px;margin:0}.feature-options{border-left:2px solid var(--line);margin-top:6px;padding:0 8px}.field{grid-template-columns:minmax(120px,1fr) minmax(0,2fr);align-items:start;gap:4px 10px;margin-top:5px;font-size:12px;display:grid}.field>span{overflow-wrap:anywhere;padding-top:5px}.field input[type=checkbox]{margin-top:7px}input:not([type=checkbox]),textarea,select{border:1px solid var(--line);background:var(--surface);width:100%;min-width:0;color:var(--text);border-radius:6px;margin:0;padding:2px 8px;font-size:12px;line-height:20px;box-shadow:inset 0 1px #1f23280a}textarea{resize:vertical;min-height:80px}.status{border-bottom:1px solid var(--line);flex:none;margin:0;padding:4px 12px;font-size:11px;line-height:18px}.actions{align-items:center;gap:4px;margin-left:auto;display:flex}.actions button{min-height:26px;padding:2px 8px;font-size:11px}.primary{background:var(--accent);color:#fff;border-color:#1f232826;min-width:92px}.primary:hover{background:var(--accent);filter:brightness(.94)}small{opacity:.6;color:var(--text);font-size:10px;line-height:16px}.toast{inset:max(16px, env(safe-area-inset-top)) 16px auto auto;color:#1e40af;z-index:2147483646;overflow-wrap:anywhere;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;align-items:center;gap:10px;width:max-content;max-width:min(380px,100vw - 32px);margin:0;padding:12px 14px;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:flex;position:fixed;box-shadow:0 8px 24px #1f232826}.toast[data-type=success]{color:#166534;background:#f0fdf4;border-color:#bbf7d0}.toast[data-type=error]{color:#991b1b;background:#fef2f2;border-color:#fecaca}.toast-icon{border:1.5px solid;border-radius:50%;flex:none;place-items:center;width:18px;height:18px;font-size:12px;font-weight:700;display:grid}.toast-message{flex:1;min-width:0}.toast-close{width:24px;min-height:24px;color:inherit;box-shadow:none;background:0 0;border:0;flex:none;padding:0;font-size:18px}.toast-close:hover{background:#818b9826}:host([data-dark]) .toast{color:#bfdbfe;background:#172554;border-color:#1e40af}:host([data-dark]) .toast[data-type=success]{color:#bbf7d0;background:#052e16;border-color:#166534}:host([data-dark]) .toast[data-type=error]{color:#fecaca;background:#450a0a;border-color:#991b1b}:host([data-dark]){--surface:#0d1117;--text:#f0f6fc;--muted:#9198a1;--line:#3d444d;--accent:#238636;--link:#4493f8;--soft:#151b23;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark}@media (width<=600px){dialog{width:100%;max-height:92dvh;padding-bottom:env(safe-area-inset-bottom);border-radius:8px 8px 0 0;margin:auto 0 0}header{flex-wrap:wrap;padding:8px}.search-bar{padding:8px 12px}.content{padding:0 12px 6px}.field{grid-template-columns:1fr;gap:4px}.actions{flex-wrap:wrap}.primary{margin:0}}@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important}}.settings-workspace{grid-template-columns:104px minmax(0,1fr);height:min(65dvh,560px);min-height:0;display:grid}.categories{border-right:1px solid var(--line);background:var(--soft);padding:8px;overflow:auto}.categories a{color:var(--text);border-radius:5px;margin-bottom:2px;padding:4px 8px;font-size:12px;text-decoration:none;display:block;position:relative}.categories a:hover{background:var(--line)}.categories a[aria-current]{color:var(--text);background:#818b981f;font-weight:600}.categories a[aria-current]:before{content:\"\";background:var(--link);border-radius:2px;width:3px;position:absolute;top:5px;bottom:5px;left:-5px}.settings-workspace .content{min-width:0;padding:0 12px 8px}.settings-workspace article{padding:7px 0}.status:empty{display:none}@media (width<=600px){.settings-workspace{grid-template-columns:72px minmax(0,1fr);height:58dvh}.categories{padding:6px 4px}.categories a{padding:7px 6px}}dialog{border-radius:6px;width:min(640px,100vw - 24px);box-shadow:0 12px 40px #0003}header{background:var(--surface);flex-wrap:nowrap;padding:8px 12px}.heading h2{font-size:15px}.search-bar{background:var(--surface);flex:0 220px;min-width:0;margin-left:auto;padding:0}.search-bar input{background:var(--soft);box-shadow:none;border-color:#0000;padding:5px 10px}.settings-workspace{grid-template-columns:76px minmax(0,1fr);height:min(56dvh,420px)}.categories{background:var(--soft);padding:8px 6px}.categories a{color:var(--muted);margin-bottom:3px;padding:6px 8px}.categories a[aria-current]{background:var(--surface);color:var(--link);box-shadow:0 1px 3px #0000000a}.categories a[aria-current]:before{display:none}.settings-workspace .content{padding:0 12px 8px}h3{border-bottom:0;padding:8px 0 3px;font-size:11px;font-weight:600}.settings-workspace article{border-bottom-color:color-mix(in srgb, var(--line) 55%, transparent);padding:7px 0}.feature-heading strong{font-size:12px;font-weight:500}.feature-heading input{width:14px;height:14px}.feature-options{background:var(--soft);border:0;border-radius:5px;margin-top:6px;padding:2px 10px 8px}.field{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;margin-top:8px}.field:has(input[type=checkbox]){grid-template-columns:1fr auto}.field>span{color:var(--muted);padding-top:0}.field input[type=checkbox]{margin:0}.settings-footer{border-top:1px solid var(--line);background:var(--surface);flex:none;padding:7px 12px}.settings-footer .actions{gap:6px;width:100%}.settings-footer button{box-shadow:none;border-radius:4px;padding:4px 9px}.settings-footer button:not(.primary){color:var(--muted);background:0 0;border-color:#0000}.settings-footer .settings-close{margin-left:auto}.settings-footer .primary{background:var(--text);color:var(--surface)}@media (width<=600px){dialog{border-radius:12px 12px 0 0;width:100%;max-height:92dvh}header{flex-wrap:wrap}.search-bar{flex:160px}.settings-workspace{grid-template-rows:auto minmax(0,1fr);grid-template-columns:1fr;height:60dvh}.categories{border-right:0;border-bottom:1px solid var(--line);gap:4px;padding:6px 12px;display:flex;overflow-x:auto}.categories a{white-space:nowrap;flex:none;margin:0}.settings-footer{padding:8px 12px}.settings-footer .actions{flex-wrap:wrap;gap:2px}.settings-footer button{padding:5px 6px}}@media (width<=700px),(hover:none){dialog{width:100%;max-width:none;max-height:92dvh;padding-bottom:env(safe-area-inset-bottom);border-radius:14px 14px 0 0;margin:0;inset:auto 0 0}header{padding:8px 12px}.search-bar{flex:100%;order:2;margin-left:0}.settings-workspace{grid-template-rows:auto minmax(0,1fr);grid-template-columns:1fr;height:min(62dvh,520px)}.categories{border-right:0;border-bottom:1px solid var(--line);gap:4px;padding:6px 12px;display:flex;overflow-x:auto}.categories a{white-space:nowrap;flex:none;margin:0;padding:6px 8px}.settings-workspace .content{padding:0 12px 8px}.settings-footer{padding:8px 12px}.settings-footer .actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;display:grid}.settings-footer .actions button{width:100%;min-width:0;padding:5px 4px}.settings-footer .settings-close{margin-left:0}}header,.search-bar,.categories,.settings-footer,.settings-workspace article{border:0}.settings-workspace article{border-radius:5px}.settings-workspace article+article{margin-top:3px}.settings-workspace article:hover{background:color-mix(in srgb, var(--soft) 45%, transparent)}.settings-footer{background:var(--soft)}";
-	var loading_default = "[aria-busy=true],.nspp-sweep-shine{-webkit-text-fill-color:currentColor;cursor:progress;background-image:linear-gradient(110deg,#0000 35%,#ffffff80 50%,#0000 65%);background-repeat:no-repeat;background-size:250% 100%;animation:1.8s linear infinite nspp-busy-feedback;opacity:1!important}@keyframes nspp-busy-feedback{0%{background-position:150% 0}to{background-position:-150% 0}}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:transparent;background-image:linear-gradient(110deg,currentColor 35%,#ffffff80 50%,currentColor 65%);-webkit-background-clip:text;background-clip:text}.nspp-action[aria-busy=true]>svg{transform-origin:50%;animation:.7s ease-in-out infinite nspp-attendance-working}@keyframes nspp-attendance-working{0%,to{transform:translateY(0)rotate(-8deg)}50%{transform:translateY(-3px)rotate(8deg)}}@media (prefers-reduced-motion:reduce){[aria-busy=true],.nspp-sweep-shine,.nspp-action[aria-busy=true]>svg{background-image:none;animation:none}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:currentColor;background-image:none}}";
+	function iconButton(button, name, label) {
+		button.replaceChildren(toolIcon(name));
+		button.title = label;
+		button.setAttribute("aria-label", label);
+		button.classList.add("nspp-icon-button");
+		return button;
+	}
+	var style_default = ":host{all:initial;--surface:#fff;--text:#1f2328;--muted:#59636e;--line:#d1d9e0;--accent:#1f883d;--link:#0969da;--soft:#f6f8fa;--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif}:host([data-dark]){--surface:#0d1117;--text:#f0f6fc;--muted:#9198a1;--line:#3d444d;--accent:#238636;--link:#4493f8;--soft:#151b23;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark}*,:before,:after{box-sizing:border-box}[hidden]{display:none!important}button,input,textarea,select{font:inherit;letter-spacing:normal;accent-color:var(--link)}button{cursor:pointer;border:1px solid var(--line);background:var(--soft);min-height:28px;color:var(--text);white-space:nowrap;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:500;line-height:20px}button:hover{background:var(--line)}button:disabled{opacity:.6;cursor:wait}:focus-visible{outline:2px solid var(--link);outline-offset:2px}p{color:var(--muted);overflow-wrap:anywhere;margin:3px 0 0}small{color:var(--muted);font-size:11px}dialog{width:min(600px,100vw - 24px);max-width:none;max-height:min(82dvh,720px);color:var(--text);background:var(--surface);border:1px solid var(--line);text-align:left;border-radius:8px;margin:auto;padding:0;overflow:hidden;box-shadow:0 12px 40px #0003}dialog[open]{flex-direction:column;display:flex}dialog::backdrop{background:#1f232866}form{flex-direction:column;min-height:0;margin:0;display:flex}header{flex:none;align-items:center;gap:12px;padding:10px 14px;display:flex}.heading{white-space:nowrap;align-items:baseline;gap:6px;display:flex}h2{margin:0;font-size:15px;font-weight:600;line-height:22px}.search-bar{flex:0 200px;min-width:0;margin-left:auto}.search-bar input{background:var(--soft);border-color:#0000;padding:4px 10px}.status{color:#9a6700;flex:none;margin:0;padding:4px 14px;font-size:11px}.status:empty{display:none}.settings-workspace{grid-template-columns:72px minmax(0,1fr);height:min(58dvh,460px);min-height:0;display:grid}.categories{padding:4px 6px;overflow:auto}.categories a{color:var(--muted);border-radius:5px;margin-bottom:2px;padding:6px 10px;font-size:12px;text-decoration:none;display:block}.categories a:hover{background:var(--soft)}.categories a[aria-current]{background:var(--soft);color:var(--text);font-weight:600}.content{overscroll-behavior:contain;scrollbar-gutter:stable;min-width:0;padding:0 14px 12px 8px;overflow-y:auto}section+section{margin-top:10px}h3{z-index:1;background:var(--surface);color:var(--muted);margin:0;padding:6px 0 4px;font-size:11px;font-weight:600;position:sticky;top:0}article{border-bottom:1px solid color-mix(in srgb, var(--line) 50%, transparent);padding:7px 0}article:last-child{border-bottom:0}.feature-heading{cursor:pointer;justify-content:space-between;align-items:center;gap:12px;min-height:20px;display:flex}.feature-heading strong,article>strong{font-size:12.5px;font-weight:500}input[type=checkbox]{cursor:pointer;flex-shrink:0;width:14px;height:14px;margin:0}.feature-options{background:var(--soft);border-radius:5px;margin-top:6px;padding:2px 10px 8px}.field{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:4px 10px;margin-top:8px;font-size:12px;display:grid}.field:has(input[type=checkbox]){grid-template-columns:1fr auto}.field:has(textarea){grid-template-columns:1fr}.field>span{color:var(--muted);overflow-wrap:anywhere}input:not([type=checkbox]),textarea,select{border:1px solid var(--line);background:var(--surface);width:100%;min-width:0;color:var(--text);border-radius:6px;margin:0;padding:2px 8px;font-size:12px;line-height:20px}input[type=color]{height:26px;padding:1px 2px}textarea{resize:vertical;min-height:60px}.data-tools{flex-wrap:wrap;gap:6px;margin-top:6px;display:flex}.data-tools button{min-height:26px;padding:2px 10px;font-size:11.5px}.about-heading{justify-content:space-between;align-items:center;gap:8px;display:flex}.about-heading strong{font-size:12.5px;font-weight:500}.check-update{min-height:24px;padding:1px 8px;font-size:11.5px}.about-content p{font-size:12px}.about-links{flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:12px;display:flex}.about-star{margin-top:4px}.about-links a,.about-star a{color:var(--link);text-decoration:none}.about-links a:hover,.about-star a:hover{text-decoration:underline}.about-buttons{gap:6px;display:flex}.about-share{min-height:24px;padding:1px 8px;font-size:11.5px}.settings-footer{border-top:1px solid color-mix(in srgb, var(--line) 60%, transparent);flex:none;padding:8px 14px}.actions{justify-content:flex-end;gap:6px;display:flex}.actions button{min-height:28px;padding:3px 12px}.settings-close{color:var(--muted);background:0 0;border-color:#0000}.primary{background:var(--text);min-width:92px;color:var(--surface);border-color:#0000}.primary:hover{background:var(--text);filter:brightness(.9)}.toast{inset:max(16px, env(safe-area-inset-top)) 16px auto auto;color:#1e40af;z-index:2147483646;overflow-wrap:anywhere;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;align-items:center;gap:10px;width:max-content;max-width:min(380px,100vw - 32px);margin:0;padding:12px 14px;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:flex;position:fixed;box-shadow:0 8px 24px #1f232826}.toast[data-type=success]{color:#166534;background:#f0fdf4;border-color:#bbf7d0}.toast[data-type=error]{color:#991b1b;background:#fef2f2;border-color:#fecaca}.toast-icon{border:1.5px solid;border-radius:50%;flex:none;place-items:center;width:18px;height:18px;font-size:12px;font-weight:700;display:grid}.toast-message{flex:1;min-width:0}.toast-close{width:24px;min-height:24px;color:inherit;background:0 0;border:0;flex:none;padding:0;font-size:18px}.toast-close:hover{background:#818b9826}:host([data-dark]) .toast{color:#bfdbfe;background:#172554;border-color:#1e40af}:host([data-dark]) .toast[data-type=success]{color:#bbf7d0;background:#052e16;border-color:#166534}:host([data-dark]) .toast[data-type=error]{color:#fecaca;background:#450a0a;border-color:#991b1b}@media (width<=700px),(hover:none){header{flex-wrap:wrap;padding:8px 12px}.search-bar{flex:100%;margin-left:0}.settings-workspace{grid-template-rows:auto minmax(0,1fr);grid-template-columns:1fr;height:min(62dvh,520px)}.categories{gap:4px;padding:4px 12px 6px;display:flex;overflow-x:auto}.categories a{white-space:nowrap;flex:none;margin:0}.content{padding:0 12px 8px}.field{grid-template-columns:1fr}.settings-footer{padding:8px 12px}.actions button{flex:1}}@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important}}";
+	var loading_default = "[aria-busy=true],.nspp-skeleton-shine{-webkit-text-fill-color:currentColor;cursor:progress;background-image:linear-gradient(110deg,#0000 35%,#ffffff80 50%,#0000 65%);background-repeat:no-repeat;background-size:250% 100%;animation:1.8s linear infinite nspp-busy-feedback;opacity:1!important}@keyframes nspp-busy-feedback{0%{background-position:150% 0}to{background-position:-150% 0}}.nspp-sweep-shine,[aria-busy=true].nspp-sweep-shine{cursor:progress;background:linear-gradient(90deg,currentColor 0% 40%,#ffffffe6 50%,currentColor 60% 100%) 0 0/200% 100%;-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;animation:4s linear infinite nspp-sweep-shine;opacity:1!important}.nspp-sweep-shine *{-webkit-text-fill-color:currentColor}[aria-busy=true]:has(>.nspp-sweep-shine){background-image:none;animation:none}@keyframes nspp-sweep-shine{0%{background-position:200% 0}to{background-position:-200% 0}}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:transparent;background-image:linear-gradient(110deg,currentColor 35%,#ffffff80 50%,currentColor 65%);-webkit-background-clip:text;background-clip:text}.nspp-action[aria-busy=true]>svg{transform-origin:50%;animation:.7s ease-in-out infinite nspp-attendance-working}@keyframes nspp-attendance-working{0%,to{transform:translateY(0)rotate(-8deg)}50%{transform:translateY(-3px)rotate(8deg)}}@media (prefers-reduced-motion:reduce){[aria-busy=true],.nspp-skeleton-shine,.nspp-action[aria-busy=true]>svg{background-image:none;animation:none}.nspp-sweep-shine,[aria-busy=true].nspp-sweep-shine{-webkit-text-fill-color:currentColor;background:0 0;animation:none}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:currentColor;background-image:none}}";
+	var sheet_default = "@media (width<=700px),(hover:none){dialog.nspp-sheet{box-sizing:border-box;width:100%;min-width:0;max-width:none;height:auto;max-height:calc(100dvh - max(24px, env(safe-area-inset-top)));padding-bottom:max(8px, env(safe-area-inset-bottom));overscroll-behavior:contain;border:0;border-top:1px solid #818b9830;border-radius:14px 14px 0 0;margin:0;position:fixed;inset:auto 0 0;overflow:hidden auto;box-shadow:0 -8px 32px #0003}dialog.nspp-sheet[open]{flex-direction:column;display:flex}dialog.nspp-sheet.nspp-sheet-tall{height:min(88dvh,760px)}dialog.nspp-sheet:before{content:\"\";background:#818b9860;border-radius:2px;flex:none;align-self:center;width:36px;height:4px;margin:6px 0 2px}dialog.nspp-sheet::backdrop{background:#0006}dialog.nspp-sheet>*{flex:none;max-width:100%}dialog.nspp-sheet>.nspp-sheet-body{overscroll-behavior:contain;flex:auto;min-height:0;overflow-y:auto}dialog.nspp-sheet>footer{margin-top:auto}dialog.nspp-sheet :is(button,input,select){min-height:36px}dialog.nspp-sheet :is(input,textarea,select){font-size:16px}}button.nspp-icon-button.nspp-icon-button{box-sizing:border-box;border-radius:6px;flex:none;justify-content:center;align-items:center;width:28px;min-width:28px;height:28px;min-height:28px;padding:0;line-height:0;display:inline-flex}button.nspp-icon-button.nspp-icon-button svg{flex:none;width:16px;height:16px}button.nspp-icon-button[data-danger]:hover{color:#cf222e}@media (width<=700px),(hover:none){button.nspp-icon-button.nspp-icon-button{width:36px;min-width:36px;height:36px;min-height:36px}button.nspp-icon-button.nspp-icon-button svg{width:18px;height:18px}}";
 	async function withTabLock(name, intervalMs, task) {
 		const key = `nspp:lock:${location.hostname}:${name}`;
 		const owner = crypto.randomUUID();
@@ -569,11 +512,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		if (navigator.locks?.request) return navigator.locks.request(key, { ifAvailable: true }, (lock) => lock ? execute() : false);
 		return execute();
 	}
-	var UPDATE_URL = "https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.user.js";
+	var UPDATE_URL = "https://raw.githubusercontent.com/rirh/nodeseek-plus/main/dist/nodeseek-plus-plus.user.js";
 	var UPDATE_META_URL = UPDATE_URL.replace(/\.user\.js$/, ".meta.js");
+	var REPOSITORY_URL = "https://github.com/rirh/nodeseek-plus";
+	var NAMESPACE = "nodeseek-plus-plus";
 	function readUpdateVersion(source) {
-		const version = (source.match(/^\s*\/\/ ==UserScript==\r?\n([\s\S]*?)^\/\/ ==\/UserScript==/m)?.[1])?.match(/^\/\/\s+@version\s+(\d+(?:\.\d+)+)\s*$/m)?.[1];
+		const header = source.match(/^\s*\/\/ ==UserScript==\r?\n([\s\S]*?)^\/\/ ==\/UserScript==/m)?.[1];
+		const version = header?.match(/^\/\/\s+@version\s+(\d+(?:\.\d+)+)\s*$/m)?.[1];
 		if (!version) throw new Error("更新源未返回有效版本信息");
+		if (header.match(/^\/\/\s+@namespace\s+(\S+)\s*$/m)?.[1] !== NAMESPACE) throw new Error("更新源脚本标识不匹配");
 		return version;
 	}
 	function isNewerVersion(candidate, current) {
@@ -585,52 +532,90 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		}
 		return false;
 	}
-	function confirmDialog(title, description, confirmLabel, signal, options = {}) {
-		if (signal.aborted) return Promise.resolve(false);
+	var ICON = "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4\"/><path d=\"M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4\"/></svg>";
+	function hasUnsentText() {
+		for (const node of document.querySelectorAll("textarea, .CodeMirror, [contenteditable=\"true\"], [contenteditable=\"\"]")) if (node instanceof HTMLTextAreaElement) {
+			if (!node.disabled && !node.readOnly && node.value.trim() && node.value !== node.defaultValue) return true;
+		} else if (node.classList.contains("CodeMirror")) {
+			const cm = node.CodeMirror;
+			if (cm?.getValue().trim() && !cm.isClean?.()) return true;
+		} else if (!node.closest(".CodeMirror") && node.textContent?.trim()) return true;
+		return false;
+	}
+	function updateNotice(latest, modal, signal) {
+		if (signal.aborted) return Promise.resolve();
+		document.querySelector(".nspp-update-notice")?.remove();
 		return new Promise((resolve) => {
-			const dialog = document.createElement("dialog");
-			dialog.className = "nspp-confirm-dialog";
-			dialog.setAttribute("aria-label", title);
-			const heading = document.createElement("h2");
-			heading.textContent = title;
-			const body = document.createElement("p");
-			body.textContent = description;
-			const actions = document.createElement("form");
-			actions.method = "dialog";
-			const cancel = document.createElement("button");
-			cancel.type = "submit";
-			cancel.value = "cancel";
-			cancel.textContent = options.cancelLabel || "取消";
-			cancel.autofocus = true;
-			const confirm = document.createElement(options.href ? "a" : "button");
-			if (confirm instanceof HTMLAnchorElement) {
-				confirm.href = options.href;
-				confirm.target = "_blank";
-				confirm.rel = "noopener noreferrer";
-				confirm.className = "nspp-confirm-primary";
-				confirm.addEventListener("click", () => dialog.close("confirm"));
-			} else {
-				confirm.type = "submit";
-				confirm.value = "confirm";
-				confirm.className = "nspp-confirm-danger";
-			}
-			confirm.textContent = confirmLabel;
-			actions.append(cancel, confirm);
-			dialog.append(heading, body, actions);
-			const abort = () => {
-				dialog.close("cancel");
-			};
-			dialog.addEventListener("close", () => {
-				signal.removeEventListener("abort", abort);
-				dialog.remove();
-				resolve(!signal.aborted && dialog.returnValue === "confirm");
-			}, { once: true });
-			dialog.addEventListener("click", (event) => {
-				const rect = dialog.getBoundingClientRect();
-				if (event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.close("cancel");
+			const notice = document.createElement("dialog");
+			notice.className = "nspp-update-notice";
+			notice.setAttribute("aria-label", "发现 NodeSeek++ 新版本");
+			const title = document.createElement("div");
+			title.className = "nspp-update-title";
+			title.innerHTML = ICON;
+			title.append(Object.assign(document.createElement("strong"), { textContent: "新版本已发布" }));
+			const message = document.createElement("p");
+			message.className = "nspp-update-message";
+			message.textContent = `当前版本：26.1030.1015　最新版本：${latest}\n点击更新，在脚本管理器中确认后回到这里，页面会自动刷新。`;
+			const actions = document.createElement("div");
+			actions.className = "nspp-update-actions";
+			const link = (className, href, text) => Object.assign(document.createElement("a"), {
+				className,
+				href,
+				textContent: text,
+				target: "_blank",
+				rel: "noopener noreferrer"
 			});
-			document.body.append(dialog);
-			dialog.showModal();
+			const install = link("nspp-update-install", UPDATE_URL, "立即更新");
+			const github = link("nspp-update-github", REPOSITORY_URL, "前往 GitHub");
+			const dismiss = Object.assign(document.createElement("button"), {
+				type: "button",
+				className: "nspp-update-dismiss",
+				textContent: "稍后提醒"
+			});
+			const away = new AbortController();
+			const reload = Object.assign(document.createElement("button"), {
+				type: "button",
+				className: "nspp-update-install nspp-update-reload",
+				textContent: "刷新页面"
+			});
+			reload.addEventListener("click", () => location.reload());
+			install.addEventListener("click", () => {
+				message.textContent = "请在脚本管理器中确认更新，回到此页面后会自动刷新。";
+				dismiss.textContent = "关闭";
+				let left = false;
+				const leave = () => {
+					left = true;
+				};
+				const back = () => {
+					if (!left || document.hidden) return;
+					away.abort();
+					if (!hasUnsentText()) {
+						location.reload();
+						return;
+					}
+					message.textContent = "页面里还有未发送的内容，所以没有自动刷新。处理好后点「刷新页面」加载新版本。";
+					install.replaceWith(reload);
+				};
+				document.addEventListener("visibilitychange", () => {
+					if (document.hidden) leave();
+					else back();
+				}, { signal: away.signal });
+				window.addEventListener("blur", leave, { signal: away.signal });
+				window.addEventListener("focus", back, { signal: away.signal });
+			});
+			dismiss.addEventListener("click", () => notice.close("cancel"));
+			actions.append(install, github, dismiss);
+			notice.append(title, message, actions);
+			const abort = () => notice.close("cancel");
+			notice.addEventListener("close", () => {
+				away.abort();
+				signal.removeEventListener("abort", abort);
+				notice.remove();
+				resolve();
+			}, { once: true });
+			document.body.append(notice);
+			if (modal) notice.showModal();
+			else notice.show();
 			signal.addEventListener("abort", abort, { once: true });
 		});
 	}
@@ -643,12 +628,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				reject(new Error("已取消"));
 				return;
 			}
-			if (typeof _GM_xmlhttpRequest !== "function") {
+			if (!hasRequest()) {
 				reject(new Error("更新检查不可用，请确认油猴脚本已正常安装"));
 				return;
 			}
 			const cleanup = () => signal.removeEventListener("abort", cancel);
-			const request = _GM_xmlhttpRequest({
+			const request = gmRequest({
 				method: "GET",
 				url: `${UPDATE_META_URL}?_=${crypto.randomUUID()}`,
 				anonymous: true,
@@ -698,9 +683,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		async function notifyUpdate() {
 			await withTabLock("script-update-notification", 0, async () => {
 				const latest = state();
-				if (signal.aborted || !latest.version || !isNewerVersion(latest.version, "26.917.1446")) return;
+				if (signal.aborted || !latest.version || !isNewerVersion(latest.version, "26.1030.1015")) return;
 				if (latest.notifiedVersion === latest.version && Date.now() - (latest.notifiedAt || 0) < REMINDER_INTERVAL) return;
-				if (systemNotify(`发现新版本 v${latest.version}，当前 v26.917.1446。点击前往更新。`, "https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.user.js", "nspp:script-update", "发现新版本")) GM_setValue$1(STATE_KEY, {
+				if (systemNotify(`发现新版本 v${latest.version}，当前 v26.1030.1015。点击从 GitHub 安装更新。`, "https://raw.githubusercontent.com/rirh/nodeseek-plus/main/dist/nodeseek-plus-plus.user.js", "nspp:script-update", "发现新版本")) GM_setValue$1(STATE_KEY, {
 					...state(),
 					notifiedVersion: latest.version,
 					notifiedAt: Date.now()
@@ -709,7 +694,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		}
 		async function prompt(manual) {
 			const latest = state();
-			if (signal.aborted || prompting || !latest.version || !isNewerVersion(latest.version, "26.917.1446")) return;
+			if (signal.aborted || prompting || !latest.version || !isNewerVersion(latest.version, "26.1030.1015")) return;
 			if (!manual && (!canPrompt() || latest.promptedVersion === latest.version && Date.now() - (latest.promptedAt || 0) < REMINDER_INTERVAL)) return;
 			prompting = true;
 			GM_setValue$1(STATE_KEY, {
@@ -718,10 +703,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				promptedAt: Date.now()
 			});
 			try {
-				await confirmDialog("发现 NodeSeek++ 新版本", `当前版本 v26.917.1446，最新版本 v${latest.version}。更新后刷新论坛页面即可使用。`, "前往更新", signal, {
-					href: UPDATE_URL,
-					cancelLabel: "稍后提醒"
-				});
+				await updateNotice(latest.version, manual, signal);
 			} finally {
 				prompting = false;
 			}
@@ -734,11 +716,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					...state(),
 					version
 				});
-				if (version && isNewerVersion(version, "26.917.1446")) {
+				if (version && isNewerVersion(version, "26.1030.1015")) {
 					await notifyUpdate();
 					if (manual) await prompt(true);
 					else prompt(false).catch(() => {});
-				} else if (manual) notify(`当前已是最新版本（v26.917.1446）`);
+				} else if (manual) notify(`当前已是最新版本（v26.1030.1015）`);
 			} catch (error) {
 				if (manual && !signal.aborted) notify(error instanceof Error ? error.message : "检查更新失败，请稍后重试");
 			}
@@ -772,25 +754,66 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			}
 		};
 	}
-	function aboutContent(check) {
-		const content = document.createElement("div");
+	var SHINE = "nspp-sweep-shine";
+	function sweepShine(text) {
+		const span = document.createElement("span");
+		span.className = SHINE;
+		span.textContent = text;
+		return span;
+	}
+	function setShine(el, active) {
+		el.classList.toggle(SHINE, active);
+		if (active) el.setAttribute("aria-busy", "true");
+		else el.removeAttribute("aria-busy");
+	}
+	function aboutContent(check, share) {
+		const content = document.createElement("article");
 		content.className = "about-content";
-		const title = document.createElement("strong");
-		title.textContent = "NodeSeek++";
-		const version = document.createElement("span");
-		version.className = "about-version";
-		version.textContent = `v26.917.1446`;
 		const heading = document.createElement("div");
 		heading.className = "about-heading";
-		heading.append(title, version);
+		const title = document.createElement("strong");
+		title.textContent = "关于";
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "check-update";
+		button.textContent = "检查更新";
+		button.addEventListener("click", async () => {
+			button.disabled = true;
+			button.setAttribute("aria-busy", "true");
+			button.replaceChildren(sweepShine("检查中…"));
+			try {
+				await check();
+			} finally {
+				button.disabled = false;
+				button.removeAttribute("aria-busy");
+				button.textContent = "检查更新";
+			}
+		});
+		const shareButton = document.createElement("button");
+		shareButton.type = "button";
+		shareButton.className = "about-share";
+		shareButton.textContent = "分享给朋友";
+		shareButton.addEventListener("click", share);
+		const buttons = document.createElement("div");
+		buttons.className = "about-buttons";
+		buttons.append(shareButton, button);
+		heading.append(title, buttons);
 		const summary = document.createElement("p");
-		summary.textContent = "NodeSeek / DeepFlood 论坛增强 · GPL-3.0-only";
+		summary.textContent = `v26.1030.1015 · NodeSeek / DeepFlood 论坛增强 · GPL-3.0-only`;
+		const star = document.createElement("p");
+		star.className = "about-star";
+		const starLink = document.createElement("a");
+		starLink.href = REPOSITORY_URL;
+		starLink.textContent = "⭐ Star";
+		starLink.target = "_blank";
+		starLink.rel = "noopener noreferrer";
+		star.append("觉得好用的话，去 GitHub 点个 ", starLink, " 支持一下吧");
 		const links = document.createElement("div");
 		links.className = "about-links";
 		for (const [label, href] of [
-			["GitHub · rirh/nodeseek-plus", "https://github.com/rirh/nodeseek-plus"],
-			["下载安装 / 手动更新", UPDATE_URL],
-			["Greasy Fork 脚本页", "https://greasyfork.org/zh-CN/scripts/595488"],
+			["GitHub", REPOSITORY_URL],
+			["下载安装", UPDATE_URL],
+			["Greasy Fork", "https://greasyfork.org/zh-CN/scripts/595488"],
 			["使用说明", "https://github.com/rirh/nodeseek-plus#readme"],
 			["反馈问题", "https://github.com/rirh/nodeseek-plus/issues"]
 		]) {
@@ -801,41 +824,2762 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			link.rel = "noopener noreferrer";
 			links.append(link);
 		}
-		const steps = document.createElement("ol");
-		for (const text of ["首次安装：安装 Tampermonkey，打开上方下载链接，在脚本管理器中确认安装，再刷新论坛。", "更新脚本：每次进入页面自动检查，页面持续打开时每 6 小时检查；发现新版本会发出系统通知并在页面空闲时提醒，同一版本每 24 小时自动提醒一次。也可手动检查更新，无需卸载旧版。"]) {
-			const step = document.createElement("li");
-			step.textContent = text;
-			steps.append(step);
-		}
-		const button = document.createElement("button");
-		button.type = "button";
-		button.textContent = "检查更新";
-		button.addEventListener("click", async () => {
-			button.disabled = true;
-			button.setAttribute("aria-busy", "true");
-			button.textContent = "检查中…";
-			try {
-				await check();
-			} finally {
-				button.disabled = false;
-				button.removeAttribute("aria-busy");
-				button.textContent = "检查更新";
-			}
-		});
-		content.append(heading, summary, links, steps, button);
+		content.append(heading, summary, star, links);
 		return content;
 	}
+	var qrcode = function(typeNumber, errorCorrectionLevel) {
+		const PAD0 = 236;
+		const PAD1 = 17;
+		let _typeNumber = typeNumber;
+		const _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
+		let _modules = null;
+		let _moduleCount = 0;
+		let _dataCache = null;
+		const _dataList = [];
+		const _this = {};
+		const makeImpl = function(test, maskPattern) {
+			_moduleCount = _typeNumber * 4 + 17;
+			_modules = function(moduleCount) {
+				const modules = new Array(moduleCount);
+				for (let row = 0; row < moduleCount; row += 1) {
+					modules[row] = new Array(moduleCount);
+					for (let col = 0; col < moduleCount; col += 1) modules[row][col] = null;
+				}
+				return modules;
+			}(_moduleCount);
+			setupPositionProbePattern(0, 0);
+			setupPositionProbePattern(_moduleCount - 7, 0);
+			setupPositionProbePattern(0, _moduleCount - 7);
+			setupPositionAdjustPattern();
+			setupTimingPattern();
+			setupTypeInfo(test, maskPattern);
+			if (_typeNumber >= 7) setupTypeNumber(test);
+			if (_dataCache == null) _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
+			mapData(_dataCache, maskPattern);
+		};
+		const setupPositionProbePattern = function(row, col) {
+			for (let r = -1; r <= 7; r += 1) {
+				if (row + r <= -1 || _moduleCount <= row + r) continue;
+				for (let c = -1; c <= 7; c += 1) {
+					if (col + c <= -1 || _moduleCount <= col + c) continue;
+					if (0 <= r && r <= 6 && (c == 0 || c == 6) || 0 <= c && c <= 6 && (r == 0 || r == 6) || 2 <= r && r <= 4 && 2 <= c && c <= 4) _modules[row + r][col + c] = true;
+					else _modules[row + r][col + c] = false;
+				}
+			}
+		};
+		const getBestMaskPattern = function() {
+			let minLostPoint = 0;
+			let pattern = 0;
+			for (let i = 0; i < 8; i += 1) {
+				makeImpl(true, i);
+				const lostPoint = QRUtil.getLostPoint(_this);
+				if (i == 0 || minLostPoint > lostPoint) {
+					minLostPoint = lostPoint;
+					pattern = i;
+				}
+			}
+			return pattern;
+		};
+		const setupTimingPattern = function() {
+			for (let r = 8; r < _moduleCount - 8; r += 1) {
+				if (_modules[r][6] != null) continue;
+				_modules[r][6] = r % 2 == 0;
+			}
+			for (let c = 8; c < _moduleCount - 8; c += 1) {
+				if (_modules[6][c] != null) continue;
+				_modules[6][c] = c % 2 == 0;
+			}
+		};
+		const setupPositionAdjustPattern = function() {
+			const pos = QRUtil.getPatternPosition(_typeNumber);
+			for (let i = 0; i < pos.length; i += 1) for (let j = 0; j < pos.length; j += 1) {
+				const row = pos[i];
+				const col = pos[j];
+				if (_modules[row][col] != null) continue;
+				for (let r = -2; r <= 2; r += 1) for (let c = -2; c <= 2; c += 1) if (r == -2 || r == 2 || c == -2 || c == 2 || r == 0 && c == 0) _modules[row + r][col + c] = true;
+				else _modules[row + r][col + c] = false;
+			}
+		};
+		const setupTypeNumber = function(test) {
+			const bits = QRUtil.getBCHTypeNumber(_typeNumber);
+			for (let i = 0; i < 18; i += 1) {
+				const mod = !test && (bits >> i & 1) == 1;
+				_modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
+			}
+			for (let i = 0; i < 18; i += 1) {
+				const mod = !test && (bits >> i & 1) == 1;
+				_modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+			}
+		};
+		const setupTypeInfo = function(test, maskPattern) {
+			const data = _errorCorrectionLevel << 3 | maskPattern;
+			const bits = QRUtil.getBCHTypeInfo(data);
+			for (let i = 0; i < 15; i += 1) {
+				const mod = !test && (bits >> i & 1) == 1;
+				if (i < 6) _modules[i][8] = mod;
+				else if (i < 8) _modules[i + 1][8] = mod;
+				else _modules[_moduleCount - 15 + i][8] = mod;
+			}
+			for (let i = 0; i < 15; i += 1) {
+				const mod = !test && (bits >> i & 1) == 1;
+				if (i < 8) _modules[8][_moduleCount - i - 1] = mod;
+				else if (i < 9) _modules[8][15 - i - 1 + 1] = mod;
+				else _modules[8][15 - i - 1] = mod;
+			}
+			_modules[_moduleCount - 8][8] = !test;
+		};
+		const mapData = function(data, maskPattern) {
+			let inc = -1;
+			let row = _moduleCount - 1;
+			let bitIndex = 7;
+			let byteIndex = 0;
+			const maskFunc = QRUtil.getMaskFunction(maskPattern);
+			for (let col = _moduleCount - 1; col > 0; col -= 2) {
+				if (col == 6) col -= 1;
+				while (true) {
+					for (let c = 0; c < 2; c += 1) if (_modules[row][col - c] == null) {
+						let dark = false;
+						if (byteIndex < data.length) dark = (data[byteIndex] >>> bitIndex & 1) == 1;
+						if (maskFunc(row, col - c)) dark = !dark;
+						_modules[row][col - c] = dark;
+						bitIndex -= 1;
+						if (bitIndex == -1) {
+							byteIndex += 1;
+							bitIndex = 7;
+						}
+					}
+					row += inc;
+					if (row < 0 || _moduleCount <= row) {
+						row -= inc;
+						inc = -inc;
+						break;
+					}
+				}
+			}
+		};
+		const createBytes = function(buffer, rsBlocks) {
+			let offset = 0;
+			let maxDcCount = 0;
+			let maxEcCount = 0;
+			const dcdata = new Array(rsBlocks.length);
+			const ecdata = new Array(rsBlocks.length);
+			for (let r = 0; r < rsBlocks.length; r += 1) {
+				const dcCount = rsBlocks[r].dataCount;
+				const ecCount = rsBlocks[r].totalCount - dcCount;
+				maxDcCount = Math.max(maxDcCount, dcCount);
+				maxEcCount = Math.max(maxEcCount, ecCount);
+				dcdata[r] = new Array(dcCount);
+				for (let i = 0; i < dcdata[r].length; i += 1) dcdata[r][i] = 255 & buffer.getBuffer()[i + offset];
+				offset += dcCount;
+				const rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+				const modPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1).mod(rsPoly);
+				ecdata[r] = new Array(rsPoly.getLength() - 1);
+				for (let i = 0; i < ecdata[r].length; i += 1) {
+					const modIndex = i + modPoly.getLength() - ecdata[r].length;
+					ecdata[r][i] = modIndex >= 0 ? modPoly.getAt(modIndex) : 0;
+				}
+			}
+			let totalCodeCount = 0;
+			for (let i = 0; i < rsBlocks.length; i += 1) totalCodeCount += rsBlocks[i].totalCount;
+			const data = new Array(totalCodeCount);
+			let index = 0;
+			for (let i = 0; i < maxDcCount; i += 1) for (let r = 0; r < rsBlocks.length; r += 1) if (i < dcdata[r].length) {
+				data[index] = dcdata[r][i];
+				index += 1;
+			}
+			for (let i = 0; i < maxEcCount; i += 1) for (let r = 0; r < rsBlocks.length; r += 1) if (i < ecdata[r].length) {
+				data[index] = ecdata[r][i];
+				index += 1;
+			}
+			return data;
+		};
+		const createData = function(typeNumber, errorCorrectionLevel, dataList) {
+			const rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
+			const buffer = qrBitBuffer();
+			for (let i = 0; i < dataList.length; i += 1) {
+				const data = dataList[i];
+				buffer.put(data.getMode(), 4);
+				buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber));
+				data.write(buffer);
+			}
+			let totalDataCount = 0;
+			for (let i = 0; i < rsBlocks.length; i += 1) totalDataCount += rsBlocks[i].dataCount;
+			if (buffer.getLengthInBits() > totalDataCount * 8) throw "code length overflow. (" + buffer.getLengthInBits() + ">" + totalDataCount * 8 + ")";
+			if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) buffer.put(0, 4);
+			while (buffer.getLengthInBits() % 8 != 0) buffer.putBit(false);
+			while (true) {
+				if (buffer.getLengthInBits() >= totalDataCount * 8) break;
+				buffer.put(PAD0, 8);
+				if (buffer.getLengthInBits() >= totalDataCount * 8) break;
+				buffer.put(PAD1, 8);
+			}
+			return createBytes(buffer, rsBlocks);
+		};
+		_this.addData = function(data, mode) {
+			mode = mode || "Byte";
+			let newData = null;
+			switch (mode) {
+				case "Numeric":
+					newData = qrNumber(data);
+					break;
+				case "Alphanumeric":
+					newData = qrAlphaNum(data);
+					break;
+				case "Byte":
+					newData = qr8BitByte(data);
+					break;
+				case "Kanji":
+					newData = qrKanji(data);
+					break;
+				default: throw "mode:" + mode;
+			}
+			_dataList.push(newData);
+			_dataCache = null;
+		};
+		_this.isDark = function(row, col) {
+			if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) throw row + "," + col;
+			return _modules[row][col];
+		};
+		_this.getModuleCount = function() {
+			return _moduleCount;
+		};
+		_this.make = function() {
+			if (_typeNumber < 1) {
+				let typeNumber = 1;
+				for (; typeNumber < 40; typeNumber++) {
+					const rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
+					const buffer = qrBitBuffer();
+					for (let i = 0; i < _dataList.length; i++) {
+						const data = _dataList[i];
+						buffer.put(data.getMode(), 4);
+						buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber));
+						data.write(buffer);
+					}
+					let totalDataCount = 0;
+					for (let i = 0; i < rsBlocks.length; i++) totalDataCount += rsBlocks[i].dataCount;
+					if (buffer.getLengthInBits() <= totalDataCount * 8) break;
+				}
+				_typeNumber = typeNumber;
+			}
+			makeImpl(false, getBestMaskPattern());
+		};
+		_this.createTableTag = function(cellSize, margin) {
+			cellSize = cellSize || 2;
+			margin = typeof margin == "undefined" ? cellSize * 4 : margin;
+			let qrHtml = "";
+			qrHtml += "<table style=\"";
+			qrHtml += " border-width: 0px; border-style: none;";
+			qrHtml += " border-collapse: collapse;";
+			qrHtml += " padding: 0px; margin: " + margin + "px;";
+			qrHtml += "\">";
+			qrHtml += "<tbody>";
+			for (let r = 0; r < _this.getModuleCount(); r += 1) {
+				qrHtml += "<tr>";
+				for (let c = 0; c < _this.getModuleCount(); c += 1) {
+					qrHtml += "<td style=\"";
+					qrHtml += " border-width: 0px; border-style: none;";
+					qrHtml += " border-collapse: collapse;";
+					qrHtml += " padding: 0px; margin: 0px;";
+					qrHtml += " width: " + cellSize + "px;";
+					qrHtml += " height: " + cellSize + "px;";
+					qrHtml += " background-color: ";
+					qrHtml += _this.isDark(r, c) ? "#000000" : "#ffffff";
+					qrHtml += ";";
+					qrHtml += "\"/>";
+				}
+				qrHtml += "</tr>";
+			}
+			qrHtml += "</tbody>";
+			qrHtml += "</table>";
+			return qrHtml;
+		};
+		_this.createSvgTag = function(cellSize, margin, alt, title) {
+			let opts = {};
+			if (typeof arguments[0] == "object") {
+				opts = arguments[0];
+				cellSize = opts.cellSize;
+				margin = opts.margin;
+				alt = opts.alt;
+				title = opts.title;
+			}
+			cellSize = cellSize || 2;
+			margin = typeof margin == "undefined" ? cellSize * 4 : margin;
+			alt = typeof alt === "string" ? { text: alt } : alt || {};
+			alt.text = alt.text || null;
+			alt.id = alt.text ? alt.id || "qrcode-description" : null;
+			title = typeof title === "string" ? { text: title } : title || {};
+			title.text = title.text || null;
+			title.id = title.text ? title.id || "qrcode-title" : null;
+			const size = _this.getModuleCount() * cellSize + margin * 2;
+			let c, mc, r, mr, qrSvg = "", rect;
+			rect = "l" + cellSize + ",0 0," + cellSize + " -" + cellSize + ",0 0,-" + cellSize + "z ";
+			qrSvg += "<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"";
+			qrSvg += !opts.scalable ? " width=\"" + size + "px\" height=\"" + size + "px\"" : "";
+			qrSvg += " viewBox=\"0 0 " + size + " " + size + "\" ";
+			qrSvg += " preserveAspectRatio=\"xMinYMin meet\"";
+			qrSvg += title.text || alt.text ? " role=\"img\" aria-labelledby=\"" + escapeXml([title.id, alt.id].join(" ").trim()) + "\"" : "";
+			qrSvg += ">";
+			qrSvg += title.text ? "<title id=\"" + escapeXml(title.id) + "\">" + escapeXml(title.text) + "</title>" : "";
+			qrSvg += alt.text ? "<description id=\"" + escapeXml(alt.id) + "\">" + escapeXml(alt.text) + "</description>" : "";
+			qrSvg += "<rect width=\"100%\" height=\"100%\" fill=\"white\" cx=\"0\" cy=\"0\"/>";
+			qrSvg += "<path d=\"";
+			for (r = 0; r < _this.getModuleCount(); r += 1) {
+				mr = r * cellSize + margin;
+				for (c = 0; c < _this.getModuleCount(); c += 1) if (_this.isDark(r, c)) {
+					mc = c * cellSize + margin;
+					qrSvg += "M" + mc + "," + mr + rect;
+				}
+			}
+			qrSvg += "\" stroke=\"transparent\" fill=\"black\"/>";
+			qrSvg += "</svg>";
+			return qrSvg;
+		};
+		_this.createDataURL = function(cellSize, margin) {
+			cellSize = cellSize || 2;
+			margin = typeof margin == "undefined" ? cellSize * 4 : margin;
+			const size = _this.getModuleCount() * cellSize + margin * 2;
+			const min = margin;
+			const max = size - margin;
+			return createDataURL(size, size, function(x, y) {
+				if (min <= x && x < max && min <= y && y < max) {
+					const c = Math.floor((x - min) / cellSize);
+					const r = Math.floor((y - min) / cellSize);
+					return _this.isDark(r, c) ? 0 : 1;
+				} else return 1;
+			});
+		};
+		_this.createImgTag = function(cellSize, margin, alt) {
+			cellSize = cellSize || 2;
+			margin = typeof margin == "undefined" ? cellSize * 4 : margin;
+			const size = _this.getModuleCount() * cellSize + margin * 2;
+			let img = "";
+			img += "<img";
+			img += " src=\"";
+			img += _this.createDataURL(cellSize, margin);
+			img += "\"";
+			img += " width=\"";
+			img += size;
+			img += "\"";
+			img += " height=\"";
+			img += size;
+			img += "\"";
+			if (alt) {
+				img += " alt=\"";
+				img += escapeXml(alt);
+				img += "\"";
+			}
+			img += "/>";
+			return img;
+		};
+		const escapeXml = function(s) {
+			let escaped = "";
+			for (let i = 0; i < s.length; i += 1) {
+				const c = s.charAt(i);
+				switch (c) {
+					case "<":
+						escaped += "&lt;";
+						break;
+					case ">":
+						escaped += "&gt;";
+						break;
+					case "&":
+						escaped += "&amp;";
+						break;
+					case "\"":
+						escaped += "&quot;";
+						break;
+					default: escaped += c;
+				}
+			}
+			return escaped;
+		};
+		const _createHalfASCII = function(margin) {
+			const cellSize = 1;
+			margin = typeof margin == "undefined" ? 2 : margin;
+			const size = _this.getModuleCount() * cellSize + margin * 2;
+			const min = margin;
+			const max = size - margin;
+			let y, x, r1, r2, p;
+			const blocks = {
+				"██": "█",
+				"█ ": "▀",
+				" █": "▄",
+				"  ": " "
+			};
+			const blocksLastLineNoMargin = {
+				"██": "▀",
+				"█ ": "▀",
+				" █": " ",
+				"  ": " "
+			};
+			let ascii = "";
+			for (y = 0; y < size; y += 2) {
+				r1 = Math.floor((y - min) / cellSize);
+				r2 = Math.floor((y + 1 - min) / cellSize);
+				for (x = 0; x < size; x += 1) {
+					p = "█";
+					if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) p = " ";
+					if (min <= x && x < max && min <= y + 1 && y + 1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) p += " ";
+					else p += "█";
+					ascii += margin < 1 && y + 1 >= max ? blocksLastLineNoMargin[p] : blocks[p];
+				}
+				ascii += "\n";
+			}
+			if (size % 2 && margin > 0) return ascii.substring(0, ascii.length - size - 1) + Array(size + 1).join("▀");
+			return ascii.substring(0, ascii.length - 1);
+		};
+		_this.createASCII = function(cellSize, margin) {
+			cellSize = cellSize || 1;
+			if (cellSize < 2) return _createHalfASCII(margin);
+			cellSize -= 1;
+			margin = typeof margin == "undefined" ? cellSize * 2 : margin;
+			const size = _this.getModuleCount() * cellSize + margin * 2;
+			const min = margin;
+			const max = size - margin;
+			let y, x, r, p;
+			const white = Array(cellSize + 1).join("██");
+			const black = Array(cellSize + 1).join("  ");
+			let ascii = "";
+			let line = "";
+			for (y = 0; y < size; y += 1) {
+				r = Math.floor((y - min) / cellSize);
+				line = "";
+				for (x = 0; x < size; x += 1) {
+					p = 1;
+					if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) p = 0;
+					line += p ? white : black;
+				}
+				for (r = 0; r < cellSize; r += 1) ascii += line + "\n";
+			}
+			return ascii.substring(0, ascii.length - 1);
+		};
+		_this.renderTo2dContext = function(context, cellSize) {
+			cellSize = cellSize || 2;
+			const length = _this.getModuleCount();
+			for (let row = 0; row < length; row++) for (let col = 0; col < length; col++) {
+				context.fillStyle = _this.isDark(row, col) ? "black" : "white";
+				context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+			}
+		};
+		return _this;
+	};
+	qrcode.stringToBytes = function(s) {
+		const bytes = [];
+		for (let i = 0; i < s.length; i += 1) {
+			const c = s.charCodeAt(i);
+			bytes.push(c & 255);
+		}
+		return bytes;
+	};
+	qrcode.createStringToBytes = function(unicodeData, numChars) {
+		const unicodeMap = function() {
+			const bin = base64DecodeInputStream(unicodeData);
+			const read = function() {
+				const b = bin.read();
+				if (b == -1) throw "eof";
+				return b;
+			};
+			let count = 0;
+			const unicodeMap = {};
+			while (true) {
+				const b0 = bin.read();
+				if (b0 == -1) break;
+				const b1 = read();
+				const b2 = read();
+				const b3 = read();
+				const k = String.fromCharCode(b0 << 8 | b1);
+				unicodeMap[k] = b2 << 8 | b3;
+				count += 1;
+			}
+			if (count != numChars) throw count + " != " + numChars;
+			return unicodeMap;
+		}();
+		const unknownChar = "?".charCodeAt(0);
+		return function(s) {
+			const bytes = [];
+			for (let i = 0; i < s.length; i += 1) {
+				const c = s.charCodeAt(i);
+				if (c < 128) bytes.push(c);
+				else {
+					const b = unicodeMap[s.charAt(i)];
+					if (typeof b == "number") {
+						if ((b & 255) == b) bytes.push(b);
+						else {
+							bytes.push(b >>> 8);
+							bytes.push(b & 255);
+						}
+					} else bytes.push(unknownChar);
+				}
+			}
+			return bytes;
+		};
+	};
+	var QRMode = {
+		MODE_NUMBER: 1,
+		MODE_ALPHA_NUM: 2,
+		MODE_8BIT_BYTE: 4,
+		MODE_KANJI: 8
+	};
+	var QRErrorCorrectionLevel = {
+		L: 1,
+		M: 0,
+		Q: 3,
+		H: 2
+	};
+	var QRMaskPattern = {
+		PATTERN000: 0,
+		PATTERN001: 1,
+		PATTERN010: 2,
+		PATTERN011: 3,
+		PATTERN100: 4,
+		PATTERN101: 5,
+		PATTERN110: 6,
+		PATTERN111: 7
+	};
+	var QRUtil = function() {
+		const PATTERN_POSITION_TABLE = [
+			[],
+			[6, 18],
+			[6, 22],
+			[6, 26],
+			[6, 30],
+			[6, 34],
+			[
+				6,
+				22,
+				38
+			],
+			[
+				6,
+				24,
+				42
+			],
+			[
+				6,
+				26,
+				46
+			],
+			[
+				6,
+				28,
+				50
+			],
+			[
+				6,
+				30,
+				54
+			],
+			[
+				6,
+				32,
+				58
+			],
+			[
+				6,
+				34,
+				62
+			],
+			[
+				6,
+				26,
+				46,
+				66
+			],
+			[
+				6,
+				26,
+				48,
+				70
+			],
+			[
+				6,
+				26,
+				50,
+				74
+			],
+			[
+				6,
+				30,
+				54,
+				78
+			],
+			[
+				6,
+				30,
+				56,
+				82
+			],
+			[
+				6,
+				30,
+				58,
+				86
+			],
+			[
+				6,
+				34,
+				62,
+				90
+			],
+			[
+				6,
+				28,
+				50,
+				72,
+				94
+			],
+			[
+				6,
+				26,
+				50,
+				74,
+				98
+			],
+			[
+				6,
+				30,
+				54,
+				78,
+				102
+			],
+			[
+				6,
+				28,
+				54,
+				80,
+				106
+			],
+			[
+				6,
+				32,
+				58,
+				84,
+				110
+			],
+			[
+				6,
+				30,
+				58,
+				86,
+				114
+			],
+			[
+				6,
+				34,
+				62,
+				90,
+				118
+			],
+			[
+				6,
+				26,
+				50,
+				74,
+				98,
+				122
+			],
+			[
+				6,
+				30,
+				54,
+				78,
+				102,
+				126
+			],
+			[
+				6,
+				26,
+				52,
+				78,
+				104,
+				130
+			],
+			[
+				6,
+				30,
+				56,
+				82,
+				108,
+				134
+			],
+			[
+				6,
+				34,
+				60,
+				86,
+				112,
+				138
+			],
+			[
+				6,
+				30,
+				58,
+				86,
+				114,
+				142
+			],
+			[
+				6,
+				34,
+				62,
+				90,
+				118,
+				146
+			],
+			[
+				6,
+				30,
+				54,
+				78,
+				102,
+				126,
+				150
+			],
+			[
+				6,
+				24,
+				50,
+				76,
+				102,
+				128,
+				154
+			],
+			[
+				6,
+				28,
+				54,
+				80,
+				106,
+				132,
+				158
+			],
+			[
+				6,
+				32,
+				58,
+				84,
+				110,
+				136,
+				162
+			],
+			[
+				6,
+				26,
+				54,
+				82,
+				110,
+				138,
+				166
+			],
+			[
+				6,
+				30,
+				58,
+				86,
+				114,
+				142,
+				170
+			]
+		];
+		const G15 = 1335;
+		const G18 = 7973;
+		const G15_MASK = 21522;
+		const _this = {};
+		const getBCHDigit = function(data) {
+			let digit = 0;
+			while (data != 0) {
+				digit += 1;
+				data >>>= 1;
+			}
+			return digit;
+		};
+		_this.getBCHTypeInfo = function(data) {
+			let d = data << 10;
+			while (getBCHDigit(d) - getBCHDigit(G15) >= 0) d ^= G15 << getBCHDigit(d) - getBCHDigit(G15);
+			return (data << 10 | d) ^ G15_MASK;
+		};
+		_this.getBCHTypeNumber = function(data) {
+			let d = data << 12;
+			while (getBCHDigit(d) - getBCHDigit(G18) >= 0) d ^= G18 << getBCHDigit(d) - getBCHDigit(G18);
+			return data << 12 | d;
+		};
+		_this.getPatternPosition = function(typeNumber) {
+			return PATTERN_POSITION_TABLE[typeNumber - 1];
+		};
+		_this.getMaskFunction = function(maskPattern) {
+			switch (maskPattern) {
+				case QRMaskPattern.PATTERN000: return function(i, j) {
+					return (i + j) % 2 == 0;
+				};
+				case QRMaskPattern.PATTERN001: return function(i, j) {
+					return i % 2 == 0;
+				};
+				case QRMaskPattern.PATTERN010: return function(i, j) {
+					return j % 3 == 0;
+				};
+				case QRMaskPattern.PATTERN011: return function(i, j) {
+					return (i + j) % 3 == 0;
+				};
+				case QRMaskPattern.PATTERN100: return function(i, j) {
+					return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 == 0;
+				};
+				case QRMaskPattern.PATTERN101: return function(i, j) {
+					return i * j % 2 + i * j % 3 == 0;
+				};
+				case QRMaskPattern.PATTERN110: return function(i, j) {
+					return (i * j % 2 + i * j % 3) % 2 == 0;
+				};
+				case QRMaskPattern.PATTERN111: return function(i, j) {
+					return (i * j % 3 + (i + j) % 2) % 2 == 0;
+				};
+				default: throw "bad maskPattern:" + maskPattern;
+			}
+		};
+		_this.getErrorCorrectPolynomial = function(errorCorrectLength) {
+			let a = qrPolynomial([1], 0);
+			for (let i = 0; i < errorCorrectLength; i += 1) a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0));
+			return a;
+		};
+		_this.getLengthInBits = function(mode, type) {
+			if (1 <= type && type < 10) switch (mode) {
+				case QRMode.MODE_NUMBER: return 10;
+				case QRMode.MODE_ALPHA_NUM: return 9;
+				case QRMode.MODE_8BIT_BYTE: return 8;
+				case QRMode.MODE_KANJI: return 8;
+				default: throw "mode:" + mode;
+			}
+			else if (type < 27) switch (mode) {
+				case QRMode.MODE_NUMBER: return 12;
+				case QRMode.MODE_ALPHA_NUM: return 11;
+				case QRMode.MODE_8BIT_BYTE: return 16;
+				case QRMode.MODE_KANJI: return 10;
+				default: throw "mode:" + mode;
+			}
+			else if (type < 41) switch (mode) {
+				case QRMode.MODE_NUMBER: return 14;
+				case QRMode.MODE_ALPHA_NUM: return 13;
+				case QRMode.MODE_8BIT_BYTE: return 16;
+				case QRMode.MODE_KANJI: return 12;
+				default: throw "mode:" + mode;
+			}
+			else throw "type:" + type;
+		};
+		_this.getLostPoint = function(qrcode) {
+			const moduleCount = qrcode.getModuleCount();
+			let lostPoint = 0;
+			for (let row = 0; row < moduleCount; row += 1) for (let col = 0; col < moduleCount; col += 1) {
+				let sameCount = 0;
+				const dark = qrcode.isDark(row, col);
+				for (let r = -1; r <= 1; r += 1) {
+					if (row + r < 0 || moduleCount <= row + r) continue;
+					for (let c = -1; c <= 1; c += 1) {
+						if (col + c < 0 || moduleCount <= col + c) continue;
+						if (r == 0 && c == 0) continue;
+						if (dark == qrcode.isDark(row + r, col + c)) sameCount += 1;
+					}
+				}
+				if (sameCount > 5) lostPoint += 3 + sameCount - 5;
+			}
+			for (let row = 0; row < moduleCount - 1; row += 1) for (let col = 0; col < moduleCount - 1; col += 1) {
+				let count = 0;
+				if (qrcode.isDark(row, col)) count += 1;
+				if (qrcode.isDark(row + 1, col)) count += 1;
+				if (qrcode.isDark(row, col + 1)) count += 1;
+				if (qrcode.isDark(row + 1, col + 1)) count += 1;
+				if (count == 0 || count == 4) lostPoint += 3;
+			}
+			for (let row = 0; row < moduleCount; row += 1) for (let col = 0; col < moduleCount - 6; col += 1) if (qrcode.isDark(row, col) && !qrcode.isDark(row, col + 1) && qrcode.isDark(row, col + 2) && qrcode.isDark(row, col + 3) && qrcode.isDark(row, col + 4) && !qrcode.isDark(row, col + 5) && qrcode.isDark(row, col + 6)) lostPoint += 40;
+			for (let col = 0; col < moduleCount; col += 1) for (let row = 0; row < moduleCount - 6; row += 1) if (qrcode.isDark(row, col) && !qrcode.isDark(row + 1, col) && qrcode.isDark(row + 2, col) && qrcode.isDark(row + 3, col) && qrcode.isDark(row + 4, col) && !qrcode.isDark(row + 5, col) && qrcode.isDark(row + 6, col)) lostPoint += 40;
+			let darkCount = 0;
+			for (let col = 0; col < moduleCount; col += 1) for (let row = 0; row < moduleCount; row += 1) if (qrcode.isDark(row, col)) darkCount += 1;
+			const ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+			lostPoint += ratio * 10;
+			return lostPoint;
+		};
+		return _this;
+	}();
+	var QRMath = function() {
+		const EXP_TABLE = new Array(256);
+		const LOG_TABLE = new Array(256);
+		for (let i = 0; i < 8; i += 1) EXP_TABLE[i] = 1 << i;
+		for (let i = 8; i < 256; i += 1) EXP_TABLE[i] = EXP_TABLE[i - 4] ^ EXP_TABLE[i - 5] ^ EXP_TABLE[i - 6] ^ EXP_TABLE[i - 8];
+		for (let i = 0; i < 255; i += 1) LOG_TABLE[EXP_TABLE[i]] = i;
+		const _this = {};
+		_this.glog = function(n) {
+			if (n < 1) throw "glog(" + n + ")";
+			return LOG_TABLE[n];
+		};
+		_this.gexp = function(n) {
+			while (n < 0) n += 255;
+			while (n >= 256) n -= 255;
+			return EXP_TABLE[n];
+		};
+		return _this;
+	}();
+	var qrPolynomial = function(num, shift) {
+		if (typeof num.length == "undefined") throw num.length + "/" + shift;
+		const _num = function() {
+			let offset = 0;
+			while (offset < num.length && num[offset] == 0) offset += 1;
+			const _num = new Array(num.length - offset + shift);
+			for (let i = 0; i < num.length - offset; i += 1) _num[i] = num[i + offset];
+			return _num;
+		}();
+		const _this = {};
+		_this.getAt = function(index) {
+			return _num[index];
+		};
+		_this.getLength = function() {
+			return _num.length;
+		};
+		_this.multiply = function(e) {
+			const num = new Array(_this.getLength() + e.getLength() - 1);
+			for (let i = 0; i < _this.getLength(); i += 1) for (let j = 0; j < e.getLength(); j += 1) num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i)) + QRMath.glog(e.getAt(j)));
+			return qrPolynomial(num, 0);
+		};
+		_this.mod = function(e) {
+			if (_this.getLength() - e.getLength() < 0) return _this;
+			const ratio = QRMath.glog(_this.getAt(0)) - QRMath.glog(e.getAt(0));
+			const num = new Array(_this.getLength());
+			for (let i = 0; i < _this.getLength(); i += 1) num[i] = _this.getAt(i);
+			for (let i = 0; i < e.getLength(); i += 1) num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i)) + ratio);
+			return qrPolynomial(num, 0).mod(e);
+		};
+		return _this;
+	};
+	var QRRSBlock = function() {
+		const RS_BLOCK_TABLE = [
+			[
+				1,
+				26,
+				19
+			],
+			[
+				1,
+				26,
+				16
+			],
+			[
+				1,
+				26,
+				13
+			],
+			[
+				1,
+				26,
+				9
+			],
+			[
+				1,
+				44,
+				34
+			],
+			[
+				1,
+				44,
+				28
+			],
+			[
+				1,
+				44,
+				22
+			],
+			[
+				1,
+				44,
+				16
+			],
+			[
+				1,
+				70,
+				55
+			],
+			[
+				1,
+				70,
+				44
+			],
+			[
+				2,
+				35,
+				17
+			],
+			[
+				2,
+				35,
+				13
+			],
+			[
+				1,
+				100,
+				80
+			],
+			[
+				2,
+				50,
+				32
+			],
+			[
+				2,
+				50,
+				24
+			],
+			[
+				4,
+				25,
+				9
+			],
+			[
+				1,
+				134,
+				108
+			],
+			[
+				2,
+				67,
+				43
+			],
+			[
+				2,
+				33,
+				15,
+				2,
+				34,
+				16
+			],
+			[
+				2,
+				33,
+				11,
+				2,
+				34,
+				12
+			],
+			[
+				2,
+				86,
+				68
+			],
+			[
+				4,
+				43,
+				27
+			],
+			[
+				4,
+				43,
+				19
+			],
+			[
+				4,
+				43,
+				15
+			],
+			[
+				2,
+				98,
+				78
+			],
+			[
+				4,
+				49,
+				31
+			],
+			[
+				2,
+				32,
+				14,
+				4,
+				33,
+				15
+			],
+			[
+				4,
+				39,
+				13,
+				1,
+				40,
+				14
+			],
+			[
+				2,
+				121,
+				97
+			],
+			[
+				2,
+				60,
+				38,
+				2,
+				61,
+				39
+			],
+			[
+				4,
+				40,
+				18,
+				2,
+				41,
+				19
+			],
+			[
+				4,
+				40,
+				14,
+				2,
+				41,
+				15
+			],
+			[
+				2,
+				146,
+				116
+			],
+			[
+				3,
+				58,
+				36,
+				2,
+				59,
+				37
+			],
+			[
+				4,
+				36,
+				16,
+				4,
+				37,
+				17
+			],
+			[
+				4,
+				36,
+				12,
+				4,
+				37,
+				13
+			],
+			[
+				2,
+				86,
+				68,
+				2,
+				87,
+				69
+			],
+			[
+				4,
+				69,
+				43,
+				1,
+				70,
+				44
+			],
+			[
+				6,
+				43,
+				19,
+				2,
+				44,
+				20
+			],
+			[
+				6,
+				43,
+				15,
+				2,
+				44,
+				16
+			],
+			[
+				4,
+				101,
+				81
+			],
+			[
+				1,
+				80,
+				50,
+				4,
+				81,
+				51
+			],
+			[
+				4,
+				50,
+				22,
+				4,
+				51,
+				23
+			],
+			[
+				3,
+				36,
+				12,
+				8,
+				37,
+				13
+			],
+			[
+				2,
+				116,
+				92,
+				2,
+				117,
+				93
+			],
+			[
+				6,
+				58,
+				36,
+				2,
+				59,
+				37
+			],
+			[
+				4,
+				46,
+				20,
+				6,
+				47,
+				21
+			],
+			[
+				7,
+				42,
+				14,
+				4,
+				43,
+				15
+			],
+			[
+				4,
+				133,
+				107
+			],
+			[
+				8,
+				59,
+				37,
+				1,
+				60,
+				38
+			],
+			[
+				8,
+				44,
+				20,
+				4,
+				45,
+				21
+			],
+			[
+				12,
+				33,
+				11,
+				4,
+				34,
+				12
+			],
+			[
+				3,
+				145,
+				115,
+				1,
+				146,
+				116
+			],
+			[
+				4,
+				64,
+				40,
+				5,
+				65,
+				41
+			],
+			[
+				11,
+				36,
+				16,
+				5,
+				37,
+				17
+			],
+			[
+				11,
+				36,
+				12,
+				5,
+				37,
+				13
+			],
+			[
+				5,
+				109,
+				87,
+				1,
+				110,
+				88
+			],
+			[
+				5,
+				65,
+				41,
+				5,
+				66,
+				42
+			],
+			[
+				5,
+				54,
+				24,
+				7,
+				55,
+				25
+			],
+			[
+				11,
+				36,
+				12,
+				7,
+				37,
+				13
+			],
+			[
+				5,
+				122,
+				98,
+				1,
+				123,
+				99
+			],
+			[
+				7,
+				73,
+				45,
+				3,
+				74,
+				46
+			],
+			[
+				15,
+				43,
+				19,
+				2,
+				44,
+				20
+			],
+			[
+				3,
+				45,
+				15,
+				13,
+				46,
+				16
+			],
+			[
+				1,
+				135,
+				107,
+				5,
+				136,
+				108
+			],
+			[
+				10,
+				74,
+				46,
+				1,
+				75,
+				47
+			],
+			[
+				1,
+				50,
+				22,
+				15,
+				51,
+				23
+			],
+			[
+				2,
+				42,
+				14,
+				17,
+				43,
+				15
+			],
+			[
+				5,
+				150,
+				120,
+				1,
+				151,
+				121
+			],
+			[
+				9,
+				69,
+				43,
+				4,
+				70,
+				44
+			],
+			[
+				17,
+				50,
+				22,
+				1,
+				51,
+				23
+			],
+			[
+				2,
+				42,
+				14,
+				19,
+				43,
+				15
+			],
+			[
+				3,
+				141,
+				113,
+				4,
+				142,
+				114
+			],
+			[
+				3,
+				70,
+				44,
+				11,
+				71,
+				45
+			],
+			[
+				17,
+				47,
+				21,
+				4,
+				48,
+				22
+			],
+			[
+				9,
+				39,
+				13,
+				16,
+				40,
+				14
+			],
+			[
+				3,
+				135,
+				107,
+				5,
+				136,
+				108
+			],
+			[
+				3,
+				67,
+				41,
+				13,
+				68,
+				42
+			],
+			[
+				15,
+				54,
+				24,
+				5,
+				55,
+				25
+			],
+			[
+				15,
+				43,
+				15,
+				10,
+				44,
+				16
+			],
+			[
+				4,
+				144,
+				116,
+				4,
+				145,
+				117
+			],
+			[
+				17,
+				68,
+				42
+			],
+			[
+				17,
+				50,
+				22,
+				6,
+				51,
+				23
+			],
+			[
+				19,
+				46,
+				16,
+				6,
+				47,
+				17
+			],
+			[
+				2,
+				139,
+				111,
+				7,
+				140,
+				112
+			],
+			[
+				17,
+				74,
+				46
+			],
+			[
+				7,
+				54,
+				24,
+				16,
+				55,
+				25
+			],
+			[
+				34,
+				37,
+				13
+			],
+			[
+				4,
+				151,
+				121,
+				5,
+				152,
+				122
+			],
+			[
+				4,
+				75,
+				47,
+				14,
+				76,
+				48
+			],
+			[
+				11,
+				54,
+				24,
+				14,
+				55,
+				25
+			],
+			[
+				16,
+				45,
+				15,
+				14,
+				46,
+				16
+			],
+			[
+				6,
+				147,
+				117,
+				4,
+				148,
+				118
+			],
+			[
+				6,
+				73,
+				45,
+				14,
+				74,
+				46
+			],
+			[
+				11,
+				54,
+				24,
+				16,
+				55,
+				25
+			],
+			[
+				30,
+				46,
+				16,
+				2,
+				47,
+				17
+			],
+			[
+				8,
+				132,
+				106,
+				4,
+				133,
+				107
+			],
+			[
+				8,
+				75,
+				47,
+				13,
+				76,
+				48
+			],
+			[
+				7,
+				54,
+				24,
+				22,
+				55,
+				25
+			],
+			[
+				22,
+				45,
+				15,
+				13,
+				46,
+				16
+			],
+			[
+				10,
+				142,
+				114,
+				2,
+				143,
+				115
+			],
+			[
+				19,
+				74,
+				46,
+				4,
+				75,
+				47
+			],
+			[
+				28,
+				50,
+				22,
+				6,
+				51,
+				23
+			],
+			[
+				33,
+				46,
+				16,
+				4,
+				47,
+				17
+			],
+			[
+				8,
+				152,
+				122,
+				4,
+				153,
+				123
+			],
+			[
+				22,
+				73,
+				45,
+				3,
+				74,
+				46
+			],
+			[
+				8,
+				53,
+				23,
+				26,
+				54,
+				24
+			],
+			[
+				12,
+				45,
+				15,
+				28,
+				46,
+				16
+			],
+			[
+				3,
+				147,
+				117,
+				10,
+				148,
+				118
+			],
+			[
+				3,
+				73,
+				45,
+				23,
+				74,
+				46
+			],
+			[
+				4,
+				54,
+				24,
+				31,
+				55,
+				25
+			],
+			[
+				11,
+				45,
+				15,
+				31,
+				46,
+				16
+			],
+			[
+				7,
+				146,
+				116,
+				7,
+				147,
+				117
+			],
+			[
+				21,
+				73,
+				45,
+				7,
+				74,
+				46
+			],
+			[
+				1,
+				53,
+				23,
+				37,
+				54,
+				24
+			],
+			[
+				19,
+				45,
+				15,
+				26,
+				46,
+				16
+			],
+			[
+				5,
+				145,
+				115,
+				10,
+				146,
+				116
+			],
+			[
+				19,
+				75,
+				47,
+				10,
+				76,
+				48
+			],
+			[
+				15,
+				54,
+				24,
+				25,
+				55,
+				25
+			],
+			[
+				23,
+				45,
+				15,
+				25,
+				46,
+				16
+			],
+			[
+				13,
+				145,
+				115,
+				3,
+				146,
+				116
+			],
+			[
+				2,
+				74,
+				46,
+				29,
+				75,
+				47
+			],
+			[
+				42,
+				54,
+				24,
+				1,
+				55,
+				25
+			],
+			[
+				23,
+				45,
+				15,
+				28,
+				46,
+				16
+			],
+			[
+				17,
+				145,
+				115
+			],
+			[
+				10,
+				74,
+				46,
+				23,
+				75,
+				47
+			],
+			[
+				10,
+				54,
+				24,
+				35,
+				55,
+				25
+			],
+			[
+				19,
+				45,
+				15,
+				35,
+				46,
+				16
+			],
+			[
+				17,
+				145,
+				115,
+				1,
+				146,
+				116
+			],
+			[
+				14,
+				74,
+				46,
+				21,
+				75,
+				47
+			],
+			[
+				29,
+				54,
+				24,
+				19,
+				55,
+				25
+			],
+			[
+				11,
+				45,
+				15,
+				46,
+				46,
+				16
+			],
+			[
+				13,
+				145,
+				115,
+				6,
+				146,
+				116
+			],
+			[
+				14,
+				74,
+				46,
+				23,
+				75,
+				47
+			],
+			[
+				44,
+				54,
+				24,
+				7,
+				55,
+				25
+			],
+			[
+				59,
+				46,
+				16,
+				1,
+				47,
+				17
+			],
+			[
+				12,
+				151,
+				121,
+				7,
+				152,
+				122
+			],
+			[
+				12,
+				75,
+				47,
+				26,
+				76,
+				48
+			],
+			[
+				39,
+				54,
+				24,
+				14,
+				55,
+				25
+			],
+			[
+				22,
+				45,
+				15,
+				41,
+				46,
+				16
+			],
+			[
+				6,
+				151,
+				121,
+				14,
+				152,
+				122
+			],
+			[
+				6,
+				75,
+				47,
+				34,
+				76,
+				48
+			],
+			[
+				46,
+				54,
+				24,
+				10,
+				55,
+				25
+			],
+			[
+				2,
+				45,
+				15,
+				64,
+				46,
+				16
+			],
+			[
+				17,
+				152,
+				122,
+				4,
+				153,
+				123
+			],
+			[
+				29,
+				74,
+				46,
+				14,
+				75,
+				47
+			],
+			[
+				49,
+				54,
+				24,
+				10,
+				55,
+				25
+			],
+			[
+				24,
+				45,
+				15,
+				46,
+				46,
+				16
+			],
+			[
+				4,
+				152,
+				122,
+				18,
+				153,
+				123
+			],
+			[
+				13,
+				74,
+				46,
+				32,
+				75,
+				47
+			],
+			[
+				48,
+				54,
+				24,
+				14,
+				55,
+				25
+			],
+			[
+				42,
+				45,
+				15,
+				32,
+				46,
+				16
+			],
+			[
+				20,
+				147,
+				117,
+				4,
+				148,
+				118
+			],
+			[
+				40,
+				75,
+				47,
+				7,
+				76,
+				48
+			],
+			[
+				43,
+				54,
+				24,
+				22,
+				55,
+				25
+			],
+			[
+				10,
+				45,
+				15,
+				67,
+				46,
+				16
+			],
+			[
+				19,
+				148,
+				118,
+				6,
+				149,
+				119
+			],
+			[
+				18,
+				75,
+				47,
+				31,
+				76,
+				48
+			],
+			[
+				34,
+				54,
+				24,
+				34,
+				55,
+				25
+			],
+			[
+				20,
+				45,
+				15,
+				61,
+				46,
+				16
+			]
+		];
+		const qrRSBlock = function(totalCount, dataCount) {
+			const _this = {};
+			_this.totalCount = totalCount;
+			_this.dataCount = dataCount;
+			return _this;
+		};
+		const _this = {};
+		const getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+			switch (errorCorrectionLevel) {
+				case QRErrorCorrectionLevel.L: return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+				case QRErrorCorrectionLevel.M: return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+				case QRErrorCorrectionLevel.Q: return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+				case QRErrorCorrectionLevel.H: return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+				default: return;
+			}
+		};
+		_this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+			const rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+			if (typeof rsBlock == "undefined") throw "bad rs block @ typeNumber:" + typeNumber + "/errorCorrectionLevel:" + errorCorrectionLevel;
+			const length = rsBlock.length / 3;
+			const list = [];
+			for (let i = 0; i < length; i += 1) {
+				const count = rsBlock[i * 3 + 0];
+				const totalCount = rsBlock[i * 3 + 1];
+				const dataCount = rsBlock[i * 3 + 2];
+				for (let j = 0; j < count; j += 1) list.push(qrRSBlock(totalCount, dataCount));
+			}
+			return list;
+		};
+		return _this;
+	}();
+	var qrBitBuffer = function() {
+		const _buffer = [];
+		let _length = 0;
+		const _this = {};
+		_this.getBuffer = function() {
+			return _buffer;
+		};
+		_this.getAt = function(index) {
+			const bufIndex = Math.floor(index / 8);
+			return (_buffer[bufIndex] >>> 7 - index % 8 & 1) == 1;
+		};
+		_this.put = function(num, length) {
+			for (let i = 0; i < length; i += 1) _this.putBit((num >>> length - i - 1 & 1) == 1);
+		};
+		_this.getLengthInBits = function() {
+			return _length;
+		};
+		_this.putBit = function(bit) {
+			const bufIndex = Math.floor(_length / 8);
+			if (_buffer.length <= bufIndex) _buffer.push(0);
+			if (bit) _buffer[bufIndex] |= 128 >>> _length % 8;
+			_length += 1;
+		};
+		return _this;
+	};
+	var qrNumber = function(data) {
+		const _mode = QRMode.MODE_NUMBER;
+		const _data = data;
+		const _this = {};
+		_this.getMode = function() {
+			return _mode;
+		};
+		_this.getLength = function(buffer) {
+			return _data.length;
+		};
+		_this.write = function(buffer) {
+			const data = _data;
+			let i = 0;
+			while (i + 2 < data.length) {
+				buffer.put(strToNum(data.substring(i, i + 3)), 10);
+				i += 3;
+			}
+			if (i < data.length) {
+				if (data.length - i == 1) buffer.put(strToNum(data.substring(i, i + 1)), 4);
+				else if (data.length - i == 2) buffer.put(strToNum(data.substring(i, i + 2)), 7);
+			}
+		};
+		const strToNum = function(s) {
+			let num = 0;
+			for (let i = 0; i < s.length; i += 1) num = num * 10 + chatToNum(s.charAt(i));
+			return num;
+		};
+		const chatToNum = function(c) {
+			if ("0" <= c && c <= "9") return c.charCodeAt(0) - "0".charCodeAt(0);
+			throw "illegal char :" + c;
+		};
+		return _this;
+	};
+	var qrAlphaNum = function(data) {
+		const _mode = QRMode.MODE_ALPHA_NUM;
+		const _data = data;
+		const _this = {};
+		_this.getMode = function() {
+			return _mode;
+		};
+		_this.getLength = function(buffer) {
+			return _data.length;
+		};
+		_this.write = function(buffer) {
+			const s = _data;
+			let i = 0;
+			while (i + 1 < s.length) {
+				buffer.put(getCode(s.charAt(i)) * 45 + getCode(s.charAt(i + 1)), 11);
+				i += 2;
+			}
+			if (i < s.length) buffer.put(getCode(s.charAt(i)), 6);
+		};
+		const getCode = function(c) {
+			if ("0" <= c && c <= "9") return c.charCodeAt(0) - "0".charCodeAt(0);
+			else if ("A" <= c && c <= "Z") return c.charCodeAt(0) - "A".charCodeAt(0) + 10;
+			else switch (c) {
+				case " ": return 36;
+				case "$": return 37;
+				case "%": return 38;
+				case "*": return 39;
+				case "+": return 40;
+				case "-": return 41;
+				case ".": return 42;
+				case "/": return 43;
+				case ":": return 44;
+				default: throw "illegal char :" + c;
+			}
+		};
+		return _this;
+	};
+	var qr8BitByte = function(data) {
+		const _mode = QRMode.MODE_8BIT_BYTE;
+		const _bytes = qrcode.stringToBytes(data);
+		const _this = {};
+		_this.getMode = function() {
+			return _mode;
+		};
+		_this.getLength = function(buffer) {
+			return _bytes.length;
+		};
+		_this.write = function(buffer) {
+			for (let i = 0; i < _bytes.length; i += 1) buffer.put(_bytes[i], 8);
+		};
+		return _this;
+	};
+	var qrKanji = function(data) {
+		const _mode = QRMode.MODE_KANJI;
+		const stringToBytes = qrcode.stringToBytes;
+		(function(c, code) {
+			const test = stringToBytes(c);
+			if (test.length != 2 || (test[0] << 8 | test[1]) != code) throw "sjis not supported.";
+		})("友", 38726);
+		const _bytes = stringToBytes(data);
+		const _this = {};
+		_this.getMode = function() {
+			return _mode;
+		};
+		_this.getLength = function(buffer) {
+			return ~~(_bytes.length / 2);
+		};
+		_this.write = function(buffer) {
+			const data = _bytes;
+			let i = 0;
+			while (i + 1 < data.length) {
+				let c = (255 & data[i]) << 8 | 255 & data[i + 1];
+				if (33088 <= c && c <= 40956) c -= 33088;
+				else if (57408 <= c && c <= 60351) c -= 49472;
+				else throw "illegal char at " + (i + 1) + "/" + c;
+				c = (c >>> 8 & 255) * 192 + (c & 255);
+				buffer.put(c, 13);
+				i += 2;
+			}
+			if (i < data.length) throw "illegal char at " + (i + 1);
+		};
+		return _this;
+	};
+	var byteArrayOutputStream = function() {
+		const _bytes = [];
+		const _this = {};
+		_this.writeByte = function(b) {
+			_bytes.push(b & 255);
+		};
+		_this.writeShort = function(i) {
+			_this.writeByte(i);
+			_this.writeByte(i >>> 8);
+		};
+		_this.writeBytes = function(b, off, len) {
+			off = off || 0;
+			len = len || b.length;
+			for (let i = 0; i < len; i += 1) _this.writeByte(b[i + off]);
+		};
+		_this.writeString = function(s) {
+			for (let i = 0; i < s.length; i += 1) _this.writeByte(s.charCodeAt(i));
+		};
+		_this.toByteArray = function() {
+			return _bytes;
+		};
+		_this.toString = function() {
+			let s = "";
+			s += "[";
+			for (let i = 0; i < _bytes.length; i += 1) {
+				if (i > 0) s += ",";
+				s += _bytes[i];
+			}
+			s += "]";
+			return s;
+		};
+		return _this;
+	};
+	var base64EncodeOutputStream = function() {
+		let _buffer = 0;
+		let _buflen = 0;
+		let _length = 0;
+		let _base64 = "";
+		const _this = {};
+		const writeEncoded = function(b) {
+			_base64 += String.fromCharCode(encode(b & 63));
+		};
+		const encode = function(n) {
+			if (n < 0) throw "n:" + n;
+			else if (n < 26) return 65 + n;
+			else if (n < 52) return 97 + (n - 26);
+			else if (n < 62) return 48 + (n - 52);
+			else if (n == 62) return 43;
+			else if (n == 63) return 47;
+			else throw "n:" + n;
+		};
+		_this.writeByte = function(n) {
+			_buffer = _buffer << 8 | n & 255;
+			_buflen += 8;
+			_length += 1;
+			while (_buflen >= 6) {
+				writeEncoded(_buffer >>> _buflen - 6);
+				_buflen -= 6;
+			}
+		};
+		_this.flush = function() {
+			if (_buflen > 0) {
+				writeEncoded(_buffer << 6 - _buflen);
+				_buffer = 0;
+				_buflen = 0;
+			}
+			if (_length % 3 != 0) {
+				const padlen = 3 - _length % 3;
+				for (let i = 0; i < padlen; i += 1) _base64 += "=";
+			}
+		};
+		_this.toString = function() {
+			return _base64;
+		};
+		return _this;
+	};
+	var base64DecodeInputStream = function(str) {
+		const _str = str;
+		let _pos = 0;
+		let _buffer = 0;
+		let _buflen = 0;
+		const _this = {};
+		_this.read = function() {
+			while (_buflen < 8) {
+				if (_pos >= _str.length) {
+					if (_buflen == 0) return -1;
+					throw "unexpected end of file./" + _buflen;
+				}
+				const c = _str.charAt(_pos);
+				_pos += 1;
+				if (c == "=") {
+					_buflen = 0;
+					return -1;
+				} else if (c.match(/^\s$/)) continue;
+				_buffer = _buffer << 6 | decode(c.charCodeAt(0));
+				_buflen += 6;
+			}
+			const n = _buffer >>> _buflen - 8 & 255;
+			_buflen -= 8;
+			return n;
+		};
+		const decode = function(c) {
+			if (65 <= c && c <= 90) return c - 65;
+			else if (97 <= c && c <= 122) return c - 97 + 26;
+			else if (48 <= c && c <= 57) return c - 48 + 52;
+			else if (c == 43) return 62;
+			else if (c == 47) return 63;
+			else throw "c:" + c;
+		};
+		return _this;
+	};
+	var gifImage = function(width, height) {
+		const _width = width;
+		const _height = height;
+		const _data = new Array(width * height);
+		const _this = {};
+		_this.setPixel = function(x, y, pixel) {
+			_data[y * _width + x] = pixel;
+		};
+		_this.write = function(out) {
+			out.writeString("GIF87a");
+			out.writeShort(_width);
+			out.writeShort(_height);
+			out.writeByte(128);
+			out.writeByte(0);
+			out.writeByte(0);
+			out.writeByte(0);
+			out.writeByte(0);
+			out.writeByte(0);
+			out.writeByte(255);
+			out.writeByte(255);
+			out.writeByte(255);
+			out.writeString(",");
+			out.writeShort(0);
+			out.writeShort(0);
+			out.writeShort(_width);
+			out.writeShort(_height);
+			out.writeByte(0);
+			const lzwMinCodeSize = 2;
+			const raster = getLZWRaster(lzwMinCodeSize);
+			out.writeByte(lzwMinCodeSize);
+			let offset = 0;
+			while (raster.length - offset > 255) {
+				out.writeByte(255);
+				out.writeBytes(raster, offset, 255);
+				offset += 255;
+			}
+			out.writeByte(raster.length - offset);
+			out.writeBytes(raster, offset, raster.length - offset);
+			out.writeByte(0);
+			out.writeString(";");
+		};
+		const bitOutputStream = function(out) {
+			const _out = out;
+			let _bitLength = 0;
+			let _bitBuffer = 0;
+			const _this = {};
+			_this.write = function(data, length) {
+				if (data >>> length != 0) throw "length over";
+				while (_bitLength + length >= 8) {
+					_out.writeByte(255 & (data << _bitLength | _bitBuffer));
+					length -= 8 - _bitLength;
+					data >>>= 8 - _bitLength;
+					_bitBuffer = 0;
+					_bitLength = 0;
+				}
+				_bitBuffer = data << _bitLength | _bitBuffer;
+				_bitLength = _bitLength + length;
+			};
+			_this.flush = function() {
+				if (_bitLength > 0) _out.writeByte(_bitBuffer);
+			};
+			return _this;
+		};
+		const getLZWRaster = function(lzwMinCodeSize) {
+			const clearCode = 1 << lzwMinCodeSize;
+			const endCode = (1 << lzwMinCodeSize) + 1;
+			let bitLength = lzwMinCodeSize + 1;
+			const table = lzwTable();
+			for (let i = 0; i < clearCode; i += 1) table.add(String.fromCharCode(i));
+			table.add(String.fromCharCode(clearCode));
+			table.add(String.fromCharCode(endCode));
+			const byteOut = byteArrayOutputStream();
+			const bitOut = bitOutputStream(byteOut);
+			bitOut.write(clearCode, bitLength);
+			let dataIndex = 0;
+			let s = String.fromCharCode(_data[dataIndex]);
+			dataIndex += 1;
+			while (dataIndex < _data.length) {
+				const c = String.fromCharCode(_data[dataIndex]);
+				dataIndex += 1;
+				if (table.contains(s + c)) s = s + c;
+				else {
+					bitOut.write(table.indexOf(s), bitLength);
+					if (table.size() < 4095) {
+						if (table.size() == 1 << bitLength) bitLength += 1;
+						table.add(s + c);
+					}
+					s = c;
+				}
+			}
+			bitOut.write(table.indexOf(s), bitLength);
+			bitOut.write(endCode, bitLength);
+			bitOut.flush();
+			return byteOut.toByteArray();
+		};
+		const lzwTable = function() {
+			const _map = {};
+			let _size = 0;
+			const _this = {};
+			_this.add = function(key) {
+				if (_this.contains(key)) throw "dup key:" + key;
+				_map[key] = _size;
+				_size += 1;
+			};
+			_this.size = function() {
+				return _size;
+			};
+			_this.indexOf = function(key) {
+				return _map[key];
+			};
+			_this.contains = function(key) {
+				return typeof _map[key] != "undefined";
+			};
+			return _this;
+		};
+		return _this;
+	};
+	var createDataURL = function(width, height, getPixel) {
+		const gif = gifImage(width, height);
+		for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) gif.setPixel(x, y, getPixel(x, y));
+		const b = byteArrayOutputStream();
+		gif.write(b);
+		const base64 = base64EncodeOutputStream();
+		const bytes = b.toByteArray();
+		for (let i = 0; i < bytes.length; i += 1) base64.writeByte(bytes[i]);
+		base64.flush();
+		return "data:image/gif;base64," + base64;
+	};
+	qrcode.stringToBytes;
+	function createSheet(className, label, options = {}) {
+		const dialog = document.createElement("dialog");
+		dialog.className = `nspp-sheet ${className}`;
+		if (options.tall) dialog.classList.add("nspp-sheet-tall");
+		dialog.setAttribute("aria-label", label);
+		if (options.dismissible !== false) dialog.addEventListener("click", (event) => {
+			if (event.target !== dialog) return;
+			const rect = dialog.getBoundingClientRect();
+			if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+		});
+		return dialog;
+	}
+	var SHARE_TITLE = "NodeSeek++";
+	var SHARE_PITCH = "NodeSeek / DeepFlood 论坛增强脚本：用户资料卡、帖子监控、实时热榜、消息中心、阅读增强。";
+	var SHARE_TEXT = [
+		`推荐 ${SHARE_TITLE}：${SHARE_PITCH}`,
+		`一键安装：${UPDATE_URL}`,
+		`项目主页：${REPOSITORY_URL}`
+	].join("\n");
+	var svgIcon = (d, fill = false) => {
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("viewBox", "0 0 24 24");
+		svg.setAttribute("width", "22");
+		svg.setAttribute("height", "22");
+		svg.setAttribute("aria-hidden", "true");
+		if (fill) svg.setAttribute("fill", "currentColor");
+		else {
+			svg.setAttribute("fill", "none");
+			svg.setAttribute("stroke", "currentColor");
+			svg.setAttribute("stroke-width", "1.8");
+			svg.setAttribute("stroke-linecap", "round");
+			svg.setAttribute("stroke-linejoin", "round");
+		}
+		const path = document.createElementNS(svg.namespaceURI, "path");
+		path.setAttribute("d", d);
+		svg.append(path);
+		return svg;
+	};
+	var icons = {
+		share: () => svgIcon("M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"),
+		download: () => svgIcon("M12 3v12M7 10l5 5 5-5M4 19h16"),
+		x: () => svgIcon("M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3Zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43Z", true),
+		telegram: () => svgIcon("M21 4 3 11l7 2 2 7 3-5 5 4 1-15ZM10 13l11-9")
+	};
+	function qrSvg() {
+		const qr = qrcode(0, "M");
+		qr.addData(REPOSITORY_URL);
+		qr.make();
+		const svg = new DOMParser().parseFromString(qr.createSvgTag({
+			cellSize: 4,
+			margin: 0,
+			scalable: true
+		}), "image/svg+xml").documentElement;
+		svg.setAttribute("role", "img");
+		svg.setAttribute("aria-label", "NodeSeek++ 项目主页二维码");
+		return document.importNode(svg, true);
+	}
+	function shareCard() {
+		const qr = qrcode(0, "M");
+		qr.addData(REPOSITORY_URL);
+		qr.make();
+		const cell = 8, size = (qr.getModuleCount() + 8) * cell, header = 76, footer = 56;
+		const canvas = document.createElement("canvas");
+		canvas.width = size + 64;
+		canvas.height = size + 64 + header + footer;
+		const c = canvas.getContext("2d");
+		if (!c) return canvas;
+		c.fillStyle = "#ffffff";
+		c.fillRect(0, 0, canvas.width, canvas.height);
+		c.fillStyle = "#1f2328";
+		c.textAlign = "center";
+		c.font = "600 28px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", sans-serif";
+		c.fillText(SHARE_TITLE, canvas.width / 2, 62);
+		c.fillStyle = "#59636e";
+		c.font = "15px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", sans-serif";
+		c.fillText("NodeSeek / DeepFlood 论坛增强脚本", canvas.width / 2, 90);
+		c.save();
+		c.translate(64, 140);
+		qr.renderTo2dContext(c, cell);
+		c.restore();
+		c.fillText("扫码查看安装方法", canvas.width / 2, 108 + size + 30);
+		return canvas;
+	}
+	var share = {
+		id: "share",
+		title: "分享入口",
+		description: "工具栏显示分享按钮：保存二维码，或分享到 X、Telegram 和系统分享。",
+		group: "操作辅助",
+		defaults: { enabled: true },
+		mount(ctx) {
+			const launch = document.createElement("button");
+			launch.type = "button";
+			launch.className = "nspp-tool-icon";
+			launch.title = "分享 NodeSeek++";
+			launch.setAttribute("aria-label", launch.title);
+			launch.dataset.nsppShareLauncher = "";
+			launch.append(toolIcon("share"));
+			const panel = createSheet("nspp-share", "分享 NodeSeek++");
+			const head = document.createElement("div");
+			head.className = "nspp-share-head";
+			const title = document.createElement("strong");
+			title.textContent = "分享 NodeSeek++";
+			const close = document.createElement("button");
+			close.type = "button";
+			close.className = "nspp-share-close";
+			close.title = "关闭";
+			close.setAttribute("aria-label", close.title);
+			close.append(toolIcon("close"));
+			close.addEventListener("click", () => panel.close(), { signal: ctx.signal });
+			head.append(title, close);
+			const intro = document.createElement("div");
+			intro.className = "nspp-share-intro";
+			const qr = document.createElement("div");
+			qr.className = "nspp-share-qr";
+			const about = document.createElement("div");
+			const pitch = document.createElement("p");
+			pitch.textContent = SHARE_PITCH;
+			const hint = document.createElement("small");
+			hint.textContent = "扫码打开项目主页，查看截图和安装方法";
+			about.append(pitch, hint);
+			intro.append(qr, about);
+			const textBox = document.createElement("div");
+			textBox.className = "nspp-share-text";
+			const text = document.createElement("pre");
+			text.textContent = SHARE_TEXT;
+			const copyText = document.createElement("button");
+			copyText.type = "button";
+			copyText.textContent = "复制文案";
+			textBox.append(text, copyText);
+			const actions = document.createElement("div");
+			actions.className = "nspp-share-actions";
+			const action = (label, icon, run) => {
+				const button = document.createElement("button");
+				button.type = "button";
+				const circle = document.createElement("span");
+				circle.append(icon);
+				button.append(circle, label);
+				button.addEventListener("click", run, { signal: ctx.signal });
+				actions.append(button);
+			};
+			const open = (url) => window.open(url, "_blank", "noopener,noreferrer");
+			const copy = async () => {
+				try {
+					await navigator.clipboard.writeText(SHARE_TEXT);
+					ctx.notify("已复制分享文案和安装地址");
+				} catch {
+					ctx.notify("复制失败，请手动复制项目地址");
+				}
+			};
+			let canvas;
+			action("保存二维码", icons.download(), () => {
+				canvas ||= shareCard();
+				canvas.toBlob((blob) => {
+					if (!blob) {
+						ctx.notify("二维码生成失败");
+						return;
+					}
+					const url = URL.createObjectURL(blob);
+					const link = document.createElement("a");
+					link.href = url;
+					link.download = "nodeseek-plus-plus-qrcode.png";
+					link.click();
+					setTimeout(() => URL.revokeObjectURL(url), 1e3);
+				}, "image/png");
+			});
+			action("X", icons.x(), () => open(`https://x.com/intent/post?text=${encodeURIComponent(`推荐 ${SHARE_TITLE}：${SHARE_PITCH}`)}&url=${encodeURIComponent(REPOSITORY_URL)}`));
+			action("Telegram", icons.telegram(), () => open(`https://t.me/share/url?url=${encodeURIComponent(REPOSITORY_URL)}&text=${encodeURIComponent(`推荐 ${SHARE_TITLE}：${SHARE_PITCH}\n一键安装：${UPDATE_URL}`)}`));
+			action("更多", icons.share(), () => {
+				if (typeof navigator.share === "function") navigator.share({
+					title: SHARE_TITLE,
+					text: SHARE_TEXT
+				}).catch((error) => {
+					if (error?.name !== "AbortError") copy();
+				});
+				else copy();
+			});
+			copyText.addEventListener("click", () => {
+				copy();
+			}, { signal: ctx.signal });
+			panel.append(head, intro, textBox, actions);
+			document.body.append(panel);
+			const tools = document.getElementById("nspp-tools") || document.body;
+			const settings = tools.querySelector("[data-nspp-settings-launcher]");
+			if (settings) settings.before(launch);
+			else tools.append(launch);
+			launch.addEventListener("click", () => {
+				if (!qr.firstChild) qr.append(qrSvg());
+				panel.showModal();
+			}, { signal: ctx.signal });
+			return () => {
+				panel.remove();
+				launch.remove();
+			};
+		}
+	};
 	var element$1 = (tag, text) => {
 		const node = document.createElement(tag);
 		if (text) node.textContent = text;
 		return node;
+	};
+	var categoryOrder = [
+		"浏览",
+		"用户",
+		"工具",
+		"其他"
+	];
+	var categories = {
+		阅读: "浏览",
+		外观: "浏览",
+		导航: "浏览",
+		过滤: "用户",
+		用户: "用户",
+		操作辅助: "工具",
+		监控: "工具",
+		编辑: "工具",
+		网络: "其他"
+	};
+	var categoryOf = (feature) => categories[feature.group] || "其他";
+	var dependsOn = {
+		"user-level.levelColor": (settings) => settings.colors === "custom",
+		"user-level.trustColor": (settings) => settings.colors === "custom",
+		"user-level.roleColor": (settings) => settings.colors === "custom",
+		"image-upload.base": (settings) => settings.provider !== "NodeImage",
+		"image-upload.customField": (settings) => settings.provider === "Custom",
+		"image-upload.customHeaders": (settings) => settings.provider === "Custom",
+		"image-upload.customResult": (settings) => settings.provider === "Custom",
+		"reading-focus.height": (settings) => settings.collapse === true
 	};
 	function mountSettings(features) {
 		const host = element$1("div");
 		host.id = "nspp-settings";
 		host.toggleAttribute("data-dark", document.body.classList.contains("dark-layout"));
 		const shadow = host.attachShadow({ mode: "open" });
-		const style = element$1("style", style_default$1 + loading_default);
+		const style = element$1("style", style_default + sheet_default + loading_default);
 		const launch = element$1("button");
 		launch.type = "button";
 		launch.append(toolIcon("settings"));
@@ -844,21 +3588,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		launch.title = "打开 NodeSeek++ 设置";
 		launch.setAttribute("aria-label", launch.title);
 		const dialog = element$1("dialog");
+		dialog.className = "nspp-sheet";
 		dialog.setAttribute("aria-labelledby", "nspp-title");
 		const header = element$1("header");
 		const heading = element$1("div");
 		const title = element$1("h2", "NodeSeek++");
 		title.id = "nspp-title";
 		heading.className = "heading";
-		heading.append(title, element$1("small", `v26.917.1446`));
-		const checkUpdate = element$1("button", "检查更新");
-		checkUpdate.type = "button";
-		checkUpdate.className = "check-update";
-		heading.append(checkUpdate);
+		heading.append(title, element$1("small", `v26.1030.1015`));
 		const close = element$1("button", "关闭");
 		close.type = "button";
 		close.className = "settings-close";
-		header.append(heading);
 		const search = element$1("input");
 		search.type = "search";
 		search.placeholder = "搜索功能…";
@@ -866,7 +3606,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		const searchBar = element$1("div");
 		searchBar.className = "search-bar";
 		searchBar.append(search);
-		header.append(searchBar);
+		header.append(heading, searchBar);
 		const content = element$1("div");
 		content.className = "content";
 		const navigation = element$1("nav");
@@ -889,6 +3629,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		clearCache.title = "清除当前站点的插件用户资料、通知计数和回帖足迹缓存并刷新页面；保留配置、阅读历史和监控记录，未保存的设置不会保存。";
 		const exportButton = element$1("button", "导出配置");
 		const importButton = element$1("button", "导入配置");
+		reset.title = "所有功能恢复默认，保存后生效。";
+		exportButton.title = "导出为 JSON，不含密钥和历史。";
 		[
 			reset,
 			clearCache,
@@ -899,7 +3641,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		file.type = "file";
 		file.accept = ".json,application/json";
 		file.hidden = true;
-		actions.append(exportButton, importButton, clearCache, reset, close, save, file);
+		const dataTools = element$1("div");
+		dataTools.className = "data-tools";
+		dataTools.append(exportButton, importButton, clearCache, reset, file);
+		actions.append(close, save);
 		const footer = element$1("footer");
 		footer.className = "settings-footer";
 		footer.append(actions);
@@ -949,18 +3694,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			toastTimer = setTimeout(dismissToast, 6e3);
 		};
 		const updates = createUpdateChecker(notify, () => !document.hidden && !dialog.open && !document.querySelector("dialog[open]"));
-		checkUpdate.addEventListener("click", async () => {
-			checkUpdate.disabled = true;
-			checkUpdate.setAttribute("aria-busy", "true");
-			checkUpdate.textContent = "检查中…";
-			try {
-				await updates.check();
-			} finally {
-				checkUpdate.disabled = false;
-				checkUpdate.removeAttribute("aria-busy");
-				checkUpdate.textContent = "检查更新";
-			}
-		});
 		let sections = [];
 		let links = [];
 		function activate(index) {
@@ -980,6 +3713,97 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			activate(current);
 		}
 		content.addEventListener("scroll", syncCategory, { passive: true });
+		function addSection(name) {
+			const group = element$1("section");
+			const index = sections.length;
+			group.id = `nspp-category-${index}`;
+			const link = element$1("a", name);
+			link.href = `#${group.id}`;
+			link.addEventListener("click", (event) => {
+				event.preventDefault();
+				content.scrollTo({
+					top: content.scrollTop + group.getBoundingClientRect().top - content.getBoundingClientRect().top,
+					behavior: "instant"
+				});
+				activate(index);
+			});
+			sections.push(group);
+			links.push(link);
+			navigation.append(link);
+			group.append(element$1("h3", name));
+			content.append(group);
+			return group;
+		}
+		function renderFeature(feature) {
+			const settings = draft[feature.id];
+			const row = element$1("article");
+			const label = element$1("label");
+			label.className = "feature-heading";
+			label.title = feature.description;
+			const toggle = element$1("input");
+			toggle.type = "checkbox";
+			toggle.checked = settings.enabled === true;
+			label.append(element$1("strong", feature.title), toggle);
+			row.append(label);
+			const options = Object.keys(feature.defaults).filter((key) => key !== "enabled");
+			if (!options.length) {
+				toggle.addEventListener("change", () => {
+					settings.enabled = toggle.checked;
+				});
+				return row;
+			}
+			const details = element$1("div");
+			details.className = "feature-options";
+			const conditional = [];
+			const sync = () => {
+				details.hidden = !toggle.checked;
+				for (const [field, visible] of conditional) field.hidden = !visible();
+			};
+			toggle.addEventListener("change", () => {
+				settings.enabled = toggle.checked;
+				sync();
+			});
+			for (const key of options) {
+				const metadata = feature.fields?.[key];
+				const value = settings[key];
+				const field = element$1("label");
+				field.className = "field";
+				field.append(element$1("span", metadata?.label || key));
+				let control;
+				if (metadata?.type === "select") {
+					control = element$1("select");
+					for (const option of metadata.options || []) {
+						const item = element$1("option", option.label);
+						item.value = option.value;
+						control.append(item);
+					}
+				} else if (metadata?.type === "textarea") {
+					control = element$1("textarea");
+					control.rows = 3;
+				} else {
+					control = element$1("input");
+					control.type = metadata?.type === "color" ? "color" : typeof value === "boolean" ? "checkbox" : typeof value === "number" ? "number" : /^(api[-_]?key|token|password|secret|access[-_]?token)$/i.test(key) ? "password" : "text";
+				}
+				if (typeof value === "boolean" && control instanceof HTMLInputElement) control.checked = value;
+				else if (feature.id === "request-settings" && control instanceof HTMLInputElement) {
+					control.min = key === "maxConcurrent" ? "1" : "0";
+					control.max = key === "maxConcurrent" ? "10" : "5000";
+					control.step = "1";
+					control.value = String(value);
+				} else control.value = String(value);
+				control.addEventListener("input", () => {
+					settings[key] = typeof value === "boolean" ? control.checked : typeof value === "number" ? Number(control.value) : control.value;
+					sync();
+				});
+				field.append(control);
+				details.append(field);
+				const visible = dependsOn[`${feature.id}.${key}`];
+				if (visible) conditional.push([field, () => visible(settings)]);
+			}
+			sync();
+			row.append(details);
+			return row;
+		}
 		function render() {
 			content.replaceChildren();
 			navigation.replaceChildren();
@@ -987,126 +3811,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			links = [];
 			const query = search.value.toLocaleLowerCase().trim();
 			const groups = new Map();
-			const categories = {
-				阅读: "浏览",
-				外观: "界面",
-				导航: "界面",
-				过滤: "用户",
-				用户: "用户",
-				操作辅助: "工具",
-				监控: "工具",
-				编辑: "工具"
-			};
-			for (const feature of features) {
-				const category = categories[feature.group] || feature.group;
+			const ordered = [...features].sort((a, b) => categoryOrder.indexOf(categoryOf(a)) - categoryOrder.indexOf(categoryOf(b)));
+			for (const feature of ordered) {
+				const category = categoryOf(feature);
 				if (query && !`${feature.title} ${feature.description} ${feature.group} ${category} ${Object.values(feature.fields || {}).map((field) => field.label).join(" ")}`.toLocaleLowerCase().includes(query)) continue;
 				let group = groups.get(category);
 				if (!group) {
-					group = element$1("section");
-					const index = sections.length;
-					group.id = `nspp-category-${index}`;
-					const link = element$1("a", category);
-					link.href = `#${group.id}`;
-					link.addEventListener("click", (event) => {
-						event.preventDefault();
-						const section = sections[index];
-						content.scrollTo({
-							top: content.scrollTop + section.getBoundingClientRect().top - content.getBoundingClientRect().top,
-							behavior: "instant"
-						});
-						activate(index);
-					});
-					sections.push(group);
-					links.push(link);
-					navigation.append(link);
-					group.append(element$1("h3", category));
+					group = addSection(category);
 					groups.set(category, group);
-					content.append(group);
 				}
-				const row = element$1("article");
-				const label = element$1("label");
-				label.className = "feature-heading";
-				const toggle = element$1("input");
-				toggle.type = "checkbox";
-				toggle.checked = draft[feature.id].enabled === true;
-				toggle.addEventListener("change", () => {
-					draft[feature.id].enabled = toggle.checked;
-				});
-				label.append(element$1("strong", feature.title), toggle);
-				row.append(label);
-				if (feature.id === "monitor") row.append(element$1("p", "开启后显示监控入口并运行监控；关闭后隐藏入口并停止检查。"));
-				if (feature.id === "request-settings") row.append(element$1("p", feature.description));
-				if ([
-					"ai-polish",
-					"official-blocklist",
-					"infinite-scroll"
-				].includes(feature.id)) row.append(element$1("p", {
-					"ai-polish": "开启并填写完整的 HTTPS 接口、模型和 API Key 后显示 AI 入口；配置在这里管理，写作在独立面板中使用。",
-					"official-blocklist": "添加或解除会修改站点黑名单。",
-					"infinite-scroll": "新增评论的回复、评分需打开原页。"
-				}[feature.id]));
-				const options = Object.keys(feature.defaults).filter((key) => key !== "enabled");
-				if (options.length) {
-					const details = element$1("div");
-					details.className = "feature-options";
-					for (const key of options) {
-						const metadata = feature.fields?.[key];
-						const value = draft[feature.id][key];
-						const field = element$1("label");
-						field.className = "field";
-						field.append(element$1("span", metadata?.label || key));
-						let control;
-						if (metadata?.type === "select") {
-							control = element$1("select");
-							for (const option of metadata.options || []) {
-								const item = element$1("option", option.label);
-								item.value = option.value;
-								control.append(item);
-							}
-						} else if (metadata?.type === "textarea") {
-							control = element$1("textarea");
-							control.rows = 4;
-						} else {
-							control = element$1("input");
-							control.type = metadata?.type === "color" ? "color" : typeof value === "boolean" ? "checkbox" : typeof value === "number" ? "number" : /^(api[-_]?key|token|password|secret|access[-_]?token)$/i.test(key) ? "password" : "text";
-						}
-						if (typeof value === "boolean" && control instanceof HTMLInputElement) control.checked = value;
-						else if (feature.id === "request-settings" && control instanceof HTMLInputElement) {
-							control.min = key === "maxConcurrent" ? "1" : "0";
-							control.max = key === "maxConcurrent" ? "10" : "5000";
-							control.step = "1";
-							control.value = String(value);
-						} else control.value = String(value);
-						control.addEventListener("input", () => {
-							draft[feature.id][key] = typeof value === "boolean" ? control.checked : typeof value === "number" ? Number(control.value) : control.value;
-						});
-						field.append(control);
-						details.append(field);
-					}
-					row.append(details);
-				}
-				group.append(row);
+				group.append(renderFeature(feature));
 			}
-			if (!query || "关于 nodeseek++ github 项目地址 下载 安装 更新 版本 使用说明 反馈 greasy fork 开源 许可证".includes(query)) {
-				const group = element$1("section");
-				const index = sections.length;
-				group.id = `nspp-category-${index}`;
-				const link = element$1("a", "关于");
-				link.href = `#${group.id}`;
-				link.addEventListener("click", (event) => {
-					event.preventDefault();
-					content.scrollTo({
-						top: content.scrollTop + group.getBoundingClientRect().top - content.getBoundingClientRect().top,
-						behavior: "instant"
-					});
-					activate(index);
-				});
-				group.append(element$1("h3", "关于"), aboutContent(() => updates.check()));
-				sections.push(group);
-				links.push(link);
-				navigation.append(link);
-				groups.set("关于", group);
-				content.append(group);
+			const showData = !query || "数据 导出 导入 配置 缓存 恢复默认 备份".includes(query);
+			const showAbout = !query || "关于 nodeseek++ github star 项目地址 下载 安装 更新 版本 使用说明 反馈 greasy fork 开源 许可证".includes(query);
+			if (showData || showAbout) {
+				const group = groups.get("其他") || addSection("其他");
+				groups.set("其他", group);
+				if (showData) {
+					const row = element$1("article");
+					row.append(element$1("strong", "数据"), dataTools);
+					group.append(row);
+				}
+				if (showAbout) group.append(aboutContent(() => updates.check(), () => {
+					const launcher = document.querySelector("[data-nspp-share-launcher]");
+					if (!launcher) {
+						navigator.clipboard?.writeText(SHARE_TEXT).then(() => notify("已复制分享文案和安装地址", "success"), () => notify("复制失败，请手动复制项目地址", "error"));
+						return;
+					}
+					dialog.close();
+					launcher.click();
+				}));
 			}
 			if (!groups.size) content.append(element$1("p", "没有匹配的功能"));
 			content.scrollTop = 0;
@@ -1207,55 +3941,368 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			stopUpdates: updates.stop
 		};
 	}
-	function copyButton(ctx, value, label = "复制", iconOnly = false) {
+	function postPath(href, base) {
+		try {
+			const url = new URL(href, base);
+			if (url.origin !== new URL(base).origin) return;
+			const id = url.pathname.match(/^\/post-(\d+)(?:-\d+)?(?:\.html)?\/?$/)?.[1];
+			return id ? `/post-${id}-1` : void 0;
+		} catch {
+			return;
+		}
+	}
+	function directLink(href, base) {
+		try {
+			let url = new URL(href, base);
+			for (let i = 0; i < 3 && url.origin === new URL(base).origin && url.pathname === "/jump" && url.searchParams.has("to"); i++) url = new URL(url.searchParams.get("to"), base);
+			return /^https?:$/.test(url.protocol) ? url.href : void 0;
+		} catch {
+			return;
+		}
+	}
+	var filterLines = (value) => String(value || "").split(/\n|,/).map((s) => s.trim()).filter(Boolean);
+	function shouldFilter(title, author, keywords, users, level, required) {
+		return keywords.some((k) => title.toLowerCase().includes(k.toLowerCase())) || users.includes(author) || level >= 0 && Number.isFinite(required) && required > level;
+	}
+	var VOTES$1 = [
+		{
+			title: "点赞",
+			icon: "good-one",
+			endpoint: "upvote",
+			done: "upvoted",
+			total: "upvoteCount",
+			ask: ""
+		},
+		{
+			title: "加鸡腿",
+			icon: "chicken-leg",
+			endpoint: "like",
+			done: "liked",
+			total: "likeCount",
+			ask: "是否投喂鸡腿，这将消耗你一个鸡腿"
+		},
+		{
+			title: "反对",
+			icon: "bad-one",
+			endpoint: "dislike",
+			done: "disliked",
+			total: "dislikeCount",
+			ask: "是否反对该回答，这将消耗你两个鸡腿"
+		}
+	];
+	function pageFloors(doc) {
+		const raw = doc.querySelector("#temp-script")?.textContent?.trim();
+		if (!raw) return [];
+		try {
+			const comments = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(raw), (c) => c.charCodeAt(0))))?.postData?.comments;
+			return Array.isArray(comments) ? comments.filter((c) => Number.isSafeInteger(c?.commentId) && Number.isSafeInteger(c?.floorIndex)) : [];
+		} catch {
+			return [];
+		}
+	}
+	var pageCallback = (fn) => {
+		const exporter = globalThis.exportFunction;
+		return typeof exporter === "function" ? exporter(fn, unsafeWindow$1) : fn;
+	};
+	function fillFloorMenus(ctx, items, floors, source) {
+		const page = unsafeWindow$1;
+		const loggedIn = () => !!page.__config__?.user;
+		const alert = (message) => {
+			try {
+				if (typeof page.mscAlert === "function") {
+					page.mscAlert(message);
+					return;
+				}
+			} catch {}
+			ctx.notify(message);
+		};
+		const confirm = (message) => new Promise((resolve) => {
+			try {
+				if (typeof page.mscConfirm === "function") {
+					page.mscConfirm(message, pageCallback(() => resolve(true)), pageCallback(() => resolve(false)));
+					return;
+				}
+			} catch {}
+			resolve(window.confirm(message));
+		});
+		const native = document.querySelector(".comment-menu:not([data-nspp-floor-menu])");
+		const scope = native ? Array.from(native.attributes, (attribute) => attribute.name).find((name) => name.startsWith("data-v-")) : void 0;
+		const make = (tag, className = "") => {
+			const node = document.createElement(tag);
+			if (className) node.className = className;
+			if (scope) node.setAttribute(scope, "");
+			return node;
+		};
+		const glyph = (name) => {
+			const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			svg.setAttribute("class", "iconpark-icon");
+			const use = document.createElementNS(svg.namespaceURI, "use");
+			use.setAttribute("href", `#${name}`);
+			if (scope) {
+				svg.setAttribute(scope, "");
+				use.setAttribute(scope, "");
+			}
+			svg.append(use);
+			return svg;
+		};
+		const item = (title, icon, text, run) => {
+			const node = make("div", "menu-item");
+			node.title = title;
+			node.tabIndex = 0;
+			node.setAttribute("role", "button");
+			const label = make("span");
+			label.textContent = text;
+			node.append(glyph(icon), label);
+			node.addEventListener("click", run, { signal: ctx.signal });
+			node.addEventListener("keydown", (event) => {
+				if (event.key === "Enter" || event.key === " ") {
+					event.preventDefault();
+					run();
+				}
+			}, { signal: ctx.signal });
+			return node;
+		};
+		const toEditor = (action, record) => {
+			const editor = page.editor, comments = page.__config__?.postData?.comments;
+			if (typeof editor?.[action] !== "function" || !Array.isArray(comments)) {
+				window.open(`${source.replace(/#.*$/, "")}#${record.floorIndex}`, "_blank", "noopener,noreferrer");
+				return;
+			}
+			let index = comments.findIndex((comment) => comment?.commentId === record.commentId);
+			if (index < 0) index = comments.push(page.JSON.parse(JSON.stringify(record))) - 1;
+			editor[action](index);
+		};
+		for (const floorItem of items) {
+			const mount = floorItem.querySelector(":scope > .comment-menu-mount");
+			const number = Number(floorItem.querySelector(".floor-link")?.textContent?.match(/\d+/)?.[0] ?? floorItem.id);
+			const record = floors.find((floor) => floor.floorIndex === number);
+			if (!mount || !record) continue;
+			const menu = make("div", "comment-menu");
+			menu.setAttribute("data-nspp-floor-menu", "");
+			const parts = [];
+			for (const vote of VOTES$1) {
+				let busy = false;
+				const node = item(vote.title, vote.icon, String(record[vote.total] ?? 0), async () => {
+					if (busy) return;
+					if (!loggedIn()) {
+						alert("您未登录，请登录后继续操作");
+						return;
+					}
+					if (vote.ask && record[vote.done]) {
+						alert(`已经进行过${vote.title}操作`);
+						return;
+					}
+					busy = true;
+					try {
+						if (vote.ask) {
+							let question = vote.ask;
+							if (vote.endpoint === "like") try {
+								const today = await ctx.request("/api/progress/today?scope=freelike");
+								if (Number(today?.maxFreeLike) > Number(today?.freeLikeUsed)) question = "是否投喂鸡腿，本次投喂免费";
+							} catch {}
+							if (!await confirm(question)) return;
+						}
+						const result = await ctx.request(`/api/statistics/${vote.endpoint}`, {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({
+								commentId: record.commentId,
+								action: "add"
+							})
+						});
+						if (!result?.success) {
+							alert(result?.message || `${vote.title}未成功`);
+							return;
+						}
+						record[vote.done] = true;
+						if (typeof result.current === "number") record[vote.total] = result.current;
+						node.classList.add("clicked");
+						node.querySelector("span").textContent = String(record[vote.total] ?? 0);
+					} catch (error) {
+						alert(error instanceof Error ? error.message : `${vote.title}未成功`);
+					} finally {
+						busy = false;
+					}
+				});
+				if (record[vote.done]) node.classList.add("clicked");
+				parts.push(node);
+			}
+			if (loggedIn()) {
+				parts.push(item("引用", "quote", "引用", () => toEditor("quote", record)));
+				if (!record.poster?.isMe) parts.push(item("回复", "back", "回复", () => toEditor("reply", record)));
+			}
+			parts.forEach((part, index) => {
+				if (index) menu.append(" ");
+				menu.append(part);
+			});
+			mount.replaceWith(menu);
+		}
+	}
+	function mount(ctx) {
+		const comments = /^\/post-/.test(location.pathname);
+		if (!ctx.get(comments ? "comments" : "posts")) return;
+		const selector = comments ? "ul.comments" : "ul.post-list:not(.topic-carousel-panel)";
+		const list = document.querySelector(selector);
+		if (!list) return;
+		let next = document.querySelector(".nsk-pager a.pager-next")?.href;
+		let busy = false, failed = false, paused = false;
+		const replying = () => comments && document.documentElement.hasAttribute("data-nspp-reply-open");
+		let loading;
+		const visited = new Set([location.href]);
 		const button = document.createElement("button");
 		button.type = "button";
-		button.className = "nspp-copy-button";
-		let timer;
-		const show = (copied) => {
-			const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-			icon.setAttribute("viewBox", "0 0 24 24");
-			icon.setAttribute("width", "14");
-			icon.setAttribute("height", "14");
-			icon.setAttribute("fill", "none");
-			icon.setAttribute("stroke", "currentColor");
-			icon.setAttribute("stroke-width", "1.8");
-			icon.setAttribute("stroke-linecap", "round");
-			icon.setAttribute("stroke-linejoin", "round");
-			icon.setAttribute("aria-hidden", "true");
-			const path = document.createElementNS(icon.namespaceURI, "path");
-			path.setAttribute("d", copied ? "M5 12l4 4L19 6" : "M9 9h12v12H9zM15 9V3H3v12h6");
-			icon.append(path);
-			button.replaceChildren(icon);
-			if (!iconOnly) button.append(document.createTextNode(copied ? "已复制" : label));
-			button.dataset.copied = String(copied);
-			button.setAttribute("aria-label", copied ? "已复制" : label);
+		button.className = "nspp-action";
+		button.textContent = "加载下一页";
+		list.after(button);
+		const pause = document.createElement("button");
+		pause.type = "button";
+		pause.className = "nspp-tool-icon";
+		const renderPause = () => {
+			pause.replaceChildren(toolIcon(paused ? "play" : "stop"));
+			pause.title = paused ? "继续自动翻页" : "暂停自动翻页";
+			pause.setAttribute("aria-label", pause.title);
+			pause.setAttribute("aria-pressed", String(paused));
 		};
-		show(false);
-		ctx.signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
-		button.title = label;
-		button.setAttribute("aria-label", label);
-		button.addEventListener("click", async () => {
-			if (button.disabled) return;
+		renderPause();
+		if (next) (document.querySelector("#nspp-tools") || document.body).append(pause);
+		pause.addEventListener("click", () => {
+			paused = !paused;
+			renderPause();
+			if (paused) {
+				observer.disconnect();
+				loading?.abort();
+			} else if (next) observer.observe(button);
+		}, { signal: ctx.signal });
+		const load = async (manual = false) => {
+			if (busy || !next || visited.has(next) || ctx.signal.aborted || replying()) return;
+			const url = new URL(next, location.href);
+			if (url.origin !== location.origin) return;
+			busy = true;
+			loading = new AbortController();
 			button.disabled = true;
 			button.setAttribute("aria-busy", "true");
+			button.replaceChildren(sweepShine("正在加载…"));
 			try {
-				await navigator.clipboard.writeText(value());
-				if (!ctx.signal.aborted) {
-					clearTimeout(timer);
-					show(true);
-					ctx.notify("复制成功");
-					timer = setTimeout(() => show(false), 1600);
+				const html = await ctx.request(url.href, {
+					responseType: "text",
+					signal: AbortSignal.any([ctx.signal, loading.signal])
+				});
+				if (ctx.signal.aborted || loading.signal.aborted || replying() || paused && !manual) return;
+				const page = new DOMParser().parseFromString(html, "text/html");
+				const source = page.querySelector(selector);
+				if (!source || !source.children.length) throw new Error("页面内容不可用");
+				source.querySelectorAll("script, iframe, object, embed, base, link, style").forEach((el) => el.remove());
+				source.querySelectorAll("*").forEach((el) => {
+					for (const attr of Array.from(el.attributes)) if (/^on/i.test(attr.name) || attr.name === "srcdoc") el.removeAttribute(attr.name);
+					else if (/^(href|src|action|formaction|xlink:href)$/i.test(attr.name)) try {
+						const resolved = new URL(attr.value, url);
+						if (![
+							"http:",
+							"https:",
+							"mailto:",
+							"tel:"
+						].includes(resolved.protocol)) el.removeAttribute(attr.name);
+						else if (!attr.value.startsWith("#")) el.setAttribute(attr.name, resolved.href);
+					} catch {
+						el.removeAttribute(attr.name);
+					}
+				});
+				const listed = comments ? void 0 : new Set(Array.from(list.querySelectorAll(".post-title a"), (a) => postPath(a.href, location.href)));
+				const appended = [];
+				for (const child of Array.from(source.children)) {
+					const id = child.id;
+					if (id && document.getElementById(id)) continue;
+					if (listed) {
+						const href = child.querySelector(".post-title a")?.getAttribute("href");
+						if (href) {
+							const path = postPath(href, url.href);
+							if (listed.has(path)) continue;
+							listed.add(path);
+						}
+					}
+					appended.push(list.appendChild(document.importNode(child, true)));
 				}
+				if (comments) fillFloorMenus(ctx, appended, pageFloors(page), url.href);
+				visited.add(url.href);
+				failed = false;
+				const href = page.querySelector(".nsk-pager a.pager-next")?.getAttribute("href");
+				next = href ? new URL(href, url).href : void 0;
+				if (next && visited.has(next)) next = void 0;
+				button.textContent = next ? "加载下一页" : "已加载全部内容";
+				pause.hidden = !next;
 			} catch {
-				if (!ctx.signal.aborted) ctx.notify("复制失败，请手动选择文本复制");
+				if (loading.signal.aborted) return;
+				failed = true;
+				button.textContent = "加载失败，点击重试";
 			} finally {
-				button.disabled = false;
+				busy = false;
+				button.disabled = !next;
 				button.removeAttribute("aria-busy");
+				if (paused && next) button.textContent = "已暂停，点击加载下一页";
+				if (loading.signal.aborted && next) button.textContent = paused ? "已暂停，点击加载下一页" : "加载下一页";
+				if (loading.signal.aborted && !ctx.signal.aborted && !paused && !replying() && next) {
+					observer.unobserve(button);
+					observer.observe(button);
+				}
 			}
+		};
+		button.addEventListener("click", () => {
+			load(true);
 		}, { signal: ctx.signal });
-		return button;
+		const observer = new IntersectionObserver((entries) => {
+			if (entries.some((e) => e.isIntersecting) && !failed && !paused && !replying() && !document.hidden) load();
+		}, { rootMargin: "150px" });
+		document.addEventListener("nspp:reply-state", () => {
+			if (replying()) {
+				observer.disconnect();
+				loading?.abort();
+			} else if (next && !paused) observer.observe(button);
+		}, { signal: ctx.signal });
+		document.addEventListener("nspp:list-replaced", () => {
+			loading?.abort();
+			busy = false;
+			failed = false;
+			visited.clear();
+			visited.add(location.href);
+			next = document.querySelector(".nsk-pager a.pager-next")?.href;
+			button.hidden = !next;
+			button.disabled = !next;
+			button.textContent = next ? "加载下一页" : "已加载全部内容";
+			pause.hidden = !next;
+			observer.disconnect();
+			if (next && !paused) observer.observe(button);
+		}, { signal: ctx.signal });
+		if (next) observer.observe(button);
+		else button.hidden = true;
+		return () => {
+			observer.disconnect();
+			loading?.abort();
+			button.remove();
+			pause.remove();
+		};
 	}
+	var infiniteScroll = {
+		id: "infinite-scroll",
+		title: "自动翻页",
+		description: "合并下一页帖子或评论；失败时手动重试。接上来的评论楼层同样可以点赞、加鸡腿、反对、引用和回复。",
+		group: "阅读",
+		defaults: {
+			enabled: true,
+			posts: true,
+			comments: false
+		},
+		fields: {
+			posts: {
+				label: "帖子自动翻页",
+				type: "text"
+			},
+			comments: {
+				label: "评论自动翻页",
+				type: "text"
+			}
+		},
+		mount
+	};
 	var daysInYear = 365.2425;
 	-(Math.pow(10, 8) * 24 * 60 * 60 * 1e3);
 	var millisecondsInWeek = 6048e5;
@@ -3152,6 +6199,285 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			firstWeekContainsDate: 4
 		}
 	};
+	var historyFeature = {
+		id: "reading-history",
+		title: "阅读历史与已读标记",
+		description: "本地保存实际浏览与最近关闭的帖子，默认 100 条、7 天，按天分组；不上传记录。",
+		group: "阅读",
+		defaults: {
+			enabled: true,
+			limit: 100,
+			days: 7
+		},
+		fields: {
+			limit: {
+				label: "保存上限",
+				type: "number"
+			},
+			days: {
+				label: "保存天数",
+				type: "number"
+			}
+		},
+		mount(ctx) {
+			const limit = Math.max(1, Math.floor(Number(ctx.get("limit")) || 100));
+			const maxAge = Math.max(1, Number(ctx.get("days")) || 7) * 864e5;
+			const key = (href) => postPath(href, location.href);
+			const load = (name) => {
+				const stored = ctx.get(name);
+				const clean = (Array.isArray(stored) ? stored : []).flatMap((entry) => {
+					const path = entry && typeof entry.path === "string" ? key(entry.path) : void 0;
+					return path && typeof entry.title === "string" && Number.isFinite(entry.time) && Date.now() - entry.time < maxAge ? [{
+						...entry,
+						path
+					}] : [];
+				}).sort((a, b) => b.time - a.time);
+				const seen = new Set();
+				const entries = clean.filter((entry) => {
+					if (seen.has(entry.path)) return false;
+					seen.add(entry.path);
+					return true;
+				}).slice(0, limit);
+				if (JSON.stringify(stored) !== JSON.stringify(entries)) ctx.set(name, entries);
+				return entries;
+			};
+			const record = (name) => {
+				const pd = unsafeWindow$1.__config__?.postData;
+				const path = pd?.postId ? key(`/post-${pd.postId}-1`) : key(location.href);
+				if (!path) return;
+				ctx.set(name, [{
+					path,
+					title: pd?.title || document.title,
+					time: Date.now(),
+					uid: pd?.op?.uid,
+					author: pd?.op?.name
+				}, ...load(name).filter((entry) => entry.path !== path)].slice(0, limit));
+			};
+			record("entries");
+			load("recent");
+			const markRead = () => {
+				const read = new Set(load("entries").map((entry) => entry.path));
+				document.querySelectorAll(".post-title a").forEach((a) => {
+					const path = key(a.href);
+					a.classList.toggle("nspp-read", !!path && read.has(path));
+				});
+			};
+			const stop = ctx.watch(markRead);
+			window.addEventListener("beforeunload", () => record("recent"), {
+				capture: true,
+				signal: ctx.signal
+			});
+			const historyButton = document.createElement("button");
+			historyButton.type = "button";
+			historyButton.className = "nspp-tool-icon";
+			historyButton.dataset.nsppHistoryLauncher = "";
+			historyButton.title = "阅读历史";
+			historyButton.setAttribute("aria-label", "阅读历史");
+			historyButton.append(toolIcon("history"));
+			document.querySelector("#nspp-tools")?.append(historyButton);
+			let historyDialog;
+			historyButton.addEventListener("click", () => {
+				historyDialog?.remove();
+				historyDialog = createSheet("nspp-history", "阅读历史", { tall: true });
+				const close = document.createElement("button");
+				iconButton(close, "close", "关闭");
+				close.type = "button";
+				close.addEventListener("click", () => historyDialog?.close(), { signal: ctx.signal });
+				const heading = document.createElement("h2");
+				heading.textContent = "阅读历史";
+				const search = document.createElement("input");
+				search.type = "search";
+				search.placeholder = "搜索历史标题";
+				search.setAttribute("aria-label", "搜索阅读历史");
+				const clear = document.createElement("button");
+				clear.type = "button";
+				iconButton(clear, "trash", "清空历史").dataset.danger = "";
+				const undoButton = document.createElement("button");
+				undoButton.type = "button";
+				undoButton.append(toolIcon("undo"), "撤销");
+				undoButton.className = "nspp-history-undo";
+				undoButton.title = "撤销删除";
+				undoButton.hidden = true;
+				let previous;
+				let tab = "entries";
+				let entries = load(tab);
+				const tabs = document.createElement("div");
+				tabs.className = "nspp-history-toolbar";
+				for (const [name, label] of [["entries", "全部"], ["recent", "最近关闭"]]) {
+					const button = document.createElement("button");
+					button.type = "button";
+					button.textContent = label;
+					button.dataset.tab = name;
+					button.addEventListener("click", () => {
+						tab = name;
+						previous = void 0;
+						undoButton.hidden = true;
+						render();
+					});
+					tabs.append(button);
+				}
+				const list = document.createElement("ol");
+				list.className = "nspp-sheet-body";
+				const save = () => {
+					ctx.set(tab, entries);
+					markRead();
+				};
+				const render = () => {
+					list.replaceChildren();
+					entries = load(tab);
+					tabs.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.tab === tab)));
+					let lastDay = "";
+					const query = search.value.trim().toLowerCase();
+					const matches = entries.filter((entry) => entry.title.toLowerCase().includes(query));
+					for (const entry of matches) {
+						if (!/^\/post-\d+-1$/.test(entry.path)) continue;
+						const day = format(new Date(entry.time), "yyyy-MM-dd");
+						if (day !== lastDay) {
+							lastDay = day;
+							const group = document.createElement("li");
+							group.className = "nspp-history-day";
+							const label = document.createElement("span");
+							label.textContent = `${day === format(new Date(), "yyyy-MM-dd") ? "今天 - " : ""}${format(new Date(entry.time), "yyyy年M月d日 EEEE", { locale: zhCN })}`;
+							const clearDay = document.createElement("button");
+							clearDay.type = "button";
+							iconButton(clearDay, "clear-day", "清除当天").dataset.danger = "";
+							clearDay.addEventListener("click", () => {
+								previous = load(tab);
+								entries = previous.filter((item) => format(new Date(item.time), "yyyy-MM-dd") !== day);
+								undoButton.hidden = false;
+								save();
+								render();
+							});
+							group.append(label, clearDay);
+							list.append(group);
+						}
+						const li = document.createElement("li");
+						const link = document.createElement("a");
+						link.href = entry.path;
+						link.textContent = entry.title;
+						if (entry.uid && /^\d+$/.test(String(entry.uid))) {
+							const avatar = document.createElement("img");
+							avatar.className = "nspp-history-avatar";
+							avatar.src = `/avatar/${entry.uid}.png`;
+							avatar.alt = "";
+							avatar.title = entry.author ? `@${entry.author}` : "";
+							avatar.addEventListener("error", () => avatar.remove(), { once: true });
+							link.prepend(avatar);
+						}
+						const remove = document.createElement("button");
+						remove.type = "button";
+						iconButton(remove, "close", `删除历史：${entry.title}`).dataset.danger = "";
+						remove.addEventListener("click", () => {
+							previous = load(tab);
+							entries = previous.filter((item) => item.path !== entry.path);
+							undoButton.hidden = false;
+							save();
+							render();
+						}, { signal: ctx.signal });
+						const date = document.createElement("time");
+						const visitedAt = new Date(entry.time);
+						date.textContent = format(visitedAt, "HH:mm");
+						date.title = format(visitedAt, "yyyy-MM-dd HH:mm:ss");
+						link.title = entry.title;
+						li.append(link, date);
+						if (tab === "recent") {
+							const restore = document.createElement("button");
+							restore.type = "button";
+							iconButton(restore, "undo", `重新打开：${entry.title}`);
+							restore.addEventListener("click", () => window.open(entry.path, "_blank", "noopener"));
+							li.append(restore);
+						}
+						li.append(remove);
+						list.append(li);
+					}
+					if (!matches.length) {
+						const empty = document.createElement("li");
+						empty.textContent = query ? "没有匹配的记录" : "尚无阅读记录";
+						list.append(empty);
+					}
+				};
+				clear.addEventListener("click", () => {
+					previous = load(tab);
+					entries = [];
+					undoButton.hidden = false;
+					save();
+					render();
+				}, { signal: ctx.signal });
+				undoButton.addEventListener("click", () => {
+					if (previous) entries = previous;
+					previous = void 0;
+					undoButton.hidden = true;
+					save();
+					render();
+				}, { signal: ctx.signal });
+				search.addEventListener("input", render, { signal: ctx.signal });
+				const header = document.createElement("header");
+				header.append(heading, close);
+				const toolbar = document.createElement("div");
+				toolbar.className = "nspp-history-toolbar";
+				toolbar.append(search, clear, undoButton);
+				historyDialog.append(header, toolbar, tabs, list);
+				render();
+				document.body.append(historyDialog);
+				historyDialog.showModal();
+			}, { signal: ctx.signal });
+			return () => {
+				stop();
+				historyButton.remove();
+				historyDialog?.remove();
+				document.querySelectorAll(".nspp-read").forEach((a) => a.classList.remove("nspp-read"));
+			};
+		}
+	};
+	function copyButton(ctx, value, label = "复制", iconOnly = false) {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "nspp-copy-button";
+		let timer;
+		const show = (copied) => {
+			const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			icon.setAttribute("viewBox", "0 0 24 24");
+			icon.setAttribute("width", "14");
+			icon.setAttribute("height", "14");
+			icon.setAttribute("fill", "none");
+			icon.setAttribute("stroke", "currentColor");
+			icon.setAttribute("stroke-width", "1.8");
+			icon.setAttribute("stroke-linecap", "round");
+			icon.setAttribute("stroke-linejoin", "round");
+			icon.setAttribute("aria-hidden", "true");
+			const path = document.createElementNS(icon.namespaceURI, "path");
+			path.setAttribute("d", copied ? "M5 12l4 4L19 6" : "M9 9h12v12H9zM15 9V3H3v12h6");
+			icon.append(path);
+			button.replaceChildren(icon);
+			if (!iconOnly) button.append(document.createTextNode(copied ? "已复制" : label));
+			button.dataset.copied = String(copied);
+			button.setAttribute("aria-label", copied ? "已复制" : label);
+		};
+		show(false);
+		ctx.signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
+		button.title = label;
+		button.setAttribute("aria-label", label);
+		button.addEventListener("click", async () => {
+			if (button.disabled) return;
+			button.disabled = true;
+			button.setAttribute("aria-busy", "true");
+			try {
+				await navigator.clipboard.writeText(value());
+				if (!ctx.signal.aborted) {
+					clearTimeout(timer);
+					show(true);
+					ctx.notify("复制成功");
+					timer = setTimeout(() => show(false), 1600);
+				}
+			} catch {
+				if (!ctx.signal.aborted) ctx.notify("复制失败，请手动选择文本复制");
+			} finally {
+				button.disabled = false;
+				button.removeAttribute("aria-busy");
+			}
+		}, { signal: ctx.signal });
+		return button;
+	}
 	function forumTime(value, now = new Date()) {
 		const date = parseISO(value.trim().replace(/\//g, "-").replace(" ", "T"));
 		if (!isValid(date)) return null;
@@ -3167,409 +6493,2522 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			full
 		};
 	}
-	function postPath(href, base) {
-		try {
-			const url = new URL(href, base);
-			if (url.origin !== new URL(base).origin) return;
-			const id = url.pathname.match(/^\/post-(\d+)(?:-\d+)?(?:\.html)?\/?$/)?.[1];
-			return id ? `/post-${id}-1` : void 0;
-		} catch {
-			return;
+	var import_viewer = __toESM(__commonJSMin(((exports, module) => {
+		(function(global, factory) {
+			typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, global.Viewer = factory());
+		})(exports, (function() {
+			"use strict";
+			function _classCallCheck(a, n) {
+				if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+			}
+			function _defineProperties(e, r) {
+				for (var t = 0; t < r.length; t++) {
+					var o = r[t];
+					o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
+				}
+			}
+			function _createClass(e, r, t) {
+				return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e;
+			}
+			function _defineProperty(e, r, t) {
+				return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+					value: t,
+					enumerable: !0,
+					configurable: !0,
+					writable: !0
+				}) : e[r] = t, e;
+			}
+			function ownKeys(e, r) {
+				var t = Object.keys(e);
+				if (Object.getOwnPropertySymbols) {
+					var o = Object.getOwnPropertySymbols(e);
+					r && (o = o.filter(function(r) {
+						return Object.getOwnPropertyDescriptor(e, r).enumerable;
+					})), t.push.apply(t, o);
+				}
+				return t;
+			}
+			function _objectSpread2(e) {
+				for (var r = 1; r < arguments.length; r++) {
+					var t = null != arguments[r] ? arguments[r] : {};
+					r % 2 ? ownKeys(Object(t), !0).forEach(function(r) {
+						_defineProperty(e, r, t[r]);
+					}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r) {
+						Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+					});
+				}
+				return e;
+			}
+			function _toPrimitive(t, r) {
+				if ("object" != typeof t || !t) return t;
+				var e = t[Symbol.toPrimitive];
+				if (void 0 !== e) {
+					var i = e.call(t, r || "default");
+					if ("object" != typeof i) return i;
+					throw new TypeError("@@toPrimitive must return a primitive value.");
+				}
+				return ("string" === r ? String : Number)(t);
+			}
+			function _toPropertyKey(t) {
+				var i = _toPrimitive(t, "string");
+				return "symbol" == typeof i ? i : i + "";
+			}
+			function _typeof(o) {
+				"@babel/helpers - typeof";
+				return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
+					return typeof o;
+				} : function(o) {
+					return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+				}, _typeof(o);
+			}
+			var DEFAULTS = {
+				backdrop: true,
+				button: true,
+				navbar: true,
+				navigation: false,
+				title: true,
+				toolbar: true,
+				className: "",
+				container: "body",
+				filter: null,
+				fullscreen: true,
+				inheritedAttributes: [
+					"crossOrigin",
+					"decoding",
+					"isMap",
+					"loading",
+					"referrerPolicy",
+					"sizes",
+					"srcset",
+					"useMap"
+				],
+				initialCoverage: .9,
+				initialViewIndex: 0,
+				inline: false,
+				autoplay: true,
+				interval: 5e3,
+				keyboard: true,
+				focus: true,
+				loading: true,
+				loop: true,
+				preload: true,
+				minWidth: 200,
+				minHeight: 100,
+				movable: true,
+				magnifier: false,
+				rotatable: true,
+				rotateOnGesture: true,
+				rotateOnTouch: true,
+				scalable: true,
+				zoomable: true,
+				zoomOnTouch: true,
+				zoomOnGesture: true,
+				zoomOnWheel: true,
+				slideOnTouch: true,
+				slideOnWheel: true,
+				toggleOnDblclick: true,
+				tooltip: true,
+				transition: true,
+				zIndex: 2015,
+				zIndexInline: 0,
+				zoomRatio: .1,
+				minZoomRatio: .01,
+				maxZoomRatio: 100,
+				url: "src",
+				ready: null,
+				show: null,
+				shown: null,
+				hide: null,
+				hidden: null,
+				view: null,
+				viewed: null,
+				move: null,
+				moved: null,
+				rotate: null,
+				rotated: null,
+				scale: null,
+				scaled: null,
+				zoom: null,
+				zoomed: null,
+				play: null,
+				playing: null,
+				stop: null
+			};
+			var TEMPLATE = "<div class=\"viewer-container\" tabindex=\"-1\" touch-action=\"none\"><div class=\"viewer-canvas\"></div><div class=\"viewer-magnifier\" aria-hidden=\"true\"><img class=\"viewer-magnifier-image\" alt=\"\"></div><div class=\"viewer-navigation\" aria-hidden=\"true\"><div class=\"viewer-prev\" data-viewer-action=\"prev\" role=\"button\" aria-label=\"Previous\"></div><div class=\"viewer-next\" data-viewer-action=\"next\" role=\"button\" aria-label=\"Next\"></div></div><div class=\"viewer-footer\" aria-hidden=\"true\"><div class=\"viewer-title\" aria-hidden=\"true\"></div><div class=\"viewer-toolbar\" aria-hidden=\"true\"></div><div class=\"viewer-navbar\" aria-hidden=\"true\"><ul class=\"viewer-list\" role=\"navigation\"></ul></div></div><div class=\"viewer-tooltip\" role=\"alert\" aria-hidden=\"true\"></div><div class=\"viewer-button\" data-viewer-action=\"mix\" role=\"button\" aria-hidden=\"true\"></div><div class=\"viewer-player\" aria-hidden=\"true\"></div></div>";
+			var IS_BROWSER = typeof window !== "undefined" && typeof window.document !== "undefined";
+			var WINDOW = IS_BROWSER ? window : {};
+			var IS_TOUCH_DEVICE = IS_BROWSER && WINDOW.document.documentElement ? "ontouchstart" in WINDOW.document.documentElement : false;
+			var HAS_POINTER_EVENT = IS_BROWSER ? "PointerEvent" in WINDOW : false;
+			var NAMESPACE = "viewer";
+			var ACTION_MOVE = "move";
+			var ACTION_ROTATE = "rotate";
+			var ACTION_SWITCH = "switch";
+			var ACTION_TRANSFORM = "transform";
+			var ACTION_ZOOM = "zoom";
+			var CLASS_ACTIVE = "".concat(NAMESPACE, "-active");
+			var CLASS_CLOSE = "".concat(NAMESPACE, "-close");
+			var CLASS_FADE = "".concat(NAMESPACE, "-fade");
+			var CLASS_FIXED = "".concat(NAMESPACE, "-fixed");
+			var CLASS_FULLSCREEN = "".concat(NAMESPACE, "-fullscreen");
+			var CLASS_FULLSCREEN_EXIT = "".concat(NAMESPACE, "-fullscreen-exit");
+			var CLASS_HIDE = "".concat(NAMESPACE, "-hide");
+			var CLASS_HIDE_MD_DOWN = "".concat(NAMESPACE, "-hide-md-down");
+			var CLASS_HIDE_SM_DOWN = "".concat(NAMESPACE, "-hide-sm-down");
+			var CLASS_HIDE_XS_DOWN = "".concat(NAMESPACE, "-hide-xs-down");
+			var CLASS_IN = "".concat(NAMESPACE, "-in");
+			var CLASS_INVISIBLE = "".concat(NAMESPACE, "-invisible");
+			var CLASS_LOADING = "".concat(NAMESPACE, "-loading");
+			var CLASS_MOVE = "".concat(NAMESPACE, "-move");
+			var CLASS_OPEN = "".concat(NAMESPACE, "-open");
+			var CLASS_SHOW = "".concat(NAMESPACE, "-show");
+			var CLASS_TRANSITION = "".concat(NAMESPACE, "-transition");
+			var EVENT_CLICK = "click";
+			var EVENT_DBLCLICK = "dblclick";
+			var EVENT_DRAG_START = "dragstart";
+			var EVENT_FOCUSIN = "focusin";
+			var EVENT_KEY_DOWN = "keydown";
+			var EVENT_LOAD = "load";
+			var EVENT_ERROR = "error";
+			var EVENT_TOUCH_END = IS_TOUCH_DEVICE ? "touchend touchcancel" : "mouseup";
+			var EVENT_TOUCH_MOVE = IS_TOUCH_DEVICE ? "touchmove" : "mousemove";
+			var EVENT_POINTER_DOWN = HAS_POINTER_EVENT ? "pointerdown" : IS_TOUCH_DEVICE ? "touchstart" : "mousedown";
+			var EVENT_POINTER_ENTER = HAS_POINTER_EVENT ? "pointerenter" : "mouseenter";
+			var EVENT_POINTER_LEAVE = HAS_POINTER_EVENT ? "pointerleave" : "mouseleave";
+			var EVENT_POINTER_MOVE = HAS_POINTER_EVENT ? "pointermove" : EVENT_TOUCH_MOVE;
+			var EVENT_POINTER_UP = HAS_POINTER_EVENT ? "pointerup pointercancel" : EVENT_TOUCH_END;
+			var EVENT_RESIZE = "resize";
+			var EVENT_TRANSITION_END = "transitionend";
+			var EVENT_WHEEL = "wheel";
+			var EVENT_GESTURE = "gesturestart gesturechange gestureend";
+			var EVENT_READY = "ready";
+			var EVENT_SHOW = "show";
+			var EVENT_SHOWN = "shown";
+			var EVENT_HIDE = "hide";
+			var EVENT_HIDDEN = "hidden";
+			var EVENT_VIEW = "view";
+			var EVENT_VIEWED = "viewed";
+			var EVENT_MOVE = "move";
+			var EVENT_MOVED = "moved";
+			var EVENT_ROTATE = "rotate";
+			var EVENT_ROTATED = "rotated";
+			var EVENT_SCALE = "scale";
+			var EVENT_SCALED = "scaled";
+			var EVENT_ZOOM = "zoom";
+			var EVENT_ZOOMED = "zoomed";
+			var EVENT_PLAY = "play";
+			var EVENT_PLAYING = "playing";
+			var EVENT_STOP = "stop";
+			var DATA_ACTION = "".concat(NAMESPACE, "Action");
+			var REGEXP_SPACES = /\s+/;
+			var BUTTONS = [
+				"zoom-in",
+				"zoom-out",
+				"one-to-one",
+				"reset",
+				"prev",
+				"play",
+				"next",
+				"rotate-left",
+				"rotate-right",
+				"flip-horizontal",
+				"flip-vertical"
+			];
+			function isString(value) {
+				return typeof value === "string";
+			}
+			var MODIFIER_KEY_PROPERTIES = {
+				ctrl: "ctrlKey",
+				shift: "shiftKey",
+				alt: "altKey",
+				meta: "metaKey"
+			};
+			function isWheelActionEnabled(option, event) {
+				if (!option) return false;
+				if (option === true) return true;
+				return isString(option) && option.split("+").every(function(key) {
+					return event[MODIFIER_KEY_PROPERTIES[key.trim().toLowerCase()]];
+				});
+			}
+			var isNaN = Number.isNaN || WINDOW.isNaN;
+			function isNumber(value) {
+				return typeof value === "number" && !isNaN(value);
+			}
+			function isUndefined(value) {
+				return typeof value === "undefined";
+			}
+			function isObject(value) {
+				return _typeof(value) === "object" && value !== null;
+			}
+			var hasOwnProperty = Object.prototype.hasOwnProperty;
+			function isPlainObject(value) {
+				if (!isObject(value)) return false;
+				try {
+					var constructor = value.constructor;
+					var prototype = constructor.prototype;
+					return constructor && prototype && hasOwnProperty.call(prototype, "isPrototypeOf");
+				} catch (error) {
+					return false;
+				}
+			}
+			function isFunction(value) {
+				return typeof value === "function";
+			}
+			function forEach(data, callback) {
+				if (data && isFunction(callback)) {
+					if (Array.isArray(data) || isNumber(data.length)) {
+						var length = data.length;
+						var i = 0;
+						for (; i < length; i += 1) if (callback.call(data, data[i], i, data) === false) break;
+					} else if (isObject(data)) Object.keys(data).forEach(function(key) {
+						callback.call(data, data[key], key, data);
+					});
+				}
+				return data;
+			}
+			function inheritAttributes(image, originalImage, inheritedAttributes) {
+				forEach(inheritedAttributes, function(name) {
+					var value = originalImage.getAttribute(name);
+					if (value !== null) image.setAttribute(name, value);
+				});
+			}
+			function isTransitionEnabled(options, action) {
+				var transition = options.transition;
+				return transition && transition[action] !== false;
+			}
+			var assign = Object.assign || function assign(obj) {
+				for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) args[_key - 1] = arguments[_key];
+				if (isObject(obj) && args.length > 0) args.forEach(function(arg) {
+					if (isObject(arg)) Object.keys(arg).forEach(function(key) {
+						obj[key] = arg[key];
+					});
+				});
+				return obj;
+			};
+			var REGEXP_SUFFIX = /^(?:width|height|left|top|marginLeft|marginTop)$/;
+			function setStyle(element, styles) {
+				var style = element.style;
+				forEach(styles, function(value, property) {
+					if (REGEXP_SUFFIX.test(property) && isNumber(value)) value += "px";
+					style[property] = value;
+				});
+			}
+			function escapeHTMLEntities(value) {
+				return isString(value) ? value.replace(/&(?!amp;|quot;|#39;|lt;|gt;)/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : value;
+			}
+			function hasClass(element, value) {
+				if (!element || !value) return false;
+				return element.classList ? element.classList.contains(value) : element.className.split(REGEXP_SPACES).indexOf(value) > -1;
+			}
+			function addClass(element, value) {
+				if (!element || !value) return;
+				if (isNumber(element.length)) {
+					forEach(element, function(elem) {
+						addClass(elem, value);
+					});
+					return;
+				}
+				if (element.classList) {
+					element.classList.add(value);
+					return;
+				}
+				var className = element.className.trim();
+				if (!className) element.className = value;
+				else if (className.indexOf(value) < 0) element.className = "".concat(className, " ").concat(value);
+			}
+			function removeClass(element, value) {
+				if (!element || !value) return;
+				if (isNumber(element.length)) {
+					forEach(element, function(elem) {
+						removeClass(elem, value);
+					});
+					return;
+				}
+				if (element.classList) {
+					element.classList.remove(value);
+					return;
+				}
+				var className = element.className;
+				if (className && className.indexOf(value) >= 0) element.className = className.split(REGEXP_SPACES).filter(function(item) {
+					return item && item !== value;
+				}).join(" ");
+			}
+			function toggleClass(element, value, added) {
+				if (!value) return;
+				if (isNumber(element.length)) {
+					forEach(element, function(elem) {
+						toggleClass(elem, value, added);
+					});
+					return;
+				}
+				if (added) addClass(element, value);
+				else removeClass(element, value);
+			}
+			var REGEXP_HYPHENATE = /([a-z\d])([A-Z])/g;
+			function hyphenate(value) {
+				return value.replace(REGEXP_HYPHENATE, "$1-$2").toLowerCase();
+			}
+			function getData(element, name) {
+				if (isObject(element[name])) return element[name];
+				if (element.dataset) return element.dataset[name];
+				return element.getAttribute("data-".concat(hyphenate(name)));
+			}
+			function setData(element, name, data) {
+				if (isObject(data)) element[name] = data;
+				else if (element.dataset) element.dataset[name] = data;
+				else element.setAttribute("data-".concat(hyphenate(name)), data);
+			}
+			var onceSupported = function() {
+				var supported = false;
+				if (IS_BROWSER) {
+					var once = false;
+					var listener = function listener() {};
+					var options = Object.defineProperty({}, "once", {
+						get: function get() {
+							supported = true;
+							return once;
+						},
+						set: function set(value) {
+							once = value;
+						}
+					});
+					WINDOW.addEventListener("test", listener, options);
+					WINDOW.removeEventListener("test", listener, options);
+				}
+				return supported;
+			}();
+			function removeListener(element, type, listener) {
+				var options = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
+				var handler = listener;
+				type.trim().split(REGEXP_SPACES).forEach(function(event) {
+					if (!onceSupported) {
+						var listeners = element.listeners;
+						if (listeners && listeners[event] && listeners[event][listener]) {
+							handler = listeners[event][listener];
+							delete listeners[event][listener];
+							if (Object.keys(listeners[event]).length === 0) delete listeners[event];
+							if (Object.keys(listeners).length === 0) delete element.listeners;
+						}
+					}
+					element.removeEventListener(event, handler, options);
+				});
+			}
+			function addListener(element, type, listener) {
+				var options = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
+				var _handler = listener;
+				type.trim().split(REGEXP_SPACES).forEach(function(event) {
+					if (options.once && !onceSupported) {
+						var _element$listeners = element.listeners, listeners = _element$listeners === void 0 ? {} : _element$listeners;
+						_handler = function handler() {
+							delete listeners[event][listener];
+							element.removeEventListener(event, _handler, options);
+							for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) args[_key2] = arguments[_key2];
+							listener.apply(element, args);
+						};
+						if (!listeners[event]) listeners[event] = {};
+						if (listeners[event][listener]) element.removeEventListener(event, listeners[event][listener], options);
+						listeners[event][listener] = _handler;
+						element.listeners = listeners;
+					}
+					element.addEventListener(event, _handler, options);
+				});
+			}
+			function dispatchEvent(element, type, data, options) {
+				var event;
+				if (isFunction(Event) && isFunction(CustomEvent)) event = new CustomEvent(type, _objectSpread2({
+					bubbles: true,
+					cancelable: true,
+					detail: data
+				}, options));
+				else {
+					event = document.createEvent("CustomEvent");
+					event.initCustomEvent(type, true, true, data);
+				}
+				return element.dispatchEvent(event);
+			}
+			function getOffset(element) {
+				var box = element.getBoundingClientRect();
+				return {
+					left: box.left + (window.pageXOffset - document.documentElement.clientLeft),
+					top: box.top + (window.pageYOffset - document.documentElement.clientTop)
+				};
+			}
+			function getTransforms(_ref) {
+				var rotate = _ref.rotate, scaleX = _ref.scaleX, scaleY = _ref.scaleY, translateX = _ref.translateX, translateY = _ref.translateY;
+				var values = [];
+				if (isNumber(translateX) && translateX !== 0) values.push("translateX(".concat(translateX, "px)"));
+				if (isNumber(translateY) && translateY !== 0) values.push("translateY(".concat(translateY, "px)"));
+				if (isNumber(rotate) && rotate !== 0) values.push("rotate(".concat(rotate, "deg)"));
+				if (isNumber(scaleX) && isNumber(scaleY) && (scaleX !== 1 || scaleY !== 1)) {
+					values.push("scaleX(".concat(scaleX, ")"));
+					values.push("scaleY(".concat(scaleY, ")"));
+				}
+				var transform = values.length ? values.join(" ") : "none";
+				return {
+					WebkitTransform: transform,
+					msTransform: transform,
+					transform
+				};
+			}
+			function getImageNameFromURL(url) {
+				return isString(url) ? decodeURIComponent(url.replace(/^.*\//, "").replace(/[?&#].*$/, "")) : "";
+			}
+			var IS_SAFARI = WINDOW.navigator && /Version\/\d+(\.\d+)+?\s+Safari/i.test(WINDOW.navigator.userAgent);
+			function getImageNaturalSizes(image, options, callback) {
+				var newImage = document.createElement("img");
+				if (image.naturalWidth && !IS_SAFARI) {
+					callback(image.naturalWidth, image.naturalHeight);
+					return newImage;
+				}
+				var body = document.body || document.documentElement;
+				newImage.onload = function() {
+					callback(newImage.width, newImage.height);
+					if (!IS_SAFARI) body.removeChild(newImage);
+				};
+				inheritAttributes(newImage, image, options.inheritedAttributes);
+				newImage.src = image.src;
+				if (!IS_SAFARI) {
+					newImage.style.cssText = "left:0;max-height:none!important;max-width:none!important;min-height:0!important;min-width:0!important;opacity:0;position:absolute;top:0;z-index:-1;";
+					body.appendChild(newImage);
+				}
+				return newImage;
+			}
+			function getResponsiveClass(type) {
+				switch (type) {
+					case 2: return CLASS_HIDE_XS_DOWN;
+					case 3: return CLASS_HIDE_SM_DOWN;
+					case 4: return CLASS_HIDE_MD_DOWN;
+					default: return "";
+				}
+			}
+			function getMaxZoomRatio(pointers) {
+				var pointers2 = _objectSpread2({}, pointers);
+				var ratios = [];
+				forEach(pointers, function(pointer, pointerId) {
+					delete pointers2[pointerId];
+					forEach(pointers2, function(pointer2) {
+						var x1 = Math.abs(pointer.startX - pointer2.startX);
+						var y1 = Math.abs(pointer.startY - pointer2.startY);
+						var x2 = Math.abs(pointer.endX - pointer2.endX);
+						var y2 = Math.abs(pointer.endY - pointer2.endY);
+						var z1 = Math.sqrt(x1 * x1 + y1 * y1);
+						var ratio = (Math.sqrt(x2 * x2 + y2 * y2) - z1) / z1;
+						ratios.push(ratio);
+					});
+				});
+				ratios.sort(function(a, b) {
+					return Math.abs(a) < Math.abs(b);
+				});
+				return ratios[0];
+			}
+			function getMaxRotateDegree(pointers) {
+				var pointers2 = _objectSpread2({}, pointers);
+				var degrees = [];
+				forEach(pointers, function(pointer, pointerId) {
+					delete pointers2[pointerId];
+					forEach(pointers2, function(pointer2) {
+						var start = Math.atan2(pointer2.startY - pointer.startY, pointer2.startX - pointer.startX);
+						var radians = Math.atan2(pointer2.endY - pointer.endY, pointer2.endX - pointer.endX) - start;
+						if (radians > Math.PI) radians -= Math.PI * 2;
+						else if (radians < -Math.PI) radians += Math.PI * 2;
+						degrees.push(radians * 180 / Math.PI);
+					});
+				});
+				degrees.sort(function(a, b) {
+					return Math.abs(b) - Math.abs(a);
+				});
+				return degrees[0] || 0;
+			}
+			function getPointer(_ref2, endOnly) {
+				var pageX = _ref2.pageX, pageY = _ref2.pageY;
+				var end = {
+					endX: pageX,
+					endY: pageY
+				};
+				return endOnly ? end : _objectSpread2({
+					timeStamp: Date.now(),
+					startX: pageX,
+					startY: pageY
+				}, end);
+			}
+			function getPointersCenter(pointers) {
+				var pageX = 0;
+				var pageY = 0;
+				var count = 0;
+				forEach(pointers, function(_ref3) {
+					var startX = _ref3.startX, startY = _ref3.startY;
+					pageX += startX;
+					pageY += startY;
+					count += 1;
+				});
+				pageX /= count;
+				pageY /= count;
+				return {
+					pageX,
+					pageY
+				};
+			}
+			var render = {
+				render: function render() {
+					this.initContainer();
+					this.initViewer();
+					this.initList();
+					this.renderViewer();
+				},
+				initBody: function initBody() {
+					var ownerDocument = this.ownerDocument;
+					var body = ownerDocument.body || ownerDocument.documentElement;
+					this.body = body;
+					this.scrollbarWidth = window.innerWidth - ownerDocument.documentElement.clientWidth;
+					this.initialBodyPaddingRight = body.style.paddingRight;
+					this.initialBodyComputedPaddingRight = window.getComputedStyle(body).paddingRight;
+				},
+				initContainer: function initContainer() {
+					this.containerData = {
+						width: window.innerWidth,
+						height: window.innerHeight
+					};
+				},
+				initViewer: function initViewer() {
+					var options = this.options, parent = this.parent;
+					var viewerData;
+					if (options.inline) {
+						viewerData = {
+							width: Math.max(parent.offsetWidth, options.minWidth),
+							height: Math.max(parent.offsetHeight, options.minHeight)
+						};
+						this.parentData = viewerData;
+					}
+					if (this.fulled || !viewerData) viewerData = this.containerData;
+					this.viewerData = assign({}, viewerData);
+				},
+				renderViewer: function renderViewer() {
+					if (this.options.inline && !this.fulled) setStyle(this.viewer, this.viewerData);
+				},
+				initList: function initList() {
+					var _this = this;
+					var viewIndex = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : this.index;
+					var element = this.element, options = this.options, list = this.list;
+					var items = [];
+					var navbarOptions = isPlainObject(options.navbar) ? options.navbar : {};
+					var probe = document.createElement("li");
+					if (!this.containerData) this.initContainer();
+					list.appendChild(probe);
+					var itemWidth = probe.offsetWidth + parseInt(window.getComputedStyle(probe).marginLeft, 10);
+					list.removeChild(probe);
+					var visibleItemCount = isNumber(navbarOptions.visibleItemCount) ? Math.floor(navbarOptions.visibleItemCount) : Math.floor(this.containerData.width / itemWidth);
+					visibleItemCount = Math.min(visibleItemCount, this.length);
+					var start = visibleItemCount > 0 ? Math.min(Math.max(0, viewIndex - Math.floor(visibleItemCount / 2)), Math.max(0, this.length - visibleItemCount)) : 0;
+					var end = visibleItemCount > 0 ? Math.min(this.length, start + visibleItemCount) : this.length;
+					list.innerHTML = "";
+					forEach(this.images, function(image, index) {
+						if (visibleItemCount > 0 && (index < start || index >= end)) return;
+						var src = image.src;
+						var alt = image.alt || getImageNameFromURL(src);
+						var url = _this.getImageURL(image);
+						if (src || url) {
+							var item = document.createElement("li");
+							var img = document.createElement("img");
+							inheritAttributes(img, image, options.inheritedAttributes);
+							if (options.navbar) img.src = src || url;
+							img.alt = alt;
+							img.setAttribute("data-original-url", url || src);
+							item.setAttribute("data-index", index);
+							item.setAttribute("data-viewer-action", "view");
+							item.setAttribute("role", "button");
+							if (options.keyboard) item.setAttribute("tabindex", 0);
+							item.appendChild(img);
+							list.appendChild(item);
+							items.push(item);
+						}
+					});
+					this.items = items;
+					if (this.viewed) {
+						var activeItem = this.getItem(this.index);
+						if (activeItem) {
+							addClass(activeItem, CLASS_ACTIVE);
+							activeItem.setAttribute("aria-selected", true);
+						}
+					}
+					forEach(items, function(item) {
+						var image = item.firstElementChild;
+						var onLoad;
+						var onError;
+						setData(image, "filled", true);
+						if (options.loading) addClass(item, CLASS_LOADING);
+						addListener(image, EVENT_LOAD, onLoad = function onLoad(event) {
+							removeListener(image, EVENT_ERROR, onError);
+							if (options.loading) removeClass(item, CLASS_LOADING);
+							_this.loadImage(event);
+						}, { once: true });
+						addListener(image, EVENT_ERROR, onError = function onError() {
+							removeListener(image, EVENT_LOAD, onLoad);
+							if (options.loading) removeClass(item, CLASS_LOADING);
+						}, { once: true });
+					});
+					if (isTransitionEnabled(options, "view")) addListener(element, EVENT_VIEWED, function() {
+						addClass(list, CLASS_TRANSITION);
+					}, { once: true });
+				},
+				getItem: function getItem(index) {
+					var item;
+					forEach(this.items, function(candidate) {
+						if (Number(getData(candidate, "index")) === index) {
+							item = candidate;
+							return false;
+						}
+						return true;
+					});
+					return item;
+				},
+				renderList: function renderList() {
+					var index = this.index;
+					var item = this.getItem(index);
+					if (!item) return;
+					var next = item.nextElementSibling;
+					var gutter = parseInt(window.getComputedStyle(next || item).marginLeft, 10);
+					var offsetWidth = item.offsetWidth;
+					var outerWidth = offsetWidth + gutter;
+					setStyle(this.list, assign({ width: outerWidth * this.items.length - gutter }, getTransforms({ translateX: (this.viewerData.width - offsetWidth) / 2 - item.offsetLeft })));
+				},
+				resetList: function resetList() {
+					var list = this.list;
+					list.innerHTML = "";
+					removeClass(list, CLASS_TRANSITION);
+					setStyle(list, assign({ width: 0 }, getTransforms({ translateX: 0 })));
+				},
+				initImage: function initImage(done) {
+					var _this2 = this;
+					var options = this.options, image = this.image, viewerData = this.viewerData;
+					var footerHeight = this.footer.offsetHeight;
+					var viewerWidth = viewerData.width;
+					var viewerHeight = Math.max(viewerData.height - footerHeight, footerHeight);
+					var oldImageData = this.imageData || {};
+					var sizingImage;
+					this.imageInitializing = { abort: function abort() {
+						sizingImage.onload = null;
+					} };
+					sizingImage = getImageNaturalSizes(image, options, function(naturalWidth, naturalHeight) {
+						var aspectRatio = naturalWidth / naturalHeight;
+						var initialCoverage = Math.max(0, Math.min(1, options.initialCoverage));
+						var width = viewerWidth;
+						var height = viewerHeight;
+						_this2.imageInitializing = false;
+						if (viewerHeight * aspectRatio > viewerWidth) height = viewerWidth / aspectRatio;
+						else width = viewerHeight * aspectRatio;
+						initialCoverage = isNumber(initialCoverage) ? initialCoverage : .9;
+						width = Math.min(width * initialCoverage, naturalWidth);
+						height = Math.min(height * initialCoverage, naturalHeight);
+						var left = (viewerWidth - width) / 2;
+						var top = (viewerHeight - height) / 2;
+						var imageData = {
+							left,
+							top,
+							x: left,
+							y: top,
+							width,
+							height,
+							oldRatio: 1,
+							ratio: width / naturalWidth,
+							aspectRatio,
+							naturalWidth,
+							naturalHeight
+						};
+						var initialImageData = assign({}, imageData);
+						if (options.rotatable) {
+							imageData.rotate = oldImageData.rotate || 0;
+							initialImageData.rotate = 0;
+						}
+						if (options.scalable) {
+							imageData.scaleX = oldImageData.scaleX || 1;
+							imageData.scaleY = oldImageData.scaleY || 1;
+							initialImageData.scaleX = 1;
+							initialImageData.scaleY = 1;
+						}
+						_this2.imageData = imageData;
+						_this2.initialImageData = initialImageData;
+						if (done) done();
+					});
+				},
+				renderImage: function renderImage(done) {
+					var _this3 = this;
+					var image = this.image, imageData = this.imageData;
+					setStyle(image, assign({
+						width: imageData.width,
+						height: imageData.height,
+						marginLeft: imageData.x,
+						marginTop: imageData.y
+					}, getTransforms(imageData)));
+					if (this.magnifierPoint) this.renderMagnifier();
+					if (done) {
+						var action = false;
+						if (this.viewing) action = "view";
+						else if (this.moving) action = "move";
+						else if (this.rotating) action = "rotate";
+						else if (this.scaling) action = "scale";
+						else if (this.zooming) action = "zoom";
+						if (action && isTransitionEnabled(this.options, action) && hasClass(image, CLASS_TRANSITION)) {
+							var onTransitionEnd = function onTransitionEnd() {
+								_this3.imageRendering = false;
+								done();
+							};
+							this.imageRendering = { abort: function abort() {
+								removeListener(image, EVENT_TRANSITION_END, onTransitionEnd);
+							} };
+							addListener(image, EVENT_TRANSITION_END, onTransitionEnd, { once: true });
+						} else done();
+					}
+				},
+				resetImage: function resetImage() {
+					var image = this.image;
+					if (image) {
+						if (this.viewing) this.viewing.abort();
+						image.parentNode.removeChild(image);
+						this.image = null;
+						this.title.innerHTML = "";
+					}
+				}
+			};
+			var events = {
+				bind: function bind() {
+					var options = this.options, viewer = this.viewer, canvas = this.canvas;
+					var document = this.ownerDocument;
+					addListener(viewer, EVENT_CLICK, this.onClick = this.click.bind(this));
+					addListener(viewer, EVENT_DRAG_START, this.onDragStart = this.dragstart.bind(this));
+					addListener(viewer, EVENT_POINTER_ENTER, this.onMagnifyEnter = this.magnify.bind(this));
+					addListener(viewer, EVENT_POINTER_MOVE, this.onMagnify = this.magnify.bind(this));
+					addListener(viewer, EVENT_POINTER_LEAVE, this.onMagnifierLeave = this.hideMagnifier.bind(this));
+					addListener(canvas, EVENT_POINTER_DOWN, this.onPointerDown = this.pointerdown.bind(this));
+					addListener(document, EVENT_POINTER_MOVE, this.onPointerMove = this.pointermove.bind(this));
+					addListener(document, EVENT_POINTER_UP, this.onPointerUp = this.pointerup.bind(this));
+					addListener(document, EVENT_KEY_DOWN, this.onKeyDown = this.keydown.bind(this));
+					addListener(window, EVENT_RESIZE, this.onResize = this.resize.bind(this));
+					if (options.zoomable && options.zoomOnWheel || options.slideOnWheel) addListener(viewer, EVENT_WHEEL, this.onWheel = this.wheel.bind(this), {
+						passive: false,
+						capture: true
+					});
+					if (options.zoomable && options.zoomOnGesture || options.rotatable && options.rotateOnGesture) addListener(viewer, EVENT_GESTURE, this.onGesture = this.gesture.bind(this), { passive: false });
+					if (options.toggleOnDblclick) addListener(canvas, EVENT_DBLCLICK, this.onDblclick = this.dblclick.bind(this));
+				},
+				unbind: function unbind() {
+					var options = this.options, viewer = this.viewer, canvas = this.canvas;
+					var document = this.ownerDocument;
+					removeListener(viewer, EVENT_CLICK, this.onClick);
+					removeListener(viewer, EVENT_DRAG_START, this.onDragStart);
+					removeListener(viewer, EVENT_POINTER_ENTER, this.onMagnifyEnter);
+					removeListener(viewer, EVENT_POINTER_MOVE, this.onMagnify);
+					removeListener(viewer, EVENT_POINTER_LEAVE, this.onMagnifierLeave);
+					removeListener(canvas, EVENT_POINTER_DOWN, this.onPointerDown);
+					removeListener(document, EVENT_POINTER_MOVE, this.onPointerMove);
+					removeListener(document, EVENT_POINTER_UP, this.onPointerUp);
+					removeListener(document, EVENT_KEY_DOWN, this.onKeyDown);
+					removeListener(window, EVENT_RESIZE, this.onResize);
+					if (options.zoomable && options.zoomOnWheel || options.slideOnWheel) removeListener(viewer, EVENT_WHEEL, this.onWheel, {
+						passive: false,
+						capture: true
+					});
+					if (options.zoomable && options.zoomOnGesture || options.rotatable && options.rotateOnGesture) removeListener(viewer, EVENT_GESTURE, this.onGesture, { passive: false });
+					if (options.toggleOnDblclick) removeListener(canvas, EVENT_DBLCLICK, this.onDblclick);
+				}
+			};
+			var handlers = {
+				click: function click(event) {
+					var options = this.options, imageData = this.imageData;
+					var target = event.target;
+					var action = getData(target, DATA_ACTION);
+					if (!action && target.localName === "img" && target.parentElement.localName === "li") {
+						target = target.parentElement;
+						action = getData(target, DATA_ACTION);
+					}
+					if (IS_TOUCH_DEVICE && event.isTrusted && target === this.canvas) clearTimeout(this.clickCanvasTimeout);
+					this.actionEvent = event;
+					switch (action) {
+						case "mix":
+							if (this.played) this.stop();
+							else if (options.inline) {
+								if (this.fulled) this.exit();
+								else this.full();
+							} else this.hide();
+							break;
+						case "hide":
+							if (!this.pointerMoved) this.hide();
+							break;
+						case "view":
+							this.view(getData(target, "index"));
+							break;
+						case "zoom-in":
+							this.zoom(.1, true);
+							break;
+						case "zoom-out":
+							this.zoom(-.1, true);
+							break;
+						case "one-to-one":
+							this.toggle();
+							break;
+						case "reset":
+							this.reset();
+							break;
+						case "prev":
+							this.prev(options.loop);
+							break;
+						case "play":
+							this.play(options.fullscreen);
+							break;
+						case "next":
+							this.next(options.loop);
+							break;
+						case "rotate-left":
+							this.rotate(-90);
+							break;
+						case "rotate-right":
+							this.rotate(90);
+							break;
+						case "flip-horizontal":
+							this.scaleX(-imageData.scaleX || -1);
+							break;
+						case "flip-vertical":
+							this.scaleY(-imageData.scaleY || -1);
+							break;
+						default: if (this.played) this.stop();
+					}
+				},
+				dblclick: function dblclick(event) {
+					event.preventDefault();
+					if (this.viewed && event.target === this.image) {
+						if (IS_TOUCH_DEVICE && event.isTrusted) clearTimeout(this.doubleClickImageTimeout);
+						this.actionEvent = event.isTrusted ? event : event.detail && event.detail.originalEvent;
+						this.toggle();
+					}
+				},
+				load: function load() {
+					var _this = this;
+					if (this.timeout) {
+						clearTimeout(this.timeout);
+						this.timeout = false;
+					}
+					var element = this.element, options = this.options, image = this.image, index = this.index, viewerData = this.viewerData;
+					removeClass(image, CLASS_INVISIBLE);
+					if (options.loading) removeClass(this.canvas, CLASS_LOADING);
+					image.style.cssText = "height:0;" + "margin-left:".concat(viewerData.width / 2, "px;") + "margin-top:".concat(viewerData.height / 2, "px;") + "max-width:none!important;position:relative;width:0;";
+					this.initImage(function() {
+						toggleClass(image, CLASS_MOVE, options.movable);
+						toggleClass(image, CLASS_TRANSITION, isTransitionEnabled(options, "view"));
+						_this.renderImage(function() {
+							_this.viewed = true;
+							_this.viewing = false;
+							setTimeout(function() {
+								toggleClass(image, CLASS_TRANSITION, options.transition);
+							}, 300);
+							if (isFunction(options.viewed)) addListener(element, EVENT_VIEWED, options.viewed, { once: true });
+							dispatchEvent(element, EVENT_VIEWED, {
+								originalImage: _this.images[index],
+								index,
+								image,
+								originalEvent: _this.viewOriginalEvent || null
+							}, { cancelable: false });
+							_this.viewOriginalEvent = null;
+						});
+					});
+				},
+				loadImage: function loadImage(event) {
+					var image = event.target;
+					var parent = image.parentNode;
+					var parentWidth = parent.offsetWidth || 30;
+					var parentHeight = parent.offsetHeight || 50;
+					var filled = !!getData(image, "filled");
+					getImageNaturalSizes(image, this.options, function(naturalWidth, naturalHeight) {
+						var aspectRatio = naturalWidth / naturalHeight;
+						var width = parentWidth;
+						var height = parentHeight;
+						if (parentHeight * aspectRatio > parentWidth) {
+							if (filled) width = parentHeight * aspectRatio;
+							else height = parentWidth / aspectRatio;
+						} else if (filled) height = parentWidth / aspectRatio;
+						else width = parentHeight * aspectRatio;
+						setStyle(image, assign({
+							width,
+							height
+						}, getTransforms({
+							translateX: (parentWidth - width) / 2,
+							translateY: (parentHeight - height) / 2
+						})));
+					});
+				},
+				keydown: function keydown(event) {
+					var options = this.options;
+					if (!options.keyboard) return;
+					var keyCode = event.keyCode || event.which || event.charCode;
+					this.actionEvent = event;
+					switch (keyCode) {
+						case 13: if (this.viewer.contains(event.target)) this.click(event);
+					}
+					if (!this.fulled) return;
+					switch (keyCode) {
+						case 27:
+							if (this.played) this.stop();
+							else if (options.inline) {
+								if (this.fulled) this.exit();
+							} else this.hide();
+							break;
+						case 32:
+							if (this.played) this.stop();
+							break;
+						case 37:
+							if (this.played && this.playing) this.playing.prev();
+							else this.prev(options.loop);
+							break;
+						case 38:
+							event.preventDefault();
+							this.zoom(options.zoomRatio, true);
+							break;
+						case 39:
+							if (this.played && this.playing) this.playing.next();
+							else this.next(options.loop);
+							break;
+						case 40:
+							event.preventDefault();
+							this.zoom(-options.zoomRatio, true);
+							break;
+						case 48:
+						case 49: if (event.ctrlKey) {
+							event.preventDefault();
+							this.toggle();
+						}
+					}
+				},
+				dragstart: function dragstart(event) {
+					if (event.target.localName === "img") event.preventDefault();
+				},
+				magnify: function magnify(event) {
+					if (event.changedTouches || event.pointerType && event.pointerType !== "mouse") {
+						this.hideMagnifier();
+						return;
+					}
+					this.magnifierPoint = {
+						clientX: event.clientX,
+						clientY: event.clientY
+					};
+					this.renderMagnifier();
+				},
+				renderMagnifier: function renderMagnifier() {
+					var options = this.options, imageData = this.imageData, magnifier = this.magnifier, magnifierImage = this.magnifierImage, viewer = this.viewer;
+					var config = isPlainObject(options.magnifier) ? options.magnifier : {};
+					var point = this.magnifierPoint;
+					if (!options.magnifier || !this.fulled || !this.viewed || !magnifier || !magnifierImage || !point) {
+						this.hideMagnifier();
+						return;
+					}
+					var size = Math.max(1, Number(config.size) || 100);
+					var zoomRatio = Math.max(1, Number(config.zoomRatio) || 2);
+					var opacity = Number(config.opacity);
+					var rect = viewer.getBoundingClientRect();
+					var x = point.clientX - rect.left;
+					var y = point.clientY - rect.top;
+					var imageURL = this.image.currentSrc || this.image.src;
+					var imageRect = this.image.getBoundingClientRect();
+					if (point.clientX < imageRect.left || point.clientX > imageRect.right || point.clientY < imageRect.top || point.clientY > imageRect.bottom) {
+						this.hideMagnifier();
+						return;
+					}
+					var scaleX = isNumber(imageData.scaleX) ? imageData.scaleX : 1;
+					var scaleY = isNumber(imageData.scaleY) ? imageData.scaleY : 1;
+					var rotate = (imageData.rotate || 0) * Math.PI / 180;
+					var cos = Math.cos(rotate);
+					var sin = Math.sin(rotate);
+					var matrixA = cos * scaleX;
+					var matrixB = sin * scaleX;
+					var matrixC = -sin * scaleY;
+					var matrixD = cos * scaleY;
+					var determinant = scaleX * scaleY;
+					if (determinant === 0) {
+						this.hideMagnifier();
+						return;
+					}
+					var centerX = imageData.x + imageData.width / 2;
+					var centerY = imageData.y + imageData.height / 2;
+					var localX = (matrixD * (x - centerX) - matrixC * (y - centerY)) / determinant;
+					var localY = (-matrixB * (x - centerX) + matrixA * (y - centerY)) / determinant;
+					var sourceX = localX + imageData.width / 2;
+					var sourceY = localY + imageData.height / 2;
+					var magnifiedWidth = imageData.width * zoomRatio;
+					var magnifiedHeight = imageData.height * zoomRatio;
+					var transformedX = matrixA * (sourceX * zoomRatio - magnifiedWidth / 2) + matrixC * (sourceY * zoomRatio - magnifiedHeight / 2);
+					var transformedY = matrixB * (sourceX * zoomRatio - magnifiedWidth / 2) + matrixD * (sourceY * zoomRatio - magnifiedHeight / 2);
+					this.magnifierSourcePoint = {
+						x: sourceX,
+						y: sourceY
+					};
+					magnifier.style.width = "".concat(size, "px");
+					magnifier.style.height = "".concat(size, "px");
+					magnifier.style.opacity = "".concat(Math.max(0, Math.min(1, isNumber(opacity) ? opacity : 1)));
+					magnifierImage.src = imageURL;
+					magnifierImage.style.width = "".concat(magnifiedWidth, "px");
+					magnifierImage.style.height = "".concat(magnifiedHeight, "px");
+					magnifierImage.style.left = "".concat(size / 2 - magnifiedWidth / 2 - transformedX, "px");
+					magnifierImage.style.top = "".concat(size / 2 - magnifiedHeight / 2 - transformedY, "px");
+					magnifierImage.style.transform = "rotate(".concat(imageData.rotate || 0, "deg) scaleX(").concat(scaleX, ") scaleY(").concat(scaleY, ")");
+					magnifier.removeAttribute("aria-hidden");
+					addClass(magnifier, "viewer-show");
+				},
+				hideMagnifier: function hideMagnifier() {
+					if (this.magnifier) {
+						removeClass(this.magnifier, "viewer-show");
+						this.magnifier.setAttribute("aria-hidden", true);
+						this.magnifierPoint = null;
+					}
+				},
+				pointerdown: function pointerdown(event) {
+					var options = this.options, pointers = this.pointers;
+					var buttons = event.buttons, button = event.button;
+					this.pointerMoved = false;
+					if (!this.viewed || this.showing || this.viewing || this.hiding || (event.type === "mousedown" || event.type === "pointerdown" && event.pointerType === "mouse") && (isNumber(buttons) && buttons !== 1 || isNumber(button) && button !== 0 || event.ctrlKey)) return;
+					event.preventDefault();
+					if (event.changedTouches) forEach(event.changedTouches, function(touch) {
+						pointers[touch.identifier] = getPointer(touch);
+					});
+					else pointers[event.pointerId || 0] = getPointer(event);
+					var action = options.movable ? ACTION_MOVE : false;
+					if ((options.zoomable && options.zoomOnTouch || options.rotatable && options.rotateOnTouch) && Object.keys(pointers).length > 1) action = ACTION_TRANSFORM;
+					else if (options.slideOnTouch && (event.pointerType === "touch" || event.type === "touchstart") && this.isSwitchable()) action = ACTION_SWITCH;
+					if (action === ACTION_MOVE || action === ACTION_ZOOM || action === ACTION_ROTATE || action === ACTION_TRANSFORM) removeClass(this.image, CLASS_TRANSITION);
+					this.action = action;
+				},
+				pointermove: function pointermove(event) {
+					var pointers = this.pointers, action = this.action;
+					if (!this.viewed || !action) return;
+					event.preventDefault();
+					if (event.changedTouches) forEach(event.changedTouches, function(touch) {
+						assign(pointers[touch.identifier] || {}, getPointer(touch, true));
+					});
+					else assign(pointers[event.pointerId || 0] || {}, getPointer(event, true));
+					this.change(event);
+				},
+				pointerup: function pointerup(event) {
+					var _this2 = this;
+					var options = this.options, action = this.action, pointers = this.pointers;
+					var pointer;
+					if (event.changedTouches) forEach(event.changedTouches, function(touch) {
+						pointer = pointers[touch.identifier];
+						delete pointers[touch.identifier];
+					});
+					else {
+						pointer = pointers[event.pointerId || 0];
+						delete pointers[event.pointerId || 0];
+					}
+					if (!action) return;
+					event.preventDefault();
+					if (action === ACTION_MOVE || action === ACTION_ZOOM || action === ACTION_ROTATE || action === ACTION_TRANSFORM) {
+						var transition = action === ACTION_TRANSFORM ? isTransitionEnabled(options, ACTION_ZOOM) || isTransitionEnabled(options, ACTION_ROTATE) : isTransitionEnabled(options, action);
+						toggleClass(this.image, CLASS_TRANSITION, transition);
+					}
+					this.action = false;
+					if (IS_TOUCH_DEVICE && action !== ACTION_ZOOM && action !== ACTION_TRANSFORM && pointer && Date.now() - pointer.timeStamp < 500) {
+						clearTimeout(this.clickCanvasTimeout);
+						clearTimeout(this.doubleClickImageTimeout);
+						if (options.toggleOnDblclick && this.viewed && event.target === this.image) {
+							if (this.pointerMoved) this.imageClicked = false;
+							else if (this.imageClicked) {
+								this.imageClicked = false;
+								this.doubleClickImageTimeout = setTimeout(function() {
+									dispatchEvent(_this2.image, EVENT_DBLCLICK, { originalEvent: event });
+								}, 50);
+							} else {
+								this.imageClicked = true;
+								this.doubleClickImageTimeout = setTimeout(function() {
+									_this2.imageClicked = false;
+								}, 500);
+							}
+						} else {
+							this.imageClicked = false;
+							if (options.backdrop && options.backdrop !== "static" && event.target === this.canvas) this.clickCanvasTimeout = setTimeout(function() {
+								dispatchEvent(_this2.canvas, EVENT_CLICK, { originalEvent: event });
+							}, 50);
+						}
+					}
+				},
+				resize: function resize() {
+					var _this3 = this;
+					if (!this.isShown || this.hiding) return;
+					if (this.fulled) {
+						this.close();
+						this.initBody();
+						this.open();
+					}
+					this.initContainer();
+					this.initViewer();
+					this.renderViewer();
+					if (isUndefined((isPlainObject(this.options.navbar) ? this.options.navbar : {}).visibleItemCount)) this.initList(this.index);
+					this.renderList();
+					if (this.viewed) this.initImage(function() {
+						_this3.renderImage();
+					});
+					if (this.played) {
+						if (this.options.fullscreen && this.fulled && !(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
+							this.stop();
+							return;
+						}
+						forEach(this.player.getElementsByTagName("img"), function(image) {
+							addListener(image, EVENT_LOAD, _this3.loadImage.bind(_this3), { once: true });
+							dispatchEvent(image, EVENT_LOAD);
+						});
+					}
+				},
+				wheel: function wheel(event) {
+					var _this4 = this;
+					var options = this.options, navbar = this.navbar;
+					if (!this.viewed) return;
+					event.preventDefault();
+					if (this.gesturing) return;
+					if (this.wheeling) return;
+					this.wheeling = true;
+					setTimeout(function() {
+						_this4.wheeling = false;
+					}, 50);
+					var delta = 1;
+					if (event.deltaY) delta = event.deltaY > 0 ? 1 : -1;
+					else if (event.wheelDelta) delta = -event.wheelDelta / 120;
+					else if (event.detail) delta = event.detail > 0 ? 1 : -1;
+					if (!(navbar && navbar.contains(event.target)) && options.zoomable && isWheelActionEnabled(options.zoomOnWheel, event)) {
+						var ratio = Number(options.zoomRatio) || .1;
+						this.actionEvent = event;
+						this.zoom(-delta * ratio, true);
+						return;
+					}
+					if (isWheelActionEnabled(options.slideOnWheel, event)) {
+						this.actionEvent = event;
+						if (delta > 0) this.next(options.loop);
+						else if (delta < 0) this.prev(options.loop);
+					}
+				},
+				gesture: function gesture(event) {
+					var options = this.options;
+					if (!this.viewed || !options.zoomOnGesture && !options.rotateOnGesture) return;
+					event.preventDefault();
+					switch (event.type) {
+						case "gesturestart":
+							this.gesturing = true;
+							this.gestureScale = event.scale || 1;
+							this.gestureRotation = event.rotation || 0;
+							break;
+						case "gesturechange":
+							var scale = event.scale || 1;
+							var ratio = scale / (this.gestureScale || 1);
+							var rotation = Number(event.rotation);
+							var degree = rotation - (this.gestureRotation || 0);
+							this.gestureScale = scale;
+							if (options.zoomable && options.zoomOnGesture && ratio !== 1) {
+								this.actionEvent = event;
+								this.zoom(ratio >= 1 ? ratio - 1 : 1 - 1 / ratio);
+							}
+							if (options.rotatable && options.rotateOnGesture && isNumber(rotation)) {
+								this.gestureRotation = rotation;
+								if (degree !== 0) {
+									this.actionEvent = event;
+									this.rotate(degree);
+								}
+							}
+							break;
+						case "gestureend":
+							this.gesturing = false;
+							this.gestureScale = 1;
+							this.gestureRotation = 0;
+					}
+				}
+			};
+			var methods = {
+				show: function show() {
+					var immediate = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+					var element = this.element, options = this.options;
+					if (options.inline || this.showing || this.isShown || this.showing) return this;
+					if (!this.ready) {
+						this.build();
+						if (this.ready) this.show(immediate);
+						return this;
+					}
+					var originalEvent = this.actionEvent || this.showOriginalEvent || this.viewOriginalEvent || null;
+					this.actionEvent = null;
+					this.showOriginalEvent = originalEvent;
+					if (isFunction(options.show)) addListener(element, EVENT_SHOW, options.show, { once: true });
+					if (dispatchEvent(element, EVENT_SHOW, { originalEvent }) === false || !this.ready) return this;
+					if (this.hiding) this.transitioning.abort();
+					this.showing = true;
+					this.open();
+					var viewer = this.viewer;
+					removeClass(viewer, CLASS_HIDE);
+					viewer.setAttribute("role", "dialog");
+					viewer.setAttribute("aria-labelledby", this.title.id);
+					viewer.setAttribute("aria-modal", true);
+					viewer.removeAttribute("aria-hidden");
+					if (isTransitionEnabled(options, "show") && !immediate) {
+						var shown = this.shown.bind(this);
+						this.transitioning = { abort: function abort() {
+							removeListener(viewer, EVENT_TRANSITION_END, shown);
+							removeClass(viewer, CLASS_IN);
+						} };
+						addClass(viewer, CLASS_TRANSITION);
+						viewer.initialOffsetWidth = viewer.offsetWidth;
+						addListener(viewer, EVENT_TRANSITION_END, shown, { once: true });
+						addClass(viewer, CLASS_IN);
+					} else {
+						addClass(viewer, CLASS_IN);
+						this.shown();
+					}
+					return this;
+				},
+				hide: function hide() {
+					var _this = this;
+					var immediate = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+					var element = this.element, options = this.options;
+					if (options.inline || this.hiding || !(this.isShown || this.showing)) return this;
+					var originalEvent = this.actionEvent || this.hideOriginalEvent || null;
+					this.actionEvent = null;
+					this.hideOriginalEvent = originalEvent;
+					if (isFunction(options.hide)) addListener(element, EVENT_HIDE, options.hide, { once: true });
+					if (dispatchEvent(element, EVENT_HIDE, { originalEvent }) === false || this.destroyed) return this;
+					if (this.showing) this.transitioning.abort();
+					this.hiding = true;
+					if (this.played) this.stop();
+					else if (this.viewing) this.viewing.abort();
+					var viewer = this.viewer, image = this.image;
+					var hideImmediately = function hideImmediately() {
+						removeClass(viewer, CLASS_IN);
+						_this.hidden();
+					};
+					if (isTransitionEnabled(options, "hide") && !immediate) {
+						var _onViewerTransitionEnd = function onViewerTransitionEnd(event) {
+							if (event && event.target === viewer) {
+								removeListener(viewer, EVENT_TRANSITION_END, _onViewerTransitionEnd);
+								_this.hidden();
+							}
+						};
+						var onImageTransitionEnd = function onImageTransitionEnd() {
+							if (hasClass(viewer, CLASS_TRANSITION)) {
+								addListener(viewer, EVENT_TRANSITION_END, _onViewerTransitionEnd);
+								removeClass(viewer, CLASS_IN);
+							} else hideImmediately();
+						};
+						this.transitioning = { abort: function abort() {
+							if (_this.viewed && hasClass(image, CLASS_TRANSITION)) removeListener(image, EVENT_TRANSITION_END, onImageTransitionEnd);
+							else if (hasClass(viewer, CLASS_TRANSITION)) removeListener(viewer, EVENT_TRANSITION_END, _onViewerTransitionEnd);
+						} };
+						if (this.viewed && hasClass(image, CLASS_TRANSITION)) {
+							addListener(image, EVENT_TRANSITION_END, onImageTransitionEnd, { once: true });
+							this.zoomTo(0, false, null, true);
+						} else onImageTransitionEnd();
+					} else hideImmediately();
+					return this;
+				},
+				view: function view() {
+					var _this2 = this;
+					var index = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : this.options.initialViewIndex;
+					var previousIndex = this.index;
+					index = Number(index) || 0;
+					if (this.hiding || this.played || index < 0 || index >= this.length || this.viewed && index === previousIndex) return this;
+					var originalEvent = this.actionEvent || this.viewOriginalEvent || null;
+					this.actionEvent = null;
+					this.viewOriginalEvent = originalEvent;
+					if (!this.isShown) {
+						this.index = index;
+						return this.show();
+					}
+					if (this.viewing) this.viewing.abort();
+					var element = this.element, options = this.options, title = this.title, canvas = this.canvas;
+					var item = this.getItem(index);
+					if (!item) {
+						this.initList(index);
+						item = this.getItem(index);
+					}
+					var img = item.querySelector("img");
+					var url = getData(img, "originalUrl");
+					var alt = img.getAttribute("alt");
+					var image = document.createElement("img");
+					inheritAttributes(image, img, options.inheritedAttributes);
+					image.src = url;
+					image.alt = alt;
+					if (isFunction(options.view)) addListener(element, EVENT_VIEW, options.view, { once: true });
+					if (dispatchEvent(element, EVENT_VIEW, {
+						originalImage: this.images[index],
+						index,
+						image,
+						originalEvent
+					}) === false || !this.isShown || this.hiding || this.played) return this;
+					this.hideMagnifier();
+					var activeItem = this.getItem(previousIndex);
+					if (activeItem) {
+						removeClass(activeItem, CLASS_ACTIVE);
+						activeItem.removeAttribute("aria-selected");
+					}
+					addClass(item, CLASS_ACTIVE);
+					item.setAttribute("aria-selected", true);
+					if (options.focus) item.focus();
+					this.image = image;
+					this.viewed = false;
+					this.index = index;
+					this.imageData = {};
+					addClass(image, CLASS_INVISIBLE);
+					if (options.loading) addClass(canvas, CLASS_LOADING);
+					canvas.innerHTML = "";
+					canvas.appendChild(image);
+					this.renderList();
+					title.innerHTML = "";
+					var onViewed = function onViewed() {
+						var imageData = _this2.imageData;
+						var render = Array.isArray(options.title) ? options.title[1] : options.title;
+						title.innerHTML = escapeHTMLEntities(isFunction(render) ? render.call(_this2, image, imageData) : "".concat(alt, " (").concat(imageData.naturalWidth, " × ").concat(imageData.naturalHeight, ")"));
+						if (options.preload) {
+							var direction = index < previousIndex ? -1 : 1;
+							var nextIndex = index + direction;
+							if (nextIndex < 0 || nextIndex >= _this2.length) {
+								if (options.loop) nextIndex = direction > 0 ? 0 : _this2.length - 1;
+								else nextIndex = -1;
+							}
+							if (nextIndex !== index) {
+								var nextImage = _this2.images[nextIndex];
+								var preloadedImage = document.createElement("img");
+								inheritAttributes(preloadedImage, nextImage, options.inheritedAttributes);
+								preloadedImage.src = _this2.getImageURL(nextImage) || nextImage.src;
+							}
+						}
+					};
+					addListener(element, EVENT_VIEWED, onViewed, { once: true });
+					var _loadImage = function loadImage() {
+						var isFallback = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+						var onLoad;
+						var onError;
+						var clean = function clean() {
+							removeListener(image, EVENT_LOAD, onLoad);
+							removeListener(image, EVENT_ERROR, onError);
+							if (_this2.timeout) {
+								clearTimeout(_this2.timeout);
+								_this2.timeout = false;
+							}
+						};
+						_this2.viewing = { abort: function abort() {
+							removeListener(element, EVENT_VIEWED, onViewed);
+							if (image.complete) {
+								if (_this2.imageRendering) _this2.imageRendering.abort();
+								else if (_this2.imageInitializing) _this2.imageInitializing.abort();
+							} else {
+								image.src = "";
+								clean();
+							}
+						} };
+						if (image.complete) _this2.load();
+						else {
+							addListener(image, EVENT_LOAD, onLoad = function onLoad() {
+								clean();
+								_this2.load();
+							}, { once: true });
+							addListener(image, EVENT_ERROR, onError = function onError() {
+								clean();
+								if (!isFallback) {
+									var fallbackSrc = img.src;
+									if (fallbackSrc && fallbackSrc !== image.src) {
+										image.src = fallbackSrc;
+										_loadImage(true);
+										return;
+									}
+								}
+								removeClass(image, CLASS_INVISIBLE);
+								if (options.loading) removeClass(_this2.canvas, CLASS_LOADING);
+							}, { once: true });
+							if (_this2.timeout) clearTimeout(_this2.timeout);
+							_this2.timeout = setTimeout(function() {
+								removeClass(image, CLASS_INVISIBLE);
+								_this2.timeout = false;
+							}, 1e3);
+						}
+					};
+					_loadImage();
+					return this;
+				},
+				prev: function prev() {
+					var loop = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+					var index = this.index - 1;
+					if (index < 0) index = loop ? this.length - 1 : 0;
+					this.view(index);
+					return this;
+				},
+				next: function next() {
+					var loop = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+					var maxIndex = this.length - 1;
+					var index = this.index + 1;
+					if (index > maxIndex) index = loop ? 0 : maxIndex;
+					this.view(index);
+					return this;
+				},
+				move: function move(x) {
+					var y = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : x;
+					var imageData = this.imageData;
+					this.moveTo(isUndefined(x) ? x : imageData.x + Number(x), isUndefined(y) ? y : imageData.y + Number(y));
+					return this;
+				},
+				moveTo: function moveTo(x) {
+					var _this3 = this;
+					var y = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : x;
+					var element = this.element, options = this.options, imageData = this.imageData;
+					x = Number(x);
+					y = Number(y);
+					if (this.viewed && !this.played && options.movable) {
+						var oldX = imageData.x;
+						var oldY = imageData.y;
+						var changed = false;
+						if (isNumber(x)) changed = true;
+						else x = oldX;
+						if (isNumber(y)) changed = true;
+						else y = oldY;
+						if (changed) {
+							var originalEvent = this.actionEvent || null;
+							this.actionEvent = null;
+							if (isFunction(options.move)) addListener(element, EVENT_MOVE, options.move, { once: true });
+							if (dispatchEvent(element, EVENT_MOVE, {
+								x,
+								y,
+								oldX,
+								oldY,
+								originalEvent
+							}) === false) return this;
+							imageData.x = x;
+							imageData.y = y;
+							imageData.left = x;
+							imageData.top = y;
+							toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "move"));
+							this.moving = true;
+							this.renderImage(function() {
+								_this3.moving = false;
+								if (isFunction(options.moved)) addListener(element, EVENT_MOVED, options.moved, { once: true });
+								dispatchEvent(element, EVENT_MOVED, {
+									x,
+									y,
+									oldX,
+									oldY,
+									originalEvent
+								}, { cancelable: false });
+							});
+						}
+					}
+					return this;
+				},
+				rotate: function rotate(degree) {
+					this.rotateTo((this.imageData.rotate || 0) + Number(degree));
+					return this;
+				},
+				rotateTo: function rotateTo(degree) {
+					var _this4 = this;
+					var element = this.element, options = this.options, imageData = this.imageData;
+					degree = Number(degree);
+					if (isNumber(degree) && this.viewed && !this.played && options.rotatable) {
+						var oldDegree = imageData.rotate;
+						var originalEvent = this.actionEvent || null;
+						this.actionEvent = null;
+						if (isFunction(options.rotate)) addListener(element, EVENT_ROTATE, options.rotate, { once: true });
+						if (dispatchEvent(element, EVENT_ROTATE, {
+							degree,
+							oldDegree,
+							originalEvent
+						}) === false) return this;
+						imageData.rotate = degree;
+						toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "rotate"));
+						this.rotating = true;
+						this.renderImage(function() {
+							_this4.rotating = false;
+							if (isFunction(options.rotated)) addListener(element, EVENT_ROTATED, options.rotated, { once: true });
+							dispatchEvent(element, EVENT_ROTATED, {
+								degree,
+								oldDegree,
+								originalEvent
+							}, { cancelable: false });
+						});
+					}
+					return this;
+				},
+				scaleX: function scaleX(_scaleX) {
+					this.scale(_scaleX, this.imageData.scaleY);
+					return this;
+				},
+				scaleY: function scaleY(_scaleY) {
+					this.scale(this.imageData.scaleX, _scaleY);
+					return this;
+				},
+				scale: function scale(scaleX) {
+					var _this5 = this;
+					var scaleY = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : scaleX;
+					var element = this.element, options = this.options, imageData = this.imageData;
+					scaleX = Number(scaleX);
+					scaleY = Number(scaleY);
+					if (this.viewed && !this.played && options.scalable) {
+						var oldScaleX = imageData.scaleX;
+						var oldScaleY = imageData.scaleY;
+						var changed = false;
+						if (isNumber(scaleX)) changed = true;
+						else scaleX = oldScaleX;
+						if (isNumber(scaleY)) changed = true;
+						else scaleY = oldScaleY;
+						if (changed) {
+							var originalEvent = this.actionEvent || null;
+							this.actionEvent = null;
+							if (isFunction(options.scale)) addListener(element, EVENT_SCALE, options.scale, { once: true });
+							if (dispatchEvent(element, EVENT_SCALE, {
+								scaleX,
+								scaleY,
+								oldScaleX,
+								oldScaleY,
+								originalEvent
+							}) === false) return this;
+							imageData.scaleX = scaleX;
+							imageData.scaleY = scaleY;
+							toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "scale"));
+							this.scaling = true;
+							this.renderImage(function() {
+								_this5.scaling = false;
+								if (isFunction(options.scaled)) addListener(element, EVENT_SCALED, options.scaled, { once: true });
+								dispatchEvent(element, EVENT_SCALED, {
+									scaleX,
+									scaleY,
+									oldScaleX,
+									oldScaleY,
+									originalEvent
+								}, { cancelable: false });
+							});
+						}
+					}
+					return this;
+				},
+				zoom: function zoom(ratio) {
+					var showTooltip = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : false;
+					var pivot = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
+					var imageData = this.imageData;
+					ratio = Number(ratio);
+					if (ratio < 0) ratio = 1 / (1 - ratio);
+					else ratio = 1 + ratio;
+					this.zoomTo(imageData.width * ratio / imageData.naturalWidth, showTooltip, pivot);
+					return this;
+				},
+				zoomTo: function zoomTo(ratio) {
+					var _this6 = this;
+					var showTooltip = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : false;
+					var pivot = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
+					var _zoomable = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : false;
+					var element = this.element, options = this.options, pointers = this.pointers, imageData = this.imageData;
+					var x = imageData.x, y = imageData.y, width = imageData.width, height = imageData.height, naturalWidth = imageData.naturalWidth, naturalHeight = imageData.naturalHeight;
+					ratio = Math.max(0, ratio);
+					if (isNumber(ratio) && this.viewed && !this.played && (_zoomable || options.zoomable)) {
+						if (!_zoomable) {
+							var minZoomRatio = Math.max(.01, isFunction(options.minZoomRatio) ? options.minZoomRatio.call(this, this.image, imageData) : options.minZoomRatio);
+							var maxZoomRatio = Math.min(100, isFunction(options.maxZoomRatio) ? options.maxZoomRatio.call(this, this.image, imageData) : options.maxZoomRatio);
+							ratio = Math.min(Math.max(ratio, minZoomRatio), maxZoomRatio);
+						}
+						var originalEvent = this.actionEvent || null;
+						this.actionEvent = null;
+						if (originalEvent && originalEvent.type !== EVENT_CLICK) switch (originalEvent.type) {
+							case "wheel":
+								if (options.zoomRatio >= .055 && ratio > .95 && ratio < 1.05) ratio = 1;
+								break;
+							case "pointermove":
+							case "touchmove":
+							case "mousemove": if (ratio > .99 && ratio < 1.01) ratio = 1;
+						}
+						var newWidth = naturalWidth * ratio;
+						var newHeight = naturalHeight * ratio;
+						var offsetWidth = newWidth - width;
+						var offsetHeight = newHeight - height;
+						var oldRatio = imageData.ratio;
+						if (isFunction(options.zoom)) addListener(element, EVENT_ZOOM, options.zoom, { once: true });
+						if (dispatchEvent(element, EVENT_ZOOM, {
+							ratio,
+							oldRatio,
+							originalEvent
+						}) === false) return this;
+						this.zooming = true;
+						if (originalEvent && originalEvent.type !== EVENT_CLICK) {
+							var offset = getOffset(this.viewer);
+							var center = pointers && Object.keys(pointers).length > 0 ? getPointersCenter(pointers) : {
+								pageX: originalEvent.pageX,
+								pageY: originalEvent.pageY
+							};
+							imageData.x -= offsetWidth * ((center.pageX - offset.left - x) / width);
+							imageData.y -= offsetHeight * ((center.pageY - offset.top - y) / height);
+						} else if (isPlainObject(pivot) && isNumber(pivot.x) && isNumber(pivot.y)) {
+							imageData.x -= offsetWidth * ((pivot.x - x) / width);
+							imageData.y -= offsetHeight * ((pivot.y - y) / height);
+						} else {
+							imageData.x -= offsetWidth / 2;
+							imageData.y -= offsetHeight / 2;
+						}
+						imageData.left = imageData.x;
+						imageData.top = imageData.y;
+						imageData.width = newWidth;
+						imageData.height = newHeight;
+						imageData.oldRatio = oldRatio;
+						imageData.ratio = ratio;
+						toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "zoom"));
+						this.renderImage(function() {
+							_this6.zooming = false;
+							if (isFunction(options.zoomed)) addListener(element, EVENT_ZOOMED, options.zoomed, { once: true });
+							dispatchEvent(element, EVENT_ZOOMED, {
+								ratio,
+								oldRatio,
+								originalEvent
+							}, { cancelable: false });
+						});
+						if (showTooltip) this.tooltip();
+					}
+					return this;
+				},
+				play: function play() {
+					var _this7 = this;
+					var fullscreen = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+					if (!this.isShown || this.played) return this;
+					var element = this.element, options = this.options;
+					var originalEvent = this.actionEvent || null;
+					this.actionEvent = null;
+					if (isFunction(options.play)) addListener(element, EVENT_PLAY, options.play, { once: true });
+					if (dispatchEvent(element, EVENT_PLAY, { originalEvent }) === false) return this;
+					var player = this.player;
+					var onLoad = this.loadImage.bind(this);
+					var list = [];
+					var total = 0;
+					var index = 0;
+					this.played = true;
+					this.onLoadWhenPlay = onLoad;
+					if (fullscreen) this.requestFullscreen(fullscreen);
+					addClass(player, CLASS_SHOW);
+					player.removeAttribute("aria-hidden");
+					forEach(this.images, function(originalImage, i) {
+						var image = document.createElement("img");
+						image.src = _this7.getImageURL(originalImage) || originalImage.src;
+						image.alt = originalImage.alt || "";
+						image.referrerPolicy = originalImage.referrerPolicy;
+						total += 1;
+						addClass(image, CLASS_FADE);
+						toggleClass(image, CLASS_TRANSITION, isTransitionEnabled(options, "play"));
+						if (i === _this7.index) {
+							addClass(image, CLASS_IN);
+							index = i;
+						}
+						list.push(image);
+						addListener(image, EVENT_LOAD, onLoad, { once: true });
+						player.appendChild(image);
+					});
+					if (isNumber(options.interval) && options.interval > 0) {
+						var _prev = function prev() {
+							clearTimeout(_this7.playing.timeout);
+							var currentOriginalEvent = _this7.actionEvent || null;
+							_this7.actionEvent = null;
+							var prevIndex = index - 1;
+							prevIndex = prevIndex >= 0 ? prevIndex : total - 1;
+							if (isFunction(options.playing)) addListener(element, EVENT_PLAYING, options.playing, { once: true });
+							if (dispatchEvent(element, EVENT_PLAYING, {
+								originalImage: _this7.images[prevIndex],
+								index: prevIndex,
+								image: list[prevIndex],
+								originalEvent: currentOriginalEvent
+							}) === false) {
+								_this7.playing.timeout = options.autoplay ? setTimeout(_prev, options.interval) : null;
+								return;
+							}
+							removeClass(list[index], CLASS_IN);
+							index = prevIndex;
+							addClass(list[index], CLASS_IN);
+							_this7.playing.timeout = options.autoplay ? setTimeout(_prev, options.interval) : null;
+						};
+						var _next = function next() {
+							clearTimeout(_this7.playing.timeout);
+							var currentOriginalEvent = _this7.actionEvent || null;
+							_this7.actionEvent = null;
+							var nextIndex = index + 1;
+							nextIndex = nextIndex < total ? nextIndex : 0;
+							if (isFunction(options.playing)) addListener(element, EVENT_PLAYING, options.playing, { once: true });
+							if (dispatchEvent(element, EVENT_PLAYING, {
+								originalImage: _this7.images[nextIndex],
+								index: nextIndex,
+								image: list[nextIndex],
+								originalEvent: currentOriginalEvent
+							}) === false) {
+								_this7.playing.timeout = options.autoplay ? setTimeout(_next, options.interval) : null;
+								return;
+							}
+							removeClass(list[index], CLASS_IN);
+							index = nextIndex;
+							addClass(list[index], CLASS_IN);
+							_this7.playing.timeout = options.autoplay ? setTimeout(_next, options.interval) : null;
+						};
+						if (total > 1) this.playing = {
+							prev: _prev,
+							next: _next,
+							timeout: options.autoplay ? setTimeout(_next, options.interval) : null
+						};
+					}
+					return this;
+				},
+				stop: function stop() {
+					var _this8 = this;
+					if (!this.played) return this;
+					var element = this.element, options = this.options;
+					var originalEvent = this.actionEvent || null;
+					this.actionEvent = null;
+					if (isFunction(options.stop)) addListener(element, EVENT_STOP, options.stop, { once: true });
+					if (dispatchEvent(element, EVENT_STOP, { originalEvent }) === false) return this;
+					var player = this.player;
+					clearTimeout(this.playing.timeout);
+					this.playing = false;
+					this.played = false;
+					forEach(player.getElementsByTagName("img"), function(image) {
+						removeListener(image, EVENT_LOAD, _this8.onLoadWhenPlay);
+					});
+					removeClass(player, CLASS_SHOW);
+					player.setAttribute("aria-hidden", true);
+					player.innerHTML = "";
+					this.exitFullscreen();
+					return this;
+				},
+				full: function full() {
+					var _this9 = this;
+					var options = this.options, viewer = this.viewer, image = this.image, list = this.list;
+					if (!this.isShown || this.played || this.fulled || !options.inline) return this;
+					this.fulled = true;
+					this.open();
+					addClass(this.button, CLASS_FULLSCREEN_EXIT);
+					removeClass(list, CLASS_TRANSITION);
+					if (this.viewed) removeClass(image, CLASS_TRANSITION);
+					addClass(viewer, CLASS_FIXED);
+					viewer.setAttribute("role", "dialog");
+					viewer.setAttribute("aria-labelledby", this.title.id);
+					viewer.setAttribute("aria-modal", true);
+					viewer.removeAttribute("style");
+					setStyle(viewer, { zIndex: options.zIndex });
+					if (options.focus) this.enforceFocus();
+					this.initContainer();
+					this.viewerData = assign({}, this.containerData);
+					this.renderList();
+					if (this.viewed) this.initImage(function() {
+						_this9.renderImage();
+					});
+					return this;
+				},
+				exit: function exit() {
+					var _this0 = this;
+					var options = this.options, viewer = this.viewer, image = this.image, list = this.list;
+					if (!this.isShown || this.played || !this.fulled || !options.inline) return this;
+					this.fulled = false;
+					this.close();
+					removeClass(this.button, CLASS_FULLSCREEN_EXIT);
+					removeClass(list, CLASS_TRANSITION);
+					if (this.viewed) removeClass(image, CLASS_TRANSITION);
+					if (options.focus) this.clearEnforceFocus();
+					viewer.removeAttribute("role");
+					viewer.removeAttribute("aria-labelledby");
+					viewer.removeAttribute("aria-modal");
+					removeClass(viewer, CLASS_FIXED);
+					setStyle(viewer, { zIndex: options.zIndexInline });
+					this.viewerData = assign({}, this.parentData);
+					this.renderViewer();
+					this.renderList();
+					if (this.viewed) this.initImage(function() {
+						_this0.renderImage();
+					});
+					return this;
+				},
+				tooltip: function tooltip() {
+					var _this1 = this;
+					var options = this.options, tooltipBox = this.tooltipBox, imageData = this.imageData;
+					if (!this.viewed || this.played || !options.tooltip) return this;
+					tooltipBox.textContent = "".concat(Math.round(imageData.ratio * 100), "%");
+					if (!this.tooltipping) {
+						if (isTransitionEnabled(options, "tooltip")) {
+							if (this.fading) dispatchEvent(tooltipBox, EVENT_TRANSITION_END);
+							addClass(tooltipBox, CLASS_SHOW);
+							addClass(tooltipBox, CLASS_FADE);
+							addClass(tooltipBox, CLASS_TRANSITION);
+							tooltipBox.removeAttribute("aria-hidden");
+							tooltipBox.initialOffsetWidth = tooltipBox.offsetWidth;
+							addClass(tooltipBox, CLASS_IN);
+						} else {
+							addClass(tooltipBox, CLASS_SHOW);
+							tooltipBox.removeAttribute("aria-hidden");
+						}
+					} else clearTimeout(this.tooltipping);
+					this.tooltipping = setTimeout(function() {
+						if (isTransitionEnabled(options, "tooltip")) {
+							addListener(tooltipBox, EVENT_TRANSITION_END, function() {
+								removeClass(tooltipBox, CLASS_SHOW);
+								removeClass(tooltipBox, CLASS_FADE);
+								removeClass(tooltipBox, CLASS_TRANSITION);
+								tooltipBox.setAttribute("aria-hidden", true);
+								_this1.fading = false;
+							}, { once: true });
+							removeClass(tooltipBox, CLASS_IN);
+							_this1.fading = true;
+						} else {
+							removeClass(tooltipBox, CLASS_SHOW);
+							tooltipBox.setAttribute("aria-hidden", true);
+						}
+						_this1.tooltipping = false;
+					}, 1e3);
+					return this;
+				},
+				toggle: function toggle() {
+					if (this.imageData.ratio === 1) this.zoomTo(this.imageData.oldRatio, true);
+					else this.zoomTo(1, true);
+					return this;
+				},
+				reset: function reset() {
+					if (this.viewed && !this.played) {
+						this.imageData = assign({}, this.initialImageData);
+						this.renderImage();
+					}
+					return this;
+				},
+				update: function update(updateOptions) {
+					var _this10 = this;
+					var element = this.element, options = this.options, isImg = this.isImg;
+					if (isPlainObject(updateOptions)) assign(options, updateOptions);
+					if (isImg && !element.parentNode) return this.destroy();
+					var images = [];
+					forEach(isImg ? [element] : element.querySelectorAll("img"), function(image) {
+						if (isFunction(options.filter)) {
+							if (options.filter.call(_this10, image)) images.push(image);
+						} else if (_this10.getImageURL(image)) images.push(image);
+					});
+					if (!images.length) return this;
+					this.images = images;
+					this.length = images.length;
+					if (this.ready) {
+						var changedIndexes = [];
+						forEach(this.items, function(item) {
+							var img = item.querySelector("img");
+							var index = Number(getData(item, "index"));
+							var image = images[index];
+							if (image && img) {
+								if (image.src !== img.src || image.alt !== img.alt) changedIndexes.push(index);
+							} else changedIndexes.push(index);
+						});
+						setStyle(this.list, { width: "auto" });
+						this.initList();
+						if (this.isShown) {
+							if (this.length) {
+								if (this.viewed) {
+									var changedIndex = changedIndexes.indexOf(this.index);
+									if (changedIndex >= 0) {
+										this.viewed = false;
+										this.view(Math.max(Math.min(this.index - changedIndex, this.length - 1), 0));
+									} else {
+										var activeItem = this.getItem(this.index);
+										addClass(activeItem, CLASS_ACTIVE);
+										activeItem.setAttribute("aria-selected", true);
+									}
+								}
+							} else {
+								this.image = null;
+								this.viewed = false;
+								this.index = 0;
+								this.imageData = {};
+								this.canvas.innerHTML = "";
+								this.title.innerHTML = "";
+							}
+						}
+					} else this.build();
+					return this;
+				},
+				destroy: function destroy() {
+					var element = this.element, options = this.options;
+					if (!element[NAMESPACE]) return this;
+					this.destroyed = true;
+					if (this.ready) {
+						if (this.played) this.stop();
+						if (options.inline) {
+							if (this.fulled) this.exit();
+							this.unbind();
+						} else if (this.isShown) {
+							if (this.viewing) {
+								if (this.imageRendering) this.imageRendering.abort();
+								else if (this.imageInitializing) this.imageInitializing.abort();
+							}
+							if (this.hiding) this.transitioning.abort();
+							this.hidden();
+						} else if (this.showing) {
+							this.transitioning.abort();
+							this.hidden();
+						}
+						this.ready = false;
+						this.viewer.parentNode.removeChild(this.viewer);
+					} else if (options.inline) {
+						if (this.delaying) this.delaying.abort();
+						else if (this.initializing) this.initializing.abort();
+					}
+					if (!options.inline) {
+						removeListener(element, EVENT_CLICK, this.onElementClick);
+						removeListener(element, EVENT_KEY_DOWN, this.onElementKeyDown);
+					}
+					element[NAMESPACE] = void 0;
+					return this;
+				}
+			};
+			var others = {
+				getImageURL: function getImageURL(image) {
+					var url = this.options.url;
+					if (isString(url)) url = image.getAttribute(url);
+					else if (isFunction(url)) url = url.call(this, image);
+					else url = "";
+					return url;
+				},
+				enforceFocus: function enforceFocus() {
+					var _this = this;
+					this.clearEnforceFocus();
+					addListener(document, EVENT_FOCUSIN, this.onFocusin = function(event) {
+						var viewer = _this.viewer;
+						var target = event.target;
+						if (target === document || target === viewer || viewer.contains(target)) return;
+						while (target) {
+							if (target.getAttribute("tabindex") !== null || target.getAttribute("aria-modal") === "true") return;
+							target = target.parentElement;
+						}
+						viewer.focus();
+					});
+				},
+				clearEnforceFocus: function clearEnforceFocus() {
+					if (this.onFocusin) {
+						removeListener(document, EVENT_FOCUSIN, this.onFocusin);
+						this.onFocusin = null;
+					}
+				},
+				open: function open() {
+					var body = this.body;
+					addClass(body, CLASS_OPEN);
+					if (this.scrollbarWidth > 0) body.style.paddingRight = "".concat(this.scrollbarWidth + (parseFloat(this.initialBodyComputedPaddingRight) || 0), "px");
+				},
+				close: function close() {
+					var body = this.body;
+					removeClass(body, CLASS_OPEN);
+					if (this.scrollbarWidth > 0) body.style.paddingRight = this.initialBodyPaddingRight;
+				},
+				shown: function shown() {
+					var element = this.element, options = this.options, viewer = this.viewer;
+					this.fulled = true;
+					this.isShown = true;
+					this.render();
+					this.bind();
+					this.showing = false;
+					if (options.focus) {
+						viewer.focus();
+						this.enforceFocus();
+					}
+					if (isFunction(options.shown)) addListener(element, EVENT_SHOWN, options.shown, { once: true });
+					if (dispatchEvent(element, EVENT_SHOWN, { originalEvent: this.showOriginalEvent || null }) === false) return;
+					this.showOriginalEvent = null;
+					if (this.ready && this.isShown && !this.hiding) this.view(this.index);
+				},
+				hidden: function hidden() {
+					var element = this.element, options = this.options, viewer = this.viewer;
+					var activeElement = viewer.ownerDocument.activeElement;
+					if (activeElement && viewer.contains(activeElement) && isFunction(activeElement.blur)) activeElement.blur();
+					if (options.focus) this.clearEnforceFocus();
+					this.close();
+					this.unbind();
+					addClass(viewer, CLASS_HIDE);
+					viewer.removeAttribute("role");
+					viewer.removeAttribute("aria-labelledby");
+					viewer.removeAttribute("aria-modal");
+					viewer.setAttribute("aria-hidden", true);
+					this.resetList();
+					this.resetImage();
+					this.fulled = false;
+					this.viewed = false;
+					this.isShown = false;
+					this.hiding = false;
+					if (!this.destroyed) {
+						if (isFunction(options.hidden)) addListener(element, EVENT_HIDDEN, options.hidden, { once: true });
+						dispatchEvent(element, EVENT_HIDDEN, { originalEvent: this.hideOriginalEvent || null }, { cancelable: false });
+						this.hideOriginalEvent = null;
+					}
+				},
+				requestFullscreen: function requestFullscreen(options) {
+					var document = this.ownerDocument;
+					if (this.fulled && !(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
+						var documentElement = document.documentElement;
+						if (documentElement.requestFullscreen) {
+							if (isPlainObject(options)) documentElement.requestFullscreen(options);
+							else documentElement.requestFullscreen();
+						} else if (documentElement.webkitRequestFullscreen) documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+						else if (documentElement.mozRequestFullScreen) documentElement.mozRequestFullScreen();
+						else if (documentElement.msRequestFullscreen) documentElement.msRequestFullscreen();
+					}
+				},
+				exitFullscreen: function exitFullscreen() {
+					var document = this.ownerDocument;
+					if (this.fulled && (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
+						if (document.exitFullscreen) document.exitFullscreen();
+						else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+						else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+						else if (document.msExitFullscreen) document.msExitFullscreen();
+					}
+				},
+				change: function change(event) {
+					var options = this.options, pointers = this.pointers;
+					var pointer = pointers[Object.keys(pointers)[0]];
+					if (!pointer) return;
+					var offsetX = pointer.endX - pointer.startX;
+					var offsetY = pointer.endY - pointer.startY;
+					switch (this.action) {
+						case ACTION_MOVE:
+							if (offsetX !== 0 || offsetY !== 0) {
+								this.pointerMoved = true;
+								this.actionEvent = event;
+								this.move(offsetX, offsetY);
+							}
+							break;
+						case ACTION_ZOOM:
+							if (options.zoomable && options.zoomOnTouch) {
+								var zoomRatio = getMaxZoomRatio(pointers);
+								if (zoomRatio !== 0) {
+									this.actionEvent = event;
+									this.zoom(zoomRatio);
+								}
+							}
+							break;
+						case ACTION_ROTATE:
+							if (options.rotatable && options.rotateOnTouch) {
+								var rotateDegree = getMaxRotateDegree(pointers);
+								if (rotateDegree !== 0) {
+									this.actionEvent = event;
+									this.rotate(rotateDegree);
+								}
+							}
+							break;
+						case ACTION_TRANSFORM:
+							if (options.zoomable && options.zoomOnTouch) {
+								var _zoomRatio = getMaxZoomRatio(pointers);
+								if (_zoomRatio !== 0) {
+									this.actionEvent = event;
+									this.zoom(_zoomRatio);
+								}
+							}
+							if (options.rotatable && options.rotateOnTouch) {
+								var _rotateDegree = getMaxRotateDegree(pointers);
+								if (_rotateDegree !== 0) {
+									this.actionEvent = event;
+									this.rotate(_rotateDegree);
+								}
+							}
+							break;
+						case ACTION_SWITCH:
+							this.action = "switched";
+							var absoluteOffsetX = Math.abs(offsetX);
+							if (absoluteOffsetX > 1 && absoluteOffsetX > Math.abs(offsetY)) {
+								this.pointers = {};
+								this.actionEvent = event;
+								if (offsetX > 1) this.prev(options.loop);
+								else if (offsetX < -1) this.next(options.loop);
+							}
+					}
+					forEach(pointers, function(p) {
+						p.startX = p.endX;
+						p.startY = p.endY;
+					});
+				},
+				isSwitchable: function isSwitchable() {
+					var imageData = this.imageData, viewerData = this.viewerData;
+					return this.length > 1 && imageData.x >= 0 && imageData.y >= 0 && imageData.width <= viewerData.width && imageData.height <= viewerData.height;
+				}
+			};
+			var AnotherViewer = WINDOW.Viewer;
+			var getUniqueID = function(id) {
+				return function() {
+					id += 1;
+					return id;
+				};
+			}(-1);
+			var Viewer = function() {
+				function Viewer(element) {
+					var options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+					_classCallCheck(this, Viewer);
+					if (!element || element.nodeType !== 1 && element.nodeType !== 11) throw new Error("The first argument is required and must be an element.");
+					this.element = element;
+					this.ownerDocument = element.ownerDocument || element.host.ownerDocument;
+					this.options = assign({}, DEFAULTS, isPlainObject(options) && options);
+					this.action = false;
+					this.actionEvent = null;
+					this.fading = false;
+					this.fulled = false;
+					this.hiding = false;
+					this.imageClicked = false;
+					this.imageData = {};
+					this.index = this.options.initialViewIndex;
+					this.isImg = false;
+					this.isShown = false;
+					this.length = 0;
+					this.moving = false;
+					this.played = false;
+					this.playing = false;
+					this.pointers = {};
+					this.ready = false;
+					this.rotating = false;
+					this.scaling = false;
+					this.showing = false;
+					this.timeout = false;
+					this.tooltipping = false;
+					this.viewed = false;
+					this.viewing = false;
+					this.wheeling = false;
+					this.zooming = false;
+					this.pointerMoved = false;
+					this.id = getUniqueID();
+					this.init();
+				}
+				return _createClass(Viewer, [{
+					key: "init",
+					value: function init() {
+						var _this = this;
+						var element = this.element, options = this.options;
+						if (element[NAMESPACE]) return;
+						element[NAMESPACE] = this;
+						if (options.focus && !options.keyboard) options.focus = false;
+						var isImg = element.localName === "img";
+						var images = [];
+						forEach(isImg ? [element] : element.querySelectorAll("img"), function(image) {
+							if (isFunction(options.filter)) {
+								if (options.filter.call(_this, image)) images.push(image);
+							} else if (_this.getImageURL(image)) images.push(image);
+						});
+						this.isImg = isImg;
+						this.length = images.length;
+						this.images = images;
+						this.initBody();
+						if (isUndefined(this.ownerDocument.createElement(NAMESPACE).style.transition)) options.transition = false;
+						if (options.inline) {
+							var count = 0;
+							var progress = function progress() {
+								count += 1;
+								if (count === _this.length) {
+									var timeout;
+									_this.initializing = false;
+									_this.delaying = { abort: function abort() {
+										clearTimeout(timeout);
+									} };
+									timeout = setTimeout(function() {
+										_this.delaying = false;
+										_this.build();
+									}, 0);
+								}
+							};
+							this.initializing = { abort: function abort() {
+								forEach(images, function(image) {
+									if (!image.complete) {
+										removeListener(image, EVENT_LOAD, progress);
+										removeListener(image, EVENT_ERROR, progress);
+									}
+								});
+							} };
+							forEach(images, function(image) {
+								if (image.complete) progress();
+								else {
+									var onLoad;
+									var onError;
+									addListener(image, EVENT_LOAD, onLoad = function onLoad() {
+										removeListener(image, EVENT_ERROR, onError);
+										progress();
+									}, { once: true });
+									addListener(image, EVENT_ERROR, onError = function onError() {
+										removeListener(image, EVENT_LOAD, onLoad);
+										progress();
+									}, { once: true });
+								}
+							});
+						} else {
+							addListener(element, EVENT_CLICK, this.onElementClick = function(event) {
+								var target = event.target;
+								if (target.localName === "img" && (!isFunction(options.filter) || options.filter.call(_this, target))) {
+									_this.actionEvent = event;
+									_this.view(_this.images.indexOf(target));
+								}
+							});
+							addListener(element, EVENT_KEY_DOWN, this.onElementKeyDown = function(event) {
+								var target = event.target, key = event.key;
+								if (target.localName === "img" && (key === "Enter" || key === " ")) {
+									event.preventDefault();
+									if (!isFunction(options.filter) || options.filter.call(_this, target)) {
+										_this.actionEvent = event;
+										_this.view(_this.images.indexOf(target));
+									}
+								}
+							});
+						}
+					}
+				}, {
+					key: "build",
+					value: function build() {
+						if (this.ready) return;
+						var element = this.element, options = this.options;
+						var parent = element.parentNode;
+						var template = document.createElement("div");
+						template.innerHTML = TEMPLATE;
+						var viewer = template.querySelector(".".concat(NAMESPACE, "-container"));
+						var title = viewer.querySelector(".".concat(NAMESPACE, "-title"));
+						var toolbar = viewer.querySelector(".".concat(NAMESPACE, "-toolbar"));
+						var navbar = viewer.querySelector(".".concat(NAMESPACE, "-navbar"));
+						var navigation = viewer.querySelector(".".concat(NAMESPACE, "-navigation"));
+						var button = viewer.querySelector(".".concat(NAMESPACE, "-button"));
+						var canvas = viewer.querySelector(".".concat(NAMESPACE, "-canvas"));
+						this.parent = parent;
+						this.viewer = viewer;
+						this.title = title;
+						this.toolbar = toolbar;
+						this.navbar = navbar;
+						this.navigation = navigation;
+						this.button = button;
+						this.canvas = canvas;
+						this.footer = viewer.querySelector(".".concat(NAMESPACE, "-footer"));
+						this.magnifier = viewer.querySelector(".".concat(NAMESPACE, "-magnifier"));
+						this.magnifierImage = viewer.querySelector(".".concat(NAMESPACE, "-magnifier-image"));
+						this.tooltipBox = viewer.querySelector(".".concat(NAMESPACE, "-tooltip"));
+						this.player = viewer.querySelector(".".concat(NAMESPACE, "-player"));
+						this.list = viewer.querySelector(".".concat(NAMESPACE, "-list"));
+						viewer.id = "".concat(NAMESPACE).concat(this.id);
+						title.id = "".concat(NAMESPACE, "Title").concat(this.id);
+						addClass(title, !options.title ? CLASS_HIDE : getResponsiveClass(Array.isArray(options.title) ? options.title[0] : options.title));
+						if (options.title) title.removeAttribute("aria-hidden");
+						var navbarOptions = isPlainObject(options.navbar) ? options.navbar : {};
+						var navbarShow = options.navbar;
+						var navbarSize = !isUndefined(navbarOptions.size) ? navbarOptions.size : options.navbar;
+						if (isPlainObject(options.navbar)) navbarShow = !isUndefined(navbarOptions.show) ? navbarOptions.show : true;
+						addClass(navbar, !navbarShow ? CLASS_HIDE : getResponsiveClass(navbarShow));
+						if (navbarShow) navbar.removeAttribute("aria-hidden");
+						if ([
+							"small",
+							"medium",
+							"large"
+						].indexOf(navbarSize) !== -1) addClass(navbar, "".concat(NAMESPACE, "-").concat(navbarSize));
+						if (isPlainObject(options.navigation)) forEach(navigation.querySelectorAll("[role=\"button\"]"), function(item) {
+							var name = getData(item, DATA_ACTION);
+							var value = options.navigation[name];
+							var deep = isPlainObject(value);
+							var show = deep && !isUndefined(value.show) ? value.show : value;
+							var size = deep && !isUndefined(value.size) ? value.size : value;
+							toggleClass(item, CLASS_HIDE, !show);
+							if (isNumber(show)) addClass(item, getResponsiveClass(show));
+							if (["small", "large"].indexOf(size) !== -1) addClass(item, "".concat(NAMESPACE, "-").concat(size));
+						});
+						else addClass(navigation, !options.navigation ? CLASS_HIDE : getResponsiveClass(options.navigation));
+						if (options.navigation) navigation.removeAttribute("aria-hidden");
+						toggleClass(button, CLASS_HIDE, !options.button);
+						if (options.button) button.removeAttribute("aria-hidden");
+						if (options.keyboard) {
+							button.setAttribute("tabindex", 0);
+							forEach(navigation.querySelectorAll("[role=\"button\"]"), function(item) {
+								item.setAttribute("tabindex", 0);
+							});
+						}
+						if (options.backdrop) {
+							addClass(viewer, "".concat(NAMESPACE, "-backdrop"));
+							if (!options.inline && options.backdrop !== "static") setData(canvas, DATA_ACTION, "hide");
+						}
+						if (isString(options.className) && options.className) options.className.split(REGEXP_SPACES).forEach(function(className) {
+							addClass(viewer, className);
+						});
+						if (options.toolbar) {
+							var list = document.createElement("ul");
+							var custom = isPlainObject(options.toolbar);
+							var zoomButtons = BUTTONS.slice(0, 3);
+							var rotateButtons = BUTTONS.slice(7, 9);
+							var scaleButtons = BUTTONS.slice(9);
+							if (!custom) addClass(toolbar, getResponsiveClass(options.toolbar));
+							toolbar.removeAttribute("aria-hidden");
+							forEach(custom ? options.toolbar : BUTTONS, function(value, index) {
+								var deep = custom && isPlainObject(value);
+								var name = custom ? hyphenate(index) : value;
+								var show = deep && !isUndefined(value.show) ? value.show : value;
+								if (!show || !options.zoomable && zoomButtons.indexOf(name) !== -1 || !options.rotatable && rotateButtons.indexOf(name) !== -1 || !options.scalable && scaleButtons.indexOf(name) !== -1) return;
+								var size = deep && !isUndefined(value.size) ? value.size : value;
+								var click = deep && !isUndefined(value.click) ? value.click : value;
+								var item = document.createElement("li");
+								if (options.keyboard) item.setAttribute("tabindex", 0);
+								item.setAttribute("role", "button");
+								addClass(item, "".concat(NAMESPACE, "-").concat(name));
+								if (!isFunction(click)) setData(item, DATA_ACTION, name);
+								if (isNumber(show)) addClass(item, getResponsiveClass(show));
+								if (["small", "large"].indexOf(size) !== -1) addClass(item, "".concat(NAMESPACE, "-").concat(size));
+								else if (name === "play") addClass(item, "".concat(NAMESPACE, "-large"));
+								if (isFunction(click)) addListener(item, EVENT_CLICK, click);
+								list.appendChild(item);
+							});
+							toolbar.appendChild(list);
+						} else addClass(toolbar, CLASS_HIDE);
+						if (options.title || navbarShow || options.toolbar) this.footer.removeAttribute("aria-hidden");
+						else addClass(this.footer, CLASS_HIDE);
+						if (!options.rotatable) {
+							var rotates = toolbar.querySelectorAll("li[class*=\"rotate\"]");
+							addClass(rotates, CLASS_INVISIBLE);
+							forEach(rotates, function(rotate) {
+								toolbar.appendChild(rotate);
+							});
+						}
+						if (options.inline) {
+							addClass(button, CLASS_FULLSCREEN);
+							setStyle(viewer, { zIndex: options.zIndexInline });
+							if (window.getComputedStyle(parent).position === "static") setStyle(parent, { position: "relative" });
+							parent.insertBefore(viewer, element.nextSibling);
+						} else {
+							addClass(button, CLASS_CLOSE);
+							addClass(viewer, CLASS_FIXED);
+							addClass(viewer, CLASS_FADE);
+							addClass(viewer, CLASS_HIDE);
+							setStyle(viewer, { zIndex: options.zIndex });
+							var container = options.container;
+							if (isString(container)) container = this.ownerDocument.querySelector(container);
+							if (!container) container = this.body;
+							container.appendChild(viewer);
+						}
+						if (options.inline) {
+							this.render();
+							this.bind();
+							this.isShown = true;
+						}
+						this.ready = true;
+						if (isFunction(options.ready)) addListener(element, EVENT_READY, options.ready, { once: true });
+						if (dispatchEvent(element, EVENT_READY) === false) {
+							this.ready = false;
+							return;
+						}
+						if (this.ready && options.inline) this.view(this.index);
+					}
+				}], [
+					{
+						key: "create",
+						value: function create(element, options) {
+							return new Viewer(element, options);
+						}
+					},
+					{
+						key: "setDefaults",
+						value: function setDefaults(options) {
+							assign(DEFAULTS, isPlainObject(options) && options);
+						}
+					},
+					{
+						key: "noConflict",
+						value: function noConflict() {
+							window.Viewer = AnotherViewer;
+							return Viewer;
+						}
+					}
+				]);
+			}();
+			assign(Viewer.prototype, render, events, handlers, methods, others);
+			return Viewer;
+		}));
+	}))(), 1);
+	_css("/*!\n * Viewer.js v1.14.0\n * https://fengyuanchen.github.io/viewerjs\n *\n * Copyright 2015-present Chen Fengyuan\n * Released under the MIT license\n *\n * Date: 2026-09-12T12:12:27.170Z\n */\n.viewer-zoom-in:before,.viewer-zoom-out:before,.viewer-one-to-one:before,.viewer-reset:before,.viewer-prev:before,.viewer-play:before,.viewer-next:before,.viewer-rotate-left:before,.viewer-rotate-right:before,.viewer-flip-horizontal:before,.viewer-flip-vertical:before,.viewer-fullscreen:before,.viewer-fullscreen-exit:before,.viewer-close:before{color:#0000;background-image:url(\"data:image/svg+xml,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 560 40%22%3E%3Cpath fill%3D%22%23fff%22 d%3D%22M49.6 17.9h20.2v3.9H49.6zm123.1 2 10.9-11 2.7 2.8-8.2 8.2 8.2 8.2-2.7 2.7-10.9-10.9zm94 0-10.8-11-2.7 2.8 8.1 8.2-8.1 8.2 2.7 2.7 10.8-10.9zM212 9.3l20.1 10.6L212 30.5V9.3zm161.5 4.6-7.2 6 7.2 5.9v-4h12.4v4l7.3-5.9-7.3-6v4h-12.4v-4zm40.2 12.3 5.9 7.2 5.9-7.2h-4V13.6h4l-5.9-7.3-5.9 7.3h4v12.6h-4zm35.9-16.5h6.3v2h-4.3V16h-2V9.7Zm14 0h6.2V16h-2v-4.3h-4.2v-2Zm6.2 14V30h-6.2v-2h4.2v-4.3h2Zm-14 6.3h-6.2v-6.3h2v4.4h4.3v2Zm-438 .1v-8.3H9.6v-3.9h8.2V9.7h3.9v8.2h8.1v3.9h-8.1v8.3h-3.9zM93.6 9.7h-5.8v3.9h2V30h3.8V9.7zm16.1 0h-5.8v3.9h1.9V30h3.9V9.7zm-11.9 4.1h3.9v3.9h-3.9zm0 8.2h3.9v3.9h-3.9zm244.6-11.7 7.2 5.9-7.2 6v-3.6c-5.4-.4-7.8.8-8.7 2.8-.8 1.7-1.8 4.9 2.8 8.2-6.3-2-7.5-6.9-6-11.3 1.6-4.4 8-5 11.9-4.9v-3.1Zm147.2 13.4h6.3V30h-2v-4.3h-4.3v-2zm14 6.3v-6.3h6.2v2h-4.3V30h-1.9zm6.2-14h-6.2V9.7h1.9V14h4.3v2zm-13.9 0h-6.3v-2h4.3V9.7h2V16zm33.3 12.5 8.6-8.6-8.6-8.7 1.9-1.9 8.6 8.7 8.6-8.7 1.9 1.9-8.6 8.7 8.6 8.6-1.9 2-8.6-8.7-8.6 8.7-1.9-2zM297 10.3l-7.1 5.9 7.2 6v-3.6c5.3-.4 7.7.8 8.7 2.8.8 1.7 1.7 4.9-2.9 8.2 6.3-2 7.5-6.9 6-11.3-1.6-4.4-7.9-5-11.8-4.9v-3.1Zm-157.3-.6c2.3 0 4.4.7 6 2l2.5-3 1.9 9.2h-9.3l2.6-3.1a6.2 6.2 0 0 0-9.9 5.1c0 3.4 2.8 6.3 6.2 6.3 2.8 0 5.1-1.9 6-4.4h4c-1 4.7-5 8.3-10 8.3a10 10 0 0 1-10-10.2 10 10 0 0 1 10-10.2Z%22%2F%3E%3C%2Fsvg%3E\");background-repeat:no-repeat;background-size:280px;width:20px;height:20px;font-size:0;line-height:0;display:block}.viewer-zoom-in:before{content:\"Zoom In\";background-position:0 0}.viewer-zoom-out:before{content:\"Zoom Out\";background-position:-20px 0}.viewer-one-to-one:before{content:\"One to One\";background-position:-40px 0}.viewer-reset:before{content:\"Reset\";background-position:-60px 0}.viewer-prev:before{content:\"Previous\";background-position:-80px 0}.viewer-play:before{content:\"Play\";background-position:-100px 0}.viewer-next:before{content:\"Next\";background-position:-120px 0}.viewer-rotate-left:before{content:\"Rotate Left\";background-position:-140px 0}.viewer-rotate-right:before{content:\"Rotate Right\";background-position:-160px 0}.viewer-flip-horizontal:before{content:\"Flip Horizontal\";background-position:-180px 0}.viewer-flip-vertical:before{content:\"Flip Vertical\";background-position:-200px 0}.viewer-fullscreen:before{content:\"Enter Full Screen\";background-position:-220px 0}.viewer-fullscreen-exit:before{content:\"Exit Full Screen\";background-position:-240px 0}.viewer-close:before{content:\"Close\";background-position:-260px 0}.viewer-container{-webkit-tap-highlight-color:transparent;-ms-touch-action:none;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;direction:ltr;font-size:0;line-height:0;position:absolute;inset:0;overflow:hidden}.viewer-container::-moz-selection{background-color:#0000}.viewer-container ::-moz-selection{background-color:#0000}.viewer-container::selection{background-color:#0000}.viewer-container ::selection{background-color:#0000}.viewer-container:focus{outline:0}.viewer-container img{width:100%;height:auto;display:block;min-width:0!important;max-width:none!important;min-height:0!important;max-height:none!important}.viewer-canvas{position:absolute;inset:0;overflow:hidden}.viewer-canvas>img{width:auto;height:auto;margin:15px auto;max-width:90%!important}.viewer-magnifier{box-sizing:border-box;pointer-events:none;z-index:2;background-color:#fff;background-repeat:no-repeat;border:2px solid #fff;border-radius:50%;display:none;position:absolute;top:16px;left:16px;overflow:hidden;box-shadow:0 1px 5px #00000080}.viewer-magnifier.viewer-show{display:block}.viewer-magnifier-image{transform-origin:50%;position:absolute;top:0;left:0;max-width:none!important}.viewer-navigation{position:absolute;top:50%;left:0;right:0}.viewer-navigation>.viewer-prev,.viewer-navigation>.viewer-next{cursor:pointer;background-color:#00000080;border-radius:50%;width:40px;height:40px;margin-top:-20px;position:absolute}.viewer-navigation>.viewer-prev:focus,.viewer-navigation>.viewer-next:focus,.viewer-navigation>.viewer-prev:hover,.viewer-navigation>.viewer-next:hover{background-color:#000c}.viewer-navigation>.viewer-prev:focus,.viewer-navigation>.viewer-next:focus{outline:0;box-shadow:0 0 3px #fff}.viewer-navigation>.viewer-prev:before,.viewer-navigation>.viewer-next:before{margin:10px}.viewer-navigation>.viewer-prev{left:15px}.viewer-navigation>.viewer-next{right:15px}.viewer-navigation>.viewer-large{width:48px;height:48px;margin-top:-24px}.viewer-navigation>.viewer-large:before{margin:14px}.viewer-navigation>.viewer-small{width:32px;height:32px;margin-top:-16px}.viewer-navigation>.viewer-small:before{margin:6px}.viewer-footer{text-align:center;position:absolute;bottom:0;left:0;right:0;overflow:hidden}.viewer-navbar{background-color:#00000080;overflow:hidden}.viewer-navbar.viewer-small>.viewer-list{height:40px}.viewer-navbar.viewer-small>.viewer-list>li{width:24px;height:40px}.viewer-navbar.viewer-large>.viewer-list{height:60px}.viewer-navbar.viewer-large>.viewer-list>li{width:36px;height:60px}.viewer-list{box-sizing:content-box;height:50px;margin:0;padding:1px 0;overflow:hidden}.viewer-list>li{color:#0000;cursor:pointer;float:left;opacity:.5;width:30px;height:50px;font-size:0;line-height:0;transition:opacity .15s;overflow:hidden}.viewer-list>li:focus,.viewer-list>li:hover{opacity:.75}.viewer-list>li:focus{outline:0}.viewer-list>li+li{margin-left:1px}.viewer-list>.viewer-loading{position:relative}.viewer-list>.viewer-loading:after{border-width:2px;width:20px;height:20px;margin-top:-10px;margin-left:-10px}.viewer-list>.viewer-active,.viewer-list>.viewer-active:focus,.viewer-list>.viewer-active:hover{opacity:1}.viewer-player{cursor:none;z-index:1;background-color:#000;display:none;position:absolute;inset:0}.viewer-player>img{position:absolute;top:0;left:0}.viewer-toolbar>ul{margin:0 auto 5px;padding:6px 3px;display:inline-block;overflow:hidden}.viewer-toolbar>ul>li{cursor:pointer;float:left;background-color:#00000080;border-radius:50%;width:24px;height:24px;transition:background-color .15s;overflow:hidden}.viewer-toolbar>ul>li:focus,.viewer-toolbar>ul>li:hover{background-color:#000c}.viewer-toolbar>ul>li:focus{z-index:1;outline:0;position:relative;box-shadow:0 0 3px #fff}.viewer-toolbar>ul>li:before{margin:2px}.viewer-toolbar>ul>li+li{margin-left:1px}.viewer-toolbar>ul>.viewer-small{width:18px;height:18px;margin-top:3px;margin-bottom:3px}.viewer-toolbar>ul>.viewer-small:before{margin:-1px}.viewer-toolbar>ul>.viewer-large{width:30px;height:30px;margin-top:-3px;margin-bottom:-3px}.viewer-toolbar>ul>.viewer-large:before{margin:5px}.viewer-tooltip{color:#fff;text-align:center;background-color:#000c;border-radius:10px;width:50px;height:20px;margin-top:-10px;margin-left:-25px;font-size:12px;line-height:20px;display:none;position:absolute;top:50%;left:50%}.viewer-title{color:#ccc;opacity:.8;text-overflow:ellipsis;white-space:nowrap;max-width:90%;min-height:14px;margin:5px 5%;font-size:12px;line-height:1.2;transition:opacity .15s;display:inline-block;overflow:hidden}.viewer-title:hover{opacity:1}.viewer-button{-webkit-app-region:no-drag;cursor:pointer;background-color:#00000080;border-radius:50%;width:80px;height:80px;transition:background-color .15s;position:absolute;top:-40px;right:-40px;overflow:hidden}.viewer-button:focus,.viewer-button:hover{background-color:#000c}.viewer-button:focus{outline:0;box-shadow:0 0 3px #fff}.viewer-button:before{position:absolute;bottom:15px;left:15px}.viewer-fixed{position:fixed}.viewer-open{overflow:hidden}.viewer-show{display:block}.viewer-hide{display:none}.viewer-backdrop{background-color:#00000080}.viewer-invisible{visibility:hidden}.viewer-move{cursor:move;cursor:grab}.viewer-fade{opacity:0}.viewer-in{opacity:1}.viewer-transition{transition:all .3s}@keyframes viewer-spinner{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.viewer-loading:after{content:\"\";z-index:1;border:4px solid #ffffff1a;border-left-color:#ffffff80;border-radius:50%;width:40px;height:40px;margin-top:-20px;margin-left:-20px;animation:1s linear infinite viewer-spinner;display:inline-block;position:absolute;top:50%;left:50%}@media (width<=767px){.viewer-hide-xs-down{display:none}}@media (width<=991px){.viewer-hide-sm-down{display:none}}@media (width<=1199px){.viewer-hide-md-down{display:none}}");
+	_css(".nspp-image-preview{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:0 0;border:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;position:fixed;inset:0;overflow:hidden}.nspp-image-preview::backdrop{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:#0b0e14eb}.nspp-image-preview .viewer-backdrop{background:0 0}.nspp-image-preview .viewer-footer{padding:0 12px max(20px, env(safe-area-inset-bottom));box-sizing:border-box}.nspp-image-preview .viewer-toolbar>ul{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);background:#252a34e6;border:1px solid #ffffff26;border-radius:999px;gap:4px;padding:6px;display:inline-flex;box-shadow:0 8px 32px #0005}.nspp-image-preview .viewer-toolbar>ul>li{background:0 0;border-radius:50%;place-items:center;width:36px;height:36px;margin:0;padding:0;display:grid}.nspp-image-preview .viewer-toolbar>ul>li:hover,.nspp-image-preview .viewer-button:hover{background-color:#ffffff24}.nspp-image-preview .viewer-button{top:max(16px, env(safe-area-inset-top));right:max(16px, env(safe-area-inset-right));background:#252a34e6;border:1px solid #ffffff26;border-radius:50%;width:40px;height:40px}.nspp-image-preview .viewer-button:before{margin:9px;position:static}.nspp-image-preview .viewer-list{margin-top:12px}.nspp-image-preview .viewer-list>li{opacity:.5;border:2px solid #0000;border-radius:6px}.nspp-image-preview .viewer-list>.viewer-active{opacity:1;border-color:#fff}.nspp-image-preview [role=button]:focus-visible{outline-offset:3px;outline:2px solid #fff}.nspp-preview-content img{cursor:zoom-in}.nspp-preview-content img:focus-visible{outline:2px solid var(--link-color,#0969da);outline-offset:3px;border-radius:3px}.nspp-image-preview .viewer-title{color:#fffc;font-variant-numeric:tabular-nums;opacity:1;margin:0 0 8px;font:12px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}");
+	function openImagePreview(content, image, onClose) {
+		const dialog = document.createElement("dialog");
+		dialog.className = "nspp-image-preview";
+		dialog.setAttribute("aria-label", "图片预览");
+		document.body.append(dialog);
+		dialog.showModal();
+		let source;
+		let images;
+		if (Array.isArray(content)) {
+			source = document.createElement("div");
+			source.hidden = true;
+			images = content.map((item) => {
+				const copy = document.createElement("img");
+				copy.src = item.currentSrc || item.src;
+				copy.alt = item.alt;
+				copy.referrerPolicy = item.referrerPolicy;
+				source.append(copy);
+				return copy;
+			});
+			dialog.append(source);
+		} else {
+			source = content;
+			images = Array.from(content.querySelectorAll("img"));
 		}
+		const start = Array.isArray(content) ? content.indexOf(image) : images.indexOf(image);
+		let viewer;
+		let closed = false;
+		const close = () => {
+			if (closed) return;
+			closed = true;
+			viewer?.destroy();
+			dialog.close();
+			dialog.remove();
+			if (image.isConnected) image.focus({ preventScroll: true });
+			onClose();
+		};
+		dialog.addEventListener("cancel", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			close();
+		});
+		const multiple = images.length > 1;
+		viewer = new import_viewer.default(source, {
+			container: dialog,
+			initialViewIndex: Math.max(0, start),
+			title: multiple ? [1, function() {
+				return `${this.index + 1} / ${images.length}`;
+			}] : false,
+			navbar: multiple,
+			toolbar: {
+				zoomOut: true,
+				zoomIn: true,
+				oneToOne: true,
+				reset: true,
+				prev: multiple,
+				next: multiple
+			},
+			fullscreen: false,
+			rotatable: false,
+			scalable: false,
+			inheritedAttributes: ["referrerPolicy"],
+			transition: !matchMedia("(prefers-reduced-motion: reduce)").matches,
+			ready() {
+				const labels = {
+					"zoom-in": "放大",
+					"zoom-out": "缩小",
+					"one-to-one": "原始大小",
+					reset: "适应窗口",
+					prev: "上一张",
+					next: "下一张",
+					mix: "关闭预览"
+				};
+				dialog.querySelectorAll("[data-viewer-action]").forEach((control) => {
+					const label = labels[control.dataset.viewerAction || ""];
+					if (label) {
+						control.title = label;
+						control.setAttribute("aria-label", label);
+					}
+				});
+				const container = dialog.querySelector(".viewer-container");
+				container?.removeAttribute("aria-labelledby");
+				container?.setAttribute("aria-label", "图片预览");
+			},
+			hidden: close
+		});
+		viewer.show();
+		return close;
 	}
-	function directLink(href, base) {
+	function linksElsewhere(image) {
+		const href = image.closest("a[href]")?.href;
+		if (!href || /^javascript:/i.test(href)) return false;
 		try {
-			let url = new URL(href, base);
-			for (let i = 0; i < 3 && url.origin === new URL(base).origin && url.pathname === "/jump" && url.searchParams.has("to"); i++) url = new URL(url.searchParams.get("to"), base);
-			return /^https?:$/.test(url.protocol) ? url.href : void 0;
+			const target = new URL(href, location.href);
+			if (target.href === new URL(image.currentSrc || image.src, location.href).href) return false;
+			return !/\.(?:avif|bmp|gif|jpe?g|png|svg|webp)$/i.test(target.pathname);
 		} catch {
-			return;
+			return false;
 		}
-	}
-	var filterLines = (value) => String(value || "").split(/\n|,/).map((s) => s.trim()).filter(Boolean);
-	function shouldFilter(title, author, keywords, users, level, required) {
-		return keywords.some((k) => title.toLowerCase().includes(k.toLowerCase())) || users.includes(author) || level >= 0 && Number.isFinite(required) && required > level;
 	}
 	var contentSelector = ":is(.post-content,.comment-content,.nsk-content,.markdown-body)";
-	function style(css) {
-		const el = document.createElement("style");
-		el.textContent = css;
-		document.head.append(el);
-		return () => el.remove();
-	}
-	function infinite(ctx) {
-		const comments = /^\/post-/.test(location.pathname);
-		if (!ctx.get(comments ? "comments" : "posts")) return;
-		const selector = comments ? "ul.comments" : "ul.post-list:not(.topic-carousel-panel)";
-		const list = document.querySelector(selector);
-		if (!list) return;
-		let next = document.querySelector(".nsk-pager a.pager-next")?.href;
-		let busy = false, failed = false, paused = false;
-		const replying = () => comments && document.documentElement.hasAttribute("data-nspp-reply-open");
-		let loading;
-		const visited = new Set([location.href]);
-		const button = document.createElement("button");
-		button.type = "button";
-		button.className = "nspp-action";
-		button.textContent = "加载下一页";
-		list.after(button);
-		const pause = document.createElement("button");
-		pause.type = "button";
-		pause.className = "nspp-tool-icon";
-		const renderPause = () => {
-			pause.replaceChildren(toolIcon(paused ? "play" : "stop"));
-			pause.title = paused ? "继续自动翻页" : "暂停自动翻页";
-			pause.setAttribute("aria-label", pause.title);
-			pause.setAttribute("aria-pressed", String(paused));
-		};
-		renderPause();
-		if (next) (document.querySelector("#nspp-tools") || document.body).append(pause);
-		pause.addEventListener("click", () => {
-			paused = !paused;
-			renderPause();
-			if (paused) {
-				observer.disconnect();
-				loading?.abort();
-			} else if (next) observer.observe(button);
-		}, { signal: ctx.signal });
-		const load = async (manual = false) => {
-			if (busy || !next || visited.has(next) || ctx.signal.aborted || replying()) return;
-			const url = new URL(next, location.href);
-			if (url.origin !== location.origin) return;
-			busy = true;
-			loading = new AbortController();
-			button.disabled = true;
-			button.setAttribute("aria-busy", "true");
-			button.textContent = "正在加载…";
-			try {
-				const html = await ctx.request(url.href, {
-					responseType: "text",
-					signal: AbortSignal.any([ctx.signal, loading.signal])
-				});
-				if (ctx.signal.aborted || loading.signal.aborted || replying() || paused && !manual) return;
-				const page = new DOMParser().parseFromString(html, "text/html");
-				const source = page.querySelector(selector);
-				if (!source || !source.children.length) throw new Error("页面内容不可用");
-				source.querySelectorAll("script, iframe, object, embed, base, link, style").forEach((el) => el.remove());
-				source.querySelectorAll("*").forEach((el) => {
-					for (const attr of Array.from(el.attributes)) if (/^on/i.test(attr.name) || attr.name === "srcdoc") el.removeAttribute(attr.name);
-					else if (/^(href|src|action|formaction|xlink:href)$/i.test(attr.name)) try {
-						const resolved = new URL(attr.value, url);
-						if (![
-							"http:",
-							"https:",
-							"mailto:",
-							"tel:"
-						].includes(resolved.protocol)) el.removeAttribute(attr.name);
-						else if (!attr.value.startsWith("#")) el.setAttribute(attr.name, resolved.href);
-					} catch {
-						el.removeAttribute(attr.name);
-					}
-				});
-				for (const child of Array.from(source.children)) {
-					const id = child.id;
-					if (id && document.getElementById(id)) continue;
-					if (!comments) {
-						const href = child.querySelector(".post-title a")?.getAttribute("href");
-						if (href && Array.from(list.querySelectorAll(".post-title a")).some((a) => postPath(a.href, location.href) === postPath(href, url.href))) continue;
-					}
-					list.append(document.importNode(child, true));
-				}
-				visited.add(url.href);
-				failed = false;
-				const href = page.querySelector(".nsk-pager a.pager-next")?.getAttribute("href");
-				next = href ? new URL(href, url).href : void 0;
-				if (next && visited.has(next)) next = void 0;
-				button.textContent = next ? "加载下一页" : "已加载全部内容";
-				pause.hidden = !next;
-			} catch {
-				if (loading.signal.aborted) return;
-				failed = true;
-				button.textContent = "加载失败，点击重试";
-			} finally {
-				busy = false;
-				button.disabled = !next;
-				button.removeAttribute("aria-busy");
-				if (paused && next) button.textContent = "已暂停，点击加载下一页";
-				if (loading.signal.aborted && next) button.textContent = paused ? "已暂停，点击加载下一页" : "加载下一页";
-				if (loading.signal.aborted && !ctx.signal.aborted && !paused && !replying() && next) {
-					observer.unobserve(button);
-					observer.observe(button);
-				}
-			}
-		};
-		button.addEventListener("click", () => {
-			load(true);
-		}, { signal: ctx.signal });
-		const observer = new IntersectionObserver((entries) => {
-			if (entries.some((e) => e.isIntersecting) && !failed && !paused && !replying() && !document.hidden) load();
-		}, { rootMargin: "150px" });
-		document.addEventListener("nspp:reply-state", () => {
-			if (replying()) {
-				observer.disconnect();
-				loading?.abort();
-			} else if (next && !paused) observer.observe(button);
-		}, { signal: ctx.signal });
-		if (next) observer.observe(button);
-		else button.hidden = true;
-		return () => {
-			observer.disconnect();
-			loading?.abort();
-			button.remove();
-			pause.remove();
-		};
-	}
+	var units = {
+		y: "年",
+		mo: "月",
+		d: "天",
+		h: "小时",
+		min: "分钟",
+		s: "秒"
+	};
 	var readingFeatures = [
-		{
-			id: "infinite-scroll",
-			title: "自动翻页",
-			description: "合并下一页帖子或评论；失败时手动重试。新增评论的互动请通过原始页面链接操作。",
-			group: "阅读",
-			defaults: {
-				enabled: true,
-				posts: true,
-				comments: false
-			},
-			fields: {
-				posts: {
-					label: "帖子自动翻页",
-					type: "text"
-				},
-				comments: {
-					label: "评论自动翻页（仅阅读）",
-					type: "text"
-				}
-			},
-			mount: infinite
-		},
-		{
-			id: "reading-history",
-			title: "阅读历史与已读标记",
-			description: "本地保存实际浏览与最近关闭的帖子，默认 100 条、7 天，按天分组；不上传记录。",
-			group: "阅读",
-			defaults: {
-				enabled: true,
-				limit: 100,
-				days: 7
-			},
-			fields: {
-				limit: {
-					label: "保存上限",
-					type: "number"
-				},
-				days: {
-					label: "保存天数",
-					type: "number"
-				}
-			},
-			mount(ctx) {
-				const limit = Math.max(1, Math.floor(Number(ctx.get("limit")) || 100));
-				const maxAge = Math.max(1, Number(ctx.get("days")) || 7) * 864e5;
-				const key = (href) => postPath(href, location.href);
-				const load = (name) => {
-					const stored = ctx.get(name);
-					const clean = (Array.isArray(stored) ? stored : []).flatMap((entry) => {
-						const path = entry && typeof entry.path === "string" ? key(entry.path) : void 0;
-						return path && typeof entry.title === "string" && Number.isFinite(entry.time) && Date.now() - entry.time < maxAge ? [{
-							...entry,
-							path
-						}] : [];
-					}).sort((a, b) => b.time - a.time);
-					const seen = new Set();
-					const entries = clean.filter((entry) => {
-						if (seen.has(entry.path)) return false;
-						seen.add(entry.path);
-						return true;
-					}).slice(0, limit);
-					if (JSON.stringify(stored) !== JSON.stringify(entries)) ctx.set(name, entries);
-					return entries;
-				};
-				const record = (name) => {
-					const pd = unsafeWindow$1.__config__?.postData;
-					const path = pd?.postId ? key(`/post-${pd.postId}-1`) : key(location.href);
-					if (!path) return;
-					ctx.set(name, [{
-						path,
-						title: pd?.title || document.title,
-						time: Date.now(),
-						uid: pd?.op?.uid,
-						author: pd?.op?.name
-					}, ...load(name).filter((entry) => entry.path !== path)].slice(0, limit));
-				};
-				record("entries");
-				load("recent");
-				const markRead = () => {
-					const entries = load("entries");
-					document.querySelectorAll(".post-title a").forEach((a) => a.classList.toggle("nspp-read", entries.some((entry) => entry.path === key(a.href))));
-				};
-				const stop = ctx.watch(markRead);
-				window.addEventListener("beforeunload", () => record("recent"), {
-					capture: true,
-					signal: ctx.signal
-				});
-				const historyButton = document.createElement("button");
-				historyButton.type = "button";
-				historyButton.className = "nspp-tool-icon";
-				historyButton.title = "阅读历史";
-				historyButton.setAttribute("aria-label", "阅读历史");
-				historyButton.append(toolIcon("history"));
-				document.querySelector("#nspp-tools")?.append(historyButton);
-				let historyDialog;
-				historyButton.addEventListener("click", () => {
-					historyDialog?.remove();
-					historyDialog = document.createElement("dialog");
-					historyDialog.className = "nspp-history";
-					historyDialog.setAttribute("aria-label", "阅读历史");
-					const close = document.createElement("button");
-					close.textContent = "关闭";
-					close.type = "button";
-					close.addEventListener("click", () => historyDialog?.close(), { signal: ctx.signal });
-					const heading = document.createElement("h2");
-					heading.textContent = "阅读历史";
-					const search = document.createElement("input");
-					search.type = "search";
-					search.placeholder = "搜索历史标题";
-					search.setAttribute("aria-label", "搜索阅读历史");
-					const clear = document.createElement("button");
-					clear.type = "button";
-					clear.textContent = "清空历史";
-					const undoButton = document.createElement("button");
-					undoButton.type = "button";
-					undoButton.textContent = "撤销删除";
-					undoButton.hidden = true;
-					let previous;
-					let tab = "entries";
-					let entries = load(tab);
-					const tabs = document.createElement("div");
-					tabs.className = "nspp-history-toolbar";
-					for (const [name, label] of [["entries", "全部"], ["recent", "最近关闭"]]) {
-						const button = document.createElement("button");
-						button.type = "button";
-						button.textContent = label;
-						button.dataset.tab = name;
-						button.addEventListener("click", () => {
-							tab = name;
-							previous = void 0;
-							undoButton.hidden = true;
-							render();
-						});
-						tabs.append(button);
-					}
-					const list = document.createElement("ol");
-					const save = () => {
-						ctx.set(tab, entries);
-						markRead();
-					};
-					const render = () => {
-						list.replaceChildren();
-						entries = load(tab);
-						tabs.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.tab === tab)));
-						let lastDay = "";
-						const query = search.value.trim().toLowerCase();
-						const matches = entries.filter((entry) => entry.title.toLowerCase().includes(query));
-						for (const entry of matches) {
-							if (!/^\/post-\d+-1$/.test(entry.path)) continue;
-							const day = format(new Date(entry.time), "yyyy-MM-dd");
-							if (day !== lastDay) {
-								lastDay = day;
-								const group = document.createElement("li");
-								group.className = "nspp-history-day";
-								const label = document.createElement("span");
-								label.textContent = `${day === format(new Date(), "yyyy-MM-dd") ? "今天 - " : ""}${format(new Date(entry.time), "yyyy年M月d日 EEEE", { locale: zhCN })}`;
-								const clearDay = document.createElement("button");
-								clearDay.type = "button";
-								clearDay.textContent = "清除当天";
-								clearDay.addEventListener("click", () => {
-									previous = load(tab);
-									entries = previous.filter((item) => format(new Date(item.time), "yyyy-MM-dd") !== day);
-									undoButton.hidden = false;
-									save();
-									render();
-								});
-								group.append(label, clearDay);
-								list.append(group);
-							}
-							const li = document.createElement("li");
-							const link = document.createElement("a");
-							link.href = entry.path;
-							link.textContent = entry.title;
-							if (entry.uid && /^\d+$/.test(String(entry.uid))) {
-								const avatar = document.createElement("img");
-								avatar.className = "nspp-history-avatar";
-								avatar.src = `/avatar/${entry.uid}.png`;
-								avatar.alt = "";
-								avatar.title = entry.author ? `@${entry.author}` : "";
-								avatar.addEventListener("error", () => avatar.remove(), { once: true });
-								link.prepend(avatar);
-							}
-							const remove = document.createElement("button");
-							remove.type = "button";
-							remove.textContent = "删除";
-							remove.setAttribute("aria-label", `删除历史：${entry.title}`);
-							remove.addEventListener("click", () => {
-								previous = load(tab);
-								entries = previous.filter((item) => item.path !== entry.path);
-								undoButton.hidden = false;
-								save();
-								render();
-							}, { signal: ctx.signal });
-							const date = document.createElement("time");
-							const visitedAt = new Date(entry.time);
-							date.textContent = format(visitedAt, "HH:mm");
-							date.title = format(visitedAt, "yyyy-MM-dd HH:mm:ss");
-							link.title = entry.title;
-							li.append(link, date);
-							if (tab === "recent") {
-								const restore = document.createElement("button");
-								restore.type = "button";
-								restore.textContent = "恢复";
-								restore.addEventListener("click", () => window.open(entry.path, "_blank", "noopener"));
-								li.append(restore);
-							}
-							li.append(remove);
-							list.append(li);
-						}
-						if (!matches.length) {
-							const empty = document.createElement("li");
-							empty.textContent = query ? "没有匹配的记录" : "尚无阅读记录";
-							list.append(empty);
-						}
-					};
-					clear.addEventListener("click", () => {
-						previous = load(tab);
-						entries = [];
-						undoButton.hidden = false;
-						save();
-						render();
-					}, { signal: ctx.signal });
-					undoButton.addEventListener("click", () => {
-						if (previous) entries = previous;
-						previous = void 0;
-						undoButton.hidden = true;
-						save();
-						render();
-					}, { signal: ctx.signal });
-					search.addEventListener("input", render, { signal: ctx.signal });
-					const header = document.createElement("header");
-					header.append(heading, close);
-					const toolbar = document.createElement("div");
-					toolbar.className = "nspp-history-toolbar";
-					toolbar.append(search, clear, undoButton);
-					historyDialog.append(header, toolbar, tabs, list);
-					render();
-					document.body.append(historyDialog);
-					historyDialog.showModal();
-				}, { signal: ctx.signal });
-				const remove = style(".post-title a.nspp-read{opacity:.6;text-decoration:underline dotted}");
-				return () => {
-					stop();
-					remove();
-					historyButton.remove();
-					historyDialog?.remove();
-					document.querySelectorAll(".nspp-read").forEach((a) => a.classList.remove("nspp-read"));
-				};
-			}
-		},
+		infiniteScroll,
+		historyFeature,
 		{
 			id: "reading-content",
 			title: "内容增强",
@@ -3611,14 +9050,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				}
 			},
 			mount(ctx) {
-				if (ctx.get("cleanLinks") && location.pathname === "/jump") {
+				const [cleanLinks, newTab, images, copyCode, callouts, chineseTime] = [
+					"cleanLinks",
+					"newTab",
+					"images",
+					"copyCode",
+					"callouts",
+					"chineseTime"
+				].map((key) => !!ctx.get(key));
+				if (cleanLinks && location.pathname === "/jump") {
 					const target = directLink(location.href, location.href);
 					if (target && target !== location.href && new URL(target).pathname !== "/jump") location.replace(target);
 				}
 				const processed = new WeakSet();
 				const undo = [];
 				const stop = ctx.watch(() => {
-					document.querySelectorAll(`${contentSelector} a, .post-title a, a[href*="/jump?to="]`).forEach((a) => {
+					if (cleanLinks || newTab) document.querySelectorAll(`${contentSelector} a, .post-title a, a[href*="/jump?to="]`).forEach((a) => {
 						if (processed.has(a)) return;
 						processed.add(a);
 						const old = [
@@ -3628,14 +9075,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						];
 						try {
 							let url = new URL(a.href);
-							if (ctx.get("cleanLinks")) {
+							if (cleanLinks) {
 								const resolved = directLink(a.href, location.href);
 								if (!resolved) return;
 								url = new URL(resolved);
 							}
 							if (!/^https?:$/.test(url.protocol)) return;
-							if (ctx.get("cleanLinks")) a.href = url.href;
-							if (ctx.get("newTab") && !url.hash) {
+							const retarget = newTab && !url.hash;
+							if (!(cleanLinks && a.href !== url.href) && !retarget) return;
+							if (cleanLinks) a.href = url.href;
+							if (retarget) {
 								a.target = "_blank";
 								a.rel = "noopener noreferrer";
 							}
@@ -3646,7 +9095,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							].forEach((key, i) => old[i] === null ? a.removeAttribute(key) : a.setAttribute(key, old[i])));
 						} catch {}
 					});
-					if (ctx.get("copyCode")) document.querySelectorAll(`${contentSelector} pre`).forEach((pre) => {
+					if (copyCode) document.querySelectorAll(`${contentSelector} pre`).forEach((pre) => {
 						if (processed.has(pre)) return;
 						processed.add(pre);
 						const button = copyButton(ctx, () => pre.querySelector("code")?.textContent || pre.textContent || "", "复制代码");
@@ -3654,20 +9103,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						pre.before(button);
 						undo.push(() => button.remove());
 					});
-					if (ctx.get("chineseTime")) document.querySelectorAll("time, .date-created, .date-updated").forEach((el) => {
+					if (chineseTime) document.querySelectorAll("time, .date-created, .date-updated").forEach((el) => {
 						if (processed.has(el) || el.children.length) return;
 						processed.add(el);
 						const old = el.textContent;
-						const units = {
-							y: "年",
-							mo: "月",
-							d: "天",
-							h: "小时",
-							min: "分钟",
-							s: "秒"
-						};
-						const translated = (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
-						const value = forumTime(el.getAttribute("datetime") || old || "")?.text || translated;
+						const value = forumTime(el.getAttribute("datetime") || old || "")?.text || (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
 						if (old !== value) {
 							el.textContent = value;
 							undo.push(() => {
@@ -3675,7 +9115,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							});
 						}
 					});
-					if (ctx.get("callouts")) document.querySelectorAll(`${contentSelector} blockquote`).forEach((el) => {
+					if (callouts) document.querySelectorAll(`${contentSelector} blockquote`).forEach((el) => {
 						if (processed.has(el)) return;
 						processed.add(el);
 						const p = el.querySelector("p");
@@ -3696,71 +9136,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						undo.push(() => details.replaceWith(el));
 					});
 				});
-				const remove = style(".nspp-callout{border-inline-start:3px solid currentColor;padding:10px 16px;margin:1em 0}.nspp-callout summary{cursor:pointer;font-weight:600}.nspp-image-viewer{max-width:95vw;max-height:95vh;padding:12px}.nspp-image-viewer img{max-width:90vw;max-height:82vh;object-fit:contain}.nspp-image-viewer::backdrop{background:rgb(0 0 0 / .8)}");
-				let dialog;
-				if (ctx.get("images")) window.addEventListener("click", (e) => {
+				let closeViewer;
+				if (images) window.addEventListener("click", (e) => {
 					if (!(e.target instanceof Element) || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 					const img = e.target.closest(`${contentSelector} img`);
 					if (!img) return;
+					if (linksElsewhere(img)) {
+						e.stopImmediatePropagation();
+						return;
+					}
 					e.preventDefault();
 					e.stopImmediatePropagation();
-					dialog?.remove();
-					dialog = document.createElement("dialog");
-					dialog.className = "nspp-image-viewer";
-					const close = document.createElement("button");
-					close.textContent = "关闭预览";
-					close.type = "button";
-					close.addEventListener("click", () => dialog?.close(), { signal: ctx.signal });
-					const large = document.createElement("img");
-					const gallery = Array.from(document.querySelectorAll(`${contentSelector} img`));
-					let index = Math.max(0, gallery.indexOf(img));
-					const count = document.createElement("span");
-					const previous = document.createElement("button");
-					previous.type = "button";
-					previous.textContent = "上一张";
-					const next = document.createElement("button");
-					next.type = "button";
-					next.textContent = "下一张";
-					const display = () => {
-						const selected = gallery[index];
-						large.src = selected.currentSrc || selected.src;
-						large.alt = selected.alt;
-						count.textContent = `${index + 1} / ${gallery.length}`;
-						previous.disabled = index === 0;
-						next.disabled = index === gallery.length - 1;
-					};
-					previous.addEventListener("click", () => {
-						index--;
-						display();
-					}, { signal: ctx.signal });
-					next.addEventListener("click", () => {
-						index++;
-						display();
-					}, { signal: ctx.signal });
-					dialog.addEventListener("keydown", (event) => {
-						if (event.key === "ArrowLeft" && index > 0) {
-							event.preventDefault();
-							index--;
-							display();
-						}
-						if (event.key === "ArrowRight" && index < gallery.length - 1) {
-							event.preventDefault();
-							index++;
-							display();
-						}
-					}, { signal: ctx.signal });
-					display();
-					dialog.append(close, previous, count, next, large);
-					document.body.append(dialog);
-					dialog.showModal();
+					closeViewer?.();
+					closeViewer = openImagePreview(Array.from(document.querySelectorAll(`${contentSelector} img`)).filter((image) => image === img || !linksElsewhere(image)), img, () => {
+						closeViewer = void 0;
+					});
 				}, {
 					capture: true,
 					signal: ctx.signal
 				});
 				return () => {
 					stop();
-					remove();
-					dialog?.remove();
+					closeViewer?.();
 					undo.reverse().forEach((fn) => fn());
 				};
 			}
@@ -3789,7 +9186,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				const previous = document.body.classList.contains("dark-layout");
 				if (ctx.get("dark")) document.body.classList.add("dark-layout");
 				if (ctx.get("keyboard")) document.addEventListener("keydown", (e) => {
-					if (!e.altKey || !["ArrowUp", "ArrowDown"].includes(e.key) || e.target.closest("input,textarea,select,[contenteditable=\"true\"]")) return;
+					if (!e.altKey || !["ArrowUp", "ArrowDown"].includes(e.key) || e.target instanceof Element && e.target.closest("input,textarea,select,[contenteditable=\"true\"],dialog")) return;
 					e.preventDefault();
 					window.scrollTo(0, e.key === "ArrowUp" ? 0 : document.documentElement.scrollHeight);
 				}, { signal: ctx.signal });
@@ -3797,48 +9194,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					document.body.classList.toggle("dark-layout", previous);
 				};
 			}
-		}
-	];
-	readingFeatures.push({
-		id: "reading-focus",
-		title: "只看楼主与长文折叠",
-		description: "可选只看楼主回复，长内容提供展开按钮；默认关闭。",
-		group: "阅读",
-		defaults: {
-			enabled: false,
-			authorOnly: false,
-			collapse: true,
-			height: 600
 		},
-		fields: {
-			authorOnly: {
-				label: "只看楼主回复",
-				type: "text"
+		{
+			id: "reading-focus",
+			title: "只看楼主与长文折叠",
+			description: "可选只看楼主回复，长内容提供展开按钮；默认关闭。",
+			group: "阅读",
+			defaults: {
+				enabled: false,
+				authorOnly: false,
+				collapse: true,
+				height: 600
 			},
-			collapse: {
-				label: "折叠长内容",
-				type: "text"
+			fields: {
+				authorOnly: {
+					label: "只看楼主回复",
+					type: "text"
+				},
+				collapse: {
+					label: "折叠长内容",
+					type: "text"
+				},
+				height: {
+					label: "折叠高度（像素，最小 200）",
+					type: "number"
+				}
 			},
-			height: {
-				label: "折叠高度（像素，最小 200）",
-				type: "number"
-			}
-		},
-		mount(ctx) {
-			const owner = document.querySelector(".nsk-content-meta-info .author-info > a[href*=\"/space/\"]")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
-			const hidden = new Map(), folded = new WeakSet(), cleanups = [];
-			const stop = ctx.watch(() => {
-				if (ctx.get("authorOnly") && owner) document.querySelectorAll("ul.comments > li").forEach((item) => {
-					const uid = item.querySelector(".author-info > a[href*=\"/space/\"]")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
-					if (uid && uid !== owner && !hidden.has(item)) {
-						hidden.set(item, item.hidden);
-						item.hidden = true;
-					}
-				});
-				if (ctx.get("collapse")) document.querySelectorAll(contentSelector).forEach((el) => {
-					if (folded.has(el) || el.parentElement?.closest(contentSelector)) return;
-					const height = Math.max(200, Number(ctx.get("height")) || 600);
-					if (el.scrollHeight <= height) return;
+			mount(ctx) {
+				const spaceId = (anchor) => anchor?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
+				const owner = spaceId(document.querySelector(".nsk-content-meta-info .author-info > a[href*=\"/space/\"]"));
+				const authorOnly = !!ctx.get("authorOnly") && !!owner, collapse = !!ctx.get("collapse");
+				const height = Math.max(200, Number(ctx.get("height")) || 600);
+				const hidden = new Map(), checked = new WeakSet(), folded = new WeakSet(), cleanups = [];
+				const fold = (el) => {
 					folded.add(el);
 					const previousHeight = el.style.maxHeight, previousOverflow = el.style.overflow;
 					el.style.maxHeight = `${height}px`;
@@ -3860,51 +9248,64 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						el.style.overflow = previousOverflow;
 						button.remove();
 					});
+				};
+				const stop = ctx.watch(() => {
+					if (authorOnly) document.querySelectorAll("ul.comments > li").forEach((item) => {
+						if (checked.has(item)) return;
+						const uid = spaceId(item.querySelector(".author-info > a[href*=\"/space/\"]"));
+						if (!uid) return;
+						checked.add(item);
+						if (uid !== owner) {
+							hidden.set(item, item.hidden);
+							item.hidden = true;
+						}
+					});
+					if (collapse) Array.from(document.querySelectorAll(contentSelector)).filter((el) => !folded.has(el) && !el.parentElement?.closest(":is(.post-content,.comment-content,.nsk-content,.markdown-body)")).filter((el) => el.scrollHeight > height).forEach(fold);
 				});
-			});
-			return () => {
-				stop();
-				hidden.forEach((value, el) => {
-					el.hidden = value;
+				return () => {
+					stop();
+					hidden.forEach((value, el) => {
+						el.hidden = value;
+					});
+					cleanups.forEach((fn) => fn());
+				};
+			}
+		},
+		{
+			id: "post-status-style",
+			title: "紧凑帖子状态",
+			description: "统一只读与置顶标记的尺寸、颜色和间距。",
+			group: "外观",
+			defaults: { enabled: true },
+			mount(ctx) {
+				const marked = new Set();
+				const stop = ctx.watch(() => {
+					document.querySelectorAll(".post-title span, .post-title small, .post-title em").forEach((node) => {
+						if (node.children.length || node.textContent?.trim() !== "只读" || node.closest("a[href*=\"/post-\"]")) return;
+						node.classList.add("nspp-readonly");
+						marked.add(node);
+					});
+					document.querySelectorAll(".post-title use").forEach((use) => {
+						const href = use.getAttribute("href") || use.getAttribute("xlink:href") || "";
+						if (!/^#(?:pin|pushpin|push-pin|top)(?:-|$)/i.test(href)) return;
+						const svg = use.closest("svg");
+						if (!svg) return;
+						svg.classList.add("nspp-pinned");
+						marked.add(svg);
+						const parent = svg.parentElement;
+						if (parent && parent.children.length === 1 && !parent.textContent?.trim() && !parent.matches("a, .post-title")) {
+							parent.classList.add("nspp-pin-wrap");
+							marked.add(parent);
+						}
+					});
 				});
-				cleanups.forEach((fn) => fn());
-			};
+				return () => {
+					stop();
+					marked.forEach((node) => node.classList.remove("nspp-readonly", "nspp-pinned", "nspp-pin-wrap"));
+				};
+			}
 		}
-	});
-	readingFeatures.push({
-		id: "post-status-style",
-		title: "紧凑帖子状态",
-		description: "统一只读与置顶标记的尺寸、颜色和间距。",
-		group: "外观",
-		defaults: { enabled: true },
-		mount(ctx) {
-			const marked = new Set();
-			const stop = ctx.watch(() => {
-				document.querySelectorAll(".post-title span, .post-title small, .post-title em").forEach((node) => {
-					if (node.children.length || node.textContent?.trim() !== "只读" || node.closest("a[href*=\"/post-\"]")) return;
-					node.classList.add("nspp-readonly");
-					marked.add(node);
-				});
-				document.querySelectorAll(".post-title use").forEach((use) => {
-					const href = use.getAttribute("href") || use.getAttribute("xlink:href") || "";
-					if (!/^#(?:pin|pushpin|push-pin|top)(?:-|$)/i.test(href)) return;
-					const svg = use.closest("svg");
-					if (!svg) return;
-					svg.classList.add("nspp-pinned");
-					marked.add(svg);
-					const parent = svg.parentElement;
-					if (parent && parent.children.length === 1 && !parent.textContent?.trim() && !parent.matches("a, .post-title")) {
-						parent.classList.add("nspp-pin-wrap");
-						marked.add(parent);
-					}
-				});
-			});
-			return () => {
-				stop();
-				marked.forEach((node) => node.classList.remove("nspp-readonly", "nspp-pinned", "nspp-pin-wrap"));
-			};
-		}
-	});
+	];
 	var controls = new Set();
 	var followed = new Set();
 	var viewer;
@@ -3912,13 +9313,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	var loading;
 	var pending = new Set();
 	var ownId = () => unsafeWindow$1.__config__?.user?.member_id;
-	var render = () => controls.forEach(({ id, button }) => {
-		button.disabled = !!loading || pending.has(id);
-		button.textContent = followed.has(id) ? "取消关注" : "关注";
-		button.setAttribute("aria-label", checked ? button.textContent : "查询关注状态");
-		if (button.disabled) button.setAttribute("aria-busy", "true");
-		else button.removeAttribute("aria-busy");
-	});
+	var renderControl = ({ id, button }) => {
+		const disabled = !!loading || pending.has(id);
+		const label = followed.has(id) ? "取消关注" : "关注";
+		if (button.disabled !== disabled) {
+			button.disabled = disabled;
+			if (disabled) button.setAttribute("aria-busy", "true");
+			else button.removeAttribute("aria-busy");
+		}
+		if (button.textContent !== label) button.textContent = label;
+		const aria = checked ? label : "查询关注状态";
+		if (button.getAttribute("aria-label") !== aria) button.setAttribute("aria-label", aria);
+	};
+	var render = () => controls.forEach(renderControl);
 	async function refreshFollowing() {
 		const account = ownId();
 		if (!account) throw new Error("请先登录");
@@ -3970,7 +9377,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			element.hidden = String(ownId()) === id;
 			if (ownId() && !element.hidden && (viewer !== ownId() || Date.now() - checked > 6e4)) refreshFollowing().catch(() => {});
 		};
-		render();
+		renderControl(control);
 		element.hidden = String(ownId()) === id;
 		follow.addEventListener("click", async () => {
 			if (pending.has(id)) return;
@@ -4017,10 +9424,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				return;
 			}
 			dialog?.remove();
-			const panel = document.createElement("dialog");
+			const panel = createSheet("nspp-history nspp-user-transfer", "星辰转账", { dismissible: false });
 			dialog = panel;
-			panel.className = "nspp-history nspp-user-transfer";
-			panel.setAttribute("aria-label", "星辰转账");
 			const title = document.createElement("h2");
 			title.textContent = "星辰转账";
 			const recipient = document.createElement("p");
@@ -4038,6 +9443,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			const status = document.createElement("p");
 			status.setAttribute("role", "status");
 			status.textContent = "正在确认收款人…";
+			setShine(status, true);
 			const actions = document.createElement("div");
 			actions.className = "nspp-transfer-actions";
 			const cancel = document.createElement("button");
@@ -4068,6 +9474,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				submit.disabled = true;
 				amount.disabled = true;
 				status.textContent = "转账中…";
+				setShine(status, true);
 				try {
 					const result = await request("/api/stardust/send", {
 						method: "POST",
@@ -4084,12 +9491,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						panel.close();
 						notify(`已转账 ${value} 星辰`);
 					} else if (result?.success === false) {
+						setShine(status, false);
 						status.textContent = result.message || "转账未成功";
 						sending = false;
 						submit.disabled = false;
 						amount.disabled = false;
 					} else throw new Error("结果未确认");
 				} catch {
+					setShine(status, false);
 					status.textContent = "结果未确认，请先核对星辰明细，勿重复转账。";
 					const ledger = document.createElement("a");
 					ledger.href = `/stardust/list?member_id=${account}`;
@@ -4112,11 +9521,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				if (result?.success !== true || !result.receiver_name) throw new Error(result?.message || "无法确认收款人");
 				if (!panel.open || signal.aborted) return;
 				recipient.textContent = `${result.receiver_name} · UID ${id}`;
+				setShine(status, false);
 				status.textContent = "";
 				ready = true;
 				submit.disabled = false;
 				amount.focus();
 			} catch (error) {
+				setShine(status, false);
 				status.textContent = error instanceof Error ? error.message : "无法确认收款人";
 			}
 		}, { signal });
@@ -4186,25 +9597,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	function profileTagKey(label) {
 		if (/^(管理|管理员|admin|administrator)$/i.test(label)) return "admin";
 		if (/^(创建者|站点创建者|founder)$/i.test(label)) return "founder";
-		if (/^(服主|拥有者|所有者|站点拥有者|owner)$/i.test(label)) return "owner";
+		if (/^(服主|拥有者|所有者|站点拥有者|owner|creater)$/i.test(label)) return "owner";
 		if (/^(代理商|agency)$/i.test(label)) return "agency";
 		if (/^(博主|blog-owner)$/i.test(label)) return "blog-owner";
+		if (/^(封禁|已封禁|banned)$/i.test(label)) return "banned";
+		if (/^(诈骗|骗子|fraud)$/i.test(label)) return "fraud";
 		return label;
 	}
 	function renderProfileTags(target, user) {
 		const labels = new Map();
 		if (user.isAdmin === true || typeof user.isAdmin === "number" && user.isAdmin > 0) labels.set("admin", "管理");
 		for (const role of Array.isArray(user.roles) ? user.roles : []) {
-			const name = typeof role === "string" ? role : role?.name || role?.title;
+			const name = typeof role === "string" ? role : role?.display_text || role?.title || role?.name;
 			if (typeof name !== "string" || !name.trim()) continue;
 			const label = name.trim();
 			const key = profileTagKey(label);
-			labels.set(key, {
+			const display = typeof role === "string" ? void 0 : role?.display_text?.trim();
+			labels.set(key, display || {
 				admin: "管理",
 				founder: "创建者",
 				owner: "服主",
 				agency: "代理商",
-				"blog-owner": "博主"
+				"blog-owner": "博主",
+				banned: "封禁",
+				fraud: "诈骗"
 			}[key] || label);
 		}
 		target.replaceChildren();
@@ -4225,15 +9641,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		return GM_getValue$1(`nspp:settings:${location.hostname}`, {})["user-level"]?.hoverPreview !== false;
 	}
 	var userHoverSelector = "a:is(.info-author,.post-author), :is(.author-info,.info-author,.post-author,.info-last-commenter) > a[href*=\"/space/\"], .nspp-messages-bubble a[href*=\"/space/\"], a[href*=\"/space/\"]:has(img), a[data-uid]";
+	var openCard;
+	var globalListeners = false;
+	function listenGlobally() {
+		if (globalListeners) return;
+		globalListeners = true;
+		const closeOpen = () => openCard?.close();
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && openCard && !openCard.element.hidden) {
+				const card = openCard;
+				card.anchor.focus();
+				card.close();
+			}
+		});
+		document.addEventListener("pointerdown", (event) => {
+			if (openCard && !openCard.element.contains(event.target) && !openCard.anchor.contains(event.target)) openCard.close();
+		});
+		window.addEventListener("resize", closeOpen);
+		window.addEventListener("scroll", closeOpen, {
+			capture: true,
+			passive: true
+		});
+	}
 	var cards = new WeakMap();
 	function isUserHoverAnchor(anchor) {
 		if (anchor.closest(".hover-user-card")) return false;
 		const url = new URL(anchor.href, location.href);
 		return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) && !url.search && !url.hash;
 	}
+	function listCard(anchor) {
+		if (location.pathname !== "/fans" || !anchor.parentElement?.matches(".user-head")) return void 0;
+		const card = anchor.closest(".user-card:not(.hover-user-card)");
+		return card && !card.querySelector("a[href^=\"/notification\"]") ? card : void 0;
+	}
 	function userHover(anchor, ctx) {
 		let entry = cards.get(anchor);
+		if (entry && entry.href !== anchor.href) {
+			cards.delete(anchor);
+			entry = void 0;
+		}
 		if (!entry) {
+			const href = anchor.href;
+			const replace = listCard(anchor);
 			const title = anchor.getAttribute("title");
 			if (userHoverEnabled()) anchor.removeAttribute("title");
 			const element = document.createElement("section");
@@ -4295,67 +9744,88 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			header.append(avatar, mark, identity);
 			element.append(header);
 			if (actions) element.append(actions.element);
-			document.body.append(element);
-			let timer;
-			const close = () => {
-				clearTimeout(timer);
-				element.hidden = true;
-			};
-			const open = () => {
-				clearTimeout(timer);
-				if (!anchor.isConnected) return;
-				if (!userHoverEnabled() || document.hidden || innerWidth <= 700 || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-				if (Array.from(document.querySelectorAll(".hover-user-card")).some((card) => !card.hidden && card.getClientRects().length > 0)) return;
-				syncTags();
+			if (replace) {
+				element.classList.add("nspp-user-hover-inline");
 				element.hidden = false;
+				const box = getComputedStyle(replace);
+				if (replace.getClientRects().length) element.style.width = box.width;
+				element.style.margin = box.margin;
+				replace.dataset.nsppReplaced = "";
+				replace.after(element);
+				if (id) avatar.src = `/avatar/${id}.png`;
 				actions?.refresh();
-				if (id && !avatar.getAttribute("src")) avatar.src = `/avatar/${id}.png`;
-				const rect = anchor.getBoundingClientRect();
-				element.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - element.offsetWidth - 8))}px`;
-				element.style.top = `${Math.max(8, Math.min(rect.bottom + 6, innerHeight - element.offsetHeight - 8))}px`;
-			};
-			const leave = () => {
-				clearTimeout(timer);
-				timer = setTimeout(close, 180);
-			};
-			anchor.addEventListener("mouseenter", () => {
-				clearTimeout(timer);
-				timer = setTimeout(open, 300);
-			}, options);
-			anchor.addEventListener("mouseleave", leave, options);
-			anchor.addEventListener("focus", open, options);
-			anchor.addEventListener("blur", leave, options);
-			element.addEventListener("mouseenter", () => clearTimeout(timer), options);
-			element.addEventListener("mouseleave", leave, options);
-			element.addEventListener("focusin", () => clearTimeout(timer), options);
-			element.addEventListener("focusout", leave, options);
-			document.addEventListener("keydown", (event) => {
-				if (event.key === "Escape" && !element.hidden) {
-					anchor.focus();
-					close();
-				}
-			}, options);
-			document.addEventListener("pointerdown", (event) => {
-				if (!element.contains(event.target) && !anchor.contains(event.target)) close();
-			}, options);
-			window.addEventListener("resize", close, options);
-			window.addEventListener("scroll", close, {
-				...options,
-				capture: true
-			});
-			entry = {
-				element,
-				users: 0,
-				dispose: () => {
-					close();
-					controller.abort();
-					element.remove();
-					if (title !== null) anchor.setAttribute("title", title);
-					cards.delete(anchor);
-				}
-			};
-			cards.set(anchor, entry);
+				entry = {
+					href,
+					element,
+					users: 0,
+					dispose: () => {
+						controller.abort();
+						element.remove();
+						if (cards.get(anchor) === entry) cards.delete(anchor);
+						if (!cards.get(anchor)?.element.classList.contains("nspp-user-hover-inline")) delete replace.dataset.nsppReplaced;
+						if (title !== null) anchor.setAttribute("title", title);
+					}
+				};
+				cards.set(anchor, entry);
+			} else {
+				let timer;
+				const close = () => {
+					clearTimeout(timer);
+					if (!element.hidden) element.hidden = true;
+					if (openCard?.element === element) openCard = void 0;
+				};
+				const open = () => {
+					clearTimeout(timer);
+					if (!anchor.isConnected) return;
+					if (!userHoverEnabled() || document.hidden || innerWidth <= 700 || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+					if (Array.from(document.querySelectorAll(".hover-user-card")).some((card) => !card.hidden && card.getClientRects().length > 0)) return;
+					if (openCard && openCard.element !== element) openCard.close();
+					if (!element.isConnected) document.body.append(element);
+					syncTags();
+					element.hidden = false;
+					openCard = {
+						element,
+						anchor,
+						close
+					};
+					listenGlobally();
+					actions?.refresh();
+					if (id && !avatar.getAttribute("src")) avatar.src = `/avatar/${id}.png`;
+					const rect = anchor.getBoundingClientRect();
+					element.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - element.offsetWidth - 8))}px`;
+					element.style.top = `${Math.max(8, Math.min(rect.bottom + 6, innerHeight - element.offsetHeight - 8))}px`;
+				};
+				const leave = () => {
+					clearTimeout(timer);
+					timer = setTimeout(close, 180);
+				};
+				anchor.addEventListener("mouseenter", () => {
+					clearTimeout(timer);
+					timer = setTimeout(open, 300);
+				}, options);
+				anchor.addEventListener("mouseleave", leave, options);
+				anchor.addEventListener("focus", open, options);
+				anchor.addEventListener("blur", leave, options);
+				element.addEventListener("mouseenter", () => clearTimeout(timer), options);
+				element.addEventListener("mouseleave", leave, options);
+				element.addEventListener("focusin", () => clearTimeout(timer), options);
+				element.addEventListener("focusout", leave, options);
+				entry = {
+					href,
+					element,
+					users: 0,
+					dispose: () => {
+						close();
+						controller.abort();
+						element.remove();
+						if (title !== null) anchor.setAttribute("title", title);
+						if (cards.get(anchor) === entry) cards.delete(anchor);
+					}
+				};
+				cards.set(anchor, entry);
+			}
 		}
+		entry = entry;
 		entry.users++;
 		const shared = entry;
 		let released = false;
@@ -4367,6 +9837,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		ctx.signal.addEventListener("abort", release, { once: true });
 		return {
 			element: shared.element,
+			inline: shared.element.classList.contains("nspp-user-hover-inline"),
 			release
 		};
 	}
@@ -4414,6 +9885,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		svg.append(use);
 		return svg;
 	}
+	var PROFILE_LIMIT = 3e3;
+	var profileFields = [
+		"member_name",
+		"isAdmin",
+		"roles",
+		"signature",
+		"bio",
+		"introduction",
+		"signature_text",
+		"coin",
+		"stardust",
+		"fans",
+		"rank",
+		"created_at",
+		"nPost",
+		"nComment"
+	];
+	function compactProfile(user) {
+		const result = {};
+		for (const key of profileFields) if (user[key] !== void 0 && user[key] !== null) result[key] = user[key];
+		return result;
+	}
 	var userBadges = {
 		id: "user-level",
 		title: "等级、信任分与身份徽章",
@@ -4421,6 +9914,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		group: "用户",
 		defaults: {
 			enabled: true,
+			listBadges: true,
 			hoverPreview: true,
 			colors: "original",
 			levelColor: "#9198a1",
@@ -4428,6 +9922,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			roleColor: "#9198a1"
 		},
 		fields: {
+			listBadges: {
+				label: "帖子列表显示等级与信任分（关闭可减少卡顿）",
+				type: "text"
+			},
 			hoverPreview: {
 				label: "用户资料悬浮预览（默认开启，仅桌面鼠标悬停）",
 				type: "text"
@@ -4473,33 +9971,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			let scoreDialog;
 			const roles = new Map();
 			const fresh = (entry) => !!entry && Number.isFinite(entry.time) && Date.now() >= entry.time && Date.now() - entry.time < 864e5;
-			const cache = new Map();
+			const cache = new Map(Object.entries(ctx.get("profiles") || {}).filter(([, entry]) => fresh(entry)));
 			const inflight = new Map();
 			const nodes = new Map();
+			const unsaved = new Map();
+			let saveTimer;
+			const persist = () => {
+				clearTimeout(saveTimer);
+				saveTimer = void 0;
+				if (!unsaved.size) return;
+				const merged = {
+					...ctx.get("profiles") || {},
+					...Object.fromEntries(unsaved)
+				};
+				unsaved.clear();
+				ctx.set("profiles", Object.fromEntries(Object.entries(merged).filter(([, entry]) => fresh(entry)).sort((a, b) => b[1].time - a[1].time).slice(0, PROFILE_LIMIT)));
+			};
+			const schedulePersist = () => {
+				if (!saveTimer) saveTimer = setTimeout(persist, 2e3);
+			};
+			addEventListener("pagehide", persist, { signal: ctx.signal });
 			const getProfile = (id) => {
 				const cached = cache.get(id);
 				if (fresh(cached)) return Promise.resolve(cached.user);
 				cache.delete(id);
 				if (inflight.has(id)) return inflight.get(id);
-				const stored = ctx.get("profiles") || {};
-				if (fresh(stored[id])) {
-					cache.set(id, stored[id]);
-					return Promise.resolve(stored[id].user);
-				}
 				const request = ctx.request(`/api/account/getInfo/${id}`).then((result) => {
 					if (!result?.success || !result.detail || typeof result.detail !== "object") throw new Error("资料不可用");
 					const entry = {
 						time: Date.now(),
-						user: result.detail
+						user: compactProfile(result.detail)
 					};
 					cache.set(id, entry);
-					const latest = ctx.get("profiles") || {};
-					latest[id] = entry;
-					ctx.set("profiles", Object.fromEntries(Object.entries(latest).filter(([, value]) => fresh(value))));
-					return result.detail;
+					unsaved.set(id, entry);
+					schedulePersist();
+					return entry.user;
 				});
 				inflight.set(id, request);
-				request.then(() => inflight.delete(id), () => inflight.delete(id));
+				const settle = () => {
+					inflight.delete(id);
+					if (!inflight.size) persist();
+				};
+				request.then(settle, settle);
 				return request;
 			};
 			const load = async (author, id, badge) => {
@@ -4601,9 +10114,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					age.setAttribute("aria-label", `${age.textContent}，查看注册资料`);
 					age.addEventListener("click", () => {
 						scoreDialog?.remove();
-						scoreDialog = document.createElement("dialog");
-						scoreDialog.className = "nspp-history nspp-profile-dialog";
-						scoreDialog.setAttribute("aria-label", "注册资料");
+						scoreDialog = createSheet("nspp-history nspp-profile-dialog", "注册资料");
 						const header = document.createElement("header");
 						const heading = document.createElement("h2");
 						heading.textContent = "注册资料";
@@ -4655,12 +10166,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					score.setAttribute("aria-label", `信任分 ${trust?.score ?? "未知"}，查看评分依据`);
 					score.addEventListener("click", () => {
 						scoreDialog?.remove();
-						scoreDialog = document.createElement("dialog");
-						scoreDialog.className = "nspp-history nspp-trust-dialog";
-						scoreDialog.setAttribute("aria-label", "信任分依据");
+						scoreDialog = createSheet("nspp-history nspp-trust-dialog", "信任分依据");
 						const heading = document.createElement("h2");
 						heading.textContent = "信任分依据";
 						const body = document.createElement("p");
+						body.className = "nspp-sheet-body";
 						body.textContent = details;
 						const close = document.createElement("button");
 						close.type = "button";
@@ -4733,7 +10243,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					if (state) load(entry.target, state.id, state.badge);
 				}
 			}, { rootMargin: "200px" }) : null;
+			const listBadges = ctx.get("listBadges") !== false;
 			const scan = () => {
+				const pending = [];
 				document.querySelectorAll(".role-tag:not(.user-level)").forEach((tag) => {
 					const text = tag.textContent?.trim();
 					const role = text === "管理员" || text === "管理" ? "admin" : text === "站点创建者" || text === "创建者" ? "founder" : text === "服主" || text === "拥有者" || text === "所有者" || text === "站点拥有者" ? "owner" : void 0;
@@ -4769,7 +10281,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					const badge = document.createElement("span");
 					badge.className = "nspp-user-badges";
 					badge.setAttribute("aria-label", "用户资料");
-					badge.hidden = !!author.closest(".info-last-commenter") || !!author.querySelector("img") || !author.matches(".author-info a, a.info-author, .info-author a, a.post-author, .post-author a, .nsk-content-meta-info a");
+					badge.hidden = !!author.closest(".info-last-commenter") || !listBadges && !!author.closest(".post-list-item") || !!author.querySelector("img") || !author.matches(".author-info a, a.info-author, .info-author a, a.post-author, .post-author a, .nsk-content-meta-info a");
 					const hover = userHover(author, ctx);
 					const details = document.createElement("dl");
 					details.textContent = "正在读取用户资料…";
@@ -4781,6 +10293,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						details,
 						release: hover.release
 					});
+					if (hover.inline) {
+						load(author, id, badge);
+						return;
+					}
 					if (badge.hidden) {
 						let started = false;
 						const start = () => {
@@ -4794,13 +10310,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						author.addEventListener("click", start, { signal: ctx.signal });
 						return;
 					}
+					pending.push([
+						author,
+						id,
+						badge
+					]);
+				});
+				const visible = pending.map(([author]) => {
+					if (!observer) return true;
 					const rect = author.getBoundingClientRect();
-					if (!observer || rect.bottom >= 0 && rect.top <= innerHeight + 200) load(author, id, badge);
+					return rect.bottom >= 0 && rect.top <= innerHeight + 200;
+				});
+				pending.forEach(([author, id, badge], index) => {
+					if (visible[index]) load(author, id, badge);
 					else observer.observe(author);
 				});
 			};
 			const stop = ctx.watch(scan);
 			return () => {
+				persist();
 				stop();
 				colorStyle.remove();
 				scoreDialog?.remove();
@@ -8893,20 +14421,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	gsap.registerPlugin(CSSPlugin);
 	var gsapWithCSS = gsap.registerPlugin(CSSPlugin) || gsap;
 	gsapWithCSS.core.Tween;
-	function uploadNodeImage(body, headers, signal) {
+	function uploadImage(url, body, headers, signal) {
+		const name = new URL(url).hostname === "api.nodeimage.com" ? "NodeImage" : "图床";
 		return new Promise((resolve, reject) => {
 			if (signal.aborted) {
 				reject(new Error("上传已取消"));
 				return;
 			}
-			if (typeof _GM_xmlhttpRequest !== "function") {
-				reject(new Error("请重新安装最新版脚本，授予 NodeImage 连接权限"));
+			if (!hasRequest()) {
+				reject(new Error(`请重新安装最新版脚本，授予 ${name} 连接权限`));
 				return;
 			}
 			const cleanup = () => signal.removeEventListener("abort", cancel);
-			const request = _GM_xmlhttpRequest({
+			const request = gmRequest({
 				method: "POST",
-				url: "https://api.nodeimage.com/api/upload",
+				url,
 				data: body,
 				headers,
 				anonymous: true,
@@ -8915,18 +14444,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				onload: (response) => {
 					cleanup();
 					if (response.status === 401 || response.status === 403) {
-						reject(new Error("NodeImage 密钥无效或无权限，请到官网 API 页面检查"));
+						reject(new Error(name === "NodeImage" ? "NodeImage 密钥无效或无权限，请到官网 API 页面检查" : "图床密钥无效或无权限（HTTP " + response.status + "）"));
 						return;
 					}
 					if (response.status < 200 || response.status >= 300) {
-						reject(new Error(`NodeImage 上传失败（HTTP ${response.status}）`));
+						reject(new Error(`${name} 上传失败（HTTP ${response.status}）`));
+						return;
+					}
+					if (!response.response) {
+						reject(new Error(`${name} 未返回 JSON，请检查上传地址`));
 						return;
 					}
 					resolve(response.response);
 				},
 				onerror: () => {
 					cleanup();
-					reject(new Error("无法连接 NodeImage，请检查网络和脚本连接权限"));
+					reject(new Error(`无法连接 ${name}，请检查网络和脚本连接权限`));
 				},
 				ontimeout: () => {
 					cleanup();
@@ -8949,12 +14482,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				reject(new Error("已取消"));
 				return;
 			}
-			if (typeof _GM_xmlhttpRequest !== "function") {
+			if (!hasRequest()) {
 				reject(new Error("请更新脚本并允许连接 NodeImage"));
 				return;
 			}
 			const cleanup = () => signal.removeEventListener("abort", cancel);
-			const request = _GM_xmlhttpRequest({
+			const request = gmRequest({
 				method: "GET",
 				url: "https://api.nodeimage.com/api/user/api-key",
 				anonymous: false,
@@ -8986,14 +14519,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			signal.addEventListener("abort", cancel, { once: true });
 		});
 	}
-	function uploadRequest(provider, configuredBase, key, file) {
-		const base = new URL(provider === "NodeImage" ? "https://api.nodeimage.com" : configuredBase);
-		if (base.protocol !== "https:" || base.username || base.password || base.search || base.hash) throw new Error("Invalid service URL");
+	var imageProviders = [
+		"NodeImage",
+		"Custom",
+		"Telegraph",
+		"Telegraph2",
+		"LskyPro",
+		"Chevereto",
+		"EasyImages"
+	];
+	function uploadRequest(provider, configuredBase, key, file, custom = {}) {
+		const base = new URL(provider === "NodeImage" ? "https://api.nodeimage.com" : configuredBase.trim());
+		if (base.protocol !== "https:" || base.username || base.password || base.hash || provider !== "Custom" && base.search) throw new Error("Invalid service URL");
 		const root = base.href.replace(/\/$/, "");
 		const body = new FormData();
 		const headers = { Accept: "application/json" };
 		let path = "/upload";
 		let field = "file";
+		if (provider === "Custom") {
+			field = custom.field?.trim() || "file";
+			for (const line of (custom.headers || "").split("\n")) {
+				if (!line.trim()) continue;
+				const split = line.indexOf(":");
+				const name = line.slice(0, split).trim();
+				if (split < 1 || !/^[A-Za-z0-9-]+$/.test(name)) throw new Error("Invalid header line");
+				const template = line.slice(split + 1).trim();
+				if (template.includes("{key}") && !key) throw new Error("API Key required");
+				headers[name] = template.replaceAll("{key}", key);
+			}
+			body.append(field, file);
+			return {
+				url: base.href,
+				base: base.origin,
+				body,
+				headers
+			};
+		}
 		if (provider === "NodeImage") {
 			path = "/api/upload";
 			field = "image";
@@ -9023,12 +14584,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			headers
 		};
 	}
-	function uploadResult(provider, base, raw) {
+	function pick(value, path) {
+		return path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean).reduce((node, part) => node && typeof node === "object" ? node[part] : void 0, value);
+	}
+	function uploadResult(provider, base, raw, resultPath = "") {
 		if (!raw || typeof raw !== "object") throw new Error("Invalid upload response");
 		const result = raw;
 		let direct;
 		if (provider === "Telegraph" && Array.isArray(result)) direct = result[0]?.src;
-		else if (!Array.isArray(result)) {
+		else if (provider === "Custom") {
+			if (!Array.isArray(result) && result.success === false) throw new Error("Upload failed");
+			direct = pick(raw, resultPath.trim() || "url");
+		} else if (!Array.isArray(result)) {
 			if (result.success === false) throw new Error("Upload failed");
 			if (provider === "NodeImage") direct = result.links?.direct;
 			else if (provider === "Telegraph2" && typeof result.data === "string") direct = result.data;
@@ -9041,40 +14608,70 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		if (!["https:", "http:"].includes(url.protocol)) throw new Error("Invalid image URL");
 		return url;
 	}
+	var errorText = {
+		"Invalid URL": "请先在设置中填写 HTTPS 图床地址",
+		"Invalid service URL": "图床地址须为 HTTPS 且不含账号信息",
+		"API Key required": "请先填写图床 API Key / Token",
+		"Invalid header line": "自定义请求头格式应为每行「名称: 值」",
+		"Upload failed": "图床返回上传失败",
+		"Invalid upload response": "图床返回格式无效",
+		"Missing image URL": "未在返回结果中找到图片地址，请检查协议或返回路径",
+		"Invalid image URL": "图床返回的图片地址无效"
+	};
+	function uploadErrorText(error) {
+		if (!(error instanceof Error)) return "图片上传失败，请重试";
+		return errorText[error.message] || (/[一-鿿]/.test(error.message) ? error.message : "上传失败：请检查图床地址、API Key、协议或网络");
+	}
+	function uploadNeedsKey(provider, customHeaders = "") {
+		return provider === "Custom" ? customHeaders.includes("{key}") : !!provider && ![
+			"NodeImage",
+			"Telegraph",
+			"Telegraph2"
+		].includes(provider);
+	}
 	var imageUpload = {
 		id: "image-upload",
 		title: "图片上传",
 		group: "操作辅助",
-		description: "选择图片上传并插入链接，支持六类图床协议。默认使用 NodeImage 官方图床；其他服务须允许 CORS；密钥仅存当前页面内存。",
+		description: "选择、粘贴或拖拽图片上传并插入链接。默认使用 NodeImage 官方图床（登录后自动获取密钥）；也可选择常见图床协议或「自定义」接口。API Key 仅存当前页面内存。",
 		defaults: {
 			enabled: true,
 			provider: "NodeImage",
-			base: ""
+			base: "",
+			customField: "file",
+			customHeaders: "",
+			customResult: "data.url"
 		},
 		fields: {
 			provider: {
-				label: "图床协议",
+				label: "图床",
 				type: "select",
-				options: [
-					"NodeImage",
-					"Telegraph",
-					"Telegraph2",
-					"LskyPro",
-					"Chevereto",
-					"EasyImages"
-				].map((value) => ({
-					label: value === "NodeImage" ? "NodeImage（论坛官方，默认）" : value,
+				options: imageProviders.map((value) => ({
+					label: value === "NodeImage" ? "NodeImage 官方图床（默认）" : value === "Custom" ? "自定义接口" : value,
 					value
 				}))
 			},
 			base: {
-				label: "其他图床地址（NodeImage 固定使用官方地址）",
+				label: "图床地址（HTTPS；自定义接口填完整上传地址）",
+				type: "text"
+			},
+			customField: {
+				label: "图片表单字段名",
+				type: "text"
+			},
+			customHeaders: {
+				label: "请求头（每行「名称: 值」，{key} 替换为页面填写的密钥，例如 Authorization: Bearer {key}）",
+				type: "textarea"
+			},
+			customResult: {
+				label: "返回 JSON 中图片地址的路径（如 data.url、data[0].src）",
 				type: "text"
 			}
 		},
 		mount(ctx) {
 			const bound = new WeakSet();
 			const bars = [];
+			const placements = [];
 			let apiKey = "";
 			let auth;
 			let lastCheck = 0;
@@ -9179,7 +14776,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						}
 						input.disabled = true;
 						key.disabled = true;
-						status.setAttribute("aria-busy", "true");
+						setShine(status, true);
 						status.textContent = "上传中…";
 						try {
 							if (ctx.get("provider") === "NodeImage" && !apiKey) {
@@ -9187,13 +14784,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 								await ensureKey();
 								status.textContent = "上传中…";
 							}
-							const request = uploadRequest(ctx.get("provider"), ctx.get("base"), apiKey, file);
-							const result = ctx.get("provider") === "NodeImage" ? await uploadNodeImage(request.body, request.headers, ctx.signal) : await ctx.request(request.url, {
+							const provider = ctx.get("provider");
+							const request = uploadRequest(provider, ctx.get("base"), apiKey, file, {
+								field: ctx.get("customField"),
+								headers: ctx.get("customHeaders")
+							});
+							const result = provider === "NodeImage" || hasRequest() ? await uploadImage(request.url, request.body, request.headers, ctx.signal) : await ctx.request(request.url, {
 								method: "POST",
 								headers: request.headers,
 								body: request.body
 							});
-							const url = uploadResult(ctx.get("provider"), request.base, result);
+							const url = uploadResult(provider, request.base, result, ctx.get("customResult"));
 							if (ctx.signal.aborted) return false;
 							const markdown = `![image](<${url.href.replace(/>/g, "%3E")}>)`;
 							if (cm) {
@@ -9212,19 +14813,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 								key.value = "";
 								official.hidden = false;
 							}
-							if (!ctx.signal.aborted) status.textContent = ctx.get("provider") === "NodeImage" && error instanceof Error ? error.message : "上传失败：请检查 HTTPS 图床地址、API Key、协议或 CORS 支持";
+							if (!ctx.signal.aborted) status.textContent = uploadErrorText(error);
 							return false;
 						} finally {
 							input.disabled = false;
 							key.disabled = false;
 							input.value = "";
-							status.removeAttribute("aria-busy");
+							setShine(status, false);
 						}
 					}
 					bar.append(official);
-					if (!nodeImage) bar.append(key);
+					if (uploadNeedsKey(ctx.get("provider"), ctx.get("customHeaders"))) bar.append(key);
 					bar.append(input, status);
-					const toolbar = host.querySelector(".mde-toolbar");
 					const imageSelector = ".toolbar-item.i-icon.i-icon-pic[title=\"图片\"]";
 					host.addEventListener("click", (event) => {
 						if (!(event.target instanceof Element) || !event.target.closest(imageSelector)) return;
@@ -9235,35 +14835,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						signal: ctx.signal,
 						capture: true
 					});
-					if (!host.querySelector(imageSelector)) {
-						const choose = document.createElement("button");
-						choose.type = "button";
-						choose.className = "nspp-upload-choose";
-						choose.title = "上传图片";
-						choose.setAttribute("aria-label", choose.title);
-						const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-						icon.setAttribute("viewBox", "0 0 24 24");
-						icon.setAttribute("aria-hidden", "true");
-						const path = document.createElementNS(icon.namespaceURI, "path");
-						path.setAttribute("d", "M3 4h18v16H3zM3 17l6-6 4 4 3-3 5 5M16 8h.1");
-						icon.append(path);
-						choose.append(icon);
-						choose.addEventListener("click", () => {
-							if (!uploading) input.click();
-						}, { signal: ctx.signal });
-						if (toolbar) {
-							const emoji = Array.from(toolbar.querySelectorAll(".toolbar-item")).find((item) => /表情|emoji|emotion|face|smile/i.test(`${item.title} ${item.getAttribute("aria-label") || ""} ${item.textContent || ""}`));
-							const right = toolbar.querySelector(".toolbar-item.right");
-							if (emoji) emoji.after(choose);
-							else if (right) toolbar.insertBefore(choose, right);
-							else toolbar.append(choose);
-						} else bar.prepend(choose);
-					}
-					if (toolbar) {
-						const right = toolbar.querySelector(".toolbar-item.right");
-						if (right) toolbar.insertBefore(bar, right);
-						else toolbar.append(bar);
-					} else host.append(bar);
+					const choose = document.createElement("button");
+					choose.type = "button";
+					choose.className = "nspp-upload-choose";
+					choose.title = "上传图片";
+					choose.setAttribute("aria-label", choose.title);
+					const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+					icon.setAttribute("viewBox", "0 0 24 24");
+					icon.setAttribute("aria-hidden", "true");
+					const path = document.createElementNS(icon.namespaceURI, "path");
+					path.setAttribute("d", "M3 4h18v16H3zM3 17l6-6 4 4 3-3 5 5M16 8h.1");
+					icon.append(path);
+					choose.append(icon);
+					choose.addEventListener("click", () => {
+						if (!uploading) input.click();
+					}, { signal: ctx.signal });
+					const place = () => {
+						if (!host.isConnected) return;
+						const topButton = host.querySelector(".editor-top-button");
+						const top = topButton?.parentElement;
+						if (top && topButton) {
+							if (choose.parentElement !== top) top.insertBefore(choose, topButton);
+							if (bar.previousElementSibling !== top) top.after(bar);
+							return;
+						}
+						if (!choose.isConnected) bar.prepend(choose);
+						if (!bar.isConnected) host.append(bar);
+					};
+					place();
+					placements.push(place);
 					bars.push(bar);
 				});
 			}
@@ -9271,6 +14871,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			checkLogin();
 			const unwatch = ctx.watch(() => {
 				const count = bars.length;
+				placements.forEach((place) => place());
 				scan();
 				if (bars.length > count) checkLogin();
 			});
@@ -9278,9 +14879,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				unwatch();
 				apiKey = "";
 				bars.forEach((bar) => bar.remove());
+				document.querySelectorAll(".nspp-upload-choose").forEach((button) => button.remove());
 			};
 		}
 	};
+	function whenReady(ctx, initialize) {
+		let cleanup;
+		let timer;
+		let stopWatch;
+		const start = () => {
+			if (cleanup || ctx.signal.aborted) return;
+			cleanup = initialize();
+			if (cleanup) {
+				stopWatch?.();
+				clearInterval(timer);
+			}
+		};
+		stopWatch = ctx.watch(start);
+		if (cleanup) stopWatch();
+		else timer = setInterval(start, 1e3);
+		return () => {
+			stopWatch?.();
+			clearInterval(timer);
+			cleanup?.();
+		};
+	}
 	function currentUser() {
 		return unsafeWindow$1.__config__?.user;
 	}
@@ -9329,6 +14952,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						run();
 					}, ctx);
 					control.className = "nspp-action nspp-tool-icon";
+					control.dataset.nsppAttendance = "";
 					const renderControl = (label = "签到") => {
 						control.replaceChildren(toolIcon("attendance"));
 						control.title = label;
@@ -9384,6 +15008,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						if (control.disabled || ctx.signal.aborted) return;
 						if (known()) {
 							complete(false);
+							ctx.notify("今日已签到");
 							return;
 						}
 						animation?.kill();
@@ -9432,17 +15057,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						control.remove();
 					};
 				};
-				let cleanup;
-				const start = () => {
-					if (!cleanup && !ctx.signal.aborted) cleanup = initialize();
-				};
-				const stopReady = ctx.watch(start);
-				const ready = setInterval(start, 1e3);
-				return () => {
-					stopReady();
-					clearInterval(ready);
-					cleanup?.();
-				};
+				return whenReady(ctx, initialize);
 			}
 		},
 		{
@@ -9513,7 +15128,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				return;
 			}
 			const cleanup = () => signal.removeEventListener("abort", cancel);
-			const request = _GM_xmlhttpRequest({
+			const request = gmRequest({
 				method: "GET",
 				url: "https://rss.nodeseek.com/",
 				anonymous: true,
@@ -9603,11 +15218,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		el.textContent = label;
 		const icon = label === "关闭" ? "close" : label === "刷新" || label === "更新" ? "refresh" : label === "停止" ? "stop" : void 0;
 		if (icon) el.prepend(toolIcon(icon));
-		if (label === "关闭") {
-			el.replaceChildren(toolIcon("close"));
-			el.title = label;
-			el.setAttribute("aria-label", label);
-		}
+		if (label === "关闭") iconButton(el, "close", label);
 		el.addEventListener("click", fn, { signal: ctx.signal });
 		return el;
 	}
@@ -9633,9 +15244,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		},
 		mount(ctx) {
 			if (location.hostname !== "www.nodeseek.com") return;
-			const panel = document.createElement("dialog");
-			panel.className = "nspp-monitor";
-			panel.setAttribute("aria-label", "帖子监控");
+			const panel = createSheet("nspp-monitor", "帖子监控");
 			const header = document.createElement("header");
 			const title = document.createElement("h3");
 			title.textContent = "帖子监控";
@@ -9702,7 +15311,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			stats.textContent = "0 轮 · 累计 0 帖 · 符合 0 · 不符合 0";
 			status.append(stats);
 			const output = document.createElement("div");
-			output.className = "nspp-monitor-results";
+			output.className = "nspp-monitor-results nspp-sheet-body";
 			panel.append(output);
 			const user = currentUser()?.member_id;
 			const trackKey = `tracked:${user}`;
@@ -9865,7 +15474,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			ctx.set("match-keywords", keywordText);
 			let { rules, errors } = compileMonitorRules(keywordText);
 			const editor = document.createElement("form");
-			editor.className = "nspp-monitor-editor";
+			editor.className = "nspp-monitor-editor nspp-sheet-body";
 			const label = document.createElement("label");
 			label.textContent = "监控正则";
 			const input = document.createElement("textarea");
@@ -9887,9 +15496,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			feedback.setAttribute("role", "status");
 			const explanation = document.createElement("small");
 			explanation.textContent = "每行一个正则，任意命中RSS 标题即收录。默认忽略大小写；例如 vmiss|搬瓦工，或 /香港.*年付/i。更新会清空旧结果并重新检查。";
-			const configDialog = document.createElement("dialog");
-			configDialog.className = "nspp-monitor nspp-monitor-config";
-			configDialog.setAttribute("aria-label", "监控配置");
+			const configDialog = createSheet("nspp-monitor nspp-monitor-config", "监控配置", { dismissible: false });
 			const configHeader = document.createElement("header");
 			const configTitle = document.createElement("h3");
 			configTitle.textContent = "监控配置";
@@ -10364,7 +15971,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		if (!/^https?:$/.test(target.protocol)) throw new Error("不支持的目标");
 		return target.href;
 	}
-	function pageConfig() {
+	function pageConfig$1() {
 		return unsafeWindow$1.__config__;
 	}
 	var extraFeatures = [{
@@ -10374,26 +15981,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		group: "阅读",
 		defaults: { enabled: true },
 		mount(ctx) {
-			const uid = pageConfig()?.user?.member_id;
+			const uid = pageConfig$1()?.user?.member_id;
 			if (!uid) return;
 			const key = `records:${location.host}:${uid}`;
 			let records = ctx.get(key) || [];
 			let cursor = ctx.get(`${key}:cursor`) || 1;
 			let busy = false;
-			const panel = document.createElement("dialog");
-			panel.className = "nspp-history nspp-footprints-dialog";
+			const panel = createSheet("nspp-history nspp-footprints-dialog", "我的回帖足迹", { tall: true });
 			panel.dataset.nsppFootprints = "";
 			const summary = document.createElement("h2");
 			summary.textContent = "我的回帖足迹";
 			const open = document.createElement("button");
 			open.type = "button";
 			open.className = "nspp-tool-icon";
+			open.dataset.nsppFootprintsLauncher = "";
 			open.title = "回帖足迹";
 			open.setAttribute("aria-label", open.title);
 			open.append(toolIcon("footprints"));
-			const close = document.createElement("button");
+			const close = iconButton(document.createElement("button"), "close", "关闭");
 			close.type = "button";
-			close.textContent = "关闭";
 			open.addEventListener("click", () => {
 				panel.showModal();
 				render();
@@ -10402,14 +16008,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			const sync = document.createElement("button");
 			sync.type = "button";
 			sync.textContent = "同步 / 继续";
-			const reset = document.createElement("button");
+			const reset = iconButton(document.createElement("button"), "trash", "清空足迹缓存");
 			reset.type = "button";
-			reset.textContent = "清空缓存";
+			reset.dataset.danger = "";
 			const status = document.createElement("span");
 			status.setAttribute("role", "status");
 			const list = document.createElement("div");
-			list.className = "nspp-footprints-list";
-			close.prepend(toolIcon("close"));
+			list.className = "nspp-footprints-list nspp-sheet-body";
 			sync.prepend(toolIcon("refresh"));
 			const header = document.createElement("header");
 			header.append(summary, close);
@@ -10438,7 +16043,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						title.append(badge);
 						badges.push(badge);
 					}
-					const href = footprintHref(post, floor, pageConfig()?.commentPerPage);
+					const href = footprintHref(post, floor, commentsPerPage());
 					if (badge.getAttribute("href") !== href) badge.setAttribute("href", href);
 					const text = `已回复 #${floor}`;
 					if (badge.textContent !== text) badge.textContent = text;
@@ -10451,6 +16056,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				const post = Number(link.dataset.post);
 				const label = link.querySelector(".nspp-footprint-title");
 				label.textContent = "正在加载帖子标题…";
+				label.classList.add("nspp-sweep-shine");
 				link.setAttribute("aria-busy", "true");
 				try {
 					const html = await ctx.request(`/post-${post}-1`, {
@@ -10473,6 +16079,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				} catch {
 					if (!signal.aborted && !ctx.signal.aborted) label.textContent = `标题暂不可用 · 帖子 ${post}`;
 				} finally {
+					label.classList.remove("nspp-sweep-shine");
 					link.removeAttribute("aria-busy");
 				}
 			};
@@ -10521,7 +16128,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				}
 				latest.forEach((floor, post) => {
 					const a = document.createElement("a");
-					a.href = footprintHref(post, floor, pageConfig()?.commentPerPage);
+					a.href = footprintHref(post, floor, commentsPerPage());
 					a.dataset.post = String(post);
 					const title = titles.get(post);
 					const label = document.createElement("span");
@@ -10583,7 +16190,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					busy = false;
 					sync.disabled = reset.disabled = false;
 					sync.removeAttribute("aria-busy");
-					sync.textContent = "同步 / 继续";
+					sync.replaceChildren(toolIcon("refresh"), "同步 / 继续");
 				}
 			}, { signal: ctx.signal });
 			reset.addEventListener("click", () => {
@@ -10647,7 +16254,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					button.dataset.nsppResolve = "";
 					button.addEventListener("click", async () => {
 						button.disabled = true;
-						button.textContent = "解析中…";
+						button.replaceChildren(sweepShine("解析中…"));
 						button.setAttribute("aria-busy", "true");
 						try {
 							const target = new URL(await resolveLink(a.href, ctx.signal));
@@ -10677,6 +16284,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			};
 		}
 	}];
+	var unreadChannel = (uid) => `nspp:unread:${location.host}:${uid}`;
 	var serviceFeatures = [
 		{
 			id: "notification-categories",
@@ -10686,7 +16294,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			defaults: { enabled: true },
 			mount(ctx) {
 				const initialize = () => {
-					const uid = unsafeWindow$1.__config__?.user?.member_id;
+					const user = unsafeWindow$1.__config__?.user;
+					const uid = user?.member_id;
 					if (!uid) return;
 					const cacheKey = `counts:${uid}`;
 					const originals = new Map();
@@ -10698,8 +16307,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					rows.forEach((row) => {
 						row.className = "nspp-notification-row";
 					});
+					const ownStat = () => Array.from(document.querySelectorAll(".user-stat")).find((stat) => stat.querySelector("a[href^=\"/notification\"]"));
 					const place = () => {
-						const card = document.querySelector(".user-card .user-stat, .user-stat");
+						const card = ownStat();
 						const columns = card?.querySelectorAll(".stat-block");
 						if (columns && columns.length >= 2) rows.forEach((row, index) => {
 							const target = columns[index === 1 ? 1 : 0];
@@ -10753,7 +16363,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							const shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
 							shape.setAttribute("d", key === "reply" ? "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" : key === "atMe" ? "M16 8v6a2 2 0 0 0 4 0v-2a8 8 0 1 0-3 6.25M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0" : "M3 5h18v14H3zM3 5l9 7 9-7");
 							icon.append(shape);
-							const template = document.querySelector(".user-stat a[href^=\"/notification\"]:not(.nspp-notification-link)");
+							const template = ownStat()?.querySelector("a[href^=\"/notification\"]:not(.nspp-notification-link)");
 							const native = template?.cloneNode(true);
 							if (native && native.children.length >= 3 && native.querySelector("svg")) {
 								native.removeAttribute("id");
@@ -10814,44 +16424,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							else rows[index].prepend(link);
 						});
 					};
-					const run = async () => {
-						if (pending || ctx.signal.aborted || Date.now() - lastAttempt < 5e3) return;
+					const update = (counts, announce) => {
+						const previous = ctx.get(cacheKey);
+						render(counts);
+						ctx.set(cacheKey, counts);
+						if (!announce || !previous || ctx.signal.aborted) return;
+						for (const [key, label, title, path] of [
+							[
+								"reply",
+								"评论/回复",
+								"收到了评论/回复",
+								"reply"
+							],
+							[
+								"atMe",
+								"@提醒",
+								"有人 @你",
+								"atMe"
+							],
+							[
+								"message",
+								"私信",
+								"收到了私信",
+								"message?mode=list"
+							]
+						]) {
+							const before = previous[key];
+							const count = counts[key];
+							if (!Number.isFinite(before) || before < 0 || !Number.isFinite(count) || count <= before) continue;
+							const message = `收到 ${count - before} 条新${label}，当前有 ${count} 条${label}未读`;
+							if (!systemNotify(message, `${location.origin}/notification#/${path}`, `nspp:${location.hostname}:${uid}:${key}`, title)) ctx.notify(message);
+						}
+					};
+					const run = async (fresh = false) => {
+						if (pending || ctx.signal.aborted || Date.now() - lastAttempt < (fresh ? 1e3 : 5e3)) return;
 						lastAttempt = Date.now();
 						pending = true;
 						try {
-							await withTabLock(`unread:${uid}`, 6e4, async () => {
+							await withTabLock(`unread:${uid}`, fresh ? 2e3 : 6e4, async () => {
 								const result = await ctx.request("/api/notification/unread-count");
 								if (!result.success || !result.unreadCount) throw new Error("Invalid response");
-								const previous = ctx.get(cacheKey);
-								render(result.unreadCount);
-								ctx.set(cacheKey, result.unreadCount);
+								update(result.unreadCount, true);
 								failed = false;
-								if (previous && !ctx.signal.aborted) for (const [key, label, title, path] of [
-									[
-										"reply",
-										"评论/回复",
-										"收到了评论/回复",
-										"reply"
-									],
-									[
-										"atMe",
-										"@提醒",
-										"有人 @你",
-										"atMe"
-									],
-									[
-										"message",
-										"私信",
-										"收到了私信",
-										"message?mode=list"
-									]
-								]) {
-									const before = previous[key];
-									const count = result.unreadCount[key];
-									if (!Number.isFinite(before) || before < 0 || !Number.isFinite(count) || count <= before) continue;
-									const message = `收到 ${count - before} 条新${label}，当前有 ${count} 条${label}未读`;
-									if (!systemNotify(message, `${location.origin}/notification#/${path}`, `nspp:${location.hostname}:${uid}:${key}`, title)) ctx.notify(message);
-								}
 							});
 							render(ctx.get(cacheKey));
 						} catch {
@@ -10866,12 +16480,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						atMe: 0,
 						message: 0
 					});
+					const seeded = user?.unViewedCount;
 					try {
-						render(ctx.get(cacheKey));
+						if (seeded && [
+							"reply",
+							"atMe",
+							"message"
+						].every((key) => Number.isFinite(seeded[key]))) update(seeded, true);
+						else render(ctx.get(cacheKey));
 					} catch {}
+					const channel = typeof BroadcastChannel === "function" ? new BroadcastChannel(unreadChannel(uid)) : void 0;
+					channel?.addEventListener("message", (event) => {
+						try {
+							if (event.data?.counts) update(event.data.counts, false);
+						} catch {}
+					});
 					const stopPlacement = ctx.watch(place);
 					document.addEventListener("visibilitychange", () => {
-						if (!document.hidden) run();
+						if (!document.hidden) run(true);
+					}, { signal: ctx.signal });
+					window.addEventListener("pageshow", (event) => {
+						if (event.persisted) run(true);
 					}, { signal: ctx.signal });
 					run();
 					const timer = setInterval(() => {
@@ -10879,6 +16508,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					}, 6e4);
 					return () => {
 						clearInterval(timer);
+						channel?.close();
 						stopPlacement();
 						rows.forEach((row) => row.remove());
 						originals.forEach((hidden, el) => {
@@ -10887,17 +16517,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						});
 					};
 				};
-				let cleanup;
-				const start = () => {
-					if (!cleanup && !ctx.signal.aborted) cleanup = initialize();
-				};
-				const stop = ctx.watch(start);
-				const readyTimer = setInterval(start, 1e3);
-				return () => {
-					stop();
-					clearInterval(readyTimer);
-					cleanup?.();
-				};
+				return whenReady(ctx, initialize);
 			}
 		},
 		{
@@ -10950,8 +16570,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				launch.setAttribute("aria-label", launch.title);
 				launch.dataset.nsppAiLauncher = "";
 				(document.getElementById("nspp-tools") || document.body).append(launch);
-				const compose = document.createElement("dialog");
-				compose.className = "nspp-ai-dialog";
+				const compose = createSheet("nspp-ai-dialog", "AI 写作助手", { dismissible: false });
 				document.body.append(compose);
 				const open = () => {
 					compose.replaceChildren();
@@ -11029,7 +16648,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							return;
 						}
 						test.disabled = true;
-						test.textContent = "连接测试中…";
+						test.replaceChildren(sweepShine("连接测试中…"));
 						test.setAttribute("aria-busy", "true");
 						try {
 							if (!(await ctx.request(url.href, {
@@ -11082,7 +16701,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							return;
 						}
 						button.disabled = true;
-						button.textContent = "生成中…";
+						button.replaceChildren(sweepShine("生成中…"));
 						button.setAttribute("aria-busy", "true");
 						try {
 							const result = (await ctx.request(url.href, {
@@ -11106,8 +16725,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							if (!result) throw new Error("Empty response");
 							if (ctx.signal.aborted) return;
 							dialog?.remove();
-							dialog = document.createElement("dialog");
-							dialog.className = "nspp-ai-dialog";
+							dialog = createSheet("nspp-ai-dialog", "AI 结果预览", { dismissible: false });
 							const heading = document.createElement("h2");
 							heading.textContent = "AI 结果预览";
 							const preview = document.createElement("textarea");
@@ -11183,6 +16801,55 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			}
 		}
 	];
+	function confirmDialog(title, description, confirmLabel, signal, options = {}) {
+		if (signal.aborted) return Promise.resolve(false);
+		return new Promise((resolve) => {
+			const dialog = document.createElement("dialog");
+			dialog.className = "nspp-sheet nspp-confirm-dialog";
+			dialog.setAttribute("aria-label", title);
+			const heading = document.createElement("h2");
+			heading.textContent = title;
+			const body = document.createElement("p");
+			body.textContent = description;
+			const actions = document.createElement("form");
+			actions.method = "dialog";
+			const cancel = document.createElement("button");
+			cancel.type = "submit";
+			cancel.value = "cancel";
+			cancel.textContent = options.cancelLabel || "取消";
+			cancel.autofocus = true;
+			const confirm = document.createElement(options.href ? "a" : "button");
+			if (confirm instanceof HTMLAnchorElement) {
+				confirm.href = options.href;
+				confirm.target = "_blank";
+				confirm.rel = "noopener noreferrer";
+				confirm.className = "nspp-confirm-primary";
+				confirm.addEventListener("click", () => dialog.close("confirm"));
+			} else {
+				confirm.type = "submit";
+				confirm.value = "confirm";
+				confirm.className = "nspp-confirm-danger";
+			}
+			confirm.textContent = confirmLabel;
+			actions.append(cancel, confirm);
+			dialog.append(heading, body, actions);
+			const abort = () => {
+				dialog.close("cancel");
+			};
+			dialog.addEventListener("close", () => {
+				signal.removeEventListener("abort", abort);
+				dialog.remove();
+				resolve(!signal.aborted && dialog.returnValue === "confirm");
+			}, { once: true });
+			dialog.addEventListener("click", (event) => {
+				const rect = dialog.getBoundingClientRect();
+				if (event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.close("cancel");
+			});
+			document.body.append(dialog);
+			dialog.showModal();
+			signal.addEventListener("abort", abort, { once: true });
+		});
+	}
 	function parseBlocklist(value) {
 		const result = value;
 		if (result?.success !== true || !Array.isArray(result.data)) throw new Error("黑名单查询失败");
@@ -11208,12 +16875,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			const pending = new Set();
 			function render() {
 				buttons.forEach(({ id, name, button }) => {
-					button.disabled = !!fetching || pending.has(id);
-					const label = button.disabled ? "…" : !loaded ? "重试" : blocked.has(id) ? "取消屏蔽" : "屏蔽";
+					const disabled = !!fetching || pending.has(id);
+					const label = disabled ? "…" : !loaded ? "重试" : blocked.has(id) ? "取消屏蔽" : "屏蔽";
+					const title = disabled ? "查询中" : !loaded ? "重试查询黑名单" : `${blocked.has(id) ? "解除屏蔽" : "屏蔽"} ${name}`;
+					const state = `${label}|${title}|${loaded && blocked.has(id)}`;
+					if (button.dataset.state === state && button.disabled === disabled) return;
+					button.dataset.state = state;
+					button.disabled = disabled;
 					if (button.textContent !== label) button.replaceChildren(siteIcon("forbid"), document.createTextNode(label));
-					button.title = button.disabled ? "查询中" : !loaded ? "重试查询黑名单" : `${blocked.has(id) ? "解除屏蔽" : "屏蔽"} ${name}`;
-					button.setAttribute("aria-label", button.title);
-					if (button.disabled) button.setAttribute("aria-busy", "true");
+					button.title = title;
+					button.setAttribute("aria-label", title);
+					if (disabled) button.setAttribute("aria-busy", "true");
 					else button.removeAttribute("aria-busy");
 					button.dataset.blocked = String(loaded && blocked.has(id));
 				});
@@ -11242,12 +16914,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					item.release();
 					buttons.delete(anchor);
 				}
-				document.querySelectorAll(userHoverSelector).forEach((anchor) => {
+				const anchors = Array.from(document.querySelectorAll(userHoverSelector)).filter((anchor) => !anchor.closest(".nspp-user-hover, .nspp-profile-dialog"));
+				let names;
+				const nameOf = (id) => {
+					if (!names) {
+						names = new Map();
+						for (const candidate of anchors) {
+							const text = candidate.textContent?.trim();
+							if (!text) continue;
+							const candidateId = authorId(candidate, location.origin);
+							if (candidateId && !names.has(candidateId)) names.set(candidateId, text);
+						}
+					}
+					return names.get(id);
+				};
+				anchors.forEach((anchor) => {
 					if (!isUserHoverAnchor(anchor)) return;
-					if (anchor.closest(".nspp-user-hover, .nspp-profile-dialog")) return;
 					const id = authorId(anchor, location.origin);
-					const name = anchor.textContent?.trim() || Array.from(document.querySelectorAll("a:is(.info-author,.post-author), :is(.author-info,.info-author,.post-author,.info-last-commenter) > a[href*=\"/space/\"], .nspp-messages-bubble a[href*=\"/space/\"], a[href*=\"/space/\"]:has(img), a[data-uid]")).find((candidate) => !candidate.closest(".nspp-user-hover, .nspp-profile-dialog") && authorId(candidate, location.origin) === id && candidate.textContent?.trim())?.textContent?.trim() || anchor.querySelector("img")?.alt.trim();
-					if (!id || id === String(ownId) || !name || buttons.has(anchor)) return;
+					if (!id || id === String(ownId) || buttons.get(anchor)?.id === id) return;
+					const name = anchor.textContent?.trim() || nameOf(id) || anchor.querySelector("img")?.alt.trim();
+					if (!name) return;
+					const previous = buttons.get(anchor);
+					if (previous) {
+						previous.button.remove();
+						previous.release();
+						buttons.delete(anchor);
+					}
 					const button = document.createElement("button");
 					button.type = "button";
 					button.className = "nspp-block-toggle";
@@ -16254,2479 +21946,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			};
 		}
 	};
-	var import_viewer = __toESM(__commonJSMin(((exports, module) => {
-		(function(global, factory) {
-			typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, global.Viewer = factory());
-		})(exports, (function() {
-			"use strict";
-			function _classCallCheck(a, n) {
-				if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
-			}
-			function _defineProperties(e, r) {
-				for (var t = 0; t < r.length; t++) {
-					var o = r[t];
-					o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
-				}
-			}
-			function _createClass(e, r, t) {
-				return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e;
-			}
-			function _defineProperty(e, r, t) {
-				return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
-					value: t,
-					enumerable: !0,
-					configurable: !0,
-					writable: !0
-				}) : e[r] = t, e;
-			}
-			function ownKeys(e, r) {
-				var t = Object.keys(e);
-				if (Object.getOwnPropertySymbols) {
-					var o = Object.getOwnPropertySymbols(e);
-					r && (o = o.filter(function(r) {
-						return Object.getOwnPropertyDescriptor(e, r).enumerable;
-					})), t.push.apply(t, o);
-				}
-				return t;
-			}
-			function _objectSpread2(e) {
-				for (var r = 1; r < arguments.length; r++) {
-					var t = null != arguments[r] ? arguments[r] : {};
-					r % 2 ? ownKeys(Object(t), !0).forEach(function(r) {
-						_defineProperty(e, r, t[r]);
-					}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r) {
-						Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
-					});
-				}
-				return e;
-			}
-			function _toPrimitive(t, r) {
-				if ("object" != typeof t || !t) return t;
-				var e = t[Symbol.toPrimitive];
-				if (void 0 !== e) {
-					var i = e.call(t, r || "default");
-					if ("object" != typeof i) return i;
-					throw new TypeError("@@toPrimitive must return a primitive value.");
-				}
-				return ("string" === r ? String : Number)(t);
-			}
-			function _toPropertyKey(t) {
-				var i = _toPrimitive(t, "string");
-				return "symbol" == typeof i ? i : i + "";
-			}
-			function _typeof(o) {
-				"@babel/helpers - typeof";
-				return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
-					return typeof o;
-				} : function(o) {
-					return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-				}, _typeof(o);
-			}
-			var DEFAULTS = {
-				backdrop: true,
-				button: true,
-				navbar: true,
-				navigation: false,
-				title: true,
-				toolbar: true,
-				className: "",
-				container: "body",
-				filter: null,
-				fullscreen: true,
-				inheritedAttributes: [
-					"crossOrigin",
-					"decoding",
-					"isMap",
-					"loading",
-					"referrerPolicy",
-					"sizes",
-					"srcset",
-					"useMap"
-				],
-				initialCoverage: .9,
-				initialViewIndex: 0,
-				inline: false,
-				autoplay: true,
-				interval: 5e3,
-				keyboard: true,
-				focus: true,
-				loading: true,
-				loop: true,
-				preload: true,
-				minWidth: 200,
-				minHeight: 100,
-				movable: true,
-				magnifier: false,
-				rotatable: true,
-				rotateOnGesture: true,
-				rotateOnTouch: true,
-				scalable: true,
-				zoomable: true,
-				zoomOnTouch: true,
-				zoomOnGesture: true,
-				zoomOnWheel: true,
-				slideOnTouch: true,
-				slideOnWheel: true,
-				toggleOnDblclick: true,
-				tooltip: true,
-				transition: true,
-				zIndex: 2015,
-				zIndexInline: 0,
-				zoomRatio: .1,
-				minZoomRatio: .01,
-				maxZoomRatio: 100,
-				url: "src",
-				ready: null,
-				show: null,
-				shown: null,
-				hide: null,
-				hidden: null,
-				view: null,
-				viewed: null,
-				move: null,
-				moved: null,
-				rotate: null,
-				rotated: null,
-				scale: null,
-				scaled: null,
-				zoom: null,
-				zoomed: null,
-				play: null,
-				playing: null,
-				stop: null
-			};
-			var TEMPLATE = "<div class=\"viewer-container\" tabindex=\"-1\" touch-action=\"none\"><div class=\"viewer-canvas\"></div><div class=\"viewer-magnifier\" aria-hidden=\"true\"><img class=\"viewer-magnifier-image\" alt=\"\"></div><div class=\"viewer-navigation\" aria-hidden=\"true\"><div class=\"viewer-prev\" data-viewer-action=\"prev\" role=\"button\" aria-label=\"Previous\"></div><div class=\"viewer-next\" data-viewer-action=\"next\" role=\"button\" aria-label=\"Next\"></div></div><div class=\"viewer-footer\" aria-hidden=\"true\"><div class=\"viewer-title\" aria-hidden=\"true\"></div><div class=\"viewer-toolbar\" aria-hidden=\"true\"></div><div class=\"viewer-navbar\" aria-hidden=\"true\"><ul class=\"viewer-list\" role=\"navigation\"></ul></div></div><div class=\"viewer-tooltip\" role=\"alert\" aria-hidden=\"true\"></div><div class=\"viewer-button\" data-viewer-action=\"mix\" role=\"button\" aria-hidden=\"true\"></div><div class=\"viewer-player\" aria-hidden=\"true\"></div></div>";
-			var IS_BROWSER = typeof window !== "undefined" && typeof window.document !== "undefined";
-			var WINDOW = IS_BROWSER ? window : {};
-			var IS_TOUCH_DEVICE = IS_BROWSER && WINDOW.document.documentElement ? "ontouchstart" in WINDOW.document.documentElement : false;
-			var HAS_POINTER_EVENT = IS_BROWSER ? "PointerEvent" in WINDOW : false;
-			var NAMESPACE = "viewer";
-			var ACTION_MOVE = "move";
-			var ACTION_ROTATE = "rotate";
-			var ACTION_SWITCH = "switch";
-			var ACTION_TRANSFORM = "transform";
-			var ACTION_ZOOM = "zoom";
-			var CLASS_ACTIVE = "".concat(NAMESPACE, "-active");
-			var CLASS_CLOSE = "".concat(NAMESPACE, "-close");
-			var CLASS_FADE = "".concat(NAMESPACE, "-fade");
-			var CLASS_FIXED = "".concat(NAMESPACE, "-fixed");
-			var CLASS_FULLSCREEN = "".concat(NAMESPACE, "-fullscreen");
-			var CLASS_FULLSCREEN_EXIT = "".concat(NAMESPACE, "-fullscreen-exit");
-			var CLASS_HIDE = "".concat(NAMESPACE, "-hide");
-			var CLASS_HIDE_MD_DOWN = "".concat(NAMESPACE, "-hide-md-down");
-			var CLASS_HIDE_SM_DOWN = "".concat(NAMESPACE, "-hide-sm-down");
-			var CLASS_HIDE_XS_DOWN = "".concat(NAMESPACE, "-hide-xs-down");
-			var CLASS_IN = "".concat(NAMESPACE, "-in");
-			var CLASS_INVISIBLE = "".concat(NAMESPACE, "-invisible");
-			var CLASS_LOADING = "".concat(NAMESPACE, "-loading");
-			var CLASS_MOVE = "".concat(NAMESPACE, "-move");
-			var CLASS_OPEN = "".concat(NAMESPACE, "-open");
-			var CLASS_SHOW = "".concat(NAMESPACE, "-show");
-			var CLASS_TRANSITION = "".concat(NAMESPACE, "-transition");
-			var EVENT_CLICK = "click";
-			var EVENT_DBLCLICK = "dblclick";
-			var EVENT_DRAG_START = "dragstart";
-			var EVENT_FOCUSIN = "focusin";
-			var EVENT_KEY_DOWN = "keydown";
-			var EVENT_LOAD = "load";
-			var EVENT_ERROR = "error";
-			var EVENT_TOUCH_END = IS_TOUCH_DEVICE ? "touchend touchcancel" : "mouseup";
-			var EVENT_TOUCH_MOVE = IS_TOUCH_DEVICE ? "touchmove" : "mousemove";
-			var EVENT_POINTER_DOWN = HAS_POINTER_EVENT ? "pointerdown" : IS_TOUCH_DEVICE ? "touchstart" : "mousedown";
-			var EVENT_POINTER_ENTER = HAS_POINTER_EVENT ? "pointerenter" : "mouseenter";
-			var EVENT_POINTER_LEAVE = HAS_POINTER_EVENT ? "pointerleave" : "mouseleave";
-			var EVENT_POINTER_MOVE = HAS_POINTER_EVENT ? "pointermove" : EVENT_TOUCH_MOVE;
-			var EVENT_POINTER_UP = HAS_POINTER_EVENT ? "pointerup pointercancel" : EVENT_TOUCH_END;
-			var EVENT_RESIZE = "resize";
-			var EVENT_TRANSITION_END = "transitionend";
-			var EVENT_WHEEL = "wheel";
-			var EVENT_GESTURE = "gesturestart gesturechange gestureend";
-			var EVENT_READY = "ready";
-			var EVENT_SHOW = "show";
-			var EVENT_SHOWN = "shown";
-			var EVENT_HIDE = "hide";
-			var EVENT_HIDDEN = "hidden";
-			var EVENT_VIEW = "view";
-			var EVENT_VIEWED = "viewed";
-			var EVENT_MOVE = "move";
-			var EVENT_MOVED = "moved";
-			var EVENT_ROTATE = "rotate";
-			var EVENT_ROTATED = "rotated";
-			var EVENT_SCALE = "scale";
-			var EVENT_SCALED = "scaled";
-			var EVENT_ZOOM = "zoom";
-			var EVENT_ZOOMED = "zoomed";
-			var EVENT_PLAY = "play";
-			var EVENT_PLAYING = "playing";
-			var EVENT_STOP = "stop";
-			var DATA_ACTION = "".concat(NAMESPACE, "Action");
-			var REGEXP_SPACES = /\s+/;
-			var BUTTONS = [
-				"zoom-in",
-				"zoom-out",
-				"one-to-one",
-				"reset",
-				"prev",
-				"play",
-				"next",
-				"rotate-left",
-				"rotate-right",
-				"flip-horizontal",
-				"flip-vertical"
-			];
-			function isString(value) {
-				return typeof value === "string";
-			}
-			var MODIFIER_KEY_PROPERTIES = {
-				ctrl: "ctrlKey",
-				shift: "shiftKey",
-				alt: "altKey",
-				meta: "metaKey"
-			};
-			function isWheelActionEnabled(option, event) {
-				if (!option) return false;
-				if (option === true) return true;
-				return isString(option) && option.split("+").every(function(key) {
-					return event[MODIFIER_KEY_PROPERTIES[key.trim().toLowerCase()]];
-				});
-			}
-			var isNaN = Number.isNaN || WINDOW.isNaN;
-			function isNumber(value) {
-				return typeof value === "number" && !isNaN(value);
-			}
-			function isUndefined(value) {
-				return typeof value === "undefined";
-			}
-			function isObject(value) {
-				return _typeof(value) === "object" && value !== null;
-			}
-			var hasOwnProperty = Object.prototype.hasOwnProperty;
-			function isPlainObject(value) {
-				if (!isObject(value)) return false;
-				try {
-					var constructor = value.constructor;
-					var prototype = constructor.prototype;
-					return constructor && prototype && hasOwnProperty.call(prototype, "isPrototypeOf");
-				} catch (error) {
-					return false;
-				}
-			}
-			function isFunction(value) {
-				return typeof value === "function";
-			}
-			function forEach(data, callback) {
-				if (data && isFunction(callback)) {
-					if (Array.isArray(data) || isNumber(data.length)) {
-						var length = data.length;
-						var i = 0;
-						for (; i < length; i += 1) if (callback.call(data, data[i], i, data) === false) break;
-					} else if (isObject(data)) Object.keys(data).forEach(function(key) {
-						callback.call(data, data[key], key, data);
-					});
-				}
-				return data;
-			}
-			function inheritAttributes(image, originalImage, inheritedAttributes) {
-				forEach(inheritedAttributes, function(name) {
-					var value = originalImage.getAttribute(name);
-					if (value !== null) image.setAttribute(name, value);
-				});
-			}
-			function isTransitionEnabled(options, action) {
-				var transition = options.transition;
-				return transition && transition[action] !== false;
-			}
-			var assign = Object.assign || function assign(obj) {
-				for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) args[_key - 1] = arguments[_key];
-				if (isObject(obj) && args.length > 0) args.forEach(function(arg) {
-					if (isObject(arg)) Object.keys(arg).forEach(function(key) {
-						obj[key] = arg[key];
-					});
-				});
-				return obj;
-			};
-			var REGEXP_SUFFIX = /^(?:width|height|left|top|marginLeft|marginTop)$/;
-			function setStyle(element, styles) {
-				var style = element.style;
-				forEach(styles, function(value, property) {
-					if (REGEXP_SUFFIX.test(property) && isNumber(value)) value += "px";
-					style[property] = value;
-				});
-			}
-			function escapeHTMLEntities(value) {
-				return isString(value) ? value.replace(/&(?!amp;|quot;|#39;|lt;|gt;)/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : value;
-			}
-			function hasClass(element, value) {
-				if (!element || !value) return false;
-				return element.classList ? element.classList.contains(value) : element.className.split(REGEXP_SPACES).indexOf(value) > -1;
-			}
-			function addClass(element, value) {
-				if (!element || !value) return;
-				if (isNumber(element.length)) {
-					forEach(element, function(elem) {
-						addClass(elem, value);
-					});
-					return;
-				}
-				if (element.classList) {
-					element.classList.add(value);
-					return;
-				}
-				var className = element.className.trim();
-				if (!className) element.className = value;
-				else if (className.indexOf(value) < 0) element.className = "".concat(className, " ").concat(value);
-			}
-			function removeClass(element, value) {
-				if (!element || !value) return;
-				if (isNumber(element.length)) {
-					forEach(element, function(elem) {
-						removeClass(elem, value);
-					});
-					return;
-				}
-				if (element.classList) {
-					element.classList.remove(value);
-					return;
-				}
-				var className = element.className;
-				if (className && className.indexOf(value) >= 0) element.className = className.split(REGEXP_SPACES).filter(function(item) {
-					return item && item !== value;
-				}).join(" ");
-			}
-			function toggleClass(element, value, added) {
-				if (!value) return;
-				if (isNumber(element.length)) {
-					forEach(element, function(elem) {
-						toggleClass(elem, value, added);
-					});
-					return;
-				}
-				if (added) addClass(element, value);
-				else removeClass(element, value);
-			}
-			var REGEXP_HYPHENATE = /([a-z\d])([A-Z])/g;
-			function hyphenate(value) {
-				return value.replace(REGEXP_HYPHENATE, "$1-$2").toLowerCase();
-			}
-			function getData(element, name) {
-				if (isObject(element[name])) return element[name];
-				if (element.dataset) return element.dataset[name];
-				return element.getAttribute("data-".concat(hyphenate(name)));
-			}
-			function setData(element, name, data) {
-				if (isObject(data)) element[name] = data;
-				else if (element.dataset) element.dataset[name] = data;
-				else element.setAttribute("data-".concat(hyphenate(name)), data);
-			}
-			var onceSupported = function() {
-				var supported = false;
-				if (IS_BROWSER) {
-					var once = false;
-					var listener = function listener() {};
-					var options = Object.defineProperty({}, "once", {
-						get: function get() {
-							supported = true;
-							return once;
-						},
-						set: function set(value) {
-							once = value;
-						}
-					});
-					WINDOW.addEventListener("test", listener, options);
-					WINDOW.removeEventListener("test", listener, options);
-				}
-				return supported;
-			}();
-			function removeListener(element, type, listener) {
-				var options = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
-				var handler = listener;
-				type.trim().split(REGEXP_SPACES).forEach(function(event) {
-					if (!onceSupported) {
-						var listeners = element.listeners;
-						if (listeners && listeners[event] && listeners[event][listener]) {
-							handler = listeners[event][listener];
-							delete listeners[event][listener];
-							if (Object.keys(listeners[event]).length === 0) delete listeners[event];
-							if (Object.keys(listeners).length === 0) delete element.listeners;
-						}
-					}
-					element.removeEventListener(event, handler, options);
-				});
-			}
-			function addListener(element, type, listener) {
-				var options = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
-				var _handler = listener;
-				type.trim().split(REGEXP_SPACES).forEach(function(event) {
-					if (options.once && !onceSupported) {
-						var _element$listeners = element.listeners, listeners = _element$listeners === void 0 ? {} : _element$listeners;
-						_handler = function handler() {
-							delete listeners[event][listener];
-							element.removeEventListener(event, _handler, options);
-							for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) args[_key2] = arguments[_key2];
-							listener.apply(element, args);
-						};
-						if (!listeners[event]) listeners[event] = {};
-						if (listeners[event][listener]) element.removeEventListener(event, listeners[event][listener], options);
-						listeners[event][listener] = _handler;
-						element.listeners = listeners;
-					}
-					element.addEventListener(event, _handler, options);
-				});
-			}
-			function dispatchEvent(element, type, data, options) {
-				var event;
-				if (isFunction(Event) && isFunction(CustomEvent)) event = new CustomEvent(type, _objectSpread2({
-					bubbles: true,
-					cancelable: true,
-					detail: data
-				}, options));
-				else {
-					event = document.createEvent("CustomEvent");
-					event.initCustomEvent(type, true, true, data);
-				}
-				return element.dispatchEvent(event);
-			}
-			function getOffset(element) {
-				var box = element.getBoundingClientRect();
-				return {
-					left: box.left + (window.pageXOffset - document.documentElement.clientLeft),
-					top: box.top + (window.pageYOffset - document.documentElement.clientTop)
-				};
-			}
-			function getTransforms(_ref) {
-				var rotate = _ref.rotate, scaleX = _ref.scaleX, scaleY = _ref.scaleY, translateX = _ref.translateX, translateY = _ref.translateY;
-				var values = [];
-				if (isNumber(translateX) && translateX !== 0) values.push("translateX(".concat(translateX, "px)"));
-				if (isNumber(translateY) && translateY !== 0) values.push("translateY(".concat(translateY, "px)"));
-				if (isNumber(rotate) && rotate !== 0) values.push("rotate(".concat(rotate, "deg)"));
-				if (isNumber(scaleX) && isNumber(scaleY) && (scaleX !== 1 || scaleY !== 1)) {
-					values.push("scaleX(".concat(scaleX, ")"));
-					values.push("scaleY(".concat(scaleY, ")"));
-				}
-				var transform = values.length ? values.join(" ") : "none";
-				return {
-					WebkitTransform: transform,
-					msTransform: transform,
-					transform
-				};
-			}
-			function getImageNameFromURL(url) {
-				return isString(url) ? decodeURIComponent(url.replace(/^.*\//, "").replace(/[?&#].*$/, "")) : "";
-			}
-			var IS_SAFARI = WINDOW.navigator && /Version\/\d+(\.\d+)+?\s+Safari/i.test(WINDOW.navigator.userAgent);
-			function getImageNaturalSizes(image, options, callback) {
-				var newImage = document.createElement("img");
-				if (image.naturalWidth && !IS_SAFARI) {
-					callback(image.naturalWidth, image.naturalHeight);
-					return newImage;
-				}
-				var body = document.body || document.documentElement;
-				newImage.onload = function() {
-					callback(newImage.width, newImage.height);
-					if (!IS_SAFARI) body.removeChild(newImage);
-				};
-				inheritAttributes(newImage, image, options.inheritedAttributes);
-				newImage.src = image.src;
-				if (!IS_SAFARI) {
-					newImage.style.cssText = "left:0;max-height:none!important;max-width:none!important;min-height:0!important;min-width:0!important;opacity:0;position:absolute;top:0;z-index:-1;";
-					body.appendChild(newImage);
-				}
-				return newImage;
-			}
-			function getResponsiveClass(type) {
-				switch (type) {
-					case 2: return CLASS_HIDE_XS_DOWN;
-					case 3: return CLASS_HIDE_SM_DOWN;
-					case 4: return CLASS_HIDE_MD_DOWN;
-					default: return "";
-				}
-			}
-			function getMaxZoomRatio(pointers) {
-				var pointers2 = _objectSpread2({}, pointers);
-				var ratios = [];
-				forEach(pointers, function(pointer, pointerId) {
-					delete pointers2[pointerId];
-					forEach(pointers2, function(pointer2) {
-						var x1 = Math.abs(pointer.startX - pointer2.startX);
-						var y1 = Math.abs(pointer.startY - pointer2.startY);
-						var x2 = Math.abs(pointer.endX - pointer2.endX);
-						var y2 = Math.abs(pointer.endY - pointer2.endY);
-						var z1 = Math.sqrt(x1 * x1 + y1 * y1);
-						var ratio = (Math.sqrt(x2 * x2 + y2 * y2) - z1) / z1;
-						ratios.push(ratio);
-					});
-				});
-				ratios.sort(function(a, b) {
-					return Math.abs(a) < Math.abs(b);
-				});
-				return ratios[0];
-			}
-			function getMaxRotateDegree(pointers) {
-				var pointers2 = _objectSpread2({}, pointers);
-				var degrees = [];
-				forEach(pointers, function(pointer, pointerId) {
-					delete pointers2[pointerId];
-					forEach(pointers2, function(pointer2) {
-						var start = Math.atan2(pointer2.startY - pointer.startY, pointer2.startX - pointer.startX);
-						var radians = Math.atan2(pointer2.endY - pointer.endY, pointer2.endX - pointer.endX) - start;
-						if (radians > Math.PI) radians -= Math.PI * 2;
-						else if (radians < -Math.PI) radians += Math.PI * 2;
-						degrees.push(radians * 180 / Math.PI);
-					});
-				});
-				degrees.sort(function(a, b) {
-					return Math.abs(b) - Math.abs(a);
-				});
-				return degrees[0] || 0;
-			}
-			function getPointer(_ref2, endOnly) {
-				var pageX = _ref2.pageX, pageY = _ref2.pageY;
-				var end = {
-					endX: pageX,
-					endY: pageY
-				};
-				return endOnly ? end : _objectSpread2({
-					timeStamp: Date.now(),
-					startX: pageX,
-					startY: pageY
-				}, end);
-			}
-			function getPointersCenter(pointers) {
-				var pageX = 0;
-				var pageY = 0;
-				var count = 0;
-				forEach(pointers, function(_ref3) {
-					var startX = _ref3.startX, startY = _ref3.startY;
-					pageX += startX;
-					pageY += startY;
-					count += 1;
-				});
-				pageX /= count;
-				pageY /= count;
-				return {
-					pageX,
-					pageY
-				};
-			}
-			var render = {
-				render: function render() {
-					this.initContainer();
-					this.initViewer();
-					this.initList();
-					this.renderViewer();
-				},
-				initBody: function initBody() {
-					var ownerDocument = this.ownerDocument;
-					var body = ownerDocument.body || ownerDocument.documentElement;
-					this.body = body;
-					this.scrollbarWidth = window.innerWidth - ownerDocument.documentElement.clientWidth;
-					this.initialBodyPaddingRight = body.style.paddingRight;
-					this.initialBodyComputedPaddingRight = window.getComputedStyle(body).paddingRight;
-				},
-				initContainer: function initContainer() {
-					this.containerData = {
-						width: window.innerWidth,
-						height: window.innerHeight
-					};
-				},
-				initViewer: function initViewer() {
-					var options = this.options, parent = this.parent;
-					var viewerData;
-					if (options.inline) {
-						viewerData = {
-							width: Math.max(parent.offsetWidth, options.minWidth),
-							height: Math.max(parent.offsetHeight, options.minHeight)
-						};
-						this.parentData = viewerData;
-					}
-					if (this.fulled || !viewerData) viewerData = this.containerData;
-					this.viewerData = assign({}, viewerData);
-				},
-				renderViewer: function renderViewer() {
-					if (this.options.inline && !this.fulled) setStyle(this.viewer, this.viewerData);
-				},
-				initList: function initList() {
-					var _this = this;
-					var viewIndex = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : this.index;
-					var element = this.element, options = this.options, list = this.list;
-					var items = [];
-					var navbarOptions = isPlainObject(options.navbar) ? options.navbar : {};
-					var probe = document.createElement("li");
-					if (!this.containerData) this.initContainer();
-					list.appendChild(probe);
-					var itemWidth = probe.offsetWidth + parseInt(window.getComputedStyle(probe).marginLeft, 10);
-					list.removeChild(probe);
-					var visibleItemCount = isNumber(navbarOptions.visibleItemCount) ? Math.floor(navbarOptions.visibleItemCount) : Math.floor(this.containerData.width / itemWidth);
-					visibleItemCount = Math.min(visibleItemCount, this.length);
-					var start = visibleItemCount > 0 ? Math.min(Math.max(0, viewIndex - Math.floor(visibleItemCount / 2)), Math.max(0, this.length - visibleItemCount)) : 0;
-					var end = visibleItemCount > 0 ? Math.min(this.length, start + visibleItemCount) : this.length;
-					list.innerHTML = "";
-					forEach(this.images, function(image, index) {
-						if (visibleItemCount > 0 && (index < start || index >= end)) return;
-						var src = image.src;
-						var alt = image.alt || getImageNameFromURL(src);
-						var url = _this.getImageURL(image);
-						if (src || url) {
-							var item = document.createElement("li");
-							var img = document.createElement("img");
-							inheritAttributes(img, image, options.inheritedAttributes);
-							if (options.navbar) img.src = src || url;
-							img.alt = alt;
-							img.setAttribute("data-original-url", url || src);
-							item.setAttribute("data-index", index);
-							item.setAttribute("data-viewer-action", "view");
-							item.setAttribute("role", "button");
-							if (options.keyboard) item.setAttribute("tabindex", 0);
-							item.appendChild(img);
-							list.appendChild(item);
-							items.push(item);
-						}
-					});
-					this.items = items;
-					if (this.viewed) {
-						var activeItem = this.getItem(this.index);
-						if (activeItem) {
-							addClass(activeItem, CLASS_ACTIVE);
-							activeItem.setAttribute("aria-selected", true);
-						}
-					}
-					forEach(items, function(item) {
-						var image = item.firstElementChild;
-						var onLoad;
-						var onError;
-						setData(image, "filled", true);
-						if (options.loading) addClass(item, CLASS_LOADING);
-						addListener(image, EVENT_LOAD, onLoad = function onLoad(event) {
-							removeListener(image, EVENT_ERROR, onError);
-							if (options.loading) removeClass(item, CLASS_LOADING);
-							_this.loadImage(event);
-						}, { once: true });
-						addListener(image, EVENT_ERROR, onError = function onError() {
-							removeListener(image, EVENT_LOAD, onLoad);
-							if (options.loading) removeClass(item, CLASS_LOADING);
-						}, { once: true });
-					});
-					if (isTransitionEnabled(options, "view")) addListener(element, EVENT_VIEWED, function() {
-						addClass(list, CLASS_TRANSITION);
-					}, { once: true });
-				},
-				getItem: function getItem(index) {
-					var item;
-					forEach(this.items, function(candidate) {
-						if (Number(getData(candidate, "index")) === index) {
-							item = candidate;
-							return false;
-						}
-						return true;
-					});
-					return item;
-				},
-				renderList: function renderList() {
-					var index = this.index;
-					var item = this.getItem(index);
-					if (!item) return;
-					var next = item.nextElementSibling;
-					var gutter = parseInt(window.getComputedStyle(next || item).marginLeft, 10);
-					var offsetWidth = item.offsetWidth;
-					var outerWidth = offsetWidth + gutter;
-					setStyle(this.list, assign({ width: outerWidth * this.items.length - gutter }, getTransforms({ translateX: (this.viewerData.width - offsetWidth) / 2 - item.offsetLeft })));
-				},
-				resetList: function resetList() {
-					var list = this.list;
-					list.innerHTML = "";
-					removeClass(list, CLASS_TRANSITION);
-					setStyle(list, assign({ width: 0 }, getTransforms({ translateX: 0 })));
-				},
-				initImage: function initImage(done) {
-					var _this2 = this;
-					var options = this.options, image = this.image, viewerData = this.viewerData;
-					var footerHeight = this.footer.offsetHeight;
-					var viewerWidth = viewerData.width;
-					var viewerHeight = Math.max(viewerData.height - footerHeight, footerHeight);
-					var oldImageData = this.imageData || {};
-					var sizingImage;
-					this.imageInitializing = { abort: function abort() {
-						sizingImage.onload = null;
-					} };
-					sizingImage = getImageNaturalSizes(image, options, function(naturalWidth, naturalHeight) {
-						var aspectRatio = naturalWidth / naturalHeight;
-						var initialCoverage = Math.max(0, Math.min(1, options.initialCoverage));
-						var width = viewerWidth;
-						var height = viewerHeight;
-						_this2.imageInitializing = false;
-						if (viewerHeight * aspectRatio > viewerWidth) height = viewerWidth / aspectRatio;
-						else width = viewerHeight * aspectRatio;
-						initialCoverage = isNumber(initialCoverage) ? initialCoverage : .9;
-						width = Math.min(width * initialCoverage, naturalWidth);
-						height = Math.min(height * initialCoverage, naturalHeight);
-						var left = (viewerWidth - width) / 2;
-						var top = (viewerHeight - height) / 2;
-						var imageData = {
-							left,
-							top,
-							x: left,
-							y: top,
-							width,
-							height,
-							oldRatio: 1,
-							ratio: width / naturalWidth,
-							aspectRatio,
-							naturalWidth,
-							naturalHeight
-						};
-						var initialImageData = assign({}, imageData);
-						if (options.rotatable) {
-							imageData.rotate = oldImageData.rotate || 0;
-							initialImageData.rotate = 0;
-						}
-						if (options.scalable) {
-							imageData.scaleX = oldImageData.scaleX || 1;
-							imageData.scaleY = oldImageData.scaleY || 1;
-							initialImageData.scaleX = 1;
-							initialImageData.scaleY = 1;
-						}
-						_this2.imageData = imageData;
-						_this2.initialImageData = initialImageData;
-						if (done) done();
-					});
-				},
-				renderImage: function renderImage(done) {
-					var _this3 = this;
-					var image = this.image, imageData = this.imageData;
-					setStyle(image, assign({
-						width: imageData.width,
-						height: imageData.height,
-						marginLeft: imageData.x,
-						marginTop: imageData.y
-					}, getTransforms(imageData)));
-					if (this.magnifierPoint) this.renderMagnifier();
-					if (done) {
-						var action = false;
-						if (this.viewing) action = "view";
-						else if (this.moving) action = "move";
-						else if (this.rotating) action = "rotate";
-						else if (this.scaling) action = "scale";
-						else if (this.zooming) action = "zoom";
-						if (action && isTransitionEnabled(this.options, action) && hasClass(image, CLASS_TRANSITION)) {
-							var onTransitionEnd = function onTransitionEnd() {
-								_this3.imageRendering = false;
-								done();
-							};
-							this.imageRendering = { abort: function abort() {
-								removeListener(image, EVENT_TRANSITION_END, onTransitionEnd);
-							} };
-							addListener(image, EVENT_TRANSITION_END, onTransitionEnd, { once: true });
-						} else done();
-					}
-				},
-				resetImage: function resetImage() {
-					var image = this.image;
-					if (image) {
-						if (this.viewing) this.viewing.abort();
-						image.parentNode.removeChild(image);
-						this.image = null;
-						this.title.innerHTML = "";
-					}
-				}
-			};
-			var events = {
-				bind: function bind() {
-					var options = this.options, viewer = this.viewer, canvas = this.canvas;
-					var document = this.ownerDocument;
-					addListener(viewer, EVENT_CLICK, this.onClick = this.click.bind(this));
-					addListener(viewer, EVENT_DRAG_START, this.onDragStart = this.dragstart.bind(this));
-					addListener(viewer, EVENT_POINTER_ENTER, this.onMagnifyEnter = this.magnify.bind(this));
-					addListener(viewer, EVENT_POINTER_MOVE, this.onMagnify = this.magnify.bind(this));
-					addListener(viewer, EVENT_POINTER_LEAVE, this.onMagnifierLeave = this.hideMagnifier.bind(this));
-					addListener(canvas, EVENT_POINTER_DOWN, this.onPointerDown = this.pointerdown.bind(this));
-					addListener(document, EVENT_POINTER_MOVE, this.onPointerMove = this.pointermove.bind(this));
-					addListener(document, EVENT_POINTER_UP, this.onPointerUp = this.pointerup.bind(this));
-					addListener(document, EVENT_KEY_DOWN, this.onKeyDown = this.keydown.bind(this));
-					addListener(window, EVENT_RESIZE, this.onResize = this.resize.bind(this));
-					if (options.zoomable && options.zoomOnWheel || options.slideOnWheel) addListener(viewer, EVENT_WHEEL, this.onWheel = this.wheel.bind(this), {
-						passive: false,
-						capture: true
-					});
-					if (options.zoomable && options.zoomOnGesture || options.rotatable && options.rotateOnGesture) addListener(viewer, EVENT_GESTURE, this.onGesture = this.gesture.bind(this), { passive: false });
-					if (options.toggleOnDblclick) addListener(canvas, EVENT_DBLCLICK, this.onDblclick = this.dblclick.bind(this));
-				},
-				unbind: function unbind() {
-					var options = this.options, viewer = this.viewer, canvas = this.canvas;
-					var document = this.ownerDocument;
-					removeListener(viewer, EVENT_CLICK, this.onClick);
-					removeListener(viewer, EVENT_DRAG_START, this.onDragStart);
-					removeListener(viewer, EVENT_POINTER_ENTER, this.onMagnifyEnter);
-					removeListener(viewer, EVENT_POINTER_MOVE, this.onMagnify);
-					removeListener(viewer, EVENT_POINTER_LEAVE, this.onMagnifierLeave);
-					removeListener(canvas, EVENT_POINTER_DOWN, this.onPointerDown);
-					removeListener(document, EVENT_POINTER_MOVE, this.onPointerMove);
-					removeListener(document, EVENT_POINTER_UP, this.onPointerUp);
-					removeListener(document, EVENT_KEY_DOWN, this.onKeyDown);
-					removeListener(window, EVENT_RESIZE, this.onResize);
-					if (options.zoomable && options.zoomOnWheel || options.slideOnWheel) removeListener(viewer, EVENT_WHEEL, this.onWheel, {
-						passive: false,
-						capture: true
-					});
-					if (options.zoomable && options.zoomOnGesture || options.rotatable && options.rotateOnGesture) removeListener(viewer, EVENT_GESTURE, this.onGesture, { passive: false });
-					if (options.toggleOnDblclick) removeListener(canvas, EVENT_DBLCLICK, this.onDblclick);
-				}
-			};
-			var handlers = {
-				click: function click(event) {
-					var options = this.options, imageData = this.imageData;
-					var target = event.target;
-					var action = getData(target, DATA_ACTION);
-					if (!action && target.localName === "img" && target.parentElement.localName === "li") {
-						target = target.parentElement;
-						action = getData(target, DATA_ACTION);
-					}
-					if (IS_TOUCH_DEVICE && event.isTrusted && target === this.canvas) clearTimeout(this.clickCanvasTimeout);
-					this.actionEvent = event;
-					switch (action) {
-						case "mix":
-							if (this.played) this.stop();
-							else if (options.inline) {
-								if (this.fulled) this.exit();
-								else this.full();
-							} else this.hide();
-							break;
-						case "hide":
-							if (!this.pointerMoved) this.hide();
-							break;
-						case "view":
-							this.view(getData(target, "index"));
-							break;
-						case "zoom-in":
-							this.zoom(.1, true);
-							break;
-						case "zoom-out":
-							this.zoom(-.1, true);
-							break;
-						case "one-to-one":
-							this.toggle();
-							break;
-						case "reset":
-							this.reset();
-							break;
-						case "prev":
-							this.prev(options.loop);
-							break;
-						case "play":
-							this.play(options.fullscreen);
-							break;
-						case "next":
-							this.next(options.loop);
-							break;
-						case "rotate-left":
-							this.rotate(-90);
-							break;
-						case "rotate-right":
-							this.rotate(90);
-							break;
-						case "flip-horizontal":
-							this.scaleX(-imageData.scaleX || -1);
-							break;
-						case "flip-vertical":
-							this.scaleY(-imageData.scaleY || -1);
-							break;
-						default: if (this.played) this.stop();
-					}
-				},
-				dblclick: function dblclick(event) {
-					event.preventDefault();
-					if (this.viewed && event.target === this.image) {
-						if (IS_TOUCH_DEVICE && event.isTrusted) clearTimeout(this.doubleClickImageTimeout);
-						this.actionEvent = event.isTrusted ? event : event.detail && event.detail.originalEvent;
-						this.toggle();
-					}
-				},
-				load: function load() {
-					var _this = this;
-					if (this.timeout) {
-						clearTimeout(this.timeout);
-						this.timeout = false;
-					}
-					var element = this.element, options = this.options, image = this.image, index = this.index, viewerData = this.viewerData;
-					removeClass(image, CLASS_INVISIBLE);
-					if (options.loading) removeClass(this.canvas, CLASS_LOADING);
-					image.style.cssText = "height:0;" + "margin-left:".concat(viewerData.width / 2, "px;") + "margin-top:".concat(viewerData.height / 2, "px;") + "max-width:none!important;position:relative;width:0;";
-					this.initImage(function() {
-						toggleClass(image, CLASS_MOVE, options.movable);
-						toggleClass(image, CLASS_TRANSITION, isTransitionEnabled(options, "view"));
-						_this.renderImage(function() {
-							_this.viewed = true;
-							_this.viewing = false;
-							setTimeout(function() {
-								toggleClass(image, CLASS_TRANSITION, options.transition);
-							}, 300);
-							if (isFunction(options.viewed)) addListener(element, EVENT_VIEWED, options.viewed, { once: true });
-							dispatchEvent(element, EVENT_VIEWED, {
-								originalImage: _this.images[index],
-								index,
-								image,
-								originalEvent: _this.viewOriginalEvent || null
-							}, { cancelable: false });
-							_this.viewOriginalEvent = null;
-						});
-					});
-				},
-				loadImage: function loadImage(event) {
-					var image = event.target;
-					var parent = image.parentNode;
-					var parentWidth = parent.offsetWidth || 30;
-					var parentHeight = parent.offsetHeight || 50;
-					var filled = !!getData(image, "filled");
-					getImageNaturalSizes(image, this.options, function(naturalWidth, naturalHeight) {
-						var aspectRatio = naturalWidth / naturalHeight;
-						var width = parentWidth;
-						var height = parentHeight;
-						if (parentHeight * aspectRatio > parentWidth) {
-							if (filled) width = parentHeight * aspectRatio;
-							else height = parentWidth / aspectRatio;
-						} else if (filled) height = parentWidth / aspectRatio;
-						else width = parentHeight * aspectRatio;
-						setStyle(image, assign({
-							width,
-							height
-						}, getTransforms({
-							translateX: (parentWidth - width) / 2,
-							translateY: (parentHeight - height) / 2
-						})));
-					});
-				},
-				keydown: function keydown(event) {
-					var options = this.options;
-					if (!options.keyboard) return;
-					var keyCode = event.keyCode || event.which || event.charCode;
-					this.actionEvent = event;
-					switch (keyCode) {
-						case 13: if (this.viewer.contains(event.target)) this.click(event);
-					}
-					if (!this.fulled) return;
-					switch (keyCode) {
-						case 27:
-							if (this.played) this.stop();
-							else if (options.inline) {
-								if (this.fulled) this.exit();
-							} else this.hide();
-							break;
-						case 32:
-							if (this.played) this.stop();
-							break;
-						case 37:
-							if (this.played && this.playing) this.playing.prev();
-							else this.prev(options.loop);
-							break;
-						case 38:
-							event.preventDefault();
-							this.zoom(options.zoomRatio, true);
-							break;
-						case 39:
-							if (this.played && this.playing) this.playing.next();
-							else this.next(options.loop);
-							break;
-						case 40:
-							event.preventDefault();
-							this.zoom(-options.zoomRatio, true);
-							break;
-						case 48:
-						case 49: if (event.ctrlKey) {
-							event.preventDefault();
-							this.toggle();
-						}
-					}
-				},
-				dragstart: function dragstart(event) {
-					if (event.target.localName === "img") event.preventDefault();
-				},
-				magnify: function magnify(event) {
-					if (event.changedTouches || event.pointerType && event.pointerType !== "mouse") {
-						this.hideMagnifier();
-						return;
-					}
-					this.magnifierPoint = {
-						clientX: event.clientX,
-						clientY: event.clientY
-					};
-					this.renderMagnifier();
-				},
-				renderMagnifier: function renderMagnifier() {
-					var options = this.options, imageData = this.imageData, magnifier = this.magnifier, magnifierImage = this.magnifierImage, viewer = this.viewer;
-					var config = isPlainObject(options.magnifier) ? options.magnifier : {};
-					var point = this.magnifierPoint;
-					if (!options.magnifier || !this.fulled || !this.viewed || !magnifier || !magnifierImage || !point) {
-						this.hideMagnifier();
-						return;
-					}
-					var size = Math.max(1, Number(config.size) || 100);
-					var zoomRatio = Math.max(1, Number(config.zoomRatio) || 2);
-					var opacity = Number(config.opacity);
-					var rect = viewer.getBoundingClientRect();
-					var x = point.clientX - rect.left;
-					var y = point.clientY - rect.top;
-					var imageURL = this.image.currentSrc || this.image.src;
-					var imageRect = this.image.getBoundingClientRect();
-					if (point.clientX < imageRect.left || point.clientX > imageRect.right || point.clientY < imageRect.top || point.clientY > imageRect.bottom) {
-						this.hideMagnifier();
-						return;
-					}
-					var scaleX = isNumber(imageData.scaleX) ? imageData.scaleX : 1;
-					var scaleY = isNumber(imageData.scaleY) ? imageData.scaleY : 1;
-					var rotate = (imageData.rotate || 0) * Math.PI / 180;
-					var cos = Math.cos(rotate);
-					var sin = Math.sin(rotate);
-					var matrixA = cos * scaleX;
-					var matrixB = sin * scaleX;
-					var matrixC = -sin * scaleY;
-					var matrixD = cos * scaleY;
-					var determinant = scaleX * scaleY;
-					if (determinant === 0) {
-						this.hideMagnifier();
-						return;
-					}
-					var centerX = imageData.x + imageData.width / 2;
-					var centerY = imageData.y + imageData.height / 2;
-					var localX = (matrixD * (x - centerX) - matrixC * (y - centerY)) / determinant;
-					var localY = (-matrixB * (x - centerX) + matrixA * (y - centerY)) / determinant;
-					var sourceX = localX + imageData.width / 2;
-					var sourceY = localY + imageData.height / 2;
-					var magnifiedWidth = imageData.width * zoomRatio;
-					var magnifiedHeight = imageData.height * zoomRatio;
-					var transformedX = matrixA * (sourceX * zoomRatio - magnifiedWidth / 2) + matrixC * (sourceY * zoomRatio - magnifiedHeight / 2);
-					var transformedY = matrixB * (sourceX * zoomRatio - magnifiedWidth / 2) + matrixD * (sourceY * zoomRatio - magnifiedHeight / 2);
-					this.magnifierSourcePoint = {
-						x: sourceX,
-						y: sourceY
-					};
-					magnifier.style.width = "".concat(size, "px");
-					magnifier.style.height = "".concat(size, "px");
-					magnifier.style.opacity = "".concat(Math.max(0, Math.min(1, isNumber(opacity) ? opacity : 1)));
-					magnifierImage.src = imageURL;
-					magnifierImage.style.width = "".concat(magnifiedWidth, "px");
-					magnifierImage.style.height = "".concat(magnifiedHeight, "px");
-					magnifierImage.style.left = "".concat(size / 2 - magnifiedWidth / 2 - transformedX, "px");
-					magnifierImage.style.top = "".concat(size / 2 - magnifiedHeight / 2 - transformedY, "px");
-					magnifierImage.style.transform = "rotate(".concat(imageData.rotate || 0, "deg) scaleX(").concat(scaleX, ") scaleY(").concat(scaleY, ")");
-					magnifier.removeAttribute("aria-hidden");
-					addClass(magnifier, "viewer-show");
-				},
-				hideMagnifier: function hideMagnifier() {
-					if (this.magnifier) {
-						removeClass(this.magnifier, "viewer-show");
-						this.magnifier.setAttribute("aria-hidden", true);
-						this.magnifierPoint = null;
-					}
-				},
-				pointerdown: function pointerdown(event) {
-					var options = this.options, pointers = this.pointers;
-					var buttons = event.buttons, button = event.button;
-					this.pointerMoved = false;
-					if (!this.viewed || this.showing || this.viewing || this.hiding || (event.type === "mousedown" || event.type === "pointerdown" && event.pointerType === "mouse") && (isNumber(buttons) && buttons !== 1 || isNumber(button) && button !== 0 || event.ctrlKey)) return;
-					event.preventDefault();
-					if (event.changedTouches) forEach(event.changedTouches, function(touch) {
-						pointers[touch.identifier] = getPointer(touch);
-					});
-					else pointers[event.pointerId || 0] = getPointer(event);
-					var action = options.movable ? ACTION_MOVE : false;
-					if ((options.zoomable && options.zoomOnTouch || options.rotatable && options.rotateOnTouch) && Object.keys(pointers).length > 1) action = ACTION_TRANSFORM;
-					else if (options.slideOnTouch && (event.pointerType === "touch" || event.type === "touchstart") && this.isSwitchable()) action = ACTION_SWITCH;
-					if (action === ACTION_MOVE || action === ACTION_ZOOM || action === ACTION_ROTATE || action === ACTION_TRANSFORM) removeClass(this.image, CLASS_TRANSITION);
-					this.action = action;
-				},
-				pointermove: function pointermove(event) {
-					var pointers = this.pointers, action = this.action;
-					if (!this.viewed || !action) return;
-					event.preventDefault();
-					if (event.changedTouches) forEach(event.changedTouches, function(touch) {
-						assign(pointers[touch.identifier] || {}, getPointer(touch, true));
-					});
-					else assign(pointers[event.pointerId || 0] || {}, getPointer(event, true));
-					this.change(event);
-				},
-				pointerup: function pointerup(event) {
-					var _this2 = this;
-					var options = this.options, action = this.action, pointers = this.pointers;
-					var pointer;
-					if (event.changedTouches) forEach(event.changedTouches, function(touch) {
-						pointer = pointers[touch.identifier];
-						delete pointers[touch.identifier];
-					});
-					else {
-						pointer = pointers[event.pointerId || 0];
-						delete pointers[event.pointerId || 0];
-					}
-					if (!action) return;
-					event.preventDefault();
-					if (action === ACTION_MOVE || action === ACTION_ZOOM || action === ACTION_ROTATE || action === ACTION_TRANSFORM) {
-						var transition = action === ACTION_TRANSFORM ? isTransitionEnabled(options, ACTION_ZOOM) || isTransitionEnabled(options, ACTION_ROTATE) : isTransitionEnabled(options, action);
-						toggleClass(this.image, CLASS_TRANSITION, transition);
-					}
-					this.action = false;
-					if (IS_TOUCH_DEVICE && action !== ACTION_ZOOM && action !== ACTION_TRANSFORM && pointer && Date.now() - pointer.timeStamp < 500) {
-						clearTimeout(this.clickCanvasTimeout);
-						clearTimeout(this.doubleClickImageTimeout);
-						if (options.toggleOnDblclick && this.viewed && event.target === this.image) {
-							if (this.pointerMoved) this.imageClicked = false;
-							else if (this.imageClicked) {
-								this.imageClicked = false;
-								this.doubleClickImageTimeout = setTimeout(function() {
-									dispatchEvent(_this2.image, EVENT_DBLCLICK, { originalEvent: event });
-								}, 50);
-							} else {
-								this.imageClicked = true;
-								this.doubleClickImageTimeout = setTimeout(function() {
-									_this2.imageClicked = false;
-								}, 500);
-							}
-						} else {
-							this.imageClicked = false;
-							if (options.backdrop && options.backdrop !== "static" && event.target === this.canvas) this.clickCanvasTimeout = setTimeout(function() {
-								dispatchEvent(_this2.canvas, EVENT_CLICK, { originalEvent: event });
-							}, 50);
-						}
-					}
-				},
-				resize: function resize() {
-					var _this3 = this;
-					if (!this.isShown || this.hiding) return;
-					if (this.fulled) {
-						this.close();
-						this.initBody();
-						this.open();
-					}
-					this.initContainer();
-					this.initViewer();
-					this.renderViewer();
-					if (isUndefined((isPlainObject(this.options.navbar) ? this.options.navbar : {}).visibleItemCount)) this.initList(this.index);
-					this.renderList();
-					if (this.viewed) this.initImage(function() {
-						_this3.renderImage();
-					});
-					if (this.played) {
-						if (this.options.fullscreen && this.fulled && !(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
-							this.stop();
-							return;
-						}
-						forEach(this.player.getElementsByTagName("img"), function(image) {
-							addListener(image, EVENT_LOAD, _this3.loadImage.bind(_this3), { once: true });
-							dispatchEvent(image, EVENT_LOAD);
-						});
-					}
-				},
-				wheel: function wheel(event) {
-					var _this4 = this;
-					var options = this.options, navbar = this.navbar;
-					if (!this.viewed) return;
-					event.preventDefault();
-					if (this.gesturing) return;
-					if (this.wheeling) return;
-					this.wheeling = true;
-					setTimeout(function() {
-						_this4.wheeling = false;
-					}, 50);
-					var delta = 1;
-					if (event.deltaY) delta = event.deltaY > 0 ? 1 : -1;
-					else if (event.wheelDelta) delta = -event.wheelDelta / 120;
-					else if (event.detail) delta = event.detail > 0 ? 1 : -1;
-					if (!(navbar && navbar.contains(event.target)) && options.zoomable && isWheelActionEnabled(options.zoomOnWheel, event)) {
-						var ratio = Number(options.zoomRatio) || .1;
-						this.actionEvent = event;
-						this.zoom(-delta * ratio, true);
-						return;
-					}
-					if (isWheelActionEnabled(options.slideOnWheel, event)) {
-						this.actionEvent = event;
-						if (delta > 0) this.next(options.loop);
-						else if (delta < 0) this.prev(options.loop);
-					}
-				},
-				gesture: function gesture(event) {
-					var options = this.options;
-					if (!this.viewed || !options.zoomOnGesture && !options.rotateOnGesture) return;
-					event.preventDefault();
-					switch (event.type) {
-						case "gesturestart":
-							this.gesturing = true;
-							this.gestureScale = event.scale || 1;
-							this.gestureRotation = event.rotation || 0;
-							break;
-						case "gesturechange":
-							var scale = event.scale || 1;
-							var ratio = scale / (this.gestureScale || 1);
-							var rotation = Number(event.rotation);
-							var degree = rotation - (this.gestureRotation || 0);
-							this.gestureScale = scale;
-							if (options.zoomable && options.zoomOnGesture && ratio !== 1) {
-								this.actionEvent = event;
-								this.zoom(ratio >= 1 ? ratio - 1 : 1 - 1 / ratio);
-							}
-							if (options.rotatable && options.rotateOnGesture && isNumber(rotation)) {
-								this.gestureRotation = rotation;
-								if (degree !== 0) {
-									this.actionEvent = event;
-									this.rotate(degree);
-								}
-							}
-							break;
-						case "gestureend":
-							this.gesturing = false;
-							this.gestureScale = 1;
-							this.gestureRotation = 0;
-					}
-				}
-			};
-			var methods = {
-				show: function show() {
-					var immediate = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
-					var element = this.element, options = this.options;
-					if (options.inline || this.showing || this.isShown || this.showing) return this;
-					if (!this.ready) {
-						this.build();
-						if (this.ready) this.show(immediate);
-						return this;
-					}
-					var originalEvent = this.actionEvent || this.showOriginalEvent || this.viewOriginalEvent || null;
-					this.actionEvent = null;
-					this.showOriginalEvent = originalEvent;
-					if (isFunction(options.show)) addListener(element, EVENT_SHOW, options.show, { once: true });
-					if (dispatchEvent(element, EVENT_SHOW, { originalEvent }) === false || !this.ready) return this;
-					if (this.hiding) this.transitioning.abort();
-					this.showing = true;
-					this.open();
-					var viewer = this.viewer;
-					removeClass(viewer, CLASS_HIDE);
-					viewer.setAttribute("role", "dialog");
-					viewer.setAttribute("aria-labelledby", this.title.id);
-					viewer.setAttribute("aria-modal", true);
-					viewer.removeAttribute("aria-hidden");
-					if (isTransitionEnabled(options, "show") && !immediate) {
-						var shown = this.shown.bind(this);
-						this.transitioning = { abort: function abort() {
-							removeListener(viewer, EVENT_TRANSITION_END, shown);
-							removeClass(viewer, CLASS_IN);
-						} };
-						addClass(viewer, CLASS_TRANSITION);
-						viewer.initialOffsetWidth = viewer.offsetWidth;
-						addListener(viewer, EVENT_TRANSITION_END, shown, { once: true });
-						addClass(viewer, CLASS_IN);
-					} else {
-						addClass(viewer, CLASS_IN);
-						this.shown();
-					}
-					return this;
-				},
-				hide: function hide() {
-					var _this = this;
-					var immediate = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
-					var element = this.element, options = this.options;
-					if (options.inline || this.hiding || !(this.isShown || this.showing)) return this;
-					var originalEvent = this.actionEvent || this.hideOriginalEvent || null;
-					this.actionEvent = null;
-					this.hideOriginalEvent = originalEvent;
-					if (isFunction(options.hide)) addListener(element, EVENT_HIDE, options.hide, { once: true });
-					if (dispatchEvent(element, EVENT_HIDE, { originalEvent }) === false || this.destroyed) return this;
-					if (this.showing) this.transitioning.abort();
-					this.hiding = true;
-					if (this.played) this.stop();
-					else if (this.viewing) this.viewing.abort();
-					var viewer = this.viewer, image = this.image;
-					var hideImmediately = function hideImmediately() {
-						removeClass(viewer, CLASS_IN);
-						_this.hidden();
-					};
-					if (isTransitionEnabled(options, "hide") && !immediate) {
-						var _onViewerTransitionEnd = function onViewerTransitionEnd(event) {
-							if (event && event.target === viewer) {
-								removeListener(viewer, EVENT_TRANSITION_END, _onViewerTransitionEnd);
-								_this.hidden();
-							}
-						};
-						var onImageTransitionEnd = function onImageTransitionEnd() {
-							if (hasClass(viewer, CLASS_TRANSITION)) {
-								addListener(viewer, EVENT_TRANSITION_END, _onViewerTransitionEnd);
-								removeClass(viewer, CLASS_IN);
-							} else hideImmediately();
-						};
-						this.transitioning = { abort: function abort() {
-							if (_this.viewed && hasClass(image, CLASS_TRANSITION)) removeListener(image, EVENT_TRANSITION_END, onImageTransitionEnd);
-							else if (hasClass(viewer, CLASS_TRANSITION)) removeListener(viewer, EVENT_TRANSITION_END, _onViewerTransitionEnd);
-						} };
-						if (this.viewed && hasClass(image, CLASS_TRANSITION)) {
-							addListener(image, EVENT_TRANSITION_END, onImageTransitionEnd, { once: true });
-							this.zoomTo(0, false, null, true);
-						} else onImageTransitionEnd();
-					} else hideImmediately();
-					return this;
-				},
-				view: function view() {
-					var _this2 = this;
-					var index = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : this.options.initialViewIndex;
-					var previousIndex = this.index;
-					index = Number(index) || 0;
-					if (this.hiding || this.played || index < 0 || index >= this.length || this.viewed && index === previousIndex) return this;
-					var originalEvent = this.actionEvent || this.viewOriginalEvent || null;
-					this.actionEvent = null;
-					this.viewOriginalEvent = originalEvent;
-					if (!this.isShown) {
-						this.index = index;
-						return this.show();
-					}
-					if (this.viewing) this.viewing.abort();
-					var element = this.element, options = this.options, title = this.title, canvas = this.canvas;
-					var item = this.getItem(index);
-					if (!item) {
-						this.initList(index);
-						item = this.getItem(index);
-					}
-					var img = item.querySelector("img");
-					var url = getData(img, "originalUrl");
-					var alt = img.getAttribute("alt");
-					var image = document.createElement("img");
-					inheritAttributes(image, img, options.inheritedAttributes);
-					image.src = url;
-					image.alt = alt;
-					if (isFunction(options.view)) addListener(element, EVENT_VIEW, options.view, { once: true });
-					if (dispatchEvent(element, EVENT_VIEW, {
-						originalImage: this.images[index],
-						index,
-						image,
-						originalEvent
-					}) === false || !this.isShown || this.hiding || this.played) return this;
-					this.hideMagnifier();
-					var activeItem = this.getItem(previousIndex);
-					if (activeItem) {
-						removeClass(activeItem, CLASS_ACTIVE);
-						activeItem.removeAttribute("aria-selected");
-					}
-					addClass(item, CLASS_ACTIVE);
-					item.setAttribute("aria-selected", true);
-					if (options.focus) item.focus();
-					this.image = image;
-					this.viewed = false;
-					this.index = index;
-					this.imageData = {};
-					addClass(image, CLASS_INVISIBLE);
-					if (options.loading) addClass(canvas, CLASS_LOADING);
-					canvas.innerHTML = "";
-					canvas.appendChild(image);
-					this.renderList();
-					title.innerHTML = "";
-					var onViewed = function onViewed() {
-						var imageData = _this2.imageData;
-						var render = Array.isArray(options.title) ? options.title[1] : options.title;
-						title.innerHTML = escapeHTMLEntities(isFunction(render) ? render.call(_this2, image, imageData) : "".concat(alt, " (").concat(imageData.naturalWidth, " × ").concat(imageData.naturalHeight, ")"));
-						if (options.preload) {
-							var direction = index < previousIndex ? -1 : 1;
-							var nextIndex = index + direction;
-							if (nextIndex < 0 || nextIndex >= _this2.length) {
-								if (options.loop) nextIndex = direction > 0 ? 0 : _this2.length - 1;
-								else nextIndex = -1;
-							}
-							if (nextIndex !== index) {
-								var nextImage = _this2.images[nextIndex];
-								var preloadedImage = document.createElement("img");
-								inheritAttributes(preloadedImage, nextImage, options.inheritedAttributes);
-								preloadedImage.src = _this2.getImageURL(nextImage) || nextImage.src;
-							}
-						}
-					};
-					addListener(element, EVENT_VIEWED, onViewed, { once: true });
-					var _loadImage = function loadImage() {
-						var isFallback = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
-						var onLoad;
-						var onError;
-						var clean = function clean() {
-							removeListener(image, EVENT_LOAD, onLoad);
-							removeListener(image, EVENT_ERROR, onError);
-							if (_this2.timeout) {
-								clearTimeout(_this2.timeout);
-								_this2.timeout = false;
-							}
-						};
-						_this2.viewing = { abort: function abort() {
-							removeListener(element, EVENT_VIEWED, onViewed);
-							if (image.complete) {
-								if (_this2.imageRendering) _this2.imageRendering.abort();
-								else if (_this2.imageInitializing) _this2.imageInitializing.abort();
-							} else {
-								image.src = "";
-								clean();
-							}
-						} };
-						if (image.complete) _this2.load();
-						else {
-							addListener(image, EVENT_LOAD, onLoad = function onLoad() {
-								clean();
-								_this2.load();
-							}, { once: true });
-							addListener(image, EVENT_ERROR, onError = function onError() {
-								clean();
-								if (!isFallback) {
-									var fallbackSrc = img.src;
-									if (fallbackSrc && fallbackSrc !== image.src) {
-										image.src = fallbackSrc;
-										_loadImage(true);
-										return;
-									}
-								}
-								removeClass(image, CLASS_INVISIBLE);
-								if (options.loading) removeClass(_this2.canvas, CLASS_LOADING);
-							}, { once: true });
-							if (_this2.timeout) clearTimeout(_this2.timeout);
-							_this2.timeout = setTimeout(function() {
-								removeClass(image, CLASS_INVISIBLE);
-								_this2.timeout = false;
-							}, 1e3);
-						}
-					};
-					_loadImage();
-					return this;
-				},
-				prev: function prev() {
-					var loop = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
-					var index = this.index - 1;
-					if (index < 0) index = loop ? this.length - 1 : 0;
-					this.view(index);
-					return this;
-				},
-				next: function next() {
-					var loop = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
-					var maxIndex = this.length - 1;
-					var index = this.index + 1;
-					if (index > maxIndex) index = loop ? 0 : maxIndex;
-					this.view(index);
-					return this;
-				},
-				move: function move(x) {
-					var y = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : x;
-					var imageData = this.imageData;
-					this.moveTo(isUndefined(x) ? x : imageData.x + Number(x), isUndefined(y) ? y : imageData.y + Number(y));
-					return this;
-				},
-				moveTo: function moveTo(x) {
-					var _this3 = this;
-					var y = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : x;
-					var element = this.element, options = this.options, imageData = this.imageData;
-					x = Number(x);
-					y = Number(y);
-					if (this.viewed && !this.played && options.movable) {
-						var oldX = imageData.x;
-						var oldY = imageData.y;
-						var changed = false;
-						if (isNumber(x)) changed = true;
-						else x = oldX;
-						if (isNumber(y)) changed = true;
-						else y = oldY;
-						if (changed) {
-							var originalEvent = this.actionEvent || null;
-							this.actionEvent = null;
-							if (isFunction(options.move)) addListener(element, EVENT_MOVE, options.move, { once: true });
-							if (dispatchEvent(element, EVENT_MOVE, {
-								x,
-								y,
-								oldX,
-								oldY,
-								originalEvent
-							}) === false) return this;
-							imageData.x = x;
-							imageData.y = y;
-							imageData.left = x;
-							imageData.top = y;
-							toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "move"));
-							this.moving = true;
-							this.renderImage(function() {
-								_this3.moving = false;
-								if (isFunction(options.moved)) addListener(element, EVENT_MOVED, options.moved, { once: true });
-								dispatchEvent(element, EVENT_MOVED, {
-									x,
-									y,
-									oldX,
-									oldY,
-									originalEvent
-								}, { cancelable: false });
-							});
-						}
-					}
-					return this;
-				},
-				rotate: function rotate(degree) {
-					this.rotateTo((this.imageData.rotate || 0) + Number(degree));
-					return this;
-				},
-				rotateTo: function rotateTo(degree) {
-					var _this4 = this;
-					var element = this.element, options = this.options, imageData = this.imageData;
-					degree = Number(degree);
-					if (isNumber(degree) && this.viewed && !this.played && options.rotatable) {
-						var oldDegree = imageData.rotate;
-						var originalEvent = this.actionEvent || null;
-						this.actionEvent = null;
-						if (isFunction(options.rotate)) addListener(element, EVENT_ROTATE, options.rotate, { once: true });
-						if (dispatchEvent(element, EVENT_ROTATE, {
-							degree,
-							oldDegree,
-							originalEvent
-						}) === false) return this;
-						imageData.rotate = degree;
-						toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "rotate"));
-						this.rotating = true;
-						this.renderImage(function() {
-							_this4.rotating = false;
-							if (isFunction(options.rotated)) addListener(element, EVENT_ROTATED, options.rotated, { once: true });
-							dispatchEvent(element, EVENT_ROTATED, {
-								degree,
-								oldDegree,
-								originalEvent
-							}, { cancelable: false });
-						});
-					}
-					return this;
-				},
-				scaleX: function scaleX(_scaleX) {
-					this.scale(_scaleX, this.imageData.scaleY);
-					return this;
-				},
-				scaleY: function scaleY(_scaleY) {
-					this.scale(this.imageData.scaleX, _scaleY);
-					return this;
-				},
-				scale: function scale(scaleX) {
-					var _this5 = this;
-					var scaleY = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : scaleX;
-					var element = this.element, options = this.options, imageData = this.imageData;
-					scaleX = Number(scaleX);
-					scaleY = Number(scaleY);
-					if (this.viewed && !this.played && options.scalable) {
-						var oldScaleX = imageData.scaleX;
-						var oldScaleY = imageData.scaleY;
-						var changed = false;
-						if (isNumber(scaleX)) changed = true;
-						else scaleX = oldScaleX;
-						if (isNumber(scaleY)) changed = true;
-						else scaleY = oldScaleY;
-						if (changed) {
-							var originalEvent = this.actionEvent || null;
-							this.actionEvent = null;
-							if (isFunction(options.scale)) addListener(element, EVENT_SCALE, options.scale, { once: true });
-							if (dispatchEvent(element, EVENT_SCALE, {
-								scaleX,
-								scaleY,
-								oldScaleX,
-								oldScaleY,
-								originalEvent
-							}) === false) return this;
-							imageData.scaleX = scaleX;
-							imageData.scaleY = scaleY;
-							toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "scale"));
-							this.scaling = true;
-							this.renderImage(function() {
-								_this5.scaling = false;
-								if (isFunction(options.scaled)) addListener(element, EVENT_SCALED, options.scaled, { once: true });
-								dispatchEvent(element, EVENT_SCALED, {
-									scaleX,
-									scaleY,
-									oldScaleX,
-									oldScaleY,
-									originalEvent
-								}, { cancelable: false });
-							});
-						}
-					}
-					return this;
-				},
-				zoom: function zoom(ratio) {
-					var showTooltip = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : false;
-					var pivot = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
-					var imageData = this.imageData;
-					ratio = Number(ratio);
-					if (ratio < 0) ratio = 1 / (1 - ratio);
-					else ratio = 1 + ratio;
-					this.zoomTo(imageData.width * ratio / imageData.naturalWidth, showTooltip, pivot);
-					return this;
-				},
-				zoomTo: function zoomTo(ratio) {
-					var _this6 = this;
-					var showTooltip = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : false;
-					var pivot = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
-					var _zoomable = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : false;
-					var element = this.element, options = this.options, pointers = this.pointers, imageData = this.imageData;
-					var x = imageData.x, y = imageData.y, width = imageData.width, height = imageData.height, naturalWidth = imageData.naturalWidth, naturalHeight = imageData.naturalHeight;
-					ratio = Math.max(0, ratio);
-					if (isNumber(ratio) && this.viewed && !this.played && (_zoomable || options.zoomable)) {
-						if (!_zoomable) {
-							var minZoomRatio = Math.max(.01, isFunction(options.minZoomRatio) ? options.minZoomRatio.call(this, this.image, imageData) : options.minZoomRatio);
-							var maxZoomRatio = Math.min(100, isFunction(options.maxZoomRatio) ? options.maxZoomRatio.call(this, this.image, imageData) : options.maxZoomRatio);
-							ratio = Math.min(Math.max(ratio, minZoomRatio), maxZoomRatio);
-						}
-						var originalEvent = this.actionEvent || null;
-						this.actionEvent = null;
-						if (originalEvent && originalEvent.type !== EVENT_CLICK) switch (originalEvent.type) {
-							case "wheel":
-								if (options.zoomRatio >= .055 && ratio > .95 && ratio < 1.05) ratio = 1;
-								break;
-							case "pointermove":
-							case "touchmove":
-							case "mousemove": if (ratio > .99 && ratio < 1.01) ratio = 1;
-						}
-						var newWidth = naturalWidth * ratio;
-						var newHeight = naturalHeight * ratio;
-						var offsetWidth = newWidth - width;
-						var offsetHeight = newHeight - height;
-						var oldRatio = imageData.ratio;
-						if (isFunction(options.zoom)) addListener(element, EVENT_ZOOM, options.zoom, { once: true });
-						if (dispatchEvent(element, EVENT_ZOOM, {
-							ratio,
-							oldRatio,
-							originalEvent
-						}) === false) return this;
-						this.zooming = true;
-						if (originalEvent && originalEvent.type !== EVENT_CLICK) {
-							var offset = getOffset(this.viewer);
-							var center = pointers && Object.keys(pointers).length > 0 ? getPointersCenter(pointers) : {
-								pageX: originalEvent.pageX,
-								pageY: originalEvent.pageY
-							};
-							imageData.x -= offsetWidth * ((center.pageX - offset.left - x) / width);
-							imageData.y -= offsetHeight * ((center.pageY - offset.top - y) / height);
-						} else if (isPlainObject(pivot) && isNumber(pivot.x) && isNumber(pivot.y)) {
-							imageData.x -= offsetWidth * ((pivot.x - x) / width);
-							imageData.y -= offsetHeight * ((pivot.y - y) / height);
-						} else {
-							imageData.x -= offsetWidth / 2;
-							imageData.y -= offsetHeight / 2;
-						}
-						imageData.left = imageData.x;
-						imageData.top = imageData.y;
-						imageData.width = newWidth;
-						imageData.height = newHeight;
-						imageData.oldRatio = oldRatio;
-						imageData.ratio = ratio;
-						toggleClass(this.image, CLASS_TRANSITION, isTransitionEnabled(options, "zoom"));
-						this.renderImage(function() {
-							_this6.zooming = false;
-							if (isFunction(options.zoomed)) addListener(element, EVENT_ZOOMED, options.zoomed, { once: true });
-							dispatchEvent(element, EVENT_ZOOMED, {
-								ratio,
-								oldRatio,
-								originalEvent
-							}, { cancelable: false });
-						});
-						if (showTooltip) this.tooltip();
-					}
-					return this;
-				},
-				play: function play() {
-					var _this7 = this;
-					var fullscreen = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
-					if (!this.isShown || this.played) return this;
-					var element = this.element, options = this.options;
-					var originalEvent = this.actionEvent || null;
-					this.actionEvent = null;
-					if (isFunction(options.play)) addListener(element, EVENT_PLAY, options.play, { once: true });
-					if (dispatchEvent(element, EVENT_PLAY, { originalEvent }) === false) return this;
-					var player = this.player;
-					var onLoad = this.loadImage.bind(this);
-					var list = [];
-					var total = 0;
-					var index = 0;
-					this.played = true;
-					this.onLoadWhenPlay = onLoad;
-					if (fullscreen) this.requestFullscreen(fullscreen);
-					addClass(player, CLASS_SHOW);
-					player.removeAttribute("aria-hidden");
-					forEach(this.images, function(originalImage, i) {
-						var image = document.createElement("img");
-						image.src = _this7.getImageURL(originalImage) || originalImage.src;
-						image.alt = originalImage.alt || "";
-						image.referrerPolicy = originalImage.referrerPolicy;
-						total += 1;
-						addClass(image, CLASS_FADE);
-						toggleClass(image, CLASS_TRANSITION, isTransitionEnabled(options, "play"));
-						if (i === _this7.index) {
-							addClass(image, CLASS_IN);
-							index = i;
-						}
-						list.push(image);
-						addListener(image, EVENT_LOAD, onLoad, { once: true });
-						player.appendChild(image);
-					});
-					if (isNumber(options.interval) && options.interval > 0) {
-						var _prev = function prev() {
-							clearTimeout(_this7.playing.timeout);
-							var currentOriginalEvent = _this7.actionEvent || null;
-							_this7.actionEvent = null;
-							var prevIndex = index - 1;
-							prevIndex = prevIndex >= 0 ? prevIndex : total - 1;
-							if (isFunction(options.playing)) addListener(element, EVENT_PLAYING, options.playing, { once: true });
-							if (dispatchEvent(element, EVENT_PLAYING, {
-								originalImage: _this7.images[prevIndex],
-								index: prevIndex,
-								image: list[prevIndex],
-								originalEvent: currentOriginalEvent
-							}) === false) {
-								_this7.playing.timeout = options.autoplay ? setTimeout(_prev, options.interval) : null;
-								return;
-							}
-							removeClass(list[index], CLASS_IN);
-							index = prevIndex;
-							addClass(list[index], CLASS_IN);
-							_this7.playing.timeout = options.autoplay ? setTimeout(_prev, options.interval) : null;
-						};
-						var _next = function next() {
-							clearTimeout(_this7.playing.timeout);
-							var currentOriginalEvent = _this7.actionEvent || null;
-							_this7.actionEvent = null;
-							var nextIndex = index + 1;
-							nextIndex = nextIndex < total ? nextIndex : 0;
-							if (isFunction(options.playing)) addListener(element, EVENT_PLAYING, options.playing, { once: true });
-							if (dispatchEvent(element, EVENT_PLAYING, {
-								originalImage: _this7.images[nextIndex],
-								index: nextIndex,
-								image: list[nextIndex],
-								originalEvent: currentOriginalEvent
-							}) === false) {
-								_this7.playing.timeout = options.autoplay ? setTimeout(_next, options.interval) : null;
-								return;
-							}
-							removeClass(list[index], CLASS_IN);
-							index = nextIndex;
-							addClass(list[index], CLASS_IN);
-							_this7.playing.timeout = options.autoplay ? setTimeout(_next, options.interval) : null;
-						};
-						if (total > 1) this.playing = {
-							prev: _prev,
-							next: _next,
-							timeout: options.autoplay ? setTimeout(_next, options.interval) : null
-						};
-					}
-					return this;
-				},
-				stop: function stop() {
-					var _this8 = this;
-					if (!this.played) return this;
-					var element = this.element, options = this.options;
-					var originalEvent = this.actionEvent || null;
-					this.actionEvent = null;
-					if (isFunction(options.stop)) addListener(element, EVENT_STOP, options.stop, { once: true });
-					if (dispatchEvent(element, EVENT_STOP, { originalEvent }) === false) return this;
-					var player = this.player;
-					clearTimeout(this.playing.timeout);
-					this.playing = false;
-					this.played = false;
-					forEach(player.getElementsByTagName("img"), function(image) {
-						removeListener(image, EVENT_LOAD, _this8.onLoadWhenPlay);
-					});
-					removeClass(player, CLASS_SHOW);
-					player.setAttribute("aria-hidden", true);
-					player.innerHTML = "";
-					this.exitFullscreen();
-					return this;
-				},
-				full: function full() {
-					var _this9 = this;
-					var options = this.options, viewer = this.viewer, image = this.image, list = this.list;
-					if (!this.isShown || this.played || this.fulled || !options.inline) return this;
-					this.fulled = true;
-					this.open();
-					addClass(this.button, CLASS_FULLSCREEN_EXIT);
-					removeClass(list, CLASS_TRANSITION);
-					if (this.viewed) removeClass(image, CLASS_TRANSITION);
-					addClass(viewer, CLASS_FIXED);
-					viewer.setAttribute("role", "dialog");
-					viewer.setAttribute("aria-labelledby", this.title.id);
-					viewer.setAttribute("aria-modal", true);
-					viewer.removeAttribute("style");
-					setStyle(viewer, { zIndex: options.zIndex });
-					if (options.focus) this.enforceFocus();
-					this.initContainer();
-					this.viewerData = assign({}, this.containerData);
-					this.renderList();
-					if (this.viewed) this.initImage(function() {
-						_this9.renderImage();
-					});
-					return this;
-				},
-				exit: function exit() {
-					var _this0 = this;
-					var options = this.options, viewer = this.viewer, image = this.image, list = this.list;
-					if (!this.isShown || this.played || !this.fulled || !options.inline) return this;
-					this.fulled = false;
-					this.close();
-					removeClass(this.button, CLASS_FULLSCREEN_EXIT);
-					removeClass(list, CLASS_TRANSITION);
-					if (this.viewed) removeClass(image, CLASS_TRANSITION);
-					if (options.focus) this.clearEnforceFocus();
-					viewer.removeAttribute("role");
-					viewer.removeAttribute("aria-labelledby");
-					viewer.removeAttribute("aria-modal");
-					removeClass(viewer, CLASS_FIXED);
-					setStyle(viewer, { zIndex: options.zIndexInline });
-					this.viewerData = assign({}, this.parentData);
-					this.renderViewer();
-					this.renderList();
-					if (this.viewed) this.initImage(function() {
-						_this0.renderImage();
-					});
-					return this;
-				},
-				tooltip: function tooltip() {
-					var _this1 = this;
-					var options = this.options, tooltipBox = this.tooltipBox, imageData = this.imageData;
-					if (!this.viewed || this.played || !options.tooltip) return this;
-					tooltipBox.textContent = "".concat(Math.round(imageData.ratio * 100), "%");
-					if (!this.tooltipping) {
-						if (isTransitionEnabled(options, "tooltip")) {
-							if (this.fading) dispatchEvent(tooltipBox, EVENT_TRANSITION_END);
-							addClass(tooltipBox, CLASS_SHOW);
-							addClass(tooltipBox, CLASS_FADE);
-							addClass(tooltipBox, CLASS_TRANSITION);
-							tooltipBox.removeAttribute("aria-hidden");
-							tooltipBox.initialOffsetWidth = tooltipBox.offsetWidth;
-							addClass(tooltipBox, CLASS_IN);
-						} else {
-							addClass(tooltipBox, CLASS_SHOW);
-							tooltipBox.removeAttribute("aria-hidden");
-						}
-					} else clearTimeout(this.tooltipping);
-					this.tooltipping = setTimeout(function() {
-						if (isTransitionEnabled(options, "tooltip")) {
-							addListener(tooltipBox, EVENT_TRANSITION_END, function() {
-								removeClass(tooltipBox, CLASS_SHOW);
-								removeClass(tooltipBox, CLASS_FADE);
-								removeClass(tooltipBox, CLASS_TRANSITION);
-								tooltipBox.setAttribute("aria-hidden", true);
-								_this1.fading = false;
-							}, { once: true });
-							removeClass(tooltipBox, CLASS_IN);
-							_this1.fading = true;
-						} else {
-							removeClass(tooltipBox, CLASS_SHOW);
-							tooltipBox.setAttribute("aria-hidden", true);
-						}
-						_this1.tooltipping = false;
-					}, 1e3);
-					return this;
-				},
-				toggle: function toggle() {
-					if (this.imageData.ratio === 1) this.zoomTo(this.imageData.oldRatio, true);
-					else this.zoomTo(1, true);
-					return this;
-				},
-				reset: function reset() {
-					if (this.viewed && !this.played) {
-						this.imageData = assign({}, this.initialImageData);
-						this.renderImage();
-					}
-					return this;
-				},
-				update: function update(updateOptions) {
-					var _this10 = this;
-					var element = this.element, options = this.options, isImg = this.isImg;
-					if (isPlainObject(updateOptions)) assign(options, updateOptions);
-					if (isImg && !element.parentNode) return this.destroy();
-					var images = [];
-					forEach(isImg ? [element] : element.querySelectorAll("img"), function(image) {
-						if (isFunction(options.filter)) {
-							if (options.filter.call(_this10, image)) images.push(image);
-						} else if (_this10.getImageURL(image)) images.push(image);
-					});
-					if (!images.length) return this;
-					this.images = images;
-					this.length = images.length;
-					if (this.ready) {
-						var changedIndexes = [];
-						forEach(this.items, function(item) {
-							var img = item.querySelector("img");
-							var index = Number(getData(item, "index"));
-							var image = images[index];
-							if (image && img) {
-								if (image.src !== img.src || image.alt !== img.alt) changedIndexes.push(index);
-							} else changedIndexes.push(index);
-						});
-						setStyle(this.list, { width: "auto" });
-						this.initList();
-						if (this.isShown) {
-							if (this.length) {
-								if (this.viewed) {
-									var changedIndex = changedIndexes.indexOf(this.index);
-									if (changedIndex >= 0) {
-										this.viewed = false;
-										this.view(Math.max(Math.min(this.index - changedIndex, this.length - 1), 0));
-									} else {
-										var activeItem = this.getItem(this.index);
-										addClass(activeItem, CLASS_ACTIVE);
-										activeItem.setAttribute("aria-selected", true);
-									}
-								}
-							} else {
-								this.image = null;
-								this.viewed = false;
-								this.index = 0;
-								this.imageData = {};
-								this.canvas.innerHTML = "";
-								this.title.innerHTML = "";
-							}
-						}
-					} else this.build();
-					return this;
-				},
-				destroy: function destroy() {
-					var element = this.element, options = this.options;
-					if (!element[NAMESPACE]) return this;
-					this.destroyed = true;
-					if (this.ready) {
-						if (this.played) this.stop();
-						if (options.inline) {
-							if (this.fulled) this.exit();
-							this.unbind();
-						} else if (this.isShown) {
-							if (this.viewing) {
-								if (this.imageRendering) this.imageRendering.abort();
-								else if (this.imageInitializing) this.imageInitializing.abort();
-							}
-							if (this.hiding) this.transitioning.abort();
-							this.hidden();
-						} else if (this.showing) {
-							this.transitioning.abort();
-							this.hidden();
-						}
-						this.ready = false;
-						this.viewer.parentNode.removeChild(this.viewer);
-					} else if (options.inline) {
-						if (this.delaying) this.delaying.abort();
-						else if (this.initializing) this.initializing.abort();
-					}
-					if (!options.inline) {
-						removeListener(element, EVENT_CLICK, this.onElementClick);
-						removeListener(element, EVENT_KEY_DOWN, this.onElementKeyDown);
-					}
-					element[NAMESPACE] = void 0;
-					return this;
-				}
-			};
-			var others = {
-				getImageURL: function getImageURL(image) {
-					var url = this.options.url;
-					if (isString(url)) url = image.getAttribute(url);
-					else if (isFunction(url)) url = url.call(this, image);
-					else url = "";
-					return url;
-				},
-				enforceFocus: function enforceFocus() {
-					var _this = this;
-					this.clearEnforceFocus();
-					addListener(document, EVENT_FOCUSIN, this.onFocusin = function(event) {
-						var viewer = _this.viewer;
-						var target = event.target;
-						if (target === document || target === viewer || viewer.contains(target)) return;
-						while (target) {
-							if (target.getAttribute("tabindex") !== null || target.getAttribute("aria-modal") === "true") return;
-							target = target.parentElement;
-						}
-						viewer.focus();
-					});
-				},
-				clearEnforceFocus: function clearEnforceFocus() {
-					if (this.onFocusin) {
-						removeListener(document, EVENT_FOCUSIN, this.onFocusin);
-						this.onFocusin = null;
-					}
-				},
-				open: function open() {
-					var body = this.body;
-					addClass(body, CLASS_OPEN);
-					if (this.scrollbarWidth > 0) body.style.paddingRight = "".concat(this.scrollbarWidth + (parseFloat(this.initialBodyComputedPaddingRight) || 0), "px");
-				},
-				close: function close() {
-					var body = this.body;
-					removeClass(body, CLASS_OPEN);
-					if (this.scrollbarWidth > 0) body.style.paddingRight = this.initialBodyPaddingRight;
-				},
-				shown: function shown() {
-					var element = this.element, options = this.options, viewer = this.viewer;
-					this.fulled = true;
-					this.isShown = true;
-					this.render();
-					this.bind();
-					this.showing = false;
-					if (options.focus) {
-						viewer.focus();
-						this.enforceFocus();
-					}
-					if (isFunction(options.shown)) addListener(element, EVENT_SHOWN, options.shown, { once: true });
-					if (dispatchEvent(element, EVENT_SHOWN, { originalEvent: this.showOriginalEvent || null }) === false) return;
-					this.showOriginalEvent = null;
-					if (this.ready && this.isShown && !this.hiding) this.view(this.index);
-				},
-				hidden: function hidden() {
-					var element = this.element, options = this.options, viewer = this.viewer;
-					var activeElement = viewer.ownerDocument.activeElement;
-					if (activeElement && viewer.contains(activeElement) && isFunction(activeElement.blur)) activeElement.blur();
-					if (options.focus) this.clearEnforceFocus();
-					this.close();
-					this.unbind();
-					addClass(viewer, CLASS_HIDE);
-					viewer.removeAttribute("role");
-					viewer.removeAttribute("aria-labelledby");
-					viewer.removeAttribute("aria-modal");
-					viewer.setAttribute("aria-hidden", true);
-					this.resetList();
-					this.resetImage();
-					this.fulled = false;
-					this.viewed = false;
-					this.isShown = false;
-					this.hiding = false;
-					if (!this.destroyed) {
-						if (isFunction(options.hidden)) addListener(element, EVENT_HIDDEN, options.hidden, { once: true });
-						dispatchEvent(element, EVENT_HIDDEN, { originalEvent: this.hideOriginalEvent || null }, { cancelable: false });
-						this.hideOriginalEvent = null;
-					}
-				},
-				requestFullscreen: function requestFullscreen(options) {
-					var document = this.ownerDocument;
-					if (this.fulled && !(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
-						var documentElement = document.documentElement;
-						if (documentElement.requestFullscreen) {
-							if (isPlainObject(options)) documentElement.requestFullscreen(options);
-							else documentElement.requestFullscreen();
-						} else if (documentElement.webkitRequestFullscreen) documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-						else if (documentElement.mozRequestFullScreen) documentElement.mozRequestFullScreen();
-						else if (documentElement.msRequestFullscreen) documentElement.msRequestFullscreen();
-					}
-				},
-				exitFullscreen: function exitFullscreen() {
-					var document = this.ownerDocument;
-					if (this.fulled && (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
-						if (document.exitFullscreen) document.exitFullscreen();
-						else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-						else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-						else if (document.msExitFullscreen) document.msExitFullscreen();
-					}
-				},
-				change: function change(event) {
-					var options = this.options, pointers = this.pointers;
-					var pointer = pointers[Object.keys(pointers)[0]];
-					if (!pointer) return;
-					var offsetX = pointer.endX - pointer.startX;
-					var offsetY = pointer.endY - pointer.startY;
-					switch (this.action) {
-						case ACTION_MOVE:
-							if (offsetX !== 0 || offsetY !== 0) {
-								this.pointerMoved = true;
-								this.actionEvent = event;
-								this.move(offsetX, offsetY);
-							}
-							break;
-						case ACTION_ZOOM:
-							if (options.zoomable && options.zoomOnTouch) {
-								var zoomRatio = getMaxZoomRatio(pointers);
-								if (zoomRatio !== 0) {
-									this.actionEvent = event;
-									this.zoom(zoomRatio);
-								}
-							}
-							break;
-						case ACTION_ROTATE:
-							if (options.rotatable && options.rotateOnTouch) {
-								var rotateDegree = getMaxRotateDegree(pointers);
-								if (rotateDegree !== 0) {
-									this.actionEvent = event;
-									this.rotate(rotateDegree);
-								}
-							}
-							break;
-						case ACTION_TRANSFORM:
-							if (options.zoomable && options.zoomOnTouch) {
-								var _zoomRatio = getMaxZoomRatio(pointers);
-								if (_zoomRatio !== 0) {
-									this.actionEvent = event;
-									this.zoom(_zoomRatio);
-								}
-							}
-							if (options.rotatable && options.rotateOnTouch) {
-								var _rotateDegree = getMaxRotateDegree(pointers);
-								if (_rotateDegree !== 0) {
-									this.actionEvent = event;
-									this.rotate(_rotateDegree);
-								}
-							}
-							break;
-						case ACTION_SWITCH:
-							this.action = "switched";
-							var absoluteOffsetX = Math.abs(offsetX);
-							if (absoluteOffsetX > 1 && absoluteOffsetX > Math.abs(offsetY)) {
-								this.pointers = {};
-								this.actionEvent = event;
-								if (offsetX > 1) this.prev(options.loop);
-								else if (offsetX < -1) this.next(options.loop);
-							}
-					}
-					forEach(pointers, function(p) {
-						p.startX = p.endX;
-						p.startY = p.endY;
-					});
-				},
-				isSwitchable: function isSwitchable() {
-					var imageData = this.imageData, viewerData = this.viewerData;
-					return this.length > 1 && imageData.x >= 0 && imageData.y >= 0 && imageData.width <= viewerData.width && imageData.height <= viewerData.height;
-				}
-			};
-			var AnotherViewer = WINDOW.Viewer;
-			var getUniqueID = function(id) {
-				return function() {
-					id += 1;
-					return id;
-				};
-			}(-1);
-			var Viewer = function() {
-				function Viewer(element) {
-					var options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-					_classCallCheck(this, Viewer);
-					if (!element || element.nodeType !== 1 && element.nodeType !== 11) throw new Error("The first argument is required and must be an element.");
-					this.element = element;
-					this.ownerDocument = element.ownerDocument || element.host.ownerDocument;
-					this.options = assign({}, DEFAULTS, isPlainObject(options) && options);
-					this.action = false;
-					this.actionEvent = null;
-					this.fading = false;
-					this.fulled = false;
-					this.hiding = false;
-					this.imageClicked = false;
-					this.imageData = {};
-					this.index = this.options.initialViewIndex;
-					this.isImg = false;
-					this.isShown = false;
-					this.length = 0;
-					this.moving = false;
-					this.played = false;
-					this.playing = false;
-					this.pointers = {};
-					this.ready = false;
-					this.rotating = false;
-					this.scaling = false;
-					this.showing = false;
-					this.timeout = false;
-					this.tooltipping = false;
-					this.viewed = false;
-					this.viewing = false;
-					this.wheeling = false;
-					this.zooming = false;
-					this.pointerMoved = false;
-					this.id = getUniqueID();
-					this.init();
-				}
-				return _createClass(Viewer, [{
-					key: "init",
-					value: function init() {
-						var _this = this;
-						var element = this.element, options = this.options;
-						if (element[NAMESPACE]) return;
-						element[NAMESPACE] = this;
-						if (options.focus && !options.keyboard) options.focus = false;
-						var isImg = element.localName === "img";
-						var images = [];
-						forEach(isImg ? [element] : element.querySelectorAll("img"), function(image) {
-							if (isFunction(options.filter)) {
-								if (options.filter.call(_this, image)) images.push(image);
-							} else if (_this.getImageURL(image)) images.push(image);
-						});
-						this.isImg = isImg;
-						this.length = images.length;
-						this.images = images;
-						this.initBody();
-						if (isUndefined(this.ownerDocument.createElement(NAMESPACE).style.transition)) options.transition = false;
-						if (options.inline) {
-							var count = 0;
-							var progress = function progress() {
-								count += 1;
-								if (count === _this.length) {
-									var timeout;
-									_this.initializing = false;
-									_this.delaying = { abort: function abort() {
-										clearTimeout(timeout);
-									} };
-									timeout = setTimeout(function() {
-										_this.delaying = false;
-										_this.build();
-									}, 0);
-								}
-							};
-							this.initializing = { abort: function abort() {
-								forEach(images, function(image) {
-									if (!image.complete) {
-										removeListener(image, EVENT_LOAD, progress);
-										removeListener(image, EVENT_ERROR, progress);
-									}
-								});
-							} };
-							forEach(images, function(image) {
-								if (image.complete) progress();
-								else {
-									var onLoad;
-									var onError;
-									addListener(image, EVENT_LOAD, onLoad = function onLoad() {
-										removeListener(image, EVENT_ERROR, onError);
-										progress();
-									}, { once: true });
-									addListener(image, EVENT_ERROR, onError = function onError() {
-										removeListener(image, EVENT_LOAD, onLoad);
-										progress();
-									}, { once: true });
-								}
-							});
-						} else {
-							addListener(element, EVENT_CLICK, this.onElementClick = function(event) {
-								var target = event.target;
-								if (target.localName === "img" && (!isFunction(options.filter) || options.filter.call(_this, target))) {
-									_this.actionEvent = event;
-									_this.view(_this.images.indexOf(target));
-								}
-							});
-							addListener(element, EVENT_KEY_DOWN, this.onElementKeyDown = function(event) {
-								var target = event.target, key = event.key;
-								if (target.localName === "img" && (key === "Enter" || key === " ")) {
-									event.preventDefault();
-									if (!isFunction(options.filter) || options.filter.call(_this, target)) {
-										_this.actionEvent = event;
-										_this.view(_this.images.indexOf(target));
-									}
-								}
-							});
-						}
-					}
-				}, {
-					key: "build",
-					value: function build() {
-						if (this.ready) return;
-						var element = this.element, options = this.options;
-						var parent = element.parentNode;
-						var template = document.createElement("div");
-						template.innerHTML = TEMPLATE;
-						var viewer = template.querySelector(".".concat(NAMESPACE, "-container"));
-						var title = viewer.querySelector(".".concat(NAMESPACE, "-title"));
-						var toolbar = viewer.querySelector(".".concat(NAMESPACE, "-toolbar"));
-						var navbar = viewer.querySelector(".".concat(NAMESPACE, "-navbar"));
-						var navigation = viewer.querySelector(".".concat(NAMESPACE, "-navigation"));
-						var button = viewer.querySelector(".".concat(NAMESPACE, "-button"));
-						var canvas = viewer.querySelector(".".concat(NAMESPACE, "-canvas"));
-						this.parent = parent;
-						this.viewer = viewer;
-						this.title = title;
-						this.toolbar = toolbar;
-						this.navbar = navbar;
-						this.navigation = navigation;
-						this.button = button;
-						this.canvas = canvas;
-						this.footer = viewer.querySelector(".".concat(NAMESPACE, "-footer"));
-						this.magnifier = viewer.querySelector(".".concat(NAMESPACE, "-magnifier"));
-						this.magnifierImage = viewer.querySelector(".".concat(NAMESPACE, "-magnifier-image"));
-						this.tooltipBox = viewer.querySelector(".".concat(NAMESPACE, "-tooltip"));
-						this.player = viewer.querySelector(".".concat(NAMESPACE, "-player"));
-						this.list = viewer.querySelector(".".concat(NAMESPACE, "-list"));
-						viewer.id = "".concat(NAMESPACE).concat(this.id);
-						title.id = "".concat(NAMESPACE, "Title").concat(this.id);
-						addClass(title, !options.title ? CLASS_HIDE : getResponsiveClass(Array.isArray(options.title) ? options.title[0] : options.title));
-						if (options.title) title.removeAttribute("aria-hidden");
-						var navbarOptions = isPlainObject(options.navbar) ? options.navbar : {};
-						var navbarShow = options.navbar;
-						var navbarSize = !isUndefined(navbarOptions.size) ? navbarOptions.size : options.navbar;
-						if (isPlainObject(options.navbar)) navbarShow = !isUndefined(navbarOptions.show) ? navbarOptions.show : true;
-						addClass(navbar, !navbarShow ? CLASS_HIDE : getResponsiveClass(navbarShow));
-						if (navbarShow) navbar.removeAttribute("aria-hidden");
-						if ([
-							"small",
-							"medium",
-							"large"
-						].indexOf(navbarSize) !== -1) addClass(navbar, "".concat(NAMESPACE, "-").concat(navbarSize));
-						if (isPlainObject(options.navigation)) forEach(navigation.querySelectorAll("[role=\"button\"]"), function(item) {
-							var name = getData(item, DATA_ACTION);
-							var value = options.navigation[name];
-							var deep = isPlainObject(value);
-							var show = deep && !isUndefined(value.show) ? value.show : value;
-							var size = deep && !isUndefined(value.size) ? value.size : value;
-							toggleClass(item, CLASS_HIDE, !show);
-							if (isNumber(show)) addClass(item, getResponsiveClass(show));
-							if (["small", "large"].indexOf(size) !== -1) addClass(item, "".concat(NAMESPACE, "-").concat(size));
-						});
-						else addClass(navigation, !options.navigation ? CLASS_HIDE : getResponsiveClass(options.navigation));
-						if (options.navigation) navigation.removeAttribute("aria-hidden");
-						toggleClass(button, CLASS_HIDE, !options.button);
-						if (options.button) button.removeAttribute("aria-hidden");
-						if (options.keyboard) {
-							button.setAttribute("tabindex", 0);
-							forEach(navigation.querySelectorAll("[role=\"button\"]"), function(item) {
-								item.setAttribute("tabindex", 0);
-							});
-						}
-						if (options.backdrop) {
-							addClass(viewer, "".concat(NAMESPACE, "-backdrop"));
-							if (!options.inline && options.backdrop !== "static") setData(canvas, DATA_ACTION, "hide");
-						}
-						if (isString(options.className) && options.className) options.className.split(REGEXP_SPACES).forEach(function(className) {
-							addClass(viewer, className);
-						});
-						if (options.toolbar) {
-							var list = document.createElement("ul");
-							var custom = isPlainObject(options.toolbar);
-							var zoomButtons = BUTTONS.slice(0, 3);
-							var rotateButtons = BUTTONS.slice(7, 9);
-							var scaleButtons = BUTTONS.slice(9);
-							if (!custom) addClass(toolbar, getResponsiveClass(options.toolbar));
-							toolbar.removeAttribute("aria-hidden");
-							forEach(custom ? options.toolbar : BUTTONS, function(value, index) {
-								var deep = custom && isPlainObject(value);
-								var name = custom ? hyphenate(index) : value;
-								var show = deep && !isUndefined(value.show) ? value.show : value;
-								if (!show || !options.zoomable && zoomButtons.indexOf(name) !== -1 || !options.rotatable && rotateButtons.indexOf(name) !== -1 || !options.scalable && scaleButtons.indexOf(name) !== -1) return;
-								var size = deep && !isUndefined(value.size) ? value.size : value;
-								var click = deep && !isUndefined(value.click) ? value.click : value;
-								var item = document.createElement("li");
-								if (options.keyboard) item.setAttribute("tabindex", 0);
-								item.setAttribute("role", "button");
-								addClass(item, "".concat(NAMESPACE, "-").concat(name));
-								if (!isFunction(click)) setData(item, DATA_ACTION, name);
-								if (isNumber(show)) addClass(item, getResponsiveClass(show));
-								if (["small", "large"].indexOf(size) !== -1) addClass(item, "".concat(NAMESPACE, "-").concat(size));
-								else if (name === "play") addClass(item, "".concat(NAMESPACE, "-large"));
-								if (isFunction(click)) addListener(item, EVENT_CLICK, click);
-								list.appendChild(item);
-							});
-							toolbar.appendChild(list);
-						} else addClass(toolbar, CLASS_HIDE);
-						if (options.title || navbarShow || options.toolbar) this.footer.removeAttribute("aria-hidden");
-						else addClass(this.footer, CLASS_HIDE);
-						if (!options.rotatable) {
-							var rotates = toolbar.querySelectorAll("li[class*=\"rotate\"]");
-							addClass(rotates, CLASS_INVISIBLE);
-							forEach(rotates, function(rotate) {
-								toolbar.appendChild(rotate);
-							});
-						}
-						if (options.inline) {
-							addClass(button, CLASS_FULLSCREEN);
-							setStyle(viewer, { zIndex: options.zIndexInline });
-							if (window.getComputedStyle(parent).position === "static") setStyle(parent, { position: "relative" });
-							parent.insertBefore(viewer, element.nextSibling);
-						} else {
-							addClass(button, CLASS_CLOSE);
-							addClass(viewer, CLASS_FIXED);
-							addClass(viewer, CLASS_FADE);
-							addClass(viewer, CLASS_HIDE);
-							setStyle(viewer, { zIndex: options.zIndex });
-							var container = options.container;
-							if (isString(container)) container = this.ownerDocument.querySelector(container);
-							if (!container) container = this.body;
-							container.appendChild(viewer);
-						}
-						if (options.inline) {
-							this.render();
-							this.bind();
-							this.isShown = true;
-						}
-						this.ready = true;
-						if (isFunction(options.ready)) addListener(element, EVENT_READY, options.ready, { once: true });
-						if (dispatchEvent(element, EVENT_READY) === false) {
-							this.ready = false;
-							return;
-						}
-						if (this.ready && options.inline) this.view(this.index);
-					}
-				}], [
-					{
-						key: "create",
-						value: function create(element, options) {
-							return new Viewer(element, options);
-						}
-					},
-					{
-						key: "setDefaults",
-						value: function setDefaults(options) {
-							assign(DEFAULTS, isPlainObject(options) && options);
-						}
-					},
-					{
-						key: "noConflict",
-						value: function noConflict() {
-							window.Viewer = AnotherViewer;
-							return Viewer;
-						}
-					}
-				]);
-			}();
-			assign(Viewer.prototype, render, events, handlers, methods, others);
-			return Viewer;
-		}));
-	}))(), 1);
-	_css("/*!\n * Viewer.js v1.14.0\n * https://fengyuanchen.github.io/viewerjs\n *\n * Copyright 2015-present Chen Fengyuan\n * Released under the MIT license\n *\n * Date: 2026-09-12T12:12:27.170Z\n */\n.viewer-zoom-in:before,.viewer-zoom-out:before,.viewer-one-to-one:before,.viewer-reset:before,.viewer-prev:before,.viewer-play:before,.viewer-next:before,.viewer-rotate-left:before,.viewer-rotate-right:before,.viewer-flip-horizontal:before,.viewer-flip-vertical:before,.viewer-fullscreen:before,.viewer-fullscreen-exit:before,.viewer-close:before{color:#0000;background-image:url(\"data:image/svg+xml,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 560 40%22%3E%3Cpath fill%3D%22%23fff%22 d%3D%22M49.6 17.9h20.2v3.9H49.6zm123.1 2 10.9-11 2.7 2.8-8.2 8.2 8.2 8.2-2.7 2.7-10.9-10.9zm94 0-10.8-11-2.7 2.8 8.1 8.2-8.1 8.2 2.7 2.7 10.8-10.9zM212 9.3l20.1 10.6L212 30.5V9.3zm161.5 4.6-7.2 6 7.2 5.9v-4h12.4v4l7.3-5.9-7.3-6v4h-12.4v-4zm40.2 12.3 5.9 7.2 5.9-7.2h-4V13.6h4l-5.9-7.3-5.9 7.3h4v12.6h-4zm35.9-16.5h6.3v2h-4.3V16h-2V9.7Zm14 0h6.2V16h-2v-4.3h-4.2v-2Zm6.2 14V30h-6.2v-2h4.2v-4.3h2Zm-14 6.3h-6.2v-6.3h2v4.4h4.3v2Zm-438 .1v-8.3H9.6v-3.9h8.2V9.7h3.9v8.2h8.1v3.9h-8.1v8.3h-3.9zM93.6 9.7h-5.8v3.9h2V30h3.8V9.7zm16.1 0h-5.8v3.9h1.9V30h3.9V9.7zm-11.9 4.1h3.9v3.9h-3.9zm0 8.2h3.9v3.9h-3.9zm244.6-11.7 7.2 5.9-7.2 6v-3.6c-5.4-.4-7.8.8-8.7 2.8-.8 1.7-1.8 4.9 2.8 8.2-6.3-2-7.5-6.9-6-11.3 1.6-4.4 8-5 11.9-4.9v-3.1Zm147.2 13.4h6.3V30h-2v-4.3h-4.3v-2zm14 6.3v-6.3h6.2v2h-4.3V30h-1.9zm6.2-14h-6.2V9.7h1.9V14h4.3v2zm-13.9 0h-6.3v-2h4.3V9.7h2V16zm33.3 12.5 8.6-8.6-8.6-8.7 1.9-1.9 8.6 8.7 8.6-8.7 1.9 1.9-8.6 8.7 8.6 8.6-1.9 2-8.6-8.7-8.6 8.7-1.9-2zM297 10.3l-7.1 5.9 7.2 6v-3.6c5.3-.4 7.7.8 8.7 2.8.8 1.7 1.7 4.9-2.9 8.2 6.3-2 7.5-6.9 6-11.3-1.6-4.4-7.9-5-11.8-4.9v-3.1Zm-157.3-.6c2.3 0 4.4.7 6 2l2.5-3 1.9 9.2h-9.3l2.6-3.1a6.2 6.2 0 0 0-9.9 5.1c0 3.4 2.8 6.3 6.2 6.3 2.8 0 5.1-1.9 6-4.4h4c-1 4.7-5 8.3-10 8.3a10 10 0 0 1-10-10.2 10 10 0 0 1 10-10.2Z%22%2F%3E%3C%2Fsvg%3E\");background-repeat:no-repeat;background-size:280px;width:20px;height:20px;font-size:0;line-height:0;display:block}.viewer-zoom-in:before{content:\"Zoom In\";background-position:0 0}.viewer-zoom-out:before{content:\"Zoom Out\";background-position:-20px 0}.viewer-one-to-one:before{content:\"One to One\";background-position:-40px 0}.viewer-reset:before{content:\"Reset\";background-position:-60px 0}.viewer-prev:before{content:\"Previous\";background-position:-80px 0}.viewer-play:before{content:\"Play\";background-position:-100px 0}.viewer-next:before{content:\"Next\";background-position:-120px 0}.viewer-rotate-left:before{content:\"Rotate Left\";background-position:-140px 0}.viewer-rotate-right:before{content:\"Rotate Right\";background-position:-160px 0}.viewer-flip-horizontal:before{content:\"Flip Horizontal\";background-position:-180px 0}.viewer-flip-vertical:before{content:\"Flip Vertical\";background-position:-200px 0}.viewer-fullscreen:before{content:\"Enter Full Screen\";background-position:-220px 0}.viewer-fullscreen-exit:before{content:\"Exit Full Screen\";background-position:-240px 0}.viewer-close:before{content:\"Close\";background-position:-260px 0}.viewer-container{-webkit-tap-highlight-color:transparent;-ms-touch-action:none;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;direction:ltr;font-size:0;line-height:0;position:absolute;inset:0;overflow:hidden}.viewer-container::-moz-selection{background-color:#0000}.viewer-container ::-moz-selection{background-color:#0000}.viewer-container::selection{background-color:#0000}.viewer-container ::selection{background-color:#0000}.viewer-container:focus{outline:0}.viewer-container img{width:100%;height:auto;display:block;min-width:0!important;max-width:none!important;min-height:0!important;max-height:none!important}.viewer-canvas{position:absolute;inset:0;overflow:hidden}.viewer-canvas>img{width:auto;height:auto;margin:15px auto;max-width:90%!important}.viewer-magnifier{box-sizing:border-box;pointer-events:none;z-index:2;background-color:#fff;background-repeat:no-repeat;border:2px solid #fff;border-radius:50%;display:none;position:absolute;top:16px;left:16px;overflow:hidden;box-shadow:0 1px 5px #00000080}.viewer-magnifier.viewer-show{display:block}.viewer-magnifier-image{transform-origin:50%;position:absolute;top:0;left:0;max-width:none!important}.viewer-navigation{position:absolute;top:50%;left:0;right:0}.viewer-navigation>.viewer-prev,.viewer-navigation>.viewer-next{cursor:pointer;background-color:#00000080;border-radius:50%;width:40px;height:40px;margin-top:-20px;position:absolute}.viewer-navigation>.viewer-prev:focus,.viewer-navigation>.viewer-next:focus,.viewer-navigation>.viewer-prev:hover,.viewer-navigation>.viewer-next:hover{background-color:#000c}.viewer-navigation>.viewer-prev:focus,.viewer-navigation>.viewer-next:focus{outline:0;box-shadow:0 0 3px #fff}.viewer-navigation>.viewer-prev:before,.viewer-navigation>.viewer-next:before{margin:10px}.viewer-navigation>.viewer-prev{left:15px}.viewer-navigation>.viewer-next{right:15px}.viewer-navigation>.viewer-large{width:48px;height:48px;margin-top:-24px}.viewer-navigation>.viewer-large:before{margin:14px}.viewer-navigation>.viewer-small{width:32px;height:32px;margin-top:-16px}.viewer-navigation>.viewer-small:before{margin:6px}.viewer-footer{text-align:center;position:absolute;bottom:0;left:0;right:0;overflow:hidden}.viewer-navbar{background-color:#00000080;overflow:hidden}.viewer-navbar.viewer-small>.viewer-list{height:40px}.viewer-navbar.viewer-small>.viewer-list>li{width:24px;height:40px}.viewer-navbar.viewer-large>.viewer-list{height:60px}.viewer-navbar.viewer-large>.viewer-list>li{width:36px;height:60px}.viewer-list{box-sizing:content-box;height:50px;margin:0;padding:1px 0;overflow:hidden}.viewer-list>li{color:#0000;cursor:pointer;float:left;opacity:.5;width:30px;height:50px;font-size:0;line-height:0;transition:opacity .15s;overflow:hidden}.viewer-list>li:focus,.viewer-list>li:hover{opacity:.75}.viewer-list>li:focus{outline:0}.viewer-list>li+li{margin-left:1px}.viewer-list>.viewer-loading{position:relative}.viewer-list>.viewer-loading:after{border-width:2px;width:20px;height:20px;margin-top:-10px;margin-left:-10px}.viewer-list>.viewer-active,.viewer-list>.viewer-active:focus,.viewer-list>.viewer-active:hover{opacity:1}.viewer-player{cursor:none;z-index:1;background-color:#000;display:none;position:absolute;inset:0}.viewer-player>img{position:absolute;top:0;left:0}.viewer-toolbar>ul{margin:0 auto 5px;padding:6px 3px;display:inline-block;overflow:hidden}.viewer-toolbar>ul>li{cursor:pointer;float:left;background-color:#00000080;border-radius:50%;width:24px;height:24px;transition:background-color .15s;overflow:hidden}.viewer-toolbar>ul>li:focus,.viewer-toolbar>ul>li:hover{background-color:#000c}.viewer-toolbar>ul>li:focus{z-index:1;outline:0;position:relative;box-shadow:0 0 3px #fff}.viewer-toolbar>ul>li:before{margin:2px}.viewer-toolbar>ul>li+li{margin-left:1px}.viewer-toolbar>ul>.viewer-small{width:18px;height:18px;margin-top:3px;margin-bottom:3px}.viewer-toolbar>ul>.viewer-small:before{margin:-1px}.viewer-toolbar>ul>.viewer-large{width:30px;height:30px;margin-top:-3px;margin-bottom:-3px}.viewer-toolbar>ul>.viewer-large:before{margin:5px}.viewer-tooltip{color:#fff;text-align:center;background-color:#000c;border-radius:10px;width:50px;height:20px;margin-top:-10px;margin-left:-25px;font-size:12px;line-height:20px;display:none;position:absolute;top:50%;left:50%}.viewer-title{color:#ccc;opacity:.8;text-overflow:ellipsis;white-space:nowrap;max-width:90%;min-height:14px;margin:5px 5%;font-size:12px;line-height:1.2;transition:opacity .15s;display:inline-block;overflow:hidden}.viewer-title:hover{opacity:1}.viewer-button{-webkit-app-region:no-drag;cursor:pointer;background-color:#00000080;border-radius:50%;width:80px;height:80px;transition:background-color .15s;position:absolute;top:-40px;right:-40px;overflow:hidden}.viewer-button:focus,.viewer-button:hover{background-color:#000c}.viewer-button:focus{outline:0;box-shadow:0 0 3px #fff}.viewer-button:before{position:absolute;bottom:15px;left:15px}.viewer-fixed{position:fixed}.viewer-open{overflow:hidden}.viewer-show{display:block}.viewer-hide{display:none}.viewer-backdrop{background-color:#00000080}.viewer-invisible{visibility:hidden}.viewer-move{cursor:move;cursor:grab}.viewer-fade{opacity:0}.viewer-in{opacity:1}.viewer-transition{transition:all .3s}@keyframes viewer-spinner{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.viewer-loading:after{content:\"\";z-index:1;border:4px solid #ffffff1a;border-left-color:#ffffff80;border-radius:50%;width:40px;height:40px;margin-top:-20px;margin-left:-20px;animation:1s linear infinite viewer-spinner;display:inline-block;position:absolute;top:50%;left:50%}@media (width<=767px){.viewer-hide-xs-down{display:none}}@media (width<=991px){.viewer-hide-sm-down{display:none}}@media (width<=1199px){.viewer-hide-md-down{display:none}}");
-	_css(".nspp-image-preview{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:0 0;border:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;position:fixed;inset:0;overflow:hidden}.nspp-image-preview::backdrop{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:#0b0e14eb}.nspp-image-preview .viewer-backdrop{background:0 0}.nspp-image-preview .viewer-footer{padding:0 12px max(20px, env(safe-area-inset-bottom));box-sizing:border-box}.nspp-image-preview .viewer-toolbar>ul{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);background:#252a34e6;border:1px solid #ffffff26;border-radius:999px;gap:4px;padding:6px;display:inline-flex;box-shadow:0 8px 32px #0005}.nspp-image-preview .viewer-toolbar>ul>li{background:0 0;border-radius:50%;place-items:center;width:36px;height:36px;margin:0;padding:0;display:grid}.nspp-image-preview .viewer-toolbar>ul>li:hover,.nspp-image-preview .viewer-button:hover{background-color:#ffffff24}.nspp-image-preview .viewer-button{top:max(16px, env(safe-area-inset-top));right:max(16px, env(safe-area-inset-right));background:#252a34e6;border:1px solid #ffffff26;border-radius:50%;width:40px;height:40px}.nspp-image-preview .viewer-button:before{margin:9px;position:static}.nspp-image-preview .viewer-list{margin-top:12px}.nspp-image-preview .viewer-list>li{opacity:.5;border:2px solid #0000;border-radius:6px}.nspp-image-preview .viewer-list>.viewer-active{opacity:1;border-color:#fff}.nspp-image-preview [role=button]:focus-visible{outline-offset:3px;outline:2px solid #fff}.nspp-preview-content img{cursor:zoom-in}.nspp-preview-content img:focus-visible{outline:2px solid var(--link-color,#0969da);outline-offset:3px;border-radius:3px}");
-	function openImagePreview(content, image, onClose) {
-		const dialog = document.createElement("dialog");
-		dialog.className = "nspp-image-preview";
-		dialog.setAttribute("aria-label", "图片预览");
-		document.body.append(dialog);
-		dialog.showModal();
-		let viewer;
-		let closed = false;
-		const close = () => {
-			if (closed) return;
-			closed = true;
-			viewer?.destroy();
-			dialog.close();
-			dialog.remove();
-			if (image.isConnected) image.focus({ preventScroll: true });
-			onClose();
-		};
-		dialog.addEventListener("cancel", (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			close();
-		});
-		const images = Array.from(content.querySelectorAll("img"));
-		const multiple = images.length > 1;
-		viewer = new import_viewer.default(content, {
-			container: dialog,
-			initialViewIndex: images.indexOf(image),
-			title: false,
-			navbar: multiple,
-			toolbar: {
-				zoomOut: true,
-				zoomIn: true,
-				oneToOne: true,
-				reset: true,
-				prev: multiple,
-				next: multiple
-			},
-			fullscreen: false,
-			rotatable: false,
-			scalable: false,
-			inheritedAttributes: ["referrerPolicy"],
-			transition: !matchMedia("(prefers-reduced-motion: reduce)").matches,
-			ready() {
-				const labels = {
-					"zoom-in": "放大",
-					"zoom-out": "缩小",
-					"one-to-one": "原始大小",
-					reset: "适应窗口",
-					prev: "上一张",
-					next: "下一张",
-					mix: "关闭预览"
-				};
-				dialog.querySelectorAll("[data-viewer-action]").forEach((control) => {
-					const label = labels[control.dataset.viewerAction || ""];
-					if (label) {
-						control.title = label;
-						control.setAttribute("aria-label", label);
-					}
-				});
-				const container = dialog.querySelector(".viewer-container");
-				container?.removeAttribute("aria-labelledby");
-				container?.setAttribute("aria-label", "图片预览");
-			},
-			hidden: close
-		});
-		viewer.show();
-		return close;
-	}
 	function readingContent(source, base) {
 		const fragment = document.createDocumentFragment();
 		const allowed = new Set([
@@ -18787,7 +22006,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					el.target = "_blank";
 					el.rel = "noopener noreferrer";
 				}
-				if (el instanceof HTMLImageElement) {
+				if (el instanceof HTMLImageElement && sourceElement.classList.contains("emoji")) {
+					el.alt = sourceElement.getAttribute("alt") || "";
+					el.dataset.emoji = "";
+				} else if (el instanceof HTMLImageElement) {
 					el.alt = sourceElement.getAttribute("alt") || "";
 					el.loading = "lazy";
 					el.tabIndex = 0;
@@ -18803,7 +22025,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	}
 	function createPostPreview(ctx) {
 		const view = document.createElement("dialog");
-		view.className = "nspp-post-preview";
+		view.className = "nspp-sheet nspp-post-preview";
 		view.hidden = true;
 		view.setAttribute("role", "dialog");
 		view.setAttribute("aria-label", "帖子预览");
@@ -18814,7 +22036,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		const status = document.createElement("p");
 		status.setAttribute("role", "status");
 		const content = document.createElement("div");
-		content.className = "nspp-preview-content";
+		content.className = "nspp-preview-content nspp-sheet-body";
 		const footer = document.createElement("footer");
 		const original = document.createElement("a");
 		original.textContent = "查看原帖与回复 ↗";
@@ -18848,7 +22070,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			footer.append(original);
 		};
 		let request;
-		const mobile = () => matchMedia("(max-width: 600px), (hover: none)").matches;
+		const mobile = () => matchMedia("(max-width: 700px), (hover: none)").matches;
 		let closeTimer;
 		let closeImage;
 		const keepOpen = () => clearTimeout(closeTimer);
@@ -18867,7 +22089,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		view.addEventListener("mouseenter", keepOpen, { signal: ctx.signal });
 		view.addEventListener("mouseleave", scheduleClose, { signal: ctx.signal });
 		window.addEventListener("click", (event) => {
-			if (!(event.target instanceof HTMLImageElement) || !content.contains(event.target) || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+			if (!(event.target instanceof HTMLImageElement) || !content.contains(event.target) || linksElsewhere(event.target) || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
 			event.preventDefault();
 			event.stopImmediatePropagation();
 			if (closeImage) return;
@@ -18926,7 +22148,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			const controller = new AbortController();
 			request = controller;
 			status.textContent = "正在加载帖子…";
-			status.setAttribute("aria-busy", "true");
+			setShine(status, true);
 			content.replaceChildren();
 			try {
 				const html = await ctx.request(url.href, {
@@ -18940,7 +22162,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				const author = doc.querySelector(".nsk-post .author-info, .author-info");
 				const meta = document.createElement("div");
 				meta.className = "nspp-preview-meta";
-				meta.textContent = author?.textContent?.trim() || "";
+				const parts = author ? Array.from(author.children, (child) => child.textContent?.trim()).filter(Boolean) : [];
+				meta.textContent = parts.length ? parts.join(" ") : author?.textContent?.trim() || "";
 				const article = document.createElement("article");
 				article.append(readingContent(body, url.href));
 				content.append(meta, article);
@@ -18965,7 +22188,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				status.textContent = "暂时无法读取正文，请打开原帖查看或完成登录验证。";
 			} finally {
 				if (!controller.signal.aborted) {
-					status.removeAttribute("aria-busy");
+					setShine(status, false);
 					position();
 				}
 			}
@@ -19029,12 +22252,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		id: "post-preview",
 		title: "帖子卡片预览",
 		group: "阅读",
-		description: "桌面悬停打开卡片，移动端点击标题直接进入详情；点击图片放大，支持缩放和切换，可从卡片进入原帖。",
+		description: "桌面悬停打开卡片，移动端点击标题打开预览弹窗；点击图片放大，支持缩放和切换，可从卡片进入原帖。",
 		defaults: { enabled: true },
 		mount(ctx) {
 			const preview = createPostPreview(ctx);
 			const bound = new Map();
 			let timer;
+			const wecom = () => document.documentElement.hasAttribute("data-nspp-wecom");
 			const stop = ctx.watch(() => {
 				for (const link of bound.keys()) if (!link.isConnected) bound.delete(link);
 				document.querySelectorAll(".post-list-item .post-title a").forEach((link) => {
@@ -19044,7 +22268,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					bound.set(link, link.getAttribute("title"));
 					link.removeAttribute("title");
 					link.addEventListener("mouseenter", () => {
-						if (!matchMedia("(hover: hover)").matches) return;
+						if (!matchMedia("(hover: hover)").matches || wecom()) return;
 						preview.keepOpen();
 						clearTimeout(timer);
 						timer = setTimeout(() => preview.open(link, "preview"), 400);
@@ -19052,6 +22276,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					link.addEventListener("mouseleave", () => {
 						clearTimeout(timer);
 						preview.scheduleClose();
+					}, { signal: ctx.signal });
+					link.addEventListener("click", (event) => {
+						if (wecom() || !matchMedia("(max-width: 700px), (hover: none)").matches || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+						event.preventDefault();
+						clearTimeout(timer);
+						preview.open(link, "preview");
 					}, { signal: ctx.signal });
 				});
 			});
@@ -19078,8 +22308,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		title.rel = "noopener noreferrer";
 		const close = document.createElement("button");
 		close.type = "button";
-		close.textContent = "×";
-		close.setAttribute("aria-label", "关闭互动");
+		iconButton(close, "close", "关闭互动");
 		const status = document.createElement("p");
 		status.setAttribute("role", "status");
 		const form = document.createElement("form");
@@ -19395,17 +22624,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		let replies = Array.isArray(saved) ? saved.filter((item) => typeof item === "string" && !!item.trim()).slice(0, 200) : [...defaults];
 		let target, page = 0, editing = -1, busy = false;
 		const size = 6;
-		const dialog = document.createElement("dialog");
-		dialog.className = "nspp-quick-replies";
-		dialog.setAttribute("aria-label", "快捷回复");
+		const dialog = createSheet("nspp-quick-replies", "快捷回复");
 		const head = document.createElement("div");
 		head.className = "nspp-quick-head";
 		const heading = document.createElement("strong");
 		heading.textContent = "快捷回复";
 		const close = document.createElement("button");
 		close.type = "button";
-		close.textContent = "×";
-		close.setAttribute("aria-label", "关闭快捷回复");
+		iconButton(close, "close", "关闭快捷回复");
 		head.append(heading, close);
 		const title = document.createElement("p");
 		title.className = "nspp-quick-target";
@@ -19417,11 +22643,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		search.setAttribute("aria-label", "查找回复");
 		const add = document.createElement("button");
 		add.type = "button";
-		add.textContent = "新增";
 		add.className = "nspp-quick-primary";
+		iconButton(add, "plus", "新增快捷回复");
 		toolbar.append(search, add);
 		const list = document.createElement("div");
-		list.className = "nspp-quick-list";
+		list.className = "nspp-quick-list nspp-sheet-body";
 		const editor = document.createElement("form");
 		editor.hidden = true;
 		const text = document.createElement("textarea");
@@ -19442,11 +22668,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		footer.className = "nspp-quick-pagination";
 		const previous = document.createElement("button");
 		previous.type = "button";
-		previous.textContent = "上一页";
+		iconButton(previous, "left", "上一页");
 		const total = document.createElement("span");
 		const next = document.createElement("button");
 		next.type = "button";
-		next.textContent = "下一页";
+		iconButton(next, "right", "下一页");
 		footer.append(previous, total, next);
 		const status = document.createElement("p");
 		status.className = "nspp-quick-status";
@@ -19484,7 +22710,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					const link = target;
 					busy = true;
 					status.textContent = "加载中";
-					status.setAttribute("aria-busy", "true");
+					setShine(status, true);
 					render();
 					try {
 						const result = await send(link, body);
@@ -19501,19 +22727,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						}
 					} finally {
 						busy = false;
-						status.removeAttribute("aria-busy");
+						setShine(status, false);
 						if (!ctx.signal.aborted) render();
 					}
 				}, { signal: ctx.signal });
 				const edit = document.createElement("button");
 				edit.type = "button";
-				edit.textContent = "修改";
+				iconButton(edit, "edit", "修改");
 				edit.disabled = busy;
 				edit.addEventListener("click", () => startEdit(index), { signal: ctx.signal });
 				const remove = document.createElement("button");
 				remove.type = "button";
-				remove.textContent = "删除";
 				remove.className = "nspp-quick-delete";
+				iconButton(remove, "trash", "删除").dataset.danger = "";
 				remove.disabled = busy;
 				remove.addEventListener("click", () => {
 					replies.splice(index, 1);
@@ -19776,7 +23002,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						});
 					}
 					const loading = document.createElement("span");
-					loading.className = "nspp-count-loading";
+					loading.className = "nspp-count-loading nspp-sweep-shine";
 					loading.textContent = "加载中";
 					loading.setAttribute("role", "status");
 					loading.hidden = true;
@@ -20018,7 +23244,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		const floor = Number(String(notice.floor_id).replace(/^#/, ""));
 		return Number.isSafeInteger(floor) && floor >= 0 ? floor : null;
 	};
-	var noticeHref = (notice) => noticeFloor(notice) === null ? `/post-${notice.post_id}-1` : footprintHref(notice.post_id, noticeFloor(notice));
+	var noticeHref = (notice) => noticeFloor(notice) === null ? `/post-${notice.post_id}-1` : footprintHref(notice.post_id, noticeFloor(notice), commentsPerPage());
 	function createNotificationInbox(ctx, onRead, onBack) {
 		const root = node("div", "nspp-messages-workspace nspp-notice-workspace");
 		root.hidden = true;
@@ -20031,7 +23257,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		search.type = "search";
 		search.placeholder = "搜索用户、帖子或已加载的回复";
 		search.setAttribute("aria-label", search.placeholder);
-		const refresh = button$1("刷新");
+		const refresh = iconButton(button$1(""), "refresh", "刷新");
 		toolbar.append(search, refresh);
 		const list = node("div", "nspp-messages-conversations");
 		const info = node("p", "nspp-messages-list-status");
@@ -20210,7 +23436,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				subjectLink.target = "_blank";
 				subjectLink.rel = "noopener noreferrer";
 				subjectLink.title = subject;
-				subjectLink.addEventListener("click", (event) => event.stopPropagation());
+				subjectLink.addEventListener("click", (event) => {
+					event.stopPropagation();
+					markRead(item).catch(() => {});
+				});
 				const excerpt = node("span", "nspp-notice-excerpt", preview ? preview.available ? preview.snippet : "" : "正在加载回复…");
 				excerpt.hidden = !!preview && !excerpt.textContent;
 				if (!preview) {
@@ -20324,6 +23553,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			title.textContent = routes[kind].label;
 			original.href = noticeHref(item);
 			original.hidden = false;
+			original.onclick = () => {
+				markRead(item).catch(() => {});
+			};
 			const floor = noticeFloor(item);
 			const summary = node("div", "nspp-notice-summary");
 			const postTitle = node("a", "", previews.get(item.id)?.title || item.post_title || item.title || `帖子 ${item.post_id}`);
@@ -20338,6 +23570,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			const body = node("div", "nspp-notice-body nspp-sweep-shine", "正在加载回复内容…");
 			body.setAttribute("aria-busy", "true");
 			content.append(body);
+			const reading = markRead(item, requestSignal).then(() => true, () => false);
 			try {
 				const preview = await getPreview(item);
 				if (!current() || requestSignal.aborted) return;
@@ -20346,29 +23579,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				body.replaceChildren(preview.body.cloneNode(true));
 				body.classList.remove("nspp-sweep-shine");
 				body.removeAttribute("aria-busy");
-				if (unread$1(item) && !document.hidden) {
-					await api(`/api/notification/${routes[kind].endpoint}/markViewed`, {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ [routes[kind].field]: [item.id] }),
-						signal: requestSignal
-					});
-					if (!requestSignal.aborted) {
-						item.viewed = true;
-						notices.set(item.id, item);
-						render();
-						onRead();
-					}
-				}
+				if (!await reading && !requestSignal.aborted) body.append(node("p", "nspp-notice-hint", "内容已加载，已读状态同步失败"));
 			} catch (error) {
 				if (!current() || requestSignal.aborted) return;
-				const message = error instanceof Error ? error.message : "内容加载失败";
-				if (body.getAttribute("aria-busy") === "true") body.textContent = message;
-				else body.append(node("p", "nspp-notice-hint", "内容已加载，已读状态同步失败"));
+				body.textContent = error instanceof Error ? error.message : "内容加载失败";
 			} finally {
 				body.classList.remove("nspp-sweep-shine");
 				body.removeAttribute("aria-busy");
 			}
+		}
+		const marking = new Map();
+		function markRead(item, requestSignal = signal()) {
+			const kind = category;
+			if (!kind || !unread$1(item)) return Promise.resolve();
+			const pending = marking.get(item.id);
+			if (pending) return pending;
+			const promise = (async () => {
+				await api(`/api/notification/${routes[kind].endpoint}/markViewed`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ [routes[kind].field]: [item.id] }),
+					signal: requestSignal
+				});
+				if (!requestSignal.aborted) {
+					item.viewed = true;
+					notices.set(item.id, item);
+					render();
+					onRead();
+				}
+			})().finally(() => marking.delete(item.id));
+			marking.set(item.id, promise);
+			return promise;
 		}
 		async function markAll() {
 			if (!current()) return;
@@ -22356,7 +25597,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		key.autocomplete = "off";
 		key.placeholder = "图床 API Key（仅本页）";
 		key.setAttribute("aria-label", key.placeholder);
-		key.hidden = !uploadSettings().provider || uploadSettings().provider === "NodeImage";
+		key.hidden = !uploadNeedsKey(uploadSettings().provider || "NodeImage", uploadSettings().customHeaders);
 		const login = document.createElement("a");
 		login.href = "https://www.nodeimage.com/";
 		login.target = "_blank";
@@ -22518,13 +25759,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						}));
 						apiKey = nodeImageKey;
 					}
-					const request = uploadRequest(provider, settings.base || "", apiKey, file);
-					const result = provider === "NodeImage" ? await uploadNodeImage(request.body, request.headers, ctx.signal) : await ctx.request(request.url, {
+					const request = uploadRequest(provider, settings.base || "", apiKey, file, {
+						field: settings.customField,
+						headers: settings.customHeaders
+					});
+					const result = provider === "NodeImage" || hasRequest() ? await uploadImage(request.url, request.body, request.headers, ctx.signal) : await ctx.request(request.url, {
 						method: "POST",
 						headers: request.headers,
 						body: request.body
 					});
-					const url = uploadResult(provider, request.base, result);
+					const url = uploadResult(provider, request.base, result, settings.customResult);
 					if (ctx.signal.aborted) return;
 					options.insert(peer, `![image](<${url.href.replace(/>/g, "%3E")}>)\n`);
 				}
@@ -22535,7 +25779,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					nodeImageKey = "";
 					login.hidden = false;
 				}
-				statuses.set(peer, error instanceof Error ? error.message : "图片上传失败，请重试");
+				statuses.set(peer, uploadErrorText(error));
 			} finally {
 				uploads.delete(peer);
 				images.value = "";
@@ -22832,7 +26076,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	};
 	var preview = (text) => text.replace(/!\[[^\]]*\]\([^)]+\)/g, "[图片]").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\s+/g, " ").trim();
 	var unread = (message) => message.viewed === false || message.viewed === 0;
-	function mountChat(ctx, account) {
+	var MESSAGE_ROUTE_EVENT = "nspp-messages-route";
+	function mountChat(ctx, account, host) {
 		const lifetime = new AbortController();
 		ctx = {
 			...ctx,
@@ -22954,7 +26199,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		returnToNew.hidden = true;
 		nativeToolbar.append(returnToNew);
 		let nativeContainer;
+		const routeHash = () => host ? host.hash : location.hash;
+		const go = (url) => {
+			if (host) host.hash = new URL(url, location.href).hash || "#/atMe";
+			else history.pushState(null, "", url);
+		};
 		function attachToNative() {
+			if (host) {
+				if (root.parentElement !== host.container) host.container.append(root);
+				return true;
+			}
 			if (!nativeContainer?.isConnected) {
 				nativeContainer?.classList.remove("nspp-messages-container");
 				nativeContainer?.removeAttribute("data-nspp-message-view");
@@ -23027,6 +26281,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			try {
 				const result = await ctx.request("/api/notification/unread-count", { signal: ctx.signal });
 				if (!panelValid() || !result.success || !result.unreadCount) return;
+				if (typeof BroadcastChannel === "function") {
+					const channel = new BroadcastChannel(unreadChannel(account));
+					channel.postMessage({ counts: result.unreadCount });
+					channel.close();
+				}
 				navigation.querySelectorAll("a").forEach((link) => {
 					const value = result.unreadCount[link.dataset.category];
 					const badge = link.querySelector(".nspp-messages-count");
@@ -23046,7 +26305,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		const updateSend = () => {
 			const busy = !!active && sending.has(active);
 			send.disabled = !active || busy || !input.value.trim() || uncertain.has(active) || editor.busy(active);
-			send.textContent = busy ? "发送中…" : "发送";
+			if (busy) send.replaceChildren(sweepShine("发送中…"));
+			else send.textContent = "发送";
 			if (busy) send.setAttribute("aria-busy", "true");
 			else send.removeAttribute("aria-busy");
 			input.disabled = busy;
@@ -23268,7 +26528,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const requestSignal = AbortSignal.any([signal(), threadController.signal]);
 			threadBusy = true;
 			retrySync.disabled = true;
-			retrySync.textContent = "重试中…";
+			retrySync.replaceChildren(sweepShine("重试中…"));
 			let peerName = peers.get(id)?.name || `用户 ${id}`;
 			if (first) {
 				const known = histories.get(id);
@@ -23360,15 +26620,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}
 		}
 		function navigate(id) {
-			history.pushState(null, "", `/notification#/message?mode=${id ? `talk&to=${id}` : "list"}`);
+			go(`/notification#/message?mode=${id ? `talk&to=${id}` : "list"}`);
 			syncRoute();
 		}
 		function syncRoute() {
-			const next = location.hash.match(/^#\/(atMe|reply|message)(?:\?|$)/)?.[1] || (!location.hash || location.hash === "#/" ? "atMe" : void 0);
-			const params = new URLSearchParams(location.hash.split("?")[1] || "");
+			const hash = routeHash();
+			const next = hash.match(/^#\/(atMe|reply|message)(?:\?|$)/)?.[1] || (!hash || hash === "#/" ? "atMe" : void 0);
+			const params = new URLSearchParams(hash.split("?")[1] || "");
 			returnToNew.hidden = params.get("native") !== "1";
 			if (!next) suppressed = false;
-			const show = attachToNative() && !!next && !suppressed && params.get("native") !== "1";
+			const show = attachToNative() && !!next && !suppressed && params.get("native") !== "1" && (!host || host.visible());
 			const wasHidden = root.hidden;
 			root.hidden = !show;
 			if (nativeContainer) nativeContainer.dataset.nsppMessageView = show ? "new" : "native";
@@ -23540,6 +26801,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}, { signal: ctx.signal });
 		back.addEventListener("click", () => navigate(), { signal: ctx.signal });
 		original.addEventListener("click", () => {
+			if (host) {
+				location.assign(`/notification${routeHash() || "#/atMe"}`);
+				return;
+			}
 			suppressed = true;
 			const params = new URLSearchParams(location.hash.split("?")[1] || "");
 			params.set("native", "1");
@@ -23594,18 +26859,22 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const link = event.target.closest("a[href]");
 			if (!link) return;
 			const url = new URL(link.href, location.href);
-			if (url.origin !== location.origin || url.pathname !== "/notification" || url.hash && !/^#\/(atMe|reply|message)(?:\?|$)/.test(url.hash) || suppressed || new URLSearchParams(location.hash.split("?")[1] || "").get("native") === "1") return;
+			if (host && !host.visible()) return;
+			if (url.origin !== location.origin || url.pathname !== "/notification" || url.hash && !/^#\/(atMe|reply|message)(?:\?|$)/.test(url.hash) || suppressed || new URLSearchParams(routeHash().split("?")[1] || "").get("native") === "1") return;
 			event.preventDefault();
 			event.stopImmediatePropagation();
-			history.pushState(null, "", url);
+			go(url.href);
 			syncRoute();
 		};
 		document.addEventListener("click", followLink, {
 			capture: true,
 			signal: ctx.signal
 		});
-		window.addEventListener("hashchange", syncRoute, { signal: ctx.signal });
-		window.addEventListener("popstate", syncRoute, { signal: ctx.signal });
+		if (host) host.container.addEventListener(MESSAGE_ROUTE_EVENT, syncRoute, { signal: ctx.signal });
+		else {
+			window.addEventListener("hashchange", syncRoute, { signal: ctx.signal });
+			window.addEventListener("popstate", syncRoute, { signal: ctx.signal });
+		}
 		const poll = () => {
 			if (!panelValid() || document.hidden) return;
 			refreshCounts();
@@ -23616,7 +26885,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		};
 		const timer = setInterval(poll, 3e4);
 		document.addEventListener("visibilitychange", poll, { signal: ctx.signal });
-		const stopMount = ctx.watch(() => {
+		const stopMount = host ? () => {} : ctx.watch(() => {
 			if (!(root.isConnected && root.parentElement === nativeContainer && nativeToolbar.parentElement === nativeContainer) && attachToNative()) syncRoute();
 		});
 		syncRoute();
@@ -23678,18 +26947,37 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			let scrollX = 0, scrollY = 0;
 			const root = document.documentElement;
 			const signalState = () => document.dispatchEvent(new Event("nspp:reply-state"));
+			let frame = 0, settleUntil = 0;
+			const resizer = new ResizeObserver(() => viewport());
 			const viewport = () => {
 				if (!editor) return;
 				const view = window.visualViewport;
-				editor.style.setProperty("--nspp-reply-height", `${view?.height ?? window.innerHeight}px`);
-				editor.style.setProperty("--nspp-reply-bottom", `${Math.max(0, window.innerHeight - (view?.height ?? window.innerHeight) - (view?.offsetTop ?? 0))}px`);
+				const height = view?.height ?? window.innerHeight;
+				editor.style.setProperty("--nspp-reply-height", `${height}px`);
+				editor.style.setProperty("--nspp-reply-top", `${Math.max(0, (view?.offsetTop ?? 0) + height - editor.offsetHeight)}px`);
 			};
-			const close = () => {
+			const settle = () => {
+				settleUntil = performance.now() + 700;
+				const step = () => {
+					viewport();
+					frame = editor && performance.now() < settleUntil ? requestAnimationFrame(step) : 0;
+				};
+				if (!frame) step();
+			};
+			const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+			let closing;
+			const finish = () => {
 				if (!editor) return;
-				document.activeElement?.blur();
+				closing?.kill();
+				closing = void 0;
+				gsapWithCSS.killTweensOf(editor);
+				gsapWithCSS.set(editor, { clearProps: "transform" });
 				editor.classList.remove("nspp-floating-reply");
 				editor.style.removeProperty("--nspp-reply-height");
-				editor.style.removeProperty("--nspp-reply-bottom");
+				editor.style.removeProperty("--nspp-reply-top");
+				resizer.disconnect();
+				cancelAnimationFrame(frame);
+				frame = 0;
 				header?.remove();
 				placeholder?.remove();
 				editor = void 0;
@@ -23702,7 +26990,22 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				previousFocus?.focus({ preventScroll: true });
 				signalState();
 			};
+			const close = (instant = false) => {
+				if (!editor || closing) return;
+				document.activeElement?.blur();
+				if (instant || still()) {
+					finish();
+					return;
+				}
+				closing = gsapWithCSS.to(editor, {
+					yPercent: 100,
+					duration: .24,
+					ease: "power2.in",
+					onComplete: finish
+				});
+			};
 			const open = () => {
+				if (closing) finish();
 				if (!mobile.matches || editor) return;
 				const host = document.querySelector(".md-editor");
 				if (!host) return;
@@ -23724,11 +27027,18 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				hide.type = "button";
 				hide.textContent = "收起";
 				hide.setAttribute("aria-label", "收起回复框");
-				hide.addEventListener("click", close, { signal: ctx.signal });
+				hide.addEventListener("click", () => close(), { signal: ctx.signal });
 				header.append(label, hide);
 				host.prepend(header);
-				viewport();
+				resizer.observe(host);
+				settle();
 				signalState();
+				if (!still()) gsapWithCSS.fromTo(host, { yPercent: 100 }, {
+					yPercent: 0,
+					duration: .32,
+					ease: "power3.out",
+					clearProps: "transform"
+				});
 				host.querySelector(".CodeMirror")?.CodeMirror?.refresh();
 			};
 			document.addEventListener("click", (event) => {
@@ -23744,14 +27054,48 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				capture: true,
 				signal: ctx.signal
 			});
+			document.addEventListener("click", (event) => {
+				const tab = event.target instanceof Element ? event.target.closest(".tab-option") : null;
+				const panes = tab && editor?.contains(tab) && !closing && !still() ? editor.querySelector("#cm-editor-wrapper")?.parentElement : null;
+				if (!panes) return;
+				const from = panes.offsetHeight;
+				requestAnimationFrame(() => {
+					if (!panes.isConnected) return;
+					const shown = Array.from(panes.children).filter((pane) => pane instanceof HTMLElement && getComputedStyle(pane).display !== "none");
+					gsapWithCSS.killTweensOf([panes, ...shown]);
+					gsapWithCSS.fromTo(panes, {
+						height: from,
+						overflow: "hidden"
+					}, {
+						height: panes.scrollHeight,
+						duration: .26,
+						ease: "power2.out",
+						clearProps: "height,overflow"
+					});
+					gsapWithCSS.fromTo(shown, {
+						autoAlpha: 0,
+						y: 6
+					}, {
+						autoAlpha: 1,
+						y: 0,
+						duration: .22,
+						ease: "power2.out",
+						clearProps: "opacity,visibility,transform"
+					});
+				});
+			}, { signal: ctx.signal });
 			document.addEventListener("keydown", (event) => {
 				if (editor && event.key === "Escape" && !document.querySelector("dialog[open]")) close();
 			}, { signal: ctx.signal });
 			mobile.addEventListener("change", () => {
-				if (!mobile.matches) close();
+				if (!mobile.matches) close(true);
 			}, { signal: ctx.signal });
-			window.visualViewport?.addEventListener("resize", viewport, { signal: ctx.signal });
+			window.visualViewport?.addEventListener("resize", settle, { signal: ctx.signal });
 			window.visualViewport?.addEventListener("scroll", viewport, { signal: ctx.signal });
+			window.addEventListener("resize", settle, { signal: ctx.signal });
+			document.addEventListener("focusin", (event) => {
+				if (editor && event.target instanceof Node && editor.contains(event.target)) settle();
+			}, { signal: ctx.signal });
 			const launch = document.createElement("button");
 			launch.type = "button";
 			launch.className = "nspp-tool-icon";
@@ -23769,7 +27113,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			(document.getElementById("nspp-tools") || document.body).append(launch);
 			return () => {
 				stop();
-				close();
+				close(true);
 				launch.remove();
 			};
 		}
@@ -23780,7 +27124,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		daily: "日榜",
 		weekly: "周榜"
 	};
-	function parse(text) {
+	function parse$1(text) {
 		const data = JSON.parse(text);
 		if (!data || !Array.isArray(data.posts)) throw new Error("热榜数据格式无效");
 		const seen = new Set();
@@ -23789,13 +27133,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const post = entry?.post;
 			if (!post || !Number.isSafeInteger(post.id) || post.id <= 0 || typeof post.title !== "string" || !post.title.trim() || seen.has(post.id)) return [];
 			seen.add(post.id);
+			const authorId = count(post.author_id), posted = count(post.post_timestamp) * 1e3;
 			return [{
 				id: post.id,
 				title: post.title,
 				author: typeof post.author === "string" ? post.author : "",
 				views: count(post.views),
 				comments: count(post.comments),
-				score: count(entry?.score)
+				score: count(entry?.score),
+				...authorId ? { authorId } : {},
+				...posted ? { posted } : {},
+				...typeof post.category === "string" && post.category ? { category: post.category } : {}
 			}];
 		});
 		if (data.posts.length && !posts.length) throw new Error("热榜数据格式无效");
@@ -23812,7 +27160,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				return;
 			}
 			const cleanup = () => signal.removeEventListener("abort", cancel);
-			const request = _GM_xmlhttpRequest({
+			const request = gmRequest({
 				method: "GET",
 				url: `https://api.bimg.eu.org/${kind}.json?t=${Date.now()}`,
 				anonymous: true,
@@ -23822,7 +27170,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					cleanup();
 					try {
 						if (response.status !== 200) throw new Error(`热榜 HTTP ${response.status}`);
-						resolve(parse(response.responseText));
+						resolve(parse$1(response.responseText));
 					} catch (error) {
 						reject(error);
 					}
@@ -23865,9 +27213,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			launch.setAttribute("aria-label", launch.title);
 			launch.dataset.nsppHotLauncher = "";
 			launch.append(document.importNode(new DOMParser().parseFromString(hot_flame_default, "image/svg+xml").documentElement, true));
-			const panel = document.createElement("dialog");
-			panel.className = "nspp-monitor nspp-hot-rankings";
-			panel.setAttribute("aria-label", "NodeSeek 热榜");
+			const panel = createSheet("nspp-monitor nspp-hot-rankings", "NodeSeek 热榜", { tall: true });
 			const head = document.createElement("div");
 			head.className = "nspp-hot-header";
 			const title = document.createElement("h2");
@@ -23875,9 +27221,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const close = document.createElement("button");
 			close.type = "button";
 			close.className = "nspp-hot-close";
-			close.title = "关闭热榜";
-			close.setAttribute("aria-label", close.title);
-			close.append(toolIcon("close"));
+			iconButton(close, "close", "关闭热榜");
 			close.addEventListener("click", () => panel.close(), { signal: ctx.signal });
 			head.append(title, close);
 			const toolbar = document.createElement("nav");
@@ -23896,7 +27240,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			});
 			const refresh = document.createElement("button");
 			refresh.type = "button";
-			refresh.textContent = "刷新";
+			iconButton(refresh, "refresh", "刷新");
 			refresh.addEventListener("click", () => {
 				load(true);
 			}, { signal: ctx.signal });
@@ -23904,6 +27248,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const status = document.createElement("p");
 			status.setAttribute("role", "status");
 			const list = document.createElement("ol");
+			list.className = "nspp-sheet-body";
 			head.replaceChildren(title, toolbar, close);
 			panel.append(head, status, list);
 			document.body.append(panel);
@@ -23916,7 +27261,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				const snapshot = cache.get(active), busy = pending.has(active);
 				tabs.forEach((tab) => tab.setAttribute("aria-pressed", String(tab.dataset.ranking === active)));
 				refresh.disabled = busy;
-				refresh.textContent = errors.has(active) ? "重试" : "刷新";
+				iconButton(refresh, "refresh", errors.has(active) ? "重试" : "刷新");
 				status.classList.toggle("nspp-sweep-shine", busy);
 				for (const control of [status, refresh]) if (busy) control.setAttribute("aria-busy", "true");
 				else control.removeAttribute("aria-busy");
@@ -23933,7 +27278,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						"heat"
 					]) {
 						const block = document.createElement("span");
-						block.className = `nspp-hot-skeleton-${part} nspp-sweep-shine`;
+						block.className = `nspp-hot-skeleton-${part} nspp-skeleton-shine`;
 						row.append(block);
 					}
 					list.append(row);
@@ -23990,9 +27335,3694 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			};
 		}
 	};
-	_css("#nspp-tools{z-index:999;box-sizing:border-box;border:1px solid var(--border-color,#d1d9e0);background:var(--bg-color,Canvas);width:44px;max-height:55dvh;color:var(--text-color,CanvasText);isolation:isolate;border-radius:12px;flex-direction:column;align-items:center;gap:2px;padding:6px;display:flex;position:fixed;bottom:16px;right:72px;overflow-y:auto;box-shadow:0 4px 16px #0000000d}#nspp-tools:not(:has(button:not([hidden]))){display:none}#nspp-tools{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light}.dark-layout #nspp-tools{--bg-color:#262626;--text-color:#dedede;--border-color:#454545;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark}html[data-nspp-settings-open] #nspp-tools,html[data-nspp-settings-open] [data-nspp-ai-launcher]{display:none!important}html[data-nspp-background] #nspp-tools *,html[data-nspp-background] .nspp-user-hover *{animation-play-state:paused!important}@media (width<=700px),(hover:none){.nspp-user-hover{display:none!important}#nspp-tools{right:auto;left:max(8px, env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));gap:2px;width:44px;max-width:44px;max-height:36dvh;padding:6px}#nspp-tools .nspp-tool-icon{width:30px;height:30px}body:has(.nspp-messages-container[data-nspp-message-view=new]) #nspp-tools{display:none!important}}.discussion-wrapper .discussion-item.nspp-discussion-row>a:first-child{overflow-wrap:anywhere;flex:1;min-width:0}.discussion-wrapper .discussion-item.nspp-discussion-row>:not(a:first-child){flex:none;margin-right:0}.discussion-wrapper .nspp-discussion-row>.nspp-discussion-stats{color:#ccc;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;gap:10px;margin:0 0 0 auto;padding-left:12px;font-size:12px;display:inline-flex}.nspp-discussion-stats[hidden],.nspp-discussion-stats>span[hidden]{display:none!important}.nspp-discussion-stats>span{align-items:center;gap:4px;display:inline-flex}.discussion-wrapper .discussion-item .nspp-discussion-stats .iconpark-icon{color:currentColor;flex:none;width:14px;height:14px}.discussion-wrapper .discussion-item .nspp-discussion-stats .iconpark-icon:hover{transform:none}#nspp-tools button,[data-nspp-resolve],.nspp-action{font:inherit;border:1px solid var(--border-color,#929a9380);color:var(--text-color,inherit);background:var(--bg-color,Canvas);cursor:pointer;border-radius:.4rem;padding:.35rem .6rem;font-size:.8rem}#nspp-tools a,[data-nspp-footprints] a{text-underline-offset:.2em}#nspp-tools a:hover,[data-nspp-footprints] a:hover{text-decoration:underline}#nspp-tools button:disabled,.nspp-compose button:disabled{opacity:1;cursor:wait}#nspp-tools :focus-visible{outline-offset:2px;outline:2px solid}@media (prefers-reduced-motion:reduce){[class*=nspp-]{scroll-behavior:auto!important}}.nspp-monitor{border:1px solid var(--border-color,#929a9380);background:var(--bg-color,Canvas);width:min(42rem,92vw);max-height:85dvh;color:var(--text-color,CanvasText);border-radius:.75rem;padding:1rem;overflow:auto}.nspp-monitor::backdrop{background:#0006}.nspp-monitor ul{padding-left:1.25rem}.nspp-monitor li{overflow-wrap:anywhere;margin:.4rem 0}.nspp-monitor a{text-underline-offset:.2em}.nspp-monitor a:hover{text-decoration:underline}.nspp-block-controls{flex-wrap:wrap;gap:.3rem;margin-left:.4rem;font-size:.75rem;display:inline-flex}.nspp-user-badges{vertical-align:baseline;white-space:nowrap;font-variant-numeric:tabular-nums;flex-wrap:nowrap;align-items:center;gap:5px;margin-inline-start:4px;font:10px/16px -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:inline-flex}.nspp-user-badges>span{white-space:nowrap;background:0 0;border:0;padding:0}.nspp-level{color:var(--nspp-badge-color,#59636e);font-weight:600}.nspp-age{color:#59636e;cursor:help}.nspp-user-badges button{font:inherit;color:inherit;min-height:0;box-shadow:none;cursor:pointer;background:0 0;border:0;border-radius:2px;padding:0}.nspp-user-badges .nspp-trust{color:var(--nspp-badge-color,#59636e);font-weight:600}.nspp-user-badges .nspp-trust:hover{text-underline-offset:3px;text-decoration:underline}.nspp-user-badges button:focus-visible{outline-offset:2px;outline:2px solid #0969da}.nspp-level[data-level=\"0\"]{--nspp-badge-color:#66717e}.nspp-level[data-level=\"2\"]{--nspp-badge-color:#0969da}.nspp-level[data-level=\"3\"]{--nspp-badge-color:#087f8c}.nspp-level[data-level=\"4\"]{--nspp-badge-color:#218044}.nspp-level[data-level=\"5\"]{--nspp-badge-color:#a66b08}.dark-layout .nspp-level,.dark-layout .nspp-user-badges .nspp-trust{color:var(--nspp-badge-color,#9198a1)}.dark-layout .nspp-age{color:#9198a1}.dark-layout .nspp-level[data-level=\"0\"]{--nspp-badge-color:#a3adb8}.dark-layout .nspp-level[data-level=\"2\"]{--nspp-badge-color:#79b8ff}.dark-layout .nspp-level[data-level=\"3\"]{--nspp-badge-color:#56c8ce}.dark-layout .nspp-level[data-level=\"4\"]{--nspp-badge-color:#70cf91}.dark-layout .nspp-level[data-level=\"5\"]{--nspp-badge-color:#dfb653}.nspp-level[data-level=\"1\"],.nspp-trust[data-tier=danger]{--nspp-badge-color:#cf3434}.nspp-trust[data-tier=warning]{--nspp-badge-color:#a66b08}.nspp-trust[data-tier=success]{--nspp-badge-color:#218044}.dark-layout .nspp-level[data-level=\"1\"],.dark-layout .nspp-trust[data-tier=danger]{--nspp-badge-color:#ff8585}.dark-layout .nspp-trust[data-tier=warning]{--nspp-badge-color:#dfb653}.dark-layout .nspp-trust[data-tier=success]{--nspp-badge-color:#70cf91}.nspp-user-badges .nspp-trust[data-tier=perfect]{--nspp-badge-color:#ffe66d;background:#b82025;border-radius:3px;padding:0 4px}.nspp-user-badges .nspp-level[data-level=\"6\"]{--nspp-badge-color:#916008;background:#fff3cd;border-radius:3px;padding:0 4px;box-shadow:inset 0 0 0 1px #dfba6266}.dark-layout .nspp-user-badges .nspp-level[data-level=\"6\"]{--nspp-badge-color:#f0ce78;background:#3c321c;box-shadow:inset 0 0 0 1px #dfba6255}.nspp-user-hover-tags,.nspp-user-native-tags,.nspp-user-profile-tags{flex-wrap:wrap;align-items:center;gap:3px;display:inline-flex}.nspp-user-native-tags:empty,.nspp-user-profile-tags:empty,.nspp-user-profile-tags[hidden],.nspp-user-hover-tags[hidden]{display:none}.nspp-user-hover .role-tag,.nspp-chat-profile .role-tag{box-shadow:none;white-space:nowrap;border:0;border-radius:3px;flex:none;align-items:center;gap:3px;margin:0;padding:0 4px;font:500 10px/15px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;display:inline-flex}.nspp-user-hover .role-tag:not([data-nspp-role]),.nspp-chat-profile .role-tag:not([data-nspp-role]){color:#69717a;background:#818b9818}.nspp-user-hover .role-tag[data-nspp-role]:before,.nspp-chat-profile .role-tag[data-nspp-role]:before{width:8px;height:9px}.role-tag[data-nspp-role]{color:#2463a0;box-shadow:none;letter-spacing:0;vertical-align:middle;white-space:nowrap;background:#eaf3fc;border:0;border-radius:3px;flex:none;align-items:center;gap:3px;padding:0 5px;font:600 10px/16px -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:inline-flex}.role-tag[data-nspp-role]:before{content:\"\";clip-path:polygon(50% 0,95% 17%,88% 65%,50% 100%,12% 65%,5% 17%);background:currentColor;flex:none;width:9px;height:10px}.role-tag[data-nspp-role=founder]{color:#087f78;background:#e5f4ef}.role-tag[data-nspp-role=founder]:before{clip-path:polygon(50% 0,66% 34%,100% 50%,66% 66%,50% 100%,34% 66%,0 50%,34% 34%)}.role-tag[data-nspp-role=owner]{color:#4c596a;background:#eaf0f5}.role-tag[data-nspp-role=owner]:before{clip-path:polygon(0 15%,25% 40%,50% 0,75% 40%,100% 15%,88% 85%,12% 85%)}.dark-layout .role-tag[data-nspp-role=admin]{color:#9ac7f2;background:#23374b}.dark-layout .role-tag[data-nspp-role=founder]{color:#7cd4c1;background:#1e3b35}.dark-layout .role-tag[data-nspp-role=owner]{color:#c1ccd9;background:#303a47}.nspp-history{color:#1f2328;background:#fff;border:1px solid #d1d9e0;border-radius:8px;width:min(640px,100vw - 24px);max-width:none;max-height:80dvh;margin:auto;padding:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;box-shadow:0 8px 28px #1f232833}.nspp-history[open]{flex-direction:column;display:flex}.nspp-history::backdrop{background:#1f232866}.nspp-history *{box-sizing:border-box}.nspp-history header{box-shadow:none;background:0 0;border-bottom:0;flex:none;justify-content:space-between;align-items:center;padding:6px 12px;display:flex}.nspp-history h2{margin:0;font-size:14px;font-weight:600}.nspp-history button{min-height:26px;color:inherit;cursor:pointer;white-space:nowrap;background:#f6f8fa;border:1px solid #d1d9e0;border-radius:5px;padding:2px 8px;font-family:inherit;font-size:12px;line-height:20px}.nspp-history [hidden]{display:none!important}.nspp-history-toolbar{border-bottom:0;flex:none;gap:6px;padding:4px 12px 6px;display:flex}.nspp-history input{width:0;min-width:0;color:inherit;font:inherit;background:0 0;border:1px solid #d1d9e0;border-radius:5px;flex:1;padding:4px 8px}.nspp-history ol{overscroll-behavior:contain;min-height:60px;margin:0;padding:0 12px;list-style:none;overflow-y:auto}.nspp-history li{border:0;align-items:center;gap:8px;margin:0;padding:3px 0;display:flex}.nspp-history li button{background:0 0;border-color:#0000;min-height:24px;padding:1px 6px}.nspp-history li:hover{background:#818b980c}.nspp-history li a{color:#0969da;white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;text-decoration:none;overflow:hidden}.nspp-history a:hover{text-underline-offset:2px;text-decoration:underline}.nspp-history time{color:#59636e;flex:none;font-size:11px}.nspp-history :focus-visible{outline-offset:2px;outline:2px solid #0969da}.dark-layout .nspp-history{color:#f0f6fc;background:#0d1117;border-color:#3d444d}.dark-layout .nspp-history header,.dark-layout .nspp-history button{background:#151b23}.dark-layout .nspp-history a{color:#79c0ff}@media (width<=600px){.nspp-history{width:calc(100vw - 16px)}.nspp-history-toolbar{flex-wrap:wrap}.nspp-history time{display:none}}.nspp-block-toggle{vertical-align:middle;color:#59636e;cursor:pointer;background:0 0;border:0;border-radius:4px;min-width:0;margin-left:5px;padding:0 2px;font:11px/18px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.nspp-block-toggle[data-blocked=true]{color:#cf222e;border-color:#ff818280}.nspp-block-toggle:disabled{opacity:1;cursor:wait}.dark-layout .nspp-block-toggle{color:#9198a1;border-color:#3d444d}.nspp-user-badges[aria-busy=true]{color:#59636e;border-radius:4px;min-width:88px;min-height:16px}.nspp-trust-dialog{padding:16px}.nspp-trust-dialog p{white-space:pre-line;line-height:1.8}.nspp-trust-dialog button{align-self:flex-end}.nspp-post-preview{z-index:2147483644;border:1px solid var(--border-color,#929a9380);background:var(--bg-color,Canvas);width:min(340px,100vw - 24px);height:auto;max-height:min(320px,100dvh - 24px);color:var(--text-color,CanvasText);text-align:left;border-radius:6px;flex-direction:column;margin:0;padding:0;font:12px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:flex;position:fixed;overflow:hidden;box-shadow:0 3px 12px #00000018}.nspp-post-preview[hidden]{display:none}.nspp-post-preview{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light}.dark-layout .nspp-post-preview{--bg-color:#262626;--text-color:#dedede;--border-color:#454545;--link-color:#8ab4f8;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark}.nspp-post-preview>header,.nspp-post-preview>footer,.nspp-post-preview>.nspp-preview-content{background:inherit;color:inherit}.nspp-post-preview header{border-bottom:1px solid #929a9350;flex-shrink:0;align-items:center;gap:8px;padding:5px 8px;font-size:12px;line-height:18px;display:flex;position:static;box-shadow:none!important;text-shadow:none!important}.nspp-post-preview header a{white-space:normal;overflow-wrap:anywhere;min-width:0;color:inherit;flex:1;font-weight:500;text-decoration:none;text-shadow:none!important;box-shadow:none!important}.nspp-post-preview button{width:20px;height:20px;min-height:0;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:3px;flex:none;padding:0;font:16px/18px Arial,sans-serif}.nspp-post-preview>p{margin:0;padding:5px 8px;font-size:11px}.nspp-post-preview>p:empty{display:none}.nspp-preview-content{overscroll-behavior:contain;overflow-wrap:anywhere;flex:0 auto;min-height:0;padding:7px 8px;font-size:12px;line-height:1.5;overflow:auto}.nspp-preview-meta{opacity:.65;margin-bottom:5px;font-size:11px}.nspp-preview-content img{object-fit:contain;width:auto;max-width:100%;height:auto;max-height:120px}.nspp-preview-content pre{background:#818b9814;border-radius:6px;padding:6px;overflow:auto}.nspp-preview-content blockquote{border-left:3px solid #818b9850;margin:6px 0;padding-left:8px}.nspp-preview-content table{max-width:100%;display:block;overflow:auto}.nspp-preview-content h3{margin:6px 0;font-size:12px}.nspp-preview-comment{border-top:1px solid #818b9830;padding:6px 0}.nspp-preview-comment>strong{font-size:12px}.nspp-post-preview footer{background:0 0;border-top:1px solid #818b9830;flex-shrink:0;padding:4px 8px;font-size:11px;line-height:16px}.nspp-post-preview footer a,.nspp-preview-content a{color:var(--link-color,#0969da)}.nspp-preview-content article>:first-child{margin-top:0}.nspp-preview-content article>:last-child{margin-bottom:0}.nspp-post-preview,.nspp-post-preview *{box-sizing:border-box}.nspp-preview-content p{font-size:inherit;line-height:inherit;margin:5px 0}.nspp-preview-content :is(ul,ol){margin:5px 0;padding-left:18px}.nspp-preview-content :is(h1,h2,h4){margin:6px 0;font-size:13px;line-height:1.5}.nspp-post-preview button:hover{background:#818b981a}.nspp-post-preview footer a{color:inherit;opacity:.7;text-decoration:none}.nspp-post-preview footer a:hover{opacity:1;text-decoration:underline}.nspp-meta-label{opacity:.6;font-size:10px}.nspp-user-badges :is(.nspp-level,.nspp-age,.nspp-trust){align-items:center;gap:3px;display:inline-flex}.nspp-user-badges .iconpark-icon{flex:none;width:11px;height:11px}.nspp-list-actions{white-space:nowrap;color:var(--text-color,#777);flex-wrap:nowrap;align-items:center;gap:12px;padding-top:5px;font:11px/18px -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:flex;overflow-x:auto}.nspp-list-actions button{color:inherit;font:inherit;cursor:pointer;opacity:.75;background:0 0;border:0;border-radius:0;align-items:center;gap:4px;margin:0;padding:0;display:inline-flex}.nspp-list-actions .iconpark-icon{width:13px;height:13px}.nspp-interaction{background:var(--bg-color,Canvas);color:var(--text-color,CanvasText);border:1px solid #818b9840;border-radius:6px;margin:4px 0 12px 52px;padding:0;font:12px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;list-style:none}.nspp-interaction[hidden],.nspp-interaction form[hidden]{display:none!important}.nspp-interaction header{border-bottom:1px solid #818b9820;align-items:center;gap:8px;padding:6px 10px;display:flex}.nspp-interaction header a{white-space:nowrap;text-overflow:ellipsis;min-width:0;color:inherit;flex:1;overflow:hidden}.nspp-interaction button{color:inherit;font:inherit;cursor:pointer;background:0 0;border:0}.nspp-interaction header button{font-size:18px}.nspp-interaction p{margin:0;padding:6px 10px;font-size:11px}.nspp-interaction p:empty{display:none}.nspp-interaction form{padding:8px 10px}.nspp-interaction textarea{box-sizing:border-box;resize:vertical;width:100%;min-height:84px;max-height:240px;font:inherit;color:inherit;background:0 0;border:1px solid #818b9850;border-radius:4px;padding:8px;display:block}.nspp-reply-actions{justify-content:space-between;align-items:center;gap:8px;margin-top:6px;display:flex}.nspp-reply-actions span{opacity:.6;font-size:10px}.nspp-reply-actions button{color:#fff;background:#238636;border-radius:4px;padding:3px 10px}.nspp-reply-actions button:disabled{opacity:.4;cursor:default}@media (width<=600px){.nspp-interaction{margin-left:0}.nspp-list-actions{gap:8px}}.nspp-list-actions [hidden]{display:none!important}.nspp-block-toggle{align-items:center;gap:3px;display:inline-flex}.nspp-block-toggle .iconpark-icon{width:11px;height:11px}.nspp-block-toggle[hidden],#nspp-tools button[hidden]{display:none!important}.nspp-action-category{color:inherit;opacity:.65;flex:none;margin-left:auto;text-decoration:none}.nspp-action-category:hover{text-underline-offset:3px;text-decoration:underline}.nspp-list-actions button{flex-shrink:0}.nspp-post-preview footer .nspp-list-actions{gap:10px;padding:2px 0 5px}.nspp-post-preview footer .nspp-list-actions button{width:auto;height:auto;font:inherit;line-height:18px}.nspp-post-preview footer .nspp-list-actions button:hover{text-underline-offset:3px;background:0 0;text-decoration:underline}.nspp-post-preview::backdrop{background:#0006}@media (width<=600px),(hover:none){.nspp-post-preview{width:100%;max-width:none;max-height:85dvh;padding-bottom:env(safe-area-inset-bottom);border-radius:14px 14px 0 0;inset:auto 0 0}.nspp-post-preview header{padding:10px 16px;font-size:14px}.nspp-post-preview header a{white-space:normal}.nspp-post-preview button{width:40px;height:40px;font-size:22px}.nspp-preview-content{padding:12px 16px;font-size:14px;line-height:1.7}.nspp-post-preview footer{padding:12px 16px;font-size:13px}.nspp-post-preview footer a{padding:8px 0;display:block}}.nspp-count-loading{flex:none;font-size:10px}.nspp-quick-replies{box-sizing:border-box;background:var(--bg-color,Canvas);width:min(440px,100vw - 24px);max-height:85dvh;color:var(--text-color,CanvasText);border:1px solid #818b9838;border-radius:12px;margin:auto;padding:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;overflow:hidden;box-shadow:0 16px 60px #0003}.nspp-quick-replies[open]{flex-direction:column;display:flex}.nspp-quick-replies::backdrop{background:#0005}.nspp-quick-replies [hidden]{display:none!important}.nspp-quick-head,.nspp-quick-pagination{color:inherit;background:0 0;flex:none;justify-content:space-between;align-items:center;gap:6px;padding:8px 12px;display:flex}.nspp-quick-head strong{font-size:14px}.nspp-quick-replies button{font:inherit;color:inherit;cursor:pointer;min-height:28px;box-shadow:none;background:0 0;border:1px solid #818b9840;border-radius:6px;padding:4px 8px}.nspp-quick-replies button:hover:not(:disabled){background:#818b9814}.nspp-quick-replies :is(button,input,textarea):focus-visible{outline:2px solid var(--link-color,#0969da);outline-offset:2px}.nspp-quick-replies button:disabled{opacity:.4;cursor:default}.nspp-quick-head button{border:0;width:28px;padding:0;font-size:18px}.nspp-quick-replies p{margin:0}.nspp-quick-replies .nspp-quick-target{white-space:nowrap;text-overflow:ellipsis;opacity:.65;flex:none;padding:0 12px 6px;font-size:12px;overflow:hidden}.nspp-quick-toolbar{flex:none;gap:6px;padding:2px 12px 8px;display:flex}.nspp-quick-replies input,.nspp-quick-replies textarea{box-sizing:border-box;min-width:0;font:inherit;color:inherit;background:0 0;border:1px solid #818b9850;border-radius:6px;padding:5px 8px}.nspp-quick-toolbar input{flex:1;width:0}.nspp-quick-replies .nspp-quick-primary{color:var(--link-color,#0969da);background:#0969da0c;border-color:#0969da40;flex:none}.nspp-quick-list{overscroll-behavior:contain;min-height:0;padding:0 12px;overflow-y:auto}.nspp-quick-item{border-bottom:1px solid #818b9820;align-items:center;gap:4px;padding:2px 0;display:flex}.nspp-quick-item:last-child{border-bottom:0}.nspp-quick-item .nspp-quick-send{text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;border:0;flex:1;min-width:0;min-height:30px;padding:4px 6px}.nspp-quick-item button:not(.nspp-quick-send){border-color:#0000;flex:none;padding:4px 6px;font-size:11px}.nspp-quick-item .nspp-quick-delete:hover:not(:disabled){color:#cf3434;background:#cf343410}.nspp-quick-list>p{text-align:center;opacity:.6;padding:16px 6px}.nspp-quick-replies form{border-top:1px solid #818b9830;flex:none;padding:8px 12px}.nspp-quick-replies form button+button{margin-left:8px}.nspp-quick-replies textarea{resize:vertical;width:100%;max-height:22dvh;margin-bottom:8px;display:block}.nspp-quick-pagination{border-top:1px solid #818b9830;padding-top:6px;padding-bottom:6px;font-size:11px}.nspp-quick-replies .nspp-quick-status{opacity:.65;flex:none;padding:0 12px 6px;font-size:11px}@media (width<=600px){.nspp-quick-replies{width:100%;max-width:none;max-height:85dvh;padding-bottom:env(safe-area-inset-bottom);border-radius:14px 14px 0 0;margin:auto 0 0}.nspp-quick-replies button{min-height:34px}}#nspp-tools .nspp-tool-icon{width:30px;height:30px;min-height:30px;box-shadow:none;background:0 0;border:0;border-radius:7px;flex:none;justify-content:center;align-items:center;margin:0;padding:0;display:inline-flex}#nspp-tools .nspp-tool-icon:hover{background:#818b9818}#nspp-tools [data-nspp-settings-launcher]{background:#818b980c;order:10;margin-top:3px}#nspp-tools [data-nspp-settings-launcher] svg{width:18px;height:18px}#nspp-tools [data-nspp-hot-launcher]{background:linear-gradient(145deg,#fff5e8,#ffe8e8);order:-1;box-shadow:inset 0 0 0 1px #f9731614}#nspp-tools [data-nspp-hot-launcher]:hover{background:linear-gradient(145deg,#ffebd4,#ffdbdf)}#nspp-tools [data-nspp-hot-launcher] svg{filter:drop-shadow(0 0 3px #ff6a3280);width:28px;height:28px}#nspp-tools [data-nspp-monitor-launcher]{order:-2}#nspp-tools button[data-nspp-monitor-launcher][data-monitor-state=running]{background:#2180440d}.dark-layout #nspp-tools [data-nspp-hot-launcher]{background:linear-gradient(145deg,#493023,#45252f);box-shadow:inset 0 0 0 1px #ff965c18}.dark-layout #nspp-tools [data-nspp-hot-launcher]:hover{background:linear-gradient(145deg,#5b3826,#592c39)}.dark-layout #nspp-tools button[data-nspp-monitor-launcher][data-monitor-state=running]{background:#70cf9114}@media (width<=700px),(hover:none){#nspp-tools .nspp-tool-icon{width:30px;height:30px}}.nspp-user-badges .nspp-age,.nspp-profile-dialog .nspp-age{color:var(--nspp-age-color,#59636e)}.nspp-age[data-tone=new]{--nspp-age-color:#cf3434}.nspp-age[data-tone=recent]{--nspp-age-color:#a66b08}.nspp-age[data-tone=member]{--nspp-age-color:#0969da}.nspp-age[data-tone=longtime]{--nspp-age-color:#218044}.dark-layout .nspp-age[data-tone=new]{--nspp-age-color:#ff8585}.dark-layout .nspp-age[data-tone=recent]{--nspp-age-color:#dfb653}.dark-layout .nspp-age[data-tone=member]{--nspp-age-color:#79b8ff}.dark-layout .nspp-age[data-tone=longtime]{--nspp-age-color:#70cf91}.dark-layout .nspp-user-badges .nspp-age,.dark-layout .nspp-profile-dialog .nspp-age{color:var(--nspp-age-color,#9198a1)}.nspp-user-badges button.nspp-age{cursor:pointer}.nspp-user-badges button.nspp-age:hover{text-underline-offset:3px;text-decoration:underline}.nspp-profile-dialog{width:min(320px,100vw - 24px)}.nspp-profile-dialog header{justify-content:space-between;padding:10px 12px}.nspp-profile-summary{align-items:baseline;gap:8px;padding:4px 12px 10px;display:flex}.nspp-profile-summary strong{font-variant-numeric:tabular-nums;font-size:22px;line-height:1.3}.nspp-profile-summary span{font-size:11px}.nspp-profile-dialog dl{border-top:1px solid #818b9830;grid-template-columns:1fr auto;gap:6px 12px;margin:0;padding:10px 12px;display:grid}.nspp-profile-dialog dt{opacity:.65}.nspp-profile-dialog dd{font-variant-numeric:tabular-nums;margin:0}.nspp-profile-dialog>p{opacity:.75;margin:0;padding:0 12px 12px;font-size:11px}.post-title .nspp-readonly{vertical-align:middle;border-radius:3px;flex:none;align-items:center;color:#b52b32!important;box-shadow:none!important;background:#cf343410!important;border:0!important;margin-left:5px!important;padding:0 4px!important;font:500 10px/17px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif!important;display:inline-flex!important}.post-title .nspp-pinned{vertical-align:middle;flex:none;margin-left:4px;color:#768390!important;background:0 0!important;border:0!important;border-radius:0!important;width:13px!important;height:13px!important;padding:0!important}.post-title .nspp-pin-wrap{align-items:center;display:inline-flex;box-shadow:none!important;background:0 0!important;border:0!important;padding:0!important}.dark-layout .post-title .nspp-readonly{color:#ff8585!important;background:#ff858514!important}.dark-layout .post-title .nspp-pinned{color:#9198a1!important}.nspp-monitor{color:#1f2328;background:#fff;border:1px solid #818b9840;border-radius:10px;width:min(560px,100vw - 24px);max-height:80dvh;padding:0;font:12px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif}.nspp-monitor[open]{flex-direction:column;display:flex}.nspp-monitor *{box-sizing:border-box}.nspp-monitor header,.nspp-monitor footer{flex:none;align-items:center;gap:8px;padding:8px 12px;display:flex}.nspp-monitor header{border-bottom:1px solid #818b9828;justify-content:space-between}.nspp-monitor h3{margin:0;font-size:14px}.nspp-monitor button{min-height:28px;color:inherit;font:inherit;cursor:pointer;white-space:nowrap;background:0 0;border:1px solid #818b9838;border-radius:5px;padding:3px 8px}.nspp-monitor button:hover{background:#818b9814}.nspp-monitor button:disabled{opacity:1;cursor:wait}.nspp-monitor>p{opacity:.65;margin:0;padding:6px 12px;font-size:11px}.nspp-monitor-summary{flex-wrap:wrap;align-items:center;gap:2px 10px;display:flex}.nspp-monitor-results:empty{display:none}.nspp-monitor-results{overscroll-behavior:contain;min-height:0;padding:0 12px 8px;overflow:auto}.nspp-monitor-results section+section{border-top:1px solid #818b9828;margin-top:8px;padding-top:4px}.nspp-monitor h4{color:#768390;align-items:center;gap:6px;margin:5px 0;font-size:11px;display:flex}.nspp-monitor h4 small{background:#818b9814;border-radius:8px;padding:0 5px;font-size:10px}.nspp-monitor ul{margin:0;padding:0;list-style:none}.nspp-monitor li{margin:0;padding:4px 0}.nspp-monitor a{color:inherit;text-decoration:none}.nspp-monitor a:hover{color:#0969da;text-decoration:underline}.nspp-monitor section>p{opacity:.55;margin:6px 0;font-size:11px}.nspp-monitor footer{border-top:1px solid #818b9828;flex-wrap:wrap}.nspp-monitor footer span{opacity:.6;flex:1;font-size:10px}.nspp-monitor-tracked{flex-shrink:0;max-height:25dvh;padding:0 12px 8px;overflow:auto}.nspp-monitor-tracked[hidden]{display:none}.nspp-monitor-tracked>div{align-items:center;gap:8px;padding:3px 0;display:flex}.nspp-monitor-tracked a{flex:1;min-width:0}#nspp-tools button[data-unread=true]{color:#cf3434;background:#fff0f0;border-color:#cf3434}.dark-layout #nspp-tools button[data-unread=true]{color:#ff8585;background:#3b2525;border-color:#ff8585}.dark-layout .nspp-monitor{color:#e6edf3;background:#161b22}@media (width<=600px){.nspp-monitor{width:100%;max-height:85dvh;padding-bottom:env(safe-area-inset-bottom);border-radius:12px 12px 0 0;margin:auto 0 0}.nspp-monitor button{min-height:34px}}[data-nspp-monitor-match=\"0\"]{background-color:#fff2c9!important}[data-nspp-monitor-match=\"1\"]{background-color:#dff3e7!important}[data-nspp-monitor-match=\"2\"]{background-color:#e2efff!important}[data-nspp-monitor-match=\"3\"]{background-color:#ffe8dc!important}.dark-layout [data-nspp-monitor-match=\"0\"]{background-color:#3c3420!important}.dark-layout [data-nspp-monitor-match=\"1\"]{background-color:#203a2c!important}.dark-layout [data-nspp-monitor-match=\"2\"]{background-color:#23344c!important}.dark-layout [data-nspp-monitor-match=\"3\"]{background-color:#432f26!important}.nspp-monitor header,.nspp-monitor footer,.nspp-monitor-results section+section{border:0}.nspp-monitor-results section+section{margin-top:12px}.nspp-monitor footer{background:#818b980a}#nspp-tools button[data-monitor-state]{position:relative}.nspp-monitor-badge{box-sizing:border-box;border:1px solid var(--bg-color,Canvas);color:#fff;text-align:center;pointer-events:none;background:#cf3434;border-radius:999px;min-width:16px;padding:0 3px;font:600 9px/14px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;position:absolute;top:-6px;right:-6px}.nspp-monitor-badge[hidden]{display:none}#nspp-tools button[data-monitor-state=running]{color:#218044;background:var(--bg-color,Canvas);border-color:#218044}.dark-layout #nspp-tools button[data-monitor-state=running]{color:#70cf91}.nspp-monitor-editor{flex-wrap:wrap;flex:none;align-items:flex-end;gap:6px;padding:4px 12px 8px;display:flex}.nspp-monitor-editor label{min-width:180px;color:inherit;flex:1;font-size:11px}.nspp-monitor-editor textarea{width:100%;color:inherit;font:inherit;resize:vertical;background:#818b9810;border:0;border-radius:6px;max-height:18dvh;margin-top:4px;padding:6px 8px;display:block}.nspp-monitor-editor>span{opacity:.65;flex-basis:100%;font-size:10px}.nspp-monitor-editor>span:empty{display:none}@media (prefers-reduced-motion:reduce){.nspp-monitor[data-checking=true]>p:before{animation:none}}.nspp-monitor-spinner{vertical-align:-2px;border:2px solid #0969da30;border-top-color:#0969da;border-radius:50%;width:10px;height:10px;margin-right:6px;display:inline-block}.nspp-monitor-spinner[hidden]{display:none}.nspp-regex-help{opacity:.65;border:1px solid;border-radius:50%;justify-content:center;align-items:center;width:16px;height:16px;margin-left:6px;font-size:10px;display:inline-flex;text-decoration:none!important}.nspp-regex-help:hover{opacity:1}.nspp-monitor button,.nspp-footprints-dialog button{justify-content:center;align-items:center;gap:4px;display:inline-flex}.nspp-monitor button svg,.nspp-footprints-dialog button svg{flex:none;width:13px;height:13px}.nspp-monitor-editor>small{opacity:.65;flex-basis:100%;font-size:10px;line-height:1.6}.nspp-monitor-editor textarea{min-height:56px}.nspp-footprints-dialog{border-radius:10px;width:min(600px,100vw - 24px);padding:8px}.nspp-footprints-dialog header{padding:4px 4px 10px}.nspp-footprints-toolbar{flex-wrap:wrap;align-items:center;gap:6px;padding:4px;display:flex}.nspp-footprints-toolbar [role=status]{opacity:.6;margin-left:auto;font-size:11px}.nspp-footprints-dialog>div:last-child{padding:8px 4px}.nspp-footprints-dialog a{color:inherit;border-radius:4px;padding:4px 6px;text-decoration:none}.nspp-footprints-dialog a:hover{background:#818b9810}.nspp-footprints-list{gap:4px;max-height:min(55dvh,400px);display:grid;overflow:auto}.nspp-footprints-list>a{align-items:baseline;gap:12px;min-width:0;display:flex}.nspp-footprint-title{overflow-wrap:anywhere;flex:1;min-width:0}.nspp-footprints-list small{opacity:.6;white-space:nowrap;flex:none;font-size:11px}.nspp-monitor>header h3{margin-right:auto}.nspp-monitor-config{width:min(420px,100vw - 24px)}.nspp-monitor-config .nspp-monitor-editor{flex-direction:column;align-items:stretch;gap:8px;padding:8px 14px 14px;display:flex;overflow:auto}.nspp-monitor-config .nspp-monitor-editor label{flex:none;min-width:0}.nspp-monitor-config .nspp-monitor-editor textarea{min-height:88px}.nspp-monitor-config input{width:100%;font:inherit;color:inherit;background:#818b9810;border:0;border-radius:6px;margin-top:5px;padding:7px 8px;display:block}.nspp-monitor-config .nspp-monitor-editor>small,.nspp-monitor-config .nspp-monitor-editor>span{flex-basis:auto}.nspp-monitor-config .nspp-monitor-editor>button{align-self:flex-end;min-width:72px}@media (width<=600px){.nspp-monitor-config{border-radius:12px 12px 0 0;width:100%;margin:auto 0 0}}.md-editor .nspp-upload-status{background:0 0;border:0;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto;padding:0 6px;font-size:11px;line-height:24px;display:inline-flex}.nspp-upload-status [hidden]{display:none!important}.nspp-upload-status [role=status]{opacity:.7;overflow-wrap:anywhere;font-size:11px}.nspp-upload-status a{color:inherit;font-size:11px;text-decoration:none}.nspp-upload-status a:hover{text-decoration:underline}.nspp-upload-status button{color:inherit;cursor:pointer;background:0 0;border:0;justify-content:center;align-items:center;padding:4px;display:inline-flex}.nspp-upload-status button svg{width:16px;height:16px}.md-editor .nspp-upload-choose{width:30px;height:30px;min-height:30px;color:var(--text-color,#59636e);opacity:1;box-shadow:none;background:0 0;border:0;border-radius:4px;flex:none;justify-content:center;align-items:center;margin:0;padding:7px;display:inline-flex}.md-editor .nspp-upload-choose:hover{background:#818b9818}.nspp-upload-status [role=status]:empty{display:none}.nspp-upload-choose svg{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none}.md-editor .nspp-upload-status{min-width:0;max-width:100%}@media (width<=700px),(hover:none){.md-editor .mde-toolbar{flex-wrap:wrap;align-items:center;min-height:40px;padding-right:4px;overflow:visible;height:auto!important;display:flex!important}.md-editor .mde-toolbar>*{flex:none}.md-editor .mde-toolbar .toolbar-item.right{margin-left:auto}}.nspp-ai-compose{flex-wrap:wrap;align-items:start;gap:8px;padding:8px;display:flex}.nspp-ai-compose textarea{min-width:180px;color:inherit;background:0 0;border:1px solid #8885;border-radius:6px;flex:1;padding:6px}.nspp-ai-compose small{opacity:.7;width:100%}.nspp-original-notification{display:none!important}.nspp-ecg-shine{display:none}#nspp-tools button[data-monitor-state=running] .nspp-ecg-shine{stroke:#8ce9aa;stroke-dasharray:18 118;animation:1.8s linear infinite nspp-ecg-scan;display:block}@keyframes nspp-ecg-scan{0%{stroke-dashoffset:18px}to{stroke-dashoffset:-118px}}@media (prefers-reduced-motion:reduce){#nspp-tools button[data-monitor-state=running] .nspp-ecg-shine{animation:none;display:none}}.user-stat .stat-block:has(>.nspp-notification-row)>:has(>.nspp-original-notification:only-child){display:none}.nspp-list-actions[hidden]{display:none!important}.nspp-user-hover{z-index:10010;box-sizing:border-box;border:1px solid var(--border-color,#818b9840);background:var(--bg-color,Canvas);width:260px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);color:var(--text-color,CanvasText);border-radius:8px;padding:12px;font:12px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;position:fixed;overflow:auto;box-shadow:0 6px 24px #0002}.nspp-user-hover[hidden]{display:none!important}.nspp-user-hover-name{color:inherit;font-weight:600;text-decoration:none}.nspp-user-hover dl{grid-template-columns:1fr auto;gap:4px 12px;margin:10px 0;display:grid}.nspp-user-hover dt{opacity:.65}.nspp-user-hover dd{font-variant-numeric:tabular-nums;margin:0}.nspp-user-hover>.nspp-block-toggle{font:inherit;color:inherit;background:0 0;border:1px solid #818b9840;border-radius:4px;margin:8px 0 0;padding:4px 8px;display:flex}.nspp-user-hover{border-radius:12px;width:280px;padding:12px;box-shadow:0 12px 36px #0002,0 2px 6px #0001}.nspp-user-hover .nspp-user-hover-header{align-items:center;gap:8px;margin-bottom:10px;display:flex}.nspp-user-hover .nspp-user-hover-header>div{flex-wrap:wrap;align-items:center;gap:6px;min-width:0;display:flex}.nspp-user-hover-name{overflow-wrap:anywhere;font-size:13px}.nspp-user-hover-monogram{color:#0969da;background:#0969da10;border-radius:10px;flex:0 0 36px;place-items:center;height:36px;font-size:18px;font-weight:600;display:grid}.nspp-user-hover .nspp-user-hover-rich{background:#818b9808;border:1px solid #818b9824;border-radius:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 10px;padding:7px 6px;font-size:13px;line-height:22px;display:grid}.nspp-user-hover-rich>div{flex-direction:column;align-items:center;gap:4px;min-width:0;display:flex}.nspp-user-hover-rich small{opacity:.6;font-size:11px;line-height:16px}.nspp-user-hover-rich .iconpark-icon{width:13px;height:13px}.nspp-user-hover-rich .nspp-age{font-weight:600}.nspp-user-hover dl{gap:4px 10px;margin:0}.nspp-user-hover dd{text-align:right;font-weight:500}.nspp-user-hover>.nspp-block-toggle{border-radius:6px;justify-content:center;width:100%;margin-top:12px;padding:5px 8px}.nspp-user-hover>.nspp-block-toggle:hover{color:#cf3434;background:#cf343410;border-color:#cf343440}.dark-layout .nspp-user-hover{color:#e6edf3;background:#161b22}.dark-layout .nspp-user-hover-monogram{color:#79b8ff;background:#79b8ff18}.nspp-user-badges[hidden],.nspp-user-hover-tags[hidden]{display:none!important}.nspp-user-hover-tags{flex-wrap:wrap;gap:5px;width:100%;display:flex}.nspp-user-hover-avatar{object-fit:cover;border-radius:10px;flex:0 0 32px;width:32px;height:32px}.nspp-user-hover-avatar[hidden],.nspp-user-hover-monogram[hidden]{display:none!important}.nspp-user-hover-signature{color:inherit;opacity:.7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:5.1em;margin:-2px 0 10px;font-size:11px;line-height:1.7;overflow:auto}.nspp-user-hover[data-trust=danger]{background:#fff3f3;border-color:#e9b9bf}.nspp-user-hover[data-trust=warning]{background:#fff9ed;border-color:#e7d5ae}.nspp-user-hover[data-trust=success]{background:#f0faf4;border-color:#b8ddc5}.nspp-user-hover[data-trust=perfect]{background:#fff8e3;border-color:#ddbc6a}.dark-layout .nspp-user-hover[data-trust=danger]{background:#2b1c22;border-color:#643740}.dark-layout .nspp-user-hover[data-trust=warning]{background:#29251b;border-color:#605234}.dark-layout .nspp-user-hover[data-trust=success]{background:#182820;border-color:#355c45}.dark-layout .nspp-user-hover[data-trust=perfect]{background:#2d2617;border-color:#756031}.nspp-user-hover .nspp-user-hover-header{width:auto;height:auto;min-height:0;box-shadow:none;background:0 0;border:0;padding:0;position:static}.nspp-copy-button{color:inherit;font:inherit;cursor:pointer;background:0 0;border:0;border-radius:4px;padding:2px 5px}.nspp-copy-button:hover{background:#818b9820}.nspp-user-hover .nspp-copy-button{opacity:.65;font-size:10px}.nspp-category-actions{white-space:nowrap;flex:none;align-items:center;gap:5px;width:max-content;max-width:none;display:inline-flex}.nspp-category-reply{cursor:pointer;white-space:nowrap;flex:none;margin:0;font-family:inherit;position:static}.nspp-copy-button{justify-content:center;align-items:center;gap:4px;display:inline-flex}.nspp-copy-button[data-copied=true]{color:#218044;opacity:1}.nspp-user-hover{width:260px;padding:9px;line-height:1.45}.nspp-user-hover .nspp-user-hover-header{gap:7px;margin-bottom:5px}.nspp-user-hover .nspp-user-hover-header>div{flex:1}.nspp-user-hover .nspp-user-hover-score{color:#768390;cursor:pointer;background:0 0;border:0;flex-direction:column;flex:none;align-items:center;gap:0;margin:0 0 0 auto;padding:0;display:flex}.nspp-user-hover-score strong{letter-spacing:-1px;font-variant-numeric:tabular-nums;font:700 26px/1 -apple-system,BlinkMacSystemFont,sans-serif}.nspp-user-hover-score small{opacity:.75;font-size:9px;line-height:16px}.nspp-user-hover[data-trust=danger] .nspp-user-hover-score{color:#c63849}.nspp-user-hover[data-trust=warning] .nspp-user-hover-score{color:#a66b08}.nspp-user-hover[data-trust=success] .nspp-user-hover-score{color:#218044}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score{color:#a56b00}.dark-layout .nspp-user-hover .nspp-user-hover-score{filter:brightness(1.5)}.nspp-user-hover dl{border-block:1px solid #818b9824;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 10px;padding:6px 0}.nspp-user-hover dl>div{justify-content:space-between;align-items:baseline;gap:6px;min-width:0;display:flex}.nspp-user-hover dt{opacity:.7;flex:none;align-items:center;gap:4px;font-size:11px;display:inline-flex}.nspp-user-hover dt .iconpark-icon{width:13px;height:13px}.nspp-user-hover dd{overflow-wrap:anywhere;min-width:0;font-size:12px}.nspp-user-hover dd a{color:inherit;text-underline-offset:3px;-webkit-text-decoration:underline #818b9850;text-decoration:underline #818b9850}.nspp-user-hover dd a:hover,.nspp-user-hover dd a:focus-visible{text-decoration-color:currentColor}.nspp-user-hover .nspp-user-hover-rich{background:0 0;border:0;border-radius:0;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:3px 6px;margin:0;padding:5px 0 0;font-size:10px;line-height:18px;display:flex}.nspp-user-hover .nspp-user-hover-rich .nspp-age{background:color-mix(in srgb, currentColor 10%, transparent);border-radius:4px;gap:3px;padding:1px 4px;font-size:10px;font-weight:400}.nspp-user-hover .nspp-user-hover-rich .nspp-age strong{font-weight:700}.nspp-user-hover dd.nspp-user-badges{margin:0}.nspp-user-hover dd .nspp-level{background:color-mix(in srgb, currentColor 10%, transparent);border-radius:4px;padding:0 4px;font-size:11px;line-height:17px}.nspp-user-hover .nspp-user-hover-rich .iconpark-icon{width:11px;height:11px;display:inline-block}.nspp-user-hover-rich>span{opacity:.65}.nspp-user-hover>.nspp-block-toggle{margin-top:8px;padding:3px 6px}.nspp-user-hover-signature{color:#8d7832;opacity:1;max-height:3em;margin:0 0 5px;line-height:1.5}.dark-layout .nspp-user-hover-signature,.nspp-user-hover[data-trust=perfect] .nspp-user-hover-signature{color:#cdbb87}.nspp-user-hover-actions{gap:4px;margin-top:6px;display:flex}.nspp-user-hover-actions[hidden]{display:none!important}.nspp-user-hover-actions>:is(a,button){box-sizing:border-box;min-width:0;color:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:1px solid #0000;border-radius:6px;flex:1;justify-content:center;align-items:center;gap:3px;margin:0;padding:3px;font-family:inherit;font-size:11px;line-height:18px;text-decoration:none;display:inline-flex}.nspp-user-hover-actions .iconpark-icon{width:12px;height:12px}.nspp-user-hover-actions>[data-action=transfer]{color:#fff;background:#218044}.nspp-user-hover-actions>[data-action=follow]{color:#fff;background:#0969da}.nspp-user-hover-actions>[data-action=message]{color:#fff;background:#8250df}.nspp-user-hover-actions>.nspp-block-toggle{color:#fff;background:#cf3434}.nspp-user-hover-actions>:hover{filter:brightness(.9)}.nspp-user-hover-actions>:disabled{opacity:.5;cursor:wait}.nspp-user-transfer{width:min(340px,100vw - 32px)}.nspp-user-transfer form{gap:12px;display:grid}.nspp-user-transfer label{gap:6px;display:grid}.nspp-user-transfer input{box-sizing:border-box;width:100%;color:inherit;font:inherit;background:0 0;border:1px solid #818b9840;border-radius:6px;padding:8px}.nspp-user-transfer [role=status]{overflow-wrap:anywhere;margin:0;font-size:12px}.nspp-user-transfer [role=status]:empty{display:none}.nspp-transfer-actions{justify-content:flex-end;gap:8px;display:flex}.nspp-user-hover[data-trust=perfect],.dark-layout .nspp-user-hover[data-trust=perfect]{color:#eee9df;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:radial-gradient(at 100% 0,#c8a5651c,#0000 65%),linear-gradient(145deg,#26272b,#191a1e);border-color:#ac8e555c;border-radius:10px;padding:9px;box-shadow:inset 0 1px #e8ce9133,0 16px 40px #0004,0 3px 10px #0002}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-header{margin-bottom:5px}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-name{color:#f5efe2;font-weight:600}.nspp-user-hover[data-trust=perfect] :is(.nspp-user-hover-avatar,.nspp-user-hover-monogram){outline-offset:2px;border-radius:9px;outline:1px solid #d3b57566}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-monogram{color:#e8ce96;background:#d3b57514}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score{color:#ebce91;filter:none}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score strong{letter-spacing:-1px;text-shadow:0 2px 14px #d6b46c20;font-size:26px;font-weight:600}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score small{color:#c6b899;opacity:1;font-size:9px}.nspp-user-hover[data-trust=perfect] dl{border-color:#d3b57526}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-rich small{color:#b9b3a7;opacity:1}.nspp-user-hover[data-trust=perfect] .nspp-user-badges :is(.nspp-age,.nspp-level){--nspp-badge-color:#e5ce9c;--nspp-age-color:#b9d0be}.nspp-user-hover[data-trust=perfect] .nspp-user-badges .nspp-level[data-level=\"6\"]{background:#d3b57518;box-shadow:inset 0 0 0 1px #d3b57538}.nspp-user-hover[data-trust=perfect] dt{color:#b9b3a7;opacity:1}.nspp-user-hover[data-trust=perfect] dd{color:#eee6d6}.nspp-user-hover[data-trust=perfect] .nspp-copy-button{color:#cabb9c;opacity:1}.nspp-user-hover[data-trust=perfect] .nspp-copy-button[data-copied=true]{color:#9cd3ac}.nspp-user-hover[data-trust=perfect]>.nspp-block-toggle{color:#c7bcaa;background:0 0;border-color:#d3b57530}.nspp-user-hover[data-trust=perfect]>.nspp-block-toggle:hover{color:#ffb4b4;background:#c9787810;border-color:#c978785c}.nspp-user-hover[data-trust=perfect] :focus-visible{outline-offset:2px;outline:2px solid #e8ce96}.nspp-ai-dialog{box-sizing:border-box;width:min(600px,100vw - 32px);max-height:85dvh;color:var(--text-color,#24292f);background:var(--bg-color,#fff);border:1px solid #8884;border-radius:10px;padding:20px;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;overflow:auto;box-shadow:0 16px 48px #0002}.nspp-ai-dialog.nspp-ai-config{width:min(460px,100vw - 32px)}.nspp-ai-dialog::backdrop{background:#0005}.nspp-ai-dialog .nspp-ai-header{align-items:center;gap:8px;margin-bottom:8px;display:flex}.nspp-ai-dialog h2{margin:0;font-size:16px;font-weight:600;line-height:24px}.nspp-ai-dialog .nspp-ai-hint{opacity:.65;margin:0 0 18px;font-size:12px}.nspp-ai-dialog label{gap:6px;margin-bottom:14px;font-size:12px;font-weight:500;display:grid}.nspp-ai-dialog :is(input,textarea,select){box-sizing:border-box;color:inherit;font:inherit;background:0 0;border:1px solid #8885;border-radius:6px;padding:7px 10px;line-height:20px}.nspp-ai-dialog :is(input,textarea){width:100%}.nspp-ai-dialog textarea{resize:vertical}.nspp-ai-dialog input::placeholder,.nspp-ai-dialog textarea::placeholder{color:inherit;opacity:.4}.nspp-ai-dialog button{appearance:none;min-height:32px;color:inherit;font:inherit;cursor:pointer;background:#8881;border:1px solid #8885;border-radius:6px;padding:5px 12px}.nspp-ai-dialog button:hover{background:#8882}.nspp-ai-dialog :is(.nspp-ai-primary,[data-nspp-ai]){color:#fff;background:#24292f;border-color:#24292f}.nspp-ai-dialog :is(.nspp-ai-primary,[data-nspp-ai]):hover{background:#39414a}.nspp-ai-dialog :focus-visible{outline-offset:2px;outline:2px solid #5989ba}.nspp-ai-dialog .nspp-ai-actions{border-top:1px solid #8883;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;display:flex}.nspp-ai-dialog .nspp-ai-compose{gap:8px;padding:12px 0 0}.dark-layout .nspp-ai-dialog{color:#dce1e7;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:#202428}.dark-layout .nspp-ai-dialog :is(.nspp-ai-primary,[data-nspp-ai]){color:#24292f;background:#e0e5eb;border-color:#e0e5eb}@media (width<=480px){.nspp-ai-dialog{padding:16px}.nspp-ai-dialog .nspp-ai-compose textarea{min-width:100%}}.nspp-history .nspp-history-day{color:#768390;justify-content:space-between;margin-top:8px;font-size:11px}.nspp-history button[aria-pressed=true]{color:#0969da;border-color:currentColor}.nspp-history-avatar{vertical-align:middle;border-radius:50%;width:20px;height:20px;margin-right:6px}.nspp-confirm-dialog{box-sizing:border-box;background:var(--bg-color,#fff);width:min(360px,100vw - 32px);max-width:none;max-height:calc(100dvh - 32px);color:var(--text-color,#24292f);border:1px solid #818b9840;border-radius:12px;margin:auto;padding:18px;font:13px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;overflow:auto;box-shadow:0 18px 48px #0003}.nspp-confirm-dialog::backdrop{background:#0006}.nspp-confirm-dialog h2{overflow-wrap:anywhere;margin:0;font-size:15px}.nspp-confirm-dialog p{opacity:.7;margin:8px 0 18px}.nspp-confirm-dialog form{justify-content:flex-end;gap:8px;display:flex}.nspp-confirm-dialog :is(button,a){box-sizing:border-box;min-height:32px;color:inherit;font:inherit;cursor:pointer;background:0 0;border:1px solid #818b9840;border-radius:6px;justify-content:center;align-items:center;padding:5px 14px;text-decoration:none;display:inline-flex}.nspp-confirm-dialog .nspp-confirm-primary{color:#fff;background:#0969da;border-color:#0969da}.nspp-confirm-dialog .nspp-confirm-danger{color:#fff;background:#cf3434;border-color:#cf3434}.nspp-confirm-dialog :focus-visible{outline-offset:2px;outline:2px solid #0969da}.dark-layout .nspp-confirm-dialog{color:#e6edf3;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:#161b22}@media (width<=480px){.nspp-confirm-dialog{width:100%;max-height:85dvh;padding:18px 16px calc(16px + env(safe-area-inset-bottom));border-radius:14px 14px 0 0;margin:0;inset:auto 0 0}.nspp-confirm-dialog form>:is(button,a){flex:1;min-height:38px}}.nspp-hot-rankings{box-sizing:border-box;border-right:0;border-radius:14px 0 0 14px;width:min(420px,100vw - 24px);height:100dvh;max-height:none;margin:0;padding:12px 14px 10px;position:fixed;inset:0 0 0 auto;overflow:hidden}.nspp-hot-rankings[open]{flex-direction:column;display:flex}.nspp-hot-rankings .nspp-hot-header{box-shadow:none;background:0 0;border:0;flex:none;align-items:center;gap:12px;margin:0;padding:0 0 5px;display:flex}.nspp-hot-rankings h2{white-space:nowrap;border:0;flex:none;margin:0;padding:0;font:600 14px/24px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.nspp-hot-rankings nav{min-width:0;box-shadow:none;background:0 0;border:0;flex:1;align-items:center;gap:3px;margin:0;padding:0;display:flex}.nspp-hot-rankings button{all:unset;box-sizing:border-box;color:inherit;cursor:pointer;font:inherit;white-space:nowrap;text-align:center;border-radius:4px;padding:3px 7px;font-size:11px;line-height:18px}.nspp-hot-rankings button:hover{background:#818b9818}.nspp-hot-rankings button:focus-visible{outline-offset:2px;outline:2px solid #0969da}.nspp-hot-rankings button:disabled{opacity:.55;cursor:wait}.nspp-hot-rankings button[aria-pressed=true]{color:#0969da;background:#0969da12;font-weight:600}.dark-layout .nspp-hot-rankings button[aria-pressed=true]{color:#79b8ff;background:#79b8ff18}.nspp-hot-rankings nav>:last-child{color:var(--text-secondary-color,#818b98);margin-left:auto}.nspp-hot-rankings .nspp-hot-close{width:24px;height:24px;color:var(--text-secondary-color,#818b98);flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.nspp-hot-close svg{width:16px;height:16px}.nspp-hot-rankings ol{overscroll-behavior:contain;flex:1;min-height:0;margin:0;padding:0;list-style:none;overflow:auto}.nspp-hot-rankings li{box-sizing:border-box;border-bottom:1px solid #818b9814;align-items:center;gap:6px;min-height:28px;margin:0;padding:3px 0;display:flex}.nspp-hot-rankings li:last-child{border-bottom:0}.nspp-hot-rankings [role=status].nspp-sweep-shine{background-color:#818b980c;border-radius:4px}.nspp-hot-skeleton>span{background-color:#818b981c;border-radius:4px;flex:none;height:12px;display:block}.nspp-hot-skeleton .nspp-hot-skeleton-rank{width:20px;height:20px}.nspp-hot-skeleton .nspp-hot-skeleton-title{flex:1;margin-right:8%}.nspp-hot-skeleton:nth-child(2n) .nspp-hot-skeleton-title{margin-right:20%}.nspp-hot-skeleton .nspp-hot-skeleton-heat{width:40px;margin-left:auto}.nspp-hot-rankings li:hover{background:#818b980a}.nspp-hot-rankings li a{text-overflow:ellipsis;white-space:nowrap;min-width:0;color:inherit;flex:1;font-size:12px;line-height:21px;text-decoration:none;overflow:hidden}.nspp-hot-rankings li a:hover{text-decoration:underline}.nspp-hot-rank{text-align:center;color:#818b98;font-variant-numeric:tabular-nums;flex:none;width:20px;font-size:11px;font-weight:600}.nspp-hot-heat{color:#818b98;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;justify-content:flex-end;align-items:center;gap:3px;min-width:58px;font-size:10px;display:inline-flex}.nspp-hot-heat svg{fill:currentColor;stroke-width:1px;width:12px;height:14px}.nspp-hot-rankings [data-rank=\"1\"]{--nspp-rank-color:#ef4444}.nspp-hot-rankings [data-rank=\"2\"]{--nspp-rank-color:#f0782c}.nspp-hot-rankings [data-rank=\"3\"]{--nspp-rank-color:#c89419}.nspp-hot-rankings :is([data-rank=\"1\"],[data-rank=\"2\"],[data-rank=\"3\"]) .nspp-hot-rank{color:var(--nspp-rank-color);background:color-mix(in srgb, var(--nspp-rank-color) 10%, transparent);border-radius:4px;line-height:20px}.nspp-hot-rankings :is([data-rank=\"1\"],[data-rank=\"2\"],[data-rank=\"3\"]) .nspp-hot-heat{color:var(--nspp-rank-color)}.nspp-hot-rankings [role=status]{color:var(--text-secondary-color,#818b98);flex:none;margin:2px 0 4px;padding:0;font-size:10px;line-height:16px}@media (width<=700px),(hover:none){.nspp-hot-rankings{width:100%;height:min(85dvh,760px);max-height:85dvh;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-radius:14px 14px 0 0;margin:0;inset:auto 0 0}.nspp-hot-rankings .nspp-hot-header{flex-wrap:wrap;gap:5px}.nspp-hot-rankings .nspp-hot-header h2{flex:1;min-width:0}.nspp-hot-rankings nav{flex-basis:100%;order:3;overflow-x:auto}.nspp-hot-rankings h2{font-size:13px}.nspp-hot-rankings button{padding:3px 5px}.nspp-hot-rankings li{gap:4px}.nspp-hot-heat{min-width:50px}}@media (width<=380px){.nspp-hot-rankings nav{flex-basis:100%;order:1}.nspp-hot-rankings .nspp-hot-close{margin-left:auto}}@media (width<=700px),(hover:none){.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings){box-sizing:border-box;width:100%;max-width:none;height:min(88dvh,720px);max-height:88dvh;padding-bottom:env(safe-area-inset-bottom);border-radius:14px 14px 0 0;margin:0;inset:auto 0 0}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>header{flex-wrap:wrap;padding:8px 12px}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>header h3{flex:1 0 100%;margin-right:0}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>.nspp-monitor-summary{padding:8px 12px}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>.nspp-monitor-results{padding:0 12px 8px}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>.nspp-monitor-tracked{max-height:24dvh}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>footer{padding:8px 12px calc(8px + env(safe-area-inset-bottom));grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;display:grid}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>footer>span{grid-column:1/-1;min-width:0;display:block}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>footer>button{width:100%;min-width:0;margin:0}.nspp-monitor-config{width:100%;max-width:none;max-height:88dvh;padding-bottom:env(safe-area-inset-bottom);border-radius:14px 14px 0 0;margin:0;inset:auto 0 0}.nspp-monitor-config .nspp-monitor-editor{max-height:calc(88dvh - 58px);padding:10px 14px 14px}.nspp-monitor-config .nspp-monitor-editor>button{align-self:stretch;width:100%}}[data-nspp-reply-launcher]{display:none!important}@media (width<=700px),(hover:none){[data-nspp-reply-launcher]:not([hidden]){display:inline-flex!important}html[data-nspp-reply-open]{scroll-behavior:auto!important;overflow:hidden!important}html[data-nspp-reply-open] body{overscroll-behavior:none;width:100%;overflow:hidden!important}html[data-nspp-reply-open] #nspp-tools{visibility:hidden}.md-editor.nspp-floating-reply{padding-bottom:env(safe-area-inset-bottom);overscroll-behavior:contain;background:var(--bg-color,Canvas);color:var(--text-color,CanvasText);border-radius:12px 12px 0 0;overflow:auto;box-shadow:0 -6px 30px #0003;inset:auto 0 var(--nspp-reply-bottom,0px)!important;z-index:1001!important;box-sizing:border-box!important;width:100%!important;max-width:none!important;max-height:min(70dvh, var(--nspp-reply-height,70dvh))!important;margin:0!important;position:fixed!important}.nspp-floating-reply .CodeMirror{height:clamp(80px, calc(var(--nspp-reply-height,100dvh) * .32), 240px)!important}.nspp-floating-reply textarea{max-height:30dvh;font-size:16px}.nspp-floating-reply-header{justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;font-size:12px;display:flex}.nspp-floating-reply-header button{font:inherit;color:inherit;cursor:pointer;background:#818b9818;border:0;border-radius:4px;flex:none;padding:5px 10px}}");
+	var BUTTONS = [
+		{
+			id: "back-to-top",
+			icon: "up",
+			title: "回到顶部"
+		},
+		{
+			id: "back-to-parent",
+			icon: "back",
+			title: "返回上级"
+		},
+		{
+			id: "back-to-bottom",
+			icon: "down",
+			title: "到达底部"
+		}
+	];
+	function mountFastNav(tools) {
+		const group = document.createElement("div");
+		group.className = "nspp-fast-nav";
+		const controls = new AbortController();
+		const { signal } = controls;
+		const proxies = BUTTONS.map(({ id, icon, title }) => {
+			const button = document.createElement("button");
+			button.type = "button";
+			button.className = "nspp-tool-icon";
+			button.title = title;
+			button.setAttribute("aria-label", title);
+			button.dataset.nsppFastNav = id;
+			button.hidden = true;
+			button.append(toolIcon(icon));
+			button.addEventListener("click", () => document.getElementById(id)?.click(), { signal });
+			group.append(button);
+			return button;
+		});
+		tools.prepend(group);
+		let observed = null, frame = 0;
+		const groupObserver = new MutationObserver(() => schedule());
+		const sync = () => {
+			frame = 0;
+			const native = document.getElementById("fast-nav-button-group");
+			if (native !== observed) {
+				groupObserver.disconnect();
+				observed = native;
+				if (native) groupObserver.observe(native, {
+					subtree: true,
+					childList: true,
+					attributes: true,
+					attributeFilter: [
+						"style",
+						"class",
+						"hidden"
+					]
+				});
+			}
+			document.documentElement.toggleAttribute("data-nspp-fast-nav", !!native);
+			proxies.forEach((proxy, index) => {
+				const target = document.getElementById(BUTTONS[index].id);
+				toggle(proxy, !!target && !target.hidden && getComputedStyle(target).display !== "none");
+			});
+		};
+		const shown = new WeakMap();
+		function toggle(proxy, visible) {
+			if (shown.get(proxy) === visible) return;
+			const first = !shown.has(proxy);
+			shown.set(proxy, visible);
+			gsapWithCSS.killTweensOf(proxy);
+			if (first || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+				proxy.hidden = !visible;
+				gsapWithCSS.set(proxy, { clearProps: "all" });
+				return;
+			}
+			if (visible) {
+				proxy.hidden = false;
+				gsapWithCSS.fromTo(proxy, {
+					height: 0,
+					minHeight: 0,
+					opacity: 0,
+					scale: .6
+				}, {
+					height: 30,
+					minHeight: 30,
+					opacity: 1,
+					scale: 1,
+					duration: .24,
+					ease: "back.out(1.6)",
+					clearProps: "all"
+				});
+			} else gsapWithCSS.to(proxy, {
+				height: 0,
+				minHeight: 0,
+				opacity: 0,
+				scale: .6,
+				duration: .18,
+				ease: "power2.in",
+				onComplete: () => {
+					proxy.hidden = true;
+					gsapWithCSS.set(proxy, { clearProps: "all" });
+				}
+			});
+		}
+		function schedule() {
+			if (!frame) frame = requestAnimationFrame(sync);
+		}
+		const bodyObserver = new MutationObserver(() => {
+			if (document.getElementById("fast-nav-button-group") !== observed) schedule();
+		});
+		bodyObserver.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
+		window.addEventListener("scroll", schedule, {
+			passive: true,
+			signal
+		});
+		window.addEventListener("resize", schedule, {
+			passive: true,
+			signal
+		});
+		sync();
+		return () => {
+			controls.abort();
+			proxies.forEach((proxy) => gsapWithCSS.killTweensOf(proxy));
+			groupObserver.disconnect();
+			bodyObserver.disconnect();
+			cancelAnimationFrame(frame);
+			document.documentElement.removeAttribute("data-nspp-fast-nav");
+			group.remove();
+		};
+	}
+	function siteKind(host) {
+		if (/(?:^|\.)linux\.do$/i.test(host)) return "linuxdo";
+		if (/(?:^|\.)v2ex\.com$/i.test(host)) return "v2ex";
+		return "nodeseek";
+	}
+	var SITE = siteKind(typeof location === "undefined" ? "" : location.hostname);
+	function pageHealthy(kind, doc = document) {
+		if (doc.querySelector("#challenge-form, #challenge-running, #challenge-stage, #cf-error-details, .cf-error-details, #cf-wrapper")) return false;
+		if (/^(?:Just a moment|Attention Required|请稍候|Checking your browser)/i.test(doc.title.trim())) return false;
+		if (kind === "linuxdo") return !!doc.querySelector("#data-preloaded, #main, .ember-application");
+		if (kind === "v2ex") return !!doc.querySelector("#Wrapper #Main, #Wrapper");
+		return true;
+	}
+	var ICONS = {
+		messages: ["M12 3.8c4.8 0 8.7 3.25 8.7 7.25s-3.9 7.25-8.7 7.25c-.95 0-1.86-.13-2.72-.36L5 19.9l.97-3.45C4.3 15.12 3.3 13.17 3.3 11.05 3.3 7.05 7.2 3.8 12 3.8Z"],
+		posts: ["M9 4.6a3.4 3.4 0 1 1 0 6.8 3.4 3.4 0 0 1 0-6.8ZM3.4 19.6c.3-3.4 2.6-5.7 5.6-5.7s5.3 2.3 5.6 5.7M16.3 7.6h4.3M16.3 11h3.2M17.6 14.4h1.9"],
+		sections: ["M12 3.2 19.8 7.6v8.8L12 20.8l-7.8-4.4V7.6L12 3.2Z", "M5 8l7 4 7-4M12 12v8"],
+		hot: ["M12 3.3a8.7 8.7 0 1 1 0 17.4 8.7 8.7 0 0 1 0-17.4Z", "M15.6 8.4l-1.9 5.3-5.3 1.9 1.9-5.3 5.3-1.9Z"],
+		moon: ["M19.8 14.6A7.6 7.6 0 1 1 9.4 4.2a6 6 0 0 0 10.4 10.4Z"],
+		sun: ["M12 8.4a3.6 3.6 0 1 1 0 7.2 3.6 3.6 0 0 1 0-7.2Z", "M12 3.5v1.6M12 18.9v1.6M5.99 5.99l1.13 1.13M16.88 16.88l1.13 1.13M3.5 12h1.6M18.9 12h1.6M5.99 18.01l1.13-1.13M16.88 7.12l1.13-1.13"],
+		menu: ["", "M4.5 6.8h15M4.5 12h15M4.5 17.2h15"],
+		compose: ["", "M11.5 4.5H7a2.5 2.5 0 0 0-2.5 2.5v10A2.5 2.5 0 0 0 7 19.5h10a2.5 2.5 0 0 0 2.5-2.5v-4.5M16 4l4 4-7.5 7.5H8.5v-4L16 4Z"],
+		sort: ["", "M8 5v14m0 0-3-3m3 3 3-3M16 19V5m0 0-3 3m3-3 3 3"],
+		refresh: ["", "M19.5 12a7.5 7.5 0 1 1-2.5-5.6M19.5 4.5V9H15"],
+		dots: ["", "M6 12h.01M12 12h.01M18 12h.01"],
+		user: ["M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4.5 20a7.5 7.5 0 0 1 15 0"],
+		fish: ["M7 12c2-3.5 5-5.5 8.5-5.5 2.8 0 5 2 6.5 5.5-1.5 3.5-3.7 5.5-6.5 5.5C12 17.5 9 15.5 7 12ZM7 12 2.5 8.5v7L7 12Z", "M17.5 11h.01"],
+		like: ["M7.5 10.5v9h-3v-9h3Zm0 0 3.8-6.2c1.4 0 2.3 1 2 2.4l-.6 3.3h4.9a2 2 0 0 1 2 2.3l-1 6.1a2 2 0 0 1-2 1.6H7.5"],
+		heart: ["M12 19.5s-7.5-4.3-7.5-9.7A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6c0 5.4-7.5 9.7-7.5 9.7Z"],
+		star: ["M12 4.2l2.3 4.8 5.2.7-3.8 3.6.9 5.2L12 16l-4.6 2.5.9-5.2-3.8-3.6 5.2-.7L12 4.2Z"],
+		bookmark: ["M7 4.5h10a1 1 0 0 1 1 1v14l-6-3.8-6 3.8v-14a1 1 0 0 1 1-1Z"]
+	};
+	function icon$1(name, size = 24, stroke = 1.7) {
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		for (const [key, value] of Object.entries({
+			viewBox: "0 0 24 24",
+			width: String(size),
+			height: String(size),
+			fill: "none",
+			stroke: "currentColor",
+			"stroke-width": String(stroke),
+			"stroke-linecap": "round",
+			"stroke-linejoin": "round",
+			"aria-hidden": "true"
+		})) svg.setAttribute(key, value);
+		const [outline, detail] = ICONS[name];
+		for (const [d, line] of [[outline, false], [detail, true]]) {
+			if (!d) continue;
+			const path = document.createElementNS(svg.namespaceURI, "path");
+			path.setAttribute("d", d);
+			if (line) path.setAttribute("data-detail", "");
+			svg.append(path);
+		}
+		return svg;
+	}
+	var el = (tag, className = "", textContent = "") => {
+		const node = document.createElement(tag);
+		if (className) node.className = className;
+		if (textContent) node.textContent = textContent;
+		return node;
+	};
+	var WEEK = [
+		"星期日",
+		"星期一",
+		"星期二",
+		"星期三",
+		"星期四",
+		"星期五",
+		"星期六"
+	];
+	var pad = (n) => String(n).padStart(2, "0");
+	var days = (date, now) => Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()) / 864e5);
+	function chatTime(date, now = new Date()) {
+		const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+		const ago = days(date, now);
+		if (ago <= 0) return time;
+		if (ago === 1) return `昨天 ${time}`;
+		if (ago < 7) return `${WEEK[date.getDay()]} ${time}`;
+		const day = `${date.getMonth() + 1}月${date.getDate()}日 ${time}`;
+		return date.getFullYear() === now.getFullYear() ? day : `${date.getFullYear()}年${day}`;
+	}
+	function listTime(date, now = new Date()) {
+		const ago = days(date, now);
+		if (ago <= 0) return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+		if (ago === 1) return "昨天";
+		if (ago < 7) return WEEK[date.getDay()];
+		return `${String(date.getFullYear()).slice(-2)}/${date.getMonth() + 1}/${date.getDate()}`;
+	}
+	var GAP = 3e5;
+	var absolute$2 = (path) => new URL(path, location.origin).href;
+	function plainEditor(input) {
+		const element = el("div", "nspp-message-editor");
+		const body = el("div", "nspp-message-editor-body");
+		body.append(input);
+		element.append(body);
+		return {
+			element,
+			toolbar: el("div"),
+			activate() {},
+			busy: () => false,
+			setDisabled(disabled) {
+				input.disabled = disabled;
+			}
+		};
+	}
+	function createChat(ctx, source, onOpen) {
+		const me = source.me;
+		const root = el("section", "nspp-wecom-chat");
+		root.setAttribute("aria-label", "帖子会话");
+		const head = el("div", "nspp-wecom-chat-head");
+		const heading = el("div", "nspp-wecom-chat-title");
+		const title = el("a");
+		title.target = "_blank";
+		title.rel = "noopener noreferrer";
+		const count = el("span", "nspp-wecom-chat-count");
+		heading.append(title, count);
+		const actions = el("div", "nspp-wecom-chat-actions");
+		const moreButton = el("button", "nspp-wecom-more-button");
+		moreButton.type = "button";
+		moreButton.title = "更多";
+		moreButton.setAttribute("aria-label", "更多");
+		moreButton.setAttribute("aria-haspopup", "menu");
+		moreButton.setAttribute("aria-expanded", "false");
+		moreButton.append(icon$1("dots", 20, 1.8));
+		const menu = el("div", "nspp-wecom-menu");
+		menu.setAttribute("role", "menu");
+		menu.hidden = true;
+		const menuItem = (label) => {
+			const item = el("button", "", label);
+			item.type = "button";
+			item.setAttribute("role", "menuitem");
+			menu.append(item);
+			return item;
+		};
+		const latest = menuItem("跳到最新回复");
+		const refresh = menuItem("刷新");
+		const openOriginal = menuItem("在新标签页打开原帖");
+		actions.append(moreButton, menu);
+		head.append(heading, actions);
+		const body = el("div", "nspp-wecom-chat-body");
+		body.tabIndex = -1;
+		const older = el("button", "nspp-wecom-more", "查看更早的回复");
+		older.type = "button";
+		const stream = el("div", "nspp-wecom-stream");
+		stream.setAttribute("role", "log");
+		const status = el("p", "nspp-wecom-status");
+		status.setAttribute("role", "status");
+		const newer = el("button", "nspp-wecom-more", "加载更多回复");
+		newer.type = "button";
+		body.append(older, stream, status, newer);
+		const foot = el("div", "nspp-wecom-composer");
+		const tools = el("div", "nspp-wecom-composer-tools");
+		const input = el("textarea");
+		input.setAttribute("aria-label", "回复内容");
+		input.placeholder = me == null ? "登录后可回复" : "";
+		input.disabled = me == null;
+		const bar = el("div", "nspp-wecom-composer-bar");
+		const sendStatus = el("span", "nspp-wecom-send-status");
+		sendStatus.setAttribute("role", "status");
+		const idleHint = me == null ? "" : "Ctrl / ⌘ + Enter 发送";
+		const send = el("button", "nspp-wecom-send", "发送");
+		send.type = "button";
+		send.title = "Ctrl / ⌘ + Enter 发送";
+		send.disabled = true;
+		bar.append(sendStatus, send);
+		const markdown = el("input");
+		markdown.type = "checkbox";
+		markdown.checked = true;
+		const editor = source.markdown ? createMessageEditor(ctx, input, markdown, {
+			peer: () => current?.id,
+			insert: (id, text) => {
+				if (current?.id === id) {
+					input.setRangeText(text, input.selectionStart, input.selectionEnd, "end");
+					input.dispatchEvent(new Event("input", { bubbles: true }));
+				} else drafts.set(id, `${drafts.get(id) || ""}${drafts.get(id) ? "\n" : ""}${text}`);
+			},
+			changed: () => syncSend(),
+			original: () => {
+				if (current) window.open(absolute$2(source.href(current.id, current.pages)), "_blank", "noopener,noreferrer");
+			}
+		}) : plainEditor(input);
+		editor.setDisabled(me == null);
+		tools.append(editor.toolbar);
+		foot.append(tools, editor.element, bar);
+		const empty = el("div", "nspp-wecom-empty");
+		empty.append(icon$1("fish", 96, 1.1), el("p", "", "选择左侧帖子开始阅读"));
+		const floorMenu = el("div", "nspp-wecom-context");
+		floorMenu.setAttribute("role", "menu");
+		floorMenu.setAttribute("aria-label", "楼层操作");
+		floorMenu.hidden = true;
+		root.append(empty, head, body, foot, floorMenu);
+		let current = null;
+		let loading;
+		let closeImage;
+		let sending = false;
+		let replyTo = null;
+		const drafts = new Map();
+		const showEmpty = (on) => {
+			root.toggleAttribute("data-empty", on);
+			empty.hidden = !on;
+			head.hidden = body.hidden = on;
+			foot.hidden = on || me == null;
+		};
+		showEmpty(true);
+		const setStatus = (text, busy = false) => {
+			status.textContent = text;
+			status.hidden = !text;
+			setShine(status, busy);
+		};
+		const setSendStatus = (text, busy = false) => {
+			sendStatus.textContent = text || idleHint;
+			sendStatus.toggleAttribute("data-idle", !text);
+			setShine(sendStatus, busy);
+		};
+		const setMenu = (open) => {
+			menu.hidden = !open;
+			moreButton.setAttribute("aria-expanded", String(open));
+		};
+		const syncSend = () => {
+			send.disabled = sending || !current || me == null || !input.value.trim() || editor.busy(current.id);
+		};
+		const floorHref = (page, floor) => absolute$2(source.href(current.id, page, floor.floor));
+		const setPlaceholder = () => {
+			if (me != null && current) input.placeholder = `发送给 ${current.title}`;
+		};
+		setStatus("");
+		const range = () => {
+			const pages = current ? [...current.loaded.keys()] : [];
+			return {
+				min: pages.length ? Math.min(...pages) : 0,
+				max: pages.length ? Math.max(...pages) : 0
+			};
+		};
+		const fillReactions = (foot, floor, data) => {
+			foot.replaceChildren(...source.chips(floor, data).filter(({ count, on }) => count > 0 || on).map(({ title: label, count: total, on, icon: glyph }) => {
+				const chip = el("span", "nspp-wecom-reaction");
+				chip.title = on ? `已${label}` : label;
+				chip.toggleAttribute("data-on", on);
+				chip.append(glyph ? glyph() : label, String(total));
+				return chip;
+			}));
+			foot.hidden = !foot.childElementCount;
+		};
+		const message = (floor, page) => {
+			const base = absolute$2(source.href(current.id, page));
+			const item = el("article", "nspp-wecom-msg");
+			item.dataset.floor = String(floor.floor);
+			item.dataset.page = String(page);
+			item.toggleAttribute("data-op", floor.op);
+			item.toggleAttribute("data-mine", source.mine(floor));
+			const avatar = el("a", "nspp-wecom-avatar");
+			avatar.href = floor.profile || "#";
+			avatar.title = floor.author;
+			if (floor.profile) {
+				avatar.target = "_blank";
+				avatar.rel = "noopener noreferrer";
+			}
+			if (floor.avatar) {
+				const img = el("img");
+				img.src = floor.avatar;
+				img.alt = floor.author;
+				img.loading = "lazy";
+				avatar.append(img);
+			} else avatar.append(el("span", "nspp-wecom-letter", floor.author.slice(0, 1).toUpperCase()));
+			const main = el("div", "nspp-wecom-msg-main");
+			const info = el("div", "nspp-wecom-msg-meta");
+			const name = el("a", "nspp-wecom-name", floor.author);
+			name.href = floor.profile || "#";
+			if (floor.profile) {
+				name.target = "_blank";
+				name.rel = "noopener noreferrer";
+			}
+			info.append(name);
+			if (floor.poster) info.append(el("span", "nspp-wecom-tag nspp-wecom-tag-op", "楼主"));
+			if (source.author?.(floor)) {
+				item.setAttribute("data-author", "");
+				const author = el("button", "nspp-wecom-tag nspp-wecom-tag-author", "插件作者");
+				author.type = "button";
+				author.title = "NodeSeek++ 作者，也在摸鱼";
+				info.append(author);
+			}
+			floor.roles.forEach((role) => info.append(el("span", "nspp-wecom-tag", role)));
+			if (floor.hot) info.append(el("span", "nspp-wecom-tag nspp-wecom-tag-hot", "热评"));
+			const floorLink = el("a", "nspp-wecom-floor", floor.label ?? `#${floor.floor}`);
+			floorLink.href = floorHref(page, floor);
+			floorLink.target = "_blank";
+			floorLink.rel = "noopener noreferrer";
+			floorLink.title = "在原帖中查看这一楼";
+			info.append(floorLink);
+			const foot = el("div", "nspp-wecom-msg-foot");
+			fillReactions(foot, floor, current.loaded.get(page));
+			const bubble = el("div", "nspp-wecom-bubble");
+			bubble.title = [forumTime(floor.time)?.full || floor.timeTitle, floor.edited].filter(Boolean).join("\n");
+			if (floor.content) bubble.append(readingContent(floor.content, base));
+			else bubble.append(el("p", "nspp-wecom-muted", "（内容不可见）"));
+			main.append(info, bubble, foot);
+			item.append(avatar, main);
+			return item;
+		};
+		const render = () => {
+			if (!current) return;
+			const fragment = document.createDocumentFragment();
+			let previous = null;
+			for (const page of [...current.loaded.keys()].sort((a, b) => a - b)) {
+				const data = current.loaded.get(page);
+				if (data.replies != null) current.replies = Math.max(current.replies, data.replies);
+				for (const floor of data.floors) {
+					if (data.replies == null) current.replies = Math.max(current.replies, floor.floor);
+					const date = new Date(floor.time);
+					const at = date.getTime();
+					if (!Number.isNaN(at) && (previous == null || at - previous > GAP)) {
+						const divider = el("div", "nspp-wecom-divider");
+						divider.append(el("span", "", chatTime(date)));
+						fragment.append(divider);
+					}
+					if (!Number.isNaN(at)) previous = at;
+					fragment.append(message(floor, page));
+				}
+			}
+			closeFloorMenu();
+			stream.replaceChildren(fragment);
+			const { min, max } = range();
+			older.hidden = min <= 1;
+			newer.hidden = max >= current.pages;
+			title.textContent = current.title;
+			setPlaceholder();
+			count.textContent = current.replies ? `(${current.replies})` : "";
+			const first = current.loaded.get(min);
+			heading.title = [current.title, [
+				first?.category?.name,
+				`${current.pages} 页`,
+				first?.views ? `${first.views} 浏览` : "",
+				min === max ? `已加载第 ${min} 页` : `已加载第 ${min}–${max} 页`
+			].filter(Boolean).join(" · ")].join("\n");
+		};
+		async function load(page, mode) {
+			if (!current) return;
+			loading?.abort();
+			const controller = new AbortController();
+			loading = controller;
+			const topic = current;
+			older.disabled = newer.disabled = refresh.disabled = latest.disabled = true;
+			setStatus(mode === "replace" ? "正在加载…" : `正在加载第 ${page} 页…`, true);
+			try {
+				const signal = AbortSignal.any([ctx.signal, controller.signal]);
+				if (!page) page = topic.floor != null && source.locate ? await source.locate({
+					id: topic.id,
+					page: 0,
+					floor: topic.floor
+				}, signal) : 1;
+				if (controller.signal.aborted || current !== topic) return;
+				const data = await source.load(topic.id, page, signal);
+				if (controller.signal.aborted || current !== topic) return;
+				if (mode === "replace") topic.loaded.clear();
+				topic.loaded.set(page, data);
+				topic.pages = Math.max(data.pages, ...[...topic.loaded.values()].map((p) => p.pages));
+				if (data.title) topic.title = data.title;
+				const anchor = mode === "prepend" ? body.scrollHeight - body.scrollTop : 0;
+				render();
+				setStatus("");
+				if (mode === "prepend") body.scrollTop = body.scrollHeight - anchor;
+				else if (mode === "replace") {
+					const target = topic.floor == null ? null : stream.querySelector(`[data-floor="${topic.floor}"]`);
+					if (target) {
+						target.scrollIntoView({ block: "center" });
+						target.setAttribute("data-flash", "");
+						setTimeout(() => target.removeAttribute("data-flash"), 1600);
+					} else body.scrollTop = 0;
+				}
+			} catch {
+				if (controller.signal.aborted || current !== topic) return;
+				setStatus("暂时无法读取帖子，请稍后重试，或在原帖页面完成登录与站点验证。");
+			} finally {
+				if (loading === controller) {
+					loading = void 0;
+					older.disabled = newer.disabled = refresh.disabled = latest.disabled = false;
+				}
+			}
+		}
+		async function jumpToLatest() {
+			if (!current) return;
+			const topic = current;
+			topic.floor = null;
+			const page = topic.pages;
+			await load(page, "replace");
+			if (current === topic && topic.pages > page) await load(topic.pages, "replace");
+			if (current === topic) body.scrollTop = body.scrollHeight;
+		}
+		async function submit() {
+			syncSend();
+			if (send.disabled || !current) return;
+			const topic = current;
+			const text = input.value;
+			const to = replyTo?.id === topic.id && text.includes(replyTo.text) ? replyTo.floor : null;
+			sending = true;
+			syncSend();
+			editor.setDisabled(true);
+			setSendStatus(source.sending, true);
+			let result;
+			try {
+				result = await source.reply(topic.id, text, to);
+			} catch (error) {
+				result = error instanceof Error ? error.message : "发送失败，请稍后重试";
+			}
+			sending = false;
+			editor.setDisabled(false);
+			if (ctx.signal.aborted) return;
+			if (!result) {
+				drafts.delete(topic.id);
+				replyTo = null;
+				source.replied?.(topic.id);
+				if (current === topic) {
+					input.value = "";
+					setSendStatus("已发送");
+					jumpToLatest();
+				}
+			} else setSendStatus(result);
+			syncSend();
+		}
+		const menuActions = new WeakMap();
+		let menuToken = 0, menuX = 0, menuY = 0;
+		const closeFloorMenu = () => {
+			menuToken++;
+			if (!floorMenu.hidden) {
+				floorMenu.hidden = true;
+				floorMenu.replaceChildren();
+			}
+		};
+		const placeFloorMenu = () => {
+			const { width, height } = floorMenu.getBoundingClientRect();
+			floorMenu.style.left = `${Math.max(8, Math.min(menuX, innerWidth - width - 8))}px`;
+			floorMenu.style.top = `${Math.max(8, menuY + height > innerHeight - 8 ? menuY - height : menuY)}px`;
+		};
+		const menuButton = (label, run, detail = "") => {
+			const button = el("button", "", label);
+			button.type = "button";
+			button.setAttribute("role", "menuitem");
+			if (detail) button.append(el("small", "", detail));
+			menuActions.set(button, run);
+			floorMenu.append(button);
+			return button;
+		};
+		const menuSeparator = () => {
+			const line = el("div");
+			line.setAttribute("role", "separator");
+			floorMenu.append(line);
+		};
+		const insertDraft = (value) => {
+			input.value = value;
+			input.dispatchEvent(new Event("input", { bubbles: true }));
+			input.focus();
+			input.setSelectionRange(value.length, value.length);
+			input.scrollTop = input.scrollHeight;
+		};
+		const refreshReactions = (floor, data) => {
+			if (current?.loaded.get(data.page) !== data) return;
+			const foot = stream.querySelector(`.nspp-wecom-msg[data-floor="${floor.floor}"] .nspp-wecom-msg-foot`);
+			if (foot) fillReactions(foot, floor, data);
+		};
+		async function act(action, floor, data) {
+			try {
+				await action.run();
+				refreshReactions(floor, data);
+			} catch (error) {
+				ctx.notify(error instanceof Error && error.message ? error.message : `${action.label}未成功`);
+			}
+		}
+		async function confirmAction(action, floor, data) {
+			const token = ++menuToken;
+			const pending = action.confirm();
+			let prompt;
+			if (typeof pending === "string") prompt = pending;
+			else {
+				floorMenu.replaceChildren(el("p", "", "正在查询…"));
+				placeFloorMenu();
+				prompt = await pending;
+				if (token !== menuToken) return;
+			}
+			floorMenu.replaceChildren(el("p", "", prompt));
+			const row = el("div", "nspp-wecom-context-confirm");
+			const cancel = el("button", "", "取消");
+			cancel.type = "button";
+			menuActions.set(cancel, closeFloorMenu);
+			const ok = el("button", "", "确定");
+			ok.type = "button";
+			ok.dataset.primary = "";
+			menuActions.set(ok, () => {
+				closeFloorMenu();
+				act(action, floor, data);
+			});
+			row.append(cancel, ok);
+			floorMenu.append(row);
+			placeFloorMenu();
+			cancel.focus();
+		}
+		function quote(item, floor, page) {
+			const bubble = item.querySelector(".nspp-wecom-bubble");
+			const text = bubble?.innerText || bubble?.textContent?.trim() || "";
+			let value = input.value;
+			if (value && !value.endsWith("\n\n")) value += value.endsWith("\n") ? "\n" : "\n\n";
+			insertDraft(value + source.quote(floor, floorHref(page, floor), text, current.id));
+		}
+		function openFloorMenu(item, x, y, selected) {
+			const data = current?.loaded.get(Number(item.dataset.page));
+			const floor = data?.floors.find((each) => each.floor === Number(item.dataset.floor));
+			if (!data || !floor) return;
+			closeFloorMenu();
+			setMenu(false);
+			const page = data.page;
+			const actions = source.actions(floor, data);
+			for (const action of actions) menuButton(action.label, () => {
+				if (action.confirm) confirmAction(action, floor, data);
+				else {
+					closeFloorMenu();
+					act(action, floor, data);
+				}
+			}, action.detail).disabled = !!action.disabled;
+			if (actions.length) menuSeparator();
+			if (me != null && !input.disabled) {
+				menuButton("引用", () => {
+					closeFloorMenu();
+					quote(item, floor, page);
+				});
+				if (source.canReply(floor)) menuButton("回复", () => {
+					closeFloorMenu();
+					const text = source.mention(floor, floorHref(page, floor));
+					replyTo = {
+						id: current.id,
+						floor,
+						text
+					};
+					insertDraft(input.value.endsWith(text) ? input.value : input.value + text);
+				});
+			}
+			menuButton(selected ? "复制选中内容" : "复制", () => {
+				closeFloorMenu();
+				const text = selected || source.source?.(floor) || item.querySelector(".nspp-wecom-bubble")?.innerText || "";
+				(navigator.clipboard?.writeText(text) ?? Promise.reject()).catch(() => ctx.notify("复制失败，请手动选择文字复制"));
+			});
+			menuButton("在原帖中查看", () => {
+				closeFloorMenu();
+				window.open(floorHref(page, floor), "_blank", "noopener,noreferrer");
+			});
+			menuX = x;
+			menuY = y;
+			floorMenu.hidden = false;
+			placeFloorMenu();
+			floorMenu.querySelector("button:not(:disabled)")?.focus({ preventScroll: true });
+		}
+		const sentinel = typeof IntersectionObserver === "function" ? new IntersectionObserver((entries) => {
+			if (!entries.some((entry) => entry.isIntersecting) || loading || !current || newer.hidden) return;
+			load(range().max + 1, "append");
+		}, {
+			root: body,
+			rootMargin: "0px 0px 240px 0px"
+		}) : void 0;
+		sentinel?.observe(newer);
+		older.addEventListener("click", () => {
+			if (current) load(range().min - 1, "prepend");
+		}, { signal: ctx.signal });
+		newer.addEventListener("click", () => {
+			if (current) load(range().max + 1, "append");
+		}, { signal: ctx.signal });
+		refresh.addEventListener("click", () => {
+			setMenu(false);
+			if (current) {
+				current.floor = null;
+				load(range().min || 1, "replace");
+			}
+		}, { signal: ctx.signal });
+		latest.addEventListener("click", () => {
+			setMenu(false);
+			jumpToLatest();
+		}, { signal: ctx.signal });
+		openOriginal.addEventListener("click", () => {
+			setMenu(false);
+			if (current) window.open(absolute$2(source.href(current.id, range().min || 1)), "_blank", "noopener,noreferrer");
+		}, { signal: ctx.signal });
+		moreButton.addEventListener("click", () => setMenu(!!menu.hidden), { signal: ctx.signal });
+		document.addEventListener("click", (event) => {
+			if (!menu.hidden && !actions.contains(event.target)) setMenu(false);
+		}, {
+			capture: true,
+			signal: ctx.signal
+		});
+		root.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && !menu.hidden) {
+				setMenu(false);
+				moreButton.focus();
+			}
+		}, { signal: ctx.signal });
+		input.addEventListener("input", () => {
+			if (current) drafts.set(current.id, input.value);
+			syncSend();
+		}, { signal: ctx.signal });
+		input.addEventListener("keydown", (event) => {
+			if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.isComposing) {
+				event.preventDefault();
+				submit();
+			}
+		}, { signal: ctx.signal });
+		send.addEventListener("click", () => {
+			submit();
+		}, { signal: ctx.signal });
+		const swim = () => {
+			if (root.querySelector(".nspp-wecom-school")) return;
+			const school = el("div", "nspp-wecom-school");
+			school.setAttribute("aria-hidden", "true");
+			for (let i = 0; i < 7; i++) {
+				const fish = el("span", "", i % 3 ? "🐟" : "🐠");
+				fish.style.setProperty("--i", String(i));
+				fish.style.setProperty("--top", `${8 + Math.random() * 74}%`);
+				fish.style.setProperty("--size", `${18 + Math.round(Math.random() * 14)}px`);
+				school.append(fish);
+			}
+			root.append(school);
+			setTimeout(() => school.remove(), 4200);
+		};
+		stream.addEventListener("click", (event) => {
+			if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+			const target = event.target;
+			if (target.closest(".nspp-wecom-tag-author")) {
+				swim();
+				return;
+			}
+			const image = target.closest("img");
+			const photo = (img) => !linksElsewhere(img) && !img.hasAttribute("data-emoji") && !source.sticker?.(img);
+			if (image instanceof HTMLImageElement && image.closest(".nspp-wecom-bubble") && photo(image)) {
+				event.preventDefault();
+				if (closeImage) return;
+				closeImage = openImagePreview(Array.from(stream.querySelectorAll(".nspp-wecom-bubble img")).filter((img) => img === image || photo(img)), image, () => {
+					closeImage = void 0;
+				});
+				return;
+			}
+			const link = target.closest(".nspp-wecom-bubble a[href]");
+			const next = link ? source.target(link.href) : null;
+			if (next) {
+				event.preventDefault();
+				api.open(next);
+			}
+		}, { signal: ctx.signal });
+		stream.addEventListener("keydown", (event) => {
+			if (!(event.target instanceof HTMLImageElement) || !["Enter", " "].includes(event.key)) return;
+			event.preventDefault();
+			event.target.click();
+		}, { signal: ctx.signal });
+		stream.addEventListener("contextmenu", (event) => {
+			const target = event.target;
+			const item = target.closest(".nspp-wecom-msg");
+			if (!item || event.shiftKey || target.closest(".nspp-wecom-bubble :is(a[href], img)")) return;
+			event.preventDefault();
+			const selection = getSelection();
+			const selected = selection && !selection.isCollapsed && item.contains(selection.anchorNode) ? selection.toString().trim() : "";
+			openFloorMenu(item, event.clientX, event.clientY, selected);
+		}, { signal: ctx.signal });
+		floorMenu.addEventListener("click", (event) => {
+			const button = event.target.closest("button");
+			if (button && !button.disabled) menuActions.get(button)?.();
+		}, { signal: ctx.signal });
+		floorMenu.addEventListener("keydown", (event) => {
+			const items = [...floorMenu.querySelectorAll("button:not(:disabled)")];
+			const index = items.indexOf(document.activeElement);
+			const next = {
+				ArrowDown: index + 1,
+				ArrowUp: index - 1,
+				Home: 0,
+				End: items.length - 1
+			}[event.key];
+			if (next != null && items.length) {
+				event.preventDefault();
+				items[(next + items.length) % items.length].focus();
+			} else if (event.key === "Escape" || event.key === "Tab") {
+				event.preventDefault();
+				closeFloorMenu();
+				body.focus({ preventScroll: true });
+			}
+		}, { signal: ctx.signal });
+		document.addEventListener("pointerdown", (event) => {
+			if (!floorMenu.hidden && !floorMenu.contains(event.target)) closeFloorMenu();
+		}, {
+			capture: true,
+			signal: ctx.signal
+		});
+		body.addEventListener("scroll", closeFloorMenu, {
+			passive: true,
+			signal: ctx.signal
+		});
+		for (const type of ["blur", "resize"]) window.addEventListener(type, closeFloorMenu, { signal: ctx.signal });
+		const api = {
+			root,
+			open(target, titleHint = "", replies = 0) {
+				if (current?.id === target.id && current.loaded.has(target.page) && target.floor != null) {
+					const node = stream.querySelector(`[data-floor="${target.floor}"]`);
+					if (node) {
+						node.scrollIntoView({ block: "center" });
+						return;
+					}
+				}
+				current = {
+					id: target.id,
+					title: titleHint || `帖子 #${target.id}`,
+					pages: Math.max(1, target.page),
+					replies,
+					loaded: new Map(),
+					floor: target.floor
+				};
+				setMenu(false);
+				closeFloorMenu();
+				setPlaceholder();
+				showEmpty(false);
+				stream.replaceChildren();
+				older.hidden = newer.hidden = true;
+				title.textContent = current.title;
+				title.href = absolute$2(source.href(target.id));
+				title.title = "在新标签页打开原帖";
+				count.textContent = replies ? `(${replies})` : "";
+				heading.title = current.title;
+				input.value = drafts.get(target.id) || "";
+				editor.activate();
+				if (!sending) setSendStatus("");
+				syncSend();
+				onOpen(target.id);
+				load(target.page, "replace");
+				body.focus({ preventScroll: true });
+			},
+			destroy() {
+				loading?.abort();
+				closeImage?.();
+				sentinel?.disconnect();
+				source.destroy?.();
+				root.remove();
+			}
+		};
+		return api;
+	}
+	function postTarget(href, base) {
+		let url;
+		try {
+			url = new URL(href, base);
+		} catch {
+			return null;
+		}
+		const match = url.pathname.match(/^\/post-(\d+)(?:-(\d+))?(?:\.html)?\/?$/);
+		if (url.origin !== new URL(base).origin || !match) return null;
+		const floor = url.hash.match(/^#(\d+)$/);
+		return {
+			id: Number(match[1]),
+			page: Math.max(1, Number(match[2]) || 1),
+			floor: floor ? Number(floor[1]) : null
+		};
+	}
+	function pageConfig(doc) {
+		const raw = doc.querySelector("#temp-script")?.textContent?.trim();
+		if (!raw) return null;
+		try {
+			const bytes = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
+			const value = JSON.parse(new TextDecoder().decode(bytes));
+			return value && typeof value === "object" ? value : null;
+		} catch {
+			return null;
+		}
+	}
+	var positive = (value) => {
+		const n = Number(value);
+		return Number.isSafeInteger(n) && n > 0 ? n : void 0;
+	};
+	var text$1 = (el) => el?.textContent?.replace(/\s+/g, " ").trim() || "";
+	var tally = (value) => {
+		const n = Number(value);
+		return Number.isSafeInteger(n) && n >= 0 ? n : 0;
+	};
+	var string = (value) => typeof value === "string" ? value : "";
+	function floorStats(value) {
+		if (!value || typeof value !== "object") return null;
+		const raw = value;
+		const commentId = positive(raw.commentId), floor = Number(raw.floorIndex);
+		if (!commentId || !Number.isSafeInteger(floor) || floor < 0) return null;
+		return [floor, {
+			commentId,
+			markdown: string(raw.markdown),
+			created: string(raw.time?.createdDate),
+			edited: string(raw.time?.editedDate),
+			mine: raw.poster?.isMe === true,
+			upvoted: raw.upvoted === true,
+			upvotes: tally(raw.upvoteCount),
+			liked: raw.liked === true,
+			likes: tally(raw.likeCount),
+			disliked: raw.disliked === true,
+			dislikes: tally(raw.dislikeCount)
+		}];
+	}
+	function parseFloor(item, base) {
+		const floorText = item.querySelector(".floor-link")?.textContent?.match(/\d+/)?.[0] ?? item.id;
+		const floor = Number(floorText);
+		if (!/^\d+$/.test(String(floorText)) || !Number.isSafeInteger(floor)) return null;
+		const nameLink = item.querySelector(".author-info .author-name, .author-info > a[href*=\"/space/\"]");
+		const profile = nameLink?.getAttribute("href") || item.querySelector(".avatar-wrapper a")?.getAttribute("href") || "";
+		const uid = Number(profile.match(/\/space\/(\d+)/)?.[1]);
+		const img = item.querySelector(".avatar-wrapper img, img.avatar-normal");
+		let avatar = "";
+		try {
+			avatar = img?.getAttribute("src") ? new URL(img.getAttribute("src"), base).href : "";
+		} catch {}
+		const time = item.querySelector(".date-created time, time");
+		return {
+			floor,
+			op: floor === 0,
+			author: text$1(nameLink) || img?.getAttribute("alt") || "匿名",
+			profile,
+			uid: Number.isSafeInteger(uid) ? uid : null,
+			avatar,
+			poster: !!item.querySelector(".author-info .is-poster"),
+			roles: Array.from(item.querySelectorAll(".author-info .role-tag:not(.is-poster)"), text$1).filter(Boolean),
+			hot: !!item.querySelector(".floor-link-wrapper .hot-badge"),
+			time: time?.getAttribute("datetime") || "",
+			timeTitle: time?.getAttribute("title") || text$1(time),
+			edited: item.querySelector(".date-updated")?.getAttribute("title") || "",
+			content: item.querySelector(":scope > article.post-content, :scope > .post-content, article.post-content"),
+			reactions: Array.from(item.querySelectorAll(":scope > .comment-menu .menu-item[title]")).flatMap((menu) => {
+				const count = Number(text$1(menu.querySelector("span")));
+				return Number.isSafeInteger(count) && count > 0 ? [{
+					title: menu.getAttribute("title"),
+					count
+				}] : [];
+			}),
+			stats: null
+		};
+	}
+	function parsePostPage(doc, url) {
+		const target = postTarget(url, url);
+		if (!target) throw new Error("不是帖子地址");
+		const config = pageConfig(doc);
+		const data = config?.postData;
+		const perPage = positive(config?.commmentPerPage ?? config?.commentPerPage) ?? 10;
+		const pagerMax = Math.max(0, ...Array.from(doc.querySelectorAll(".nsk-pager a[href], .nsk-pager span[href]"), (a) => postTarget(a.getAttribute("href") || "", url)).filter((next) => next?.id === target.id).map((next) => next.page));
+		const pages = Math.max(target.page, positive(data?.postPageCount) ?? 0, pagerMax);
+		const first = (target.page - 1) * perPage + 1, last = target.page * perPage;
+		const stats = new Map((Array.isArray(data?.comments) ? data.comments : []).flatMap((comment) => {
+			const entry = floorStats(comment);
+			return entry ? [entry] : [];
+		}));
+		const byFloor = new Map();
+		doc.querySelectorAll(".nsk-post .content-item, ul.comments > .content-item").forEach((item) => {
+			const floor = parseFloor(item, url);
+			if (!floor) return;
+			floor.stats = stats.get(floor.floor) ?? null;
+			const inPage = floor.floor === 0 ? target.page === 1 : floor.floor >= first && floor.floor <= last;
+			const seen = byFloor.get(floor.floor);
+			if (!inPage) return;
+			if (seen) {
+				seen.hot ||= floor.hot;
+				return;
+			}
+			byFloor.set(floor.floor, floor);
+		});
+		const categoryLink = doc.querySelector(".nsk-post .content-category a[href]");
+		const categoryName = typeof data?.categoryWord === "string" ? data.categoryWord : text$1(categoryLink);
+		const categoryHref = typeof data?.categoryLink === "string" ? data.categoryLink : categoryLink?.getAttribute("href") || "";
+		return {
+			id: target.id,
+			page: target.page,
+			pages,
+			title: typeof data?.title === "string" && data.title.trim() || text$1(doc.querySelector(".post-title-link, .post-title h1")) || `帖子 #${target.id}`,
+			category: categoryName ? {
+				name: categoryName,
+				href: categoryHref
+			} : null,
+			views: data?.views == null ? "" : String(data.views),
+			collected: data?.collected === true,
+			collections: data?.collectionCount == null ? null : tally(data.collectionCount),
+			floors: [...byFloor.values()].sort((a, b) => a.floor - b.floor)
+		};
+	}
+	function postHref(id, page = 1, floor) {
+		return `/post-${id}-${page}${floor == null ? "" : `#${floor}`}`;
+	}
+	var num = (value) => {
+		const n = Number(value);
+		return Number.isFinite(n) ? n : 0;
+	};
+	var date = (value) => {
+		if (typeof value !== "string" || !value) return null;
+		const parsed = new Date(value);
+		return Number.isNaN(parsed.getTime()) ? null : parsed;
+	};
+	function avatarUrl(template, origin, size = 96) {
+		if (typeof template !== "string" || !template) return "";
+		try {
+			return new URL(template.replace("{size}", String(size)), origin).href;
+		} catch {
+			return "";
+		}
+	}
+	function jsonPath(path) {
+		const url = new URL(path, "https://forum.invalid");
+		const clean = url.pathname.replace(/\/+$/, "") || "/latest";
+		url.pathname = clean.endsWith(".json") ? clean : `${clean}.json`;
+		return url.pathname + url.search;
+	}
+	function discourseTarget(href, base) {
+		let url;
+		try {
+			url = new URL(href, base);
+		} catch {
+			return null;
+		}
+		if (url.origin !== new URL(base).origin) return null;
+		const parts = url.pathname.replace(/\/+$/, "").split("/").slice(1);
+		if (parts[0] !== "t" || parts.length < 2) return null;
+		const rest = parts.slice(1), numeric = (value) => !!value && /^\d+$/.test(value);
+		let id, post;
+		if (numeric(rest[0]) && (rest.length === 1 || rest.length === 2 && numeric(rest[1]))) [id, post] = rest;
+		else if (numeric(rest[1]) && rest.length <= 3 && (rest.length < 3 || numeric(rest[2]))) [, id, post] = rest;
+		if (!id) return null;
+		const floor = post ? Number(post) : null;
+		return {
+			id: Number(id),
+			page: floor && floor > 1 ? 0 : 1,
+			floor: floor && floor > 1 ? floor : null
+		};
+	}
+	var LISTS = [
+		"/latest",
+		"/new",
+		"/unread",
+		"/top",
+		"/hot",
+		"/bookmarks",
+		"/posted"
+	];
+	function discourseRoute(url) {
+		const topic = discourseTarget(url.href, url.origin);
+		if (topic) return {
+			list: null,
+			topic
+		};
+		const path = url.pathname.replace(/\/+$/, "") || "/";
+		if (path === "/" || path === "/categories") return {
+			list: "/latest",
+			topic: null
+		};
+		if (LISTS.includes(path)) return {
+			list: path + url.search,
+			topic: null
+		};
+		if (/^\/c\/.+\/\d+$/.test(path) || /^\/c\/\d+$/.test(path)) return {
+			list: `${path}/l/latest`,
+			topic: null
+		};
+		if (/^\/(?:c|tag|tags)\/./.test(path)) return {
+			list: path + url.search,
+			topic: null
+		};
+		return null;
+	}
+	function discourseRows(json, origin, categories) {
+		const users = new Map((json.users || []).map((user) => [user.id, user]));
+		return {
+			rows: (json.topic_list?.topics || []).flatMap((topic) => {
+				const id = num(topic.id);
+				if (!id) return [];
+				const opener = topic.posters?.find((poster) => /original poster|原始发帖人|发帖人/i.test(poster.description || "")) || topic.posters?.[0];
+				const author = users.get(opener?.user_id);
+				const unread = num(topic.unread_posts) || num(topic.new_posts);
+				return [{
+					id,
+					title: topic.title || topic.fancy_title || `话题 #${id}`,
+					author: author?.username || topic.last_poster_username || "",
+					avatar: avatarUrl(author?.avatar_template, origin),
+					meta: [categories.get(num(topic.category_id)), topic.last_poster_username].filter(Boolean).join(" · "),
+					time: date(topic.bumped_at || topic.last_posted_at || topic.created_at),
+					count: Math.max(0, num(topic.posts_count) - 1),
+					floor: null,
+					unread: unread || void 0,
+					read: topic.unseen ? false : void 0,
+					pinned: topic.pinned === true
+				}];
+			}),
+			next: json.topic_list?.more_topics_url || null
+		};
+	}
+	var NOTICES = {
+		1: "提到了你",
+		2: "回复了你",
+		3: "引用了你",
+		4: "编辑了你的帖子",
+		5: "赞了你的帖子",
+		6: "给你发了私信",
+		7: "邀请你加入私信",
+		9: "发布了回复",
+		11: "链接了你的帖子",
+		12: "授予了你徽章",
+		15: "提到了你的群组",
+		16: "给群组发了私信",
+		17: "发布了新话题",
+		19: "书签提醒",
+		25: "回应了你的帖子",
+		26: "投票已结束",
+		36: "回应了你的帖子"
+	};
+	function discourseNoticeRows(json, origin) {
+		return {
+			rows: (json.notifications || []).flatMap((notice) => {
+				const id = num(notice.topic_id);
+				if (!id) return [];
+				const who = notice.data?.display_username || notice.data?.original_username || notice.data?.username || "";
+				const what = NOTICES[num(notice.notification_type)] || "有新动态";
+				return [{
+					id,
+					title: notice.data?.topic_title || notice.fancy_title || notice.data?.badge_name || `话题 #${id}`,
+					author: who,
+					avatar: avatarUrl(notice.acting_user_avatar_template, origin),
+					meta: who ? `${who} ${what}` : what,
+					time: date(notice.created_at),
+					count: null,
+					floor: num(notice.post_number) > 1 ? num(notice.post_number) : null,
+					page: num(notice.post_number) > 1 ? 0 : 1,
+					read: notice.read === true,
+					notice: num(notice.id) || void 0
+				}];
+			}),
+			next: null
+		};
+	}
+	function discourseSections(categories) {
+		const valid = categories.filter((category) => num(category.id) && category.slug && category.name);
+		const order = (a, b) => num(a.position) - num(b.position) || String(a.name).localeCompare(String(b.name));
+		const byId = new Map(valid.map((category) => [num(category.id), category]));
+		const color = (category) => category.color && /^[0-9a-f]{3,8}$/i.test(category.color) ? `#${category.color}` : void 0;
+		return valid.filter((category) => !category.parent_category_id || !byId.has(num(category.parent_category_id))).sort(order).flatMap((parent) => [{
+			name: parent.name,
+			path: `/c/${parent.slug}/${parent.id}/l/latest`,
+			color: color(parent),
+			depth: 0
+		}, ...valid.filter((child) => num(child.parent_category_id) === num(parent.id)).sort(order).map((child) => ({
+			name: child.name,
+			path: `/c/${parent.slug}/${child.slug}/${child.id}/l/latest`,
+			color: color(child),
+			depth: 1
+		}))]);
+	}
+	function tidyCooked(root) {
+		const doc = root.ownerDocument;
+		root.querySelectorAll(".quote > .title img, .lightbox-wrapper .meta, .onebox-avatar, .site-icon, .cooked-date + svg").forEach((node) => node.remove());
+		root.querySelectorAll("aside.onebox, .onebox:not(a)").forEach((box) => {
+			const href = box.getAttribute("data-onebox-src") || box.querySelector("header a, h3 a, h4 a, a")?.getAttribute("href") || "";
+			const label = box.querySelector("h3, h4")?.textContent?.trim() || href;
+			const line = doc.createElement("p");
+			if (href) {
+				const link = doc.createElement("a");
+				link.setAttribute("href", href);
+				link.textContent = label;
+				line.append(link);
+			}
+			box.replaceWith(line);
+		});
+		root.querySelectorAll(".poll").forEach((poll) => {
+			const line = doc.createElement("p");
+			line.textContent = "（投票，请在原帖中查看）";
+			poll.replaceWith(line);
+		});
+		root.querySelectorAll(".video-placeholder-container[data-video-src]").forEach((video) => {
+			const line = doc.createElement("p");
+			const link = doc.createElement("a");
+			link.setAttribute("href", video.getAttribute("data-video-src"));
+			link.textContent = "视频";
+			line.append(link);
+			video.replaceWith(line);
+		});
+		return root;
+	}
+	var likeAction = (post) => post.actions_summary?.find((action) => action.id === 2);
+	function discourseFloor(post, origin, opener, parse) {
+		const number = num(post.post_number);
+		if (!number || post.post_type === 3) return null;
+		const like = likeAction(post);
+		const username = post.username || "";
+		const roles = [post.admin ? "管理员" : post.moderator ? "版主" : "", post.user_title || ""].filter(Boolean);
+		const created = post.created_at || "";
+		const edited = (post.version || 1) > 1 && post.updated_at && post.updated_at !== created ? `编辑于 ${new Date(post.updated_at).toLocaleString()}` : "";
+		return {
+			floor: number,
+			op: number === 1,
+			label: `#${number}`,
+			postId: num(post.id) || void 0,
+			author: username || post.name || "匿名",
+			profile: username ? `/u/${encodeURIComponent(username)}` : "",
+			uid: num(post.user_id) || null,
+			avatar: avatarUrl(post.avatar_template, origin),
+			poster: !!opener && username === opener,
+			roles: [...new Set(roles)],
+			hot: false,
+			time: created,
+			timeTitle: "",
+			edited,
+			content: post.cooked ? tidyCooked(parse(post.cooked)) : null,
+			reactions: [],
+			stats: null,
+			likes: num(post.reaction_users_count) || num(like?.count),
+			liked: like?.acted === true || !!post.current_user_reaction,
+			canLike: like?.can_act === true || like?.can_undo === true
+		};
+	}
+	function discoursePage(topic, posts, page, pages, origin, categories, parse) {
+		const id = num(topic.id);
+		const opener = topic.details?.created_by?.username || topic.post_stream?.posts?.find((post) => post.post_number === 1)?.username || "";
+		const category = categories.get(num(topic.category_id));
+		return {
+			id,
+			page,
+			pages: Math.max(1, pages),
+			replies: Math.max(0, num(topic.posts_count) - 1),
+			title: topic.title || topic.fancy_title || `话题 #${id}`,
+			category: category ? {
+				name: category,
+				href: `/c/${num(topic.category_id)}`
+			} : null,
+			views: topic.views == null ? "" : String(topic.views),
+			collected: false,
+			collections: null,
+			floors: posts.flatMap((post) => {
+				const floor = discourseFloor(post, origin, opener, parse);
+				return floor ? [floor] : [];
+			})
+		};
+	}
+	var STREAM_TTL = 6e4;
+	var inert = (html) => new DOMParser().parseFromString(`<div>${html}</div>`, "text/html").body.firstElementChild;
+	function preloaded(key) {
+		try {
+			const raw = document.getElementById("data-preloaded")?.getAttribute("data-preloaded");
+			const value = raw ? JSON.parse(raw)?.[key] : null;
+			return typeof value === "string" ? JSON.parse(value) : value ?? null;
+		} catch {
+			return null;
+		}
+	}
+	function darkColor(color) {
+		const [r, g, b, a = 1] = (color.match(/[\d.]+/g) || []).map(Number);
+		if (r == null || a === 0) return null;
+		return .2126 * r + .7152 * g + .0722 * b < 110;
+	}
+	function linuxdoSite(ctx) {
+		const origin = location.origin;
+		const current = preloaded("currentUser");
+		const categories = new Map();
+		let rawCategories = preloaded("site")?.categories || [];
+		rawCategories.forEach((category) => {
+			if (category.id && category.name) categories.set(category.id, category.name);
+		});
+		const topics = new Map();
+		let token = "";
+		const api = (path, signal) => ctx.request(path, {
+			signal,
+			headers: {
+				Accept: "application/json",
+				"X-Requested-With": "XMLHttpRequest"
+			}
+		});
+		const csrf = async () => {
+			token ||= document.querySelector("meta[name=\"csrf-token\"]")?.content || "";
+			if (!token) token = (await api("/session/csrf.json"))?.csrf || "";
+			if (!token) throw new Error("未能取得登录凭证，请刷新页面后重试");
+			return token;
+		};
+		async function write(path, init) {
+			const response = await fetch(path, {
+				...init,
+				credentials: "same-origin",
+				headers: {
+					Accept: "application/json",
+					"X-Requested-With": "XMLHttpRequest",
+					"X-CSRF-Token": await csrf(),
+					...init.headers
+				}
+			});
+			const data = await response.json().catch(() => null);
+			if (!response.ok) {
+				if (response.status === 403 && token) token = "";
+				throw new Error(data?.errors?.join("；") || data?.error || (response.status === 429 ? "操作太频繁，请稍后再试" : `站点未接受（HTTP ${response.status}）`));
+			}
+			return data;
+		}
+		async function ensureCategories(signal) {
+			if (rawCategories.length) return;
+			rawCategories = (await api("/site.json", signal))?.categories || [];
+			rawCategories.forEach((category) => {
+				if (category.id && category.name) categories.set(category.id, category.name);
+			});
+		}
+		const remember = (id, json) => {
+			const entry = topics.get(id) || {
+				thread: json,
+				stream: [],
+				posts: new Map(),
+				fetched: 0
+			};
+			entry.thread = json;
+			entry.fetched = Date.now();
+			if (Array.isArray(json.post_stream?.stream)) entry.stream = json.post_stream.stream;
+			for (const post of json.post_stream?.posts || []) if (post.id) entry.posts.set(post.id, post);
+			topics.set(id, entry);
+			return entry;
+		};
+		const pages = (entry) => Math.max(1, Math.ceil(entry.stream.length / 20));
+		const me = current?.username ? {
+			id: current.id ?? current.username,
+			name: current.username
+		} : null;
+		async function like(floor) {
+			if (!floor.postId) throw new Error("未能确定这条帖子");
+			if (floor.liked) await write(`/post_actions/${floor.postId}?post_action_type_id=2`, { method: "DELETE" });
+			else await write("/post_actions", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					id: floor.postId,
+					post_action_type_id: 2
+				})
+			});
+			floor.likes = Math.max(0, (floor.likes || 0) + (floor.liked ? -1 : 1));
+			floor.liked = !floor.liked;
+		}
+		const thread = {
+			me,
+			markdown: true,
+			sending: "正在发送…",
+			href: (id, _page, floor) => `/t/topic/${id}${floor && floor > 1 ? `/${floor}` : ""}`,
+			target: (href) => discourseTarget(href, origin),
+			async load(id, page, signal) {
+				await ensureCategories(signal).catch(() => {});
+				let entry = topics.get(id);
+				if (page === 1 || !entry || Date.now() - entry.fetched > STREAM_TTL) entry = remember(id, await api(`/t/${id}.json`, signal));
+				const ids = entry.stream.slice((page - 1) * 20, page * 20);
+				const missing = ids.filter((post) => !entry.posts.has(post));
+				if (missing.length) {
+					const more = await api(`/t/${id}/posts.json?${missing.map((post) => `post_ids[]=${post}`).join("&")}`, signal);
+					for (const post of more?.post_stream?.posts || []) if (post.id) entry.posts.set(post.id, post);
+				}
+				const posts = ids.flatMap((post) => entry.posts.get(post) || []);
+				if (!posts.length && page === 1) throw new Error("未找到正文");
+				return discoursePage(entry.thread, posts, page, pages(entry), origin, categories, inert);
+			},
+			async locate(target, signal) {
+				const entry = remember(target.id, await api(`/t/${target.id}/${target.floor}.json`, signal));
+				const post = [...entry.posts.values()].find((each) => each.post_number === target.floor);
+				const index = post?.id ? entry.stream.indexOf(post.id) : -1;
+				return index >= 0 ? Math.floor(index / 20) + 1 : Math.min(pages(entry), Math.max(1, Math.ceil((target.floor || 1) / 20)));
+			},
+			async reply(id, text, to) {
+				await write("/posts.json", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						raw: text,
+						topic_id: id,
+						...to && !to.op ? { reply_to_post_number: to.floor } : {}
+					})
+				});
+				return "";
+			},
+			replied: (id) => {
+				topics.delete(id);
+			},
+			chips: (floor) => [{
+				title: "点赞",
+				count: floor.likes || 0,
+				on: !!floor.liked,
+				icon: () => icon$1("heart", 12, 2)
+			}],
+			actions: (floor) => me && floor.canLike && !thread.mine(floor) ? [{
+				label: floor.liked ? "取消点赞" : "点赞",
+				detail: String(floor.likes || 0),
+				run: () => like(floor)
+			}] : [],
+			mine: (floor) => !!me && floor.author === me.name,
+			canReply: () => true,
+			mention: (floor) => `@${floor.author} `,
+			quote: (floor, _href, text, id) => `[quote="${floor.author}, post:${floor.floor}, topic:${id}"]\n${text.trim()}\n[/quote]\n\n`
+		};
+		return {
+			name: "LINUX DO",
+			user: () => me ? {
+				name: me.name,
+				avatar: avatarUrl(current?.avatar_template, origin),
+				profile: `/u/${encodeURIComponent(me.name)}`
+			} : null,
+			signIn: "/login",
+			compose: "/new-topic",
+			home: "/latest",
+			route: (url) => discourseRoute(url),
+			async list(path, signal) {
+				await ensureCategories(signal).catch(() => {});
+				return discourseRows(await api(jsonPath(path), signal), origin, categories);
+			},
+			sorts: [{
+				label: "新回复",
+				apply: (path) => {
+					const url = new URL(path, origin);
+					url.searchParams.delete("order");
+					return url.pathname + url.search;
+				},
+				matches: (path) => !/[?&]order=created\b/.test(path)
+			}, {
+				label: "新发布",
+				apply: (path) => {
+					const url = new URL(path, origin);
+					url.searchParams.set("order", "created");
+					return url.pathname + url.search;
+				},
+				matches: (path) => /[?&]order=created\b/.test(path)
+			}],
+			async sections(signal) {
+				await ensureCategories(signal);
+				return discourseSections(rawCategories);
+			},
+			hot: [
+				{
+					label: "热门",
+					path: "/hot"
+				},
+				{
+					label: "日榜",
+					path: "/top?period=daily"
+				},
+				{
+					label: "周榜",
+					path: "/top?period=weekly"
+				},
+				{
+					label: "月榜",
+					path: "/top?period=monthly"
+				}
+			],
+			async notices(signal) {
+				return discourseNoticeRows(await api("/notifications.json?limit=40&recent=true", signal), origin);
+			},
+			async read(row) {
+				if (!row.notice || row.read) return;
+				await write("/notifications/mark-read", {
+					method: "PUT",
+					headers: { "Content-Type": "application/x-www-form-urlencoded" },
+					body: new URLSearchParams({ id: String(row.notice) }).toString()
+				});
+				row.read = true;
+			},
+			unread() {
+				const badge = document.querySelector(".header-dropdown-toggle.current-user .badge-notification, #current-user .badge-notification");
+				if (badge) return Number(badge.textContent?.replace(/\D/g, "")) || 0;
+				return document.querySelector(".d-header") ? 0 : current?.all_unread_notifications_count ?? current?.unread_notifications ?? 0;
+			},
+			dark() {
+				for (const node of [document.body, document.documentElement]) {
+					const dark = darkColor(getComputedStyle(node).backgroundColor);
+					if (dark != null) return dark;
+				}
+				return matchMedia("(prefers-color-scheme: dark)").matches;
+			},
+			thread
+		};
+	}
+	var V2EX_TABS = [
+		["tech", "技术"],
+		["creative", "创意"],
+		["play", "好玩"],
+		["apple", "Apple"],
+		["jobs", "酷工作"],
+		["deals", "交易"],
+		["city", "城市"],
+		["qna", "问与答"],
+		["hot", "最热"],
+		["all", "全部"],
+		["r2", "R2"]
+	].map(([tab, name]) => ({
+		name,
+		path: `/?tab=${tab}`
+	}));
+	var text = (node) => node?.textContent?.replace(/\s+/g, " ").trim() || "";
+	var member = (href) => {
+		const name = href?.match(/\/member\/([^/?#]+)/)?.[1];
+		try {
+			return name ? decodeURIComponent(name) : "";
+		} catch {
+			return name || "";
+		}
+	};
+	var absolute$1 = (src, origin) => {
+		if (!src) return "";
+		try {
+			return new URL(src, origin).href;
+		} catch {
+			return "";
+		}
+	};
+	function v2exDate(value) {
+		const match = value?.trim().match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)(?:\s*([+-]\d{2}):?(\d{2}))?/);
+		if (!match) return null;
+		const date = new Date(`${match[1]}T${match[2].length === 5 ? `${match[2]}:00` : match[2]}${match[3] ? `${match[3]}:${match[4]}` : "+08:00"}`);
+		return Number.isNaN(date.getTime()) ? null : date;
+	}
+	function relativeDate(value, now = new Date()) {
+		const absoluteDate = v2exDate(value);
+		if (absoluteDate) return absoluteDate;
+		if (/刚刚|just now/i.test(value)) return now;
+		const units = [
+			[/(\d+)\s*(?:天|days?)/i, 864e5],
+			[/(\d+)\s*(?:小时|hours?)/i, 36e5],
+			[/(\d+)\s*(?:分钟|minutes?|mins?)/i, 6e4],
+			[/(\d+)\s*(?:秒|seconds?)/i, 1e3]
+		];
+		let ago = 0, found = false;
+		for (const [pattern, unit] of units) {
+			const match = value.match(pattern);
+			if (match) {
+				ago += Number(match[1]) * unit;
+				found = true;
+			}
+		}
+		return found ? new Date(now.getTime() - ago) : null;
+	}
+	function v2exTarget(href, base) {
+		let url;
+		try {
+			url = new URL(href, base);
+		} catch {
+			return null;
+		}
+		const match = url.pathname.match(/^\/t\/(\d+)\/?$/);
+		if (!match || url.hostname.replace(/^www\./, "") !== new URL(base).hostname.replace(/^www\./, "")) return null;
+		const floor = Number(url.hash.match(/^#reply(\d+)$/)?.[1]) || null;
+		const page = Number(url.searchParams.get("p")) || (floor ? Math.ceil(floor / 100) : 1);
+		return {
+			id: Number(match[1]),
+			page: Math.max(1, page),
+			floor
+		};
+	}
+	function v2exRoute(url) {
+		const topic = v2exTarget(url.href, url.origin);
+		if (topic) return {
+			list: null,
+			topic
+		};
+		if (url.pathname === "/") return {
+			list: `/${url.searchParams.get("tab") ? `?tab=${url.searchParams.get("tab")}` : ""}`,
+			topic: null
+		};
+		if (url.pathname === "/recent" || /^\/go\/[^/]+\/?$/.test(url.pathname)) return {
+			list: url.pathname + url.search,
+			topic: null
+		};
+		return null;
+	}
+	function nextPage(doc, path, origin) {
+		const url = new URL(path, origin);
+		if (url.hash) return null;
+		if (url.pathname === "/") return doc.querySelector("#Main a[href=\"/recent\"]") ? "/recent" : null;
+		const current = Number(url.searchParams.get("p")) || 1;
+		if (current >= Math.max(current, Number(doc.querySelector("input.page_input")?.getAttribute("max")) || 0, ...Array.from(doc.querySelectorAll("#Main a.page_normal, #Main a.page_current, #Main .page_input + a"), (link) => Number(link.getAttribute("href")?.match(/[?&]p=(\d+)/)?.[1]) || 0))) return null;
+		url.searchParams.set("p", String(current + 1));
+		return url.pathname + url.search;
+	}
+	function v2exRows(doc, path, origin, now = new Date()) {
+		const seen = new Set();
+		const rows = [];
+		doc.querySelectorAll(path.endsWith("#TopicsHot") ? "#TopicsHot .cell" : "#Main .cell").forEach((cell) => {
+			const link = cell.querySelector(".item_title a[href*=\"/t/\"], a.topic-link, .item_hot_topic_title a[href*=\"/t/\"]");
+			const target = link ? v2exTarget(link.getAttribute("href") || "", origin) : null;
+			if (!link || !target || seen.has(target.id)) return;
+			seen.add(target.id);
+			const info = cell.querySelector(".topic_info");
+			const names = Array.from(info?.querySelectorAll("strong a[href^=\"/member/\"]") || [], (node) => text(node));
+			const avatar = cell.querySelector("img.avatar");
+			const author = names[0] || member(cell.querySelector("a[href^=\"/member/\"]")?.getAttribute("href")) || avatar?.getAttribute("alt") || "";
+			const stamp = info?.querySelector("span[title]");
+			const count = cell.querySelector("a.count_livid, a.count_orange, .count_livid, .count_orange");
+			const node = text(info?.querySelector("a.node"));
+			rows.push({
+				id: target.id,
+				title: text(link) || `主题 #${target.id}`,
+				author,
+				avatar: absolute$1(avatar?.getAttribute("src"), origin),
+				meta: [node || author, names[1]].filter(Boolean).join(" · "),
+				time: v2exDate(stamp?.getAttribute("title")) || (stamp ? relativeDate(text(stamp), now) : null),
+				count: count ? Number(text(count)) || 0 : info ? 0 : null,
+				floor: null
+			});
+		});
+		return {
+			rows,
+			next: nextPage(doc, path, origin)
+		};
+	}
+	function v2exNoticeRows(doc, origin, now = new Date()) {
+		const rows = [];
+		doc.querySelectorAll("#Main .cell[id^=\"n_\"]").forEach((cell) => {
+			const link = Array.from(cell.querySelectorAll("a[href*=\"/t/\"]")).find((node) => v2exTarget(node.getAttribute("href") || "", origin));
+			const target = link ? v2exTarget(link.getAttribute("href") || "", origin) : null;
+			if (!link || !target) return;
+			const who = text(cell.querySelector(".fade a[href^=\"/member/\"], a[href^=\"/member/\"] strong")) || member(cell.querySelector("a[href^=\"/member/\"]")?.getAttribute("href"));
+			const line = text(cell.querySelector(".fade"));
+			const what = /感谢/.test(line) ? "感谢了你" : /收藏/.test(line) ? "收藏了你的主题" : /提到/.test(line) ? "提到了你" : "回复了你";
+			const payload = text(cell.querySelector(".payload"));
+			rows.push({
+				id: target.id,
+				title: text(link) || `主题 #${target.id}`,
+				author: who,
+				avatar: absolute$1(cell.querySelector("img.avatar")?.getAttribute("src"), origin),
+				meta: `${who ? `${who} ` : ""}${what}${payload ? `：${payload}` : ""}`,
+				time: relativeDate(text(cell.querySelector(".snow")), now),
+				count: null,
+				floor: /感谢|收藏/.test(what) && !/回复/.test(line) ? null : target.floor,
+				page: target.page
+			});
+		});
+		return {
+			rows,
+			next: null
+		};
+	}
+	function v2exOnce(doc) {
+		const field = doc.querySelector("input[name=\"once\"]")?.getAttribute("value");
+		if (field) return field;
+		for (const node of Array.from(doc.querySelectorAll("a[href*=\"once=\"], [onclick*=\"once\"], script"))) {
+			const match = (node.getAttribute("href") || node.getAttribute("onclick") || node.textContent || "").match(/once[=:]\s*['"]?(\d+)/);
+			if (match) return match[1];
+		}
+		return "";
+	}
+	function v2exUnread(doc) {
+		const link = doc.querySelector("#Rightbar a[href^=\"/notifications\"], #Top a[href^=\"/notifications\"], a.fade[href^=\"/notifications\"]");
+		return Number(text(link).match(/(\d+)/)?.[1]) || 0;
+	}
+	function v2exUser(doc, origin) {
+		const name = member(doc.querySelector("#Rightbar .box .cell a[href^=\"/member/\"], #Top a[href^=\"/member/\"]")?.getAttribute("href"));
+		if (!name) return null;
+		return {
+			name,
+			avatar: absolute$1(doc.querySelector(`#Rightbar img.avatar, #Top a[href^="/member/"] img`)?.getAttribute("src"), origin),
+			profile: `/member/${encodeURIComponent(name)}`
+		};
+	}
+	function v2exTabs(doc) {
+		const tabs = Array.from(doc.querySelectorAll("#Tabs a[href^=\"/?tab=\"]"), (link) => ({
+			name: text(link),
+			path: link.getAttribute("href")
+		})).filter((tab) => tab.name);
+		return tabs.length ? tabs : V2EX_TABS;
+	}
+	var thanks = (value) => Number(value.match(/(\d+)/)?.[1]) || 0;
+	function v2exPage(doc, id, page, origin, me = "") {
+		const header = doc.querySelector("#Main .header");
+		const title = text(header?.querySelector("h1")) || `主题 #${id}`;
+		const opener = member(header?.querySelector("small a[href^=\"/member/\"], .gray a[href^=\"/member/\"], a[href^=\"/member/\"]")?.getAttribute("href")) || header?.querySelector("img.avatar")?.getAttribute("alt") || "";
+		const stats = text(doc.querySelector("#Main .topic_stats, #Main .topic_buttons .fr")) || text(header?.querySelector("small"));
+		const content = Array.from(doc.querySelectorAll("#Main .topic_content")).find((node) => !node.closest(".subtle"));
+		const ownerDoc = doc.ownerDocument || doc;
+		let opBody = null;
+		if (content || doc.querySelector("#Main .subtle")) {
+			opBody = ownerDoc.createElement("div");
+			if (content) opBody.append(...Array.from(content.childNodes, (node) => node.cloneNode(true)));
+			doc.querySelectorAll("#Main .subtle").forEach((note) => {
+				const heading = ownerDoc.createElement("p");
+				heading.textContent = text(note.querySelector(".fade")) || "附言";
+				const quote = ownerDoc.createElement("blockquote");
+				quote.append(heading, ...Array.from(note.querySelector(".topic_content")?.childNodes || [], (node) => node.cloneNode(true)));
+				opBody.append(quote);
+			});
+		}
+		const opTime = header?.querySelector("small span[title], span[title]");
+		const topicThank = doc.querySelector("#topic_thank");
+		const floors = [];
+		if (page === 1) floors.push({
+			floor: 0,
+			op: true,
+			author: opener || "楼主",
+			profile: opener ? `/member/${encodeURIComponent(opener)}` : "",
+			uid: null,
+			avatar: absolute$1(header?.querySelector("img.avatar")?.getAttribute("src"), origin),
+			poster: true,
+			roles: [],
+			hot: false,
+			time: v2exDate(opTime?.getAttribute("title"))?.toISOString() || "",
+			timeTitle: opTime?.getAttribute("title") || "",
+			edited: "",
+			content: opBody,
+			reactions: [],
+			stats: null,
+			likes: thanks(stats.match(/(\d+)\s*人感谢/)?.[0] || ""),
+			liked: /感谢已发送|已感谢/.test(text(topicThank)),
+			canLike: !!topicThank?.querySelector("a") && !!me && me !== opener
+		});
+		doc.querySelectorAll("#Main .cell[id^=\"r_\"]").forEach((cell) => {
+			const floor = Number(text(cell.querySelector(".no")));
+			if (!Number.isSafeInteger(floor) || floor <= 0) return;
+			const author = text(cell.querySelector("strong a.dark, strong a[href^=\"/member/\"]")) || cell.querySelector("img.avatar")?.getAttribute("alt") || "匿名";
+			const stamp = cell.querySelector(".ago[title], span[title]");
+			const area = cell.querySelector(".thank_area");
+			floors.push({
+				floor,
+				op: false,
+				postId: Number(cell.id.slice(2)) || void 0,
+				author,
+				profile: `/member/${encodeURIComponent(author)}`,
+				uid: null,
+				avatar: absolute$1(cell.querySelector("img.avatar")?.getAttribute("src"), origin),
+				poster: !!cell.querySelector(".badge.op") || !!opener && author === opener,
+				roles: Array.from(cell.querySelectorAll(".badges .badge:not(.op)"), text).filter(Boolean),
+				hot: false,
+				time: v2exDate(stamp?.getAttribute("title"))?.toISOString() || "",
+				timeTitle: stamp?.getAttribute("title") || text(stamp),
+				edited: "",
+				content: cell.querySelector(".reply_content"),
+				reactions: [],
+				stats: null,
+				likes: thanks(text(cell.querySelector(".small.fade"))),
+				liked: !!area && (area.classList.contains("thanked") || /感谢已发送/.test(text(area))),
+				canLike: !!area?.querySelector("a.thank, a[onclick*=\"thank\"]") && !!me && me !== author
+			});
+		});
+		const replies = Number(Array.from(doc.querySelectorAll("#Main .cell > .gray, #Main .cell .gray"), text).join(" ").match(/(\d+)\s*(?:条回复|repl(?:y|ies))/i)?.[1]) || 0;
+		const pageMax = Math.max(Number(doc.querySelector("input.page_input")?.getAttribute("max")) || 0, ...Array.from(doc.querySelectorAll(`#Main a[href*="/t/${id}?p="]`), (link) => Number(link.getAttribute("href")?.match(/[?&]p=(\d+)/)?.[1]) || 0));
+		const favorite = doc.querySelector("#Main a[href*=\"favorite/topic/\"]");
+		return {
+			id,
+			page,
+			pages: Math.max(page, pageMax, Math.ceil(replies / 100)),
+			replies,
+			title,
+			category: header?.querySelector("a[href^=\"/go/\"]") ? {
+				name: text(header.querySelector("a[href^=\"/go/\"]")),
+				href: header.querySelector("a[href^=\"/go/\"]").getAttribute("href")
+			} : null,
+			views: stats.match(/(\d+)\s*次点击/)?.[1] || "",
+			collected: /unfavorite/.test(favorite?.getAttribute("href") || ""),
+			collections: Number(stats.match(/(\d+)\s*人收藏/)?.[1]) || 0,
+			floors,
+			once: v2exOnce(doc),
+			favorite: favorite ? {
+				on: /unfavorite/.test(favorite.getAttribute("href") || ""),
+				href: favorite.getAttribute("href")
+			} : null
+		};
+	}
+	function v2exProblem(doc) {
+		const problem = text(doc.querySelector("#Main .problem"));
+		if (problem) return problem;
+		if (!doc.querySelector("#Main .topic_content, #Main .header h1") && doc.querySelector("form[action=\"/signin\"], #Main .message")) return text(doc.querySelector("#Main .message")) || "需要先登录 V2EX";
+		return "";
+	}
+	function v2exMission(html) {
+		const days = Number(html.match(/已连续登录\s*(\d+)\s*天|(\d+)\s*consecutive days?/i)?.slice(1).find(Boolean)) || null;
+		const redeem = html.match(/(\/mission\/daily\/redeem\?once=\d+)/)?.[1] || null;
+		return {
+			done: !redeem && /每日登录奖励已领取|已成功领取每日登录奖励|already (?:been )?redeemed|reward has been redeemed/i.test(html),
+			redeem,
+			days
+		};
+	}
+	var parse = (html) => new DOMParser().parseFromString(html, "text/html");
+	function v2exSite(ctx) {
+		const origin = location.origin;
+		const user = v2exUser(document, origin);
+		let unread = v2exUnread(document);
+		let once = v2exOnce(document);
+		const page = async (path, signal) => {
+			const doc = parse(await ctx.request(path, {
+				responseType: "text",
+				signal
+			}));
+			if (doc.querySelector("#Rightbar, #Top")) unread = v2exUnread(doc);
+			once = v2exOnce(doc) || once;
+			return doc;
+		};
+		async function post(path, body) {
+			const response = await fetch(path, {
+				method: "POST",
+				credentials: "same-origin",
+				...body ? {
+					headers: { "Content-Type": "application/x-www-form-urlencoded" },
+					body: body.toString()
+				} : {}
+			});
+			if (!response.ok) throw new Error(response.status === 403 ? "需要先登录 V2EX，或今日操作次数已用完" : `站点未接受（HTTP ${response.status}）`);
+			if (response.redirected && /\/signin\b/.test(response.url)) throw new Error("登录已过期，请重新登录 V2EX");
+			const text = await response.text();
+			if (/^\s*[{[]/.test(text)) {
+				const data = JSON.parse(text);
+				if (data.once) once = String(data.once);
+				if (data.success === false) throw new Error(data.message || "站点未接受");
+				return null;
+			}
+			const doc = parse(text);
+			const problem = v2exProblem(doc);
+			if (problem) throw new Error(problem);
+			once = v2exOnce(doc) || once;
+			return doc;
+		}
+		const token = async (id) => {
+			if (!once) await page(`/t/${id}`);
+			if (!once) throw new Error("需要先登录 V2EX");
+			return once;
+		};
+		async function thank(floor, id) {
+			await post(`${floor.op ? `/thank/topic/${id}` : `/thank/reply/${floor.postId}`}?once=${encodeURIComponent(await token(id))}`);
+			floor.liked = true;
+			floor.likes = (floor.likes || 0) + 1;
+		}
+		async function favorite(data) {
+			if (!data.favorite) return;
+			const response = await fetch(new URL(data.favorite.href, origin), { credentials: "same-origin" });
+			if (!response.ok) throw new Error(`站点未接受（HTTP ${response.status}）`);
+			const doc = parse(await response.text());
+			const next = doc.querySelector("#Main a[href*=\"favorite/topic/\"]")?.getAttribute("href");
+			const on = !data.favorite.on;
+			data.favorite = {
+				on,
+				href: next || data.favorite.href.replace(on ? "/favorite/" : "/unfavorite/", on ? "/unfavorite/" : "/favorite/")
+			};
+			data.collected = on;
+			data.collections = Math.max(0, (data.collections || 0) + (on ? 1 : -1));
+			once = v2exOnce(doc) || once;
+		}
+		const me = user ? {
+			id: user.name,
+			name: user.name
+		} : null;
+		const thread = {
+			me,
+			markdown: false,
+			sending: "正在发送…",
+			href: (id, number = 1, floor) => `/t/${id}${number > 1 ? `?p=${number}` : ""}${floor ? `#reply${floor}` : ""}`,
+			target: (href) => v2exTarget(href, origin),
+			async load(id, number, signal) {
+				const doc = await page(thread.href(id, number), signal);
+				const problem = v2exProblem(doc);
+				if (problem) throw new Error(problem);
+				const data = v2exPage(doc, id, number, origin, me?.name);
+				if (!data.floors.length && number === 1) throw new Error("未找到正文");
+				return data;
+			},
+			async reply(id, text) {
+				try {
+					await post(`/t/${id}`, new URLSearchParams({
+						content: text,
+						once: await token(id)
+					}));
+				} catch (error) {
+					if (!(error instanceof Error) || !/once|过期|token/i.test(error.message)) throw error;
+					once = "";
+					await post(`/t/${id}`, new URLSearchParams({
+						content: text,
+						once: await token(id)
+					}));
+				}
+				return "";
+			},
+			chips: (floor, data) => [{
+				title: "感谢",
+				count: floor.likes || 0,
+				on: !!floor.liked,
+				icon: () => icon$1("heart", 12, 2)
+			}, ...floor.op ? [{
+				title: "收藏",
+				count: data.collections || 0,
+				on: data.collected,
+				icon: () => icon$1("star", 12, 2)
+			}] : []],
+			actions(floor, data) {
+				if (!me) return [];
+				const actions = [];
+				if (floor.liked) actions.push({
+					label: "已感谢",
+					disabled: true,
+					run: async () => {}
+				});
+				else if (floor.canLike) actions.push({
+					label: "感谢",
+					detail: floor.likes ? String(floor.likes) : "",
+					confirm: () => floor.op ? "你确定要向本主题创建者发送谢意？" : `确认花费 10 个铜币向 @${floor.author} 的这条回复发送感谢？`,
+					run: () => thank(floor, data.id)
+				});
+				const page = data;
+				if (floor.op && page.favorite) actions.push({
+					label: page.favorite.on ? "取消收藏" : "收藏",
+					detail: String(data.collections || 0),
+					run: () => favorite(page)
+				});
+				return actions;
+			},
+			mine: (floor) => !!me && floor.author === me.name,
+			canReply: () => true,
+			mention: (floor) => `@${floor.author} ${floor.op ? "" : `#${floor.floor} `}`,
+			quote: (floor, _href, text) => {
+				const line = text.replace(/\s+/g, " ").trim();
+				return `@${floor.author} ${floor.op ? "" : `#${floor.floor} `}「${line.length > 80 ? `${line.slice(0, 80)}…` : line}」\n`;
+			}
+		};
+		return {
+			name: "V2EX",
+			user: () => user,
+			signIn: "/signin",
+			compose: "/write",
+			home: "/recent",
+			route: (url) => v2exRoute(url),
+			async list(path, signal) {
+				return v2exRows(await page(path.endsWith("#TopicsHot") ? "/" : path, signal), path, origin);
+			},
+			sections: async () => v2exTabs(document),
+			hot: [{
+				label: "最热",
+				path: "/?tab=hot"
+			}, {
+				label: "今日热议",
+				path: "/#TopicsHot"
+			}],
+			async notices(signal) {
+				const rows = v2exNoticeRows(await page("/notifications", signal), origin);
+				unread = 0;
+				return rows;
+			},
+			unread: () => unread,
+			async poll(signal) {
+				await page("/", signal);
+				return unread;
+			},
+			dark: () => !!document.querySelector("#Wrapper.Night, body.Night") || matchMedia("(prefers-color-scheme: dark)").matches && !document.querySelector("#Wrapper"),
+			thread
+		};
+	}
+	function railItem(label, name, href) {
+		const node = href ? el("a") : el("button");
+		if (node instanceof HTMLAnchorElement) node.href = href;
+		else node.type = "button";
+		node.className = "nspp-wecom-rail-item";
+		node.dataset.tip = label;
+		node.setAttribute("aria-label", label);
+		node.append(icon$1(name));
+		return node;
+	}
+	function fishIcon() {
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		for (const [key, value] of Object.entries({
+			viewBox: "0 0 24 24",
+			width: "18",
+			height: "18",
+			fill: "none",
+			stroke: "currentColor",
+			"stroke-width": "1.8",
+			"stroke-linecap": "round",
+			"stroke-linejoin": "round",
+			"aria-hidden": "true",
+			class: "nspp-fish"
+		})) svg.setAttribute(key, value);
+		const part = (tag, className, attributes) => {
+			const node = document.createElementNS(svg.namespaceURI, tag);
+			node.setAttribute("class", className);
+			for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
+			return node;
+		};
+		const body = document.createElementNS(svg.namespaceURI, "g");
+		body.setAttribute("class", "nspp-fish-body");
+		body.append(part("path", "nspp-fish-tail", { d: "M7 12 2.5 8.5v7L7 12Z" }), part("path", "", { d: "M7 12c2-3.5 5-5.5 8.5-5.5 2.8 0 5 2 6.5 5.5-1.5 3.5-3.7 5.5-6.5 5.5C12 17.5 9 15.5 7 12Z" }), part("path", "", { d: "M17.5 11h.01" }));
+		svg.append(body, part("circle", "nspp-fish-bubble", {
+			cx: "21",
+			cy: "7",
+			r: ".9"
+		}), part("circle", "nspp-fish-bubble", {
+			cx: "22.4",
+			cy: "4.4",
+			r: ".6"
+		}));
+		return svg;
+	}
+	function hoverFlyout(ctx, button, flyout, set) {
+		let timer;
+		let over = false;
+		const later = (open, delay) => {
+			clearTimeout(timer);
+			timer = setTimeout(() => set(open), delay);
+		};
+		const mouse = (event) => event.pointerType === "mouse";
+		button.addEventListener("pointerenter", (event) => {
+			if (!mouse(event)) return;
+			over = true;
+			if (flyout.hidden) later(true, 120);
+			else clearTimeout(timer);
+		}, { signal: ctx.signal });
+		button.addEventListener("pointerleave", (event) => {
+			if (!mouse(event)) return;
+			over = false;
+			later(false, 250);
+		}, { signal: ctx.signal });
+		flyout.addEventListener("pointerenter", (event) => {
+			if (mouse(event)) clearTimeout(timer);
+		}, { signal: ctx.signal });
+		flyout.addEventListener("pointerleave", (event) => {
+			if (mouse(event)) later(false, 250);
+		}, { signal: ctx.signal });
+		button.addEventListener("click", () => {
+			clearTimeout(timer);
+			set(over || !!flyout.hidden);
+		}, { signal: ctx.signal });
+		ctx.signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
+	}
+	function createToolMenu(ctx, tools, more) {
+		const menu = el("div", "nspp-wecom-railmenu");
+		menu.setAttribute("role", "menu");
+		menu.setAttribute("aria-label", "NodeSeek++ 工具");
+		menu.hidden = true;
+		const toolButtons = () => Array.from(tools?.querySelectorAll(":scope > button, :scope > :not(.nspp-fast-nav) button") || []).filter((button) => !button.hidden && !button.matches(".nspp-tools-toggle, [data-nspp-hot-launcher]") && !button.closest(".nspp-fast-nav"));
+		const flagged = (button) => !!button.querySelector("[class*=\"badge\"]:not([hidden]):not(:empty), [class*=\"badge\"][data-count]:not([hidden])");
+		const build = () => {
+			const rank = (button) => button.hasAttribute("data-nspp-wecom-launcher") ? 3 : button.hasAttribute("data-nspp-settings-launcher") ? 2 : button.hasAttribute("data-nspp-share-launcher") ? 1 : 0;
+			const items = toolButtons().sort((a, b) => rank(a) - rank(b)).map((button) => {
+				const item = el("button", "", (button.getAttribute("aria-label") || button.title || button.textContent || "工具").split(/[·\n]/)[0].trim() || "工具");
+				item.type = "button";
+				item.setAttribute("role", "menuitem");
+				item.disabled = button.disabled;
+				if (flagged(button)) item.append(el("b", "nspp-wecom-dot"));
+				if (rank(button)) item.dataset.separate = "";
+				item.addEventListener("click", () => {
+					set(false);
+					button.click();
+				}, { signal: ctx.signal });
+				return item;
+			});
+			menu.replaceChildren(...items);
+			if (!items.length) menu.append(el("p", "", "没有可用的工具"));
+		};
+		const set = (open) => {
+			if (open) build();
+			menu.hidden = !open;
+			more.setAttribute("aria-expanded", String(open));
+			if (open) menu.querySelector("button")?.focus({ preventScroll: true });
+		};
+		return {
+			menu,
+			set,
+			flagged: () => toolButtons().some(flagged)
+		};
+	}
+	function createResizer(ctx) {
+		const resizer = el("div", "nspp-wecom-resizer");
+		resizer.tabIndex = 0;
+		resizer.setAttribute("role", "separator");
+		resizer.setAttribute("aria-orientation", "vertical");
+		resizer.setAttribute("aria-label", "拖拽调整列表宽度，双击恢复默认");
+		resizer.title = resizer.getAttribute("aria-label");
+		const clamp = (value) => Math.round(Math.max(220, Math.min(value, 560, window.innerWidth - 60 - 420)));
+		let width = clamp(Number(ctx.get("listWidth")) || 300);
+		const set = (value, save = false) => {
+			width = clamp(value);
+			document.body.style.setProperty("--wc-list-w", `${width}px`);
+			resizer.setAttribute("aria-valuenow", String(width));
+			if (save) ctx.set("listWidth", width);
+		};
+		resizer.addEventListener("pointerdown", (event) => {
+			if (event.button !== 0) return;
+			event.preventDefault();
+			resizer.setPointerCapture?.(event.pointerId);
+			document.documentElement.setAttribute("data-nspp-wecom-resizing", "");
+			const move = (next) => set(next.clientX - 60);
+			const end = () => {
+				resizer.removeEventListener("pointermove", move);
+				document.documentElement.removeAttribute("data-nspp-wecom-resizing");
+				set(width, true);
+			};
+			resizer.addEventListener("pointermove", move, { signal: ctx.signal });
+			resizer.addEventListener("pointerup", end, {
+				once: true,
+				signal: ctx.signal
+			});
+			resizer.addEventListener("pointercancel", end, {
+				once: true,
+				signal: ctx.signal
+			});
+		}, { signal: ctx.signal });
+		resizer.addEventListener("dblclick", () => set(300, true), { signal: ctx.signal });
+		resizer.addEventListener("keydown", (event) => {
+			if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+			event.preventDefault();
+			set(width + (event.key === "ArrowRight" ? 16 : -16), true);
+		}, { signal: ctx.signal });
+		return {
+			resizer,
+			apply: () => set(width),
+			clear: () => {
+				document.body.style.removeProperty("--wc-list-w");
+				document.documentElement.removeAttribute("data-nspp-wecom-resizing");
+			}
+		};
+	}
+	function conversationRow(ctx, row, open, rank) {
+		const item = el("li");
+		item.dataset.id = String(row.id);
+		if (row.pinned) item.dataset.pinned = "";
+		const button = el("button", "nspp-wecom-hot-row");
+		button.type = "button";
+		const letter = (row.author || row.title || "?").slice(0, 1);
+		const avatar = el("span", "nspp-wecom-hot-avatar", row.avatar ? "" : letter);
+		if (row.avatar) {
+			const img = el("img");
+			img.alt = "";
+			img.loading = "lazy";
+			img.src = row.avatar;
+			img.addEventListener("error", () => {
+				img.remove();
+				avatar.textContent = letter;
+			}, {
+				once: true,
+				signal: ctx.signal
+			});
+			avatar.append(img);
+		}
+		if (row.unread) avatar.append(el("b", "nspp-wecom-row-badge", row.unread > 99 ? "99+" : String(row.unread)));
+		else if (row.read === false) avatar.append(el("b", "nspp-wecom-row-dot"));
+		const text = el("span", "nspp-wecom-hot-text");
+		const title = el("strong");
+		if (rank != null) {
+			const badge = el("b", "nspp-wecom-hot-rank", String(rank));
+			if (rank <= 3) badge.dataset.top = String(rank);
+			title.append(badge);
+		}
+		title.append(row.title);
+		const time = el("span", "nspp-wecom-hot-time", row.time && !Number.isNaN(row.time.getTime()) ? listTime(row.time) : "");
+		const count = el("span", "nspp-wecom-hot-count", row.count == null ? "" : String(row.count));
+		count.hidden = row.count == null;
+		text.append(title, time, el("small", "", row.meta), count);
+		button.append(avatar, text);
+		button.title = row.title;
+		button.addEventListener("click", (event) => open(row, event), { signal: ctx.signal });
+		item.append(button);
+		return item;
+	}
+	var ACTIVE$1 = "data-nspp-wecom-active";
+	var FILTERED$1 = "data-nspp-wecom-filtered";
+	var POLL = 18e4;
+	var VIEWS = {
+		linuxdo: [
+			["/new", "新话题"],
+			["/unread", "未读"],
+			["/top?period=daily", "日榜"]
+		],
+		v2ex: V2EX_TABS.map((tab) => [tab.path, tab.name])
+	};
+	function remoteMoyu(kind) {
+		return {
+			id: "moyu-mode",
+			title: "摸鱼模式",
+			group: "外观",
+			description: `默认保持 ${kind === "linuxdo" ? "linux.do" : "V2EX"} 原样式。桌面端（宽度 ≥ 1000px）的列表和帖子页在工具栏多一个小鱼按钮，点击切换为聊天式三栏：左侧导航（通知、帖子、${kind === "linuxdo" ? "分类" : "节点"}、热榜，底部菜单收纳 NodeSeek++ 工具）、可拖拽调宽的帖子列表、气泡式阅读区。底部输入框直接回复，右键消息可${kind === "linuxdo" ? "点赞" : "感谢"}、引用和回复。再点一次小鱼恢复原样式。`,
+			defaults: {
+				enabled: true,
+				defaultView: "home"
+			},
+			fields: { defaultView: {
+				label: "进入摸鱼模式时默认打开",
+				type: "select",
+				options: [
+					{
+						label: kind === "linuxdo" ? "最新话题（默认）" : "最近主题（默认）",
+						value: "home"
+					},
+					{
+						label: "热榜",
+						value: "hot"
+					},
+					{
+						label: "通知",
+						value: "notices"
+					},
+					...VIEWS[kind].map(([value, label]) => ({
+						label: `${kind === "linuxdo" ? "列表" : "标签"}：${label}`,
+						value
+					}))
+				]
+			} },
+			mount: (ctx) => mountRemote(ctx, kind === "linuxdo" ? linuxdoSite(ctx) : v2exSite(ctx), kind)
+		};
+	}
+	function mountRemote(ctx, site, kind) {
+		const desktop = matchMedia("(min-width: 1000px)");
+		const here = () => site.route(new URL(location.href));
+		let native = !here();
+		let moyu = ctx.get("moyu") === true;
+		let view = "posts";
+		let activeId = null;
+		const isOn = () => desktop.matches && moyu && !native;
+		const tools = document.getElementById("nspp-tools");
+		const root = document.documentElement;
+		const rail = el("nav", "nspp-wecom-rail");
+		rail.setAttribute("aria-label", "摸鱼模式导航");
+		const person = site.user();
+		const me = el("a", "nspp-wecom-me");
+		me.href = person?.profile || site.signIn;
+		me.target = "_blank";
+		me.rel = "noopener";
+		me.dataset.tip = person?.name || "登录";
+		me.setAttribute("aria-label", me.dataset.tip);
+		if (person?.avatar) {
+			const img = el("img");
+			img.alt = "";
+			img.src = person.avatar;
+			img.addEventListener("error", () => img.replaceWith(icon$1("user")), {
+				once: true,
+				signal: ctx.signal
+			});
+			me.append(img);
+		} else me.append(icon$1("user"));
+		const notices = railItem("通知", "messages");
+		notices.hidden = !person;
+		const badge = el("b", "nspp-wecom-badge");
+		badge.hidden = true;
+		notices.append(badge);
+		const posts = railItem("帖子", "posts");
+		const sectionsButton = railItem(kind === "linuxdo" ? "分类" : "节点", "sections");
+		sectionsButton.setAttribute("aria-expanded", "false");
+		const hot = railItem("热榜", "hot");
+		const theme = railItem("主题", "moon");
+		const more = railItem("更多", "menu");
+		more.setAttribute("aria-haspopup", "menu");
+		more.setAttribute("aria-expanded", "false");
+		const moreDot = el("b", "nspp-wecom-dot");
+		moreDot.hidden = true;
+		more.append(moreDot);
+		const top = el("div", "nspp-wecom-rail-top");
+		top.append(me, notices, posts, sectionsButton, hot);
+		const bottom = el("div", "nspp-wecom-rail-bottom");
+		bottom.append(theme, more);
+		rail.append(top, bottom);
+		const tool = createToolMenu(ctx, tools, more);
+		const flyout = el("nav", "nspp-wecom-categories");
+		flyout.hidden = true;
+		flyout.setAttribute("aria-label", sectionsButton.dataset.tip);
+		const sectionList = el("ul");
+		flyout.append(el("h2", "", kind === "linuxdo" ? "所有分类" : "标签"), sectionList);
+		let sectionsLoaded;
+		const fillSections = (sections) => sectionList.replaceChildren(...sections.map((section) => {
+			const li = el("li");
+			const link = el("a");
+			link.href = section.path;
+			link.dataset.path = section.path;
+			if (section.depth) link.dataset.depth = String(section.depth);
+			const dot = el("i", "nspp-wecom-section-dot");
+			if (section.color) dot.style.background = section.color;
+			link.append(dot, section.name);
+			li.append(link);
+			return li;
+		}));
+		const setFlyout = (open) => {
+			flyout.hidden = !open;
+			sectionsButton.setAttribute("aria-expanded", String(open));
+			if (open && !sectionsLoaded) sectionsLoaded = site.sections(ctx.signal).then((sections) => {
+				fillSections(sections);
+				syncCurrent();
+			}).catch(() => {
+				sectionsLoaded = void 0;
+				sectionList.replaceChildren(el("li", "nspp-wecom-muted", "暂时无法读取，请稍后重试"));
+			});
+		};
+		const listHead = el("div", "nspp-wecom-listhead");
+		const search = el("input");
+		search.type = "search";
+		search.placeholder = "搜索";
+		search.setAttribute("aria-label", "按标题、作者或分类筛选已加载的帖子");
+		const sort = el("button", "nspp-wecom-sort");
+		sort.type = "button";
+		sort.hidden = true;
+		const compose = el("a", "nspp-wecom-compose");
+		compose.href = site.compose;
+		compose.target = "_blank";
+		compose.rel = "noopener";
+		compose.title = "发帖";
+		compose.setAttribute("aria-label", "发帖");
+		compose.append(icon$1("compose", 20));
+		compose.hidden = !person;
+		listHead.append(search, sort, compose);
+		const feed = el("section", "nspp-wecom-feed");
+		feed.setAttribute("aria-label", "帖子列表");
+		const feedList = el("ol", "nspp-wecom-hot-list");
+		const feedStatus = el("p", "nspp-wecom-hot-status");
+		feedStatus.setAttribute("role", "status");
+		const feedMore = el("button", "nspp-wecom-more", "加载更多");
+		feedMore.type = "button";
+		feedMore.hidden = true;
+		feed.append(feedList, feedStatus, feedMore);
+		const panel = (label, className) => {
+			const section = el("section", `nspp-wecom-hot ${className}`);
+			section.hidden = true;
+			section.setAttribute("aria-label", label);
+			const head = el("div", "nspp-wecom-hot-head");
+			const refresh = el("button", "nspp-wecom-hot-refresh");
+			refresh.type = "button";
+			refresh.setAttribute("aria-label", `刷新${label}`);
+			refresh.title = "刷新";
+			refresh.append(icon$1("refresh", 16));
+			const list = el("ol", "nspp-wecom-hot-list");
+			const status = el("p", "nspp-wecom-hot-status");
+			status.setAttribute("role", "status");
+			section.append(head, list, status);
+			return {
+				section,
+				head,
+				refresh,
+				list,
+				status
+			};
+		};
+		const hotPanel = panel("热榜", "nspp-wecom-ranking");
+		const tabs = el("div", "nspp-wecom-tabs");
+		tabs.setAttribute("role", "tablist");
+		let hotPath = site.hot[0]?.path || "";
+		const tabButtons = site.hot.map((entry) => {
+			const tab = el("button", "", entry.label);
+			tab.type = "button";
+			tab.setAttribute("role", "tab");
+			tab.dataset.path = entry.path;
+			tab.addEventListener("click", () => {
+				hotPath = entry.path;
+				loadHot();
+			}, { signal: ctx.signal });
+			tabs.append(tab);
+			return tab;
+		});
+		hotPanel.head.append(tabs, hotPanel.refresh);
+		const noticePanel = panel("通知", "nspp-wecom-notices");
+		noticePanel.head.append(el("strong", "nspp-wecom-panel-title", "通知"), noticePanel.refresh);
+		const { resizer, apply: applyWidth, clear: clearWidth } = createResizer(ctx);
+		const chat = createChat(ctx, site.thread, (id) => {
+			activeId = id;
+			markActive();
+		});
+		const markActive = () => {
+			for (const list of [
+				feedList,
+				hotPanel.list,
+				noticePanel.list
+			]) list.querySelectorAll(":scope > li").forEach((row) => row.toggleAttribute(ACTIVE$1, Number(row.dataset.id) === activeId));
+		};
+		const openRow = (row, event) => {
+			if (event.ctrlKey || event.metaKey || event.shiftKey) {
+				window.open(site.thread.href(row.id, row.page || 1, row.floor), "_blank", "noopener");
+				return;
+			}
+			chat.open({
+				id: row.id,
+				page: row.page ?? (row.floor ? 0 : 1),
+				floor: row.floor
+			}, row.title, row.count || 0);
+		};
+		let listPath = site.home;
+		let next = null;
+		let listing;
+		const seen = new Set();
+		const filter = () => {
+			const query = search.value.trim().toLowerCase();
+			feedList.querySelectorAll(":scope > li").forEach((row) => row.toggleAttribute(FILTERED$1, !!query && !(row.textContent || "").toLowerCase().includes(query)));
+		};
+		async function loadList(path, append = false) {
+			listing?.abort();
+			const controller = new AbortController();
+			listing = controller;
+			const signal = AbortSignal.any([ctx.signal, controller.signal]);
+			if (!append) {
+				listPath = path;
+				next = null;
+				seen.clear();
+				feedList.replaceChildren();
+				feed.scrollTop = 0;
+				syncSort();
+				syncCurrent();
+			}
+			feedMore.hidden = true;
+			feedStatus.textContent = append ? "正在加载更多…" : "正在加载…";
+			setShine(feedStatus, true);
+			try {
+				const page = await site.list(append ? next : path, signal);
+				if (controller.signal.aborted) return true;
+				const rows = page.rows.filter((row) => !seen.has(row.id));
+				rows.forEach((row) => seen.add(row.id));
+				feedList.append(...rows.map((row) => conversationRow(ctx, row, openRow)));
+				next = page.next;
+				feedStatus.textContent = seen.size ? "" : "这里还没有帖子";
+				feedMore.hidden = !next;
+				filter();
+				markActive();
+				syncBadge();
+				return true;
+			} catch (error) {
+				if (controller.signal.aborted) return true;
+				feedStatus.textContent = `列表暂时无法加载：${error instanceof Error ? error.message : "请稍后重试"}`;
+				feedMore.hidden = !append || !next;
+				return false;
+			} finally {
+				if (listing === controller) {
+					listing = void 0;
+					setShine(feedStatus, false);
+				}
+			}
+		}
+		const moreObserver = typeof IntersectionObserver === "function" ? new IntersectionObserver((entries) => {
+			if (entries.some((entry) => entry.isIntersecting) && next && !listing && isOn() && view === "posts") loadList(listPath, true);
+		}, {
+			root: feed,
+			rootMargin: "0px 0px 200px 0px"
+		}) : void 0;
+		moreObserver?.observe(feedMore);
+		feedMore.addEventListener("click", () => {
+			if (next && !listing) loadList(listPath, true);
+		}, { signal: ctx.signal });
+		search.addEventListener("input", filter, { signal: ctx.signal });
+		const sortable = () => !!site.sorts && /^\/(?:latest|c\/|tag\/)/.test(listPath);
+		const syncSort = () => {
+			sort.hidden = !sortable();
+			if (sort.hidden) return;
+			const current = site.sorts.find((entry) => entry.matches(listPath)) || site.sorts[0];
+			sort.replaceChildren(icon$1("sort", 13), current.label);
+			sort.title = `按${current.label}排序，点击切换`;
+			sort.setAttribute("aria-label", sort.title);
+		};
+		sort.addEventListener("click", () => {
+			const other = site.sorts?.find((entry) => !entry.matches(listPath));
+			if (other) loadList(other.apply(listPath));
+		}, { signal: ctx.signal });
+		const cache = new Map();
+		let panelRequest;
+		async function fill(target, key, load, ranked, force = false) {
+			const cached = cache.get(key);
+			const render = (rows, at) => {
+				target.list.replaceChildren(...rows.map((row, index) => conversationRow(ctx, row, (clicked, event) => {
+					const dot = event.currentTarget.querySelector(".nspp-wecom-row-dot");
+					openRow(clicked, event);
+					if (clicked.read === false && site.read) site.read(clicked).then(() => dot?.remove()).catch(() => {});
+					else if (clicked.read === false) dot?.remove();
+				}, ranked ? index + 1 : void 0)));
+				target.status.textContent = rows.length ? `更新于 ${listTime(new Date(at))}` : "暂无内容";
+				markActive();
+			};
+			if (cached) render(cached.rows, cached.at);
+			if (!force && cached && Date.now() - cached.at < 3e5) return;
+			panelRequest?.abort();
+			const controller = new AbortController();
+			panelRequest = controller;
+			if (!cached) {
+				target.list.replaceChildren();
+				target.status.textContent = "正在加载…";
+			}
+			try {
+				const rows = await load(AbortSignal.any([ctx.signal, controller.signal]));
+				if (controller.signal.aborted) return;
+				cache.set(key, {
+					rows,
+					at: Date.now()
+				});
+				render(rows, Date.now());
+				syncBadge();
+			} catch (error) {
+				if (!controller.signal.aborted) target.status.textContent = `暂时无法加载：${error instanceof Error ? error.message : "请稍后重试"}`;
+			}
+		}
+		const loadHot = (force = false) => {
+			tabButtons.forEach((tab) => tab.setAttribute("aria-selected", String(tab.dataset.path === hotPath)));
+			return fill(hotPanel, `hot:${hotPath}`, async (signal) => (await site.list(hotPath, signal)).rows, true, force);
+		};
+		const loadNotices = (force = false) => fill(noticePanel, "notices", async (signal) => (await site.notices(signal)).rows, false, force);
+		hotPanel.refresh.addEventListener("click", () => {
+			loadHot(true);
+		}, { signal: ctx.signal });
+		noticePanel.refresh.addEventListener("click", () => {
+			loadNotices(true);
+		}, { signal: ctx.signal });
+		const toggle = el("button", "nspp-tool-icon");
+		toggle.type = "button";
+		toggle.dataset.nsppWecomLauncher = "";
+		toggle.append(fishIcon());
+		(tools || document.body).prepend(toggle);
+		const dark = () => {
+			const choice = ctx.get("dark");
+			return typeof choice === "boolean" ? choice : site.dark();
+		};
+		const syncTheme = () => {
+			const on = dark();
+			root.toggleAttribute("data-nspp-wecom-dark", isOn() && on);
+			theme.replaceChildren(icon$1(on ? "sun" : "moon"));
+			theme.dataset.tip = on ? "切换到浅色" : "切换到深色";
+			theme.setAttribute("aria-label", theme.dataset.tip);
+		};
+		const syncBadge = () => {
+			const count = site.unread();
+			const label = count > 99 ? "99+" : String(count);
+			if (badge.textContent !== label) badge.textContent = label;
+			badge.hidden = count <= 0;
+		};
+		const syncCurrent = () => {
+			const inSection = /^\/(?:c\/|tag\/|go\/)|[?&]tab=/.test(listPath);
+			posts.toggleAttribute("aria-current", view === "posts" && !inSection);
+			sectionsButton.toggleAttribute("aria-current", view === "posts" && inSection);
+			hot.toggleAttribute("aria-current", view === "hot");
+			notices.toggleAttribute("aria-current", view === "notices");
+			for (const node of [
+				posts,
+				sectionsButton,
+				hot,
+				notices
+			]) if (node.hasAttribute("aria-current")) node.setAttribute("aria-current", "page");
+			sectionList.querySelectorAll("a").forEach((link) => {
+				if (view === "posts" && link.dataset.path === listPath.replace(/([?&])order=created&?/, "$1").replace(/[?&]$/, "")) link.setAttribute("aria-current", "page");
+				else link.removeAttribute("aria-current");
+			});
+		};
+		let started = false;
+		const syncToggle = () => {
+			toggle.hidden = !desktop.matches || !isOn() && !here();
+			toggle.title = isOn() ? "退出摸鱼模式" : "摸鱼模式";
+			toggle.setAttribute("aria-label", toggle.title);
+			toggle.setAttribute("aria-pressed", String(isOn()));
+		};
+		const apply = () => {
+			const on = isOn();
+			if (on && !started) begin();
+			root.toggleAttribute("data-nspp-wecom", on);
+			if (on) {
+				root.dataset.nsppWecomView = view;
+				root.dataset.nsppWecomSite = kind;
+			} else {
+				delete root.dataset.nsppWecomView;
+				delete root.dataset.nsppWecomSite;
+			}
+			rail.hidden = resizer.hidden = !on;
+			listHead.hidden = feed.hidden = !on || view !== "posts";
+			hotPanel.section.hidden = !on || view !== "hot";
+			noticePanel.section.hidden = !on || view !== "notices";
+			chat.root.hidden = !on;
+			if (on) {
+				applyWidth();
+				if (view === "hot") loadHot();
+				if (view === "notices") loadNotices();
+			} else {
+				setFlyout(false);
+				tool.set(false);
+				clearWidth();
+			}
+			syncToggle();
+			syncTheme();
+			syncCurrent();
+			syncBadge();
+		};
+		const showView = (next) => {
+			view = next;
+			setFlyout(false);
+			tool.set(false);
+			apply();
+		};
+		function begin() {
+			started = true;
+			const page = here();
+			let choice = String(ctx.get("defaultView") || "home");
+			if (!person && (choice === "notices" || /^\/(?:new|unread)\b/.test(choice))) choice = "home";
+			if (page?.topic) chat.open(page.topic, document.title.replace(/\s+[-–|]\s+[^-–|]+$/, ""));
+			const opened = page?.list && page.list !== "/" && page.list !== site.home ? page.list : null;
+			if (!opened && !page?.topic && (choice === "hot" || choice === "notices")) view = choice;
+			loadList(opened || (choice.startsWith("/") ? choice : site.home)).then((ok) => {
+				if (!ok && !seen.size) fallback();
+			});
+		}
+		function fallback() {
+			if (!isOn()) return;
+			native = true;
+			started = false;
+			apply();
+			ctx.notify(`${site.name} 暂时无法读取，已切回原网站；恢复后点小鱼重新进入摸鱼模式`);
+		}
+		document.body.append(rail, tool.menu, flyout, listHead, feed, hotPanel.section, noticePanel.section, resizer, chat.root);
+		apply();
+		desktop.addEventListener("change", apply, { signal: ctx.signal });
+		toggle.addEventListener("click", () => {
+			moyu = !isOn();
+			native = false;
+			ctx.set("moyu", moyu);
+			apply();
+		}, { signal: ctx.signal });
+		theme.addEventListener("click", () => {
+			ctx.set("dark", !dark());
+			syncTheme();
+		}, { signal: ctx.signal });
+		notices.addEventListener("click", () => showView("notices"), { signal: ctx.signal });
+		posts.addEventListener("click", () => {
+			if (view !== "posts") showView("posts");
+			else {
+				setFlyout(false);
+				tool.set(false);
+				loadList(site.home);
+			}
+		}, { signal: ctx.signal });
+		hot.addEventListener("click", () => showView("hot"), { signal: ctx.signal });
+		hoverFlyout(ctx, sectionsButton, flyout, (open) => {
+			if (open) tool.set(false);
+			setFlyout(open);
+		});
+		more.addEventListener("click", () => {
+			setFlyout(false);
+			tool.set(!!tool.menu.hidden);
+		}, { signal: ctx.signal });
+		sectionList.addEventListener("click", (event) => {
+			const link = event.target.closest("a[data-path]");
+			const mouse = event;
+			if (!link || mouse.button !== 0 || mouse.ctrlKey || mouse.metaKey || mouse.shiftKey || mouse.altKey) return;
+			event.preventDefault();
+			setFlyout(false);
+			if (view !== "posts") {
+				view = "posts";
+				apply();
+			}
+			loadList(link.dataset.path);
+		}, { signal: ctx.signal });
+		document.addEventListener("click", (event) => {
+			const target = event.target;
+			if (!flyout.hidden && !flyout.contains(target) && !sectionsButton.contains(target)) setFlyout(false);
+			if (!tool.menu.hidden && !tool.menu.contains(target) && !more.contains(target)) tool.set(false);
+		}, {
+			capture: true,
+			signal: ctx.signal
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key !== "Escape") return;
+			if (!flyout.hidden) {
+				setFlyout(false);
+				sectionsButton.focus();
+			}
+			if (!tool.menu.hidden) {
+				tool.set(false);
+				more.focus();
+			}
+		}, { signal: ctx.signal });
+		window.addEventListener("popstate", () => {
+			const topic = site.route(new URL(location.href))?.topic;
+			if (isOn() && topic && topic.id !== activeId) chat.open(topic);
+		}, { signal: ctx.signal });
+		const stop = ctx.watch(() => {
+			syncBadge();
+			moreDot.hidden = !tool.flagged();
+			syncToggle();
+		});
+		const poll = site.poll ? setInterval(() => {
+			if (isOn() && !document.hidden) site.poll(ctx.signal).then(syncBadge).catch(() => {});
+		}, POLL) : void 0;
+		return () => {
+			stop();
+			clearInterval(poll);
+			listing?.abort();
+			panelRequest?.abort();
+			moreObserver?.disconnect();
+			chat.destroy();
+			for (const node of [
+				rail,
+				tool.menu,
+				flyout,
+				listHead,
+				feed,
+				hotPanel.section,
+				noticePanel.section,
+				resizer,
+				toggle
+			]) node.remove();
+			clearWidth();
+			root.removeAttribute("data-nspp-wecom");
+			root.removeAttribute("data-nspp-wecom-dark");
+			delete root.dataset.nsppWecomView;
+			delete root.dataset.nsppWecomSite;
+		};
+	}
+	var STICKER = "/static/image/sticker/";
+	var AUTHOR_UID = 17170;
+	var VOTES = {
+		点赞: {
+			endpoint: "upvote",
+			done: "upvoted",
+			total: "upvotes",
+			confirm: ""
+		},
+		加鸡腿: {
+			endpoint: "like",
+			done: "liked",
+			total: "likes",
+			confirm: "是否投喂鸡腿，这将消耗你一个鸡腿"
+		},
+		反对: {
+			endpoint: "dislike",
+			done: "disliked",
+			total: "dislikes",
+			confirm: "是否反对该回答，这将消耗你两个鸡腿"
+		}
+	};
+	var TOKEN = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	var absolute = (path) => new URL(path, location.origin).href;
+	var icon = (title) => {
+		const name = reactions.find((reaction) => reaction.title === title)?.icon;
+		return name ? () => siteIcon(name) : void 0;
+	};
+	function nodeseekThread(ctx) {
+		const user = unsafeWindow$1.__config__?.user;
+		const me = user?.member_id;
+		const csrf = Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => TOKEN[byte % 62]).join("");
+		const statistic = (path, payload) => ctx.request(`/api/statistics/${path}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload)
+		});
+		async function vote(kind, stats) {
+			const spec = VOTES[kind];
+			const result = await statistic(spec.endpoint, {
+				commentId: stats.commentId,
+				action: "add"
+			});
+			if (!result?.success) throw new Error(result?.message || `${kind}未成功`);
+			stats[spec.done] = true;
+			if (typeof result.current === "number") stats[spec.total] = result.current;
+		}
+		async function collect(data) {
+			const result = await statistic("collection", {
+				postId: data.id,
+				action: data.collected ? "remove" : "add"
+			});
+			if (!result?.success) throw new Error(result?.message || "收藏未成功");
+			data.collected = result.message === "added" || result.message !== "removed" && !data.collected;
+			if (typeof result.postCollectionCount === "number") data.collections = result.postCollectionCount;
+		}
+		async function feedPrompt() {
+			try {
+				const today = await ctx.request("/api/progress/today?scope=freelike");
+				if (Number(today?.maxFreeLike) > Number(today?.freeLikeUsed)) return "是否投喂鸡腿，本次投喂免费";
+			} catch {}
+			return VOTES.加鸡腿.confirm;
+		}
+		return {
+			me: me == null ? null : {
+				id: me,
+				name: user?.member_name || ""
+			},
+			markdown: true,
+			sending: "正在发送…",
+			href: postHref,
+			target: (href) => postTarget(href, location.origin),
+			async load(id, page, signal) {
+				const url = absolute(postHref(id, page));
+				const html = await ctx.request(url, {
+					responseType: "text",
+					signal
+				});
+				const data = parsePostPage(new DOMParser().parseFromString(html, "text/html"), url);
+				if (!data.floors.length && page === 1) throw new Error("未找到正文");
+				return data;
+			},
+			async reply(id, text) {
+				let response;
+				try {
+					response = await fetch(absolute("/api/content/new-comment"), {
+						method: "POST",
+						credentials: "same-origin",
+						headers: {
+							"Content-Type": "application/json",
+							"csrf-token": csrf
+						},
+						body: JSON.stringify({
+							content: text,
+							mode: "new-comment",
+							postId: id
+						}),
+						signal: AbortSignal.any([ctx.signal, AbortSignal.timeout(2e4)])
+					});
+				} catch (error) {
+					if (error instanceof DOMException && error.name === "TimeoutError") return "尚未确认发送结果，请刷新查看，勿重复发送";
+					return "网络连接失败，回复未发送，请稍后重试";
+				}
+				const result = await response.json().catch(() => null);
+				if (result?.success) return "";
+				if (result?.message) return result.message;
+				return response.ok ? "服务器未返回有效数据，请检查登录状态或站点验证页面" : `回复未发送（HTTP ${response.status}），请在原帖完成登录或站点验证后重试`;
+			},
+			chips(floor, data) {
+				const stats = floor.stats;
+				if (!stats) return floor.reactions.map((reaction) => ({
+					...reaction,
+					on: false,
+					icon: icon(reaction.title)
+				}));
+				return [
+					{
+						title: "点赞",
+						count: stats.upvotes,
+						on: stats.upvoted
+					},
+					{
+						title: "加鸡腿",
+						count: stats.likes,
+						on: stats.liked
+					},
+					{
+						title: "反对",
+						count: stats.dislikes,
+						on: stats.disliked
+					},
+					...floor.op && data.collections != null ? [{
+						title: "收藏",
+						count: data.collections,
+						on: data.collected
+					}] : []
+				].map((chip) => ({
+					...chip,
+					icon: icon(chip.title)
+				}));
+			},
+			actions(floor, data) {
+				const stats = floor.stats;
+				if (me == null || !stats) return [];
+				const votes = Object.keys(VOTES).map((kind) => {
+					const spec = VOTES[kind], done = stats[spec.done];
+					return {
+						label: done ? `已${kind}` : kind,
+						detail: String(stats[spec.total]),
+						disabled: done,
+						confirm: kind === "加鸡腿" ? feedPrompt : spec.confirm ? () => spec.confirm : void 0,
+						run: () => vote(kind, stats)
+					};
+				});
+				return floor.op ? [...votes, {
+					label: data.collected ? "取消收藏" : "收藏",
+					detail: data.collections == null ? "" : String(data.collections),
+					run: () => collect(data)
+				}] : votes;
+			},
+			mine: (floor) => me != null && (floor.stats ? floor.stats.mine : floor.uid === me),
+			canReply: (floor) => !(floor.stats ? floor.stats.mine : floor.uid === me),
+			mention: (floor, href) => `@${floor.author} [#${floor.floor}](${href}) `,
+			quote(floor, href, text) {
+				const stats = floor.stats;
+				const created = new Date(stats?.created || floor.time);
+				const edited = stats?.edited ? `，编辑于${new Date(stats.edited).toLocaleString()}` : "";
+				const source = stats?.markdown || text;
+				return `> @${floor.author} [#${floor.floor}](${href}) 发布于${Number.isNaN(created.getTime()) ? "" : created.toLocaleString()}${edited}\n${source.split("\n").map((line) => `> ${line}`).join("\n")}\n\n`;
+			},
+			source: (floor) => floor.stats?.markdown || "",
+			sticker: (image) => image.src.includes(STICKER),
+			author: (floor) => floor.uid === AUTHOR_UID
+		};
+	}
+	_css("html[data-nspp-wecom] body{--wc-rail-w:60px;--wc-list-w:300px;--wc-head-h:60px;--wc-green:#07c160;--wc-red:#fa5151;--wc-rail:#e9e9e9;--wc-rail-fg:#5f5f5f;--wc-rail-hover:#191919;--wc-rail-line:#0000000f;--wc-list:#f7f7f7;--wc-search:#eaeaea;--wc-row-hover:#ececec;--wc-row-active:#dedede;--wc-pinned:#efefef;--wc-sep:#ebebeb;--wc-chat:#f0f0f0;--wc-border:#e3e3e3;--wc-bubble:#fff;--wc-mine:#95ec69;--wc-mine-text:#000;--wc-text:#191919;--wc-muted:#8c8c8c;--wc-time:#b2b2b2;--wc-link:#576b95;--wc-code:#f4f4f4;--wc-box:#fff;--wc-box-line:#e2e2e2;--wc-send:#ededed;--wc-pop:#fff;--wc-pop-line:#e5e5e5;--wc-shadow:0 8px 28px #00000024, 0 1px 3px #0000000f;--wc-font:-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif;background:var(--wc-chat);overflow:hidden}html[data-nspp-wecom] body.dark-layout,html[data-nspp-wecom][data-nspp-wecom-dark] body{--wc-rail:#1f1f1f;--wc-rail-fg:#9a9a9a;--wc-rail-hover:#ececec;--wc-rail-line:#ffffff12;--wc-list:#262626;--wc-search:#303030;--wc-row-hover:#2d2d2d;--wc-row-active:#363636;--wc-pinned:#2b2b2b;--wc-sep:#2f2f2f;--wc-chat:#1f1f1f;--wc-border:#2d2d2d;--wc-bubble:#2e2e2e;--wc-mine:#3eb575;--wc-mine-text:#0d0d0d;--wc-text:#dcdcdc;--wc-muted:#8c8c8c;--wc-time:#6e6e6e;--wc-link:#7d90a9;--wc-code:#262626;--wc-box:#242424;--wc-box-line:#353535;--wc-send:#343434;--wc-pop:#2c2c2c;--wc-pop-line:#3a3a3a;--wc-shadow:0 8px 28px #00000080, 0 1px 3px #0000004d}.nspp-wecom-rail,.nspp-wecom-railmenu,.nspp-wecom-categories,.nspp-wecom-listhead,.nspp-wecom-feed,.nspp-wecom-hot,.nspp-wecom-resizer,.nspp-wecom-chat,.nspp-wecom-messages{display:none}html[data-nspp-wecom] :is(.nspp-wecom-rail,.nspp-wecom-railmenu,.nspp-wecom-categories,.nspp-wecom-listhead,.nspp-wecom-feed,.nspp-wecom-hot,.nspp-wecom-chat){box-sizing:border-box;color:var(--wc-text);font-family:var(--wc-font);-webkit-font-smoothing:antialiased}html[data-nspp-wecom] :is(.nspp-wecom-rail,.nspp-wecom-railmenu,.nspp-wecom-categories,.nspp-wecom-listhead,.nspp-wecom-feed,.nspp-wecom-hot,.nspp-wecom-chat) :is(*){box-sizing:border-box}html[data-nspp-wecom] :is(.nspp-wecom-rail,.nspp-wecom-railmenu,.nspp-wecom-categories,.nspp-wecom-listhead,.nspp-wecom-feed,.nspp-wecom-hot,.nspp-wecom-chat) [hidden]{display:none!important}html[data-nspp-wecom] :is(.nspp-wecom-rail,.nspp-wecom-railmenu,.nspp-wecom-categories,.nspp-wecom-listhead,.nspp-wecom-feed,.nspp-wecom-hot,.nspp-wecom-chat,.nspp-wecom-resizer) :focus-visible:not(textarea,input){outline:2px solid var(--wc-green);outline-offset:1px}html[data-nspp-wecom] body>header,html[data-nspp-wecom] body>footer,html[data-nspp-wecom] #nsk-left-panel-container,html[data-nspp-wecom] #nsk-right-panel-container,html[data-nspp-wecom] #fast-nav-button-group,html[data-nspp-wecom] #nsk-body-left .topic-carousel-wrapper,html[data-nspp-wecom] #nsk-body-left .post-list-controler,html[data-nspp-wecom] #nsk-body-left .nspp-list-actions{display:none!important}html[data-nspp-wecom] #nspp-tools{visibility:hidden;pointer-events:none;bottom:14px;left:12px;right:auto}html[data-nspp-wecom][data-nspp-wecom-site]{overflow:hidden!important}html[data-nspp-wecom][data-nspp-wecom-site] body{margin:0!important;padding:0!important}html[data-nspp-wecom][data-nspp-wecom-site] body>:not([class*=nspp-],[id^=nspp-]){display:none!important}html[data-nspp-wecom-resizing],html[data-nspp-wecom-resizing] *{cursor:col-resize!important;-webkit-user-select:none!important;user-select:none!important}html[data-nspp-wecom] :is(#nsk-body-left,.nspp-wecom-feed,.nspp-wecom-chat-body,.nspp-wecom-messages .nspp-messages-contact-list,.nspp-wecom-messages .nspp-messages-thread){scrollbar-width:thin;scrollbar-color:#00000026 transparent}html[data-nspp-wecom] :is(body.dark-layout,[data-nspp-wecom-dark] body) :is(#nsk-body-left,.nspp-wecom-feed,.nspp-wecom-hot-list,.nspp-wecom-chat-body,.nspp-wecom-messages .nspp-messages-contact-list,.nspp-wecom-messages .nspp-messages-thread){scrollbar-color:#ffffff26 transparent}html[data-nspp-wecom] .nspp-wecom-rail:not([hidden]){z-index:40;width:var(--wc-rail-w);background:var(--wc-rail);border-right:1px solid var(--wc-rail-line);flex-direction:column;justify-content:space-between;align-items:center;padding:18px 0 12px;display:flex;position:fixed;inset:0 auto 0 0}.nspp-wecom-rail-top,.nspp-wecom-rail-bottom{flex-direction:column;align-items:center;gap:6px;display:flex}html[data-nspp-wecom] .nspp-wecom-rail .nspp-wecom-me{color:var(--wc-rail-fg);margin-bottom:16px;line-height:0;display:block}.nspp-wecom-me img,.nspp-wecom-me>svg{object-fit:cover;background:#0000000d;border-radius:6px;flex:none;width:36px;height:36px;display:block}.nspp-wecom-me>svg{padding:6px}.nspp-wecom-rail-item{width:42px;height:42px;color:var(--wc-rail-fg);cursor:pointer;background:0 0;border:0;border-radius:8px;justify-content:center;align-items:center;margin:0;padding:0;transition:color .12s;display:inline-flex;position:relative}.nspp-wecom-rail-item:hover{color:var(--wc-rail-hover)}.nspp-wecom-rail-item[aria-current=page],.nspp-wecom-rail-item[aria-expanded=true]{color:var(--wc-green)}.nspp-wecom-rail-item[aria-current=page] svg path:not([data-detail]){fill:currentColor}.nspp-wecom-rail-item[aria-current=page] svg path[data-detail]{stroke:var(--wc-rail)}.nspp-wecom-rail-item svg{width:24px;height:24px}.nspp-wecom-badge{border:2px solid var(--wc-rail);background:var(--wc-red);color:#fff;min-width:18px;height:18px;font:600 10px/14px var(--wc-font);text-align:center;box-sizing:border-box;border-radius:9px;padding:0 4px;position:absolute;top:2px;left:20px}.nspp-wecom-dot{background:var(--wc-red);border-radius:50%;width:8px;height:8px;position:absolute;top:8px;right:8px}.nspp-wecom-rail [data-tip]{position:relative}.nspp-wecom-rail [data-tip]:after{content:attr(data-tip);z-index:50;color:#fff;font:12px/1.2 var(--wc-font);white-space:nowrap;opacity:0;pointer-events:none;background:#2b2b2b;border-radius:5px;padding:5px 9px;transition:opacity .12s,transform .12s;position:absolute;top:50%;left:calc(100% + 10px);transform:translate(-3px,-50%);box-shadow:0 2px 8px #00000026}:is(body.dark-layout,[data-nspp-wecom-dark] body) .nspp-wecom-rail [data-tip]:after{background:#4a4a4a}.nspp-wecom-rail [data-tip]:is(:hover,:focus-visible):not([aria-expanded=true]):after{opacity:1;transition-delay:.3s;transform:translateY(-50%)}html[data-nspp-wecom] .nspp-wecom-railmenu:not([hidden]){bottom:14px;left:calc(var(--wc-rail-w) - 4px);z-index:45;border:1px solid var(--wc-pop-line);background:var(--wc-pop);min-width:150px;max-width:240px;max-height:calc(100dvh - 28px);box-shadow:var(--wc-shadow);border-radius:8px;padding:6px 0;display:block;position:fixed;overflow-y:auto}.nspp-wecom-railmenu button{width:100%;height:34px;color:var(--wc-text);font:14px var(--wc-font);text-align:left;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;background:0 0;border:0;border-radius:0;margin:0;padding:0 28px 0 16px;display:block;position:relative;overflow:hidden}.nspp-wecom-railmenu button:hover:not(:disabled),.nspp-wecom-railmenu button:focus-visible{background:var(--wc-row-hover);outline:none}.nspp-wecom-railmenu button:disabled{color:var(--wc-time);cursor:default}.nspp-wecom-railmenu button[data-separate]:not([data-separate]~button){box-shadow:0 -6px 0 -5px var(--wc-pop-line);margin-top:6px}.nspp-wecom-railmenu .nspp-wecom-dot{top:14px;right:14px}.nspp-wecom-railmenu p{color:var(--wc-muted);margin:0;padding:8px 18px;font-size:13px}html[data-nspp-wecom] .nspp-wecom-categories:not([hidden]){top:0;bottom:0;left:var(--wc-rail-w);z-index:39;background:var(--wc-list);border-right:1px solid var(--wc-sep);width:210px;padding:18px 8px;display:block;position:fixed;overflow-y:auto;box-shadow:8px 0 24px #0000001a}.nspp-wecom-categories h2{color:var(--wc-muted);margin:0 12px 10px;font-size:12px;font-weight:400}.nspp-wecom-categories ul{margin:0;padding:0;list-style:none}.nspp-wecom-categories a{color:var(--wc-text);border-radius:6px;align-items:center;gap:10px;padding:9px 12px;font-size:14px;text-decoration:none;display:flex}.nspp-wecom-categories a:hover{background:var(--wc-row-hover)}.nspp-wecom-categories a[aria-current=page]{background:var(--wc-row-active)}.nspp-wecom-categories .iconpark-icon{width:16px;height:16px;color:var(--wc-muted);margin:0}.nspp-wecom-categories a[data-depth=\"1\"]{color:var(--wc-muted);padding-left:30px;font-size:13px}.nspp-wecom-categories a[data-depth=\"1\"]:is(:hover,[aria-current]){color:var(--wc-text)}.nspp-wecom-section-dot{border-radius:3px;flex:none;width:9px;height:9px}.nspp-wecom-section-dot:not([style]){display:none}.nspp-wecom-categories .nspp-wecom-muted{padding:9px 12px;font-size:13px}html[data-nspp-wecom] .nspp-wecom-listhead:not([hidden]){top:0;left:var(--wc-rail-w);z-index:20;width:var(--wc-list-w);height:var(--wc-head-h);background:var(--wc-list);align-items:center;gap:8px;padding:0 12px 0 14px;display:flex;position:fixed}html[data-nspp-wecom] .nspp-wecom-listhead input[type=search]{box-shadow:none;background:var(--wc-search) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E\") no-repeat 9px center;min-width:0;height:28px;color:var(--wc-text);font:13px var(--wc-font);border:0;border-radius:6px;outline:none;flex:1;margin:0;padding:0 8px 0 28px}html[data-nspp-wecom] .nspp-wecom-listhead input[type=search]::placeholder{color:var(--wc-muted);font-size:13px}.nspp-wecom-sort{height:28px;color:var(--wc-muted);font:12px var(--wc-font);white-space:nowrap;cursor:pointer;background:0 0;border:0;border-radius:6px;flex:none;align-items:center;gap:2px;margin:0;padding:0 4px;display:inline-flex}.nspp-wecom-sort:hover{color:var(--wc-text);background:var(--wc-row-hover)}.nspp-wecom-compose{width:28px;height:28px;color:var(--wc-rail-fg);border-radius:6px;flex:none;justify-content:center;align-items:center;display:inline-flex}.nspp-wecom-compose:hover{color:var(--wc-text);background:var(--wc-row-hover)}html[data-nspp-wecom] #nsk-body-left{top:var(--wc-head-h);bottom:0;left:var(--wc-rail-w);z-index:10;box-sizing:border-box;overscroll-behavior:contain;background:var(--wc-list);font-family:var(--wc-font);overflow-y:auto;width:var(--wc-list-w)!important;max-width:none!important;margin:0!important;padding:0 0 12px!important;position:fixed!important}html[data-nspp-wecom] #nsk-body-left ul.post-list{box-shadow:none;background:0 0;border:0;margin:0;padding:0;transition:opacity .15s}html[data-nspp-wecom] #nsk-body-left[aria-busy=true] ul.post-list{opacity:.5;pointer-events:none}html[data-nspp-wecom] #nsk-body-left ul.post-list>.post-list-item{box-sizing:border-box;cursor:default;background:0 0;border-radius:0;align-items:center;gap:11px;height:66px;margin:0;padding:0 14px;display:flex;position:relative;border:0!important}html[data-nspp-wecom] #nsk-body-left ul.post-list>.post-list-item:after{content:\"\";background:var(--wc-sep);pointer-events:none;height:1px;position:absolute;bottom:0;left:65px;right:0}html[data-nspp-wecom] #nsk-body-left ul.post-list>.post-list-item:has(use[href=\\#pin]){background:var(--wc-pinned)}html[data-nspp-wecom] #nsk-body-left ul.post-list>.post-list-item:hover{background:var(--wc-row-hover)}html[data-nspp-wecom] #nsk-body-left ul.post-list>.post-list-item[data-nspp-wecom-active]{background:var(--wc-row-active)!important}html[data-nspp-wecom] #nsk-body-left ul.post-list>.post-list-item:is(:hover,[data-nspp-wecom-active]):after{opacity:0}html[data-nspp-wecom] #nsk-body-left ul.post-list>.post-list-item[data-nspp-wecom-filtered]{display:none!important}html[data-nspp-wecom] #nsk-body-left .post-list-item>a:first-child{flex:none;line-height:0}html[data-nspp-wecom] #nsk-body-left .post-list-item img.avatar-normal{max-width:none;box-shadow:none;object-fit:cover;aspect-ratio:1;border:0;border-radius:6px;flex:none;margin:0;padding:0;display:block;width:40px!important;height:40px!important}html[data-nspp-wecom] #nsk-body-left .post-list-item>.post-list-content{white-space:nowrap;flex:1;grid-template-rows:20px 17px;grid-template-columns:auto minmax(0,1fr) auto;align-content:center;align-items:center;gap:3px 6px;min-width:0;margin:0;padding:0;display:grid}html[data-nspp-wecom] #nsk-body-left .post-title{min-width:0;color:var(--wc-text);text-overflow:ellipsis;white-space:nowrap;grid-area:1/1/auto/3;margin:0;font-size:14px;font-weight:400;line-height:20px;display:block;overflow:hidden}html[data-nspp-wecom] #nsk-body-left .post-title a{color:var(--wc-text);font-weight:400;text-decoration:none}html[data-nspp-wecom] #nsk-body-left .post-title .iconpark-icon{width:12px!important;height:12px!important}html[data-nspp-wecom] #nsk-body-left .post-info{color:var(--wc-muted);font-size:12px;line-height:17px;display:contents}html[data-nspp-wecom] #nsk-body-left .post-info>*{display:none;margin:0!important}html[data-nspp-wecom] #nsk-body-left .post-info>:is(.post-category,.nspp-category-actions){grid-area:2/1;align-items:center;height:17px;display:inline-flex!important;position:static!important;inset:auto!important;transform:none!important}html[data-nspp-wecom] #nsk-body-left .post-info .post-category{white-space:nowrap;border:0;border-radius:0;padding:0;font-size:12px;height:17px!important;min-height:0!important;box-shadow:none!important;color:var(--wc-muted)!important;background:0 0!important;line-height:17px!important;display:block!important;position:static!important}html[data-nspp-wecom] #nsk-body-left .post-info .nspp-category-reply{display:none!important}html[data-nspp-wecom] #nsk-body-left .post-info>.info-last-commenter{min-width:0;height:17px;color:var(--wc-muted);grid-area:2/2;align-items:center;font-size:12px;line-height:17px;display:flex;overflow:hidden}html[data-nspp-wecom] #nsk-body-left .post-info>.info-last-commenter:before{content:\"·\";flex:none;margin-right:6px}html[data-nspp-wecom] #nsk-body-left .post-info>.info-last-commenter a{min-width:0;color:inherit;font:inherit;line-height:inherit;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}html[data-nspp-wecom] #nsk-body-left .post-info .iconpark-icon{display:none}html[data-nspp-wecom] #nsk-body-left .post-info>.info-comments-count{height:17px;color:var(--wc-time);font-variant-numeric:tabular-nums;grid-area:2/3;justify-self:end;align-items:center;gap:3px;font-size:12px;line-height:17px;display:inline-flex}html[data-nspp-wecom] #nsk-body-left .post-info>.info-comments-count>span{line-height:inherit}html[data-nspp-wecom] #nsk-body-left .post-info>.info-comments-count .iconpark-icon{color:currentColor;width:12px;height:12px;margin:0;display:inline-block}html[data-nspp-wecom] #nsk-body-left .post-info>.info-last-comment-time{color:var(--wc-time);grid-area:1/3;justify-self:end;font-size:12px;line-height:20px;text-decoration:none;display:block}html[data-nspp-wecom] #nsk-body-left .info-last-comment-time[data-nspp-wecom-time]>*{display:none}html[data-nspp-wecom] #nsk-body-left .info-last-comment-time[data-nspp-wecom-time]:after{content:attr(data-nspp-wecom-time)}html[data-nspp-wecom] #nsk-body-left .nsk-pager{margin:8px 0;font-size:12px;justify-content:center!important}html[data-nspp-wecom] #nsk-body-left>div:has(>.nsk-pager){margin:8px 0;font-size:12px;justify-content:center!important}html[data-nspp-wecom] #nsk-body-left>.nspp-action,html[data-nspp-wecom] #nsk-body-left ul.post-list+.nspp-action{background:var(--wc-search);width:calc(100% - 28px);color:var(--wc-muted);border:0;margin:10px 14px;display:block}html[data-nspp-wecom] .nspp-wecom-feed:not([hidden]){top:var(--wc-head-h);bottom:0;left:var(--wc-rail-w);z-index:10;width:var(--wc-list-w);overscroll-behavior:contain;background:var(--wc-list);display:block;position:fixed;overflow-y:auto}.nspp-wecom-feed>.nspp-wecom-hot-list{padding:0;overflow:visible}.nspp-wecom-hot-list>li[data-nspp-wecom-filtered]{display:none}.nspp-wecom-hot-list>li[data-pinned] .nspp-wecom-hot-row{background:var(--wc-pinned)}.nspp-wecom-feed>.nspp-wecom-more{margin:10px auto 18px}.nspp-wecom-panel-title{flex:1;min-width:0;font-size:15px;font-weight:500}html[data-nspp-wecom][data-nspp-wecom-view=hot] #nsk-body-left{display:none!important}html[data-nspp-wecom] .nspp-wecom-hot:not([hidden]){top:0;bottom:0;left:var(--wc-rail-w);z-index:10;width:var(--wc-list-w);background:var(--wc-list);flex-direction:column;display:flex;position:fixed}.nspp-wecom-hot-head{height:var(--wc-head-h);flex:none;align-items:center;gap:8px;padding:0 12px 0 14px;display:flex}.nspp-wecom-tabs{background:var(--wc-search);border-radius:6px;flex:1;padding:2px;display:flex}.nspp-wecom-tabs button{height:24px;color:var(--wc-muted);font:12px var(--wc-font);cursor:pointer;background:0 0;border:0;border-radius:5px;flex:1;margin:0;padding:0}.nspp-wecom-tabs button:hover{color:var(--wc-text)}.nspp-wecom-tabs button[aria-selected=true]{background:var(--wc-bubble);color:var(--wc-text);font-weight:500;box-shadow:0 1px 2px #0000001a}.nspp-wecom-hot-refresh{width:28px;height:28px;color:var(--wc-rail-fg);cursor:pointer;background:0 0;border:0;border-radius:6px;flex:none;justify-content:center;align-items:center;margin:0;padding:0;display:inline-flex}.nspp-wecom-hot-refresh:hover{color:var(--wc-text);background:var(--wc-row-hover)}.nspp-wecom-hot-list{overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#00000026 transparent;flex:1;min-height:0;margin:0;padding:0 0 8px;list-style:none;overflow-y:auto}.nspp-wecom-hot-list>li{position:relative}.nspp-wecom-hot-list>li:after{content:\"\";background:var(--wc-sep);pointer-events:none;height:1px;position:absolute;bottom:0;left:65px;right:0}.nspp-wecom-hot-list>li:is(:hover,[data-nspp-wecom-active]):after{opacity:0}.nspp-wecom-hot-row{width:100%;height:66px;color:var(--wc-text);font:inherit;text-align:left;cursor:default;background:0 0;border:0;border-radius:0;align-items:center;gap:11px;margin:0;padding:0 14px;display:flex}.nspp-wecom-hot-list>li:hover .nspp-wecom-hot-row{background:var(--wc-row-hover)}.nspp-wecom-hot-list>li[data-nspp-wecom-active] .nspp-wecom-hot-row{background:var(--wc-row-active)}.nspp-wecom-hot-avatar{background:var(--wc-search);width:40px;height:40px;color:var(--wc-muted);border-radius:6px;flex:none;justify-content:center;align-items:center;font-size:16px;display:inline-flex;position:relative}.nspp-wecom-hot-avatar img{object-fit:cover;border-radius:6px;width:100%;height:100%;display:block}.nspp-wecom-row-badge{border:2px solid var(--wc-list);background:var(--wc-red);color:#fff;min-width:18px;height:18px;font:600 10px/14px var(--wc-font);text-align:center;border-radius:9px;padding:0 5px;position:absolute;top:-6px;right:-8px}.nspp-wecom-row-dot{border:2px solid var(--wc-list);background:var(--wc-red);border-radius:50%;width:10px;height:10px;position:absolute;top:-4px;right:-4px}.nspp-wecom-hot-text{flex:1;grid-template-rows:auto auto;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 6px;min-width:0;display:grid}.nspp-wecom-hot-text strong{text-overflow:ellipsis;white-space:nowrap;min-width:0;font-size:14px;font-weight:400;line-height:20px;display:block;overflow:hidden}.nspp-wecom-hot-text small{min-width:0;color:var(--wc-muted);text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:17px;overflow:hidden}.nspp-wecom-hot-rank{background:var(--wc-search);min-width:16px;height:16px;color:var(--wc-muted);font:600 11px/16px var(--wc-font);font-variant-numeric:tabular-nums;text-align:center;vertical-align:1px;border-radius:4px;margin:0 6px 0 0;padding:0 4px;display:inline-block}.nspp-wecom-hot-rank[data-top]{color:#fff}.nspp-wecom-hot-rank[data-top=\"1\"]{background:#fa5151}.nspp-wecom-hot-rank[data-top=\"2\"]{background:#fa7d3c}.nspp-wecom-hot-rank[data-top=\"3\"]{background:#f5a623}.nspp-wecom-hot-time{color:var(--wc-time);justify-self:end;font-size:12px;line-height:20px}.nspp-wecom-hot-count{color:var(--wc-time);font-variant-numeric:tabular-nums;justify-self:end;font-size:12px;line-height:17px}.nspp-wecom-hot-count:before{content:\"\";vertical-align:-1px;background:currentColor;width:11px;height:11px;margin-right:3px;display:inline-block;-webkit-mask:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M7 4.5h10a3.5 3.5 0 0 1 3.5 3.5v5.5a3.5 3.5 0 0 1-3.5 3.5h-5.2l-4.3 3.3V17H7a3.5 3.5 0 0 1-3.5-3.5V8A3.5 3.5 0 0 1 7 4.5Z'/%3E%3C/svg%3E\") 50%/contain no-repeat;mask:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M7 4.5h10a3.5 3.5 0 0 1 3.5 3.5v5.5a3.5 3.5 0 0 1-3.5 3.5h-5.2l-4.3 3.3V17H7a3.5 3.5 0 0 1-3.5-3.5V8A3.5 3.5 0 0 1 7 4.5Z'/%3E%3C/svg%3E\") 50%/contain no-repeat}.nspp-wecom-hot-status{color:var(--wc-time);text-align:center;flex:none;margin:0;padding:6px 14px 10px;font-size:11px}.nspp-wecom-hot-status:empty{display:none}html[data-nspp-wecom] .nspp-wecom-resizer:not([hidden]){top:0;bottom:0;left:calc(var(--wc-rail-w) + var(--wc-list-w) - 3px);z-index:30;cursor:col-resize;touch-action:none;width:6px;display:block;position:fixed}html[data-nspp-wecom] .nspp-wecom-resizer:after{content:\"\";background:0 0;width:2px;transition:background .15s;position:absolute;top:0;bottom:0;left:2px}html[data-nspp-wecom] .nspp-wecom-resizer:is(:hover,:focus-visible):after,html[data-nspp-wecom-resizing] .nspp-wecom-resizer:after{background:var(--wc-green);opacity:.5}html[data-nspp-wecom] .nspp-wecom-chat:not([hidden]){inset:0 0 0 calc(var(--wc-rail-w) + var(--wc-list-w));z-index:10;background:var(--wc-chat);border-left:1px solid var(--wc-border);flex-direction:column;font-size:14px;display:flex;position:fixed}.nspp-wecom-empty{color:var(--wc-time);flex-direction:column;flex:1;justify-content:center;align-items:center;gap:14px;display:flex}.nspp-wecom-empty svg{opacity:.3;width:96px;height:96px}.nspp-wecom-empty p{margin:0;font-size:13px}.nspp-wecom-chat-head{height:var(--wc-head-h);border-bottom:1px solid var(--wc-border);background:var(--wc-chat);flex:none;justify-content:space-between;align-items:center;gap:16px;padding:0 16px 0 24px;display:flex}.nspp-wecom-chat-title{align-items:baseline;gap:4px;min-width:0;display:flex}.nspp-wecom-chat-title a{min-width:0;color:var(--wc-text);text-overflow:ellipsis;white-space:nowrap;font-size:16px;font-weight:500;line-height:22px;text-decoration:none;overflow:hidden}.nspp-wecom-chat-count{color:var(--wc-text);font-variant-numeric:tabular-nums;flex:none;font-size:16px;font-weight:500}.nspp-wecom-chat-actions{flex:none;display:flex;position:relative}.nspp-wecom-more-button{width:34px;height:34px;color:var(--wc-rail-fg);cursor:pointer;background:0 0;border:0;border-radius:6px;justify-content:center;align-items:center;margin:0;padding:0;display:inline-flex}.nspp-wecom-more-button:hover,.nspp-wecom-more-button[aria-expanded=true]{color:var(--wc-text);background:var(--wc-row-hover)}.nspp-wecom-more-button svg{stroke-width:3px;width:22px;height:22px}.nspp-wecom-menu{z-index:5;border:1px solid var(--wc-pop-line);background:var(--wc-pop);min-width:168px;box-shadow:var(--wc-shadow);border-radius:8px;padding:6px 0;position:absolute;top:40px;right:0}.nspp-wecom-menu button{width:100%;height:36px;color:var(--wc-text);font:14px var(--wc-font);text-align:left;cursor:pointer;background:0 0;border:0;border-radius:0;margin:0;padding:0 18px;display:block}.nspp-wecom-menu button:hover:not(:disabled){background:var(--wc-row-hover)}.nspp-wecom-menu button:disabled{color:var(--wc-time);cursor:default}.nspp-wecom-chat-body{overscroll-behavior:contain;outline:none;flex:1;min-height:0;padding:0 24px 16px;overflow-y:auto}.nspp-wecom-more{color:var(--wc-link);font:12px var(--wc-font);cursor:pointer;background:0 0;border:0;margin:14px auto 4px;padding:0;display:block}.nspp-wecom-more:hover:not(:disabled){text-decoration:underline}.nspp-wecom-status{color:var(--wc-time);text-align:center;margin:18px 0;font-size:12px}.nspp-wecom-divider{text-align:center;margin:20px 0 12px}.nspp-wecom-divider span{color:var(--wc-time);font-size:12px}.nspp-wecom-msg{align-items:flex-start;gap:12px;margin:0 0 18px;display:flex}.nspp-wecom-avatar{flex:none;line-height:0}.nspp-wecom-avatar img{object-fit:cover;aspect-ratio:1;border-radius:6px;width:38px;height:38px;display:block}.nspp-wecom-letter{background:var(--wc-search);width:38px;height:38px;color:var(--wc-muted);border-radius:6px;justify-content:center;align-items:center;font-size:16px;line-height:1;display:flex}.nspp-wecom-msg-main{flex-direction:column;align-items:flex-start;min-width:0;max-width:min(660px,100% - 100px);display:flex}.nspp-wecom-msg[data-op] .nspp-wecom-msg-main{max-width:calc(100% - 100px)}.nspp-wecom-msg-meta{color:var(--wc-muted);flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 5px;font-size:12px;line-height:16px;display:flex}.nspp-wecom-name{color:var(--wc-muted);text-decoration:none}.nspp-wecom-name:hover,.nspp-wecom-floor:hover{color:var(--wc-link)}.nspp-wecom-tag{color:var(--wc-link);background:#576b951a;border-radius:3px;padding:0 4px;font-size:10px;line-height:15px}.nspp-wecom-tag-op{color:#e0861f;background:#fa9d3b1f}.nspp-wecom-tag-hot{color:var(--wc-red);background:#fa51511a}.nspp-wecom-tag-author{color:#fff;font:600 10px/15px var(--wc-font);cursor:pointer;background:linear-gradient(90deg,#07c160,#10aeff);border:0;margin:0}.nspp-wecom-tag-author:hover{filter:brightness(1.08)}.nspp-wecom-msg[data-author] .nspp-wecom-avatar,html[data-nspp-wecom] #nsk-body-left .post-list-item>a:first-child[href$=\"/space/17170\"]{position:relative}.nspp-wecom-msg[data-author] .nspp-wecom-avatar:after,html[data-nspp-wecom] #nsk-body-left .post-list-item>a:first-child[href$=\"/space/17170\"]:after{content:\"🐟\";pointer-events:none;font-size:14px;line-height:1;position:absolute;bottom:-5px;right:-6px}.nspp-wecom-school{inset:var(--wc-head-h) 0 0;z-index:4;pointer-events:none;position:absolute;overflow:hidden}.nspp-wecom-school span{top:var(--top);font-size:var(--size);animation:nspp-wecom-swim 3s ease-in-out calc(var(--i) * .16s) both;line-height:1;position:absolute;left:100%}@keyframes nspp-wecom-swim{0%{left:100%;transform:translateY(0)}25%{transform:translateY(-12px)}50%{transform:translateY(8px)}75%{transform:translateY(-6px)}to{left:-48px;transform:translateY(0)}}@keyframes nspp-wecom-bob{0%,to{opacity:0}20%,80%{opacity:1}}@media (prefers-reduced-motion:reduce){.nspp-wecom-school span{left:calc(16% + var(--i) * 10%);animation:nspp-wecom-bob 3s ease calc(var(--i) * .1s) both}}.nspp-wecom-floor{visibility:hidden;color:var(--wc-time);font-variant-numeric:tabular-nums;text-decoration:none}.nspp-wecom-msg:is(:hover,:focus-within) .nspp-wecom-floor,.nspp-wecom-msg[data-flash] .nspp-wecom-floor{visibility:visible}.nspp-wecom-msg-foot{color:var(--wc-time);gap:12px;margin-top:6px;font-size:11px;line-height:14px;display:flex}.nspp-wecom-reaction{color:var(--wc-time);font-variant-numeric:tabular-nums;align-items:center;gap:3px;display:inline-flex}.nspp-wecom-reaction :is(.iconpark-icon,svg){color:currentColor;width:12px;height:12px;margin:0}.nspp-wecom-reaction[data-on] svg path{fill:currentColor}.nspp-wecom-reaction[data-on]{color:var(--wc-green)}html[data-nspp-wecom] .nspp-wecom-context:not([hidden]){z-index:60;border:1px solid var(--wc-pop-line);background:var(--wc-pop);min-width:148px;max-width:260px;box-shadow:var(--wc-shadow);border-radius:8px;padding:5px 0;font-size:13px;display:block;position:fixed}.nspp-wecom-context>button{width:100%;height:32px;color:var(--wc-text);font:inherit;text-align:left;white-space:nowrap;cursor:pointer;background:0 0;border:0;border-radius:0;align-items:center;gap:16px;margin:0;padding:0 16px;display:flex}.nspp-wecom-context>button small{color:var(--wc-time);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px}html[data-nspp-wecom] .nspp-wecom-context>button:is(:hover,:focus-visible):not(:disabled){background:var(--wc-row-hover);outline:none}.nspp-wecom-context>button:disabled{color:var(--wc-time);cursor:default}.nspp-wecom-context>[role=separator]{background:var(--wc-pop-line);height:1px;margin:5px 0}.nspp-wecom-context>p{max-width:240px;color:var(--wc-text);white-space:normal;margin:0;padding:8px 16px 10px;line-height:1.5}.nspp-wecom-context-confirm{justify-content:flex-end;gap:8px;padding:0 12px 6px;display:flex}.nspp-wecom-context-confirm button{background:var(--wc-search);height:28px;color:var(--wc-text);font:13px var(--wc-font);cursor:pointer;border:0;border-radius:6px;margin:0;padding:0 14px}.nspp-wecom-context-confirm button[data-primary]{background:var(--wc-green);color:#fff}.nspp-wecom-context-confirm button:hover{filter:brightness(.97)}.nspp-wecom-bubble{background:var(--wc-bubble);max-width:100%;color:var(--wc-text);overflow-wrap:anywhere;border-radius:6px;padding:10px 13px;font-size:14px;line-height:1.65}.nspp-wecom-msg[data-mine]{flex-direction:row-reverse}.nspp-wecom-msg[data-mine] .nspp-wecom-msg-main{align-items:flex-end}.nspp-wecom-msg[data-mine] .nspp-wecom-msg-meta{flex-direction:row-reverse}.nspp-wecom-msg[data-mine] .nspp-wecom-bubble{background:var(--wc-mine);color:var(--wc-mine-text)}.nspp-wecom-msg[data-mine] .nspp-wecom-bubble a{color:inherit;text-decoration:underline}.nspp-wecom-msg[data-flash] .nspp-wecom-bubble{animation:1.6s ease-out nspp-wecom-flash}@keyframes nspp-wecom-flash{0%{box-shadow:0 0 0 3px var(--wc-green)}to{box-shadow:0 0 0 3px #0000}}@media (prefers-reduced-motion:reduce){.nspp-wecom-msg[data-flash] .nspp-wecom-bubble{outline:2px solid var(--wc-green);animation:none}}.nspp-wecom-bubble>:first-child{margin-top:0}.nspp-wecom-bubble>:last-child{margin-bottom:0}.nspp-wecom-bubble p{margin:0 0 .45em}.nspp-wecom-bubble :is(h1,h2,h3,h4){margin:.6em 0 .3em;font-size:1em;font-weight:600;line-height:1.5}.nspp-wecom-bubble :is(ul,ol){margin:0 0 .45em;padding-left:1.4em}.nspp-wecom-bubble a{color:var(--wc-link);text-decoration:none}.nspp-wecom-bubble a:hover{text-decoration:underline}.nspp-wecom-bubble img{vertical-align:middle;cursor:zoom-in;border-radius:4px;max-width:min(100%,300px);max-height:300px}.nspp-wecom-bubble img[src*=\"/static/image/sticker/\"]{cursor:default;border-radius:0;width:auto;height:40px}.nspp-wecom-bubble img[data-emoji]{vertical-align:-.3em;cursor:default;border-radius:0;width:1.35em;height:1.35em;max-height:none}.nspp-wecom-bubble blockquote{border:0;border-left:2px solid var(--wc-time);color:var(--wc-muted);background:0 0;margin:0 0 .5em;padding:0 0 0 9px;font-size:13px}.nspp-wecom-bubble pre{background:var(--wc-code);border-radius:4px;margin:0 0 .45em;padding:8px 10px;font-size:12.5px;line-height:1.5;overflow:auto}.nspp-wecom-bubble code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}.nspp-wecom-bubble table{border-collapse:collapse;max-width:100%;margin:0 0 .45em;display:block;overflow:auto}.nspp-wecom-bubble :is(th,td){border:1px solid var(--wc-border);padding:2px 8px}.nspp-wecom-bubble hr{border:0;border-top:1px solid var(--wc-border)}.nspp-wecom-muted{color:var(--wc-muted)}.nspp-wecom-composer{--chat-text:var(--wc-text);--chat-muted:var(--wc-muted);--chat-border:var(--wc-border);--chat-surface:transparent;border:1px solid var(--wc-box-line);background:var(--wc-box);border-radius:8px;flex:none;grid-template:\"tools tools\"\"editor editor\"minmax(0,1fr)\".bar\"/minmax(0,1fr) auto;align-items:center;column-gap:12px;height:176px;margin:0 16px 16px;padding:6px 12px 10px;display:grid}.nspp-wecom-composer>.nspp-message-editor{background:0 0;flex-direction:column;grid-area:editor;height:100%;min-height:0;padding-top:4px;display:flex}.nspp-wecom-composer-tools{grid-area:tools;align-items:center;min-width:0;margin-left:-6px;display:flex}.nspp-wecom-composer .nspp-message-editor-toolbar{gap:0}.nspp-wecom-composer .nspp-message-editor-toolbar button{width:30px;height:30px;box-shadow:none;color:var(--wc-rail-fg);cursor:pointer;background:0 0;border:0;border-radius:6px;margin:0;padding:6px}.nspp-wecom-composer .nspp-message-editor-toolbar button:hover:not(:disabled),.nspp-wecom-composer .nspp-message-editor-toolbar button[aria-pressed=true]{background:var(--wc-row-hover);color:var(--wc-text)}.nspp-wecom-composer .nspp-message-editor-toolbar button:disabled{opacity:.45;cursor:default}.nspp-wecom-composer .nspp-message-editor-toolbar svg{width:18px;height:18px}.nspp-wecom-composer .nspp-message-editor-toolbar .nspp-message-editor-tab{width:auto;font:12px var(--wc-font);padding:0 8px}.nspp-wecom-composer .nspp-message-editor-body{flex:1;min-height:0;display:flex}.nspp-wecom-composer .nspp-message-editor-body textarea{resize:none;width:100%;min-height:0;box-shadow:none;color:var(--wc-text);font:14px/1.6 var(--wc-font);caret-color:var(--wc-green);background:0 0;border:0;outline:none;flex:1;margin:0;padding:0}.nspp-wecom-composer .nspp-message-editor-body textarea::placeholder{color:var(--wc-time);opacity:1}.nspp-wecom-composer .nspp-message-editor-preview{min-height:0;max-height:none;color:var(--wc-text);flex:1;padding:0;font-size:14px;overflow:auto}.nspp-wecom-composer .nspp-message-editor-status{color:var(--wc-muted);padding:2px 0}.nspp-wecom-composer-bar{grid-area:bar;justify-content:flex-end;align-items:center;gap:12px;padding-top:6px;display:flex}.nspp-wecom-send-status{min-width:0;max-width:260px;color:var(--wc-muted);text-overflow:ellipsis;white-space:nowrap;font-size:12px;overflow:hidden}.nspp-wecom-send-status[data-idle]{color:var(--wc-time)}.nspp-wecom-send{background:var(--wc-green);color:#fff;height:30px;font:14px var(--wc-font);cursor:pointer;border:0;border-radius:6px;flex:none;margin:0;padding:0 22px}.nspp-wecom-send:hover:not(:disabled){filter:brightness(1.06)}.nspp-wecom-send:disabled{background:var(--wc-send);color:var(--wc-time);cursor:default}html[data-nspp-wecom][data-nspp-wecom-view=messages] #nsk-body-left{display:none!important}html[data-nspp-wecom] .nspp-wecom-messages:not([hidden]){inset:0 0 0 var(--wc-rail-w);z-index:10;display:block;position:fixed}html[data-nspp-wecom] .nspp-wecom-messages>.nspp-messages{--chat-bg:var(--wc-chat);--chat-sidebar:var(--wc-list);--chat-surface:var(--wc-bubble);--chat-text:var(--wc-text);--chat-muted:var(--wc-muted);--chat-border:var(--wc-border);grid-template-columns:var(--wc-list-w) minmax(0, 1fr);grid-template-rows:var(--wc-head-h) minmax(0, 1fr);width:100%;height:100%;min-height:0;max-height:none;box-shadow:none;background:var(--wc-chat);color:var(--wc-text);font-family:var(--wc-font);border:0;border-radius:0;margin:0;display:grid}.nspp-wecom-messages>.nspp-messages>.nspp-messages-workspace:not(.nspp-notice-workspace){display:contents}.nspp-wecom-messages>.nspp-messages>.nspp-messages-top{min-height:0;height:var(--wc-head-h);border-bottom:1px solid var(--wc-border);border-left:1px solid var(--wc-border);background:var(--wc-chat);box-shadow:none;grid-area:1/2;padding:0 16px 0 24px;position:static}.nspp-wecom-messages .nspp-messages-top .nspp-messages-heading strong{font-size:16px;font-weight:500}.nspp-wecom-messages .nspp-messages-top-actions button{color:var(--wc-muted);font-size:12px}.nspp-wecom-messages .nspp-messages-top-actions button:hover:not(:disabled){color:var(--wc-text)}.nspp-wecom-messages>.nspp-messages>.nspp-messages-workspace>.nspp-messages-sidebar{background:var(--wc-list);border:0;grid-area:1/1/3;min-height:0}.nspp-wecom-messages>.nspp-messages>.nspp-messages-workspace>:is(.nspp-messages-chat,.nspp-notice-workspace){border-left:1px solid var(--wc-border);background:var(--wc-chat);grid-area:2/2;min-height:0}.nspp-wecom-messages>.nspp-messages>.nspp-messages-workspace>.nspp-messages-sidebar>.nspp-messages-search{height:var(--wc-head-h);align-items:center;gap:8px;padding:0 12px 0 14px}.nspp-wecom-messages .nspp-messages-search input{background:var(--wc-search) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E\") no-repeat 9px center;height:28px;color:var(--wc-text);border-radius:6px;padding:0 8px 0 28px;font-size:13px}.nspp-wecom-messages .nspp-messages-search>button:not(.nspp-messages-back){width:28px;min-width:28px;height:28px;color:var(--wc-rail-fg);background:0 0;border-radius:6px;justify-content:center;align-items:center;padding:0;display:inline-flex}.nspp-wecom-messages .nspp-messages-search>button:not(.nspp-messages-back):hover{background:var(--wc-row-hover);color:var(--wc-text)}.nspp-wecom-messages .nspp-messages-search>button svg{width:16px;height:16px}.nspp-wecom-messages .nspp-messages-sidebar .nspp-messages-peer{gap:11px;min-height:66px;padding:0 14px}.nspp-wecom-messages>.nspp-messages>.nspp-messages-workspace>.nspp-messages-sidebar .nspp-messages-peer{position:relative}.nspp-wecom-messages>.nspp-messages>.nspp-messages-workspace>.nspp-messages-sidebar .nspp-messages-peer:after{content:\"\";background:var(--wc-sep);height:1px;position:absolute;bottom:0;left:67px;right:0}.nspp-wecom-messages .nspp-messages-sidebar .nspp-messages-peer:hover{background:var(--wc-row-hover)}.nspp-wecom-messages .nspp-messages-sidebar .nspp-messages-peer:is([aria-pressed=true],[aria-current]){background:var(--wc-row-active)}.nspp-wecom-messages .nspp-messages-sidebar .nspp-messages-avatar{border-radius:6px;width:42px;height:42px}.nspp-wecom-messages .nspp-messages-sidebar .nspp-messages-peer-title strong{font-size:14px;font-weight:400}.nspp-wecom-messages .nspp-messages-peer-title time{color:var(--wc-time);font-size:12px}.nspp-wecom-messages .nspp-messages-snippet{color:var(--wc-muted);font-size:12px}.nspp-wecom-messages .nspp-messages-sidebar .nspp-messages-unread{border-color:var(--wc-list);top:8px;left:50px}.nspp-wecom-messages .nspp-messages-count{background:var(--wc-red);border-radius:9px;min-width:18px;padding:0 5px;font-size:11px;line-height:18px}.nspp-wecom-messages .nspp-messages-thread{padding:12px 24px 16px}.nspp-wecom-messages .nspp-messages-stamp{color:var(--wc-time);margin:8px 0 12px;font-size:12px}.nspp-wecom-messages .nspp-messages-message{gap:12px;margin-bottom:18px}.nspp-wecom-messages .nspp-messages-message .nspp-messages-avatar{border-radius:6px;width:38px;height:38px}.nspp-wecom-messages .nspp-messages-bubble{background:var(--wc-bubble);max-width:min(660px,100% - 100px);min-height:0;box-shadow:none;color:var(--wc-text);border-radius:6px;padding:10px 13px;font-size:14px;line-height:1.65}.nspp-wecom-messages .nspp-messages-bubble:before{display:none}.nspp-wecom-messages .nspp-messages-message.is-mine .nspp-messages-bubble{background:var(--wc-mine);color:var(--wc-mine-text)}.nspp-wecom-messages .nspp-messages-bubble a{color:var(--wc-link);text-decoration:none}.nspp-wecom-messages .nspp-messages-message.is-mine .nspp-messages-bubble a{color:inherit;text-decoration:underline}.nspp-wecom-messages .nspp-messages-composer:not([hidden]){border:1px solid var(--wc-box-line);background:var(--wc-box);border-radius:10px;grid-template:\"editor editor editor\"minmax(0,1fr)\"tools markdown send\"/minmax(0,1fr) auto auto;align-items:center;column-gap:12px;height:168px;margin:0 16px 16px;padding:10px 10px 8px 14px;display:grid}.nspp-wecom-messages .nspp-messages-composer:focus-within{border-color:color-mix(in srgb, var(--wc-green) 45%, var(--wc-box-line))}.nspp-wecom-messages .nspp-messages-composer>.nspp-message-editor{background:0 0;flex-direction:column;grid-area:editor;min-width:0;height:100%;min-height:0;display:flex}.nspp-wecom-messages .nspp-messages-composer .nspp-message-editor-body{flex:1;min-height:0;display:flex}.nspp-wecom-messages .nspp-messages-composer .nspp-message-editor-body textarea{resize:none;min-height:0;max-height:none;color:var(--wc-text);caret-color:var(--wc-green);background:0 0;flex:1;padding:0;font-size:14px}.nspp-wecom-messages .nspp-messages-composer .nspp-message-editor-preview{flex:1;min-height:0;max-height:none;padding:0}.nspp-wecom-messages .nspp-messages-composer>.nspp-messages-compose-actions{display:contents}.nspp-wecom-messages .nspp-messages-compose-actions>.nspp-message-editor-toolbar{grid-area:tools;gap:0}.nspp-wecom-messages .nspp-messages-compose-actions>label{color:var(--wc-time);grid-area:markdown}.nspp-wecom-messages .nspp-messages-compose-actions>small{display:none}.nspp-wecom-messages .nspp-message-editor-toolbar button{width:30px;height:30px;color:var(--wc-rail-fg)}.nspp-wecom-messages .nspp-message-editor-toolbar .nspp-message-editor-tab{width:auto;padding:0 8px;font-size:12px}.nspp-wecom-messages .nspp-message-editor-toolbar svg{width:18px;height:18px}.nspp-wecom-messages .nspp-messages .nspp-messages-send{background:var(--wc-green);color:#fff;border-radius:6px;grid-area:send;min-width:0;height:30px;padding:0 20px}.nspp-wecom-messages .nspp-messages .nspp-messages-send:disabled{opacity:1;background:var(--wc-send);color:var(--wc-time)}.nspp-wecom-messages .nspp-notice-workspace>.nspp-messages-sidebar{background:var(--wc-chat)}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-search{padding:12px 24px 4px}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-conversations{padding:8px 24px 4px}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-peer{background:var(--wc-bubble);border-radius:8px;align-items:flex-start;gap:12px;min-height:0;margin:0 0 10px;padding:12px 14px}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-peer:hover{background:var(--wc-bubble);box-shadow:0 0 0 1px var(--wc-border), 0 2px 8px #0000000d}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-avatar{border-radius:6px;width:36px;height:36px}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-peer-title strong{font-size:13px;font-weight:500}.nspp-wecom-messages .nspp-notice-workspace .nspp-notice-subject{color:var(--wc-text);font-size:14px}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-unread{border-color:var(--wc-bubble);top:10px;left:44px}.nspp-wecom-messages .nspp-notice-workspace .nspp-messages-more{margin:0 auto 16px;color:var(--wc-link)!important}.nspp-wecom-messages .nspp-notice-detail{padding:16px 24px}.nspp-wecom-messages .nspp-notice-summary{background:var(--wc-bubble);border:0;border-radius:8px;padding:14px 16px}html[data-nspp-wecom] .nspp-user-hover:not(.nspp-user-hover-inline){width:288px;box-shadow:var(--wc-shadow);color:var(--wc-text);font-family:var(--wc-font);border-radius:10px;padding:16px 16px 14px;border:1px solid var(--wc-pop-line)!important;background:var(--wc-pop)!important}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-header{grid-template-columns:48px minmax(0,1fr) auto;align-items:center;column-gap:12px;display:grid}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-header>:is(.nspp-user-hover-avatar,.nspp-user-hover-monogram){object-fit:cover;aspect-ratio:1;border-radius:6px;grid-column:1;width:48px;height:48px;margin:0;font-size:22px;display:block}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-header>div{grid-column:2;min-width:0}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-name{color:var(--wc-text);font-size:16px;font-weight:500}html[data-nspp-wecom] .nspp-user-hover .nspp-copy-button{color:var(--wc-time)}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-score{flex-direction:column;grid-column:3;align-items:flex-end;margin:0}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-score strong{font:600 24px/1 var(--wc-font);letter-spacing:-.5px}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-score small{color:var(--wc-muted);opacity:1;margin-top:3px;font-size:11px;line-height:1}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-signature{color:var(--wc-muted);margin:10px 0 0;font-size:12px}html[data-nspp-wecom] .nspp-user-hover>dl{border-top:1px solid var(--wc-pop-line);border-bottom:1px solid var(--wc-pop-line);margin:12px 0 0;padding:8px 0}html[data-nspp-wecom] .nspp-user-hover>dl>div{padding:3px 0}html[data-nspp-wecom] .nspp-user-hover>dl dt{color:var(--wc-muted);font-size:12px}html[data-nspp-wecom] .nspp-user-hover>dl dt .iconpark-icon{display:none}html[data-nspp-wecom] .nspp-user-hover>dl dd{color:var(--wc-text);font-size:13px}html[data-nspp-wecom] .nspp-user-hover>dl dd a{color:var(--wc-text);-webkit-text-decoration-color:var(--wc-time);text-decoration-color:var(--wc-time)}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-rich{color:var(--wc-muted);margin:8px 0 0;font-size:12px}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-rich .nspp-age{color:var(--wc-muted);background:0 0;border:0;padding:0;font-size:12px}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-rich .nspp-age strong{color:var(--wc-text)}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-actions{gap:6px;margin-top:12px}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-actions>:is(button,a){height:30px;font:13px var(--wc-font);box-shadow:none;border:0;border-radius:6px;justify-content:center;align-items:center;text-decoration:none;display:inline-flex;background:var(--wc-search)!important;color:var(--wc-text)!important}html[data-nspp-wecom] .nspp-user-hover .nspp-user-hover-actions>:is(button,a):hover:not(:disabled){background:var(--wc-row-active)!important}html[data-nspp-wecom] .nspp-user-hover :is(.nspp-user-hover-actions>[data-action=block],.nspp-block-toggle){color:var(--wc-red)!important}html[data-nspp-wecom] .nspp-wecom-messages .nspp-chat-profile{border-bottom:1px solid var(--wc-border);padding:12px 24px;background:var(--wc-chat)!important}html[data-nspp-wecom] .nspp-wecom-messages .nspp-chat-profile:before{display:none}html[data-nspp-wecom] .nspp-wecom-messages .nspp-chat-profile>a .nspp-messages-avatar{border-radius:6px;outline:0}html[data-nspp-wecom] .nspp-wecom-messages .nspp-chat-profile-data{background:var(--wc-bubble)!important}html[data-nspp-wecom] .nspp-wecom-messages .nspp-chat-profile :is(.nspp-chat-profile-heading>strong,.nspp-chat-profile-stat>strong){color:var(--wc-text)}html[data-nspp-wecom] .nspp-wecom-messages .nspp-chat-profile :is(.nspp-chat-profile-meta,.nspp-chat-profile-notice,.nspp-chat-profile-stat>small,.nspp-chat-profile-bio){color:var(--wc-muted)}html[data-nspp-wecom] .nspp-wecom-chat .nspp-wecom-chat-body:focus-visible{outline:none}");
+	var LIST = "#nsk-body-left ul.post-list:not(.topic-carousel-panel)";
+	var ROWS = `${LIST} > .post-list-item`;
+	var ACTIVE = "data-nspp-wecom-active";
+	var FILTERED = "data-nspp-wecom-filtered";
+	var TIME = "data-nspp-wecom-time";
+	var LIST_PATH = /^\/(?:page-\d+\/?|categories\/[^/]+(?:\/page-\d+)?\/?)?$/;
+	var nodeseekMoyu = {
+		id: "moyu-mode",
+		title: "摸鱼模式",
+		group: "外观",
+		description: "默认保持论坛原样式。桌面端（宽度 ≥ 1000px）的首页和版块列表在工具栏多一个小鱼按钮，点击切换为微信聊天式三栏：左侧导航（消息、帖子、版块、热榜，鼠标停在版块上即展开版块列表，底部菜单收纳 NodeSeek++ 工具）、可拖拽调宽的帖子列表、气泡式阅读区；消息在原位打开消息中心。再点一次小鱼恢复原样式。底部输入框直接调用论坛的评论接口发送回复。从首页进入时默认打开的栏目可选：首页帖子、热榜或某个版块。",
+		defaults: {
+			enabled: true,
+			defaultView: "home"
+		},
+		fields: { defaultView: {
+			label: "进入摸鱼模式时默认打开",
+			type: "select",
+			options: [
+				{
+					label: "首页帖子（默认）",
+					value: "home"
+				},
+				{
+					label: "热榜",
+					value: "hot"
+				},
+				...[
+					["daily", "日常"],
+					["tech", "技术"],
+					["info", "情报"],
+					["review", "测评"],
+					["trade", "交易"],
+					["carpool", "拼车"],
+					["promotion", "推广"],
+					["life", "生活"],
+					["dev", "Dev"],
+					["photo-share", "贴图"],
+					["expose", "曝光"],
+					["inside", "内版"],
+					["sandbox", "沙盒"],
+					["meaningless", "无意义"]
+				].map(([slug, name]) => ({
+					label: `版块：${name}`,
+					value: `categories/${slug}`
+				}))
+			]
+		} },
+		mount(ctx) {
+			if (location.pathname.startsWith("/post-") || !document.querySelector(LIST)) return;
+			const desktop = matchMedia("(min-width: 1000px)");
+			let moyu = ctx.get("moyu") === true;
+			let activeId = null;
+			let view = "posts";
+			const isOn = () => desktop.matches && moyu;
+			const tools = document.getElementById("nspp-tools");
+			const rail = el("nav", "nspp-wecom-rail");
+			rail.setAttribute("aria-label", "摸鱼模式导航");
+			const user = unsafeWindow$1.__config__?.user;
+			const me = el("a", "nspp-wecom-me");
+			me.href = user?.member_id ? `/space/${user.member_id}` : "/signIn.html";
+			me.dataset.tip = user?.member_name || (user?.member_id ? "个人主页" : "登录");
+			me.setAttribute("aria-label", me.dataset.tip);
+			if (user?.member_id) {
+				const img = el("img");
+				img.alt = "";
+				const card = document.querySelector(".user-card .user-head img")?.getAttribute("src");
+				img.addEventListener("error", () => {
+					if (card && img.getAttribute("src") !== card) img.src = card;
+					else img.replaceWith(icon$1("user"));
+				}, { signal: ctx.signal });
+				img.src = `/avatar/${user.member_id}.png`;
+				me.append(img);
+			} else me.append(icon$1("user"));
+			const chats = railItem("消息", "messages", "/notification");
+			chats.hidden = !user?.member_id;
+			const badge = el("b", "nspp-wecom-badge");
+			badge.hidden = true;
+			chats.append(badge);
+			const posts = railItem("帖子", "posts", "/");
+			const sections = railItem("版块", "sections");
+			sections.setAttribute("aria-expanded", "false");
+			const hot = railItem("热榜", "hot");
+			hot.hidden = location.hostname !== "www.nodeseek.com";
+			const theme = railItem("主题", "moon");
+			const more = railItem("更多", "menu");
+			more.setAttribute("aria-haspopup", "menu");
+			more.setAttribute("aria-expanded", "false");
+			const moreDot = el("b", "nspp-wecom-dot");
+			moreDot.hidden = true;
+			more.append(moreDot);
+			const top = el("div", "nspp-wecom-rail-top");
+			top.append(me, chats, posts, sections, hot);
+			const bottom = el("div", "nspp-wecom-rail-bottom");
+			bottom.append(theme, more);
+			rail.append(top, bottom);
+			const tool = createToolMenu(ctx, tools, more);
+			const { menu } = tool, setMenu = tool.set;
+			const flyout = el("nav", "nspp-wecom-categories");
+			flyout.hidden = true;
+			flyout.setAttribute("aria-label", "版块");
+			flyout.append(el("h2", "", "所有版块"));
+			const categoryList = el("ul");
+			const seen = new Set();
+			document.querySelectorAll(".category-list a[href^=\"/categories/\"]").forEach((source) => {
+				const href = source.getAttribute("href");
+				if (seen.has(href)) return;
+				seen.add(href);
+				const li = el("li");
+				const link = source.cloneNode(true);
+				link.removeAttribute("id");
+				li.append(link);
+				categoryList.append(li);
+			});
+			const syncSections = () => categoryList.querySelectorAll("a").forEach((link) => {
+				const href = link.getAttribute("href") || "";
+				link.toggleAttribute("aria-current", location.pathname === href || location.pathname.startsWith(`${href}/`));
+				if (link.hasAttribute("aria-current")) link.setAttribute("aria-current", "page");
+			});
+			flyout.append(categoryList);
+			const setFlyout = (open) => {
+				flyout.hidden = !open;
+				sections.setAttribute("aria-expanded", String(open));
+			};
+			const listHead = el("div", "nspp-wecom-listhead");
+			const search = el("input");
+			search.type = "search";
+			search.placeholder = "搜索";
+			search.setAttribute("aria-label", "按标题、作者或版块筛选已加载的帖子");
+			const compose = el("a", "nspp-wecom-compose");
+			compose.href = "/new-discussion";
+			compose.title = "发帖";
+			compose.setAttribute("aria-label", "发帖");
+			compose.append(icon$1("compose", 20));
+			compose.hidden = !user?.member_id;
+			const sort = el("button", "nspp-wecom-sort");
+			sort.type = "button";
+			sort.hidden = true;
+			const sortLinks = () => Array.from(document.querySelectorAll("#nsk-body-left .sorter a"));
+			const syncSort = () => {
+				const label = sortLinks().find((link) => link.classList.contains("selected"))?.textContent?.trim() || "";
+				sort.hidden = sortLinks().length < 2 || !label;
+				if (sort.dataset.label === label) return;
+				sort.dataset.label = label;
+				sort.replaceChildren(icon$1("sort", 13), label);
+				sort.title = `按${label}排序，点击切换`;
+				sort.setAttribute("aria-label", sort.title);
+			};
+			sort.addEventListener("click", () => {
+				const other = sortLinks().find((link) => !link.classList.contains("selected"))?.dataset.sort;
+				if (!other) return;
+				const url = new URL(location.href);
+				url.pathname = url.pathname.replace(/\/?page-\d+\/?$/, "") || "/";
+				url.searchParams.set("sortBy", other);
+				navigate(url.href, true);
+			}, { signal: ctx.signal });
+			listHead.append(search, sort, compose);
+			const { resizer, apply: applyWidth, clear: clearWidth } = createResizer(ctx);
+			const markActive = () => {
+				document.querySelectorAll(ROWS).forEach((row) => {
+					const href = row.querySelector(".post-title a")?.href;
+					row.toggleAttribute(ACTIVE, activeId != null && !!href && postTarget(href, location.origin)?.id === activeId);
+				});
+				hotList.querySelectorAll("[data-id]").forEach((row) => row.toggleAttribute(ACTIVE, Number(row.dataset.id) === activeId));
+			};
+			const hotPanel = el("section", "nspp-wecom-hot");
+			hotPanel.hidden = true;
+			hotPanel.setAttribute("aria-label", "热榜");
+			const hotHead = el("div", "nspp-wecom-hot-head");
+			const tabs = el("div", "nspp-wecom-tabs");
+			tabs.setAttribute("role", "tablist");
+			let ranking = "hot";
+			const tabButtons = Object.keys(rankings).map((kind) => {
+				const tab = el("button", "", rankings[kind].replace("实时热榜", "实时"));
+				tab.type = "button";
+				tab.setAttribute("role", "tab");
+				tab.dataset.kind = kind;
+				tab.addEventListener("click", () => {
+					ranking = kind;
+					loadHot();
+				}, { signal: ctx.signal });
+				tabs.append(tab);
+				return tab;
+			});
+			const hotRefresh = el("button", "nspp-wecom-hot-refresh");
+			hotRefresh.type = "button";
+			hotRefresh.setAttribute("aria-label", "刷新热榜");
+			hotRefresh.dataset.tip = "刷新";
+			hotRefresh.append(icon$1("refresh", 16));
+			hotHead.append(tabs, hotRefresh);
+			const hotStatus = el("p", "nspp-wecom-hot-status");
+			hotStatus.setAttribute("role", "status");
+			const hotList = el("ol", "nspp-wecom-hot-list");
+			hotPanel.append(hotHead, hotList, hotStatus);
+			const hotCache = new Map();
+			let hotRequest;
+			const renderHot = () => {
+				tabButtons.forEach((tab) => tab.setAttribute("aria-selected", String(tab.dataset.kind === ranking)));
+				const snapshot = hotCache.get(ranking);
+				hotList.replaceChildren(...(snapshot?.posts || []).map((post, index) => conversationRow(ctx, {
+					id: post.id,
+					title: post.title,
+					author: post.author,
+					avatar: post.authorId ? `/avatar/${post.authorId}.png` : "",
+					meta: [post.author, `${post.views} 浏览`].filter(Boolean).join(" · "),
+					time: post.posted ? new Date(post.posted) : null,
+					count: post.comments,
+					floor: null
+				}, () => chat.open({
+					id: post.id,
+					page: 1,
+					floor: null
+				}, post.title, post.comments), index + 1)));
+				markActive();
+			};
+			async function loadHot(force = false) {
+				renderHot();
+				const cached = hotCache.get(ranking);
+				if (!force && cached && Date.now() - cached.fetched < 3e5) {
+					hotStatus.textContent = cached.updated ? `更新于 ${listTime(new Date(cached.updated))}` : "";
+					return;
+				}
+				hotRequest?.abort();
+				const controller = new AbortController();
+				hotRequest = controller;
+				const kind = ranking;
+				hotStatus.textContent = "正在加载热榜…";
+				try {
+					const snapshot = await requestRanking(kind, AbortSignal.any([ctx.signal, controller.signal]));
+					hotCache.set(kind, snapshot);
+					if (ranking === kind) {
+						renderHot();
+						hotStatus.textContent = snapshot.updated ? `更新于 ${listTime(new Date(snapshot.updated))}` : "";
+					}
+				} catch {
+					if (!controller.signal.aborted && ranking === kind) hotStatus.textContent = "热榜暂时无法加载，点右上角刷新重试";
+				}
+			}
+			hotRefresh.addEventListener("click", () => {
+				loadHot(true);
+			}, { signal: ctx.signal });
+			let swapping;
+			async function navigate(href, push) {
+				const url = new URL(href, location.href);
+				if (url.origin !== location.origin || !LIST_PATH.test(url.pathname)) {
+					location.assign(url.href);
+					return;
+				}
+				swapping?.abort();
+				const controller = new AbortController();
+				swapping = controller;
+				const column = document.querySelector("#nsk-body-left");
+				column?.setAttribute("aria-busy", "true");
+				try {
+					const html = await ctx.request(url.href, {
+						responseType: "text",
+						signal: AbortSignal.any([ctx.signal, controller.signal])
+					});
+					if (controller.signal.aborted) return;
+					const page = new DOMParser().parseFromString(html, "text/html");
+					const source = page.querySelector(LIST), list = document.querySelector(LIST);
+					if (!source || !list) throw new Error("列表不可用");
+					source.querySelectorAll("script, iframe, object, embed, base, link, style").forEach((node) => node.remove());
+					source.querySelectorAll("*").forEach((node) => {
+						for (const attr of Array.from(node.attributes)) if (/^on/i.test(attr.name)) node.removeAttribute(attr.name);
+					});
+					list.replaceChildren(...Array.from(source.children, (child) => document.importNode(child, true)));
+					const pagers = page.querySelectorAll("#nsk-body-left .nsk-pager");
+					document.querySelectorAll("#nsk-body-left .nsk-pager").forEach((pager, index) => {
+						if (pagers[index]) pager.replaceWith(document.importNode(pagers[index], true));
+					});
+					const selected = page.querySelector(".sorter a.selected")?.dataset.sort;
+					if (selected) sortLinks().forEach((link) => link.classList.toggle("selected", link.dataset.sort === selected));
+					if (push) history.pushState(null, "", url.href);
+					else if (location.href !== url.href) history.replaceState(null, "", url.href);
+					if (page.title) document.title = page.title;
+					if (column) column.scrollTop = 0;
+					syncCurrent();
+					syncSort();
+					stamp();
+					filter();
+					markActive();
+					document.dispatchEvent(new Event("nspp:list-replaced"));
+				} catch {
+					if (!controller.signal.aborted && !ctx.signal.aborted) location.assign(url.href);
+				} finally {
+					if (swapping === controller) column?.removeAttribute("aria-busy");
+				}
+			}
+			const chat = createChat(ctx, nodeseekThread(ctx), (id) => {
+				activeId = id;
+				markActive();
+			});
+			const stamp = () => document.querySelectorAll(`${ROWS} .info-last-comment-time`).forEach((link) => {
+				const date = new Date(link.querySelector("time")?.getAttribute("datetime") || "");
+				if (Number.isNaN(date.getTime())) return;
+				const label = listTime(date);
+				if (link.getAttribute(TIME) !== label) link.setAttribute(TIME, label);
+			});
+			const filter = () => {
+				const query = search.value.trim().toLowerCase();
+				document.querySelectorAll(ROWS).forEach((row) => {
+					row.toggleAttribute(FILTERED, !!query && !(row.textContent || "").toLowerCase().includes(query));
+				});
+			};
+			search.addEventListener("input", filter, { signal: ctx.signal });
+			const toggle = el("button", "nspp-tool-icon");
+			toggle.type = "button";
+			toggle.dataset.nsppWecomLauncher = "";
+			toggle.append(fishIcon());
+			(tools || document.body).prepend(toggle);
+			const messages = el("div", "nspp-wecom-messages");
+			messages.hidden = true;
+			const host = {
+				container: messages,
+				hash: "#/atMe",
+				visible: () => isOn() && view === "messages"
+			};
+			let stopMessages;
+			const showView = (next) => {
+				view = next;
+				if (view === "messages" && !stopMessages && user?.member_id) stopMessages = mountChat(ctx, user.member_id, host);
+				apply();
+			};
+			const syncCurrent = () => {
+				const section = location.pathname.startsWith("/categories/");
+				posts.toggleAttribute("aria-current", view === "posts" && !section);
+				sections.toggleAttribute("aria-current", view === "posts" && section);
+				hot.toggleAttribute("aria-current", view === "hot");
+				chats.toggleAttribute("aria-current", view === "messages");
+				for (const node of [
+					posts,
+					sections,
+					hot,
+					chats
+				]) if (node.hasAttribute("aria-current")) node.setAttribute("aria-current", "page");
+				syncSections();
+			};
+			const syncTheme = () => {
+				const dark = document.body.classList.contains("dark-layout");
+				theme.replaceChildren(icon$1(dark ? "sun" : "moon"));
+				theme.dataset.tip = dark ? "切换到浅色" : "切换到深色";
+				theme.setAttribute("aria-label", theme.dataset.tip);
+			};
+			const apply = () => {
+				const on = isOn();
+				document.documentElement.toggleAttribute("data-nspp-wecom", on);
+				if (on) document.documentElement.dataset.nsppWecomView = view;
+				else delete document.documentElement.dataset.nsppWecomView;
+				rail.hidden = resizer.hidden = !on;
+				listHead.hidden = !on || view !== "posts";
+				hotPanel.hidden = !on || view !== "hot";
+				chat.root.hidden = !on || view === "messages";
+				messages.hidden = !on || view !== "messages";
+				if (on && view === "hot") loadHot();
+				messages.dispatchEvent(new Event(MESSAGE_ROUTE_EVENT));
+				syncCurrent();
+				if (on) {
+					stamp();
+					applyWidth();
+				} else {
+					setFlyout(false);
+					setMenu(false);
+					clearWidth();
+				}
+				toggle.hidden = !desktop.matches;
+				toggle.title = on ? "退出摸鱼模式" : "摸鱼模式";
+				toggle.setAttribute("aria-label", toggle.title);
+				toggle.setAttribute("aria-pressed", String(on));
+				syncTheme();
+			};
+			const openDefault = () => {
+				if (!isOn() || location.pathname !== "/" || location.search) return;
+				const choice = String(ctx.get("defaultView") || "home");
+				if (choice === "hot") {
+					if (!hot.hidden) showView("hot");
+					return;
+				}
+				const section = Array.from(categoryList.querySelectorAll("a"), (link) => link.getAttribute("href")).find((href) => href === `/${choice}`);
+				if (section) navigate(section, false);
+			};
+			document.body.append(rail, menu, flyout, listHead, hotPanel, resizer, chat.root, messages);
+			apply();
+			openDefault();
+			desktop.addEventListener("change", apply, { signal: ctx.signal });
+			toggle.addEventListener("click", () => {
+				moyu = !moyu;
+				ctx.set("moyu", moyu);
+				apply();
+				if (moyu) openDefault();
+			}, { signal: ctx.signal });
+			hoverFlyout(ctx, sections, flyout, (open) => {
+				if (open) setMenu(false);
+				setFlyout(open);
+			});
+			more.addEventListener("click", () => {
+				setFlyout(false);
+				setMenu(!!menu.hidden);
+			}, { signal: ctx.signal });
+			hot.addEventListener("click", () => {
+				setFlyout(false);
+				setMenu(false);
+				showView("hot");
+			}, { signal: ctx.signal });
+			const plain = (event) => isOn() && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
+			chats.addEventListener("click", (event) => {
+				if (!plain(event) || !user?.member_id) return;
+				event.preventDefault();
+				setFlyout(false);
+				setMenu(false);
+				showView("messages");
+			}, { signal: ctx.signal });
+			posts.addEventListener("click", (event) => {
+				if (!plain(event)) return;
+				event.preventDefault();
+				setFlyout(false);
+				setMenu(false);
+				if (view !== "posts") showView("posts");
+				else if (location.pathname !== "/") navigate("/", true);
+			}, { signal: ctx.signal });
+			categoryList.addEventListener("click", (event) => {
+				const link = event.target.closest("a[href]");
+				if (!link || !plain(event)) return;
+				event.preventDefault();
+				setFlyout(false);
+				if (view !== "posts") showView("posts");
+				navigate(link.href, true);
+			}, { signal: ctx.signal });
+			document.querySelector("#nsk-body-left")?.addEventListener("click", (event) => {
+				const link = event.target.closest(".nsk-pager a[href]");
+				if (!link || !plain(event)) return;
+				event.preventDefault();
+				navigate(link.href, true);
+			}, { signal: ctx.signal });
+			window.addEventListener("popstate", () => {
+				if (isOn() && LIST_PATH.test(location.pathname)) navigate(location.href, false);
+			}, { signal: ctx.signal });
+			theme.addEventListener("click", () => {
+				document.querySelector("#nsk-head .color-theme-switcher, .color-theme-switcher")?.click();
+				setTimeout(syncTheme, 50);
+			}, { signal: ctx.signal });
+			document.addEventListener("click", (event) => {
+				const target = event.target;
+				if (!flyout.hidden && !flyout.contains(target) && !sections.contains(target)) setFlyout(false);
+				if (!menu.hidden && !menu.contains(target) && !more.contains(target)) setMenu(false);
+			}, {
+				capture: true,
+				signal: ctx.signal
+			});
+			document.addEventListener("keydown", (event) => {
+				if (event.key !== "Escape") return;
+				if (!flyout.hidden) {
+					setFlyout(false);
+					sections.focus();
+				}
+				if (!menu.hidden) {
+					setMenu(false);
+					more.focus();
+				}
+			}, { signal: ctx.signal });
+			document.querySelector("#nsk-body-left")?.addEventListener("click", (event) => {
+				const mouse = event;
+				if (!isOn() || mouse.button !== 0 || mouse.ctrlKey || mouse.metaKey || mouse.shiftKey || mouse.altKey) return;
+				const target = event.target;
+				const row = target.closest(".post-list-item");
+				if (!row || row.classList.contains("topic-carousel-item") || !row.closest(LIST)) return;
+				if (target.closest(".info-author a, .info-last-commenter a, .post-category, .nspp-list-actions, button, input, select, textarea")) return;
+				const titleLink = row.querySelector(".post-title a");
+				const link = target.closest("a.info-last-comment-time") || titleLink;
+				const next = link ? postTarget(link.href, location.origin) : null;
+				if (!next) return;
+				event.preventDefault();
+				chat.open(next, titleLink?.textContent?.trim() || "", Number(row.querySelector(".info-comments-count")?.textContent?.trim()) || 0);
+			}, { signal: ctx.signal });
+			const stop = ctx.watch(() => {
+				const count = Number(document.querySelector(".user-card .notify-count")?.textContent?.trim()) || 0;
+				const label = count > 99 ? "99+" : String(count);
+				if (badge.textContent !== label) badge.textContent = label;
+				badge.hidden = count <= 0;
+				moreDot.hidden = !tool.flagged();
+				if (activeId != null) markActive();
+				if (search.value.trim()) filter();
+				if (isOn()) stamp();
+				syncSort();
+			});
+			return () => {
+				stop();
+				chat.destroy();
+				stopMessages?.();
+				messages.remove();
+				hotRequest?.abort();
+				swapping?.abort();
+				hotPanel.remove();
+				delete document.documentElement.dataset.nsppWecomView;
+				clearWidth();
+				rail.remove();
+				menu.remove();
+				flyout.remove();
+				listHead.remove();
+				resizer.remove();
+				toggle.remove();
+				document.documentElement.removeAttribute("data-nspp-wecom");
+				document.querySelectorAll(`[${ACTIVE}], [${FILTERED}], [${TIME}]`).forEach((node) => {
+					node.removeAttribute(ACTIVE);
+					node.removeAttribute(FILTERED);
+					node.removeAttribute(TIME);
+				});
+			};
+		}
+	};
+	var moyuMode = SITE === "nodeseek" ? nodeseekMoyu : remoteMoyu(SITE);
+	var KEY = "nspp:tools-collapsed";
+	function mountToolsCollapse(tools) {
+		const toggle = document.createElement("button");
+		toggle.type = "button";
+		toggle.className = "nspp-tool-icon nspp-tools-toggle";
+		const apply = (collapsed) => {
+			tools.toggleAttribute("data-collapsed", collapsed);
+			toggle.replaceChildren(toolIcon(collapsed ? "up" : "down"));
+			toggle.title = collapsed ? "展开工具栏" : "收起工具栏";
+			toggle.setAttribute("aria-label", toggle.title);
+			toggle.setAttribute("aria-expanded", String(!collapsed));
+		};
+		apply(GM_getValue$1(KEY, false) === true);
+		toggle.addEventListener("click", () => {
+			const collapsed = !tools.hasAttribute("data-collapsed");
+			apply(collapsed);
+			try {
+				GM_setValue$1(KEY, collapsed);
+			} catch {}
+		});
+		tools.append(toggle);
+		return () => {
+			toggle.remove();
+			tools.removeAttribute("data-collapsed");
+		};
+	}
+	var LAUNCHER = "[data-nspp-wecom-launcher]";
+	var SWIM_MS = 2200;
+	var INTRO_TIP_MS = 4e3;
+	function mountToolTips(tools) {
+		const tip = document.createElement("div");
+		tip.className = "nspp-tool-tip";
+		tip.setAttribute("role", "tooltip");
+		tip.hidden = true;
+		document.body.append(tip);
+		const controller = new AbortController();
+		const { signal } = controller;
+		let current = null;
+		let pointed = null;
+		let timer;
+		let keyboard = false;
+		const label = (button) => (button.getAttribute("aria-label") || button.title || button.dataset.nsppTitle || "").trim();
+		const show = (button, text = label(button)) => {
+			if (!text || !button.isConnected) return;
+			if (button.hasAttribute("title")) {
+				button.dataset.nsppTitle = button.title;
+				button.removeAttribute("title");
+			}
+			tip.textContent = text;
+			tip.hidden = false;
+			const rect = button.getBoundingClientRect(), box = tip.getBoundingClientRect();
+			const left = rect.left > window.innerWidth / 2 ? rect.left - box.width - 10 : rect.right + 10;
+			tip.style.left = `${Math.max(8, Math.round(left))}px`;
+			tip.style.top = `${Math.round(Math.min(window.innerHeight - box.height - 8, Math.max(8, rect.top + rect.height / 2 - box.height / 2)))}px`;
+		};
+		const hide = () => {
+			clearTimeout(timer);
+			if (current && current.dataset.nsppTitle !== void 0) {
+				if (!current.hasAttribute("title")) current.title = current.dataset.nsppTitle;
+				delete current.dataset.nsppTitle;
+			}
+			current = null;
+			tip.hidden = true;
+		};
+		const buttonOf = (event) => event.target?.closest?.("button, a[href]") ?? null;
+		tools.addEventListener("pointerover", (event) => {
+			if (event.pointerType !== "mouse") return;
+			const button = buttonOf(event);
+			pointed = button;
+			if (!button || button === current) return;
+			hide();
+			current = button;
+			timer = setTimeout(() => {
+				if (current === button) show(button);
+			}, 250);
+		}, { signal });
+		tools.addEventListener("pointerout", (event) => {
+			const next = event.relatedTarget;
+			if (pointed && !(next && pointed.contains(next))) pointed = null;
+			if (current && !(next && current.contains(next))) hide();
+		}, { signal });
+		document.addEventListener("keydown", (event) => {
+			keyboard = true;
+			if (event.key === "Escape") hide();
+		}, {
+			capture: true,
+			signal
+		});
+		document.addEventListener("pointerdown", () => {
+			keyboard = false;
+		}, {
+			capture: true,
+			signal
+		});
+		tools.addEventListener("focusin", (event) => {
+			const button = buttonOf(event);
+			if (!keyboard || !button) return;
+			hide();
+			current = button;
+			show(button);
+		}, { signal });
+		tools.addEventListener("focusout", hide, { signal });
+		tools.addEventListener("pointerdown", hide, { signal });
+		tools.addEventListener("scroll", hide, {
+			passive: true,
+			signal
+		});
+		let introTimer;
+		let swimming = null;
+		let visible;
+		const intro = (launcher) => {
+			const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+			if (!reduced) {
+				swimming = launcher;
+				launcher.setAttribute("data-swimming", "");
+			}
+			introTimer = setTimeout(() => {
+				launcher.removeAttribute("data-swimming");
+				swimming = null;
+				if (!launcher.isConnected || launcher.hidden || pointed && pointed !== launcher) return;
+				hide();
+				current = launcher;
+				show(launcher, `${label(launcher)}：点一下，切换成微信式三栏`);
+				introTimer = setTimeout(() => {
+					if (current === launcher && pointed !== launcher) hide();
+				}, INTRO_TIP_MS);
+			}, reduced ? 0 : SWIM_MS);
+		};
+		const watch = new MutationObserver(() => arm());
+		const arm = () => {
+			const launcher = tools.querySelector(LAUNCHER);
+			if (!launcher || launcher.hidden || document.documentElement.hasAttribute("data-nspp-wecom")) return;
+			watch.disconnect();
+			if (typeof IntersectionObserver !== "function") {
+				intro(launcher);
+				return;
+			}
+			visible = new IntersectionObserver((entries) => {
+				if (!entries.some((entry) => entry.isIntersecting)) return;
+				visible?.disconnect();
+				if (!document.hidden) {
+					intro(launcher);
+					return;
+				}
+				document.addEventListener("visibilitychange", function shown() {
+					if (document.hidden) return;
+					document.removeEventListener("visibilitychange", shown);
+					intro(launcher);
+				}, { signal });
+			}, { threshold: .6 });
+			visible.observe(launcher);
+		};
+		if (location.pathname === "/") {
+			watch.observe(tools, {
+				childList: true,
+				subtree: true,
+				attributes: true,
+				attributeFilter: ["hidden"]
+			});
+			arm();
+		}
+		return () => {
+			clearTimeout(introTimer);
+			watch.disconnect();
+			visible?.disconnect();
+			swimming?.removeAttribute("data-swimming");
+			hide();
+			controller.abort();
+			tip.remove();
+		};
+	}
+	var day = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(new Date());
+	var v2exAttendance = {
+		id: "attendance",
+		title: "签到",
+		group: "操作辅助",
+		description: "领取 V2EX 每日登录奖励。每天尝试一次，成功、已领取或失败都会记住当天并隐藏按钮，次日再试；按账户隔离。未登录时不显示。",
+		defaults: {
+			enabled: true,
+			automatic: true
+		},
+		fields: { automatic: {
+			label: "每天自动签到",
+			type: "text"
+		} },
+		mount(ctx) {
+			const user = v2exUser(document, location.origin);
+			if (!user) return;
+			const key = `day:${user.name}`;
+			const known = () => ctx.get(key) === day();
+			const control = document.createElement("button");
+			control.type = "button";
+			control.className = "nspp-action nspp-tool-icon";
+			control.dataset.nsppAttendance = "";
+			const render = (label = "签到") => {
+				control.replaceChildren(toolIcon("attendance"));
+				control.title = label;
+				control.setAttribute("aria-label", label);
+			};
+			render();
+			control.hidden = known();
+			(document.getElementById("nspp-tools") || document.body).append(control);
+			async function run(manual) {
+				if (control.disabled || ctx.signal.aborted) return;
+				if (known()) {
+					control.hidden = true;
+					if (manual) ctx.notify("今日已签到");
+					return;
+				}
+				const today = day();
+				control.disabled = true;
+				render("签到中…");
+				control.setAttribute("aria-busy", "true");
+				try {
+					await withTabLock(`attendance:${user.name}`, 1e4, async () => {
+						if (known() || ctx.signal.aborted) return;
+						const mission = v2exMission(await ctx.request("/mission/daily", { responseType: "text" }));
+						let days = mission.days;
+						if (mission.redeem) {
+							const result = v2exMission(await ctx.request(mission.redeem, { responseType: "text" }));
+							days = result.days ?? days;
+							if (!result.done) throw new Error("V2EX 未确认领取，可打开每日任务页面查看");
+							ctx.notify(days ? `V2EX 签到成功，已连续登录 ${days} 天` : "V2EX 签到成功");
+						} else if (manual) ctx.notify(mission.done ? "今日已签到" : "未找到可领取的每日奖励");
+						ctx.set(key, today);
+					});
+				} catch (error) {
+					if (!ctx.signal.aborted) {
+						ctx.set(key, today);
+						ctx.notify(`签到未完成：${error instanceof Error ? error.message : "请稍后重试"}`);
+					}
+				} finally {
+					control.disabled = false;
+					control.removeAttribute("aria-busy");
+					render();
+					control.hidden = known();
+				}
+			}
+			control.addEventListener("click", () => {
+				run(true);
+			}, { signal: ctx.signal });
+			const tick = () => {
+				if (ctx.get("automatic") && !known() && !document.hidden) run(false);
+				else control.hidden = known();
+			};
+			window.addEventListener("focus", tick, { signal: ctx.signal });
+			document.addEventListener("visibilitychange", tick, { signal: ctx.signal });
+			const rollover = setInterval(tick, 6e4);
+			tick();
+			return () => {
+				clearInterval(rollover);
+				control.remove();
+			};
+		}
+	};
+	_css("#nspp-tools{z-index:999;box-sizing:border-box;scrollbar-width:none;border:1px solid var(--border-color,#d1d9e0);--nspp-tools-edge:color-mix(in srgb, currentColor 22%, transparent);background:linear-gradient(var(--bg-color,Canvas) 40%, transparent) top / 100% 20px no-repeat local, linear-gradient(transparent, var(--bg-color,Canvas) 60%) bottom / 100% 20px no-repeat local, radial-gradient(farthest-side at 50% 0, var(--nspp-tools-edge), transparent) top / 100% 8px no-repeat, radial-gradient(farthest-side at 50% 100%, var(--nspp-tools-edge), transparent) bottom / 100% 8px no-repeat, var(--bg-color,Canvas);width:44px;max-height:55dvh;color:var(--text-color,CanvasText);isolation:isolate;border-radius:12px;flex-direction:column;align-items:center;gap:2px;padding:6px;display:flex;position:fixed;bottom:16px;right:72px;overflow:hidden auto;box-shadow:0 4px 16px #0000000d}#nspp-tools::-webkit-scrollbar{display:none}#nspp-tools:not(:has(button:not([hidden]):not(.nspp-tools-toggle))){display:none}#nspp-tools button.nspp-tools-toggle{order:20;display:none}#nspp-tools{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light}.dark-layout #nspp-tools{--bg-color:#262626;--text-color:#dedede;--border-color:#454545;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark}html[data-nspp-settings-open] #nspp-tools,html[data-nspp-settings-open] [data-nspp-ai-launcher]{display:none!important}html[data-nspp-background] #nspp-tools *,html[data-nspp-background] .nspp-user-hover *{animation-play-state:paused!important}@media (width<=700px),(hover:none){.nspp-user-hover:not(.nspp-user-hover-inline){display:none!important}#nspp-tools{left:auto;right:max(8px, env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));gap:2px;width:44px;max-width:44px;max-height:36dvh;padding:6px}#nspp-tools .nspp-tool-icon{width:30px;height:30px}#nspp-tools button.nspp-tools-toggle{color:var(--text-secondary-color,#818b98);margin-top:2px;display:inline-flex;position:relative}#nspp-tools:not([data-collapsed]) button.nspp-tools-toggle{border-top:1px solid var(--border-color,#d1d9e0);border-radius:0 0 7px 7px;padding-top:2px}#nspp-tools[data-collapsed]>:not(.nspp-tools-toggle){display:none!important}#nspp-tools[data-collapsed]{overflow:visible}#nspp-tools[data-collapsed]:has(.nspp-monitor-badge:not([hidden])) .nspp-tools-toggle:after{content:\"\";border:1.5px solid var(--bg-color,Canvas);background:#cf3434;border-radius:50%;width:8px;height:8px;position:absolute;top:1px;right:1px}body:has(.nspp-messages-container[data-nspp-message-view=new]) #nspp-tools{display:none!important}}.discussion-wrapper .discussion-item.nspp-discussion-row>a:first-child{overflow-wrap:anywhere;flex:1;min-width:0}.discussion-wrapper .discussion-item.nspp-discussion-row>:not(a:first-child){flex:none;margin-right:0}.discussion-wrapper .nspp-discussion-row>.nspp-discussion-stats{color:#ccc;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;gap:10px;margin:0 0 0 auto;padding-left:12px;font-size:12px;display:inline-flex}.nspp-discussion-stats[hidden],.nspp-discussion-stats>span[hidden]{display:none!important}.nspp-discussion-stats>span{align-items:center;gap:4px;display:inline-flex}.discussion-wrapper .discussion-item .nspp-discussion-stats .iconpark-icon{color:currentColor;flex:none;width:14px;height:14px}.discussion-wrapper .discussion-item .nspp-discussion-stats .iconpark-icon:hover{transform:none}#nspp-tools button,[data-nspp-resolve],.nspp-action{font:inherit;border:1px solid var(--border-color,#929a9380);color:var(--text-color,inherit);background:var(--bg-color,Canvas);cursor:pointer;border-radius:.4rem;padding:.35rem .6rem;font-size:.8rem}#nspp-tools a,[data-nspp-footprints] a{text-underline-offset:.2em}#nspp-tools a:hover,[data-nspp-footprints] a:hover{text-decoration:underline}#nspp-tools button:disabled,.nspp-compose button:disabled{opacity:1;cursor:wait}#nspp-tools :focus-visible{outline-offset:2px;outline:2px solid}@media (prefers-reduced-motion:reduce){[class*=nspp-]{scroll-behavior:auto!important}}.nspp-monitor{border:1px solid var(--border-color,#929a9380);background:var(--bg-color,Canvas);width:min(42rem,92vw);max-height:85dvh;color:var(--text-color,CanvasText);border-radius:.75rem;padding:1rem;overflow:auto}.nspp-monitor::backdrop{background:#0006}.nspp-monitor ul{padding-left:1.25rem}.nspp-monitor li{overflow-wrap:anywhere;margin:.4rem 0}.nspp-monitor a{text-underline-offset:.2em}.nspp-monitor a:hover{text-decoration:underline}.nspp-block-controls{flex-wrap:wrap;gap:.3rem;margin-left:.4rem;font-size:.75rem;display:inline-flex}.nspp-user-badges{vertical-align:baseline;white-space:nowrap;font-variant-numeric:tabular-nums;flex-wrap:nowrap;align-items:center;gap:5px;margin-inline-start:4px;font:10px/16px -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:inline-flex}.nspp-user-badges>span{white-space:nowrap;background:0 0;border:0;padding:0}.nspp-level{color:var(--nspp-badge-color,#59636e);font-weight:600}.nspp-age{color:#59636e;cursor:help}.nspp-user-badges button{font:inherit;color:inherit;min-height:0;box-shadow:none;cursor:pointer;background:0 0;border:0;border-radius:2px;padding:0}.nspp-user-badges .nspp-trust{color:var(--nspp-badge-color,#59636e);font-weight:600}.nspp-user-badges .nspp-trust:hover{text-underline-offset:3px;text-decoration:underline}.nspp-user-badges button:focus-visible{outline-offset:2px;outline:2px solid #0969da}.nspp-level[data-level=\"0\"]{--nspp-badge-color:#66717e}.nspp-level[data-level=\"2\"]{--nspp-badge-color:#0969da}.nspp-level[data-level=\"3\"]{--nspp-badge-color:#087f8c}.nspp-level[data-level=\"4\"]{--nspp-badge-color:#218044}.nspp-level[data-level=\"5\"]{--nspp-badge-color:#a66b08}.dark-layout .nspp-level,.dark-layout .nspp-user-badges .nspp-trust{color:var(--nspp-badge-color,#9198a1)}.dark-layout .nspp-age{color:#9198a1}.dark-layout .nspp-level[data-level=\"0\"]{--nspp-badge-color:#a3adb8}.dark-layout .nspp-level[data-level=\"2\"]{--nspp-badge-color:#79b8ff}.dark-layout .nspp-level[data-level=\"3\"]{--nspp-badge-color:#56c8ce}.dark-layout .nspp-level[data-level=\"4\"]{--nspp-badge-color:#70cf91}.dark-layout .nspp-level[data-level=\"5\"]{--nspp-badge-color:#dfb653}.nspp-level[data-level=\"1\"],.nspp-trust[data-tier=danger]{--nspp-badge-color:#cf3434}.nspp-trust[data-tier=warning]{--nspp-badge-color:#a66b08}.nspp-trust[data-tier=success]{--nspp-badge-color:#218044}.dark-layout .nspp-level[data-level=\"1\"],.dark-layout .nspp-trust[data-tier=danger]{--nspp-badge-color:#ff8585}.dark-layout .nspp-trust[data-tier=warning]{--nspp-badge-color:#dfb653}.dark-layout .nspp-trust[data-tier=success]{--nspp-badge-color:#70cf91}.nspp-user-badges .nspp-trust[data-tier=perfect]{--nspp-badge-color:#ffe66d;background:#b82025;border-radius:3px;padding:0 4px}.nspp-user-badges .nspp-level[data-level=\"6\"]{--nspp-badge-color:#916008;background:#fff3cd;border-radius:3px;padding:0 4px;box-shadow:inset 0 0 0 1px #dfba6266}.dark-layout .nspp-user-badges .nspp-level[data-level=\"6\"]{--nspp-badge-color:#f0ce78;background:#3c321c;box-shadow:inset 0 0 0 1px #dfba6255}");
+	_css(".nspp-user-hover-tags,.nspp-user-native-tags,.nspp-user-profile-tags{flex-wrap:wrap;align-items:center;gap:3px;display:inline-flex}.nspp-user-native-tags:empty,.nspp-user-profile-tags:empty,.nspp-user-profile-tags[hidden],.nspp-user-hover-tags[hidden]{display:none}.nspp-user-hover .role-tag,.nspp-chat-profile .role-tag{box-shadow:none;white-space:nowrap;border:0;border-radius:3px;flex:none;align-items:center;gap:3px;margin:0;padding:0 4px;font:500 10px/15px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;display:inline-flex}.nspp-user-hover .role-tag:not([data-nspp-role]),.nspp-chat-profile .role-tag:not([data-nspp-role]){color:#69717a;background:#818b9818}.nspp-user-hover .role-tag[data-nspp-role]:before,.nspp-chat-profile .role-tag[data-nspp-role]:before{width:8px;height:9px}.role-tag[data-nspp-role]{color:#2463a0;box-shadow:none;letter-spacing:0;vertical-align:middle;white-space:nowrap;background:#eaf3fc;border:0;border-radius:3px;flex:none;align-items:center;gap:3px;padding:0 5px;font:600 10px/16px -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:inline-flex}.role-tag[data-nspp-role]:before{content:\"\";clip-path:polygon(50% 0,95% 17%,88% 65%,50% 100%,12% 65%,5% 17%);background:currentColor;flex:none;width:9px;height:10px}.role-tag[data-nspp-role=founder]{color:#087f78;background:#e5f4ef}.role-tag[data-nspp-role=founder]:before{clip-path:polygon(50% 0,66% 34%,100% 50%,66% 66%,50% 100%,34% 66%,0 50%,34% 34%)}.role-tag[data-nspp-role=owner]{color:#4c596a;background:#eaf0f5}.role-tag[data-nspp-role=owner]:before{clip-path:polygon(0 15%,25% 40%,50% 0,75% 40%,100% 15%,88% 85%,12% 85%)}.dark-layout .role-tag[data-nspp-role=admin]{color:#9ac7f2;background:#23374b}.dark-layout .role-tag[data-nspp-role=founder]{color:#7cd4c1;background:#1e3b35}.dark-layout .role-tag[data-nspp-role=owner]{color:#c1ccd9;background:#303a47}.nspp-history{color:#1f2328;background:#fff;border:1px solid #d1d9e0;border-radius:8px;width:min(640px,100vw - 24px);max-width:none;max-height:80dvh;margin:auto;padding:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;box-shadow:0 8px 28px #1f232833}.nspp-history[open]{flex-direction:column;display:flex}.nspp-history::backdrop{background:#1f232866}.nspp-history *{box-sizing:border-box}.nspp-history header{box-shadow:none;background:0 0;border-bottom:0;flex:none;justify-content:space-between;align-items:center;padding:6px 12px;display:flex}.nspp-history h2{margin:0;font-size:14px;font-weight:600}.nspp-history button{min-height:26px;color:inherit;cursor:pointer;white-space:nowrap;background:#f6f8fa;border:1px solid #d1d9e0;border-radius:5px;padding:2px 8px;font-family:inherit;font-size:12px;line-height:20px}.nspp-history [hidden]{display:none!important}.nspp-history-toolbar{border-bottom:0;flex:none;gap:6px;padding:4px 12px 6px;display:flex}.nspp-history input{width:0;min-width:0;color:inherit;font:inherit;background:0 0;border:1px solid #d1d9e0;border-radius:5px;flex:1;padding:4px 8px}.nspp-history ol{overscroll-behavior:contain;min-height:60px;margin:0;padding:0 12px;list-style:none;overflow-y:auto}.nspp-history li{border:0;align-items:center;gap:8px;margin:0;padding:3px 0;display:flex}.nspp-history li button{background:0 0;border-color:#0000;min-height:24px;padding:1px 6px}.nspp-history li:hover{background:#818b980c}.nspp-history li a{color:#0969da;white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;text-decoration:none;overflow:hidden}.nspp-history a:hover{text-underline-offset:2px;text-decoration:underline}.nspp-history time{color:#59636e;flex:none;font-size:11px}.nspp-history :focus-visible{outline-offset:2px;outline:2px solid #0969da}.dark-layout .nspp-history{color:#f0f6fc;background:#0d1117;border-color:#3d444d}.dark-layout .nspp-history header,.dark-layout .nspp-history button{background:#151b23}.dark-layout .nspp-history a{color:#79c0ff}@media (width<=700px),(hover:none){.nspp-history-toolbar{flex-wrap:wrap}.nspp-history time{display:none}}.nspp-block-toggle{vertical-align:middle;color:#59636e;cursor:pointer;background:0 0;border:0;border-radius:4px;min-width:0;margin-left:5px;padding:0 2px;font:11px/18px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.nspp-block-toggle[data-blocked=true]{color:#cf222e;border-color:#ff818280}.nspp-block-toggle:disabled{opacity:1;cursor:wait}.dark-layout .nspp-block-toggle{color:#9198a1;border-color:#3d444d}.nspp-user-badges[aria-busy=true]{color:#59636e;border-radius:4px;min-width:88px;min-height:16px}.nspp-trust-dialog{padding:16px}.nspp-trust-dialog p{white-space:pre-line;line-height:1.8}.nspp-trust-dialog button{align-self:flex-end}.nspp-post-preview{z-index:2147483644;border:1px solid var(--border-color,#929a9380);background:var(--bg-color,Canvas);width:min(340px,100vw - 24px);height:auto;max-height:min(320px,100dvh - 24px);color:var(--text-color,CanvasText);text-align:left;border-radius:6px;flex-direction:column;margin:0;padding:0;font:12px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:flex;position:fixed;overflow:hidden;box-shadow:0 3px 12px #00000018}.nspp-post-preview[hidden]{display:none}.nspp-post-preview{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light}.dark-layout .nspp-post-preview{--bg-color:#262626;--text-color:#dedede;--border-color:#454545;--link-color:#8ab4f8;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark}.nspp-post-preview>header,.nspp-post-preview>footer,.nspp-post-preview>.nspp-preview-content{background:inherit;color:inherit}.nspp-post-preview header{border-bottom:1px solid #929a9350;flex-shrink:0;align-items:center;gap:8px;padding:5px 8px;font-size:12px;line-height:18px;display:flex;position:static;box-shadow:none!important;text-shadow:none!important}.nspp-post-preview header a{white-space:normal;overflow-wrap:anywhere;min-width:0;color:inherit;flex:1;font-weight:500;text-decoration:none;text-shadow:none!important;box-shadow:none!important}.nspp-post-preview button{width:20px;height:20px;min-height:0;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:3px;flex:none;padding:0;font:16px/18px Arial,sans-serif}.nspp-post-preview>p{margin:0;padding:5px 8px;font-size:11px}.nspp-post-preview>p:empty{display:none}.nspp-preview-content{overscroll-behavior:contain;overflow-wrap:anywhere;flex:0 auto;min-height:0;padding:7px 8px;font-size:12px;line-height:1.5;overflow:auto}.nspp-preview-meta{opacity:.65;margin-bottom:5px;font-size:11px}.nspp-preview-content img{object-fit:contain;width:auto;max-width:100%;height:auto;max-height:120px}.nspp-preview-content pre{background:#818b9814;border-radius:6px;padding:6px;overflow:auto}.nspp-preview-content blockquote{border-left:3px solid #818b9850;margin:6px 0;padding-left:8px}.nspp-preview-content table{max-width:100%;display:block;overflow:auto}.nspp-preview-content h3{margin:6px 0;font-size:12px}.nspp-preview-comment{border-top:1px solid #818b9830;padding:6px 0}.nspp-preview-comment>strong{font-size:12px}.nspp-post-preview footer{background:0 0;border-top:1px solid #818b9830;flex-shrink:0;padding:4px 8px;font-size:11px;line-height:16px}.nspp-post-preview footer a,.nspp-preview-content a{color:var(--link-color,#0969da)}.nspp-preview-content article>:first-child{margin-top:0}.nspp-preview-content article>:last-child{margin-bottom:0}.nspp-post-preview,.nspp-post-preview *{box-sizing:border-box}.nspp-preview-content p{font-size:inherit;line-height:inherit;margin:5px 0}.nspp-preview-content :is(ul,ol){margin:5px 0;padding-left:18px}.nspp-preview-content :is(h1,h2,h4){margin:6px 0;font-size:13px;line-height:1.5}.nspp-post-preview button:hover{background:#818b981a}.nspp-post-preview footer a{color:inherit;opacity:.7;text-decoration:none}.nspp-post-preview footer a:hover{opacity:1;text-decoration:underline}.nspp-meta-label{opacity:.6;font-size:10px}.nspp-user-badges :is(.nspp-level,.nspp-age,.nspp-trust){align-items:center;gap:3px;display:inline-flex}.nspp-user-badges .iconpark-icon{flex:none;width:11px;height:11px}.nspp-list-actions{white-space:nowrap;color:var(--text-color,#777);flex-wrap:nowrap;align-items:center;gap:12px;padding-top:5px;font:11px/18px -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;display:flex;overflow-x:auto}.nspp-list-actions button{color:inherit;font:inherit;cursor:pointer;opacity:.75;background:0 0;border:0;border-radius:0;align-items:center;gap:4px;margin:0;padding:0;display:inline-flex}.nspp-list-actions .iconpark-icon{width:13px;height:13px}.nspp-interaction{background:var(--bg-color,Canvas);color:var(--text-color,CanvasText);border:1px solid #818b9840;border-radius:6px;margin:4px 0 12px 52px;padding:0;font:12px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;list-style:none}.nspp-interaction[hidden],.nspp-interaction form[hidden]{display:none!important}.nspp-interaction header{border-bottom:1px solid #818b9820;align-items:center;gap:8px;padding:6px 10px;display:flex}.nspp-interaction header a{white-space:nowrap;text-overflow:ellipsis;min-width:0;color:inherit;flex:1;overflow:hidden}.nspp-interaction button{color:inherit;font:inherit;cursor:pointer;background:0 0;border:0}.nspp-interaction header button{font-size:18px}.nspp-interaction p{margin:0;padding:6px 10px;font-size:11px}.nspp-interaction p:empty{display:none}.nspp-interaction form{padding:8px 10px}.nspp-interaction textarea{box-sizing:border-box;resize:vertical;width:100%;min-height:84px;max-height:240px;font:inherit;color:inherit;background:0 0;border:1px solid #818b9850;border-radius:4px;padding:8px;display:block}.nspp-reply-actions{justify-content:space-between;align-items:center;gap:8px;margin-top:6px;display:flex}.nspp-reply-actions span{opacity:.6;font-size:10px}.nspp-reply-actions button{color:#fff;background:#238636;border-radius:4px;padding:3px 10px}.nspp-reply-actions button:disabled{opacity:.4;cursor:default}@media (width<=600px){.nspp-interaction{margin-left:0}.nspp-list-actions{gap:8px}}.nspp-list-actions [hidden]{display:none!important}.nspp-block-toggle{align-items:center;gap:3px;display:inline-flex}.nspp-block-toggle .iconpark-icon{width:11px;height:11px}.nspp-block-toggle[hidden],#nspp-tools button[hidden]{display:none!important}.nspp-action-category{color:inherit;opacity:.65;flex:none;margin-left:auto;text-decoration:none}.nspp-action-category:hover{text-underline-offset:3px;text-decoration:underline}.nspp-list-actions button{flex-shrink:0}.nspp-post-preview footer{align-items:center;gap:12px;display:flex}.nspp-post-preview footer .nspp-list-actions{flex:auto;gap:10px;min-width:0;padding:0}.nspp-post-preview footer>a{white-space:nowrap;flex:none;margin-left:auto}.nspp-post-preview footer .nspp-list-actions button{width:auto;height:auto;font:inherit;line-height:18px}.nspp-post-preview footer .nspp-list-actions button:hover{text-underline-offset:3px;background:0 0;text-decoration:underline}.nspp-post-preview::backdrop{background:#0006}@media (width<=700px),(hover:none){.nspp-post-preview{max-height:85dvh}.nspp-post-preview header{padding:8px 16px;font-size:14px}.nspp-post-preview header a{white-space:normal}.nspp-post-preview button{width:40px;height:40px;font-size:22px}.nspp-preview-content{padding:10px 16px;font-size:14px;line-height:1.7}.nspp-post-preview footer{padding:4px 16px;font-size:13px}.nspp-post-preview footer a{padding:8px 0}}.nspp-count-loading{flex:none;font-size:10px}.nspp-quick-replies{box-sizing:border-box;background:var(--bg-color,Canvas);width:min(440px,100vw - 24px);max-height:85dvh;color:var(--text-color,CanvasText);border:1px solid #818b9838;border-radius:12px;margin:auto;padding:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;overflow:hidden;box-shadow:0 16px 60px #0003}.nspp-quick-replies[open]{flex-direction:column;display:flex}.nspp-quick-replies::backdrop{background:#0005}.nspp-quick-replies [hidden]{display:none!important}.nspp-quick-head,.nspp-quick-pagination{color:inherit;background:0 0;flex:none;justify-content:space-between;align-items:center;gap:6px;padding:8px 12px;display:flex}.nspp-quick-head strong{font-size:14px}.nspp-quick-replies button{font:inherit;color:inherit;cursor:pointer;min-height:28px;box-shadow:none;background:0 0;border:1px solid #818b9840;border-radius:6px;padding:4px 8px}.nspp-quick-replies button:hover:not(:disabled){background:#818b9814}.nspp-quick-replies :is(button,input,textarea):focus-visible{outline:2px solid var(--link-color,#0969da);outline-offset:2px}.nspp-quick-replies button:disabled{opacity:.4;cursor:default}.nspp-quick-head button{border:0;width:28px;padding:0;font-size:18px}.nspp-quick-replies p{margin:0}.nspp-quick-replies .nspp-quick-target{white-space:nowrap;text-overflow:ellipsis;opacity:.65;flex:none;padding:0 12px 6px;font-size:12px;overflow:hidden}.nspp-quick-toolbar{flex:none;gap:6px;padding:2px 12px 8px;display:flex}.nspp-quick-replies input,.nspp-quick-replies textarea{box-sizing:border-box;min-width:0;font:inherit;color:inherit;background:0 0;border:1px solid #818b9850;border-radius:6px;padding:5px 8px}.nspp-quick-toolbar input{flex:1;width:0}.nspp-quick-replies .nspp-quick-primary{color:var(--link-color,#0969da);background:#0969da0c;border-color:#0969da40;flex:none}.nspp-quick-list{overscroll-behavior:contain;min-height:0;padding:0 12px;overflow-y:auto}.nspp-quick-item{border-bottom:1px solid #818b9820;align-items:center;gap:4px;padding:2px 0;display:flex}.nspp-quick-item:last-child{border-bottom:0}.nspp-quick-item .nspp-quick-send{text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;border:0;flex:1;min-width:0;min-height:30px;padding:4px 6px}.nspp-quick-item button:not(.nspp-quick-send){border-color:#0000;flex:none;padding:4px 6px;font-size:11px}.nspp-quick-item .nspp-quick-delete:hover:not(:disabled){color:#cf3434;background:#cf343410}.nspp-quick-list>p{text-align:center;opacity:.6;padding:16px 6px}.nspp-quick-replies form{border-top:1px solid #818b9830;flex:none;padding:8px 12px}.nspp-quick-replies form button+button{margin-left:8px}.nspp-quick-replies textarea{resize:vertical;width:100%;max-height:22dvh;margin-bottom:8px;display:block}.nspp-quick-pagination{border-top:1px solid #818b9830;padding-top:6px;padding-bottom:6px;font-size:11px}.nspp-quick-replies .nspp-quick-status{opacity:.65;flex:none;padding:0 12px 6px;font-size:11px}.post-title a.nspp-read{opacity:.6;-webkit-text-decoration:underline dotted;text-decoration:underline dotted}.nspp-callout{border-inline-start:3px solid;margin:1em 0;padding:10px 16px}.nspp-callout summary{cursor:pointer;font-weight:600}.nspp-history .nspp-history-undo{flex:none;align-items:center;gap:4px;display:inline-flex}.nspp-history .nspp-history-undo svg{width:14px;height:14px}.nspp-history header .nspp-icon-button,.dark-layout .nspp-history header .nspp-icon-button{background:0 0;border-color:#0000}");
+	_css("#nspp-tools .nspp-tool-icon{width:30px;height:30px;min-height:30px;box-shadow:none;background:0 0;border:0;border-radius:7px;flex:none;justify-content:center;align-items:center;margin:0;padding:0;display:inline-flex}#nspp-tools .nspp-tool-icon:hover{background:#818b9818}#nspp-tools [data-nspp-settings-launcher]{background:#818b980c;order:10;margin-top:3px}#nspp-tools [data-nspp-settings-launcher] svg{width:18px;height:18px}#nspp-tools [data-nspp-hot-launcher]{background:linear-gradient(145deg,#fff5e8,#ffe8e8);order:-1;box-shadow:inset 0 0 0 1px #f9731614}#nspp-tools [data-nspp-hot-launcher]:hover{background:linear-gradient(145deg,#ffebd4,#ffdbdf)}#nspp-tools [data-nspp-hot-launcher] svg{filter:drop-shadow(0 0 3px #ff6a3280);width:28px;height:28px}#nspp-tools [data-nspp-monitor-launcher]{order:-2}#nspp-tools [data-nspp-wecom-launcher]{color:#07a854;background:linear-gradient(145deg,#eafaf0,#d9f5e5);order:15;margin-top:9px;position:relative;box-shadow:inset 0 0 0 1px #07c16026}#nspp-tools [data-nspp-wecom-launcher]:before{content:\"\";background:var(--border-color,#d1d9e0);height:1px;position:absolute;top:-6px;left:2px;right:2px}#nspp-tools [data-nspp-wecom-launcher]:hover{background:linear-gradient(145deg,#dcf6e7,#c9f0da)}#nspp-tools [data-nspp-wecom-launcher] svg{width:20px;height:20px}.dark-layout #nspp-tools [data-nspp-wecom-launcher]{color:#4cd68a;background:linear-gradient(145deg,#1f3a2b,#1a3224);box-shadow:inset 0 0 0 1px #4cd68a26}.dark-layout #nspp-tools [data-nspp-wecom-launcher]:hover{background:linear-gradient(145deg,#25463a,#1f3c2b)}#nspp-tools .nspp-fish{overflow:visible}#nspp-tools .nspp-fish :is(.nspp-fish-body,.nspp-fish-tail,.nspp-fish-bubble){transform-box:fill-box}#nspp-tools .nspp-fish .nspp-fish-body{transform-origin:50%}#nspp-tools .nspp-fish .nspp-fish-tail{transform-origin:100%}#nspp-tools .nspp-fish .nspp-fish-bubble{opacity:0}#nspp-tools [data-nspp-wecom-launcher][data-swimming] .nspp-fish-body{animation:1.1s ease-in-out 2 nspp-fish-swim}#nspp-tools [data-nspp-wecom-launcher][data-swimming] .nspp-fish-tail{animation:.275s ease-in-out 8 alternate nspp-fish-tail}#nspp-tools [data-nspp-wecom-launcher][data-swimming] .nspp-fish-bubble{animation:1.1s ease-out 2 nspp-fish-bubble}#nspp-tools [data-nspp-wecom-launcher][data-swimming] .nspp-fish-bubble+.nspp-fish-bubble{animation-delay:.25s}@keyframes nspp-fish-swim{0%,to{transform:translate(0)rotate(0)}25%{transform:translate(1.5px,-1.5px)rotate(-7deg)}50%{transform:translate(2.5px)rotate(0)}75%{transform:translate(1px,1px)rotate(6deg)}}@keyframes nspp-fish-tail{0%{transform:rotate(-16deg)}to{transform:rotate(16deg)}}@keyframes nspp-fish-bubble{0%{opacity:0;transform:translateY(2px)}30%{opacity:1}to{opacity:0;transform:translate(1px,-4px)}}@media (prefers-reduced-motion:reduce){#nspp-tools [data-nspp-wecom-launcher][data-swimming] *{animation:none!important}}.nspp-tool-tip{z-index:1000;color:#fff;overflow-wrap:anywhere;pointer-events:none;background:#2b2b2b;border-radius:5px;max-width:240px;padding:5px 9px;font:12px/1.4 -apple-system,BlinkMacSystemFont,PingFang SC,Microsoft YaHei,sans-serif;position:fixed;box-shadow:0 2px 8px #00000026}.nspp-tool-tip[hidden]{display:none}.dark-layout .nspp-tool-tip{background:#4a4a4a}html[data-nspp-fast-nav] #fast-nav-button-group{display:none!important}#nspp-tools .nspp-fast-nav{border-bottom:1px solid var(--border-color,#d1d9e0);flex-direction:column;order:-10;align-items:center;gap:2px;margin-bottom:3px;padding-bottom:4px;display:flex}#nspp-tools .nspp-fast-nav:not(:has(button:not([hidden]))){display:none}#nspp-tools .nspp-fast-nav svg{width:20px;height:20px}#nspp-tools .nspp-fast-nav button{overflow:hidden}#nspp-tools button[data-nspp-monitor-launcher][data-monitor-state=running]{background:#2180440d}.dark-layout #nspp-tools [data-nspp-hot-launcher]{background:linear-gradient(145deg,#493023,#45252f);box-shadow:inset 0 0 0 1px #ff965c18}.dark-layout #nspp-tools [data-nspp-hot-launcher]:hover{background:linear-gradient(145deg,#5b3826,#592c39)}.dark-layout #nspp-tools button[data-nspp-monitor-launcher][data-monitor-state=running]{background:#70cf9114}@media (width<=700px),(hover:none){#nspp-tools .nspp-tool-icon{width:30px;height:30px}}.nspp-user-badges .nspp-age,.nspp-profile-dialog .nspp-age{color:var(--nspp-age-color,#59636e)}.nspp-age[data-tone=new]{--nspp-age-color:#cf3434}.nspp-age[data-tone=recent]{--nspp-age-color:#a66b08}.nspp-age[data-tone=member]{--nspp-age-color:#0969da}.nspp-age[data-tone=longtime]{--nspp-age-color:#218044}.dark-layout .nspp-age[data-tone=new]{--nspp-age-color:#ff8585}.dark-layout .nspp-age[data-tone=recent]{--nspp-age-color:#dfb653}.dark-layout .nspp-age[data-tone=member]{--nspp-age-color:#79b8ff}.dark-layout .nspp-age[data-tone=longtime]{--nspp-age-color:#70cf91}.dark-layout .nspp-user-badges .nspp-age,.dark-layout .nspp-profile-dialog .nspp-age{color:var(--nspp-age-color,#9198a1)}.nspp-user-badges button.nspp-age{cursor:pointer}.nspp-user-badges button.nspp-age:hover{text-underline-offset:3px;text-decoration:underline}.nspp-profile-dialog{width:min(320px,100vw - 24px)}.nspp-profile-dialog header{justify-content:space-between;padding:10px 12px}.nspp-profile-summary{align-items:baseline;gap:8px;padding:4px 12px 10px;display:flex}.nspp-profile-summary strong{font-variant-numeric:tabular-nums;font-size:22px;line-height:1.3}.nspp-profile-summary span{font-size:11px}.nspp-profile-dialog dl{border-top:1px solid #818b9830;grid-template-columns:1fr auto;gap:6px 12px;margin:0;padding:10px 12px;display:grid}.nspp-profile-dialog dt{opacity:.65}.nspp-profile-dialog dd{font-variant-numeric:tabular-nums;margin:0}.nspp-profile-dialog>p{opacity:.75;margin:0;padding:0 12px 12px;font-size:11px}.post-title .nspp-readonly{vertical-align:middle;border-radius:3px;flex:none;align-items:center;color:#b52b32!important;box-shadow:none!important;background:#cf343410!important;border:0!important;margin-left:5px!important;padding:0 4px!important;font:500 10px/17px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif!important;display:inline-flex!important}.post-title .nspp-pinned{vertical-align:middle;flex:none;margin-left:4px;color:#768390!important;background:0 0!important;border:0!important;border-radius:0!important;width:13px!important;height:13px!important;padding:0!important}.post-title .nspp-pin-wrap{align-items:center;display:inline-flex;box-shadow:none!important;background:0 0!important;border:0!important;padding:0!important}.dark-layout .post-title .nspp-readonly{color:#ff8585!important;background:#ff858514!important}.dark-layout .post-title .nspp-pinned{color:#9198a1!important}.nspp-monitor{color:#1f2328;background:#fff;border:1px solid #818b9840;border-radius:10px;width:min(560px,100vw - 24px);max-height:80dvh;padding:0;font:12px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif}.nspp-monitor[open]{flex-direction:column;display:flex}.nspp-monitor *{box-sizing:border-box}.nspp-monitor header,.nspp-monitor footer{flex:none;align-items:center;gap:8px;padding:8px 12px;display:flex}.nspp-monitor header{border-bottom:1px solid #818b9828;justify-content:space-between}.nspp-monitor h3{margin:0;font-size:14px}.nspp-monitor button{min-height:28px;color:inherit;font:inherit;cursor:pointer;white-space:nowrap;background:0 0;border:1px solid #818b9838;border-radius:5px;padding:3px 8px}.nspp-monitor button:hover{background:#818b9814}.nspp-monitor button:disabled{opacity:1;cursor:wait}.nspp-monitor>p{opacity:.65;margin:0;padding:6px 12px;font-size:11px}.nspp-monitor-summary{flex-wrap:wrap;align-items:center;gap:2px 10px;display:flex}.nspp-monitor-results:empty{display:none}.nspp-monitor-results{overscroll-behavior:contain;min-height:0;padding:0 12px 8px;overflow:auto}.nspp-monitor-results section+section{border-top:1px solid #818b9828;margin-top:8px;padding-top:4px}.nspp-monitor h4{color:#768390;align-items:center;gap:6px;margin:5px 0;font-size:11px;display:flex}.nspp-monitor h4 small{background:#818b9814;border-radius:8px;padding:0 5px;font-size:10px}.nspp-monitor ul{margin:0;padding:0;list-style:none}.nspp-monitor li{margin:0;padding:4px 0}.nspp-monitor a{color:inherit;text-decoration:none}.nspp-monitor a:hover{color:#0969da;text-decoration:underline}.nspp-monitor section>p{opacity:.55;margin:6px 0;font-size:11px}.nspp-monitor footer{border-top:1px solid #818b9828;flex-wrap:wrap}.nspp-monitor footer span{opacity:.6;flex:1;font-size:10px}.nspp-monitor-tracked{flex-shrink:0;max-height:25dvh;padding:0 12px 8px;overflow:auto}.nspp-monitor-tracked[hidden]{display:none}.nspp-monitor-tracked>div{align-items:center;gap:8px;padding:3px 0;display:flex}.nspp-monitor-tracked a{flex:1;min-width:0}#nspp-tools button[data-unread=true]{color:#cf3434;background:#fff0f0;border-color:#cf3434}.dark-layout #nspp-tools button[data-unread=true]{color:#ff8585;background:#3b2525;border-color:#ff8585}.dark-layout .nspp-monitor{color:#e6edf3;background:#161b22}[data-nspp-monitor-match=\"0\"]{background-color:#fff2c9!important}[data-nspp-monitor-match=\"1\"]{background-color:#dff3e7!important}[data-nspp-monitor-match=\"2\"]{background-color:#e2efff!important}[data-nspp-monitor-match=\"3\"]{background-color:#ffe8dc!important}.dark-layout [data-nspp-monitor-match=\"0\"]{background-color:#3c3420!important}.dark-layout [data-nspp-monitor-match=\"1\"]{background-color:#203a2c!important}.dark-layout [data-nspp-monitor-match=\"2\"]{background-color:#23344c!important}.dark-layout [data-nspp-monitor-match=\"3\"]{background-color:#432f26!important}.nspp-monitor header,.nspp-monitor footer,.nspp-monitor-results section+section{border:0}.nspp-monitor-results section+section{margin-top:12px}.nspp-monitor footer{background:#818b980a}#nspp-tools button[data-monitor-state]{position:relative}.nspp-monitor-badge{box-sizing:border-box;border:1px solid var(--bg-color,Canvas);color:#fff;text-align:center;pointer-events:none;background:#cf3434;border-radius:999px;min-width:16px;padding:0 3px;font:600 9px/14px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;position:absolute;top:-6px;right:-6px}.nspp-monitor-badge[hidden]{display:none}#nspp-tools button[data-monitor-state=running]{color:#218044;background:var(--bg-color,Canvas);border-color:#218044}.dark-layout #nspp-tools button[data-monitor-state=running]{color:#70cf91}.nspp-monitor-editor{flex-wrap:wrap;flex:none;align-items:flex-end;gap:6px;padding:4px 12px 8px;display:flex}.nspp-monitor-editor label{min-width:180px;color:inherit;flex:1;font-size:11px}.nspp-monitor-editor textarea{width:100%;color:inherit;font:inherit;resize:vertical;background:#818b9810;border:0;border-radius:6px;max-height:18dvh;margin-top:4px;padding:6px 8px;display:block}.nspp-monitor-editor>span{opacity:.65;flex-basis:100%;font-size:10px}.nspp-monitor-editor>span:empty{display:none}@media (prefers-reduced-motion:reduce){.nspp-monitor[data-checking=true]>p:before{animation:none}}.nspp-monitor-spinner{vertical-align:-2px;border:2px solid #0969da30;border-top-color:#0969da;border-radius:50%;width:10px;height:10px;margin-right:6px;display:inline-block}.nspp-monitor-spinner[hidden]{display:none}.nspp-regex-help{opacity:.65;border:1px solid;border-radius:50%;justify-content:center;align-items:center;width:16px;height:16px;margin-left:6px;font-size:10px;display:inline-flex;text-decoration:none!important}.nspp-regex-help:hover{opacity:1}.nspp-monitor button,.nspp-footprints-dialog button{justify-content:center;align-items:center;gap:4px;display:inline-flex}.nspp-monitor button svg,.nspp-footprints-dialog button svg{flex:none;width:13px;height:13px}.nspp-monitor-editor>small{opacity:.65;flex-basis:100%;font-size:10px;line-height:1.6}.nspp-monitor-editor textarea{min-height:56px}.nspp-footprints-dialog{border-radius:10px;width:min(600px,100vw - 24px);padding:8px}.nspp-footprints-dialog header{padding:4px 4px 10px}.nspp-footprints-toolbar{flex-wrap:wrap;align-items:center;gap:6px;padding:4px;display:flex}.nspp-footprints-toolbar [role=status]{opacity:.6;margin-left:auto;font-size:11px}.nspp-footprints-dialog>div:last-child{padding:8px 4px}.nspp-footprints-dialog a{color:inherit;border-radius:4px;padding:4px 6px;text-decoration:none}.nspp-footprints-dialog a:hover{background:#818b9810}.nspp-footprints-list{gap:4px;max-height:min(55dvh,400px);display:grid;overflow:auto}.nspp-footprints-list>a{align-items:baseline;gap:12px;min-width:0;display:flex}.nspp-footprint-title{overflow-wrap:anywhere;flex:1;min-width:0}.nspp-footprints-list small{opacity:.6;white-space:nowrap;flex:none;font-size:11px}.nspp-monitor>header h3{margin-right:auto}.nspp-monitor-config{width:min(420px,100vw - 24px)}.nspp-monitor-config .nspp-monitor-editor{flex-direction:column;align-items:stretch;gap:8px;padding:8px 14px 14px;display:flex;overflow:auto}.nspp-monitor-config .nspp-monitor-editor label{flex:none;min-width:0}.nspp-monitor-config .nspp-monitor-editor textarea{min-height:88px}.nspp-monitor-config input{width:100%;font:inherit;color:inherit;background:#818b9810;border:0;border-radius:6px;margin-top:5px;padding:7px 8px;display:block}.nspp-monitor-config .nspp-monitor-editor>small,.nspp-monitor-config .nspp-monitor-editor>span{flex-basis:auto}.nspp-monitor-config .nspp-monitor-editor>button{align-self:flex-end;min-width:72px}.md-editor .nspp-upload-status{background:0 0;border:0;border-bottom:1px solid #818b9820;flex-wrap:wrap;align-items:center;gap:6px;padding:4px 10px;font-size:11px;line-height:24px;display:flex}.md-editor .nspp-upload-status:not(:has(>:is(a:not([hidden]),input[type=password],[role=status]:not(:empty),.nspp-upload-choose))){display:none}.nspp-upload-status [hidden]{display:none!important}.nspp-upload-status [role=status]{opacity:.7;overflow-wrap:anywhere;font-size:11px}.nspp-upload-status a{color:inherit;font-size:11px;text-decoration:none}.nspp-upload-status a:hover{text-decoration:underline}.nspp-upload-status button{color:inherit;cursor:pointer;background:0 0;border:0;justify-content:center;align-items:center;padding:4px;display:inline-flex}.nspp-upload-status button svg{width:16px;height:16px}.md-editor .nspp-upload-choose{width:28px;height:28px;min-height:28px;color:inherit;opacity:1;box-shadow:none;cursor:pointer;background:0 0;border:0;border-radius:4px;flex:none;justify-content:center;align-self:center;align-items:center;margin:0 2px;padding:6px;display:inline-flex}.md-editor .nspp-upload-choose svg{width:16px;height:16px}.md-editor .nspp-upload-choose:hover{background:#818b9818}.nspp-upload-status [role=status]:empty{display:none}.nspp-upload-choose svg{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none}.md-editor .nspp-upload-status{min-width:0;max-width:100%}@media (width<=700px),(hover:none){.md-editor .mde-toolbar{flex-wrap:wrap;align-items:center;min-height:40px;padding-right:4px;overflow:visible;height:auto!important;display:flex!important}.md-editor .mde-toolbar>*{flex:none}.md-editor .mde-toolbar .toolbar-item.right{margin-left:auto}}.nspp-ai-compose{flex-wrap:wrap;align-items:start;gap:8px;padding:8px;display:flex}.nspp-ai-compose textarea{min-width:180px;color:inherit;background:0 0;border:1px solid #8885;border-radius:6px;flex:1;padding:6px}.nspp-ai-compose small{opacity:.7;width:100%}.nspp-original-notification{display:none!important}.nspp-notification-icon{vertical-align:-.125em;flex:none;width:1em;height:1em}.nspp-ecg-shine{display:none}#nspp-tools button[data-monitor-state=running] .nspp-ecg-shine{stroke:#8ce9aa;stroke-dasharray:18 118;animation:1.8s linear infinite nspp-ecg-scan;display:block}@keyframes nspp-ecg-scan{0%{stroke-dashoffset:18px}to{stroke-dashoffset:-118px}}@media (prefers-reduced-motion:reduce){#nspp-tools button[data-monitor-state=running] .nspp-ecg-shine{animation:none;display:none}}.user-stat .stat-block:has(>.nspp-notification-row)>:has(>.nspp-original-notification:only-child){display:none}.nspp-list-actions[hidden]{display:none!important}");
+	_css(".nspp-user-hover{z-index:10010;box-sizing:border-box;border:1px solid var(--border-color,#818b9840);background:var(--bg-color,Canvas);width:260px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);color:var(--text-color,CanvasText);border-radius:8px;padding:12px;font:12px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;position:fixed;overflow:auto;box-shadow:0 6px 24px #0002}.nspp-user-hover[hidden]{display:none!important}.nspp-user-hover-name{color:inherit;font-weight:600;text-decoration:none}.nspp-user-hover dl{grid-template-columns:1fr auto;gap:4px 12px;margin:10px 0;display:grid}.nspp-user-hover dt{opacity:.65}.nspp-user-hover dd{font-variant-numeric:tabular-nums;margin:0}.nspp-user-hover>.nspp-block-toggle{font:inherit;color:inherit;background:0 0;border:1px solid #818b9840;border-radius:4px;margin:8px 0 0;padding:4px 8px;display:flex}.nspp-user-hover{border-radius:12px;width:280px;padding:12px;box-shadow:0 12px 36px #0002,0 2px 6px #0001}.nspp-user-hover .nspp-user-hover-header{align-items:center;gap:8px;margin-bottom:10px;display:flex}.nspp-user-hover .nspp-user-hover-header>div{flex-wrap:wrap;align-items:center;gap:6px;min-width:0;display:flex}.nspp-user-hover-name{overflow-wrap:anywhere;font-size:13px}.nspp-user-hover-monogram{color:#0969da;background:#0969da10;border-radius:10px;flex:0 0 36px;place-items:center;height:36px;font-size:18px;font-weight:600;display:grid}.nspp-user-hover .nspp-user-hover-rich{background:#818b9808;border:1px solid #818b9824;border-radius:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 10px;padding:7px 6px;font-size:13px;line-height:22px;display:grid}.nspp-user-hover-rich>div{flex-direction:column;align-items:center;gap:4px;min-width:0;display:flex}.nspp-user-hover-rich small{opacity:.6;font-size:11px;line-height:16px}.nspp-user-hover-rich .iconpark-icon{width:13px;height:13px}.nspp-user-hover-rich .nspp-age{font-weight:600}.nspp-user-hover dl{gap:4px 10px;margin:0}.nspp-user-hover dd{text-align:right;font-weight:500}.nspp-user-hover>.nspp-block-toggle{border-radius:6px;justify-content:center;width:100%;margin-top:12px;padding:5px 8px}.nspp-user-hover>.nspp-block-toggle:hover{color:#cf3434;background:#cf343410;border-color:#cf343440}.dark-layout .nspp-user-hover{color:#e6edf3;background:#161b22}.dark-layout .nspp-user-hover-monogram{color:#79b8ff;background:#79b8ff18}.nspp-user-badges[hidden],.nspp-user-hover-tags[hidden]{display:none!important}.nspp-user-hover-tags{flex-wrap:wrap;gap:5px;width:100%;display:flex}.nspp-user-hover-avatar{object-fit:cover;border-radius:10px;flex:0 0 32px;width:32px;height:32px}.nspp-user-hover-avatar[hidden],.nspp-user-hover-monogram[hidden]{display:none!important}.nspp-user-hover-signature{color:inherit;opacity:.7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:5.1em;margin:-2px 0 10px;font-size:11px;line-height:1.7;overflow:auto}.nspp-user-hover[data-trust=danger]{background:#fff3f3;border-color:#e9b9bf}.nspp-user-hover[data-trust=warning]{background:#fff9ed;border-color:#e7d5ae}.nspp-user-hover[data-trust=success]{background:#f0faf4;border-color:#b8ddc5}.nspp-user-hover[data-trust=perfect]{background:#fff8e3;border-color:#ddbc6a}.dark-layout .nspp-user-hover[data-trust=danger]{background:#2b1c22;border-color:#643740}.dark-layout .nspp-user-hover[data-trust=warning]{background:#29251b;border-color:#605234}.dark-layout .nspp-user-hover[data-trust=success]{background:#182820;border-color:#355c45}.dark-layout .nspp-user-hover[data-trust=perfect]{background:#2d2617;border-color:#756031}.nspp-user-hover .nspp-user-hover-header{width:auto;height:auto;min-height:0;box-shadow:none;background:0 0;border:0;padding:0;position:static}.nspp-copy-button{color:inherit;font:inherit;cursor:pointer;background:0 0;border:0;border-radius:4px;padding:2px 5px}.nspp-copy-button:hover{background:#818b9820}.nspp-user-hover .nspp-copy-button{opacity:.65;font-size:10px}.nspp-category-actions{white-space:nowrap;flex:none;align-items:center;gap:5px;width:max-content;max-width:none;display:inline-flex}.nspp-category-reply{cursor:pointer;white-space:nowrap;flex:none;margin:0;font-family:inherit;position:static}.nspp-copy-button{justify-content:center;align-items:center;gap:4px;display:inline-flex}.nspp-copy-button[data-copied=true]{color:#218044;opacity:1}.nspp-user-hover{width:260px;padding:9px;line-height:1.45}.nspp-user-hover .nspp-user-hover-header{gap:7px;margin-bottom:5px}.nspp-user-hover .nspp-user-hover-header>div{flex:1}.nspp-user-hover .nspp-user-hover-score{color:#768390;cursor:pointer;background:0 0;border:0;flex-direction:column;flex:none;align-items:center;gap:0;margin:0 0 0 auto;padding:0;display:flex}.nspp-user-hover-score strong{letter-spacing:-1px;font-variant-numeric:tabular-nums;font:700 26px/1 -apple-system,BlinkMacSystemFont,sans-serif}.nspp-user-hover-score small{opacity:.75;font-size:9px;line-height:16px}.nspp-user-hover[data-trust=danger] .nspp-user-hover-score{color:#c63849}.nspp-user-hover[data-trust=warning] .nspp-user-hover-score{color:#a66b08}.nspp-user-hover[data-trust=success] .nspp-user-hover-score{color:#218044}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score{color:#a56b00}.dark-layout .nspp-user-hover .nspp-user-hover-score{filter:brightness(1.5)}.nspp-user-hover dl{border-block:1px solid #818b9824;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 10px;padding:6px 0}.nspp-user-hover dl>div{justify-content:space-between;align-items:baseline;gap:6px;min-width:0;display:flex}.nspp-user-hover dt{opacity:.7;flex:none;align-items:center;gap:4px;font-size:11px;display:inline-flex}.nspp-user-hover dt .iconpark-icon{width:13px;height:13px}.nspp-user-hover dd{overflow-wrap:anywhere;min-width:0;font-size:12px}.nspp-user-hover dd a{color:inherit;text-underline-offset:3px;-webkit-text-decoration:underline #818b9850;text-decoration:underline #818b9850}.nspp-user-hover dd a:hover,.nspp-user-hover dd a:focus-visible{text-decoration-color:currentColor}.nspp-user-hover .nspp-user-hover-rich{background:0 0;border:0;border-radius:0;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:3px 6px;margin:0;padding:5px 0 0;font-size:10px;line-height:18px;display:flex}.nspp-user-hover .nspp-user-hover-rich .nspp-age{background:color-mix(in srgb, currentColor 10%, transparent);border-radius:4px;gap:3px;padding:1px 4px;font-size:10px;font-weight:400}.nspp-user-hover .nspp-user-hover-rich .nspp-age strong{font-weight:700}.nspp-user-hover dd.nspp-user-badges{margin:0}.nspp-user-hover dd .nspp-level{background:color-mix(in srgb, currentColor 10%, transparent);border-radius:4px;padding:0 4px;font-size:11px;line-height:17px}.nspp-user-hover .nspp-user-hover-rich .iconpark-icon{width:11px;height:11px;display:inline-block}.nspp-user-hover-rich>span{opacity:.65}.nspp-user-hover>.nspp-block-toggle{margin-top:8px;padding:3px 6px}.nspp-user-hover-signature{color:#8d7832;opacity:1;max-height:3em;margin:0 0 5px;line-height:1.5}.dark-layout .nspp-user-hover-signature,.nspp-user-hover[data-trust=perfect] .nspp-user-hover-signature{color:#cdbb87}.nspp-user-hover-actions{gap:4px;margin-top:6px;display:flex}.nspp-user-hover-actions[hidden]{display:none!important}.nspp-user-hover-actions>:is(a,button){box-sizing:border-box;min-width:0;color:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:1px solid #0000;border-radius:6px;flex:1;justify-content:center;align-items:center;gap:3px;margin:0;padding:3px;font-family:inherit;font-size:11px;line-height:18px;text-decoration:none;display:inline-flex}.nspp-user-hover-actions .iconpark-icon{width:12px;height:12px}.nspp-user-hover-actions>[data-action=transfer]{color:#fff;background:#218044}.nspp-user-hover-actions>[data-action=follow]{color:#fff;background:#0969da}.nspp-user-hover-actions>[data-action=message]{color:#fff;background:#8250df}.nspp-user-hover-actions>.nspp-block-toggle{color:#fff;background:#cf3434}.nspp-user-hover-actions>:hover{filter:brightness(.9)}.nspp-user-hover-actions>:disabled{opacity:.5;cursor:wait}.user-card[data-nspp-replaced]{display:none!important}.nspp-user-hover.nspp-user-hover-inline{align-self:start;width:auto;max-width:none;max-height:none;display:block;position:static;overflow:visible;box-shadow:0 2px 8px #0000000f}.nspp-user-hover.nspp-user-hover-inline[hidden]{display:none!important}.nspp-user-transfer{width:min(340px,100vw - 32px)}.nspp-user-transfer form{gap:12px;display:grid}.nspp-user-transfer label{gap:6px;display:grid}.nspp-user-transfer input{box-sizing:border-box;width:100%;color:inherit;font:inherit;background:0 0;border:1px solid #818b9840;border-radius:6px;padding:8px}.nspp-user-transfer [role=status]{overflow-wrap:anywhere;margin:0;font-size:12px}.nspp-user-transfer [role=status]:empty{display:none}.nspp-transfer-actions{justify-content:flex-end;gap:8px;display:flex}.nspp-user-hover[data-trust=perfect],.dark-layout .nspp-user-hover[data-trust=perfect]{color:#eee9df;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:radial-gradient(at 100% 0,#c8a5651c,#0000 65%),linear-gradient(145deg,#26272b,#191a1e);border-color:#ac8e555c;border-radius:10px;padding:9px;box-shadow:inset 0 1px #e8ce9133,0 16px 40px #0004,0 3px 10px #0002}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-header{margin-bottom:5px}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-name{color:#f5efe2;font-weight:600}.nspp-user-hover[data-trust=perfect] :is(.nspp-user-hover-avatar,.nspp-user-hover-monogram){outline-offset:2px;border-radius:9px;outline:1px solid #d3b57566}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-monogram{color:#e8ce96;background:#d3b57514}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score{color:#ebce91;filter:none}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score strong{letter-spacing:-1px;text-shadow:0 2px 14px #d6b46c20;font-size:26px;font-weight:600}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-score small{color:#c6b899;opacity:1;font-size:9px}.nspp-user-hover[data-trust=perfect] dl{border-color:#d3b57526}.nspp-user-hover[data-trust=perfect] .nspp-user-hover-rich small{color:#b9b3a7;opacity:1}.nspp-user-hover[data-trust=perfect] .nspp-user-badges :is(.nspp-age,.nspp-level){--nspp-badge-color:#e5ce9c;--nspp-age-color:#b9d0be}.nspp-user-hover[data-trust=perfect] .nspp-user-badges .nspp-level[data-level=\"6\"]{background:#d3b57518;box-shadow:inset 0 0 0 1px #d3b57538}.nspp-user-hover[data-trust=perfect] dt{color:#b9b3a7;opacity:1}.nspp-user-hover[data-trust=perfect] dd{color:#eee6d6}.nspp-user-hover[data-trust=perfect] .nspp-copy-button{color:#cabb9c;opacity:1}.nspp-user-hover[data-trust=perfect] .nspp-copy-button[data-copied=true]{color:#9cd3ac}.nspp-user-hover[data-trust=perfect]>.nspp-block-toggle{color:#c7bcaa;background:0 0;border-color:#d3b57530}.nspp-user-hover[data-trust=perfect]>.nspp-block-toggle:hover{color:#ffb4b4;background:#c9787810;border-color:#c978785c}.nspp-user-hover[data-trust=perfect] :focus-visible{outline-offset:2px;outline:2px solid #e8ce96}");
+	_css(".nspp-ai-dialog{box-sizing:border-box;width:min(600px,100vw - 32px);max-height:85dvh;color:var(--text-color,#24292f);background:var(--bg-color,#fff);border:1px solid #8884;border-radius:10px;padding:20px;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;overflow:auto;box-shadow:0 16px 48px #0002}.nspp-ai-dialog.nspp-ai-config{width:min(460px,100vw - 32px)}.nspp-ai-dialog::backdrop{background:#0005}.nspp-ai-dialog .nspp-ai-header{align-items:center;gap:8px;margin-bottom:8px;display:flex}.nspp-ai-dialog h2{margin:0;font-size:16px;font-weight:600;line-height:24px}.nspp-ai-dialog .nspp-ai-hint{opacity:.65;margin:0 0 18px;font-size:12px}.nspp-ai-dialog label{gap:6px;margin-bottom:14px;font-size:12px;font-weight:500;display:grid}.nspp-ai-dialog :is(input,textarea,select){box-sizing:border-box;color:inherit;font:inherit;background:0 0;border:1px solid #8885;border-radius:6px;padding:7px 10px;line-height:20px}.nspp-ai-dialog :is(input,textarea){width:100%}.nspp-ai-dialog textarea{resize:vertical}.nspp-ai-dialog input::placeholder,.nspp-ai-dialog textarea::placeholder{color:inherit;opacity:.4}.nspp-ai-dialog button{appearance:none;min-height:32px;color:inherit;font:inherit;cursor:pointer;background:#8881;border:1px solid #8885;border-radius:6px;padding:5px 12px}.nspp-ai-dialog button:hover{background:#8882}.nspp-ai-dialog :is(.nspp-ai-primary,[data-nspp-ai]){color:#fff;background:#24292f;border-color:#24292f}.nspp-ai-dialog :is(.nspp-ai-primary,[data-nspp-ai]):hover{background:#39414a}.nspp-ai-dialog :focus-visible{outline-offset:2px;outline:2px solid #5989ba}.nspp-ai-dialog .nspp-ai-actions{border-top:1px solid #8883;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;display:flex}.nspp-ai-dialog .nspp-ai-compose{gap:8px;padding:12px 0 0}.dark-layout .nspp-ai-dialog{color:#dce1e7;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:#202428}.dark-layout .nspp-ai-dialog :is(.nspp-ai-primary,[data-nspp-ai]){color:#24292f;background:#e0e5eb;border-color:#e0e5eb}@media (width<=700px),(hover:none){.nspp-ai-dialog{padding:8px 16px 16px}.nspp-ai-dialog .nspp-ai-compose textarea{min-width:100%}}.nspp-history .nspp-history-day{color:#768390;justify-content:space-between;margin-top:8px;font-size:11px}.nspp-history button[aria-pressed=true]{color:#0969da;border-color:currentColor}.nspp-history-avatar{vertical-align:middle;border-radius:50%;width:20px;height:20px;margin-right:6px}.nspp-confirm-dialog{box-sizing:border-box;background:var(--bg-color,#fff);width:min(360px,100vw - 32px);max-width:none;max-height:calc(100dvh - 32px);color:var(--text-color,#24292f);border:1px solid #818b9840;border-radius:12px;margin:auto;padding:18px;font:13px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;overflow:auto;box-shadow:0 18px 48px #0003}.nspp-confirm-dialog::backdrop{background:#0006}.nspp-confirm-dialog h2{overflow-wrap:anywhere;margin:0;font-size:15px}.nspp-confirm-dialog p{opacity:.7;margin:8px 0 18px}.nspp-confirm-dialog form{justify-content:flex-end;gap:8px;display:flex}.nspp-confirm-dialog :is(button,a){box-sizing:border-box;min-height:32px;color:inherit;font:inherit;cursor:pointer;background:0 0;border:1px solid #818b9840;border-radius:6px;justify-content:center;align-items:center;padding:5px 14px;text-decoration:none;display:inline-flex}.nspp-confirm-dialog .nspp-confirm-primary{color:#fff;background:#0969da;border-color:#0969da}.nspp-confirm-dialog .nspp-confirm-danger{color:#fff;background:#cf3434;border-color:#cf3434}.nspp-confirm-dialog :focus-visible{outline-offset:2px;outline:2px solid #0969da}.dark-layout .nspp-confirm-dialog{color:#e6edf3;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:#161b22}.nspp-update-notice{z-index:1300;box-sizing:border-box;color:#1f2329;background:#fff;border:1px solid #1f232914;border-radius:10px;width:420px;max-width:calc(100vw - 24px);margin:0;padding:16px;font:13px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;position:fixed;inset:auto 20px 20px auto;box-shadow:0 8px 32px #1f23292e}.nspp-update-notice::backdrop{background:0 0}.nspp-update-title{align-items:center;gap:7px;font-size:15px;display:flex}.nspp-update-title svg{color:#3370ff;flex-shrink:0}.nspp-update-message{color:#646a73;white-space:pre-line;margin:6px 0 0}.nspp-update-actions{flex-wrap:wrap;align-items:center;gap:12px;margin-top:12px;display:flex}.nspp-update-notice :is(a,button){box-sizing:border-box;box-shadow:none;font:inherit;cursor:pointer;background:0 0;border:0;margin:0;text-decoration:none}.nspp-update-notice .nspp-update-install{color:#fff;background:#3370ff;border-radius:5px;align-items:center;min-height:32px;padding:4px 13px;font-weight:600;display:inline-flex}.nspp-update-notice .nspp-update-install:hover{background:#4e83fd}.nspp-update-notice .nspp-update-github{color:#646a73}.nspp-update-notice .nspp-update-github:hover{color:#3370ff}.nspp-update-notice .nspp-update-dismiss{color:#8f959e;margin-left:auto;padding:4px 0}.nspp-update-notice :focus-visible{outline-offset:3px;outline:2px solid #3370ff}.dark-layout .nspp-update-notice{color:#ebebeb;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:#232324;border-color:#ffffff1f}.dark-layout .nspp-update-message,.dark-layout .nspp-update-notice .nspp-update-github{color:#a6a6a6}.dark-layout .nspp-update-notice .nspp-update-dismiss{color:#8a8a8a}@media (width<=600px){.nspp-update-notice{inset:auto 12px calc(12px + env(safe-area-inset-bottom)) 12px;width:auto}}@media (width<=700px),(hover:none){.nspp-confirm-dialog{padding:12px 16px 16px}.nspp-confirm-dialog form>:is(button,a){flex:1;min-height:38px}}");
+	_css(".nspp-hot-rankings{box-sizing:border-box;border-right:0;border-radius:14px 0 0 14px;width:min(420px,100vw - 24px);height:100dvh;max-height:none;margin:0;padding:12px 14px 10px;position:fixed;inset:0 0 0 auto;overflow:hidden}.nspp-hot-rankings[open]{flex-direction:column;display:flex}.nspp-hot-rankings .nspp-hot-header{box-shadow:none;background:0 0;border:0;flex:none;align-items:center;gap:12px;margin:0;padding:0 0 5px;display:flex}.nspp-hot-rankings h2{white-space:nowrap;border:0;flex:none;margin:0;padding:0;font:600 14px/24px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.nspp-hot-rankings nav{min-width:0;box-shadow:none;background:0 0;border:0;flex:1;align-items:center;gap:3px;margin:0;padding:0;display:flex}.nspp-hot-rankings button{all:unset;box-sizing:border-box;color:inherit;cursor:pointer;font:inherit;white-space:nowrap;text-align:center;border-radius:4px;padding:3px 7px;font-size:11px;line-height:18px}.nspp-hot-rankings button:hover{background:#818b9818}.nspp-hot-rankings button:focus-visible{outline-offset:2px;outline:2px solid #0969da}.nspp-hot-rankings button:disabled{opacity:.55;cursor:wait}.nspp-hot-rankings button[aria-pressed=true]{color:#0969da;background:#0969da12;font-weight:600}.dark-layout .nspp-hot-rankings button[aria-pressed=true]{color:#79b8ff;background:#79b8ff18}.nspp-hot-rankings nav>:last-child{color:var(--text-secondary-color,#818b98);margin-left:auto}.nspp-hot-rankings .nspp-hot-close{width:24px;height:24px;color:var(--text-secondary-color,#818b98);flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.nspp-hot-close svg{width:16px;height:16px}.nspp-hot-rankings ol{overscroll-behavior:contain;flex:1;min-height:0;margin:0;padding:0;list-style:none;overflow:auto}.nspp-hot-rankings li{box-sizing:border-box;border-bottom:1px solid #818b9814;align-items:center;gap:6px;min-height:28px;margin:0;padding:3px 0;display:flex}.nspp-hot-rankings li:last-child{border-bottom:0}.nspp-hot-skeleton>span{background-color:#818b981c;border-radius:4px;flex:none;height:12px;display:block}.nspp-hot-skeleton .nspp-hot-skeleton-rank{width:20px;height:20px}.nspp-hot-skeleton .nspp-hot-skeleton-title{flex:1;margin-right:8%}.nspp-hot-skeleton:nth-child(2n) .nspp-hot-skeleton-title{margin-right:20%}.nspp-hot-skeleton .nspp-hot-skeleton-heat{width:40px;margin-left:auto}.nspp-hot-rankings li:hover{background:#818b980a}.nspp-hot-rankings li a{text-overflow:ellipsis;white-space:nowrap;min-width:0;color:inherit;flex:1;font-size:12px;line-height:21px;text-decoration:none;overflow:hidden}.nspp-hot-rankings li a:hover{text-decoration:underline}.nspp-hot-rank{text-align:center;color:#818b98;font-variant-numeric:tabular-nums;flex:none;width:20px;font-size:11px;font-weight:600}.nspp-hot-heat{color:#818b98;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;justify-content:flex-end;align-items:center;gap:3px;min-width:58px;font-size:10px;display:inline-flex}.nspp-hot-heat svg{fill:currentColor;stroke-width:1px;width:12px;height:14px}.nspp-hot-rankings [data-rank=\"1\"]{--nspp-rank-color:#ef4444}.nspp-hot-rankings [data-rank=\"2\"]{--nspp-rank-color:#f0782c}.nspp-hot-rankings [data-rank=\"3\"]{--nspp-rank-color:#c89419}.nspp-hot-rankings :is([data-rank=\"1\"],[data-rank=\"2\"],[data-rank=\"3\"]) .nspp-hot-rank{color:var(--nspp-rank-color);background:color-mix(in srgb, var(--nspp-rank-color) 10%, transparent);border-radius:4px;line-height:20px}.nspp-hot-rankings :is([data-rank=\"1\"],[data-rank=\"2\"],[data-rank=\"3\"]) .nspp-hot-heat{color:var(--nspp-rank-color)}.nspp-hot-rankings [role=status]{color:var(--text-secondary-color,#818b98);flex:none;margin:2px 0 4px;padding:0;font-size:10px;line-height:16px}@media (width<=700px),(hover:none){.nspp-hot-rankings{padding:0 12px}.nspp-hot-rankings .nspp-hot-header{flex-wrap:wrap;gap:5px}.nspp-hot-rankings .nspp-hot-header h2{flex:1;min-width:0}.nspp-hot-rankings nav{flex-basis:100%;order:3;overflow-x:auto}.nspp-hot-rankings h2{font-size:13px}.nspp-hot-rankings button{padding:3px 5px}.nspp-hot-rankings li{gap:4px}.nspp-hot-heat{min-width:50px}}@media (width<=380px){.nspp-hot-rankings nav{flex-basis:100%;order:1}.nspp-hot-rankings .nspp-hot-close{margin-left:auto}}@media (width<=700px),(hover:none){.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>header{flex-wrap:wrap;padding:8px 12px}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>header h3{flex:1;min-width:0;margin-right:0}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>.nspp-monitor-summary{padding:8px 12px}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>.nspp-monitor-results{padding:0 12px 8px}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>.nspp-monitor-tracked{max-height:24dvh}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>footer{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px 12px;display:grid}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>footer>span{grid-column:1/-1;min-width:0;display:block}.nspp-monitor:not(.nspp-monitor-config):not(.nspp-hot-rankings)>footer>button{width:100%;min-width:0;margin:0}.nspp-monitor-config .nspp-monitor-editor{padding:10px 14px 14px}.nspp-monitor-config .nspp-monitor-editor>button{align-self:stretch;width:100%}}[data-nspp-reply-launcher]{display:none!important}@media (width<=700px),(hover:none){[data-nspp-reply-launcher]:not([hidden]){display:inline-flex!important}html[data-nspp-reply-open]{scroll-behavior:auto!important;overflow:hidden!important}html[data-nspp-reply-open] body{overscroll-behavior:none;width:100%;overflow:hidden!important}html[data-nspp-reply-open] #nspp-tools{visibility:hidden}.md-editor.nspp-floating-reply{padding-bottom:env(safe-area-inset-bottom);overscroll-behavior:contain;background:var(--bg-color,Canvas);color:var(--text-color,CanvasText);border-radius:12px 12px 0 0;overflow:auto;box-shadow:0 -6px 30px #0003;inset:var(--nspp-reply-top,auto) 0 auto!important;z-index:1001!important;box-sizing:border-box!important;width:100%!important;max-width:none!important;max-height:min(70dvh, calc(var(--nspp-reply-height,70dvh) - 8px))!important;margin:0!important;position:fixed!important}.dark-layout .md-editor.nspp-floating-reply{color:#dedede;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:#262626;box-shadow:0 -6px 30px #0008}.nspp-floating-reply .CodeMirror{height:clamp(80px, calc(var(--nspp-reply-height,100dvh) * .32), 240px)!important}.nspp-floating-reply textarea{max-height:30dvh;font-size:16px}.nspp-floating-reply-header{justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;font-size:12px;display:flex}.nspp-floating-reply-header button{font:inherit;color:inherit;cursor:pointer;background:#818b9818;border:0;border-radius:4px;flex:none;padding:5px 10px}}");
+	_css("dialog.nspp-share{box-sizing:border-box;color:#1f2328;text-align:left;background:#fff;border:1px solid #d1d9e0;border-radius:12px;width:min(420px,100vw - 24px);max-width:none;height:fit-content;max-height:calc(100dvh - 32px);margin:auto;padding:16px 18px 18px;font:13px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif;position:fixed;inset:0;overflow-y:auto;box-shadow:0 12px 40px #0003}dialog.nspp-share::backdrop{background:#1f232866}.nspp-share *{box-sizing:border-box}.nspp-share .nspp-share-head{box-shadow:none;background:0 0;border:0;justify-content:space-between;align-items:center;gap:8px;margin:0 0 12px;padding:0;display:flex}.nspp-share .nspp-share-head strong{font-size:15px;font-weight:600}.nspp-share .nspp-share-close{color:#818b98;cursor:pointer;background:0 0;border:0;border-radius:6px;justify-content:center;align-items:center;width:28px;height:28px;margin:-4px -6px -4px 0;padding:0;display:inline-flex}.nspp-share .nspp-share-close svg{width:16px;height:16px}.nspp-share .nspp-share-close:hover{background:#818b981f}.nspp-share .nspp-share-intro{align-items:center;gap:14px;display:flex}.nspp-share .nspp-share-qr{background:#fff;border-radius:8px;flex:none;width:96px;height:96px;padding:6px;box-shadow:inset 0 0 0 1px #d1d9e0}.nspp-share .nspp-share-qr svg{width:100%;height:100%;display:block}.nspp-share .nspp-share-intro p{margin:0;font-size:13px;line-height:1.6}.nspp-share .nspp-share-intro small{color:#818b98;margin-top:4px;font-size:11.5px;display:block}.nspp-share .nspp-share-text{background:#f6f8fa;border-radius:8px;margin-top:14px;padding:10px 12px;position:relative}.nspp-share .nspp-share-text pre{color:#59636e;white-space:pre-wrap;overflow-wrap:anywhere;-webkit-user-select:text;user-select:text;background:0 0;border:0;margin:0;padding:0;font:12px/1.65 -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif}.nspp-share .nspp-share-text button{color:#1f2328;cursor:pointer;background:#fff;border:1px solid #d1d9e0;border-radius:6px;min-height:0;margin:8px 0 0 auto;padding:3px 10px;font:500 12px/18px inherit;display:block}.nspp-share .nspp-share-text button:hover{background:#eaeef2}.nspp-share .nspp-share-actions{grid-template-columns:repeat(4,1fr);gap:4px;margin-top:14px;display:grid}.nspp-share .nspp-share-actions button{color:#59636e;cursor:pointer;background:0 0;border:0;flex-direction:column;align-items:center;gap:5px;min-height:0;padding:2px 0;font:12px/1.4 inherit;display:flex}.nspp-share .nspp-share-actions button>span{color:#1f2328;background:#eef0f2;border-radius:50%;place-items:center;width:44px;height:44px;transition:background .15s;display:grid}.nspp-share .nspp-share-actions button>span svg{width:20px;height:20px}.nspp-share .nspp-share-actions button:hover>span{background:#e1e4e8}.dark-layout dialog.nspp-share{color:#dedede;background:#1e1e1e;border-color:#454545}.dark-layout .nspp-share .nspp-share-text{background:#262626}.dark-layout .nspp-share .nspp-share-text pre,.dark-layout .nspp-share .nspp-share-actions button{color:#a0a0a0}.dark-layout .nspp-share .nspp-share-text button{color:#dedede;background:#1e1e1e;border-color:#454545}.dark-layout .nspp-share .nspp-share-actions button>span{color:#eee;background:#2e2e2e}.dark-layout .nspp-share .nspp-share-actions button:hover>span{background:#3a3a3a}.dark-layout .nspp-share .nspp-share-qr{box-shadow:none}@media (width<=700px),(hover:none){dialog.nspp-share{width:100%;padding:4px 18px max(18px, env(safe-area-inset-bottom));border-radius:14px 14px 0 0;margin:0;inset:auto 0 0}}");
+	_css("@media (width<=700px),(hover:none){dialog.nspp-sheet{box-sizing:border-box;width:100%;min-width:0;max-width:none;height:auto;max-height:calc(100dvh - max(24px, env(safe-area-inset-top)));padding-bottom:max(8px, env(safe-area-inset-bottom));overscroll-behavior:contain;border:0;border-top:1px solid #818b9830;border-radius:14px 14px 0 0;margin:0;position:fixed;inset:auto 0 0;overflow:hidden auto;box-shadow:0 -8px 32px #0003}dialog.nspp-sheet[open]{flex-direction:column;display:flex}dialog.nspp-sheet.nspp-sheet-tall{height:min(88dvh,760px)}dialog.nspp-sheet:before{content:\"\";background:#818b9860;border-radius:2px;flex:none;align-self:center;width:36px;height:4px;margin:6px 0 2px}dialog.nspp-sheet::backdrop{background:#0006}dialog.nspp-sheet>*{flex:none;max-width:100%}dialog.nspp-sheet>.nspp-sheet-body{overscroll-behavior:contain;flex:auto;min-height:0;overflow-y:auto}dialog.nspp-sheet>footer{margin-top:auto}dialog.nspp-sheet :is(button,input,select){min-height:36px}dialog.nspp-sheet :is(input,textarea,select){font-size:16px}}button.nspp-icon-button.nspp-icon-button{box-sizing:border-box;border-radius:6px;flex:none;justify-content:center;align-items:center;width:28px;min-width:28px;height:28px;min-height:28px;padding:0;line-height:0;display:inline-flex}button.nspp-icon-button.nspp-icon-button svg{flex:none;width:16px;height:16px}button.nspp-icon-button[data-danger]:hover{color:#cf222e}@media (width<=700px),(hover:none){button.nspp-icon-button.nspp-icon-button{width:36px;min-width:36px;height:36px;min-height:36px}button.nspp-icon-button.nspp-icon-button svg{width:18px;height:18px}}");
+	var MENU_COMMANDS = [
+		[
+			"attendance",
+			"签到",
+			"[data-nspp-attendance]",
+			"登录后才能签到"
+		],
+		[
+			"hot-rankings",
+			"NodeSeek 热榜",
+			"[data-nspp-hot-launcher]",
+			"热榜暂不可用"
+		],
+		[
+			"monitor",
+			"帖子监控",
+			"[data-nspp-monitor-launcher]",
+			"帖子监控暂不可用"
+		],
+		[
+			"reading-history",
+			"阅读历史",
+			"[data-nspp-history-launcher]",
+			"阅读历史暂不可用"
+		],
+		[
+			"footprints",
+			"回帖足迹",
+			"[data-nspp-footprints-launcher]",
+			"登录后才能查看回帖足迹"
+		]
+	];
 	function main() {
 		if (document.getElementById("nspp-settings")) return;
+		if (!pageHealthy(SITE)) return;
 		const loadingStyle = document.createElement("style");
 		loadingStyle.textContent = loading_default.replaceAll("[aria-busy=\"true\"]", ":is([class*=\"nspp-\"], [data-nspp-resolve], [data-nspp-copy], #nspp-tools *, .nspp-compose *, .nspp-monitor *, .nspp-history *, .nspp-post-preview *, .nspp-interaction *, .nspp-quick-replies *, [data-nspp-footprints] *, [data-nspp-ai], [data-nspp-ai-test])[aria-busy=\"true\"]");
 		document.head.append(loadingStyle);
@@ -24000,7 +31030,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		tools.id = "nspp-tools";
 		tools.setAttribute("aria-label", "NodeSeek++");
 		document.body.append(tools);
-		const features = [
+		const stopFastNav = mountFastNav(tools);
+		const stopToolsCollapse = mountToolsCollapse(tools);
+		const stopToolTips = mountToolTips(tools);
+		const features = SITE === "v2ex" ? [
+			requestSettings$1,
+			moyuMode,
+			v2exAttendance
+		] : SITE === "linuxdo" ? [requestSettings$1, moyuMode] : [
 			requestSettings$1,
 			...readingFeatures,
 			...filteringFeatures,
@@ -24015,19 +31052,37 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			discussionStatsFeature,
 			messagesFeature,
 			floatingReply,
-			hotRankings
+			hotRankings,
+			share,
+			moyuMode
 		];
 		if (new Set(features.map((feature) => feature.id)).size !== features.length) throw new Error("重复功能 ID");
 		const ui = mountSettings(features);
 		GM_registerMenuCommand$1("NodeSeek++ 设置", ui.open);
-		const stop = startFeatures(features, loadSettings(features), ui.notify);
+		const settings = loadSettings(features);
+		for (const [id, label, selector, missing] of MENU_COMMANDS) {
+			if (!settings[id]?.enabled) continue;
+			GM_registerMenuCommand$1(label, () => {
+				const launcher = tools.querySelector(selector);
+				if (launcher) launcher.click();
+				else ui.notify(missing);
+			});
+		}
+		const stop = startFeatures(features, settings, ui.notify);
 		window.addEventListener("pagehide", (event) => {
 			if (!event.persisted) {
 				stop();
 				ui.stopUpdates();
+				stopFastNav();
+				stopToolsCollapse();
+				stopToolTips();
 			}
 		});
 	}
-	if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", main, { once: true });
-	else main();
+	function boot() {
+		if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", main, { once: true });
+		else main();
+	}
+	if (needsStoragePreparation()) prepareStorage().then(boot);
+	else boot();
 })();

@@ -91,6 +91,7 @@
 // @connect      release-assets.githubusercontent.com
 // @connect      objects.githubusercontent.com
 // @connect      cdn.jsdelivr.net
+// @connect      *
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM.getValue

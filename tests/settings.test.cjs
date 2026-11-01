@@ -133,13 +133,19 @@ test("全部设置可保存：逐个操作所有可见字段和开关，重新�
   for(const tab of Object.keys(names)) {
    await host.getByRole("tab",{name:names[tab],exact:true}).click();
    // 子选项先改，最后再关总开关，验证不会因 inert 把子项操作漏掉。
-   const inTab=fields.filter(f=>f.tab===tab).sort((a,b)=>Number(a.key==="enabled")-Number(b.key==="enabled"));
+   // 下拉框先改：图床选「自定义接口」后，只对自定义接口有意义的地址、请求头等字段才显示出来
+   const rank=f=>f.key==="enabled"?2:f.options?0:1;
+   const inTab=fields.filter(f=>f.tab===tab).sort((a,b)=>rank(a)-rank(b));
    for(const f of inTab) {
     const selector=`[data-feature="${f.feature}"][data-key="${f.key}"]`;
     const control=host.locator(selector);
     let value;
     if(f.type==="checkbox") {value=!f.value;await control.setChecked(value);}
-    else if(f.options) {value=f.options.findLast(o=>o!==f.value);await control.locator("..").locator(`[role=radio][data-value="${value}"]`).click();}
+    else if(f.options) {
+     value=f.key==="host"?"Custom":f.options.findLast(o=>o!==f.value);
+     const radio=control.locator("..").locator(`[role=radio][data-value="${value}"]`);
+     if(await radio.count()) await radio.click(); else await control.selectOption(value);
+    }
     else {value=f.type==="number"?12:f.key==="notes"?"user0=测试备注":f.key==="hidden"?"生活\nDev":"__settings_audit__";await control.fill(String(value));await control.press("Tab");}
     expected.push({...f,value});
    }

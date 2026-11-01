@@ -2,11 +2,11 @@
 	{
 		"id": "nodeseek-plus",
 		"name": "NodeSeek++",
-		"version": "26.917.1446",
+		"version": "26.1030.1015",
 		"license": "GPL-3.0-only",
-		"page": "https://greasyfork.org/scripts/595488",
-		"meta": "https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.meta.js",
-		"code": "https://update.greasyfork.org/scripts/595488/NodeSeek%2B%2B.user.js",
+		"page": "https://github.com/rirh/nodeseek-plus",
+		"meta": "https://raw.githubusercontent.com/rirh/nodeseek-plus/main/dist/nodeseek-plus-plus.meta.js",
+		"code": "https://raw.githubusercontent.com/rirh/nodeseek-plus/main/dist/nodeseek-plus-plus.user.js",
 		"merged": "nodeseek-max.user.js Part 2（论坛增强）"
 	},
 	{
