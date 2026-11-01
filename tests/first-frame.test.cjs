@@ -147,6 +147,8 @@ test("主题分段：手机、深色下也和整份注入逐元素一致，手�
     await page.waitForFunction(()=>!document.querySelector(".user-stat")||document.querySelector(".nspp-notification-link"),null,{timeout:8000}).catch(()=>{});
     await page.mouse.move(8,8);
     await page.waitForTimeout(900);
+    // 页脚在屏幕外时高度取占位值，排过版才是实际值，两次打开可能差这一步
+    await page.addStyleTag({content:"body > footer{content-visibility:visible!important}"});
     const state=await page.evaluate(()=>{
      // 带参数打开时站点把当前版块的链接标成别的类，只比标签和 ID
      const label=el=>`${el.tagName.toLowerCase()}${el.id?"#"+el.id:""}`;

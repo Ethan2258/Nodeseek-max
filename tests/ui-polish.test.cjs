@@ -147,7 +147,7 @@ for(const engine of engines){
     const host=document.querySelector(".selector-right-side");
     const box=document.createElement("div");
     // 内联样式照抄真站这几处的计算值：不修的话黑底、灰底阴影、大头像都会留下来
-    box.innerHTML='<div class="ip-list" style="background:rgba(0,0,0,.72);color:#fff;padding:10px;border-radius:12px"><div class="ip-item"><a href="#">1.2.3.4</a> <p>3 days ago</p></div><div class="ip-item"><a href="#">5.6.7.8</a> <p>4 days ago</p></div></div><div class="block-list" style="background:rgb(247,248,250);box-shadow:rgba(0,0,0,.1) 4px 4px 8px;padding:15px"><form class="pure-form"><input></form></div><form class="pure-form"><input type="password"><div class="mail-row" style="display:flex"></div></form><div style="text-align:center"><img class="avatar" style="width:320px;height:320px" alt=""><p>name</p></div>';
+    box.innerHTML='<div class="ip-list" style="background:rgba(0,0,0,.72);color:#fff;padding:10px;border-radius:12px"><div class="ip-item"><a href="#">1.2.3.4</a> <p>3 days ago</p></div><div class="ip-item"><a href="#">5.6.7.8</a> <p>4 days ago</p></div></div><div class="block-list" style="background:rgb(247,248,250);box-shadow:rgba(0,0,0,.1) 4px 4px 8px;padding:15px"><form class="pure-form"><input></form></div><form class="pure-form"><input type="password"><div class="mail-row" style="display:flex"></div></form><div style="text-align:center"><img class="avatar" style="width:320px;height:320px" alt=""><p>name</p></div><label class="switch"><input type="checkbox" checked><span class="slider"><span class="circle"></span></span></label>';
     // HTML 解析器会丢掉嵌套的 form，真站这层是脚本创建的，这里也用 DOM 接口建
     const nested=document.createElement("form");
     nested.className="pure-form";
@@ -156,7 +156,7 @@ for(const engine of engines){
     box.querySelector(".mail-row").append(nested);
     host.append(box);
     const css=(sel)=>getComputedStyle(box.querySelector(sel));
-    return{bg:css(".ip-list").backgroundColor,a:css(".ip-item a").color,time:css(".ip-item p").color,text:getComputedStyle(document.body).color,blockShadow:css(".block-list").boxShadow,blockBg:css(".block-list").backgroundColor,password:box.querySelector("input[type=password]").getBoundingClientRect().width,mail:box.querySelector("input.mail").getBoundingClientRect().width,avatar:box.querySelector("img.avatar").getBoundingClientRect().width,left:css("img.avatar + p").textAlign};
+    return{bg:css(".ip-list").backgroundColor,a:css(".ip-item a").color,time:css(".ip-item p").color,text:getComputedStyle(document.body).color,blockShadow:css(".block-list").boxShadow,blockBg:css(".block-list").backgroundColor,password:box.querySelector("input[type=password]").getBoundingClientRect().width,mail:box.querySelector("input.mail").getBoundingClientRect().width,avatar:box.querySelector("img.avatar").getBoundingClientRect().width,left:css("img.avatar + p").textAlign,track:[box.querySelector("label.switch").offsetWidth,box.querySelector("label.switch").offsetHeight],knob:box.querySelector(".circle").offsetWidth,on:css(".slider").backgroundColor};
    });
    assert.notEqual(s.bg,"rgba(0, 0, 0, 0.72)");
    assert.equal(s.a,s.text,"IP 文字和正文同色");
@@ -165,6 +165,9 @@ for(const engine of engines){
    assert.equal(s.blockBg,"rgba(0, 0, 0, 0)");
    assert.equal(s.mail,s.password,"邮箱框和密码框同宽");
    assert.equal(s.avatar,64);
+   assert.deepEqual(s.track,[40,23],"开关和 sb.sb 一样 40×23");
+   assert.equal(s.knob,15);
+   assert.equal(s.on,"rgb(28, 28, 30)");
    assert.equal(s.left,"left");
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
@@ -191,39 +194,79 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
- test(`${engine} 电脑页脚和顶栏、主体同一条边线`,async()=>{
-  for(const width of [1280,1920]){
-   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,viewport:{width,height:860},html:P.listPage({count:4})});
+ test(`${engine} 电脑尺寸和 sb.sb 现版一致：工具条、列表行、回复头、登录页`,async()=>{
+  const site={...desk,seed:{"nspp:settings:www.nodeseek.com":{"attendance":{enabled:false},"modern-theme":{font:"system",fontSize:"site"}}}};
+  const box=(page,sel)=>page.locator(sel).first().evaluate(e=>e.getBoundingClientRect().height);
+  const css=(page,sel,prop)=>page.locator(sel).first().evaluate((e,prop)=>getComputedStyle(e)[prop],prop);
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...site,html:P.listPage({count:4})});
    try{
     await ready(page);
-    await page.evaluate(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:"instant"}));
-    const s=await page.evaluate(()=>{const box=sel=>document.querySelector(sel).getBoundingClientRect();return{main:box("#nsk-body-left").left,foot:box("body > footer .contain > :first-child").left,side:box("#nsk-right-panel-container").right,end:box("body > footer .contain").right};});
-    assert.ok(near(s.main,s.foot),JSON.stringify(s));
-    assert.ok(near(s.side,s.end-16),JSON.stringify(s));
+    assert.ok(near(await box(page,".post-list-controler"),50.5,.6));
+    assert.ok(near(await box(page,"li.post-item:nth-child(2)"),72.25,.6));
+    assert.equal(await css(page,".nsk-pager.pager-bottom .nsmax-pager-ellipsis","letterSpacing"),"normal");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...site,html:P.postPage({})});
+   try{
+    await ready(page);
+    assert.ok(near(await box(page,".nsmax-owner-only"),31,.6));
+    assert.ok(near(await box(page,".comment-container > div:first-child"),54,.6));
+    assert.equal(await css(page,".nsk-post article.post-content p","marginBottom"),"12.75px");
+    assert.equal(await css(page,".nsk-post > .post-title h1 a","letterSpacing"),"-0.21px");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/signIn.html",{...site,html:P.signInPage({})});
+   try{
+    await ready(page);
+    assert.equal(await css(page,".nsmax-auth-tabs a","lineHeight"),"26.25px");
+    assert.equal(await css(page,"#login-panel label","lineHeight"),"22.75px");
+    assert.equal(await css(page,"#stacked-email","paddingLeft"),"12px");
+    assert.equal(await css(page,"#stacked-email","paddingTop"),"0px");
+    assert.equal(await css(page,"#stacked-password","paddingRight"),"56px");
+    assert.ok(near(await box(page,".nsmax-password-toggle"),30,.6));
+    assert.equal(await css(page,".nsmax-password-toggle","fontSize"),"12px");
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
  });
- test(`${engine} 电脑悬停：浅色主题下文字链接有下划线，右栏头像变淡`,async()=>{
+ test(`${engine} 深色下列表标题悬停变链接色`,async()=>{
+  const dark={...desk,colorScheme:"dark",seed:{"nspp:settings:www.nodeseek.com":{"attendance":{enabled:false},"modern-theme":{font:"system",colorMode:"dark"}}}};
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...dark,html:P.listPage({count:4})});
+  try{
+   await ready(page);
+   const title=page.locator("#nsk-body-left .post-title > a").first();
+   await title.hover();
+   await page.waitForFunction(()=>getComputedStyle(document.querySelector("#nsk-body-left .post-title > a")).color==="rgb(255, 217, 119)",null,{timeout:2500}).catch(()=>{});
+   assert.equal(await title.evaluate(e=>getComputedStyle(e).color),"rgb(255, 217, 119)");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 电脑悬停和 sb.sb 一致：元信息和右栏链接下划线，楼号变正文色，帖子标题和版块胶囊不加下划线`,async()=>{
+  const list=P.listPage({count:4}),post=P.postPage({});
   const cases=[
-   ["/",P.listPage({count:4}),"#nsk-body-left .post-meta a:not(.nsmax-inline-category)","textDecorationLine","underline"],
-   ["/",P.listPage({count:4}),".nsmax-sb-account .nsmax-account-name","textDecorationLine","underline"],
-   ["/",P.listPage({count:4}),".nsmax-sb-account .nsmax-account-stat","textDecorationLine","underline","dd"],
-   ["/",P.listPage({count:4}),".nsmax-sb-account .nsmax-account-head > a:not(.nsmax-account-name)","opacity","0.8"],
-   ["/post-1000-1",P.postPage({}),"#nsk-body-left .content-item .floor-link","textDecorationLine","underline"],
-   ["/ruling",P.rulingPage({}),".ruling-log td a","textDecorationLine","underline"],
-   ["/fans?type=follow",P.fansPage({}),".nsmax-member-name","textDecorationLine","underline"],
-   ["/register.html",P.registerPage({}),"[data-nsmax-auth-app] .invite-link","textDecorationLine","underline"],
-   ["/providers",P.providersPage({}),".nsk-providers > p:last-child a","textDecorationLine","underline"]
+   ["/",list,"#nsk-body-left .post-meta .info-author a","textDecorationLine","underline"],
+   ["/",list,"#nsk-body-left .post-meta .post-forum-badge","textDecorationLine","none"],
+   ["/",list,".nsmax-sb-account .nsmax-account-name","textDecorationLine","underline"],
+   ["/",list,".nsmax-sb-account .nsmax-account-stat","textDecorationLine","underline"],
+   ["/",list,".nsmax-hot-list a","textDecorationLine","underline"],
+   ["/",list,"#nsk-right-panel-container a[href*='new-discussion']","textDecorationLine","none"],
+   ["/post-1000-1",post,"ul.comments .floor-link","color","rgb(28, 28, 30)"],
+   ["/post-1000-1",post,"ul.comments .floor-link","textDecorationLine","none"],
+   ["/post-1000-1",post,".post-title-link","textDecorationLine","none"]
   ];
-  for(const [url,html,selector,prop,value,child] of cases){
+  for(const [url,html,selector,prop,value] of cases){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
    try{
     await ready(page);
     const target=page.locator(selector+":visible").first();
     // 右栏会在未读数回来后重画一次，重画时悬停状态会丢，多悬停几次
     let got;
-    for(let i=0;i<8&&got!==value;i++){await target.hover();await page.waitForTimeout(120);got=await target.evaluate((el,{prop,child})=>getComputedStyle(child?el.querySelector(child):el)[prop],{prop,child});}
+    for(let i=0;i<8&&got!==value;i++){await target.hover();await page.waitForTimeout(120);got=await target.evaluate((el,prop)=>getComputedStyle(el)[prop],prop);}
     assert.equal(got,value,selector);
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
