@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.11
+// @version      1.9.12
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -905,7 +905,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.11";
+	var NSMAX_VERSION = "1.9.12";
 	var NSMAX_BOOT_REGIONS = Object.freeze(["header", "left", "right"]);
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
@@ -24176,13 +24176,15 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 	// 开奖链接怎么认（2026-11-01 用户：「只要里面有开奖链接，就判定为抽奖帖子」）：本站的 /lucky?…——站点渲染出来的链接、
 	// 写成 nodeseek.com / www.nodeseek.com 完整网址的（以前只认和当前页面同一个域名的，www 和不带 www 混着写的卡片出不来）、
 	// 没被渲染成链接的纯文字网址都算；参数不全（没写开奖时间）的也算抽奖帖，只是画不出倒计时卡片
-	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?nodeseek\.com|(?<![\w.:\/-]))\/lucky\?[^\s<>"'）)\]]+/g;
+	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?(?:nodeseek|deepflood)\.com|(?<![\w.:\/-]))\/lucky\?[^\s<>"'）)\]]+/gi;
 	function nsmaxLuckyUrl(href) {
 		let url;
 		try { url = new URL(href, location.href); } catch { return null; }
+		if (!/^https?:$/.test(url.protocol)) return null;
 		if (url.pathname !== "/lucky" || !url.search) return null;
 		if (url.origin === location.origin) return url;
-		if (!/^(?:www\.)?nodeseek\.com$/.test(url.hostname)) return null;
+		const family = location.hostname.replace(/^www\./, "");
+		if (!/^(?:nodeseek|deepflood)\.com$/.test(family) || url.hostname.replace(/^www\./, "") !== family) return null;
 		return new URL(url.pathname + url.search + url.hash, location.origin);
 	}
 	// 一段内容里所有开奖链接（链接 + 纯文字网址），卡片自己的「查看开奖」不算
@@ -24194,9 +24196,16 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			if (url) urls.push(url);
 		}
 		const text = root.textContent || "";
-		if (text.includes("/lucky?")) for (const match of text.matchAll(NSMAX_LUCKY_TEXT)) {
-			const url = nsmaxLuckyUrl(match[0]);
-			if (url) urls.push(url);
+		if (text.includes("/lucky?")) {
+			// textContent 会把相邻段落拼起来，令 time=123 后面粘上下一段正文。
+			// 逐个文本节点读取，不触发布局，也不把生成卡片里的文字当作新链接。
+			const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+				acceptNode: node => node.parentElement?.closest(".nsmax-lottery, a[href]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+			});
+			while (walker.nextNode()) for (const match of walker.currentNode.data.matchAll(NSMAX_LUCKY_TEXT)) {
+				const url = nsmaxLuckyUrl(match[0]);
+				if (url) urls.push(url);
+			}
 		}
 		return urls;
 	}
@@ -25026,18 +25035,67 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		const title = document.querySelector(".nsk-post > .post-title h1, .post-title h1")?.textContent || "";
 		return nsmaxLotteryPrizeFromTitle(title).slice(0, 80) || "见正文";
 	}
-	// 参与人：已经加载出来的楼层里，从起始楼层起回复的人（按楼层先后、同一个人只算一次）
-	function nsmaxLotteryEntrants(start) {
+	// 参与人按楼层先后、UID 去重；截止后只显示有时间证据的回复。
+	var nsmaxLotterySeenRows = new WeakMap();
+	var nsmaxLotteryPeopleSnapshot;
+	function nsmaxLotteryEntrants(start, until = Infinity, items) {
 		const people = [];
 		const seen = new Set();
-		for (const item of document.querySelectorAll("ul.comments li.content-item")) {
+		const rows = Array.from(items || document.querySelectorAll("ul.comments li.content-item")).sort((a, b) => Number(a.id) - Number(b.id));
+		for (const item of rows) {
 			const floor = Number(item.id);
-			const name = item.querySelector(".author-info > a.author-name")?.textContent.trim();
-			if (!Number.isFinite(floor) || floor < start || !name || seen.has(name)) continue;
-			seen.add(name);
+			const author = item.querySelector(":scope > .nsk-content-meta-info .author-info > a.author-name");
+			const name = author?.textContent.trim();
+			const uid = author?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
+			const identity = uid ? "uid:" + uid : "name:" + name;
+			if (!Number.isFinite(floor) || floor < start || !name || seen.has(identity)) continue;
+			const created = Date.parse(item.querySelector(":scope > .nsk-content-meta-info .date-created time")?.getAttribute("datetime") || "");
+			if (!nsmaxLotterySeenRows.has(item)) nsmaxLotterySeenRows.set(item, Number.isFinite(created) ? created : Date.now());
+			const at = Number.isFinite(created) ? created : nsmaxLotterySeenRows.get(item);
+			if (at > until) continue;
+			seen.add(identity);
 			people.push([floor, name]);
 		}
-		return people.sort((a, b) => a[0] - b[0]);
+		return people;
+	}
+	function nsmaxLotteryPeople(entrants) {
+		if (!entrants.length) return null;
+		const people = document.createElement("div");
+		people.className = "nsmax-lottery-people";
+		people.dataset.nsmaxPeople = JSON.stringify(entrants);
+		for (const [floor, name] of entrants.slice(0, 12)) {
+			const chip = document.createElement("a");
+			chip.className = "nsmax-lottery-person";
+			chip.href = "#" + floor;
+			chip.textContent = `#${floor} ${name}`;
+			people.append(chip);
+		}
+		if (entrants.length > 12) {
+			const more = document.createElement("span");
+			more.className = "nsmax-lottery-more";
+			more.textContent = `等 ${entrants.length} 人`;
+			people.append(more);
+		}
+		return people;
+	}
+	function nsmaxRefreshLotteryPeople() {
+		const post = String(nsmaxMyRepliesPost());
+		const cards = Array.from(document.querySelectorAll(".nsmax-lottery[data-nsmax-post]")).filter(card => card.dataset.nsmaxPost === post);
+		if (!cards.length) return;
+		const root = document.querySelector("ul.comments");
+		const rows = root?.querySelectorAll("li.content-item[id]") || [];
+		const last = rows[rows.length - 1], loading = document.readyState === "loading";
+		const previous = nsmaxLotteryPeopleSnapshot;
+		nsmaxLotteryPeopleSnapshot = { root, last, count: rows.length, loading };
+		if (!previous || !loading && !previous.loading && previous.root === root && previous.last === last && previous.count === rows.length) return;
+		for (const card of cards) {
+			const entrants = nsmaxLotteryEntrants(Number(card.dataset.nsmaxStart), Number(card.dataset.nsmaxTime), rows);
+			const old = card.querySelector(":scope > .nsmax-lottery-people");
+			if (old?.dataset.nsmaxPeople === JSON.stringify(entrants)) continue;
+			const people = nsmaxLotteryPeople(entrants);
+			if (old) people ? old.replaceWith(people) : old.remove();
+			else if (people) card.querySelector(".nsmax-lottery-stat")?.after(people);
+		}
 	}
 	function nsmaxPrepareLottery() {
 		for (const link of document.querySelectorAll('article.post-content a[href*="/lucky?"]:not([data-nsmax-lottery])')) {
@@ -25048,13 +25106,14 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			const { url, time, count, start, duplicate } = params;
 			link.setAttribute("data-nsmax-lottery", "");
 			const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
+			if (postId && !url.searchParams.has("post")) url.searchParams.set("post", postId);
 			if (postId && link.closest(".nsk-post")) nsmaxRememberLotteryTime(postId, time);
 			const article = link.closest("article.post-content") || document;
 			// 回复总数见 nsmaxPostReplyCount；一时拿不到先写这一页的参与人数，拿到后 nsmaxShowPostReplyCount 更新
 			const targetPost = Number(url.searchParams.get("post"));
 			const isCurrent = targetPost === Number(postId);
 			const replies = isCurrent ? nsmaxPostReplyCount() : null;
-			const entrants = isCurrent ? nsmaxLotteryEntrants(start) : [];
+			const entrants = isCurrent ? nsmaxLotteryEntrants(start, time) : [];
 			const { card, join } = nsmaxBuildLotteryCard({ time, count, start, duplicate, prize: nsmaxLotteryPrize(article), href: url.href, replies: isCurrent ? replies ?? entrants.length : null, entrants });
 			join.addEventListener("click", () => nsmaxLotteryJoin(targetPost));
 			const block = link.closest("p, li, blockquote") || link;
@@ -25069,15 +25128,17 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			op.setAttribute("data-nsmax-lottery-text", "");
 			const params = nsmaxLuckyUrlsIn(op).map((url) => nsmaxLuckyParams(url.href)).find(Boolean);
 			if (params) {
+				if (!params.url.searchParams.has("post")) params.url.searchParams.set("post", String(nsmaxMyRepliesPost()));
 				const isCurrent = Number(params.url.searchParams.get("post")) === nsmaxMyRepliesPost();
 				const replies = isCurrent ? nsmaxPostReplyCount() : null;
-				const entrants = isCurrent ? nsmaxLotteryEntrants(params.start) : [];
+				const entrants = isCurrent ? nsmaxLotteryEntrants(params.start, params.time) : [];
 				const { card, join } = nsmaxBuildLotteryCard({ ...params, prize: nsmaxLotteryPrize(op), href: params.url.href, replies: isCurrent ? replies ?? entrants.length : null, entrants });
 				join.addEventListener("click", () => nsmaxLotteryJoin(Number(params.url.searchParams.get("post"))));
 				op.append(card);
 				nsmaxTrackLottery(card);
 			}
 		}
+		nsmaxRefreshLotteryPeople();
 	}
 	// 「回复参与」：跳到回复框并聚焦
 	function nsmaxLotteryJoin(post = 0) {
@@ -25154,13 +25215,7 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		}
 		stat.append(make("span", "", `从 ${start} 楼起按楼层抽`), make("span", "", duplicate ? "可以重复中奖" : "每人最多中一次"));
 		// 参与人：前 12 位小胶囊，多的写「等 N 人」
-		const people = make("div", "nsmax-lottery-people");
-		for (const [floor, name] of entrants.slice(0, 12)) {
-			const chip = make("a", "nsmax-lottery-person", `#${floor} ${name}`);
-			chip.href = `#${floor}`;
-			people.append(chip);
-		}
-		if (entrants.length > 12) people.append(make("span", "nsmax-lottery-more", `等 ${entrants.length} 人`));
+		const people = nsmaxLotteryPeople(entrants);
 		const actions = make("div", "nsmax-lottery-actions");
 		const view = make("a", "nsmax-lottery-view", "查看开奖");
 		view.setAttribute("data-nsmax-lottery", "");
@@ -25177,7 +25232,7 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		}
 		actions.append(join, view);
 		card.append(head, countdown, table, stat);
-		if (people.childElementCount) card.append(people);
+		if (people) card.append(people);
 		card.append(actions);
 		return { card, join, view };
 	}

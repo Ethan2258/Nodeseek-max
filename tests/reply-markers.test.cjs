@@ -90,6 +90,7 @@ for (const engine of ["chromium", "webkit"]) {
         document.querySelector("ul.comments").append(row);
       });
       await page.waitForSelector(".nsmax-lottery-head .nsmax-joined-badge");
+      await page.locator(".nsmax-lottery-people").getByText("#9 tester", { exact: true }).waitFor();
       assert.equal(await page.locator(".nsk-post .nsmax-replied-badge").count(), 1);
       assert.equal(await page.locator(".nsk-post .post-title .nsmax-joined-badge").count(), 1);
       const second = await context.newPage();
@@ -131,6 +132,28 @@ for (const engine of ["chromium", "webkit"]) {
     }
   });
 
+  test(`${engine} 抽奖名单按 UID 去重，保留最早楼层并排除截止后的回复`, async () => {
+    for (const ended of [false,true]) {
+      const time=Date.now()+(ended?-864e5:864e5);
+      const html=P.postPage().replace("<h2>配置说明</h2>",ruleLink(1000,time)+"<h2>配置说明</h2>");
+      const init=`document.addEventListener("DOMContentLoaded",()=>{
+        const rows=[...document.querySelectorAll("ul.comments>li.content-item")];
+        for(let i=0;i<3;i++){const a=rows[i].querySelector(".author-info .author-name");a.href="/space/"+(i===2?12:11);a.textContent=i===1?"renamed":"same";rows[i].querySelector("time").dateTime=new Date(${time}-36e5).toISOString();}
+        const late=rows[2].cloneNode(true);late.id="4";late.querySelector(".author-name").href="/space/13";late.querySelector("time").dateTime=new Date(${time}+36e5).toISOString();document.querySelector("ul.comments").append(late);
+        rows[0].before(rows[1]);
+      });`;
+      const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html,init,seed:seed(state({}))});
+      try{
+        await ready(page);
+        assert.deepEqual(await page.locator(".nsmax-lottery-person").allTextContents(),["#1 same","#3 same"]);
+        const person=page.locator(".nsmax-lottery-person").first();
+        await person.focus();await page.waitForTimeout(650);
+        assert.equal(await person.evaluate(e=>e===document.activeElement),true,"名单没变时不重建或丢失键盘焦点");
+        assert.deepEqual(errors,[]);
+      }finally{await context.close();}
+    }
+  });
+
   test(`${engine} 我的回复按每页楼数跳转，引用其他帖的抽奖前往原帖并保留正确参与状态`, async () => {
     const html=P.postPage().replace("<h2>配置说明</h2>",ruleLink(9999,Date.now()+864e5)+"<h2>配置说明</h2>");
     const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html,seed:seed(state({1000:[15]})),init:'document.addEventListener("DOMContentLoaded",()=>{window.__config__.commmentPerPage=4;});',pages:{"/post-9999-1":P.postPage()}});
@@ -141,5 +164,43 @@ for (const engine of ["chromium", "webkit"]) {
       await Promise.all([page.waitForURL("**/post-9999-1"),card.getByRole("button",{name:"前往原帖参与",exact:true}).click()]);
       assert.deepEqual(errors,[]);
     }finally{await context.close();}
+  });
+
+  test(`${engine} 开奖链接省略 post 时补齐当前帖，不丢失参与标记或查看模式`, async () => {
+    const link=ruleLink(1000,Date.now()+864e5).replace("post=1000&amp;","");
+    const html=P.postPage().replaceAll('href="/space/11"','href="/space/1"').replace("<h2>配置说明</h2>",link+"<h2>配置说明</h2>");
+    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html,seed:seed(state({}))});
+    try{
+      await ready(page);
+      const card=page.locator(".nsmax-lottery");
+      assert.equal(await card.getAttribute("data-nsmax-post"),"1000");
+      assert.equal(await card.locator(".nsmax-joined-badge").count(),1);
+      const href=new URL(await card.locator(".nsmax-lottery-view").getAttribute("href"));
+      assert.equal(href.searchParams.get("post"),"1000");assert.deepEqual(href.searchParams.getAll("mode"),["view"]);
+      await card.getByRole("button",{name:"回复参与",exact:true}).click();
+      await page.waitForFunction(()=>!!document.activeElement.closest(".md-editor"));
+      assert.equal(page.url(),"https://www.nodeseek.com/post-1000-1");assert.deepEqual(errors,[]);
+    }finally{await context.close();}
+  });
+
+  test(`${engine} 开奖链接的域名别名仅在同一论坛内归一，不套用另一论坛的数据`, async () => {
+    const time=Date.now()+864e5;
+    for(const [host,href,card,anchorText] of [
+      ["www.nodeseek.com",`https://nodeseek.com/lucky?post=1000&time=${time}`,true],
+      ["www.deepflood.com",`HTTPS://DEEPFLOOD.COM/lucky?post=1000&time=${time}`,true],
+      ["www.deepflood.com",`https://www.nodeseek.com/lucky?post=1000&time=${time}`,false],
+      ["www.nodeseek.com",`https://www.deepflood.com/lucky?post=1000&time=${time}`,false],
+      ["www.nodeseek.com",`https://www.deepflood.com/lucky?post=1000&time=${time}`,false,`/lucky?post=1000&time=${time}`]
+    ]){
+      const text=anchorText?`<a href="${href}">${anchorText}</a>`:href;
+      const html=P.postPage().replace("<h2>配置说明</h2>",`<p>${text}</p><h2>配置说明</h2>`);
+      const {context,page,errors}=await open(browser,`https://${host}/post-1000-1`,{html,seed:seed(state({}))});
+      try{
+        await ready(page);
+        assert.equal(await page.locator(".nsmax-lottery").count(),card?1:0,JSON.stringify({host,href,errors}));
+        if(card){const view=new URL(await page.locator(".nsmax-lottery-view").getAttribute("href"));assert.equal(view.host,host);assert.equal(view.searchParams.get("mode"),"view");}
+        assert.deepEqual(errors,[]);
+      }finally{await context.close();}
+    }
   });
 }
