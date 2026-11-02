@@ -183,6 +183,58 @@ for (const engine of ["chromium", "webkit"]) {
     }finally{await context.close();}
   });
 
+  test(`${engine} 抽奖奖品取原始标题，不混入已回复和已参与标签`, async () => {
+    const time = Date.now() + 864e5;
+    const html = P.postPage().replace("<h2>配置说明</h2>", ruleLink(1000, time) + "<h2>配置说明</h2>");
+    const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+      html, seed: seed(state({ 1000: [1] })), init: rulesInit({ 1000: [{ start: 1, time }] })
+    });
+    try {
+      await ready(page);
+      assert.equal(await page.locator(".nsk-post .post-title .nsmax-joined-badge").count(), 1);
+      assert.equal(await page.locator(".nsmax-lottery-prize").textContent(), "出一台香港 CN2 GIA 小鸡，年付 99");
+      assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+  });
+
+  test(`${engine} 引用外帖的过期开奖不污染本帖状态，旧的错误结束缓存可恢复`, async () => {
+    const past = Date.now() - 864e5, future = Date.now() + 864e5;
+    for (const links of [[9999], [9999, 1000], [1000, 9999]]) {
+      const html = P.postPage().replace("<h2>配置说明</h2>", links.map(post => ruleLink(post, post === 1000 ? future : past)).join("") + "<h2>配置说明</h2>");
+      const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+        html, seed: seed(state({})), init: `localStorage.setItem("nsmax:lottery-times", JSON.stringify({1000:${past}}));localStorage.setItem("nsmax:lottery-ended",JSON.stringify(["1000"]));`
+      });
+      try {
+        await ready(page);
+        assert.equal(await page.locator(".nsk-post .post-title .nsmax-prize-badge").count(), 1);
+        assert.equal(await page.locator(".nsk-post .post-title .nsmax-ended-badge").count(), 0, JSON.stringify(links));
+        const cached = await page.evaluate(() => ({ times: JSON.parse(localStorage.getItem("nsmax:lottery-times")), ended: JSON.parse(localStorage.getItem("nsmax:lottery-ended")) }));
+        assert.equal(cached.times[1000], links.includes(1000) ? future : undefined);
+        assert.deepEqual(cached.ended, []);
+        assert.deepEqual(errors, []);
+      } finally { await context.close(); }
+    }
+  });
+
+  test(`${engine} 评论中的本帖开奖时间持续保留，后续评论页不凭缺失信息清空缓存`, async () => {
+    const future = Date.now() + 864e5;
+    for (const [pageNumber, inComments] of [[1, true], [2, false], [1, false]]) {
+      let html = P.postPage().replace("<h2>配置说明</h2>", ruleLink(9999, Date.now() - 864e5) + "<h2>配置说明</h2>");
+      if (inComments) html = html.replace("收了，私信你", '<a href="/lucky?post=1000">稍后补充开奖时间</a>').replace("价格不错，帮顶", ruleLink(1000, future));
+      const { context, page, errors } = await open(browser, `https://www.nodeseek.com/post-1000-${pageNumber}`, {
+        html, seed: seed(state({})), init: !inComments ? `localStorage.setItem("nsmax:lottery-times", JSON.stringify({1000:${future}}));` : ""
+      });
+      try {
+        await ready(page);
+        await page.evaluate(() => document.querySelector("ul.comments").append(document.createElement("li")));
+        await page.waitForTimeout(300);
+        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:lottery-times") || "{}")[1000]), future);
+        assert.equal(await page.locator(".nsk-post .post-title .nsmax-ended-badge").count(), 0);
+        assert.deepEqual(errors, []);
+      } finally { await context.close(); }
+    }
+  });
+
   test(`${engine} 开奖链接的域名别名仅在同一论坛内归一，不套用另一论坛的数据`, async () => {
     const time=Date.now()+864e5;
     for(const [host,href,card,anchorText] of [

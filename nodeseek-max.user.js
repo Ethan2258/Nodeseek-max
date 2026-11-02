@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.12
+// @version      1.9.13
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -905,7 +905,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.12";
+	var NSMAX_VERSION = "1.9.13";
 	var NSMAX_BOOT_REGIONS = Object.freeze(["header", "left", "right"]);
 	var s = new Set();
 	// document-start 时 <html> 可能尚未创建：样式与根属性等到根元素出现后立即挂上（仍早于首帧渲染）。
@@ -1140,6 +1140,7 @@ var nsmaxRedirecting = false;
 	var nsmaxAsyncStorage = false;
 	var nsmaxStorageInitError = "";
 	var nsmaxFlushStorage = async () => {};
+	var nsmaxPatchStorage = null;
 	var nsmaxModernGM = typeof GM !== "undefined" ? GM : null;
 	var nsmaxManagerName = String(nsmaxModernGM?.info?.scriptHandler || (typeof GM_info !== "undefined" ? GM_info?.scriptHandler : "") || "");
 	// Userscripts 只提供异步 GM 存储。先读入扩展自己的存储，再用内存同步视图服务现有模块；不把配置复制到站点存储。
@@ -1155,18 +1156,35 @@ var nsmaxRedirecting = false;
 			for (const [key, value] of values) if (value !== undefined) memory.set(key, value);
 			const pending = new Map(), failed = new Map();
 			_GM_getValue = (key, fallback) => memory.has(key) ? structuredClone(memory.get(key)) : fallback;
-			_GM_setValue = (key, value) => {
-				const snapshot = structuredClone(value);
-				memory.set(key, snapshot);
-				const write = (pending.get(key) || Promise.resolve()).then(() => nsmaxModernGM.setValue(key, snapshot)).then(() => failed.delete(key), error => { failed.set(key, error); });
+			const enqueueWrite = (key, operation) => {
+				if (!operation.retry) memory.set(key, operation.patch ? mergeSettings(memory.get(key), operation.patch) : structuredClone(operation.value));
+				const write = (pending.get(key) || Promise.resolve()).then(async () => {
+					const operations = [...(failed.get(key) || []), ...operation.retry ? [] : [operation]];
+					try {
+						const commit = async () => {
+							const patches = operations.some(item => item.patch);
+							const previous = patches ? await nsmaxModernGM.getValue(key, {}) : undefined;
+							let next = previous;
+							for (const item of operations) next = item.patch ? mergeSettings(next, item.patch) : structuredClone(item.value);
+							if (!patches || JSON.stringify(previous) !== JSON.stringify(next)) await nsmaxModernGM.setValue(key, next);
+							if (pending.get(key) === write) memory.set(key, structuredClone(next));
+						};
+						// 另一标签页可能刚保存了不同字段；在同源锁内读取、合并、写入，避免异步 GM 的读写交错。
+						if (operations.some(item => item.patch) && navigator.locks?.request) await navigator.locks.request(`nsmax:settings:${key}`, commit);
+						else await commit();
+						failed.delete(key);
+					} catch { failed.set(key, operations); }
+				});
 				pending.set(key, write);
 				void write.then(() => { if (pending.get(key) === write) pending.delete(key); });
 			};
+			_GM_setValue = (key, value) => enqueueWrite(key, { value: structuredClone(value) });
+			nsmaxPatchStorage = (key, patch) => enqueueWrite(key, { patch: structuredClone(patch) });
 			nsmaxFlushStorage = async (retry = false) => {
 				let timeout;
 				const flush = async () => {
 					while (pending.size) await Promise.all([...pending.values()]);
-					if (retry && failed.size) { for (const key of [...failed.keys()]) _GM_setValue(key, memory.get(key)); while (pending.size) await Promise.all([...pending.values()]); }
+					if (retry && failed.size) { for (const key of [...failed.keys()]) enqueueWrite(key, { retry: true }); while (pending.size) await Promise.all([...pending.values()]); }
 					if (failed.size) throw new Error("设置没有写入 Userscripts，请稍后重试");
 				};
 				try { await Promise.race([flush(), new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error("保存设置超时，请稍后重试")), 2000); })]); } finally { clearTimeout(timeout); }
@@ -1614,15 +1632,23 @@ var nsmaxRedirecting = false;
 	function loadSettings(features) {
 		return normalizeSettings(features, GM_getValue$1(SETTINGS_KEY, {}));
 	}
-	function saveSettings(features, settings) {
+	function mergeSettings(previous, patch) {
+		const next = { ...(validObject(previous) ? previous : {}) };
+		for (const [id, options] of Object.entries(patch)) next[id] = { ...(validObject(next[id]) ? next[id] : {}), ...options };
+		return next;
+	}
+	function saveSettings(features, settings, fields) {
 		if (!hasStorage()) throw new Error("油猴存储未就绪，请重新安装脚本后刷新");
 		const normalized = normalizeSettings(features, settings);
+		// 普通操作仅保存用户明确修改的字段；导入和恢复默认未传 fields，按整份配置应用。
+		const patch = fields ? Object.fromEntries(Object.entries(fields).filter(([id]) => Object.hasOwn(normalized, id)).map(([id, keys]) => [id, Object.fromEntries(keys.filter(key => Object.hasOwn(normalized[id], key)).map(key => [key, normalized[id][key]]))])) : normalized;
 		const previous = GM_getValue$1(SETTINGS_KEY, {});
-		const next = { ...previous, ...normalized };
+		const next = mergeSettings(previous, patch);
 		// input / change 会对同一次编辑各保存一遍；值没变时不再写油猴存储、重新注册整个脚本。
-		if (JSON.stringify(previous) !== JSON.stringify(next)) GM_setValue$1(SETTINGS_KEY, next);
+		if (nsmaxPatchStorage) nsmaxPatchStorage(SETTINGS_KEY, patch);
+		else if (JSON.stringify(previous) !== JSON.stringify(next)) GM_setValue$1(SETTINGS_KEY, next);
 		if (nsmaxActiveSettings) {
-			for (const [id, opts] of Object.entries(normalized)) {
+			for (const [id, opts] of Object.entries(patch)) {
 				if (nsmaxActiveSettings[id] && typeof opts === "object") {
 					Object.assign(nsmaxActiveSettings[id], opts);
 				}
@@ -1812,7 +1838,7 @@ var nsmaxRedirecting = false;
 						].includes(key)) return;
 						if (Object.hasOwn(feature.defaults, key)) {
 							settings[feature.id][key] = value;
-							saveSettings(features, settings);
+							saveSettings(features, settings, { [feature.id]: [key] });
 						} else state.set(key, value);
 					},
 					watch: (callback) => {
@@ -2544,9 +2570,13 @@ var nsmaxRedirecting = false;
 			}
 		});
 		const byId = new Map(features.map((feature) => [feature.id, feature]));
-		const persist = () => {
-			if (hasStorage()) {
-				saveSettings(features, draft);
+		let unsavedFields = {}, replaceUnsaved = false;
+		const persist = (fields) => {
+			if (fields) for (const [id, keys] of Object.entries(fields)) unsavedFields[id] = [...new Set([...(unsavedFields[id] || []), ...keys])];
+			else replaceUnsaved = true;
+			try {
+				saveSettings(features, draft, replaceUnsaved ? undefined : unsavedFields);
+				unsavedFields = {}; replaceUnsaved = false;
 				draft = loadSettings(features);
 				save.textContent = nsmaxAsyncStorage ? "正在保存…" : "刷新应用设置";
 				save.title = "改动已保存到本机，刷新后所有选项按新设置运行。";
@@ -2554,6 +2584,11 @@ var nsmaxRedirecting = false;
 					save.title = "正在写入脚本管理器，完成后可刷新应用。";
 					return nsmaxFlushStorage().then(() => { save.textContent = "刷新应用设置"; save.title = "设置已写入脚本管理器，刷新后应用。"; return true; }, () => { save.textContent = "重试保存并刷新"; notify("设置保存失败，请重试保存后再刷新。", "error"); return false; });
 				}
+				return true;
+			} catch {
+				save.textContent = "重试保存并刷新";
+				notify("设置保存失败，请重试保存后再刷新。", "error");
+				return false;
 			}
 		};
 		// 「主标签（补充说明）」拆成主标签和下面一行小号说明
@@ -2578,7 +2613,7 @@ var nsmaxRedirecting = false;
 				input.dataset.key = key;
 				input.addEventListener("change", () => {
 					draft[feature.id][key] = input.checked;
-					persist();
+					persist({ [feature.id]: [key] });
 				});
 				const text = element$1("span", main);
 				if (hint) text.append(element$1("small", hint));
@@ -2673,7 +2708,7 @@ var nsmaxRedirecting = false;
 			const commit = () => {
 				if (typeof fallback === "number" && !Number.isFinite(control.valueAsNumber)) return;
 				draft[feature.id][key] = typeof fallback === "number" ? control.valueAsNumber : control.value;
-				persist();
+				persist({ [feature.id]: [key] });
 			};
 			control.addEventListener("input", commit);
 			control.addEventListener("change", () => { commit(); if (typeof fallback === "number") control.value = String(draft[feature.id][key]); });
@@ -2729,7 +2764,7 @@ var nsmaxRedirecting = false;
 				};
 				input.addEventListener("change", () => {
 					for (const key of keys) draft[feature.id][key] = input.checked;
-					persist();
+					persist({ [feature.id]: keys });
 					sync();
 				});
 				label.append(input, heading);
@@ -2821,7 +2856,7 @@ var nsmaxRedirecting = false;
 		}
 		const open = () => {
 			syncHost();
-			draft = loadSettings(features);
+			if (!replaceUnsaved && !Object.keys(unsavedFields).length) draft = loadSettings(features);
 			status.textContent = hasStorage() ? "" : nsmaxManagerName === "Userscripts" ? `Userscripts 存储未就绪，设置暂时无法保存${nsmaxStorageInitError ? "：" + nsmaxStorageInitError : "；请确认已更新脚本并重新加载页面"}。` : "油猴存储未就绪，设置无法保存；请重新安装脚本后刷新。";
 			if (hasStorage() && nsmaxUserscriptsBridge && !nsmaxUserscriptsBridge.available) status.textContent = "此页使用论坛原生编辑器；其他增强正常运行。";
 			save.disabled = !hasStorage();
@@ -2854,7 +2889,11 @@ var nsmaxRedirecting = false;
 			save.setAttribute("aria-busy", "true");
 			save.textContent = "正在保存…";
 			try {
-				saveSettings(features, draft);
+				// 编辑已自动保存；仅重试未写入的改动，不能把旧标签页的整份草稿再写回去。
+				if (replaceUnsaved || Object.keys(unsavedFields).length) {
+					saveSettings(features, draft, replaceUnsaved ? undefined : unsavedFields);
+					unsavedFields = {}; replaceUnsaved = false;
+				}
 				await nsmaxFlushStorage(true);
 				location.reload();
 			} catch {
@@ -2865,11 +2904,11 @@ var nsmaxRedirecting = false;
 			}
 		});
 		// 恢复默认：和其它改动一样立即保存（以前只改了面板里的草稿，关掉面板就丢了）
-		reset.addEventListener("click", () => {
+		reset.addEventListener("click", async () => {
 			draft = normalizeSettings(features, {});
-			persist();
+			const saved = await persist();
 			render();
-			notify("已恢复默认设置，刷新页面后全部生效。", "success");
+			if (saved !== false) notify("已恢复默认设置，刷新页面后全部生效。", "success");
 		});
 		clearCache.addEventListener("click", async () => {
 			clearCache.disabled = true;
@@ -24220,14 +24259,17 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 	// 认 post 参数是这一篇的、或者没写 post 的（别人贴的别的帖子的开奖链接不算）；没被渲染成链接的纯文字网址也认。
 	// 返回 { time }（time 没写就是 0）
 	function nsmaxCommentLuckyParams(root, id) {
+		let fallback = null;
 		for (const body of root.querySelectorAll("ul.comments article.post-content")) {
 			for (const url of nsmaxLuckyUrlsIn(body)) {
 				const post = url.searchParams.get("post");
 				if (post && post !== String(id)) continue;
-				return { url, time: nsmaxLuckyParams(url.href)?.time || 0 };
+				const result = { url, time: nsmaxLuckyParams(url.href)?.time || 0 };
+				if (result.time) return result;
+				fallback ||= result;
 			}
 		}
-		return null;
+		return fallback;
 	}
 	// 当前页面列表里这一篇的那一行（认出来是抽奖帖时记下它在列表上的样子，见 nsmaxRememberLotteryRow）
 	function nsmaxListRowOf(id) {
@@ -24315,7 +24357,7 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 	// 读到一篇帖子第一页的主帖以后记下它是不是抽奖帖（后台查帖、悬停预览都走这里）。comments：评论里指向这一篇的开奖链接
 	function nsmaxLearnSpecialPost(id, op, title, comments = null, row = null) {
 		const kinds = nsmaxSpecialKindsOf(op);
-		let time = nsmaxLotteryTimeOf(op);
+		let time = nsmaxLotteryTimeOf(op, id);
 		if (!kinds.includes("lottery") && comments) {
 			kinds.push("lottery");
 			time = comments.time;
@@ -24751,29 +24793,37 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 	}
 	var nsmaxCommentLuckyPage = "";
 	var nsmaxCommentLucky = "";
+	var nsmaxCommentLuckyTime = 0;
 	function nsmaxPrizeBadges() {
 		const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
 		const op = postId && document.querySelector(".nsk-post article.post-content");
 		if (op) {
 			const kinds = nsmaxSpecialKindsOf(op);
 			if (!kinds.includes("poll") && document.querySelector("#nsk-body-left .vote-panel[data-nsmax-detached]")) kinds.push("poll");
-			let time = nsmaxLotteryTimeOf(op);
-			// 主帖里没有、这一页评论里有指向这一篇的开奖链接：也是抽奖帖（2026-10-23）。整页解析完只看一次
-			if (!kinds.includes("lottery") && document.readyState !== "loading" && nsmaxCommentLuckyPage !== location.pathname) {
+			let time = nsmaxLotteryTimeOf(op, postId);
+			// 引用其他帖的链接也会得到抽奖类型，但时间必须来自本帖；完整评论每页只读一次。
+			if (!time && document.readyState !== "loading" && nsmaxCommentLuckyPage !== location.pathname) {
 				nsmaxCommentLuckyPage = location.pathname;
+				nsmaxCommentLucky = "";
+				nsmaxCommentLuckyTime = 0;
 				const params = nsmaxCommentLuckyParams(document, postId);
 				if (params) {
 					nsmaxCommentLucky = postId;
-					time = params.time;
+					nsmaxCommentLuckyTime = params.time;
 				}
 			}
-			if (nsmaxCommentLucky === postId && !kinds.includes("lottery")) kinds.push("lottery");
+			if (nsmaxCommentLucky === postId) {
+				if (!kinds.includes("lottery")) kinds.push("lottery");
+				time ||= nsmaxCommentLuckyTime;
+			}
 			nsmaxRememberSpecialPost(postId, kinds);
 			nsmaxRememberLotteryTime(postId, time);
 			// 整页解析完才算「查过」：解析到一半时正文还不全，记成「不是」以后就不会再认
 			if (document.readyState !== "loading") {
 				nsmaxMarkSpecialChecked(postId);
-				if (kinds.includes("lottery")) nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title")?.textContent || "") || nsmaxLotteryEndedIn(op));
+				// 只纠正与正文外帖链接时间吻合的旧污染。第一页未见链接不能证明缓存无效，链接可能在后续评论页。
+				if (!time && nsmaxCommentLuckyPage === location.pathname && /^\/post-\d+(?:-1)?$/.test(location.pathname)) nsmaxForgetForeignLotteryTime(postId, op);
+				if (kinds.includes("lottery")) nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title a[href*='/post-']")?.textContent || "") || nsmaxLotteryEndedIn(op));
 			}
 		}
 		const known = nsmaxSpecialPostMap();
@@ -24896,6 +24946,16 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		while (map.size > 400) map.delete(map.keys().next().value);
 		try { localStorage.setItem(NSMAX_LOTTERY_TIMES_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
+	function nsmaxForgetForeignLotteryTime(id, op) {
+		const map = nsmaxLotteryTimes();
+		const time = map.get(id);
+		if (!time || !nsmaxLuckyUrlsIn(op).some(url => {
+			const post = url.searchParams.get("post");
+			return post && post !== String(id) && nsmaxLuckyParams(url.href)?.time === time;
+		})) return;
+		map.delete(id);
+		try { localStorage.setItem(NSMAX_LOTTERY_TIMES_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
 	// 开奖链接（/lucky?post=…&time=开奖时间&count=中奖人数&start=起始楼层&duplicate=可否重复中奖）的参数；只认本站的 /lucky
 	function nsmaxLuckyParams(href) {
 		const url = nsmaxLuckyUrl(href);
@@ -24916,8 +24976,10 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		params.url.searchParams.append("mode", "view");
 		return params.url.href;
 	}
-	function nsmaxLotteryTimeOf(op) {
+	function nsmaxLotteryTimeOf(op, id) {
 		for (const url of nsmaxLuckyUrlsIn(op)) {
+			const post = url.searchParams.get("post");
+			if (post && post !== String(id)) continue;
 			const params = nsmaxLuckyParams(url.href);
 			if (params) return params.time;
 		}
@@ -25032,7 +25094,9 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			const match = node.textContent.match(/奖品\s*[:：]\s*(.+)/);
 			if (match) return match[1].replace(/\s+/g, " ").trim().slice(0, 80);
 		}
-		const title = document.querySelector(".nsk-post > .post-title h1, .post-title h1")?.textContent || "";
+		const heading = document.querySelector(".nsk-post > .post-title h1, .post-title h1");
+		// 状态标签与标题链接并列；奖品回退只读取原始标题，避免把「已参与 / 已回复」带进去。
+		const title = (heading?.querySelector("a[href*='/post-']") || heading)?.textContent || "";
 		return nsmaxLotteryPrizeFromTitle(title).slice(0, 80) || "见正文";
 	}
 	// 参与人按楼层先后、UID 去重；截止后只显示有时间证据的回复。
@@ -25107,11 +25171,11 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			link.setAttribute("data-nsmax-lottery", "");
 			const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
 			if (postId && !url.searchParams.has("post")) url.searchParams.set("post", postId);
-			if (postId && link.closest(".nsk-post")) nsmaxRememberLotteryTime(postId, time);
 			const article = link.closest("article.post-content") || document;
 			// 回复总数见 nsmaxPostReplyCount；一时拿不到先写这一页的参与人数，拿到后 nsmaxShowPostReplyCount 更新
 			const targetPost = Number(url.searchParams.get("post"));
 			const isCurrent = targetPost === Number(postId);
+			if (isCurrent && link.closest(".nsk-post")) nsmaxRememberLotteryTime(postId, time);
 			const replies = isCurrent ? nsmaxPostReplyCount() : null;
 			const entrants = isCurrent ? nsmaxLotteryEntrants(start, time) : [];
 			const { card, join } = nsmaxBuildLotteryCard({ time, count, start, duplicate, prize: nsmaxLotteryPrize(article), href: url.href, replies: isCurrent ? replies ?? entrants.length : null, entrants });

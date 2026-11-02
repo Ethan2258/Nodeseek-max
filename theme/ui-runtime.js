@@ -748,14 +748,17 @@
 	// 认 post 参数是这一篇的、或者没写 post 的（别人贴的别的帖子的开奖链接不算）；没被渲染成链接的纯文字网址也认。
 	// 返回 { time }（time 没写就是 0）
 	function nsmaxCommentLuckyParams(root, id) {
+		let fallback = null;
 		for (const body of root.querySelectorAll("ul.comments article.post-content")) {
 			for (const url of nsmaxLuckyUrlsIn(body)) {
 				const post = url.searchParams.get("post");
 				if (post && post !== String(id)) continue;
-				return { url, time: nsmaxLuckyParams(url.href)?.time || 0 };
+				const result = { url, time: nsmaxLuckyParams(url.href)?.time || 0 };
+				if (result.time) return result;
+				fallback ||= result;
 			}
 		}
-		return null;
+		return fallback;
 	}
 	// 当前页面列表里这一篇的那一行（认出来是抽奖帖时记下它在列表上的样子，见 nsmaxRememberLotteryRow）
 	function nsmaxListRowOf(id) {
@@ -843,7 +846,7 @@
 	// 读到一篇帖子第一页的主帖以后记下它是不是抽奖帖（后台查帖、悬停预览都走这里）。comments：评论里指向这一篇的开奖链接
 	function nsmaxLearnSpecialPost(id, op, title, comments = null, row = null) {
 		const kinds = nsmaxSpecialKindsOf(op);
-		let time = nsmaxLotteryTimeOf(op);
+		let time = nsmaxLotteryTimeOf(op, id);
 		if (!kinds.includes("lottery") && comments) {
 			kinds.push("lottery");
 			time = comments.time;
@@ -1279,29 +1282,37 @@
 	}
 	var nsmaxCommentLuckyPage = "";
 	var nsmaxCommentLucky = "";
+	var nsmaxCommentLuckyTime = 0;
 	function nsmaxPrizeBadges() {
 		const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
 		const op = postId && document.querySelector(".nsk-post article.post-content");
 		if (op) {
 			const kinds = nsmaxSpecialKindsOf(op);
 			if (!kinds.includes("poll") && document.querySelector("#nsk-body-left .vote-panel[data-nsmax-detached]")) kinds.push("poll");
-			let time = nsmaxLotteryTimeOf(op);
-			// 主帖里没有、这一页评论里有指向这一篇的开奖链接：也是抽奖帖（2026-10-23）。整页解析完只看一次
-			if (!kinds.includes("lottery") && document.readyState !== "loading" && nsmaxCommentLuckyPage !== location.pathname) {
+			let time = nsmaxLotteryTimeOf(op, postId);
+			// 引用其他帖的链接也会得到抽奖类型，但时间必须来自本帖；完整评论每页只读一次。
+			if (!time && document.readyState !== "loading" && nsmaxCommentLuckyPage !== location.pathname) {
 				nsmaxCommentLuckyPage = location.pathname;
+				nsmaxCommentLucky = "";
+				nsmaxCommentLuckyTime = 0;
 				const params = nsmaxCommentLuckyParams(document, postId);
 				if (params) {
 					nsmaxCommentLucky = postId;
-					time = params.time;
+					nsmaxCommentLuckyTime = params.time;
 				}
 			}
-			if (nsmaxCommentLucky === postId && !kinds.includes("lottery")) kinds.push("lottery");
+			if (nsmaxCommentLucky === postId) {
+				if (!kinds.includes("lottery")) kinds.push("lottery");
+				time ||= nsmaxCommentLuckyTime;
+			}
 			nsmaxRememberSpecialPost(postId, kinds);
 			nsmaxRememberLotteryTime(postId, time);
 			// 整页解析完才算「查过」：解析到一半时正文还不全，记成「不是」以后就不会再认
 			if (document.readyState !== "loading") {
 				nsmaxMarkSpecialChecked(postId);
-				if (kinds.includes("lottery")) nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title")?.textContent || "") || nsmaxLotteryEndedIn(op));
+				// 只纠正与正文外帖链接时间吻合的旧污染。第一页未见链接不能证明缓存无效，链接可能在后续评论页。
+				if (!time && nsmaxCommentLuckyPage === location.pathname && /^\/post-\d+(?:-1)?$/.test(location.pathname)) nsmaxForgetForeignLotteryTime(postId, op);
+				if (kinds.includes("lottery")) nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title a[href*='/post-']")?.textContent || "") || nsmaxLotteryEndedIn(op));
 			}
 		}
 		const known = nsmaxSpecialPostMap();
@@ -1424,6 +1435,16 @@
 		while (map.size > 400) map.delete(map.keys().next().value);
 		try { localStorage.setItem(NSMAX_LOTTERY_TIMES_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
+	function nsmaxForgetForeignLotteryTime(id, op) {
+		const map = nsmaxLotteryTimes();
+		const time = map.get(id);
+		if (!time || !nsmaxLuckyUrlsIn(op).some(url => {
+			const post = url.searchParams.get("post");
+			return post && post !== String(id) && nsmaxLuckyParams(url.href)?.time === time;
+		})) return;
+		map.delete(id);
+		try { localStorage.setItem(NSMAX_LOTTERY_TIMES_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
 	// 开奖链接（/lucky?post=…&time=开奖时间&count=中奖人数&start=起始楼层&duplicate=可否重复中奖）的参数；只认本站的 /lucky
 	function nsmaxLuckyParams(href) {
 		const url = nsmaxLuckyUrl(href);
@@ -1444,8 +1465,10 @@
 		params.url.searchParams.append("mode", "view");
 		return params.url.href;
 	}
-	function nsmaxLotteryTimeOf(op) {
+	function nsmaxLotteryTimeOf(op, id) {
 		for (const url of nsmaxLuckyUrlsIn(op)) {
+			const post = url.searchParams.get("post");
+			if (post && post !== String(id)) continue;
 			const params = nsmaxLuckyParams(url.href);
 			if (params) return params.time;
 		}
@@ -1560,7 +1583,9 @@
 			const match = node.textContent.match(/奖品\s*[:：]\s*(.+)/);
 			if (match) return match[1].replace(/\s+/g, " ").trim().slice(0, 80);
 		}
-		const title = document.querySelector(".nsk-post > .post-title h1, .post-title h1")?.textContent || "";
+		const heading = document.querySelector(".nsk-post > .post-title h1, .post-title h1");
+		// 状态标签与标题链接并列；奖品回退只读取原始标题，避免把「已参与 / 已回复」带进去。
+		const title = (heading?.querySelector("a[href*='/post-']") || heading)?.textContent || "";
 		return nsmaxLotteryPrizeFromTitle(title).slice(0, 80) || "见正文";
 	}
 	// 参与人按楼层先后、UID 去重；截止后只显示有时间证据的回复。
@@ -1635,11 +1660,11 @@
 			link.setAttribute("data-nsmax-lottery", "");
 			const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
 			if (postId && !url.searchParams.has("post")) url.searchParams.set("post", postId);
-			if (postId && link.closest(".nsk-post")) nsmaxRememberLotteryTime(postId, time);
 			const article = link.closest("article.post-content") || document;
 			// 回复总数见 nsmaxPostReplyCount；一时拿不到先写这一页的参与人数，拿到后 nsmaxShowPostReplyCount 更新
 			const targetPost = Number(url.searchParams.get("post"));
 			const isCurrent = targetPost === Number(postId);
+			if (isCurrent && link.closest(".nsk-post")) nsmaxRememberLotteryTime(postId, time);
 			const replies = isCurrent ? nsmaxPostReplyCount() : null;
 			const entrants = isCurrent ? nsmaxLotteryEntrants(start, time) : [];
 			const { card, join } = nsmaxBuildLotteryCard({ time, count, start, duplicate, prize: nsmaxLotteryPrize(article), href: url.href, replies: isCurrent ? replies ?? entrants.length : null, entrants });

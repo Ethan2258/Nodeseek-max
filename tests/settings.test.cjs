@@ -1,6 +1,7 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const {webkit} = require("playwright");
 const {launch,open} = require("./harness.cjs");
 const {listPage,postPage,spaceTopicsPage,fansPage} = require("./fixtures/pages.cjs");
 const KEY = "nspp:settings:www.nodeseek.com";
@@ -200,4 +201,64 @@ test("关闭增强真实生效：图片、复制、高亮、Callout、备注、�
   assert.equal(await page.locator(".viewer-container").count(),0,"不拦截打开脚本图片查看器");
   assert.deepEqual(errors,[]);
  } finally {await context.close();}
+});
+
+for(const engine of ["chromium","webkit"]) for(const asyncStorage of [false,true]) {
+ test(`设置跨标签页不互相覆盖：${engine} / ${asyncStorage?"Userscripts":"同步 GM"}`,async()=>{
+  const instance=engine==="webkit"?await webkit.launch():await launch();
+  const {context,page:a,errors}=await open(instance,"https://www.nodeseek.com/",{html:listPage(),manager:asyncStorage?{type:"userscripts",delay:30}:null});
+  const read=p=>p.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key))||{},KEY);
+  const stored=async(p,feature,key,value)=>p.waitForFunction(({storage,feature,key,value})=>JSON.parse(localStorage.getItem("__gm__:"+storage))?.[feature]?.[key]===value,{storage:KEY,feature,key,value});
+  try {
+   const b=await context.newPage();b.on("pageerror",error=>errors.push(error.message));await b.goto("https://www.nodeseek.com/");
+   await Promise.all([ready(a),ready(b)]);
+   const panelA=await settings(a),panelB=await settings(b);
+   // 两个旧面板同时改同组的不同字段；异步管理器读写确实交错，仍应同时留下。
+   await Promise.all([
+    panelA.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true}).click(),
+    panelB.getByRole("radiogroup",{name:"字体",exact:true}).getByRole("radio",{name:"系统字体",exact:true}).click()
+   ]);
+   await stored(a,"modern-theme","fontSize","xlarge");await stored(a,"modern-theme","font","system");
+   await panelB.getByRole("tab",{name:"浏览",exact:true}).click();
+   await panelB.locator('[data-feature="reading-content"][data-key="chineseTime"]').uncheck();
+   await stored(b,"reading-content","chineseTime",false);
+   // A 面板仍显示旧的 sb.sb 字体；再次明确选它应覆盖 B 的该字段，其他字段不能回退。
+   await panelA.getByRole("radiogroup",{name:"字体",exact:true}).getByRole("radio",{name:"sb.sb 同款",exact:true}).click();
+   await stored(a,"modern-theme","font","sbsb");
+   let state=await read(a);assert.equal(state["modern-theme"].fontSize,"xlarge");assert.equal(state["reading-content"].chineseTime,false);
+   await Promise.all([a.waitForEvent("domcontentloaded"),panelA.getByRole("button",{name:"刷新应用设置",exact:true}).click()]);
+   await ready(a);state=await read(a);assert.equal(state["modern-theme"].fontSize,"xlarge");assert.equal(state["reading-content"].chineseTime,false,"无新编辑的刷新不会回写旧面板");
+   // 导入和恢复默认属于用户明确的整份配置操作，仍可替换其他标签页先前保存的值。
+   const imported={format:"nodeseek-plus-plus",schema:1,settings:{"modern-theme":{fontSize:"large",font:"system"}}};
+   await panelB.locator('input[type=file]').setInputFiles({name:"settings.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(imported))});
+   await stored(b,"modern-theme","font","system");await stored(b,"reading-content","chineseTime",true);
+   assert.equal((await read(b))["modern-theme"].fontSize,"large");
+   await panelB.getByRole("button",{name:"恢复默认",exact:true}).click();await stored(b,"modern-theme","font","sbsb");
+   assert.equal((await read(b))["reading-content"].chineseTime,true);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();await instance.close();}
+ });
+}
+
+for(const engine of ["chromium","webkit"]) test(`Userscripts 保存重试只重放未完成字段：${engine}`,async()=>{
+ const instance=engine==="webkit"?await webkit.launch():await launch();
+ const {context,page:a,errors}=await open(instance,"https://www.nodeseek.com/",{html:listPage(),manager:{type:"userscripts",delay:20}});
+ try {
+  const b=await context.newPage();b.on("pageerror",error=>errors.push(error.message));await b.goto("https://www.nodeseek.com/");await Promise.all([ready(a),ready(b)]);
+  const panelA=await settings(a),panelB=await settings(b);
+  await a.evaluate(()=>{window.__userscriptsFailSettings=true;});
+  await panelA.getByRole("tab",{name:"浏览",exact:true}).click();
+  await panelA.locator('[data-feature="reading-content"][data-key="chineseTime"]').uncheck();
+  await panelA.getByRole("button",{name:"重试保存并刷新",exact:true}).waitFor();
+  const copyCode=panelA.locator('[data-feature="reading-content"][data-key="copyCode"]');
+  await copyCode.uncheck();await copyCode.check();await copyCode.uncheck();
+  await panelA.getByRole("button",{name:"重试保存并刷新",exact:true}).waitFor();
+  await panelB.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true}).click();
+  await b.waitForFunction(key=>JSON.parse(localStorage.getItem("__gm__:"+key))?.["modern-theme"]?.fontSize==="xlarge",KEY);
+  await a.evaluate(()=>{window.__userscriptsFailSettings=false;});
+  await Promise.all([a.waitForEvent("domcontentloaded"),panelA.getByRole("button",{name:"重试保存并刷新",exact:true}).click()]);await ready(a);
+  const state=await a.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key)),KEY);
+  assert.equal(state["reading-content"].chineseTime,false);assert.equal(state["reading-content"].copyCode,false,"失败后继续修改的字段和最后一次明确选择也会重放");assert.equal(state["modern-theme"].fontSize,"xlarge","不能用失败标签页的整份内存快照覆盖另一页的字号");
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();await instance.close();}
 });
