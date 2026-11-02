@@ -22,6 +22,7 @@ for (const engine of ["chromium", "webkit"]) {
       const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/", {
         html: P.listPage({ mobile, dark }), colorScheme: dark ? "dark" : "light",
         device: mobile ? { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } } : {},
+        manager: mobile ? { type: "userscripts", delay: 10 } : undefined,
         seed: seed(state({ 1000: [3], 1002: [5, 12] })),
         init: rulesInit({ 1000: [{ start: 1, time }] }) + `
           const mark=performance.mark.bind(performance);
