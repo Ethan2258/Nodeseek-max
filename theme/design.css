@@ -9507,7 +9507,7 @@ html[data-nsmax-theme] .nsmax-poll-badge {
   vertical-align: middle !important;
 }
 /* 帖子标题里的小标大一号：sb.sb .post-content-title .topic-badge——2px 10px、13px，竖直居中 */
-html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge):is(#nsmax-lv, *) {
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge, .nsmax-replied-badge, .nsmax-joined-badge):is(#nsmax-lv, *) {
   display: inline-block !important;
   height: auto !important;
   padding: 2px 10px !important;
@@ -11766,6 +11766,26 @@ html[data-nsmax-theme] .nsmax-my-replies > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
   font-family: var(--font-mono) !important;
   font-size: 12px !important;
   text-decoration: none !important;
+}
+/* 沿用 sb.sb .topic-badge 的 11px / 1px 8px 胶囊尺寸；标记不另占一行。 */
+html[data-nsmax-theme] :is(.nsmax-replied-badge,.nsmax-joined-badge):is(#nsmax-lv, *) {
+  display: inline-block !important;
+  margin: 0 6px 0 0 !important;
+  padding: 1px 8px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme] .nsmax-joined-badge:is(#nsmax-lv, *) {
+  border-color: color-mix(in srgb, var(--success-soft-text) 35%, var(--line)) !important;
+  background: var(--success-soft) !important;
+  color: var(--success-soft-text) !important;
 }
 html[data-nsmax-theme] .nsmax-my-replies > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   color: var(--link-hover) !important;
