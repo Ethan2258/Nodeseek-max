@@ -1308,21 +1308,87 @@
 			nsmaxTopicBadge(title, link, "nsmax-ended-badge", "已结束", lottery && ended);
 		});
 	}
-	// 帖子里的投票（NodeSeek .vote-panel）：样子全由主题 CSS 照 sb.sb .poll-widget 排；这里把每项的百分比、总票数写成属性给 CSS 显示
-	function nsmaxPreparePolls() {
-		for (const panel of document.querySelectorAll("article.post-content .vote-panel")) {
+	// 投票保留原生表单与事件，只整理为主楼下方的独立卡片。
+	var nsmaxPollSequence = 0;
+	var nsmaxPollObservers = new WeakMap();
+	function nsmaxPreparePolls(root = document, signal) {
+		for (const panel of root.matches?.(".vote-panel") ? [root] : root.querySelectorAll("#nsk-body-left .vote-panel")) {
+			const form = panel.querySelector("form.pure-form");
+			if (!form) continue;
+			if (!nsmaxPollObservers.has(panel)) {
+				const observer = new MutationObserver(() => nsmaxPreparePolls(panel));
+				observer.observe(panel, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["title", "class", "checked", "style"] });
+				nsmaxPollObservers.set(panel, observer);
+				form.addEventListener("change", () => nsmaxPreparePolls(panel), { signal });
+				signal?.addEventListener("abort", () => { observer.disconnect(); nsmaxPollObservers.delete(panel); }, { once: true });
+			}
+			const post = panel.closest(".nsk-post");
+			if (post && panel.closest("article.post-content") === post.querySelector("article.post-content")) {
+				let after = post;
+				while (after.nextElementSibling?.matches(".vote-panel[data-nsmax-detached]")) after = after.nextElementSibling;
+				after.after(panel);
+				panel.setAttribute("data-nsmax-detached", "");
+			}
+			let heading = panel.querySelector(":scope > .nsmax-poll-head");
+			if (!heading) {
+				heading = document.createElement("div");
+				heading.className = "nsmax-poll-head";
+				const title = document.createElement("strong");
+				title.textContent = "投票";
+				const summary = document.createElement("span");
+				summary.className = "nsmax-poll-total";
+				heading.append(title, summary);
+				panel.prepend(heading);
+			}
 			let total = 0;
-			for (const stat of panel.querySelectorAll(".vote-stat")) {
+			const stats = Array.from(form.querySelectorAll(".vote-stat"));
+			let complete = stats.length > 0;
+			for (const stat of stats) {
 				const bar = stat.querySelector(".vote-stat-count-bar");
 				const value = stat.querySelector(".vote-stat-count-value");
-				const count = Number((value?.textContent || "").trim());
-				if (Number.isFinite(count)) total += count;
+				const count = Number((value?.textContent || "").trim().replace(/,/g, ""));
+				if (value && Number.isSafeInteger(count) && count >= 0) total += count;
+				else complete = false;
 				if (value) nsmaxSetAttr(value, "data-nsmax-pct", (bar?.getAttribute("title") || bar?.textContent || "").trim());
+				nsmaxFlag(stat, "data-nsmax-mine", stat.classList.contains("voted") && !!stat.querySelector("input:checked"));
 			}
 			// 站点在投票下面用一行灰字写 App 深链接和「（公开投票）」：深链接网页上用不上，整行由 CSS 收起，公开 / 匿名挪到总票数前面
 			const kind = Array.from(panel.querySelectorAll("form > div")).map(div => div.textContent.match(/[(（]\s*((?:公开|匿名)投票)\s*[)）]/)?.[1]).find(Boolean);
 			const head = panel.querySelector("form > h2");
 			if (head) nsmaxSetAttr(head, "data-nsmax-total", (kind ? kind + " · " : "") + `${total} 票`);
+			const single = stats.length > 0 && stats.every(stat => stat.querySelector("input")?.type === "radio");
+			const summary = heading.querySelector(".nsmax-poll-total");
+			const summaryText = complete ? single ? `${total} 人已参与` : `${total} 票` : single ? "单选" : "多选";
+			if (summary.textContent !== summaryText) summary.textContent = summaryText;
+			const actions = form.querySelector(".op-buttons");
+			if (!actions) continue;
+			let kindLabel = actions.querySelector(".nsmax-poll-kind");
+			if (!kindLabel) {
+				kindLabel = document.createElement("span");
+				kindLabel.className = "nsmax-poll-kind";
+				actions.append(kindLabel);
+			}
+			if (kindLabel.textContent !== (kind || "")) kindLabel.textContent = kind || "";
+			kindLabel.hidden = !kind;
+			let toggle = actions.querySelector(".nsmax-poll-voters-toggle");
+			if (!toggle) {
+				toggle = document.createElement("button");
+				toggle.type = "button";
+				toggle.className = "nsmax-poll-voters-toggle";
+				toggle.setAttribute("aria-expanded", "false");
+				toggle.textContent = "查看投票人";
+				toggle.addEventListener("click", () => {
+					const expanded = !panel.hasAttribute("data-nsmax-show-voters");
+					nsmaxFlag(panel, "data-nsmax-show-voters", expanded);
+					toggle.setAttribute("aria-expanded", String(expanded));
+					toggle.textContent = expanded ? "收起投票人" : "查看投票人";
+				});
+				actions.append(toggle);
+			}
+			const list = form.querySelector(".vote-stat-wrapper");
+			if (list && !list.id) list.id = "nsmax-poll-options-" + ++nsmaxPollSequence;
+			if (list) nsmaxSetAttr(toggle, "aria-controls", list.id);
+			toggle.hidden = !form.querySelector(".voter-avatar-container > a, .voter-avatar-container > .i-icon");
 		}
 	}
 	// 开奖时间记在本机（帖子 ID → 时间，最多 400 篇）：列表里已经到了开奖时间的抽奖帖，标签照 sb.sb 换成细线框的「抽奖」「已结束」
@@ -5375,7 +5441,7 @@ function nsmaxTagStructure() {
 			if (isPost) {
 				nsmaxGroupFloorActions();
 				nsmaxMarkPinnedReplies();
-				nsmaxPreparePolls();
+				nsmaxPreparePolls(document, ctx.signal);
 				nsmaxPrepareLottery();
 				nsmaxWrapCodeBlocks();
 			}
