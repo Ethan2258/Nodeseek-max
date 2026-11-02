@@ -11782,11 +11782,6 @@ html[data-nsmax-theme] :is(.nsmax-replied-badge,.nsmax-joined-badge):is(#nsmax-l
   white-space: nowrap !important;
   vertical-align: middle !important;
 }
-html[data-nsmax-theme] .nsmax-joined-badge:is(#nsmax-lv, *) {
-  border-color: color-mix(in srgb, var(--success-soft-text) 35%, var(--line)) !important;
-  background: var(--success-soft) !important;
-  color: var(--success-soft-text) !important;
-}
 html[data-nsmax-theme] .nsmax-my-replies > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   color: var(--link-hover) !important;
   text-decoration: underline !important;

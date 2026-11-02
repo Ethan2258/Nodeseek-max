@@ -640,6 +640,7 @@
 			badge.textContent = text;
 			link.before(badge);
 		} else if (!on && badge) badge.remove();
+		return on ? badge : null;
 	}
 	// 抽奖帖怎么认（2026-10-18 起只认抽奖、只看正文；投票帖不再挂小标）：
 	// 1. 打开过的帖子：主帖正文里有开奖链接（/lucky?…）才算是；
@@ -6177,15 +6178,18 @@ function nsmaxTagStructure() {
 	function nsmaxReplyMarkers(title, post, floors, confirmed) {
 		const link = title?.querySelector("a[href*='/post-']");
 		if (!link) return false;
-		nsmaxTopicBadge(title, link, "nsmax-replied-badge", "已回复", !!floors?.length);
+		const repliedBadge = nsmaxTopicBadge(title, link, "nsmax-replied-badge", "已回复", !!floors?.length);
 		let joined = false, changed = false;
 		for (const rule of floors?.length ? nsmaxLotteryRules().get(String(post)) || [] : []) {
 			const result = nsmaxParticipation(post, floors || [], confirmed, rule);
 			joined ||= !!result.floor;
 			changed ||= result.added;
 		}
-		nsmaxTopicBadge(title, link, "nsmax-joined-badge", "已参与", joined);
-		const badge = title.querySelector(":scope > .nsmax-joined-badge");
+		const badge = nsmaxTopicBadge(title, link, "nsmax-joined-badge", "已参与", joined);
+		// 原版顺序：类型标记 → 已参与 → 已回复 → 标题；只在顺序改变时移动。
+		if (repliedBadge && repliedBadge.nextElementSibling !== link) link.before(repliedBadge);
+		const next = repliedBadge || link;
+		if (badge && badge.nextElementSibling !== next) next.before(badge);
 		if (badge) nsmaxSetAttr(badge, "title", "本机已记录符合起始楼层及开奖时间的回复；最终以原帖规则为准");
 		return changed;
 	}

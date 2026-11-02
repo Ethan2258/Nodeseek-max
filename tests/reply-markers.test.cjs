@@ -25,6 +25,7 @@ for (const engine of ["chromium", "webkit"]) {
         manager: mobile ? { type: "userscripts", delay: 10 } : undefined,
         seed: seed(state({ 1000: [3], 1002: [5, 12] })),
         init: rulesInit({ 1000: [{ start: 1, time }] }) + `
+          localStorage.setItem("nsmax:special-posts",JSON.stringify({"1000":"lottery"}));
           const mark=performance.mark.bind(performance);
           performance.mark=(name,...args)=>{if(name==="nsmax:primary-ready")window.__replyTagsAtPrimary=document.querySelectorAll(".nsmax-replied-badge").length;return mark(name,...args)};
           window.__markerShifts=[];
@@ -36,9 +37,14 @@ for (const engine of ["chromium", "webkit"]) {
         assert.equal(await page.locator(".nsmax-replied-badge").count(), 2);
         assert.equal(await page.locator(".nsmax-joined-badge").count(), 1);
         assert.equal(await page.evaluate(() => __replyTagsAtPrimary), 2);
-        const badge = await page.locator(".nsmax-joined-badge").evaluate(e => ({ font: getComputedStyle(e).fontSize, radius: getComputedStyle(e).borderRadius, color: getComputedStyle(e).color, background: getComputedStyle(e).backgroundColor }));
+        const badge = await page.locator(".nsmax-joined-badge").evaluate(e => ({ font: getComputedStyle(e).fontSize, radius: getComputedStyle(e).borderRadius, color: getComputedStyle(e).color, background: getComputedStyle(e).backgroundColor, border: getComputedStyle(e).borderColor, padding: getComputedStyle(e).padding }));
         assert.equal(badge.font, "11px"); assert.ok(parseFloat(badge.radius) >= 10);
-        assert.equal(badge.color, dark ? "rgb(79, 220, 167)" : "rgb(0, 122, 78)");
+        assert.equal(badge.color, dark ? "rgb(168, 171, 187)" : "rgb(85, 90, 106)");
+        assert.equal(badge.background, dark ? "rgb(26, 27, 36)" : "rgb(250, 251, 252)");
+        assert.equal(badge.border, dark ? "rgb(42, 44, 56)" : "rgb(224, 226, 232)");
+        assert.equal(badge.padding, "1px 8px");
+        const labels=await page.locator("li.post-list-item").first().locator(".post-title").evaluate(e=>[...e.children].filter(n=>n.matches(".nsmax-prize-badge,.nsmax-joined-badge,.nsmax-replied-badge")).map(n=>n.textContent));
+        assert.deepEqual(labels,["抽奖","已参与","已回复"]);
         await page.waitForTimeout(100);
         await page.evaluate(() => { window.__markerMutations=0;window.__markerObserver=new MutationObserver(rows=>__markerMutations+=rows.length);__markerObserver.observe(document.querySelector("ul.post-list"),{subtree:true,childList:true,attributes:true,characterData:true}); });
         await page.waitForTimeout(650);
