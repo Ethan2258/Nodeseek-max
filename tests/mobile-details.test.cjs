@@ -33,9 +33,12 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 手机评论：时间和操作同一行，楼号在作者行右边；320px 仍分行`,async()=>{
+ test(`${engine} 手机近期评论：时间和操作同一行，楼号在作者行右边；320px 仍分行`,async()=>{
   for(const width of [390,320]){
-   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html:P.postPage({mobile:true})});
+   // 此项检查相对时间的布局，日期随运行时间生成，避免固定日期在 30 天后变成长时间戳。
+   const created=new Date(Date.now()-2*36e5).toISOString();
+   const html=P.postPage({mobile:true}).replaceAll("2026-10-03T04:00:00.000Z",created).replaceAll("2026-10-03 12:00:00",created);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html});
    try{
     await ready(page);
     const s=await page.evaluate(()=>{const li=document.querySelector("ul.comments>li.content-item"),r=e=>e.getBoundingClientRect().toJSON();return{li:r(li),head:r(li.querySelector(".nsmax-author-col")),time:r(li.querySelector(".nsk-content-meta-info>div:not([class])")),menu:r(li.querySelector(".comment-menu")),floor:r(li.querySelector(".floor-link")),body:r(li.querySelector("article.post-content"))};});

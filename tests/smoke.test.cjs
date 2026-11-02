@@ -6958,7 +6958,7 @@ test("2026-10-24 按内容认抽奖帖（标题里没写「抽奖」的）：只
 });
 test("v1.8.37 「抽奖」分类不只靠搜标题：本机按内容认出来、搜索没搜到的抽奖帖按编号并进第一页（比这一页最旧的还旧的不并）", async () => {
 	const rows = {
-		"1010": { t: "庆祝上线，评论区送 3 台年付", u: "30", n: "boss", v: "88", r: "12", lu: "31", ln: "lucky", th: "/post-1010-1#12", td: "2026-10-03T05:00:00.000Z", tt: "2026-10-03 13:00:00", c: "/categories/daily", cn: "日常" },
+		"1010": { t: "庆祝上线，评论区送 3 台年付", u: "30", n: "boss", v: "88", r: "12", lu: "31", ln: "lucky", th: "/post-1010-1#12", td: new Date(Date.now() - 36e5).toISOString(), tt: "1h ago", c: "/categories/daily", cn: "日常" },
 		"900": { t: "很早以前的一次", u: "32", n: "old", v: "5", r: "1", lu: "", ln: "", th: "", td: "", tt: "", c: "", cn: "" }
 	};
 	const init = `if (window.top === window) { localStorage.setItem("nsmax:special-posts", JSON.stringify({ "1010": "lottery", "900": "lottery", "1001": "lottery" })); localStorage.setItem("nsmax:special-checked", JSON.stringify({ "1000": 1, "1001": 1, "1002": 1, "1010": 1, "900": 1 })); localStorage.setItem("nsmax:lottery-rows", ${JSON.stringify(JSON.stringify(rows))}); localStorage.setItem("nsmax:lottery-index-at", String(Date.now())); }`;
@@ -6978,7 +6978,7 @@ test("v1.8.37 「抽奖」分类不只靠搜标题：本机按内容认出来、
 		assert.equal(state.merged.author, "boss");
 		assert.equal(state.merged.category, "日常", "并进来的行和别的行一样换图标、加行内版块");
 		assert.equal(state.merged.badge, true, "标题前也挂「抽奖」");
-		assert.notEqual(state.merged.time, "2026-10-03 13:00:00", "时间也换成中文相对时间");
+		assert.equal(state.merged.time, "1 小时前", "近期时间转换为中文相对时间，不受运行日期和时区影响");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

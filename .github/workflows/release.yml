@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: release
@@ -19,7 +20,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
@@ -31,32 +32,53 @@ jobs:
           ref: ${{ env.SHA }}
           fetch-depth: 0
 
+      - name: Read version
+        id: version
+        run: |
+          version=$(sed -n 's|^// @version[[:space:]]*\([^[:space:]]*\).*|\1|p' nodeseek-max.user.js)
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git show-ref --verify --quiet "refs/tags/v$version"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "v$version 已发布，跳过构建与发布。" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 手动运行也必须对应 main 上已通过的 push CI，不能绕过浏览器测试。
+      - name: Require successful CI for this commit
+        if: steps.version.outputs.exists == 'false'
+        run: |
+          passed=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml \
+            --commit "$SHA" --branch main --event push --status success \
+            --limit 1 --json databaseId --jq 'length')
+          if [ "$passed" != 1 ]; then
+            echo "::error::This commit has no successful main push CI. Run CI before publishing."
+            exit 1
+          fi
+
       - uses: actions/setup-node@v7
+        if: steps.version.outputs.exists == 'false'
         with:
           node-version: 24
           cache: npm
 
       - name: Install dependencies
+        if: steps.version.outputs.exists == 'false'
         run: npm ci --no-audit --no-fund
 
       - name: Check script and metadata
+        if: steps.version.outputs.exists == 'false'
         run: npm run check
 
-      # 发布压缩后的脚本（仓库里保留可读源码）；CI 已经用同一份压缩产物跑过完整测试
-      - name: Minify release artifact
-        run: node scripts/minify.mjs --out release/nodeseek-max.user.js
-
-      - name: Read version
-        id: version
+      # 发布压缩后的脚本（仓库里保留可读源码）；CI 已经用同一份压缩产物跑过完整测试。
+      - name: Build release assets and checksums
+        if: steps.version.outputs.exists == 'false'
         run: |
-          version=$(node scripts/release-notes.mjs --version)
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "v$version 已发布，跳过"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          node scripts/minify.mjs --out release/nodeseek-max.user.js
+          cp nodeseek-max.meta.js release/nodeseek-max.meta.js
+          cd release
+          sha256sum nodeseek-max.user.js nodeseek-max.meta.js > SHA256SUMS
 
       - name: Publish release
         if: steps.version.outputs.exists == 'false'
@@ -64,7 +86,7 @@ jobs:
           version='${{ steps.version.outputs.version }}'
           node scripts/release-notes.mjs > release-notes.md
           cat release-notes.md
-          gh release create "v$version" release/nodeseek-max.user.js nodeseek-max.meta.js \
+          gh release create "v$version" release/nodeseek-max.user.js release/nodeseek-max.meta.js release/SHA256SUMS \
             --target "$SHA" \
             --title "NodeSeek Max v$version" \
             --notes-file release-notes.md \

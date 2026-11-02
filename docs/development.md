@@ -6,6 +6,8 @@
 
 推荐 Node.js 24（CI 使用同一主版本），最低 Node.js 22。云端运行环境固定为 Ubuntu 24.04，避免 latest 镜像迁移改变依赖安装环境。首次克隆后：
 
+仓库的 [.nvmrc](../.nvmrc) 标出推荐主版本；已安装版本管理器时可先切换到该版本。
+
 ```bash
 npm ci
 npx playwright install chromium webkit
@@ -91,7 +93,15 @@ npm run performance -- --baseline=v1.8.46
 1. 同步脚本 @version、NSMAX_VERSION、package.json 与锁文件版本，在 CHANGELOG.md 顶部写当前版本说明。
 2. 运行 build、check 和相关测试，检查生成差异与更新截图。
 3. 推送或合并到 main；CI 完整测试源码与压缩包。
-4. CI 成功后，Release 工作流从该 CI 的提交构建，创建版本标签与安装附件；已有标签会跳过。
+4. CI 成功后，Release 工作流从该 CI 的提交构建，创建版本标签与安装附件；已有标签会直接跳过依赖安装与构建。
 5. 核对标签提交、版本与附件哈希。不要用手动发布绕过失败的 CI。
 
-Release 使用锁文件和与 CI 相同的 Node.js 主版本。上游检查只报告与登记基线的差异，不会自动移植代码。
+Release 使用锁文件和与 CI 相同的 Node.js 主版本。手动运行仅允许 main，且同一提交必须已有成功的 main push CI；不会用手动发布绕过浏览器回归。新版本附件还包括 SHA256SUMS，下载两个安装文件后可在同目录用 `sha256sum -c SHA256SUMS` 校验。Windows PowerShell 可用 `Get-FileHash -Algorithm SHA256` 逐个核对。
+
+仅修改文档或仓库配置时，无需增加脚本版本；当前版本已有标签，发布任务会跳过。上游检查只报告与登记基线的差异，不会自动移植代码。
+
+## 仓库维护
+
+- CI 在安装浏览器和字体前执行 check，让语法、链接和生成文件问题更早暴露；完整源码与压缩包回归仍然执行。
+- Dependabot 每月为 npm 与 GitHub Actions 检查更新，开发依赖的兼容更新会分组。更新通过 PR 审查和 CI 后再合并，不自动合并；主版本升级单独评估。
+- 问题与功能建议使用不同的 issue 表单；安装和设置说明直接从反馈选择页进入。
