@@ -275,7 +275,7 @@ for(const engine of ["chromium","webkit"]) test(`Userscripts 保存重试只重�
 
 for(const engine of ["chromium","webkit"]) for(const dualApi of [false,true]) test(`设置事务等待真实跨页锁与确认落盘：${engine} / ${dualApi?"双 API":"仅同步 API"}`,async()=>{
  const instance=engine==="webkit"?await webkit.launch():await launch();
- const dualShim=`(()=>{const get=window.GM_getValue,set=window.GM_setValue;window.GM={async getValue(key,fallback){return get(key,fallback);},async setValue(key,value){if(key.startsWith("nspp:settings:")&&window.__holdSettingsWrite){window.__settingsWriteStarted=true;await new Promise(resolve=>{window.__releaseSettingsWrite=resolve;});}set(key,value);}};})();`;
+ const dualShim=`(()=>{const get=window.GM_getValue,set=window.GM_setValue;window.__settingsGMTrace=[];const trace=(op,key,value)=>{if(key.startsWith("nspp:settings:"))window.__settingsGMTrace.push({op,value:structuredClone(value)});};window.GM={async getValue(key,fallback){const value=get(key,fallback);trace("read",key,value);return value;},async setValue(key,value){trace("write-start",key,value);if(key.startsWith("nspp:settings:")&&window.__holdSettingsWrite){window.__settingsWriteStarted=true;await new Promise(resolve=>{window.__releaseSettingsWrite=resolve;});}set(key,value);trace("write-complete",key,value);}};})();`;
  const source=fs.readFileSync(process.env.NSMAX_SCRIPT_PATH||path.join(ROOT,"nodeseek-max.user.js"),"utf8");
  const seed={[KEY]:{"modern-theme":{fontSize:"large",font:"sbsb"}},"nsmax:migrate:font-system":true,"nsmax:migrate:font-sbsb":true};
  const {context,page:a,errors}=await open(instance,"https://www.nodeseek.com/",{html:listPage(),seed,scriptSource:(dualApi?dualShim:"")+source});
@@ -289,7 +289,11 @@ for(const engine of ["chromium","webkit"]) for(const dualApi of [false,true]) te
   assert.equal(await panel.getByRole("radio",{name:"特大",exact:true}).getAttribute("aria-checked"),"true","排队时保留用户的选择");
   assert.equal(await a.evaluate(key=>window.GM_getValue(key)["modern-theme"].fontSize,KEY),"large","锁未释放，旧的同步写入路径也不能抢先写设置");
   // 模拟 A 的持锁事务先保存另一个字段，B 必须等锁释放后重新读取再合并。
-  await a.evaluate(async key=>{const current=window.GM_getValue(key);window.GM_setValue(key,{...current,"modern-theme":{...current["modern-theme"],font:"system"}});window.__releaseSettingsLock();await window.__settingsLockTask;},KEY);
+  await a.evaluate(async key=>{const current=window.GM_getValue(key),next={...current,"modern-theme":{...current["modern-theme"],font:"system"}};if(window.GM?.setValue)await window.GM.setValue(key,next);else window.GM_setValue(key,next);},KEY);
+  // GM mock 使用页面 localStorage；跨 renderer 的缓存传播不由 Web Lock 保证。
+  // 在释放前确认测试前置写入已经可见，再验证待处理事务必须重新读取、合并。
+  await b.waitForFunction(key=>window.GM_getValue(key)?.["modern-theme"]?.font==="system",KEY);
+  await a.evaluate(async()=>{window.__releaseSettingsLock();await window.__settingsLockTask;});
   if(dualApi){
    await b.waitForFunction(()=>window.__settingsWriteStarted);
    const held=await a.evaluate(async key=>(await navigator.locks.query()).held.some(lock=>lock.name==="nsmax:settings:"+key),KEY);
@@ -298,7 +302,10 @@ for(const engine of ["chromium","webkit"]) for(const dualApi of [false,true]) te
    await b.evaluate(()=>{window.__releaseSettingsWrite();});
   }
   await b.waitForFunction(key=>window.GM_getValue(key)["modern-theme"].fontSize==="xlarge",KEY);
-  const stored=await a.evaluate(key=>window.GM_getValue(key)["modern-theme"],KEY);
-  assert.equal(stored.font,"system");assert.equal(stored.fontSize,"xlarge");assert.deepEqual(errors,[]);
+  // A 也观察到本次提交的字号后再断言字体，不能通过等待目标字体掩盖错误合并。
+  await a.waitForFunction(key=>window.GM_getValue(key)?.["modern-theme"]?.fontSize==="xlarge",KEY);
+  const snapshots=await Promise.all([a,b].map(p=>p.evaluate(key=>({raw:window.GM_getValue(key),calls:window.__settingsGMTrace||[]}),KEY)));
+  const stored=snapshots[0].raw["modern-theme"],diagnostic=JSON.stringify({a:snapshots[0],b:snapshots[1]});
+  assert.equal(stored.font,"system",diagnostic);assert.equal(stored.fontSize,"xlarge",diagnostic);assert.deepEqual(errors,[]);
  }finally{await context.close();await instance.close();}
 });
