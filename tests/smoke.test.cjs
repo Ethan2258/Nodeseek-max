@@ -3083,12 +3083,14 @@ test("我的通知：站点设置在当前页打开帖子时，点通知先标�
 	} finally { await context.close(); }
 });
 
-test("投票帖（2026-10-17；2026-10-18 起标题前不再加「投票」小标）：投票照 sb.sb .poll-widget（总票数、每项票数和百分比、8px 进度条、20px 投票人头像一排），头像不当正文配图", async () => {
+test("投票卡片：总票数、每项票数和百分比、8px 进度条；投票人展开后是 20px 头像，头像不当正文配图", async () => {
 	for (const width of [1440, 390]) {
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: specialPostPage(), viewport: { width, height: 900 } });
 		try {
 			await page.waitForSelector(".vote-panel form > h2[data-nsmax-total]");
 			await wait(page, 600);
+			assert.equal(await page.locator(".vote-panel").first().locator(".voter-avatar-container img").first().isVisible(), false);
+			await page.locator(".vote-panel").first().getByRole("button", { name: "查看投票人", exact: true }).click();
 			const state = await page.evaluate(() => {
 				const article = document.querySelector(".nsk-post article.post-content").getBoundingClientRect();
 				const [voted, open] = document.querySelectorAll(".vote-panel");
@@ -3137,7 +3139,7 @@ test("投票帖（2026-10-17；2026-10-18 起标题前不再加「投票」小�
 			assert.equal(state.radio, "none", "投过票的选项不显示单选框");
 			assert.equal(state.openChoice, "solid", "没投过的投票：每项一张细线框小卡片");
 			assert.equal(state.openButton, "rgb(28, 28, 30)", "投票按钮：墨色实底");
-			assert.equal(state.badge, null, "标题前不再加「投票」小标（2026-10-18）");
+			assert.deepEqual(state.badge, { text: "投票", bg: "rgb(59, 111, 224)", color: "rgb(255, 255, 255)" }, "投票页面标题显示蓝色小标");
 			assert.equal(state.remembered, "lottery,poll", "打开过的投票 / 抽奖帖记在本机，列表里也带小标");
 			assert.equal(state.overflow, false);
 			assert.deepEqual(errors, []);

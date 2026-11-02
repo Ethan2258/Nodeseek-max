@@ -11,6 +11,26 @@ for(const engine of engines){
  let browser;
  test.before(async()=>{browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
+ test(`${engine} 手机旧评论：40 天和跨年完整时间戳可换行，操作仍为单行且保留 44px 点击区`,async()=>{
+  for(const width of [390,360])for(const days of [40,400]){
+   const created=new Date(Date.now()-days*864e5).toISOString();
+   const html=P.postPage({mobile:true}).replaceAll("2026-10-03T04:00:00.000Z",created).replaceAll("2026-10-03 12:00:00",created);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html});
+   try{
+    await ready(page);
+    const state=await page.evaluate(()=>{
+     const li=document.querySelector("ul.comments>li.content-item"),head=li.querySelector(".nsmax-author-col").getBoundingClientRect(),body=li.querySelector("article.post-content").getBoundingClientRect(),menu=li.querySelector(".comment-menu"),time=li.querySelector(".date-created time");
+     return{text:time.textContent,title:time.title,stamp:time.dateTime,menuHeight:menu.getBoundingClientRect().height,buttons:[...menu.children].map(e=>e.getBoundingClientRect().height),gap:body.top-head.bottom,overflow:document.documentElement.scrollWidth>innerWidth+1};
+    });
+    assert.match(state.text,/\d{4}[-/]\d{2}[-/]\d{2}.*\d{2}:\d{2}/);
+    assert.equal(state.stamp,created);
+    assert.equal(state.menuHeight,44,JSON.stringify({width,days,...state}));
+    assert.ok(state.buttons.every(height=>height>=44));
+    assert.ok(state.gap<70,JSON.stringify({width,days,...state}));
+    assert.equal(state.overflow,false);assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
  test(`${engine} 手机页码：标记省掉的页码不显示，帖子底部只有 3 页时不会出现两个 3`,async()=>{
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true})});
   try{
