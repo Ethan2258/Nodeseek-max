@@ -2087,7 +2087,7 @@ test("v1.8.1 账簿：sb.sb 积分账本表格、页码挪到表格下方居中�
 	}
 });
 
-test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动立即保存、搜索、联动开关、每个模块都有名字", async () => {
+test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动自动保存、搜索、联动开关、每个模块都有名字", async () => {
 	const KEY = "nspp:settings:www.nodeseek.com";
 	const stored = (page) => page.evaluate((key) => JSON.parse(localStorage.getItem("__gm__:" + key) || "{}"), KEY);
 	for (const dark of [false, true]) {
@@ -2107,12 +2107,14 @@ test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动立即保存、搜索�
 			assert.ok(box.width <= 720, `弹窗宽 ${box.width}`);
 			// 只保留圆角：面板里没有圆角 / 直角选项
 			assert.equal(await host.getByRole("radio", { name: "直角" }).count(), 0);
-			// 分段选择：点「特大」立即写入存储
+			// 分段选择：点「特大」自动保存，面板确认事务完成后检查持久化值。
 			await host.getByRole("radio", { name: "特大", exact: true }).click();
 			assert.equal(await host.getByRole("radio", { name: "特大", exact: true }).getAttribute("aria-checked"), "true");
+			await host.getByRole("button", { name: "刷新应用设置", exact: true }).waitFor();
 			assert.equal((await stored(page))["modern-theme"].fontSize, "xlarge");
 			// 今日热门：总开关同时关掉「侧栏显示」，不会留下关不掉的子开关
 			await host.getByRole("checkbox", { name: "今日热门", exact: true }).uncheck();
+			await host.getByRole("button", { name: "刷新应用设置", exact: true }).waitFor();
 			const hot = (await stored(page))["hot-rankings"];
 			assert.equal(hot.enabled, false);
 			assert.equal(hot.sidebar, false);
@@ -2330,6 +2332,7 @@ test("v1.8.0 设置项重做（v1.9.9 起图床选项按所选图床显示）：
 		assert.deepEqual(await host.locator('.module[data-feature="request-settings"] [role=radio]').allInnerTexts(), ["标准", "稳妥", "最慢"]);
 		assert.equal(await host.locator('.module[data-feature="request-settings"] input[type=number]').count(), 0);
 		await host.getByRole("radio", { name: "稳妥", exact: true }).click();
+		await host.getByRole("button", { name: "刷新应用设置", exact: true }).waitFor();
 		const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem("__gm__:" + key) || "{}"), OPT_KEY);
 		assert.equal(stored["request-settings"].pace, "gentle");
 		assert.deepEqual(errors, []);
