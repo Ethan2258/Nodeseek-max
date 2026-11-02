@@ -1143,6 +1143,45 @@ var nsmaxRedirecting = false;
 	var nsmaxPatchStorage = null;
 	var nsmaxModernGM = typeof GM !== "undefined" ? GM : null;
 	var nsmaxManagerName = String(nsmaxModernGM?.info?.scriptHandler || (typeof GM_info !== "undefined" ? GM_info?.scriptHandler : "") || "");
+	function nsmaxInstallStorageQueue(read, writeValue, allWrites = false) {
+		const pending = new Map(), failed = new Map(), syncGet = _GM_getValue;
+		// 同步管理器仍直接读原存储；只有正在保存或等待重试的键才需要乐观视图。
+		_GM_getValue = (key, fallback) => allWrites || pending.has(key) || failed.has(key) ? memory.has(key) ? structuredClone(memory.get(key)) : fallback : syncGet(key, fallback);
+		const enqueueWrite = (key, operation) => {
+			if (!operation.retry) memory.set(key, operation.patch ? mergeSettings(_GM_getValue(key, {}), operation.patch) : structuredClone(operation.value));
+			const write = (pending.get(key) || Promise.resolve()).then(async () => {
+				const operations = [...(failed.get(key) || []), ...(operation.retry ? [] : [operation])];
+				try {
+					const commit = async () => {
+						const patches = operations.some(item => item.patch);
+						const previous = patches ? await read(key, {}) : undefined;
+						let next = previous;
+						for (const item of operations) next = item.patch ? mergeSettings(next, item.patch) : structuredClone(item.value);
+						if (!patches || JSON.stringify(previous) !== JSON.stringify(next)) await writeValue(key, next);
+						if (pending.get(key) === write) memory.set(key, structuredClone(next));
+					};
+					// 不同标签页的同步 GM 也可能同时读到旧值；全部设置 patch 在同源锁内重新读取、合并并等待写入。
+					if (operations.some(item => item.patch) && navigator.locks?.request) await navigator.locks.request(`nsmax:settings:${key}`, commit);
+					else await commit();
+					failed.delete(key);
+				} catch { failed.set(key, operations); }
+			});
+			pending.set(key, write);
+			void write.then(() => { if (pending.get(key) === write) pending.delete(key); });
+		};
+		if (allWrites) _GM_setValue = (key, value) => enqueueWrite(key, { value: structuredClone(value) });
+		nsmaxPatchStorage = (key, patch) => enqueueWrite(key, { patch: structuredClone(patch) });
+		nsmaxFlushStorage = async (retry = false) => {
+			let timeout;
+			const flush = async () => {
+				while (pending.size) await Promise.all([...pending.values()]);
+				if (retry && failed.size) { for (const key of [...failed.keys()]) enqueueWrite(key, { retry: true }); while (pending.size) await Promise.all([...pending.values()]); }
+				if (failed.size) throw new Error("设置没有写入脚本管理器，请稍后重试");
+			};
+			try { await Promise.race([flush(), new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error("保存设置超时，请稍后重试")), 2000); })]); } finally { clearTimeout(timeout); }
+		};
+		nsmaxAsyncStorage = true;
+	}
 	// Userscripts 只提供异步 GM 存储。先读入扩展自己的存储，再用内存同步视图服务现有模块；不把配置复制到站点存储。
 	if (typeof nsmaxModernGM?.getValue === "function" && typeof nsmaxModernGM?.setValue === "function" && (typeof _GM_getValue !== "function" || typeof _GM_setValue !== "function" || nsmaxManagerName === "Userscripts")) {
 		let timer;
@@ -1154,44 +1193,14 @@ var nsmaxRedirecting = false;
 			};
 			const values = await Promise.race([load(), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("读取设置超时")), 2000); })]);
 			for (const [key, value] of values) if (value !== undefined) memory.set(key, value);
-			const pending = new Map(), failed = new Map();
-			_GM_getValue = (key, fallback) => memory.has(key) ? structuredClone(memory.get(key)) : fallback;
-			const enqueueWrite = (key, operation) => {
-				if (!operation.retry) memory.set(key, operation.patch ? mergeSettings(memory.get(key), operation.patch) : structuredClone(operation.value));
-				const write = (pending.get(key) || Promise.resolve()).then(async () => {
-					const operations = [...(failed.get(key) || []), ...operation.retry ? [] : [operation]];
-					try {
-						const commit = async () => {
-							const patches = operations.some(item => item.patch);
-							const previous = patches ? await nsmaxModernGM.getValue(key, {}) : undefined;
-							let next = previous;
-							for (const item of operations) next = item.patch ? mergeSettings(next, item.patch) : structuredClone(item.value);
-							if (!patches || JSON.stringify(previous) !== JSON.stringify(next)) await nsmaxModernGM.setValue(key, next);
-							if (pending.get(key) === write) memory.set(key, structuredClone(next));
-						};
-						// 另一标签页可能刚保存了不同字段；在同源锁内读取、合并、写入，避免异步 GM 的读写交错。
-						if (operations.some(item => item.patch) && navigator.locks?.request) await navigator.locks.request(`nsmax:settings:${key}`, commit);
-						else await commit();
-						failed.delete(key);
-					} catch { failed.set(key, operations); }
-				});
-				pending.set(key, write);
-				void write.then(() => { if (pending.get(key) === write) pending.delete(key); });
-			};
-			_GM_setValue = (key, value) => enqueueWrite(key, { value: structuredClone(value) });
-			nsmaxPatchStorage = (key, patch) => enqueueWrite(key, { patch: structuredClone(patch) });
-			nsmaxFlushStorage = async (retry = false) => {
-				let timeout;
-				const flush = async () => {
-					while (pending.size) await Promise.all([...pending.values()]);
-					if (retry && failed.size) { for (const key of [...failed.keys()]) enqueueWrite(key, { retry: true }); while (pending.size) await Promise.all([...pending.values()]); }
-					if (failed.size) throw new Error("设置没有写入 Userscripts，请稍后重试");
-				};
-				try { await Promise.race([flush(), new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error("保存设置超时，请稍后重试")), 2000); })]); } finally { clearTimeout(timeout); }
-			};
-			nsmaxAsyncStorage = true;
+			nsmaxInstallStorageQueue(nsmaxModernGM.getValue.bind(nsmaxModernGM), nsmaxModernGM.setValue.bind(nsmaxModernGM), true);
 		} catch (error) { nsmaxStorageInitError = String(error?.message || error); }
 		finally { clearTimeout(timer); }
+	}
+	if (!nsmaxPatchStorage && typeof _GM_getValue === "function" && typeof _GM_setValue === "function") {
+		// 篡改猴等同时提供两种 API 时，用 Promise API 确认扩展写完后再释放锁；缓存/状态仍走原同步 API。
+		const modern = typeof nsmaxModernGM?.getValue === "function" && typeof nsmaxModernGM?.setValue === "function";
+		nsmaxInstallStorageQueue(modern ? nsmaxModernGM.getValue.bind(nsmaxModernGM) : _GM_getValue, modern ? nsmaxModernGM.setValue.bind(nsmaxModernGM) : _GM_setValue);
 	}
 	if (typeof _GM_xmlhttpRequest !== "function" && typeof nsmaxModernGM?.xmlHttpRequest === "function") _GM_xmlhttpRequest = details => {
 		let done = false;
@@ -22878,25 +22887,21 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 	var nsmaxEarlyThemeObserver = null;
 	// 在 document-start 阶段（页面还未渲染）就挂上主题属性与样式，避免先闪一下原版界面。
 	// v1.6.9 起默认字体改为 sb.sb 用的系统字体：仅在首次升级迁移一次，后续用户自定义不受影响。
-	(function migrateThemeFont() {
+	function nsmaxMigrateThemeFont(marker, from, to) {
 		try {
-			if (GM_getValue$1("nsmax:migrate:font-system", false)) return;
+			if (GM_getValue$1(marker, false)) return;
 			const all = GM_getValue$1(SETTINGS_KEY, {});
 			const theme = all?.["modern-theme"];
-			if (theme && theme.font === "claude") GM_setValue$1(SETTINGS_KEY, { ...all, "modern-theme": { ...theme, font: "system" } });
-			GM_setValue$1("nsmax:migrate:font-system", true);
+			if (theme?.font === from && nsmaxPatchStorage) {
+				nsmaxPatchStorage(SETTINGS_KEY, { "modern-theme": { font: to } });
+				// 迁移也不能绕过设置事务；写入成功后再登记，失败时下次仍会重试。
+				void nsmaxFlushStorage().then(() => GM_setValue$1(marker, true), () => {});
+			} else GM_setValue$1(marker, true);
 		} catch {}
-	})();
+	}
+	nsmaxMigrateThemeFont("nsmax:migrate:font-system", "claude", "system");
 	// v1.8.0 按 sb.sb 1:1 重做：默认字体改为 sb.sb 同款（系统字体 + Space Mono 数字）。原来停在旧默认（系统字体）的迁移一次，之后的选择不再改动。
-	(function migrateThemeFontSbsb() {
-		try {
-			if (GM_getValue$1("nsmax:migrate:font-sbsb", false)) return;
-			const all = GM_getValue$1(SETTINGS_KEY, {});
-			const theme = all?.["modern-theme"];
-			if (theme && theme.font === "system") GM_setValue$1(SETTINGS_KEY, { ...all, "modern-theme": { ...theme, font: "sbsb" } });
-			GM_setValue$1("nsmax:migrate:font-sbsb", true);
-		} catch {}
-	})();
+	nsmaxMigrateThemeFont("nsmax:migrate:font-sbsb", "system", "sbsb");
 	// Cloudflare 安全验证页（「正在进行安全验证」）：脚本不套主题、不挂功能。
 	// 普通页面里也有 Cloudflare 的检测脚本（/cdn-cgi/challenge-platform/scripts/jsd/…），不能只看脚本地址：
 	// 有 NodeSeek 自己的页面框架（#nsk-frame、#nsk-head）就一定不是验证页；验证页认它的「验证页」脚本（orchestrate/chl_page）和标题结构

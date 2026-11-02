@@ -1,8 +1,10 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const {webkit} = require("playwright");
-const {launch,open} = require("./harness.cjs");
+const {launch,open,ROOT} = require("./harness.cjs");
 const {listPage,postPage,spaceTopicsPage,fansPage} = require("./fixtures/pages.cjs");
 const KEY = "nspp:settings:www.nodeseek.com";
 let browser;
@@ -10,6 +12,8 @@ test.before(async()=>{browser=await launch();});
 test.after(async()=>{await browser?.close();});
 const ready = page => page.waitForFunction(()=>document.documentElement.hasAttribute("data-nsmax-theme")&&!document.documentElement.hasAttribute("data-nsmax-mounting")&&performance.getEntriesByName("nsmax:deferred-start").length);
 const settings = async page => {await page.getByRole("button",{name:"NodeSeek Max 设置",exact:true}).click();return page.locator("#nspp-settings");};
+// 同步 GM 的设置也经过跨标签页事务；以面板确认保存完成为准，再读持久化值或刷新。
+const saved = host => host.getByRole("button",{name:"刷新应用设置",exact:true}).waitFor();
 
 test("设置真实生效：个人主页主题帖计数只在开启时读取，关闭后不请求帖子",async()=>{
  for(const enabled of [true,false]) {
@@ -67,6 +71,7 @@ test("设置输入有效：热榜条数保存为 5–50 的整数，空输入不
   const host=await settings(page),input=host.locator('[data-feature="hot-rankings"][data-key="sidebarCount"]');
   for(const [value,want] of [["52",50],["2",5],["12.8",12]]) {
    await input.fill(value);await input.press("Tab");
+   await saved(host);
    assert.equal(await input.inputValue(),String(want));
    assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key))["hot-rankings"].sidebarCount,KEY),want);
   }
@@ -88,6 +93,7 @@ test("设置键盘可用：分段选项和分类标签支持 Home、End，刷新
   assert.equal(await host.getByRole("tab",{name:"关于",exact:true}).getAttribute("aria-selected"),"true");
   await page.keyboard.press("Home");
   assert.equal(await host.getByRole("tab",{name:"外观",exact:true}).getAttribute("aria-selected"),"true");
+  await saved(host);
   await page.reload();host=await settings(page);
   assert.equal(await host.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true}).getAttribute("aria-checked"),"true");
   assert.deepEqual(errors,[]);
@@ -102,6 +108,7 @@ test("设置保存少做重复工作：选中同一选项和重复 change 不再
   const radio=host.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true});
   await radio.click();await radio.click();
   await host.locator('select[data-feature="modern-theme"][data-key="fontSize"]').dispatchEvent("change");
+  await saved(host);
   assert.equal(await page.evaluate(()=>window.__settingWrites),1);
   assert.deepEqual(errors,[]);
  } finally {await context.close();}
@@ -151,6 +158,7 @@ test("全部设置可保存：逐个操作所有可见字段和开关，重新�
     expected.push({...f,value});
    }
   }
+  await saved(host);
   assert.equal(await host.getByRole("button",{name:"刷新应用设置",exact:true}).count(),1,"明确说明改动已保存、刷新应用");
   await page.reload();host=await settings(page);
   for(const f of expected) {
@@ -171,6 +179,7 @@ test("旧配置与导入仍可用：无总开关的功能不会被旧 disabled �
   const host=await settings(page);
   const imported={format:"nodeseek-plus-plus",schema:1,settings:{"hot-rankings":{enabled:true,sidebar:true,sidebarCount:999},"modern-theme":{enabled:false,font:"system",fontSize:"not-a-choice"},"user-notes":{enabled:true,notes:"user0=导入测试"}}};
   await host.locator('input[type=file]').setInputFiles({name:"settings.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(imported))});
+  await host.getByRole("button",{name:"导入配置",exact:true}).waitFor();await saved(host);
   await page.waitForFunction(key=>JSON.parse(localStorage.getItem("__gm__:"+key))["user-notes"]?.notes==="user0=导入测试",KEY);
   const stored=await page.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key)),KEY);
   assert.equal(stored["hot-rankings"].sidebarCount,50);assert.equal(stored["modern-theme"].fontSize,"large");assert.equal(stored["modern-theme"].enabled,true);
@@ -180,6 +189,7 @@ test("旧配置与导入仍可用：无总开关的功能不会被旧 disabled �
   const stream=await download.createReadStream();let text="";for await(const chunk of stream)text+=chunk.toString();
   const exported=JSON.parse(text);assert.equal(exported.schema,1);assert.equal(exported.settings["user-notes"].notes,"user0=导入测试");assert.equal(exported.settings["hot-rankings"].sidebarCount,50);
   await host.getByRole("button",{name:"恢复默认",exact:true}).click();
+  await saved(host);
   const reset=await page.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key)),KEY);
   assert.equal(reset["user-notes"].notes,"");assert.equal(reset["hot-rankings"].sidebarCount,10);
   assert.deepEqual(errors,[]);
@@ -260,5 +270,35 @@ for(const engine of ["chromium","webkit"]) test(`Userscripts 保存重试只重�
   const state=await a.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key)),KEY);
   assert.equal(state["reading-content"].chineseTime,false);assert.equal(state["reading-content"].copyCode,false,"失败后继续修改的字段和最后一次明确选择也会重放");assert.equal(state["modern-theme"].fontSize,"xlarge","不能用失败标签页的整份内存快照覆盖另一页的字号");
   assert.deepEqual(errors,[]);
+ }finally{await context.close();await instance.close();}
+});
+
+for(const engine of ["chromium","webkit"]) for(const dualApi of [false,true]) test(`设置事务等待真实跨页锁与确认落盘：${engine} / ${dualApi?"双 API":"仅同步 API"}`,async()=>{
+ const instance=engine==="webkit"?await webkit.launch():await launch();
+ const dualShim=`(()=>{const get=window.GM_getValue,set=window.GM_setValue;window.GM={async getValue(key,fallback){return get(key,fallback);},async setValue(key,value){if(key.startsWith("nspp:settings:")&&window.__holdSettingsWrite){window.__settingsWriteStarted=true;await new Promise(resolve=>{window.__releaseSettingsWrite=resolve;});}set(key,value);}};})();`;
+ const source=fs.readFileSync(process.env.NSMAX_SCRIPT_PATH||path.join(ROOT,"nodeseek-max.user.js"),"utf8");
+ const seed={[KEY]:{"modern-theme":{fontSize:"large",font:"sbsb"}},"nsmax:migrate:font-system":true,"nsmax:migrate:font-sbsb":true};
+ const {context,page:a,errors}=await open(instance,"https://www.nodeseek.com/",{html:listPage(),seed,scriptSource:(dualApi?dualShim:"")+source});
+ try {
+  const b=await context.newPage();b.on("pageerror",error=>errors.push(error.message));await b.goto("https://www.nodeseek.com/");await Promise.all([ready(a),ready(b)]);
+  const panel=await settings(b);
+  await a.evaluate(key=>{window.__settingsLockTask=navigator.locks.request("nsmax:settings:"+key,()=>new Promise(resolve=>{window.__settingsLockHeld=true;window.__releaseSettingsLock=resolve;}));},KEY);
+  await a.waitForFunction(()=>window.__settingsLockHeld);
+  if(dualApi)await b.evaluate(()=>{window.__holdSettingsWrite=true;});
+  await panel.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true}).click();
+  assert.equal(await panel.getByRole("radio",{name:"特大",exact:true}).getAttribute("aria-checked"),"true","排队时保留用户的选择");
+  assert.equal(await a.evaluate(key=>window.GM_getValue(key)["modern-theme"].fontSize,KEY),"large","锁未释放，旧的同步写入路径也不能抢先写设置");
+  // 模拟 A 的持锁事务先保存另一个字段，B 必须等锁释放后重新读取再合并。
+  await a.evaluate(async key=>{const current=window.GM_getValue(key);window.GM_setValue(key,{...current,"modern-theme":{...current["modern-theme"],font:"system"}});window.__releaseSettingsLock();await window.__settingsLockTask;},KEY);
+  if(dualApi){
+   await b.waitForFunction(()=>window.__settingsWriteStarted);
+   const held=await a.evaluate(async key=>(await navigator.locks.query()).held.some(lock=>lock.name==="nsmax:settings:"+key),KEY);
+   assert.equal(held,true,"Promise 写入尚未落盘时仍持有锁");
+   assert.equal(await a.evaluate(key=>window.GM_getValue(key)["modern-theme"].fontSize,KEY),"large");
+   await b.evaluate(()=>{window.__releaseSettingsWrite();});
+  }
+  await b.waitForFunction(key=>window.GM_getValue(key)["modern-theme"].fontSize==="xlarge",KEY);
+  const stored=await a.evaluate(key=>window.GM_getValue(key)["modern-theme"],KEY);
+  assert.equal(stored.font,"system");assert.equal(stored.fontSize,"xlarge");assert.deepEqual(errors,[]);
  }finally{await context.close();await instance.close();}
 });
