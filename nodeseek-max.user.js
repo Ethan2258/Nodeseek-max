@@ -24746,6 +24746,7 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		const op = postId && document.querySelector(".nsk-post article.post-content");
 		if (op) {
 			const kinds = nsmaxSpecialKindsOf(op);
+			if (!kinds.includes("poll") && document.querySelector("#nsk-body-left .vote-panel[data-nsmax-detached]")) kinds.push("poll");
 			let time = nsmaxLotteryTimeOf(op);
 			// 主帖里没有、这一页评论里有指向这一篇的开奖链接：也是抽奖帖（2026-10-23）。整页解析完只看一次
 			if (!kinds.includes("lottery") && document.readyState !== "loading" && nsmaxCommentLuckyPage !== location.pathname) {
@@ -24770,8 +24771,10 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			const link = title.querySelector("a");
 			if (!link || nsmaxLateRows && title.closest(nsmaxLateRows)) return;
 			const id = (link.getAttribute("href") || "").match(/\/post-(\d+)/)?.[1] || postId;
-			// 只有确认正文里有开奖链接的才挂「抽奖」；投票帖不再挂小标（2026-10-18）
+			// 列表只标已确认的抽奖；投票页面标题按参考样式显示蓝色小标。
 			const lottery = (id && known.get(id) || "").split(",").includes("lottery");
+			const poll = !!title.closest(".nsk-post") && (id && known.get(id) || "").split(",").includes("poll");
+			nsmaxTopicBadge(title, link, "nsmax-poll-badge", "投票", poll);
 			// 到了开奖时间（sb.sb .lottery-badge-done + .special-ended）：「抽奖」变成细线框灰字，后面多一个「已结束」
 			const time = lottery ? nsmaxLotteryTimes().get(id) : 0;
 			const ended = lottery && ((!!time && time <= Date.now()) || nsmaxLotteryEnded().has(id) || NSMAX_LOTTERY_ENDED_TITLE.test(link.textContent || ""));

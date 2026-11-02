@@ -43,6 +43,7 @@ for (const engine of ["chromium", "webkit"]) {
         const card = page.locator(".vote-panel").first();
         assert.equal(await card.locator(".nsmax-poll-total").innerText(), "152 人已参与");
         assert.equal(await card.locator(".nsmax-poll-head strong").innerText(), "投票");
+        assert.equal(await page.locator(".nsk-post .post-title .nsmax-poll-badge").innerText(), "投票");
         assert.equal(await card.locator(".voter-avatar-container img").first().isVisible(), false);
         assert.equal(await card.evaluate(e => !!e.closest(".nsk-post")), false);
         assert.equal(await page.evaluate(() => __pollNative.every(({panel,form,input}) => panel.isConnected && panel.querySelector("form") === form && panel.querySelector("input") === input)), true);
