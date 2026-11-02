@@ -1,0 +1,30 @@
+name: 功能建议
+description: 描述使用场景和希望改进的行为
+title: "[建议] "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前可以先搜索已有建议。界面错位或现有功能失效请使用“问题反馈”。
+        请勿公开 Cookie、令牌、私信或完整配置。
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 在什么场景遇到了不便？
+      description: 描述页面、设备和当前操作方式。
+      placeholder: 在 iPhone Safari 看长帖子时，我需要……
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 希望改成什么样？
+      description: 说明期望行为；可以附去除个人信息的截图或参考。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 试过的替代方式（可选）
+      description: 是否已有设置能部分解决？还有什么取舍？

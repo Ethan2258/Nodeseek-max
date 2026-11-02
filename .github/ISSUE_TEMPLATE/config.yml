@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安装、更新与常见问题
+    url: https://github.com/Ethan2258/Nodeseek-max/blob/main/docs/installation.md
+    about: 先检查脚本管理器、Safari 扩展权限、更新与保存步骤。
+  - name: 功能与设置说明
+    url: https://github.com/Ethan2258/Nodeseek-max/blob/main/docs/usage.md
+    about: 查看设置、手机侧栏、编辑器与数据保存方式。

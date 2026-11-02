@@ -47,7 +47,7 @@ jobs:
             echo
             cat upstream-report.md
             echo
-            echo "合并步骤见 [upstream/README.md](../blob/main/upstream/README.md)：\`node scripts/upstream.mjs --fetch\` 下载新源码，与 \`upstream/\` 里的基线对比后移植改动。"
+            echo "合并步骤见 [upstream/README.md](https://github.com/$GITHUB_REPOSITORY/blob/main/upstream/README.md)：\`node scripts/upstream.mjs --fetch\` 下载新源码，与 \`upstream/\` 里的基线对比后移植改动。"
           } > issue.md
           gh issue create --title "$title" --label upstream --body-file issue.md
 
