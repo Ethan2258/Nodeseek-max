@@ -308,6 +308,10 @@ html[data-nsmax-theme] :focus-visible {
   outline: 2px solid var(--focus-ring) !important;
   outline-offset: 2px !important;
 }
+/* 关键词屏蔽弹窗的输入框：聚焦时已经有黄色描边 + 浅黄光圈（和设置里的输入框一样），不再叠一圈黑色焦点框 */
+html[data-nsmax-theme] .nsmax-pop[data-kind="keywords"] form.nsmax-pop-form input:focus-visible {
+  outline: none !important;
+}
 html[data-nsmax-theme] :is(code, kbd, samp, pre) {
   font-family: var(--font-mono) !important;
 }

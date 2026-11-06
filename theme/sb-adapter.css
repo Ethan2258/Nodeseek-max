@@ -333,6 +333,8 @@ html[data-nsmax-theme] .nsmax-pop-form input {min-width:0;flex:1;width:100%;padd
 html[data-nsmax-theme] .nsmax-pop-chips {display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:12px 0;padding:0;}
 html[data-nsmax-theme] .nsmax-pop-chips li {display:flex;align-items:center;gap:4px;max-width:100%;padding:2px 4px 2px 9px;border-radius:999px;background:var(--panel-alt);border:1px solid var(--line);}
 html[data-nsmax-theme] .nsmax-pop-chips li span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+html[data-nsmax-theme] .nsmax-pop-chips li[data-flash] {animation:nsmax-chip-flash 900ms ease-out;}
+@keyframes nsmax-chip-flash {0%,30% {border-color:var(--field-focus,#e0a800);background:var(--brand-soft,#fff4c4);} 100% {border-color:var(--line);background:var(--panel-alt);}}
 html[data-nsmax-theme] .nsmax-pop-chips li button {display:grid;place-items:center;border:0;padding:3px;background:transparent;}
 html[data-nsmax-theme] .nsmax-pop-foot {border-top:1px solid var(--line-soft);padding-top:10px;}
 html[data-nsmax-theme] .nsmax-pop-foot label {display:flex;align-items:center;gap:6px;color:var(--text-muted);}
@@ -410,6 +412,10 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel h2 {margin
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel ul {list-style:none;margin:0;padding:0;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel a {display:block;padding:4px 0;font:13px/23px var(--font-sans);color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel a:hover {color:var(--brand);}
+html[data-nsmax-theme] :is(#nsk-right-panel-container,#left-slide-panel) .nsmax-recent-panel {position:relative!important;}
+html[data-nsmax-theme] .nsmax-recent-panel > .nsmax-recent-clear {position:absolute;top:12px;right:10px;margin:0;padding:0 6px;border:0;border-radius:var(--r-sm,6px);background:transparent;color:var(--text-subtle);font:400 12px/20px var(--font-sans);cursor:pointer;}
+html[data-nsmax-theme] .nsmax-recent-panel > .nsmax-recent-clear:hover {background:var(--panel-hover);color:var(--text);}
+html[data-nsmax-theme] .nsmax-recent-panel > .nsmax-recent-clear[data-confirm] {color:var(--danger-soft-text,#c62828);background:var(--danger-soft,#fdecec);}
 html[data-nsmax-theme] :is(#nsk-right-panel-container,#left-slide-panel) .nsmax-recent-panel a[aria-current="page"]:not(:hover) {color:var(--text-subtle)!important;}
 html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item {padding:11px 72px 11px 14px!important;gap:12px!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-title a {font:500 15px/22px var(--font-sans)!important;color:var(--text-strong)!important;text-decoration:none!important;}
@@ -618,7 +624,7 @@ html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] .nsmax-pop-head {display:f
 html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] .nsmax-pop-head strong {font:600 13px/22px var(--font-sans)!important;color:var(--text)!important;}
 html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form {display:flex!important;align-items:center!important;gap:8px!important;margin:0!important;padding:0!important;height:auto!important;min-height:36px!important;}
 html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input {box-sizing:border-box!important;flex:1!important;width:0!important;min-width:0!important;height:36px!important;min-height:36px!important;margin:0!important;padding:7px 10px!important;border:1px solid var(--line)!important;border-radius:8px!important;box-shadow:none!important;outline:0!important;font:13px/20px var(--font-sans)!important;}
-html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input:focus {border-color:var(--line-strong)!important;box-shadow:0 0 0 2px var(--brand-soft)!important;}
+html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input:focus {border-color:var(--field-focus,#e0a800)!important;box-shadow:0 0 0 3px var(--field-ring,rgb(255 208 47 / .18))!important;outline:none!important;}
 html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form button {flex:none!important;height:34px!important;min-height:34px!important;margin:0!important;padding:5px 12px!important;font:12px/22px var(--font-sans)!important;}
 html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] .nsmax-pop-empty {display:block!important;margin:12px 0!important;padding:0!important;color:var(--text-subtle)!important;font:12px/1.7 var(--font-sans)!important;}
 html[data-nsmax-theme] .nsmax-pop[data-kind=keywords] .nsmax-pop-foot {margin-top:12px!important;padding-top:12px!important;border-top:1px solid var(--line-soft)!important;}
