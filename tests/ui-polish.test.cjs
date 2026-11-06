@@ -430,4 +430,38 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 资料卡备注：直接写本机备注，名字后马上出现；移出卡片不收起，Esc 只取消编辑，清空即删除这一行`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage({count:4}),seed:{...seed,"nspp:settings:www.nodeseek.com":{...seed["nspp:settings:www.nodeseek.com"],"user-notes":{notes:"# 备注\nuser1=老朋友"}}}});
+  try{
+   await ready(page);
+   const badges=()=>page.evaluate(()=>[...document.querySelectorAll(".nspp-user-note")].map(e=>e.previousElementSibling?.textContent.trim()+"="+e.textContent));
+   assert.deepEqual(await badges(),["user1=老朋友"]);
+   await page.locator('.post-list-item .info-author a[href="/space/10"]').hover();
+   const note=page.locator(".nsmax-person-pop .nsmax-person-note");
+   await note.waitFor();
+   assert.equal(await note.textContent(),"备注");
+   await note.click();
+   const input=page.locator(".nsmax-person-note-form input");
+   assert.equal(await input.evaluate(e=>e===document.activeElement),true);
+   await page.keyboard.type("  卖鸡的  大佬 ");
+   await page.mouse.move(1200,880);await page.waitForTimeout(400);
+   assert.equal(await input.count(),1,"正在写备注时鼠标移出不收起卡片");
+   await input.press("Enter");
+   assert.equal(await note.textContent(),"卖鸡的 大佬");
+   assert.deepEqual((await badges()).sort(),["user0=卖鸡的 大佬","user1=老朋友"]);
+   await note.click();await input.press("Escape");
+   assert.equal(await page.locator(".nsmax-person-pop").count(),1,"Esc 只关输入框");
+   assert.equal(await page.locator(".nsmax-person-foot").isVisible(),true);
+   await page.keyboard.press("Escape");
+   assert.equal(await page.locator(".nsmax-person-pop").count(),0);
+   await page.locator('.post-list-item .info-author a[href="/space/10"]').hover();
+   await note.waitFor();await note.click();await input.fill("");await input.press("Enter");
+   assert.equal(await note.textContent(),"备注");
+   assert.deepEqual(await badges(),["user1=老朋友"]);
+   await page.keyboard.press("Escape");
+   await page.locator('.post-list-item .info-author a[href="/space/11"]').hover();
+   await page.waitForFunction(()=>document.querySelector(".nsmax-person-pop .nsmax-person-note")?.textContent==="老朋友");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
 }

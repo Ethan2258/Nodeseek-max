@@ -11934,6 +11934,68 @@ html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > .nsmax-person-bloc
   opacity: 0.6 !important;
   cursor: default !important;
 }
+/* 资料卡「备注」：靠右和「屏蔽」挨着；写了备注就显示备注本身（太长截断）。点了底栏换成一行输入框 + 保存 */
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > .nsmax-person-note:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-width: 0 !important;
+  max-width: 11em !important;
+  margin-left: auto !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > .nsmax-person-note + .nsmax-person-block:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: -4px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-note > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-foot > .nsmax-person-note[data-on]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-note-form:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 6px 8px !important;
+  border-top: 1px solid var(--line-soft) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-note-form > input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  flex: 1 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 9px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-sm) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-note-form > input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
+  border-color: var(--field-focus) !important;
+  box-shadow: 0 0 0 3px var(--field-ring) !important;
+}
+html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-note-form > button:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
 html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-stats + .nsmax-person-status:is(#nsmax-lv, *):is(#nsmax-b, *) {
   padding: 10px 14px 0 !important;
 }

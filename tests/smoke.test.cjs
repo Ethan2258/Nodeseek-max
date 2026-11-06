@@ -3896,7 +3896,7 @@ test("第六批（2026-10-18）：资料卡里有「管理记录」和「屏蔽�
 			};
 		});
 		assert.deepEqual(card.labels, ["关注", "私信", "主页"], "名字下面三个按钮（2026-10-18 第七批重排）");
-		assert.deepEqual(card.foot, ["管理记录", "屏蔽"], "管理记录、屏蔽在底栏");
+		assert.deepEqual(card.foot, ["管理记录", "备注", "屏蔽"], "管理记录、备注（2026-11-06）、屏蔽在底栏");
 		assert.equal(card.oneRow, true);
 		assert.equal(card.widths, 1, "三个按钮一样宽");
 		assert.equal(await page.locator("ul.post-list > li.post-list-item").first().isVisible(), true);
