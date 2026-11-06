@@ -464,4 +464,72 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 手机楼中楼：时间和「#楼号 回复 引用…」同一行同一条中线，时间贴内容左边线、操作靠右；窄屏楼号挪到作者行`,async()=>{
+  // 2026-11-06 用户截图：时间单独在左上，操作行低半行、缩进一大截，一条回复占三行高
+  const recent=`datetime="${new Date(Date.now()-3e4).toISOString()}"`;
+  const html=P.postPage({mobile:true}).replace(/datetime="[^"]+"/g,recent)
+   .replace("<p>价格不错，帮顶</p>",'<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 价格不错，帮顶</p>');
+  for(const width of [390,340]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nsmax-floor-box>.nsmax-nested-replies>li.content-item .nsmax-floor-actions");
+    const s=await page.evaluate(()=>{
+     const li=document.querySelector(".nsmax-floor-box>.nsmax-nested-replies>li.content-item");
+     const box=(e)=>e.getBoundingClientRect();
+     const text=(e)=>{const r=document.createRange();r.selectNodeContents(e);return r.getBoundingClientRect();};
+     const time=text(li.querySelector(".content-info time")),article=box(li.querySelector("article.post-content")),actions=box(li.querySelector(".nsmax-floor-actions")),item=li.querySelector(".nsmax-floor-actions .menu-item"),liBox=box(li);
+     const outer=document.querySelector("ul.comments>li.content-item"),link=box(outer.querySelector(".floor-link")),col=box(outer.querySelector(".nsmax-author-col")),menu=box(outer.querySelector(".nsmax-floor-actions>.comment-menu"));
+     return{timeMid:(time.top+time.bottom)/2,actMid:(actions.top+actions.bottom)/2,timeLeft:time.left,articleLeft:article.left,actRight:actions.right,liRight:liBox.right,itemHeight:box(item).height,overlap:actions.left<time.right,actTop:actions.top+5,timeBottom:time.bottom,linkInHead:link.top>=col.top&&link.bottom<=col.bottom+1,linkAboveMenu:link.bottom<=menu.top+1};
+    });
+    // 390px 放得下：同一行同一条中线；340px 放不下时操作整排换到下一行，不压住时间
+    if(width>=360){assert.ok(near(s.timeMid,s.actMid,2),JSON.stringify(s));assert.equal(s.overlap,false,JSON.stringify(s));}
+    else assert.ok(near(s.timeMid,s.actMid,2)&&!s.overlap||s.actTop>=s.timeBottom-1,JSON.stringify(s));
+    assert.ok(near(s.timeLeft,s.articleLeft,1.5),JSON.stringify(s));
+    assert.ok(s.actRight<=s.liRight+6.5,JSON.stringify(s));
+    assert.ok(s.itemHeight>=44,JSON.stringify(s));
+    assert.equal(s.linkInHead,true,`${width}px 外层楼号在作者行 ${JSON.stringify(s)}`);
+    assert.equal(s.linkAboveMenu,true,JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 手机主帖：站点把空占位换成「点赞 加鸡腿…」那一刻，正文宽度和作者行不变（不再跳一下）`,async()=>{
+  // 2026-11-06 真站逐帧：空的 .comment-menu-mount 排在第 2 列，一列的网格多出 40px 隐形列，换成真按钮时正文变宽重排
+  const html=P.postPage({mobile:true}).replace(/<div class="topic-warning"><\/div> (<div class="comment-menu">[\s\S]*?<\/div><\/div>)<\/div><\/div>/,(all,menu)=>`<div class="topic-warning"></div> <div class="comment-menu-mount"></div><template id="real-menu">${menu}</template></div></div>`);
+  assert.match(html,/comment-menu-mount/);
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html});
+  try{
+   await ready(page);
+   const measure=()=>page.evaluate(()=>{const item=document.querySelector(".nsk-post>.content-item"),article=item.querySelector("article.post-content").getBoundingClientRect(),col=item.querySelector(".nsmax-author-col")?.getBoundingClientRect();return{columns:getComputedStyle(item).gridTemplateColumns.split(" ").length,width:Math.round(article.width),top:Math.round(article.top),col:col&&Math.round(col.height)};});
+   const before=await measure();
+   await page.evaluate(()=>{const mount=document.querySelector(".nsk-post .comment-menu-mount");mount.replaceWith(document.getElementById("real-menu").content.cloneNode(true));});
+   await page.waitForTimeout(300);
+   const after=await measure();
+   assert.equal(before.columns,1,JSON.stringify(before));
+   assert.deepEqual(after,before);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 表情贴图：最高 64px、和文字竖直居中，单独一段也不当成大图；深色模式垫浅色底，透明线稿看得清`,async()=>{
+  // 2026-11-06 用户截图：透明底黑线稿贴图在深色卡片上几乎看不见，按原图一百多像素排在基线上，一句话上下撑出两大块空白
+  const svg=encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><circle cx='80' cy='70' r='45' fill='none' stroke='black' stroke-width='3'/></svg>");
+  const st=`<img src="data:image/svg+xml,${svg}#/static/image/sticker/test/1.png" alt="sticker">`;
+  for(const dark of [true,false]){
+   const html=P.postPage({mobile:true,dark}).replace("<p>收了，私信你</p>",`<p>闲鱼上有卖这个的吗${st}</p><p>${st}</p>`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html,colorScheme:dark?"dark":"light"});
+   try{
+    await ready(page);
+    const s=await page.evaluate(()=>[...document.querySelectorAll('ul.comments article.post-content img[src*="/static/image/sticker/"]')].map(i=>{const st=getComputedStyle(i);return{h:i.getBoundingClientRect().height,va:st.verticalAlign,bg:st.backgroundColor,big:i.classList.contains("nsmax-post-image")};}));
+    assert.equal(s.length,2);
+    for(const one of s){
+     assert.ok(one.h<=68&&one.h>=40,JSON.stringify(s));
+     assert.equal(one.va,"middle");
+     assert.equal(one.big,false,"单独一段的贴图不当大图");
+     if(dark)assert.notEqual(one.bg,"rgba(0, 0, 0, 0)");else assert.equal(one.bg,"rgba(0, 0, 0, 0)");
+    }
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }

@@ -2223,7 +2223,7 @@
 			// 图片在后台线程解码（2026-10-20）：几 MB 的截图滚进屏幕时不再占着主线程解码、把滚动卡一下
 			if (!image.hasAttribute("decoding")) image.decoding = "async";
 			const parent = image.parentElement;
-			const emoji = /emoji|smoji|expression|emoticon|yct\d|xhj\d|表情/i.test(image.className + " " + image.alt + " " + image.src);
+			const emoji = /emoji|smoji|sticker|expression|emoticon|yct\d|xhj\d|表情/i.test(image.className + " " + image.alt + " " + image.src);
 			// 投票里的投票人头像、指向个人主页的小头像不是正文配图（以前被当成大图，每个头像单独占一行，一个投票拉得两三千像素高）
 			if (emoji || image.closest(".vote-panel") || parent?.matches('a[href*="/space/"]')) continue;
 			if (!parent?.matches("p, a") || parent.textContent.trim()) continue;
@@ -5480,7 +5480,7 @@ function nsmaxTagStructure() {
 			}
 			if (!form || bound.has(form)) return;
 			bound.add(form);
-			input.enterKeyHint = "search"; input.autocapitalize = "none"; input.setAttribute("aria-label", "搜索帖子或用户"); input.placeholder = "搜索";
+			input.enterKeyHint = "search"; input.autocapitalize = "none"; input.setAttribute("aria-label", "搜索帖子或用户");
 			const close = document.createElement("button"); close.type = "button"; close.className = "nsmax-search-close"; close.setAttribute("aria-label", "关闭搜索"); close.append(toolIcon("close"));
 			close.addEventListener("click", () => closeSearch(true), { signal: ctx.signal }); form.append(close);
 			input.addEventListener("focus", () => { if (media.matches) root.setAttribute("data-nsmax-search-open", ""); }, { signal: ctx.signal });
