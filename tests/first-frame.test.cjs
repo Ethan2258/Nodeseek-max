@@ -160,6 +160,20 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 手机首页：版块那一排的「全部」第一帧就是黑色胶囊，不等手机模块启动；搜索框提示字不来回换`,async()=>{
+  // 2026-11-06 真站逐帧：「全部」要到 1.3 秒后才变黑，搜索框提示字「搜索关键词 → 搜索 → 搜索关键词」跳两次
+  const watch=`(()=>{window.__all=null;window.__ph=[];const seen=()=>{const a=[...document.querySelectorAll("body>header>ul.mobile-nav a")].find(x=>x.textContent.trim()==="全部");if(a&&window.__all===null&&(a.hasAttribute("aria-current")||a.hasAttribute("data-nsmax-header-cat-on")))window.__all=performance.now();const i=document.getElementById("search-site2");if(i&&window.__ph.at(-1)!==i.placeholder)window.__ph.push(i.placeholder);};new MutationObserver(seen).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:["aria-current","data-nsmax-header-cat-on","placeholder"]});})();`;
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true}),init:watch});
+  try{
+   await ready(page);
+   await page.waitForTimeout(600);
+   const s=await page.evaluate(()=>({all:window.__all,fcp:performance.getEntriesByName("first-contentful-paint")[0]?.startTime,deferred:performance.getEntriesByName("nsmax:deferred-start")[0]?.startTime,ph:window.__ph,bg:(()=>{const a=[...document.querySelectorAll("body>header>ul.mobile-nav a")].find(x=>x.textContent.trim()==="全部");return getComputedStyle(a,"::before").backgroundColor;})()}));
+   assert.ok(s.all!==null&&s.all<=s.fcp,JSON.stringify(s));
+   assert.notEqual(s.bg,"rgba(0, 0, 0, 0)",JSON.stringify(s));
+   assert.deepEqual(s.ph.filter(t=>t==="搜索"),[],JSON.stringify(s));
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
 }
 // 分段只比 Chromium：每种页面跑两遍，WebKit 上时间太长，样式分段本身和引擎无关
 test("主题分段：手机、深色下也和整份注入逐元素一致，手机上遇到带右栏的网页时把右栏段补上",async()=>{

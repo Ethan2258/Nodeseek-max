@@ -9479,6 +9479,25 @@ html[data-nsmax-theme] #nsk-body-left article.post-content img:not(.sticker, .sm
   margin: 0 !important;
   box-shadow: none !important;
 }
+/* 表情贴图（站点 /static/image/sticker/，2026-11-06 用户截图）：以前按原图大小（一百多像素）排在文字基线上，一句话被撑出上下两大块空白；
+   改成最高 64px、和文字竖直居中。不少贴图是透明底的黑线稿，深色卡片上几乎看不见：深色模式垫一块浅色小圆角底 */
+html[data-nsmax-theme] #nsk-body-left article.post-content img:is(.sticker, [src*="/static/image/sticker/"]):is(#nsmax-lv, *) {
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: min(64px, 100%) !important;
+  max-height: 64px !important;
+  margin: 0 2px !important;
+  box-shadow: none !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme][data-nsmax-dark] #nsk-body-left article.post-content img:is(.sticker, [src*="/static/image/sticker/"]):is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-dark] dialog.nspp-post-preview .nspp-preview-content img:is(.sticker, [src*="/static/image/sticker/"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: content-box !important;
+  padding: 2px !important;
+  border-radius: var(--r-sm) !important;
+  background: #dcdce2 !important;
+}
 /* 大图（没包在链接里的）：sb.sb .post-image-link——8px 小圆角；悬停一圈 2px 深一级细线、外移 1px。
    以前一条规则把圆角、描边都写死成 0，没包链接的图片既没有圆角，悬停也没有那一圈 */
 html[data-nsmax-theme] #nsk-body-left article.post-content img.nsmax-post-image:not(a img):is(#nsmax-lv, *) {
@@ -11758,6 +11777,14 @@ html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-pos
   grid-row: 5 !important;
   grid-column: 2 !important;
   margin: 12px 20px 0 !important;
+}
+/* ≤1000px 是一列：占位也放第 1 列、左右 12px，和其他格子一样（2026-11-06 真站逐帧：上面那条排在第 2 列，一列的网格被它撑出一列 40px 的
+   隐形列，主帖正文先窄 40px；站点脚本把占位换成真按钮的那一帧，正文变宽重排、作者行从两行收成一行，整块跳一下） */
+@media (max-width: 1000px) {
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .nsk-post .content-item > .comment-menu-mount:empty:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    grid-column: 1 !important;
+    margin: 12px 12px 0 !important;
+  }
 }
 
 /* ---------- 52. 2026-10-18 第六批：等级锁对齐、我的回复、资料卡的管理记录 / 屏蔽 ---------- */
