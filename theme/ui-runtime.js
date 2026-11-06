@@ -6786,7 +6786,7 @@ function nsmaxTagStructure() {
 			try { const url = new URL(link.href,location.href); return url.origin === location.origin && /^\/space\/\d+\/?$/.test(url.pathname) ? link : null; } catch { return null; }
 		};
 		const hide = () => { clearTimeout(opening); clearTimeout(closing); serial++; pop?.remove(); pop = null; anchor = null; document.documentElement.removeAttribute("data-nsmax-person-open"); };
-		const closeSoon = () => { clearTimeout(opening); clearTimeout(closing); closing = setTimeout(hide,160); };
+		const closeSoon = () => { if (pop?.querySelector(".nsmax-person-note-form")) return; clearTimeout(opening); clearTimeout(closing); closing = setTimeout(hide,160); };
 		const place = () => { if (!pop || !anchor) return; const box = anchor.getBoundingClientRect(); pop.style.left = Math.max(8,Math.min(box.left,innerWidth-pop.offsetWidth-8))+"px"; pop.style.top = Math.max(8,Math.min(box.bottom+8,innerHeight-pop.offsetHeight-8))+"px"; };
 		const show = async link => {
 			const url = new URL(link.href,location.href), id = url.pathname.match(/^\/space\/(\d+)\/?$/)?.[1];
@@ -6871,6 +6871,40 @@ function nsmaxTagStructure() {
 				nsmaxRulingDialog(id, who);
 			}, { signal: ctx.signal });
 			foot.append(ruling);
+			// 「备注」：在卡片里直接给这个人写本机备注（就是设置「用户备注」里的那一行），名字后面的备注小标跟着变；
+			// 编辑时底栏换成输入框，回车保存、Esc 取消，鼠标移出卡片也不收起
+			const notes = nsmaxUserNotes;
+			if (notes && !self && !/^用户 \d+$/.test(name)) {
+				const who = () => profile.textContent.trim() || name;
+				const note = document.createElement("button"); note.type = "button"; note.className = "nsmax-person-note";
+				const noteLabel = document.createElement("span");
+				note.append(toolIcon("note"), noteLabel);
+				const setNote = (text) => {
+					noteLabel.textContent = text || "备注";
+					note.toggleAttribute("data-on", !!text);
+					note.title = text ? `备注：${text}（点击修改）` : "写个备注，只保存在这台设备上";
+				};
+				setNote(notes.get(who()));
+				note.addEventListener("click", () => {
+					const form = document.createElement("form"); form.className = "nsmax-person-note-form";
+					const input = document.createElement("input"); input.type = "text"; input.maxLength = 60; input.value = notes.get(who());
+					input.placeholder = "给 " + who() + " 写个备注"; input.setAttribute("aria-label", who() + " 的备注");
+					const save = document.createElement("button"); save.type = "submit"; save.textContent = "保存";
+					form.append(input, save);
+					const close = () => { form.remove(); foot.hidden = false; note.focus({ preventScroll: true }); };
+					form.addEventListener("submit", (event) => {
+						event.preventDefault();
+						if (nsmaxUserNotes?.set(who(), input.value)) setNote(nsmaxUserNotes.get(who()));
+						close();
+					});
+					input.addEventListener("keydown", (event) => {
+						if (event.key !== "Escape" || event.isComposing) return;
+						event.preventDefault(); event.stopPropagation(); close();
+					});
+					foot.hidden = true; foot.after(form); input.focus({ preventScroll: true }); input.select();
+				}, { signal: ctx.signal });
+				foot.append(note);
+			}
 			// 「屏蔽」：和站点的黑名单连在一起——站点黑名单里加上 / 去掉（/api/block-list/add 按用户名、/del 按 ID），
 			// 脚本的屏蔽名单也同步改，他的帖子、回复马上藏起来；先问一句再动手
 			if (me && !self) {
