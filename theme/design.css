@@ -9491,7 +9491,13 @@ html[data-nsmax-theme] #nsk-body-left article.post-content img:is(.sticker, [src
   box-shadow: none !important;
   vertical-align: middle !important;
 }
-html[data-nsmax-theme][data-nsmax-dark] #nsk-body-left article.post-content img:is(.sticker, [src*="/static/image/sticker/"]):is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-dark] #nsk-body-left article.post-content img:is(.sticker, [src*="/static/image/sticker/"]):is(#nsmax-lv, *) {
+  box-sizing: content-box !important;
+  padding: 2px !important;
+  border-radius: var(--r-sm) !important;
+  background: #dcdce2 !important;
+}
+/* 帖子预览浮层里同样（浮层样式单独一条：首帧不注入浮层规则） */
 html[data-nsmax-theme][data-nsmax-dark] dialog.nspp-post-preview .nspp-preview-content img:is(.sticker, [src*="/static/image/sticker/"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: content-box !important;
   padding: 2px !important;
