@@ -96,6 +96,8 @@ input:not([type=checkbox]):focus,select:focus,textarea:focus{border-color:var(--
 .segments button[aria-checked=true],.segments button[aria-checked=true]:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}
 .segment-note{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.6}
 .empty{margin:28px 0;color:var(--s-muted);font-size:13.5px;text-align:center}
+/* 搜索命中的字：浅黄底、文字原色，不加粗不改字距，避免整行重排 */
+mark{padding:0;border-radius:2px;background:var(--s-warning-soft);color:inherit;box-shadow:0 0 0 1px var(--s-warning-soft)}
 /* 底部：sb.sb .settings-actions——line-soft 细线；左边细线框小胶囊工具按钮，右边墨色实底主按钮 */
 .foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--s-line-soft)}
 .foot-tools{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto}

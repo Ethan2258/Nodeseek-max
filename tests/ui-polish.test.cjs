@@ -355,4 +355,79 @@ for(const engine of engines){
    assert.deepEqual(home.errors,[]);
   }finally{await home.context.close();}
  });
+ test(`${engine} 设置搜索：挂在开关上的选项和选项名也能搜到，多个词同时匹配并标出命中处；Esc 先清空搜索再关闭`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage({count:4})});
+  try{
+   await ready(page);
+   await page.getByRole("button",{name:"NodeSeek Max 设置",exact:true}).click();
+   const host=page.locator("#nspp-settings"),search=host.getByRole("searchbox",{name:"搜索设置"});
+   const modules=()=>host.locator(".module").evaluateAll(list=>list.map(m=>m.dataset.feature));
+   await search.fill("热榜");
+   await page.waitForTimeout(300);
+   assert.ok((await modules()).includes("hot-rankings"),JSON.stringify(await modules()));
+   assert.ok(await host.locator(".module mark").count()>=1);
+   await search.fill("深色 inter");
+   await page.waitForTimeout(300);
+   assert.deepEqual(await modules(),["modern-theme"]);
+   const marks=await host.locator(".module mark").allTextContents();
+   assert.ok(marks.length>=2&&marks.every(t=>/^(深色|inter)$/i.test(t))&&marks.some(t=>/inter/i.test(t)),JSON.stringify(marks));
+   assert.equal(await host.locator('.module[data-feature="modern-theme"] .module-title').textContent(),"主题样式");
+   await search.fill("zz不存在");
+   await page.waitForTimeout(300);
+   assert.match(await host.locator(".empty").textContent(),/zz不存在/);
+   await search.press("Escape");
+   assert.equal(await search.inputValue(),"");
+   assert.equal(await host.locator("dialog").isVisible(),true,"第一次 Esc 只清空搜索");
+   assert.ok(await host.locator(".module").count()>1);
+   await search.press("Escape");
+   await page.waitForTimeout(200);
+   assert.equal(await host.locator("dialog").isVisible(),false,"第二次 Esc 关闭设置");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 最近浏览：手机菜单里列表有排版（无圆点、44px 点按区、标题和热榜同字号），「清空」要点两次才清掉`,async()=>{
+  const recs=JSON.stringify(Array.from({length:4},(_,i)=>({path:`/post-${70+i}-1`,title:`之前看过的帖子 ${i+1}`})));
+  const init=`for(const k of ["1","10","guest"])localStorage.setItem("nsmax:recent:"+k,${JSON.stringify(recs)})`;
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true}),init});
+  try{
+   await ready(page);
+   await page.getByRole("button",{name:"打开菜单",exact:true}).tap();
+   await page.locator("#left-slide-panel").getByRole("button",{name:"最近浏览",exact:true}).tap();
+   const panel=page.locator("#left-slide-panel .nsmax-recent-panel");
+   await panel.locator("a").first().waitFor();
+   const s=await panel.evaluate(p=>({list:getComputedStyle(p.querySelector("ul")).listStyleType,h2:getComputedStyle(p.querySelector("h2")).fontSize,heights:[...p.querySelectorAll("a")].map(a=>a.getBoundingClientRect().height),clear:p.querySelector(".nsmax-recent-clear").getBoundingClientRect().height,count:p.querySelectorAll("a").length}));
+   assert.equal(s.list,"none",JSON.stringify(s));
+   assert.equal(s.h2,"15px",JSON.stringify(s));
+   assert.ok(s.heights.every(h=>h>=44)&&s.clear>=44,JSON.stringify(s));
+   assert.equal(s.count,5,JSON.stringify(s));
+   const clear=panel.locator(".nsmax-recent-clear");
+   await clear.tap();
+   assert.equal(await clear.textContent(),"确认清空");
+   assert.equal(await panel.locator("a").count(),5,"点一次不清");
+   await clear.tap();
+   await page.waitForFunction(()=>!document.querySelector("#left-slide-panel .nsmax-recent-panel"));
+   assert.equal(await page.locator("#left-slide-panel .nsmax-drawer-empty").isVisible(),true);
+   const stored=await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith("nsmax:recent:")).map(k=>JSON.parse(localStorage.getItem(k)).length));
+   assert.ok(stored.includes(0),JSON.stringify(stored));
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 关键词屏蔽：大小写不同的同一个词不重复添加，已有的标签闪一下并清空输入框；输入框只有一圈黄色焦点`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage({count:4})});
+  try{
+   await ready(page);
+   await page.getByRole("button",{name:"关键词屏蔽"}).click();
+   const input=page.locator(".nsmax-pop[data-kind=keywords] input[type=text]");
+   await input.fill("VPS");await input.press("Enter");
+   await page.locator(".nsmax-pop-chips li").first().waitFor();
+   await input.fill("vps");await input.press("Enter");
+   assert.deepEqual(await page.locator(".nsmax-pop-chips li").allTextContents(),["VPS"]);
+   assert.equal(await input.inputValue(),"");
+   assert.equal(await page.locator(".nsmax-pop-chips li[data-flash]").count(),1);
+   await input.fill("/VPS/");await input.press("Enter");
+   await page.waitForFunction(()=>document.querySelectorAll(".nsmax-pop-chips li").length===2);
+   assert.equal(await input.evaluate(e=>getComputedStyle(e).outlineStyle),"none");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
 }

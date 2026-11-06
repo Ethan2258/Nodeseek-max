@@ -6167,7 +6167,13 @@ function nsmaxTagStructure() {
 		panel.className = "nsmax-recent-panel";
 		const head = document.createElement("h2");
 		head.textContent = "最近浏览";
-		panel.append(head, document.createElement("ul"));
+		// 右上角「清空」：点一下变成「确认清空」，3 秒内再点才清掉（只清本机这个账号的记录）
+		const clear = document.createElement("button");
+		clear.type = "button";
+		clear.className = "nsmax-recent-clear";
+		clear.textContent = "清空";
+		clear.title = "清空最近浏览记录";
+		panel.append(head, clear, document.createElement("ul"));
 		return panel;
 	}
 	// 列表内容和记录一样时不动 DOM（页面解析阶段画好的面板，模块接管时不重画）
@@ -6233,6 +6239,24 @@ function nsmaxTagStructure() {
 			};
 			const stop = ctx.watch(render);
 			window.addEventListener("storage", event => { if (event.key === key) { records = nsmaxRecentRecords(account); render(); } }, { signal: ctx.signal });
+			let confirmTimer = 0;
+			document.addEventListener("click", event => {
+				const button = event.target.closest?.(".nsmax-recent-clear");
+				if (!button) return;
+				event.preventDefault();
+				if (!button.hasAttribute("data-confirm")) {
+					button.setAttribute("data-confirm", "");
+					button.textContent = "确认清空";
+					clearTimeout(confirmTimer);
+					confirmTimer = setTimeout(() => { button.removeAttribute("data-confirm"); button.textContent = "清空"; }, 3000);
+					return;
+				}
+				clearTimeout(confirmTimer);
+				records = [];
+				try { localStorage.setItem(key, "[]"); } catch {}
+				render();
+				for (const stale of document.querySelectorAll(".nsmax-recent-panel")) stale.remove();
+			}, { signal: ctx.signal });
 			return () => { stop(); panel?.remove(); };
 		}
 	};
