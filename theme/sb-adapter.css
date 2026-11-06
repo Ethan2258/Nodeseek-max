@@ -410,6 +410,7 @@ html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel h2 {margin
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel ul {list-style:none;margin:0;padding:0;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel a {display:block;padding:4px 0;font:13px/23px var(--font-sans);color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-recent-panel a:hover {color:var(--brand);}
+html[data-nsmax-theme] :is(#nsk-right-panel-container,#left-slide-panel) .nsmax-recent-panel a[aria-current="page"]:not(:hover) {color:var(--text-subtle)!important;}
 html[data-nsmax-theme] #nsk-body-left ul.post-list>li.post-list-item {padding:11px 72px 11px 14px!important;gap:12px!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-title a {font:500 15px/22px var(--font-sans)!important;color:var(--text-strong)!important;text-decoration:none!important;}
 html[data-nsmax-theme] #nsk-body-left .post-list-item .post-info {display:flex!important;align-items:center!important;gap:10px!important;margin-top:3px!important;font:400 12.5px/20px var(--font-sans)!important;color:var(--text-subtle)!important;}

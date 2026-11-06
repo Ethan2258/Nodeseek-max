@@ -300,4 +300,59 @@ for(const engine of engines){
    assert.deepEqual(list.errors,[]);
   }finally{await list.context.close();}
  });
+ test(`${engine} 交易小标：标题开头的【出】【收】【求】[已出] 画成 sb.sb .mk-tag 彩色小标，标题文字不变`,async()=>{
+  // 2026-11-06 sb.sb index.2b8d1ab929.css 新增 .mk-tag（我要卖 / 我要买）；NodeSeek 按楼主写在标题开头的标记画
+  for(const [label,opts,url,html] of [["电脑",desk,"https://www.nodeseek.com/",P.listPage({count:6})],["手机",phone(),"https://www.nodeseek.com/",P.listPage({mobile:true,count:6})]]){
+   const marked=html.replace("求推荐稳定的美西 VPS","【出】 美西 VPS 2C4G").replace("分享一个 Docker 一键部署脚本","[已出] 分享一个 Docker").replace("Cloudflare Tunnel 踩坑记录","【求购】Cloudflare 账号");
+   const {context,page,errors}=await open(browser,url,{...opts,html:marked});
+   try{
+    await ready(page);
+    const s=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-title > a")].map(a=>{const mk=a.querySelector(":scope > .nsmax-mk"),r=mk?.getBoundingClientRect(),title=a.getBoundingClientRect();return{text:a.textContent,kind:mk?.dataset.mk||"",shown:mk?mk.innerText.trim():"",color:mk?getComputedStyle(mk).color:"",bg:mk?getComputedStyle(mk).backgroundColor:"",inside:mk?r.left>=title.left-0.5:true}}));
+    const by=t=>s.find(x=>x.text.includes(t));
+    assert.equal(by("美西").text,"【出】 美西 VPS 2C4G",label);
+    assert.equal(by("美西").kind,"sell",label);
+    assert.equal(by("美西").shown,"出",label);
+    assert.equal(by("Docker").kind,"done",label);
+    assert.equal(by("Cloudflare").kind,"seek",label);
+    assert.equal(by("日本原生").kind,"buy",label);
+    assert.equal(by("日本原生").shown,"收",label);
+    assert.equal(by("香港 CN2").kind,"",`标题中间的「出」不算：${label}`);
+    assert.notEqual(by("美西").color,by("日本原生").color,label);
+    assert.notEqual(by("美西").bg,"rgba(0, 0, 0, 0)",label);
+    assert.ok(s.every(x=>x.inside),JSON.stringify(s));
+    await page.evaluate(()=>document.querySelector("ul.post-list").append(document.createElement("i")));await page.waitForTimeout(400);
+    assert.equal(await page.locator(".post-list-item .nsmax-mk").count(),4,label);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 最近浏览标出正在看的这篇；手机未读通知整行直角；手机热榜数字列等宽`,async()=>{
+  const post=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,viewport:{width:1440,height:1400},html:P.postPage()});
+  try{
+   await ready(post.page);
+   await post.page.waitForSelector(".nsmax-recent-panel a");
+   const s=await post.page.evaluate(()=>[...document.querySelectorAll(".nsmax-recent-panel a")].map(a=>({href:a.getAttribute("href"),current:a.getAttribute("aria-current"),color:getComputedStyle(a).color,subtle:getComputedStyle(document.documentElement).getPropertyValue("--text-subtle").trim()})));
+   const current=s.find(x=>x.href==="/post-1000-1");
+   assert.equal(current?.current,"page",JSON.stringify(s));
+   assert.deepEqual(post.errors,[]);
+  }finally{await post.context.close();}
+  const notice=await open(browser,"https://www.nodeseek.com/notification",{...phone(),html:P.notificationPage({mobile:true})});
+  try{
+   await ready(notice.page);
+   await notice.page.waitForSelector(".nsmax-notice-row[data-unread]");
+   assert.equal(await notice.page.locator(".nsmax-notice-row[data-unread]").first().evaluate(e=>getComputedStyle(e).borderTopLeftRadius),"0px");
+   assert.deepEqual(notice.errors,[]);
+  }finally{await notice.context.close();}
+  const home=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true,count:4})});
+  try{
+   await ready(home.page);
+   await home.page.getByRole("button",{name:"打开菜单",exact:true}).tap();
+   await home.page.locator("#left-slide-panel").getByRole("button",{name:"热榜",exact:true}).tap();
+   await home.page.waitForSelector("#left-slide-panel .nsmax-hot-list a");
+   const widths=await home.page.evaluate(()=>[...document.querySelectorAll("#left-slide-panel .nsmax-hot-text")].map(e=>Math.round(e.getBoundingClientRect().width)));
+   assert.ok(widths.length>=10,JSON.stringify(widths));
+   assert.ok(Math.max(...widths)-Math.min(...widths)<=1,`标题列一样宽：${JSON.stringify(widths)}`);
+   assert.deepEqual(home.errors,[]);
+  }finally{await home.context.close();}
+ });
 }
