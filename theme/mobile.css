@@ -300,9 +300,11 @@ html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-bo
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>*{grid-column:1/-1!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>div:not([class]){grid-column:1!important;grid-row:2!important;align-self:center!important;min-height:44px!important;margin:0 0 0 12px!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>div:not([class]){min-width:0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info :is(.content-info,.date-created,time){white-space:normal!important;overflow-wrap:anywhere!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info :is(.content-info,.date-created,time){white-space:normal!important;overflow-wrap:normal!important;word-break:keep-all!important}
+/* 2026-11-07：操作点按区宽度收到 36px 起（高仍 44px，和楼中楼一样；左右留白 6px，整排右边多让 2px，最后一个字仍对齐正文右边线），390px 宽时「2026-10-03 04:00」和五个操作能排进一行；放不下时时间只在日期和钟点之间换行，不再折成「2026-10-」「03 04:00」 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item{min-width:36px!important;padding:8px 6px!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions{display:contents!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu{grid-column:2!important;grid-row:2!important;justify-self:end!important;align-self:center!important;justify-content:flex-end!important;margin:0 4px 0 8px!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu{grid-column:2!important;grid-row:2!important;justify-self:end!important;align-self:center!important;justify-content:flex-end!important;margin:0 6px 0 8px!important;padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.floor-link-wrapper{grid-column:1/-1!important;grid-row:1!important;justify-self:end!important;align-self:center!important;position:relative!important;z-index:1!important;margin:0 12px 0 0!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col{padding-right:56px!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-who{min-width:0!important}
@@ -317,6 +319,29 @@ html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-bo
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col{padding-right:56px!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-who{min-width:0!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+}
+/* 简洁模式（手机，2026-11-07 用户截图）：以前照电脑排法，头像单独占左边一栏，正文、签名、按钮全都往右缩进 42px；
+   「回复 引用 点赞 鸡腿 反对」挤在名字下面、正文上面单独一行，楼号放不下又掉到再下一行。改成：
+   头像（36px）+ 名字 · 等级（下面一行时间）+ 右边楼号；正文、签名占满整宽；「回复 引用 …」放到正文下面，文字和正文同一条左边线。
+   主楼一样，右上角放「引用 回复 举报」 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item){grid-template-columns:36px minmax(0,1fr) auto!important;grid-template-rows:none!important;grid-auto-rows:auto!important;column-gap:10px!important;row-gap:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>*{grid-column:1/-1!important;grid-row:auto!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>.avatar-wrapper{grid-column:1!important;grid-row:1!important;align-self:center!important;width:36px!important;height:36px!important;margin:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>.avatar-wrapper :is(a,img){width:36px!important;height:36px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]){grid-column:2!important;grid-row:1!important;align-self:center!important;flex-wrap:wrap!important;align-items:center!important;gap:0 8px!important;min-width:0!important;min-height:44px!important;height:auto!important;margin:0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]) .author-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]) .content-info{flex:0 0 100%!important;margin:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left .nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions{grid-column:3!important;grid-row:1!important;align-self:center!important;justify-self:end!important;margin:0 -8px 0 0!important;padding:0!important;gap:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions{display:contents!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.floor-link-wrapper{grid-column:3!important;grid-row:1!important;align-self:center!important;justify-self:end!important;margin:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu{grid-column:1/-1!important;order:99!important;justify-self:start!important;align-self:center!important;flex-wrap:wrap!important;gap:0 4px!important;height:auto!important;margin:-4px 0 -10px -8px!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>article.post-content{margin-top:6px!important}
+/* 简洁模式回复连成一张卡片、层与层之间一条细线：每层还带着手机分卡片时的 12px 圆角，细线两头往下弯成弧。照电脑只留最后一层底下两个圆角 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left ul.comments>li.content-item{border-radius:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left ul.comments>li.content-item:last-child{border-radius:0 0 var(--r) var(--r)!important}
+/* 360px 以下主楼右上角放不下「引用 回复 举报」（名字、楼主、等级会被挤成一个一行）：换到名字下面一行靠右 */
+@media (max-width:359px){
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left .nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions{grid-column:1/-1!important;grid-row:2!important;margin:-6px -8px 0 0!important}
 }
 /* 回复区工具条「只看楼主 直达底部 简洁模式」：和编辑器、页码一样是 44px 点击区 + 28px 细线胶囊（以前是 44px 高的方框，和页面其他按钮不是一套） */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){position:relative!important;isolation:isolate!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:8px 12px!important;border:0!important;border-radius:var(--r-pill)!important;background:transparent!important;box-shadow:none!important;color:var(--text-muted)!important}
@@ -358,6 +383,11 @@ html[data-nsmax-theme][data-nsmax-touch] body>header>ul.mobile-nav>li>a{padding:
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .comment-container>:is(div[data-nsmax-pagerbox],.nsmax-reply-head):first-child{margin:0 0 10px!important;border-bottom:1px solid var(--line)!important;border-radius:var(--r)!important}
 /* 「只看楼主 直达底部 简洁模式」：照参照站 .bot-toggle 画成 31px 高、12px 字的细线胶囊；按钮仍有 44px 点击区，上下各收 6.5px 让标题栏保持 55px */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){margin-block:-6.5px!important;padding:0 12px!important;font-size:12px!important}
+/* 简洁模式 320px 宽时「N 条回复 只看楼主 直达底部 退出简洁模式」一行放不下，最后一个按钮被卡片右边切掉一截：简洁模式下（按钮字多两个）这么窄时标题单独一行，三个按钮排在下面一行 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left .comment-container>div[data-nsmax-pagerbox]:first-child{flex-wrap:wrap!important;row-gap:13px!important}
+@media (max-width:359px){
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left .comment-container>div[data-nsmax-pagerbox]:first-child>.nsmax-reply-title{flex:0 0 100%!important;margin:0!important}
+}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle)::before{inset:6.5px 0!important}
 @media (max-width:359px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){padding:0 8px!important}}
 /* 主楼「点赞 加鸡腿 反对 收藏」：参照站是 66px 宽、靠左排的小方块（.topic-actions>*：7px 3px 内边距、间隔 8px），不再拉满整行；320px 放不下四个时一起收窄，不折行 */

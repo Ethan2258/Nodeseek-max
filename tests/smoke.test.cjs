@@ -6747,10 +6747,11 @@ test("v1.8.36 打开页面更快：看图库（Viewer.js）和它的样式等第
 	} finally { await context.close(); }
 });
 
-test("v1.8.36 中文时间（不再走 date-fns 的通用格式化，结果和以前逐字一样）：刚刚 / N 分钟前 / N 小时前 / N 天前；超过 30 天和将来的时间显示完整时间", async () => {
+test("v1.8.36 中文时间（不再走 date-fns 的通用格式化，结果和以前逐字一样）：刚刚 / N 分钟前 / N 小时前 / N 天前；超过 30 天和将来的时间显示到分钟的完整日期", async () => {
 	const now = Date.now();
 	const iso = (ms) => new Date(now - ms).toISOString();
-	const full = (ms) => { const d = new Date(now - ms); const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+	// v1.9.19：超过 30 天和将来的时间只写到分钟（秒数在悬停提示里）
+	const full = (ms) => { const d = new Date(now - ms); const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 	const cases = [[20e3, "刚刚"], [90e3, "1 分钟前"], [30 * 6e4 + 15e3, "30 分钟前"], [61 * 6e4, "1 小时前"], [5 * 36e5 + 10 * 6e4, "5 小时前"], [864e5 + 36e5, "1 天前"], [3 * 864e5 + 2 * 36e5, "3 天前"], [40 * 864e5, null], [-5 * 6e4, null]];
 	const html = postPage().replace("</article>", cases.map(([ms], i) => `<p><time id="t${i}" datetime="${iso(ms)}">x</time></p>`).join("") + "</article>");
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
