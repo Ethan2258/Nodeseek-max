@@ -382,7 +382,7 @@ test("手机版页面（服务器按手机 UA 输出的顶栏）：≡ / 标志 
 		assert.equal(drawer.row, 39);
 		assert.ok(!drawer.links.some((text) => /推广|生活|Dev|贴图|沙盒/.test(text)), JSON.stringify(drawer.links));
 		assert.ok(drawer.links.includes("日常") && drawer.links.includes("推荐阅读"), JSON.stringify(drawer.links));
-		assert.match(drawer.mask, /rgba\(5, 0, 56, 0\.42\)/);
+		assert.match(drawer.mask, /rgba\(15, 17, 23, 0\.42\)/);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

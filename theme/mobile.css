@@ -457,7 +457,7 @@ html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group>#back-to-top.nav
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-scroll-down] #fast-nav-button-group{transform:translateY(16px)!important;opacity:0!important;pointer-events:none!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-scroll-down] #fast-nav-button-group>.nav-item-btn{pointer-events:none!important}
 @media (prefers-reduced-motion:reduce){html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group{transition:none!important}}
-/* 列表信息行：作者、版块、浏览、回复、时间五项排一行；「最后回复人」和作者用同一个小人图标，真站上常把一行挤成两行，手机上不放 */
+/* 列表信息行：只放作者、版块、浏览、回复、时间五项；「最后回复人」和作者用同一个小人图标，真站上常把一行挤成两行，手机上不放（放不下时仍整项换行，不截短） */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-last-commenter{display:none!important}
 /* 按住滑动时行背景不再留着悬停色（触屏的 :hover 会粘在最后点过的那一行上），按下仍有反馈 */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item:not(.topic-pinned):hover:not(:active){background:transparent!important}
@@ -468,13 +468,6 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-lis
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item.topic-pinned{background:rgb(255 208 47/.05)!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list>li.post-list-item .post-title>span[data-nsmax-pinned],
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left .content-item .author-info .role-tag.is-poster{background:rgb(255 208 47/.16)!important;color:#ffd977!important}
-/* 信息行始终一行：放不下时先把作者名、再把时间截成省略号，不再把时间单独挤到第二行 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info{flex-wrap:nowrap!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>*{flex:none!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-author{max-width:8.5em!important;overflow:hidden!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-author>a{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-last-comment-time{display:block!important;flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
-@media (max-width:359px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-views{display:none!important}}
 /* 第二批 */
 /* 菜单里未登录的「登录 / 注册」：以前是透明胶囊、文字缩进 12px，看起来像普通文字。改成并排两个按钮：登录实心、注册描边，和上面的列表左边对齐 */
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new>.P{flex-direction:row!important;gap:10px!important}
