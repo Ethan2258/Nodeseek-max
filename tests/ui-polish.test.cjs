@@ -558,4 +558,42 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 电脑个人主页：1200px 以上九格数据排一行、窄一些三列；「介绍」标签藏起来时「主题」不再多空 14px`,async()=>{
+  for(const [width,cols] of [[1440,9],[1100,3]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{viewport:{width,height:900},seed,html:P.spaceTopicsPage()});
+   try{
+    await ready(page);
+    const s=await page.evaluate(()=>{
+     const cells=[...document.querySelectorAll(".head-container > .card-block > .nsmax-user-stat")].filter(c=>c.offsetWidth);
+     const tabs=[...document.querySelectorAll(".selector > a.select-item")].filter(t=>t.offsetWidth);
+     return{cols:new Set(cells.map(c=>Math.round(c.getBoundingClientRect().left))).size,rows:new Set(cells.map(c=>Math.round(c.getBoundingClientRect().top))).size,count:cells.length,
+      firstTabGap:Math.round(tabs[0].getBoundingClientRect().left-document.querySelector(".selector").getBoundingClientRect().left),gaps:tabs.slice(1).map((t,i)=>Math.round(t.getBoundingClientRect().left-tabs[i].getBoundingClientRect().right)),overflow:document.documentElement.scrollWidth-innerWidth};
+    });
+    assert.equal(s.count,9,JSON.stringify(s));
+    assert.equal(s.cols,cols,width+JSON.stringify(s));
+    assert.equal(s.rows,9/cols,width+JSON.stringify(s));
+    assert.equal(s.firstTabGap,14,width+JSON.stringify(s));
+    assert.ok(s.gaps.every(g=>g===14),width+JSON.stringify(s));
+    assert.equal(s.overflow,0);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 电脑通知页未读：左边 2px 黄线，底色比品牌浅底淡（深色下不再一整块土黄）`,async()=>{
+  for(const dark of [false,true]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification",{viewport:{width:1440,height:900},seed,colorScheme:dark?"dark":"light",html:P.notificationPage({dark})});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nsmax-notice-row[data-unread]");
+    const s=await page.evaluate(()=>{
+     const row=document.querySelector(".nsmax-notice-row[data-unread]"),c=getComputedStyle(row);
+     const probe=document.createElement("i");probe.style.color="var(--brand-soft)";document.body.append(probe);const soft=getComputedStyle(probe).color;probe.remove();
+     return{bg:c.backgroundColor,shadow:c.boxShadow,soft};
+    });
+    assert.match(s.shadow,/inset/,JSON.stringify(s));
+    assert.notEqual(s.bg,s.soft,JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }
