@@ -461,13 +461,9 @@ html[data-nsmax-theme][data-nsmax-touch][data-nsmax-scroll-down] #fast-nav-butto
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-last-commenter{display:none!important}
 /* 按住滑动时行背景不再留着悬停色（触屏的 :hover 会粘在最后点过的那一行上），按下仍有反馈 */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item:not(.topic-pinned):hover:not(:active){background:transparent!important}
-/* 标题后的小页码：高 22px、文字居中，不再被裁掉半个数字；「…」用次要色看得清 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>a{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:22px!important;min-width:22px!important;padding:0 6px!important;overflow:visible!important;text-overflow:clip!important;font-family:var(--font-sans)!important;font-size:12px!important;line-height:20px!important;font-variant-numeric:tabular-nums!important}
+/* 标题后的小页码：照 sb.sb .topic-pages——等宽 11.5px、左右 4px、细线框；高 20px，数字不再被裁掉一半；「…」用次要色看得清 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>a{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:20px!important;min-width:18px!important;padding:0 4px!important;overflow:visible!important;text-overflow:clip!important;font-family:var(--font-mono)!important;font-size:11.5px!important;line-height:18px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>.nsmax-topic-pages-gap{color:var(--text-subtle)!important}
-/* 深色：置顶行、「置顶 / 楼主」小标从整块亮黄改成浅黄字 + 半透明黄底，不再是页面上最刺眼的东西 */
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item.topic-pinned{background:rgb(255 208 47/.05)!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list>li.post-list-item .post-title>span[data-nsmax-pinned],
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left .content-item .author-info .role-tag.is-poster{background:rgb(255 208 47/.16)!important;color:#ffd977!important}
 /* 第二批 */
 /* 菜单里未登录的「登录 / 注册」：以前是透明胶囊、文字缩进 12px，看起来像普通文字。改成并排两个按钮：登录实心、注册描边，和上面的列表左边对齐 */
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new>.P{flex-direction:row!important;gap:10px!important}
@@ -491,22 +487,15 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-p
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-pop-foot label{min-height:44px!important;font-size:13.5px!important}
 /* 顶部版块栏：以前左右各缩 10px，右边被硬切在半个胶囊上。改成贴满屏宽、第一颗位置不变，右边 28px 渐隐，看得出还能往右滑 */
 html[data-nsmax-theme][data-nsmax-touch] body>header>ul.mobile-nav{width:100%!important;max-width:100%!important;margin:6px 0 0!important;padding:0 28px 0 10px!important;scroll-padding-inline:10px 28px!important;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important;mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important}
-/* 经典布局回复卡片减重：奇数层不再整张泛奶黄（看着像「热门」或被标记），只把作者栏垫一层中性浅灰；正文上方和签名的虚线改成细实线 */
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item:nth-child(odd){background:var(--panel)!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item:nth-child(odd)>.nsmax-author-col{background:var(--panel-alt)!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>article.post-content{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.signature::after{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-nested-replies>li.content-item,html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-fb-foot{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
-/* 楼中楼底部「我也说一句」：手机上黑色实心胶囊是整页最重的东西，改成和其他小按钮一样的细线胶囊 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-fb-foot>.nsmax-fb-say{border-color:var(--line)!important;background:transparent!important;color:var(--text)!important}
 /* 回复区标题栏：真机字体比测试环境宽，390px 时「退出简洁模式」会掉到第二行。400px 以下三个小胶囊左右各收 2px */
 @media (max-width:399px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){padding:0 10px!important}}
 /* 简洁模式的名字：15px/600，和时间、正文拉开层次（以前和正文一样粗，一眼分不出谁说的） */
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]) .author-name{font-weight:600!important}
-/* 登录 / 注册页表单下面的说明块：手机上是一整块亮黄（深色下尤其刺眼）、28px 粗体大字。改成和表单同款的面板卡片，标题 18px */
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero{gap:16px!important;padding:18px 20px!important;border:1px solid var(--line)!important;background:var(--panel)!important;color:var(--text)!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero-name{font-size:18px!important;font-weight:700!important;letter-spacing:0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero-notes li{color:var(--text-muted)!important;font-size:13.5px!important}
 /* 列表底部翻页的「›」：和数字页码一样画上细线圆圈（以前只有一个光秃秃的箭头，看不出能点） */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager a[href]:is(.pager-next,.pager-prev):not([aria-disabled=true]){position:relative!important;isolation:isolate!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;min-width:44px!important;min-height:44px!important;border:0!important;background:transparent!important;color:var(--text-muted)!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager a[href]:is(.pager-next,.pager-prev):not([aria-disabled=true])::after{content:""!important;display:block!important;position:absolute!important;inset:6px!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:transparent!important}
+/* 2026-11-07 对照 sb.sb 现版（电脑 + 手机逐页截图） */
+/* 版块那一排只在列表页出现（sb.sb 帖子、个人页、登录、排行页都直接从卡片开始，首屏不再被往下推 44px） */
+html[data-nsmax-theme][data-nsmax-touch]:is([data-nsmax-page=post],[data-nsmax-page=space],[data-nsmax-page=auth],[data-nsmax-page=board]) body>header>ul.mobile-nav{display:none!important}
+/* 菜单里当前版块：深色下不再是黄字（sb.sb 当前项和普通项同色） */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a[aria-current=page]>p{color:var(--text)!important}

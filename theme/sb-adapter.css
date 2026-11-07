@@ -387,8 +387,8 @@ html[data-nsmax-theme] #nsk-head .search-box {flex:0 1 180px!important;width:180
 html[data-nsmax-theme] #nsk-head .search-box input {height:36px!important;border:1px solid var(--line)!important;border-radius:8px!important;padding:0 34px 0 10px!important;background:var(--panel-alt)!important;font:13.5px/36px var(--font-sans)!important;color:var(--text)!important;}
 html[data-nsmax-theme] #nsk-head .nsmax-header-action {width:32px!important;height:32px!important;border:1px solid var(--line)!important;background:var(--panel)!important;border-radius:999px!important;}
 html[data-nsmax-theme] #nsk-head .nsmax-header-action[aria-expanded=true] {border-color:var(--brand-border)!important;background:var(--brand-soft)!important;color:var(--brand)!important;}
-html[data-nsmax-theme] .nsmax-pop[data-kind=colors] {width:136px!important;padding:6px!important;border-radius:12px!important;background:var(--panel)!important;box-shadow:var(--shadow-medium)!important;}
-html[data-nsmax-theme] .nsmax-pop[data-kind=colors] .nsmax-pop-item {min-height:36px!important;padding:7px 8px!important;gap:8px!important;font:12px/20px var(--font-sans)!important;color:var(--text-subtle)!important;}
+html[data-nsmax-theme] .nsmax-pop[data-kind=colors] {width:138px!important;padding:5px!important;border-radius:12px!important;background:var(--panel)!important;box-shadow:var(--shadow-medium)!important;}
+html[data-nsmax-theme] .nsmax-pop[data-kind=colors] .nsmax-pop-item {min-height:36px!important;padding:7px 10px!important;gap:8px!important;font:500 13.5px/20px var(--font-sans)!important;color:var(--text)!important;}
 html[data-nsmax-theme] .nsmax-pop[data-kind=colors] [aria-checked=true] {color:var(--text-strong)!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-head {display:flex!important;gap:12px!important;align-items:center!important;margin-bottom:12px!important;}
 html[data-nsmax-theme] #nsk-right-panel-container .nsmax-account-name {font:600 14px/1.3 var(--font-sans)!important;color:var(--text-strong)!important;}
