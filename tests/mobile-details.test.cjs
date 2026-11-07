@@ -188,13 +188,13 @@ for(const engine of engines){
    assert.equal(await reg.page.locator("#agree-tos").isChecked(),true);assert.deepEqual(reg.errors,[]);
   }finally{await reg.context.close();}
  });
- test(`${engine} 手机简洁模式（2026-11-07 用户截图）：头像、名字、时间、楼号一行，正文不缩进，操作在正文下面，层间细线两头不弯`,async()=>{
+ test(`${engine} 手机简洁模式（2026-11-07 用户截图）：头像和名字顶对齐、楼号和名字同一条中线，正文不缩进，操作在正文下面（主楼也是），层间细线两头不弯`,async()=>{
   const simple="if(window.top===window)try{localStorage.setItem('nsmax:post-layout','simple')}catch{}";
   for(const width of [390,320]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html:P.postPage({mobile:true}),init:simple});
    try{
     await ready(page);
-    const s=await page.evaluate(()=>{const r=e=>e.getBoundingClientRect().toJSON();const floors=[...document.querySelectorAll("#nsk-body-left ul.comments>li.content-item")].map(li=>({li:r(li),pad:parseFloat(getComputedStyle(li).paddingLeft),radius:getComputedStyle(li).borderTopLeftRadius,avatar:r(li.querySelector(".avatar-wrapper")),name:r(li.querySelector(".author-name")),time:r(li.querySelector(".date-created")),floor:r(li.querySelector(".floor-link")),body:r(li.querySelector("article.post-content")),menu:r(li.querySelector(".comment-menu")),first:Math.min(...[...li.querySelectorAll(".comment-menu>.menu-item")].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().left))}));const op=document.querySelector("#nsk-body-left .nsk-post>.content-item");const opActions=r(op.querySelector(".nsmax-op-actions")),opName=r(op.querySelector(".author-name")),opBody=r(op.querySelector("article.post-content")),opAvatar=r(op.querySelector(".avatar-wrapper"));const head=document.querySelector(".nsmax-layout-toggle").parentElement;return{floors,opActions,opName,opBody,opAvatar,headOverflow:head.scrollWidth>head.clientWidth+1,toggle:r(document.querySelector(".nsmax-layout-toggle")),headBox:r(head),overflow:document.documentElement.scrollWidth>innerWidth+1};});
+    const s=await page.evaluate(()=>{const r=e=>e.getBoundingClientRect().toJSON();const floors=[...document.querySelectorAll("#nsk-body-left ul.comments>li.content-item")].map(li=>({li:r(li),pad:parseFloat(getComputedStyle(li).paddingLeft),radius:getComputedStyle(li).borderTopLeftRadius,avatar:r(li.querySelector(".avatar-wrapper")),name:r(li.querySelector(".author-name")),time:r(li.querySelector(".date-created")),floor:r(li.querySelector(".floor-link")),body:r(li.querySelector("article.post-content")),menu:r(li.querySelector(".comment-menu")),first:Math.min(...[...li.querySelectorAll(".comment-menu>.menu-item")].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().left))}));const op=document.querySelector("#nsk-body-left .nsk-post>.content-item");const opActions=r(op.querySelector(".nsmax-op-actions")),opFirst=op.querySelector(".nsmax-op-actions>a").getBoundingClientRect().left,opSig=r(op.querySelector(".signature")),opReact=r(op.querySelector(".topic-actions")),opName=r(op.querySelector(".author-name")),opBody=r(op.querySelector("article.post-content")),opAvatar=r(op.querySelector(".avatar-wrapper"));const head=document.querySelector(".nsmax-layout-toggle").parentElement;return{floors,opActions,opFirst,opSig,opReact,opName,opBody,opAvatar,headOverflow:head.scrollWidth>head.clientWidth+1,toggle:r(document.querySelector(".nsmax-layout-toggle")),headBox:r(head),overflow:document.documentElement.scrollWidth>innerWidth+1};});
     assert.ok(s.floors.length>=3);
     for(const [i,f] of s.floors.entries()){
      const info=JSON.stringify({width,i,...f});
@@ -203,14 +203,19 @@ for(const engine of engines){
      assert.ok(f.name.left>f.avatar.right&&f.name.top<f.avatar.bottom,`名字在头像右边同一行：${info}`);
      assert.ok(f.time.top>=f.name.bottom-1&&f.time.bottom<=f.body.top+1,`时间在名字下面、正文上面：${info}`);
      assert.ok(f.floor.top<f.avatar.bottom&&f.floor.bottom>f.avatar.top&&f.floor.right<=f.li.right,`楼号在头像那一行右边：${info}`);
+     // 2026-11-07：头像和名字顶对齐（名字长、小标换行时头像不再往下掉），楼号和名字同一条中线
+     assert.ok(Math.abs(f.avatar.top-f.name.top)<3,`头像和名字顶对齐：${info}`);
+     assert.ok(Math.abs((f.floor.top+f.floor.bottom)/2-(f.name.top+f.name.bottom)/2)<2,`楼号和名字同一条中线：${info}`);
      assert.ok(f.menu.top>=f.body.bottom-5&&f.menu.top+f.menu.height/2>f.body.bottom,`操作在正文下面（点按区上沿可以压进正文 4px）：${info}`);
      assert.ok(f.menu.height<=44.5,`操作一行：${info}`);
      assert.ok(Math.abs(f.first+8-f.body.left)<1.5,`第一个操作的文字和正文同一条左边线：${info}`);
      if(i>0)assert.equal(f.radius,"0px",`层间细线两头不弯：${info}`);
     }
     assert.ok(Math.abs(s.opBody.left-s.opAvatar.left)<1.5,`主楼正文不缩进：${JSON.stringify(s)}`);
-    if(width>=360)assert.ok(s.opActions.top<s.opAvatar.bottom&&s.opActions.left>s.opName.right,`主楼「引用 回复 举报」在名字那一行右边：${JSON.stringify(s)}`);
-    assert.ok(s.opActions.bottom<=s.opBody.top+1,"主楼操作在正文上面");
+    // 2026-11-07 重排：主楼「引用 回复 举报」不再挤在名字右边，和每层回复一样放在最下面一行、文字和正文同一条左边线
+    assert.ok(s.opActions.top>=s.opSig.bottom-5&&s.opActions.top>=s.opReact.bottom,`主楼操作在点赞一排和签名下面：${JSON.stringify(s)}`);
+    assert.ok(Math.abs(s.opFirst+8-s.opBody.left)<1.5,`主楼第一个操作的文字和正文同一条左边线：${JSON.stringify(s)}`);
+    assert.ok(s.opReact.top>=s.opBody.bottom&&s.opReact.bottom<=s.opSig.top,"点赞一排在正文和签名之间");
     assert.equal(s.headOverflow,false);assert.ok(s.toggle.right<=s.headBox.right+0.5,`「退出简洁模式」没被切掉：${JSON.stringify(s)}`);
     assert.equal(s.overflow,false);assert.deepEqual(errors,[]);
    }finally{await context.close();}
