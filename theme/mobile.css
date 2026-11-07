@@ -79,7 +79,7 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-vi
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-comments-count{order:3!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-last-commenter{order:4!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-last-comment-time{order:5!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler+ul.post-list{border-top-left-radius:0!important;border-top-right-radius:0!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler~ul.post-list{border-top-left-radius:0!important;border-top-right-radius:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:none!important;min-width:44px!important;min-height:44px!important;margin-left:auto!important;padding:0 2px!important;border:0!important;border-radius:0!important;background:transparent!important;color:var(--text-muted)!important;font:12px/20px var(--font-sans)!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter svg{width:14px!important;height:14px!important;margin-right:4px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter::after{content:"隐藏"!important}
@@ -449,3 +449,29 @@ html[data-nsmax-theme][data-nsmax-touch] #register :is(input[type=radio],input[t
 html[data-nsmax-theme][data-nsmax-touch] #register label.pure-radio{display:inline-flex!important;align-items:center!important;gap:8px!important;min-height:44px!important;margin:0 16px 0 0!important;padding:0!important;line-height:20px!important}
 html[data-nsmax-theme][data-nsmax-touch] #register label[for=agree-tos]{display:inline-flex!important;align-items:center!important;min-height:44px!important;margin:0!important;padding:0 6px 0 8px!important;vertical-align:middle!important}
 html[data-nsmax-theme][data-nsmax-touch] #register input#agree-tos{vertical-align:middle!important}
+/* 2026-11-07 手机端重做，第一批（真站 iPhone 走查） */
+/* 回到顶部：只留这一个按钮，40px 圆形、面板底加柔和投影；往下翻时收起，往回翻或翻到底再出来，不再一直压着正文右侧 */
+html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group{right:14px!important;bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;width:40px!important;transition:transform .2s ease,opacity .2s ease!important}
+html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group>.nav-item-btn:not(#back-to-top){display:none!important}
+html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group>#back-to-top.nav-item-btn{bottom:0!important;display:grid!important;place-items:center!important;box-sizing:border-box!important;width:40px!important;height:40px!important;padding:0!important;border:1px solid var(--line)!important;border-radius:50%!important;background:var(--panel)!important;color:var(--text-muted)!important;box-shadow:0 4px 14px rgb(0 0 0/.12)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-scroll-down] #fast-nav-button-group{transform:translateY(16px)!important;opacity:0!important;pointer-events:none!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-scroll-down] #fast-nav-button-group>.nav-item-btn{pointer-events:none!important}
+@media (prefers-reduced-motion:reduce){html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group{transition:none!important}}
+/* 列表信息行：作者、版块、浏览、回复、时间五项排一行；「最后回复人」和作者用同一个小人图标，真站上常把一行挤成两行，手机上不放 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-last-commenter{display:none!important}
+/* 按住滑动时行背景不再留着悬停色（触屏的 :hover 会粘在最后点过的那一行上），按下仍有反馈 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item:not(.topic-pinned):hover:not(:active){background:transparent!important}
+/* 标题后的小页码：高 22px、文字居中，不再被裁掉半个数字；「…」用次要色看得清 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>a{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:22px!important;min-width:22px!important;padding:0 6px!important;overflow:visible!important;text-overflow:clip!important;font-family:var(--font-sans)!important;font-size:12px!important;line-height:20px!important;font-variant-numeric:tabular-nums!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>.nsmax-topic-pages-gap{color:var(--text-subtle)!important}
+/* 深色：置顶行、「置顶 / 楼主」小标从整块亮黄改成浅黄字 + 半透明黄底，不再是页面上最刺眼的东西 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item.topic-pinned{background:rgb(255 208 47/.05)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list>li.post-list-item .post-title>span[data-nsmax-pinned],
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left .content-item .author-info .role-tag.is-poster{background:rgb(255 208 47/.16)!important;color:#ffd977!important}
+/* 信息行始终一行：放不下时先把作者名、再把时间截成省略号，不再把时间单独挤到第二行 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info{flex-wrap:nowrap!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>*{flex:none!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-author{max-width:8.5em!important;overflow:hidden!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-author>a{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-last-comment-time{display:block!important;flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
+@media (max-width:359px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-views{display:none!important}}

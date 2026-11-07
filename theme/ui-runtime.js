@@ -5546,8 +5546,23 @@ function nsmaxTagStructure() {
 		// iOS Safari 要文档上挂着 touchstart 才会触发 :active，否则手机按下反馈不生效
 		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
+		// 手机上往下翻时把「回到顶部」收起来，往回翻或到页底再出来：以前它一直浮在右下角，压着正文和回复按钮
+		let lastY = scrollY, scrollFrame = 0;
+		const onScroll = () => {
+			if (scrollFrame) return;
+			scrollFrame = requestAnimationFrame(() => {
+				scrollFrame = 0;
+				const y = scrollY, delta = y - lastY;
+				if (Math.abs(delta) < 8 && y > 0) return;
+				const atEnd = y + innerHeight >= document.documentElement.scrollHeight - 24;
+				const down = media.matches && delta > 0 && y > 120 && !atEnd;
+				if (root.hasAttribute("data-nsmax-scroll-down") !== down) root.toggleAttribute("data-nsmax-scroll-down", down);
+				lastY = y;
+			});
+		};
+		addEventListener("scroll", onScroll, { passive: true, signal: ctx.signal });
 		const stop = ctx.watch(sync);
-		return () => { stopScroll(); stop(); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
+		return () => { stopScroll(); stop(); cancelAnimationFrame(scrollFrame); root.removeAttribute("data-nsmax-scroll-down"); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
 	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
