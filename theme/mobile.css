@@ -475,3 +475,45 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-in
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-author>a{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-last-comment-time{display:block!important;flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
 @media (max-width:359px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-views{display:none!important}}
+/* 第二批 */
+/* 菜单里未登录的「登录 / 注册」：以前是透明胶囊、文字缩进 12px，看起来像普通文字。改成并排两个按钮：登录实心、注册描边，和上面的列表左边对齐 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new>.P{flex-direction:row!important;gap:10px!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new a.btn{flex:1 1 0!important;justify-content:center!important;min-height:44px!important;margin:0!important;padding:0 12px!important;border:1px solid var(--line-strong,var(--line))!important;border-radius:var(--r-pill)!important;background:transparent!important;color:var(--text)!important;font-size:14.5px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new a.btn[href*="signIn"]{border-color:var(--action)!important;background:var(--action)!important;color:var(--action-text)!important}
+/* 菜单在深色下和页面同色，边线也看不出：加一层投影把它和后面的页面分开 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel{box-shadow:6px 0 24px rgb(0 0 0/.18)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #left-slide-panel{box-shadow:8px 0 32px rgb(0 0 0/.5)!important}
+/* 当前所在版块：品牌色字外再加一条浅底，一眼看出在哪 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a[aria-current=page]>p{margin:0 -10px!important;padding-inline:10px!important;border-radius:var(--r-sm)!important;background:var(--panel-hover)!important}
+/* 「关键词屏蔽」弹窗：以前按按钮右对齐，左边只剩 3px、右边 27px；输入框聚焦是黄圈，「添加」按钮又小又灰。改成左右各 12px 居中、浮层投影，
+   输入框 44px 高、聚焦用中性描边，「添加」和输入框一样高的实心按钮（没输入时变淡但仍看得出是按钮） */
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop{box-shadow:var(--shadow-medium)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords]{left:12px!important;right:12px!important;width:auto!important;max-width:none!important;padding:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-pop-head strong{font-size:15px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input{height:44px!important;padding:0 12px!important;border-radius:12px!important;font-size:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input:is(:focus,:focus-visible){border-color:var(--text-subtle)!important;box-shadow:none!important;outline:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form button{height:44px!important;min-height:44px!important;padding:0 18px!important;border:0!important;border-radius:12px!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14.5px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form button:disabled{opacity:.35!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-pop-chips li{min-height:32px!important;font-size:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-pop-foot label{min-height:44px!important;font-size:13.5px!important}
+/* 顶部版块栏：以前左右各缩 10px，右边被硬切在半个胶囊上。改成贴满屏宽、第一颗位置不变，右边 28px 渐隐，看得出还能往右滑 */
+html[data-nsmax-theme][data-nsmax-touch] body>header>ul.mobile-nav{width:100%!important;max-width:100%!important;margin:6px 0 0!important;padding:0 28px 0 10px!important;scroll-padding-inline:10px 28px!important;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important;mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important}
+/* 经典布局回复卡片减重：奇数层不再整张泛奶黄（看着像「热门」或被标记），只把作者栏垫一层中性浅灰；正文上方和签名的虚线改成细实线 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item:nth-child(odd){background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item:nth-child(odd)>.nsmax-author-col{background:var(--panel-alt)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>article.post-content{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.signature::after{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-nested-replies>li.content-item,html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-fb-foot{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
+/* 楼中楼底部「我也说一句」：手机上黑色实心胶囊是整页最重的东西，改成和其他小按钮一样的细线胶囊 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-fb-foot>.nsmax-fb-say{border-color:var(--line)!important;background:transparent!important;color:var(--text)!important}
+/* 回复区标题栏：真机字体比测试环境宽，390px 时「退出简洁模式」会掉到第二行。400px 以下三个小胶囊左右各收 2px */
+@media (max-width:399px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){padding:0 10px!important}}
+/* 简洁模式的名字：15px/600，和时间、正文拉开层次（以前和正文一样粗，一眼分不出谁说的） */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]) .author-name{font-weight:600!important}
+/* 登录 / 注册页表单下面的说明块：手机上是一整块亮黄（深色下尤其刺眼）、28px 粗体大字。改成和表单同款的面板卡片，标题 18px */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero{gap:16px!important;padding:18px 20px!important;border:1px solid var(--line)!important;background:var(--panel)!important;color:var(--text)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero-name{font-size:18px!important;font-weight:700!important;letter-spacing:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero-notes li{color:var(--text-muted)!important;font-size:13.5px!important}
+/* 列表底部翻页的「›」：和数字页码一样画上细线圆圈（以前只有一个光秃秃的箭头，看不出能点） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager a[href]:is(.pager-next,.pager-prev):not([aria-disabled=true]){position:relative!important;isolation:isolate!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;min-width:44px!important;min-height:44px!important;border:0!important;background:transparent!important;color:var(--text-muted)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager a[href]:is(.pager-next,.pager-prev):not([aria-disabled=true])::after{content:""!important;display:block!important;position:absolute!important;inset:6px!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:transparent!important}

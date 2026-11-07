@@ -5479,7 +5479,7 @@ function nsmaxTagStructure() {
 				const boards = panel.querySelector(":scope > .category-mobile");
 				if (boards) tabs.after(boards);
 				const account = panel.querySelector(":scope > .user-card-container");
-				if (account) { const title = document.createElement("h2"); title.className = "nsmax-drawer-section-title"; title.textContent = "我的菜单"; account.prepend(title); }
+				if (account) { const title = document.createElement("h2"); title.className = "nsmax-drawer-section-title"; title.textContent = account.classList.contains("welcome-new") ? "账号" : "我的菜单"; account.prepend(title); }
 				const category = panel.querySelector(".category-mobile > div");
 				if (category && !category.querySelector('a[href="/"]')) { const all = document.createElement("a"); all.href = "/"; const text = document.createElement("p"); text.textContent = "全部帖子"; all.append(text); category.prepend(all); }
 				const tools = document.createElement("div"); tools.className = "nsmax-drawer-tools";
