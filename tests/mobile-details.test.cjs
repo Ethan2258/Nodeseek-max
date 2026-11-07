@@ -229,7 +229,10 @@ for(const engine of engines){
  });
  test(`${engine} 2026-11-07 手机重做：列表不放最后回复人、回顶按钮下翻收起、关键词弹窗居中、菜单登录注册是按钮`,async()=>{
   for(const width of [390,320]){
-   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(width),html:P.listPage({mobile:true})});
+   // 真站的帖子大多是「N 小时前」这类相对时间：把夹具里 30 天前的日期换成两小时前，免得长日期让信息行换行
+   const recent=new Date(Date.now()-2*36e5).toISOString();
+   const html=P.listPage({mobile:true}).replace(/2026-10-03T04:0\d:00\.000Z/g,recent).replace(/2026-10-03 12:0\d:00/g,recent);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(width),html});
    try{
     await ready(page);
     const rows=await page.evaluate(()=>[...document.querySelectorAll("ul.post-list>li.post-list-item .post-info")].map(e=>({h:e.getBoundingClientRect().height,last:getComputedStyle(e.querySelector(".info-last-commenter")).display})));
