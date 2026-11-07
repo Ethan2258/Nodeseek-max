@@ -71,11 +71,11 @@ html[data-nsmax-theme] body {
   --inverse: #1c1c1e;
   --inverse-text: #ffffff;
   --inverse-border: #2c2c34;
-  --backdrop: rgb(5 0 56 / 0.42);
+  --backdrop: rgb(15 17 23 / 0.42);
   --selection: #ffd02f;
   --selection-editor: #ffd02f;
-  --shadow-base: 0 1px 2px rgb(5 0 56 / 0.04);
-  --shadow-medium: 0 16px 48px -8px rgb(5 0 56 / 0.12);
+  --shadow-base: 0 1px 2px rgb(15 17 23 / 0.05);
+  --shadow-medium: 0 16px 48px -8px rgb(15 17 23 / 0.16);
   --code-inline-bg: #fff4c4;
   --code-inline-text: #6b5414;
   --code-inline-border: #f0dc8c;

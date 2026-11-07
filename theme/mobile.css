@@ -79,7 +79,7 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-vi
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-comments-count{order:3!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-last-commenter{order:4!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-last-comment-time{order:5!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler+ul.post-list{border-top-left-radius:0!important;border-top-right-radius:0!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler~ul.post-list{border-top-left-radius:0!important;border-top-right-radius:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:none!important;min-width:44px!important;min-height:44px!important;margin-left:auto!important;padding:0 2px!important;border:0!important;border-radius:0!important;background:transparent!important;color:var(--text-muted)!important;font:12px/20px var(--font-sans)!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter svg{width:14px!important;height:14px!important;margin-right:4px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter::after{content:"隐藏"!important}
@@ -261,8 +261,29 @@ html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel>u
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel a{color:var(--text)!important;text-decoration:none!important;overflow-wrap:anywhere!important}
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel a[aria-current="page"]{color:var(--text-subtle)!important}
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel>.nsmax-recent-clear{top:0!important;right:-10px!important;min-height:44px!important;padding:0 10px!important;font-size:13px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay{max-height:var(--nsmax-overlay-height,100dvh)!important;border-radius:var(--r)!important;overflow-y:auto!important;overscroll-behavior:contain!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay :is(button,[role=tab]){min-width:44px!important;min-height:44px!important;border-radius:var(--r)!important;font-size:14px!important}
+/* 搜索面板（手机，2026-11-07 用户截图）：以前把「只有可见区那么高 + 圆角」加在遮罩本身上，键盘一弹出遮罩就只盖上半屏、底边还是圆的，
+   下面的列表照常露出来。改成：遮罩铺满整屏；面板贴顶、最多和可见区（键盘上面那一块）一样高，内容多了在面板里滚。
+   面板里：「搜索」按钮是框里右边一个实心小胶囊（以前是框右边一道竖线隔出来的灰字，像没对齐）；版块标签伸到面板两边、
+   右边渐隐，看得出能横着滑；「搜索历史」标题和「清空」行距收紧，历史胶囊 32px 好点 */
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay{position:fixed!important;inset:0!important;height:auto!important;max-height:none!important;padding:var(--nsmax-overlay-top,0px) 0 0!important;border-radius:0!important;overflow:hidden!important;overscroll-behavior:contain!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-card{width:100%!important;max-width:none!important;max-height:var(--nsmax-overlay-height,100dvh)!important;overflow-y:auto!important;overscroll-behavior:contain!important;border:0!important;border-radius:0 0 20px 20px!important;box-shadow:0 10px 30px rgb(0 0 0/.14)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs{height:48px!important;padding:env(safe-area-inset-top,0px) 4px 0 16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs>.tab-btn{height:48px!important;min-width:0!important;padding:0 4px!important;border-radius:0!important;font-size:15px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-close{width:44px!important;height:44px!important;border-radius:var(--r-pill)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-content{gap:12px!important;padding:14px 16px 16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group{height:46px!important;padding:0 0 0 14px!important;border-radius:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group>input{font-size:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-search-btn{align-self:center!important;min-width:0!important;min-height:0!important;height:34px!important;margin:0 6px 0 4px!important;padding:0 16px!important;border:0!important;border-radius:var(--r-pill)!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav{gap:8px!important;margin:0 -16px!important;padding:0 28px 0 16px!important;scroll-padding-inline:16px 28px!important;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important;mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav>.sub-pill{height:32px!important;padding:0 14px!important;border-radius:var(--r-pill)!important;font-size:13.5px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .search-history{padding:12px 0 0!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header{min-height:32px!important;margin:0 0 6px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header>span{font-size:13px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .clear-history-btn{min-width:44px!important;min-height:32px!important;margin:0 -10px 0 0!important;padding:0 10px!important;border-radius:var(--r-pill)!important;font-size:13px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-list{gap:8px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item{height:32px!important;padding:0 6px 0 13px!important;font-size:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-keyword{font-size:14px!important}
 html[data-nsmax-theme][data-nsmax-touch] :is(.viewer-button,.viewer-toolbar>ul>li){width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:var(--r-pill)!important}
 html[data-nsmax-theme][data-nsmax-touch] .viewer-toolbar>ul>li::before{margin:12px!important}
 html[data-nsmax-theme][data-nsmax-touch] dialog[open]{border-radius:var(--r)!important;animation:none!important}
@@ -428,3 +449,64 @@ html[data-nsmax-theme][data-nsmax-touch] #register :is(input[type=radio],input[t
 html[data-nsmax-theme][data-nsmax-touch] #register label.pure-radio{display:inline-flex!important;align-items:center!important;gap:8px!important;min-height:44px!important;margin:0 16px 0 0!important;padding:0!important;line-height:20px!important}
 html[data-nsmax-theme][data-nsmax-touch] #register label[for=agree-tos]{display:inline-flex!important;align-items:center!important;min-height:44px!important;margin:0!important;padding:0 6px 0 8px!important;vertical-align:middle!important}
 html[data-nsmax-theme][data-nsmax-touch] #register input#agree-tos{vertical-align:middle!important}
+/* 2026-11-07 手机端重做，第一批（真站 iPhone 走查） */
+/* 回到顶部：只留这一个按钮，40px 圆形、面板底加柔和投影；往下翻时收起，往回翻或翻到底再出来，不再一直压着正文右侧 */
+html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group{right:14px!important;bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;width:40px!important;transition:transform .2s ease,opacity .2s ease!important}
+html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group>.nav-item-btn:not(#back-to-top){display:none!important}
+html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group>#back-to-top.nav-item-btn{bottom:0!important;display:grid!important;place-items:center!important;box-sizing:border-box!important;width:40px!important;height:40px!important;padding:0!important;border:1px solid var(--line)!important;border-radius:50%!important;background:var(--panel)!important;color:var(--text-muted)!important;box-shadow:0 4px 14px rgb(0 0 0/.12)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-scroll-down] #fast-nav-button-group{transform:translateY(16px)!important;opacity:0!important;pointer-events:none!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-scroll-down] #fast-nav-button-group>.nav-item-btn{pointer-events:none!important}
+@media (prefers-reduced-motion:reduce){html[data-nsmax-theme][data-nsmax-touch] #fast-nav-button-group{transition:none!important}}
+/* 列表信息行：只放作者、版块、浏览、回复、时间五项；「最后回复人」和作者用同一个小人图标，真站上常把一行挤成两行，手机上不放（放不下时仍整项换行，不截短） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info>.info-last-commenter{display:none!important}
+/* 按住滑动时行背景不再留着悬停色（触屏的 :hover 会粘在最后点过的那一行上），按下仍有反馈 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item:not(.topic-pinned):hover:not(:active){background:transparent!important}
+/* 标题后的小页码：高 22px、文字居中，不再被裁掉半个数字；「…」用次要色看得清 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>a{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:22px!important;min-width:22px!important;padding:0 6px!important;overflow:visible!important;text-overflow:clip!important;font-family:var(--font-sans)!important;font-size:12px!important;line-height:20px!important;font-variant-numeric:tabular-nums!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>.nsmax-topic-pages-gap{color:var(--text-subtle)!important}
+/* 深色：置顶行、「置顶 / 楼主」小标从整块亮黄改成浅黄字 + 半透明黄底，不再是页面上最刺眼的东西 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list:not(.topic-carousel-panel)>li.post-list-item.topic-pinned{background:rgb(255 208 47/.05)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left ul.post-list>li.post-list-item .post-title>span[data-nsmax-pinned],
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #nsk-body-left .content-item .author-info .role-tag.is-poster{background:rgb(255 208 47/.16)!important;color:#ffd977!important}
+/* 第二批 */
+/* 菜单里未登录的「登录 / 注册」：以前是透明胶囊、文字缩进 12px，看起来像普通文字。改成并排两个按钮：登录实心、注册描边，和上面的列表左边对齐 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new>.P{flex-direction:row!important;gap:10px!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new a.btn{flex:1 1 0!important;justify-content:center!important;min-height:44px!important;margin:0!important;padding:0 12px!important;border:1px solid var(--line-strong,var(--line))!important;border-radius:var(--r-pill)!important;background:transparent!important;color:var(--text)!important;font-size:14.5px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .welcome-new a.btn[href*="signIn"]{border-color:var(--action)!important;background:var(--action)!important;color:var(--action-text)!important}
+/* 菜单在深色下和页面同色，边线也看不出：加一层投影把它和后面的页面分开 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel{box-shadow:6px 0 24px rgb(0 0 0/.18)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-dark] #left-slide-panel{box-shadow:8px 0 32px rgb(0 0 0/.5)!important}
+/* 当前所在版块：品牌色字外再加一条浅底，一眼看出在哪 */
+html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a[aria-current=page]>p{margin:0 -10px!important;padding-inline:10px!important;border-radius:var(--r-sm)!important;background:var(--panel-hover)!important}
+/* 「关键词屏蔽」弹窗：以前按按钮右对齐，左边只剩 3px、右边 27px；输入框聚焦是黄圈，「添加」按钮又小又灰。改成左右各 12px 居中、浮层投影，
+   输入框 44px 高、聚焦用中性描边，「添加」和输入框一样高的实心按钮（没输入时变淡但仍看得出是按钮） */
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop{box-shadow:var(--shadow-medium)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords]{left:12px!important;right:12px!important;width:auto!important;max-width:none!important;padding:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-pop-head strong{font-size:15px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input{height:44px!important;padding:0 12px!important;border-radius:12px!important;font-size:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input:is(:focus,:focus-visible){border-color:var(--text-subtle)!important;box-shadow:none!important;outline:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form button{height:44px!important;min-height:44px!important;padding:0 18px!important;border:0!important;border-radius:12px!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14.5px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] form.nsmax-pop-form button:disabled{opacity:.35!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-pop-chips li{min-height:32px!important;font-size:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop[data-kind=keywords] .nsmax-pop-foot label{min-height:44px!important;font-size:13.5px!important}
+/* 顶部版块栏：以前左右各缩 10px，右边被硬切在半个胶囊上。改成贴满屏宽、第一颗位置不变，右边 28px 渐隐，看得出还能往右滑 */
+html[data-nsmax-theme][data-nsmax-touch] body>header>ul.mobile-nav{width:100%!important;max-width:100%!important;margin:6px 0 0!important;padding:0 28px 0 10px!important;scroll-padding-inline:10px 28px!important;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important;mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important}
+/* 经典布局回复卡片减重：奇数层不再整张泛奶黄（看着像「热门」或被标记），只把作者栏垫一层中性浅灰；正文上方和签名的虚线改成细实线 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item:nth-child(odd){background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item:nth-child(odd)>.nsmax-author-col{background:var(--panel-alt)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>article.post-content{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.signature::after{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-nested-replies>li.content-item,html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-fb-foot{border-top-style:solid!important;border-top-color:var(--line-soft)!important}
+/* 楼中楼底部「我也说一句」：手机上黑色实心胶囊是整页最重的东西，改成和其他小按钮一样的细线胶囊 */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-floor-box>.nsmax-fb-foot>.nsmax-fb-say{border-color:var(--line)!important;background:transparent!important;color:var(--text)!important}
+/* 回复区标题栏：真机字体比测试环境宽，390px 时「退出简洁模式」会掉到第二行。400px 以下三个小胶囊左右各收 2px */
+@media (max-width:399px){html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){padding:0 10px!important}}
+/* 简洁模式的名字：15px/600，和时间、正文拉开层次（以前和正文一样粗，一眼分不出谁说的） */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]) .author-name{font-weight:600!important}
+/* 登录 / 注册页表单下面的说明块：手机上是一整块亮黄（深色下尤其刺眼）、28px 粗体大字。改成和表单同款的面板卡片，标题 18px */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero{gap:16px!important;padding:18px 20px!important;border:1px solid var(--line)!important;background:var(--panel)!important;color:var(--text)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero-name{font-size:18px!important;font-weight:700!important;letter-spacing:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=auth] .nsmax-auth-hero-notes li{color:var(--text-muted)!important;font-size:13.5px!important}
+/* 列表底部翻页的「›」：和数字页码一样画上细线圆圈（以前只有一个光秃秃的箭头，看不出能点） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager a[href]:is(.pager-next,.pager-prev):not([aria-disabled=true]){position:relative!important;isolation:isolate!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;min-width:44px!important;min-height:44px!important;border:0!important;background:transparent!important;color:var(--text-muted)!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager a[href]:is(.pager-next,.pager-prev):not([aria-disabled=true])::after{content:""!important;display:block!important;position:absolute!important;inset:6px!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:transparent!important}

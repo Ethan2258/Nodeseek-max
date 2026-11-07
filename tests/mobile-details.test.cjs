@@ -227,4 +227,43 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 2026-11-07 手机重做：列表不放最后回复人、回顶按钮下翻收起、关键词弹窗居中、菜单登录注册是按钮`,async()=>{
+  for(const width of [390,320]){
+   // 真站的帖子大多是「N 小时前」这类相对时间：把夹具里 30 天前的日期换成两小时前，免得长日期让信息行换行
+   const recent=new Date(Date.now()-2*36e5).toISOString();
+   const html=P.listPage({mobile:true}).replace(/2026-10-03T04:0\d:00\.000Z/g,recent).replace(/2026-10-03 12:0\d:00/g,recent);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(width),html});
+   try{
+    await ready(page);
+    const rows=await page.evaluate(()=>[...document.querySelectorAll("ul.post-list>li.post-list-item .post-info")].map(e=>({h:e.getBoundingClientRect().height,last:getComputedStyle(e.querySelector(".info-last-commenter")).display})));
+    assert.ok(rows.length&&rows.every(r=>r.last==="none"),`${width}：${JSON.stringify(rows)}`);if(width===390)assert.ok(rows.slice(0,4).every(r=>r.h<=21),`390px 常见的帖子信息排一行：${JSON.stringify(rows)}`);
+    await page.locator(".nsmax-mobile-filter").click();
+    const pop=await page.locator('.nsmax-pop[data-kind="keywords"]').evaluate(e=>{const r=e.getBoundingClientRect(),b=e.querySelector("form button").getBoundingClientRect(),i=e.querySelector("form input").getBoundingClientRect();return{left:r.left,right:innerWidth-r.right,button:b.height,input:i.height};});
+    assert.ok(Math.abs(pop.left-12)<1&&Math.abs(pop.right-12)<1&&pop.button===pop.input&&pop.input>=44,JSON.stringify(pop));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  const post=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(390,700),html:P.postPage({mobile:true})});
+  try{
+   await ready(post.page);
+   const state=async()=>post.page.evaluate(()=>({down:document.documentElement.hasAttribute("data-nsmax-scroll-down"),opacity:getComputedStyle(document.querySelector("#fast-nav-button-group")).opacity}));
+   await post.page.evaluate(()=>scrollTo(0,600));await post.page.waitForTimeout(400);
+   const down=await state();
+   await post.page.evaluate(()=>scrollTo(0,300));await post.page.waitForTimeout(400);
+   const up=await state();
+   assert.ok(down.down&&down.opacity==="0",JSON.stringify(down));assert.ok(!up.down&&up.opacity==="1",JSON.stringify(up));
+   const buttons=await post.page.evaluate(()=>[...document.querySelectorAll("#fast-nav-button-group>.nav-item-btn")].filter(e=>getComputedStyle(e).display!=="none").map(e=>e.id));
+   assert.deepEqual(buttons.filter(id=>id!=="back-to-top"),[],"手机上只留回到顶部");
+   assert.deepEqual(post.errors,[]);
+  }finally{await post.context.close();}
+  const guest=await open(browser,"https://www.nodeseek.com/notification",{...phone(),html:P.notificationGuestPage({mobile:true})});
+  try{
+   await ready(guest.page);
+   await guest.page.locator("#toggle-left-panel>a").click();await guest.page.waitForTimeout(300);
+   const btns=await guest.page.evaluate(()=>[...document.querySelectorAll("#left-slide-panel .welcome-new a.btn")].map(a=>{const r=a.getBoundingClientRect(),s=getComputedStyle(a);return{top:r.top,left:r.left,width:r.width,height:r.height,bg:s.backgroundColor};}));
+   assert.equal(btns.length,2);assert.equal(Math.round(btns[0].top),Math.round(btns[1].top),"登录、注册并排");assert.equal(btns[0].left,16);
+   assert.ok(btns.every(b=>b.height>=44&&b.width>=100),JSON.stringify(btns));assert.notEqual(btns[0].bg,"rgba(0, 0, 0, 0)","登录是实心按钮");
+   assert.deepEqual(guest.errors,[]);
+  }finally{await guest.context.close();}
+ });
 }

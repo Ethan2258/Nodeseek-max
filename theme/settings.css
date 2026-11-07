@@ -167,4 +167,15 @@ button.primary{width:100%;min-height:48px;margin:0;font-size:16px}
 .foot{gap:4px;padding-top:6px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
 .foot-tools{gap:4px}.foot-tools>button{border:0;background:transparent;font-size:12px;padding:6px 2px}
 button.primary{min-height:44px;height:44px;font-size:14px}
+/* 2026-11-07 手机重做：上下固定的部分以前占了屏幕 38%（标题 52 + 搜索 48 + 页签 44 + 底栏 108），改成 48 + 44 + 44 + 82，留更多地方给设置本身 */
+.head{min-height:48px;height:48px}
+.tabs-row input.search{min-height:36px;height:36px;margin:4px 0;padding:0 12px;border-radius:var(--s-r-pill)}
+.tab-bar{justify-content:space-between;gap:0}.tab{flex:none}
+.foot{gap:2px;padding-top:2px}
+.foot-tools>button{min-height:36px;height:36px;padding:0 2px}
+button.primary{min-height:40px;height:40px}
+/* 勾选项：两行的说明时方框对齐第一行，不再挂在两行中间 */
+.check{align-items:flex-start;padding-block:11px;min-height:0}.check input[type=checkbox]{margin-top:1px}
+textarea{resize:none}
+.head>.link{color:var(--s-muted)}
 }
