@@ -3959,7 +3959,7 @@ test("v1.8.39 个人主页加右栏（照 sb.sb /u/…/）：主栏 + 260px 右�
 	}
 });
 
-test("v1.8.39 个人主页统计照 sb.sb .user-stats：九格三列靠左，自己的主页能点进关注、粉丝、账簿、星辰明细、等级进度；等级进度按鸡腿算", async () => {
+test("v1.8.39 个人主页统计照 sb.sb .user-stats：九格靠左（1200px 以上宽屏一行九格，窄一些三列），自己的主页能点进关注、粉丝、账簿、星辰明细、等级进度；等级进度按鸡腿算", async () => {
 	const detail = { member_id: 1, member_name: "Steve", rank: 3, coin: 1257, stardust: 26, nPost: 100, nComment: 873, follows: 11, fans: 155, collectionCount: 42, created_at: new Date(Date.now() - 659 * 864e5 - 6e5).toISOString() };
 	const read = () => {
 		const block = document.querySelector(".head-container > .card-block");
@@ -3984,7 +3984,7 @@ test("v1.8.39 个人主页统计照 sb.sb .user-stats：九格三列靠左，自
 				["星辰", "26", "/stardust/list"], ["主题", "100", "#/discussions"], ["回帖", "873", "#/comments"],
 				["收藏", "42", "#/collections"], ["等级", "Lv.3", "/progress"], ["注册天数", "659", null]
 			]);
-			assert.equal(stats.columns, 3, "九格排三列");
+			assert.equal(stats.columns, 9, "1280 宽：九格排成一行（2026-11-07 电脑端优化，以前三列每格 300 多 px 宽）");
 			assert.equal(stats.left, true, "每格靠左（sb.sb .user-stat）");
 			assert.deepEqual(stats.progress, ["Lv.3 渐入佳境", "51%", "Lv.4 小有成就 还差 343"], "Lv.3 要 900、Lv.4 要 1600：1257 走了 51%");
 			assert.equal(stats.bar, "51%");

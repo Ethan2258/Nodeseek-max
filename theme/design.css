@@ -3829,6 +3829,14 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block {
   background: transparent !important;
   box-shadow: none !important;
 }
+/* 电脑宽屏：主栏有 900px 以上，三列九格每格 370px 宽，数字之间隔得很开、整块又高（三行），像一张没填满的表。
+   这里九格排成一行，资料卡矮一半，数字一眼扫完（2026-11-07 电脑端优化） */
+@media (min-width: 1200px) {
+  html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block:is(#nsmax-lv, *) {
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+    gap: 6px 10px !important;
+  }
+}
 html[data-nsmax-theme][data-nsmax-page="space"] .head-container > .card-block > :is(.card-item, .nsmax-user-stat) {
   display: flex !important;
   flex-direction: column !important;
@@ -4011,7 +4019,8 @@ html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item {
   line-height: 24.5px !important;
   text-decoration: none !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item + a.select-item {
+/* 「介绍」标签藏起来时（没写介绍）它还在第一个，以前「主题」也按「前面有标签」多空 14px，整排标签比首页的标签条往右偏一截 */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item:not([hidden]) ~ a.select-item:not([hidden]) {
   margin-left: 14px !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > a.select-item:hover {
@@ -9269,7 +9278,9 @@ html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-list > :first-child:
   border-top: 0 !important;
 }
 html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row[data-unread]:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  background: var(--brand-soft) !important;
+  /* 2026-11-07 电脑端走查：整行品牌浅底太重（浅色一条亮黄、深色一块土黄），底色减半，左边 2px 黄线来标未读 */
+  background: color-mix(in srgb, var(--brand-soft) 50%, var(--panel)) !important;
+  box-shadow: inset 2px 0 0 var(--mark) !important;
 }
 html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row:hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
   background: var(--panel-hover) !important;
