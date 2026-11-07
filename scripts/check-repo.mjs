@@ -45,5 +45,23 @@ for (const file of files(root)) {
 		links++;
 	}
 }
+// 老 iPhone（Safari 16.x）能不能解析整个脚本：后行断言 (?<= / (?<!（16.4 起）、正则 v 标志（17 起）、类静态块（16.4 起）
+// 只要写进一处，整个脚本在这些设备上解析失败、什么都不运行（2026-11-07 修过一次抽奖网址正则）。按语法树查，字符串里的不算
+{
+	const { minify } = await import("terser");
+	const { ast } = await minify(read("nodeseek-max.user.js"), { compress: false, mangle: false, format: { ast: true, code: false } });
+	const seen = new Set(), skip = new Set(["start", "end", "parent_scope", "scope", "thedef", "enclosed", "variables", "uses_eval", "block_scope"]);
+	const walk = (node) => {
+		if (!node || typeof node !== "object" || seen.has(node)) return;
+		seen.add(node);
+		if (Array.isArray(node)) { for (const item of node) walk(item); return; }
+		const where = `nodeseek-max.user.js:${node.start?.line ?? "?"}`;
+		if (node.TYPE === "RegExp" && /\(\?<[=!]/.test(node.value?.source || "")) problems.push(`${where}: 正则里有后行断言，Safari 16.4 以前整个脚本解析失败`);
+		if (node.TYPE === "RegExp" && /v/.test(node.value?.flags || "")) problems.push(`${where}: 正则用了 v 标志，Safari 17 以前整个脚本解析失败`);
+		if (node.TYPE === "ClassStaticBlock") problems.push(`${where}: 类静态块，Safari 16.4 以前整个脚本解析失败`);
+		for (const key in node) if (!skip.has(key)) walk(node[key]);
+	};
+	walk(ast);
+}
 if (problems.length) { console.error(problems.map(item => `- ${item}`).join("\n")); process.exitCode = 1; }
 else console.log(`仓库检查通过：v${version}，${scripts} 个脚本，${links} 个本地文档链接`);

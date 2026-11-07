@@ -846,6 +846,22 @@ test("发帖页：同一套编辑器、标题焦点、原生分类和深色提�
 });
 
 
+test("老浏览器没有 AbortSignal.any / AbortSignal.timeout（Safari 17.4 以前）：站内请求照常，悬停预览能读出来，Escape 关闭",async()=>{
+	const path=require("node:path");
+	const source=require("node:fs").readFileSync(process.env.NSMAX_SCRIPT_PATH?path.resolve(process.env.NSMAX_SCRIPT_PATH):path.join(__dirname,"..","nodeseek-max.user.js"),"utf8");
+	const old=`delete AbortSignal.any;delete AbortSignal.timeout;\n${source}`;
+	const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage(),pages:{'/post-1000-1':postPage()},scriptSource:old});
+	try{
+		await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-nsmax-mounting'));
+		assert.equal(await page.evaluate(()=>typeof AbortSignal.any),"undefined");
+		await page.locator('.post-list-item .post-title a').first().hover();
+		await page.waitForSelector('dialog.nspp-post-preview article');
+		await page.keyboard.press('Escape');
+		assert.equal(await page.locator('dialog.nspp-post-preview').isVisible(),false);
+		assert.deepEqual(errors,[]);
+	}finally{await context.close();}
+});
+
 test("帖子悬停预览：SB 卡片表面与标题色、按需读取、Escape 关闭",async()=>{
 	for(const dark of [false,true]){
 		const {context,page,errors}=await open(browser,'https://www.nodeseek.com/',{html:listPage({dark}),pages:{'/post-1000-1':postPage({dark})},colorScheme:dark?'dark':'light'});
@@ -5334,6 +5350,20 @@ test("第十四批（2026-10-19）：帖子回复总数——多页的帖子以�
 		await fresh.page.waitForFunction(() => { try { return JSON.parse(localStorage.getItem("nsmax:reply-counts") || "{}")["1000"]?.[0] === 699; } catch { return false; } }, null, { timeout: 3e3 });
 		assert.deepEqual(fresh.errors, []);
 	} finally { await fresh.context.close(); }
+	// 2b. 最后一页取不到（被拦 / 断网，这里回 404）：标题栏先写下限「691+」（前 69 页每页 10 楼、最后一页至少 1 楼），评论区标题和抽奖卡片不写猜的数；
+	//     失败后不会马上连着重发（20 秒后才再试一次）
+	const failed = [];
+	const blocked = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: multi, viewport: { width: 1280, height: 800 }, beforeNavigate: (page) => page.on("request", (request) => { if (new URL(request.url()).pathname === "/post-1000-70") failed.push(Date.now()); }) });
+	try {
+		await blocked.page.waitForFunction(() => document.querySelector(".nsk-post .nsmax-post-stats .nsmax-post-stat-item:last-child > span")?.textContent.trim() === "691+", null, { timeout: 5e3 });
+		await wait(blocked.page, 1500);
+		const state = await read(blocked.page);
+		assert.equal(state.stat, "691+");
+		assert.ok(!/691/.test(state.heading || ""), `评论区标题不写下限：${state.heading}`);
+		assert.ok(!/691/.test(state.lottery || ""), `抽奖卡片不写下限：${state.lottery}`);
+		assert.equal(failed.length, 1, "失败后不连着重发");
+		assert.deepEqual(blocked.errors, []);
+	} finally { await blocked.context.close(); }
 	// 3. 只有一页：这一页最大的楼号（3），不是楼中楼框底的 1
 	const single = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: nested(postPage()), viewport: { width: 1280, height: 800 } });
 	try {

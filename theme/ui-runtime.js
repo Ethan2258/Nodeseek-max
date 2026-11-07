@@ -98,12 +98,23 @@
 		if (!window.__nsmax_space_api_cache) window.__nsmax_space_api_cache = new Map();
 		let reqPromise = window.__nsmax_space_api_cache.get(uid);
 		if (reqPromise) return reqPromise;
+		// 没取到（被拦、断网、接口报错）时给 null、不留缓存：以前当成「没写介绍」记下来，「介绍」标签就被藏掉了，同一页也不会再取
 		reqPromise = fetch("/api/account/getInfo/" + uid + "?readme=1", { headers: { "Accept": "application/json" } })
-			.then(res => res.json())
-			.then(data => data?.detail || data?.data || {})
-			.catch(() => ({}));
+			.then(res => {
+				if (!res.ok) throw new Error(String(res.status));
+				return res.json();
+			})
+			.then(data => {
+				if (!data || data.success === false) throw new Error("getInfo");
+				return data.detail || data.data || {};
+			})
+			.catch(() => {
+				if (window.__nsmax_space_api_cache.get(uid) === reqPromise) window.__nsmax_space_api_cache.delete(uid);
+				return null;
+			});
 		window.__nsmax_space_api_cache.set(uid, reqPromise);
 		reqPromise.then(info => {
+			if (!info) return;
 			nsmaxSpaceIntro.set(uid, typeof info?.readme === "string" ? info.readme.trim().length > 0 : false);
 			nsmaxPrepareSpace();
 			// 资料卡里的 Telegram 联系方式：接口返回的签名 / 简介里有就补一个和「私信」一样的按钮（放在它后面）
@@ -734,7 +745,9 @@
 	// 开奖链接怎么认（2026-11-01 用户：「只要里面有开奖链接，就判定为抽奖帖子」）：本站的 /lucky?…——站点渲染出来的链接、
 	// 写成 nodeseek.com / www.nodeseek.com 完整网址的（以前只认和当前页面同一个域名的，www 和不带 www 混着写的卡片出不来）、
 	// 没被渲染成链接的纯文字网址都算；参数不全（没写开奖时间）的也算抽奖帖，只是画不出倒计时卡片
-	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?(?:nodeseek|deepflood)\.com|(?<![\w.:\/-]))\/lucky\?[^\s<>"'）)\]]+/gi;
+	// 不用后行断言 (?<!…)：Safari 16.4 以前不认，整个脚本会因为这一行解析失败、什么都不运行（2026-11-07）。
+	// 改成把前面那个字符一起匹配进第 1 组，用的时候切掉
+	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?(?:nodeseek|deepflood)\.com|(^|[^\w.:\/-]))\/lucky\?[^\s<>"'）)\]]+/gi;
 	function nsmaxLuckyUrl(href) {
 		let url;
 		try { url = new URL(href, location.href); } catch { return null; }
@@ -761,7 +774,7 @@
 				acceptNode: node => node.parentElement?.closest(".nsmax-lottery, a[href]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
 			});
 			while (walker.nextNode()) for (const match of walker.currentNode.data.matchAll(NSMAX_LUCKY_TEXT)) {
-				const url = nsmaxLuckyUrl(match[0]);
+				const url = nsmaxLuckyUrl(match[1] ? match[0].slice(match[1].length) : match[0]);
 				if (url) urls.push(url);
 			}
 		}
@@ -4121,6 +4134,8 @@ function nsmaxTagStructure() {
 		}
 	}
 	var nsmaxReplyFetching = new Set();
+	// 取最后一页失败的次数（按帖子）：失败后过一会儿再试，最多三次（2026-11-07：以前失败一次就记成「正在取」，整页都不再试，标题栏一直是「—」）
+	var nsmaxReplyFetchFailures = new Map();
 	function nsmaxPostReplyCount() {
 		const data = unsafeWindow$1.__config__?.postData || {};
 		const id = String(data.postId || location.pathname.match(/^\/post-(\d+)/)?.[1] || "");
@@ -4134,27 +4149,55 @@ function nsmaxTagStructure() {
 			return here;
 		}
 		const cached = nsmaxReplyCounts().get(id);
-		if ((!cached || Date.now() - cached[1] > 10 * 60e3) && !nsmaxReplyFetching.has(id) && pages > 1 && !nsmaxBackgroundPaused()) {
+		const failures = nsmaxReplyFetchFailures.get(id) || 0;
+		if ((!cached || Date.now() - cached[1] > 10 * 60e3) && !nsmaxReplyFetching.has(id) && failures < 3 && pages > 1 && !nsmaxBackgroundPaused()) {
 			nsmaxReplyFetching.add(id);
+			let ok = false;
 			// 等页面自己加载完再取（2026-10-24：不和正文图片抢网速）
 			nsmaxPageLoaded().then(() => fetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" })).then((response) => response.ok ? response.text() : "").then((html) => {
 				if (!html) return;
 				const doc = new DOMParser().parseFromString(html, "text/html");
 				const last = Array.from(doc.querySelectorAll("ul.comments li.content-item[id]"), (li) => Number(li.id)).filter(Number.isFinite);
 				if (!last.length) return;
+				ok = true;
 				nsmaxRememberReplyCount(id, Math.max(...last));
 				nsmaxShowPostReplyCount();
-			}).catch(() => {});
+			}).catch(() => {}).finally(() => {
+				if (ok) {
+					nsmaxReplyFetchFailures.delete(id);
+					nsmaxReplyFetching.delete(id);
+					return;
+				}
+				// 没取到（被拦、断网、页面改版）：隔 20s、40s 再试，下一轮整理时自动重发
+				nsmaxReplyFetchFailures.set(id, failures + 1);
+				setTimeout(() => {
+					nsmaxReplyFetching.delete(id);
+					nsmaxShowPostReplyCount();
+				}, 20e3 * (failures + 1));
+			});
 		}
 		return cached ? Math.max(cached[0], here) : null;
+	}
+	// 还不知道准确的回复数时的下限：前面每页都是满的，最后一页至少一层（显示成「151+」，比「—」有用）
+	function nsmaxPostReplyFloor() {
+		const data = unsafeWindow$1.__config__?.postData || {};
+		const pages = Math.max(1, Number(data.postPageCount) || 1);
+		const floors = Array.from(document.querySelectorAll("#nsk-body-left ul.comments li.content-item[id]"), (li) => Number(li.id)).filter(Number.isFinite);
+		const lower = Math.max(floors.length ? Math.max(...floors) : 0, pages > 1 ? (pages - 1) * nsmaxCommentsPerPage() + 1 : 0);
+		return lower > 0 ? lower : null;
 	}
 	// 把回复总数写到标题栏、评论区标题、抽奖卡片上（拿到最后一页的数以后也调一次）
 	function nsmaxShowPostReplyCount() {
 		const count = nsmaxPostReplyCount();
-		if (count === null) return;
 		const stat = document.querySelector("#nsk-body-left .nsk-post .nsmax-post-stats .nsmax-post-stat-item:last-child > span");
-		if (stat && stat.textContent !== String(count)) stat.textContent = String(count);
 		const heading = document.querySelector("#nsk-body-left .comment-container .nsmax-reply-title");
+		if (count === null) {
+			// 准确数还没拿到：标题栏先显示下限（「151+」），评论区标题和抽奖卡片只写准确数
+			const lower = nsmaxPostReplyFloor();
+			if (lower !== null && stat && /^(—|\d+\+)$/.test(stat.textContent) && stat.textContent !== `${lower}+`) stat.textContent = `${lower}+`;
+			return;
+		}
+		if (stat && stat.textContent !== String(count)) stat.textContent = String(count);
 		if (heading && heading.textContent !== `${count} 条回复`) heading.textContent = `${count} 条回复`;
 		for (const span of document.querySelectorAll("#nsk-body-left .nsk-post .nsmax-lottery [data-nsmax-replies]")) {
 			if (span.textContent !== `${count} 条回复`) span.textContent = `${count} 条回复`;
@@ -4210,7 +4253,8 @@ function nsmaxTagStructure() {
 
 				// 回复总数见 nsmaxPostReplyCount
 				const replyCount = nsmaxPostReplyCount();
-				const replies = replyCount === null ? "—" : String(replyCount);
+				const replyFloor = replyCount === null ? nsmaxPostReplyFloor() : null;
+				const replies = replyCount !== null ? String(replyCount) : replyFloor !== null ? `${replyFloor}+` : "—";
 
 				stats.innerHTML = `
 				<span class="nsmax-post-stat-item" title="浏览量">
