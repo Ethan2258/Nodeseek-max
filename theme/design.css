@@ -4159,6 +4159,43 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.dis
   font-size: 13.5px !important;
   line-height: 1.65 !important;
 }
+/* 「主题 / 回帖」列表有时包在 .selector-right-side 里（.selector > .selector-right-side > .discussion-wrapper），
+   上面那条规则管不到：列表没有边框和下圆角，和上面的标签条断开，像飘在页面上的一串字。补上同样的卡片边框 */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .selector-right-side > .discussion-wrapper:is(#nsmax-lv, *) {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 0 var(--r) var(--r) !important;
+  background: var(--panel) !important;
+  overflow: hidden !important;
+}
+/* 标题后面站点带的阅读权限标记（小锁 + 等级，站点是浅红字）：以前被「继承标题字号」带成和标题一样大的黑色数字，
+   看着像标题里多了个「1」。改成标题后面的小号描边胶囊：锁 + 等级 */
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]):is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]):is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin-left: 8px !important;
+  padding: 0 6px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  color: var(--text-subtle) !important;
+  font: 500 11.5px/18px var(--font-mono) !important;
+  vertical-align: 2px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]) svg:is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]) svg:is(#nsmax-lv, *) {
+  width: 11px !important;
+  height: 11px !important;
+  fill: currentColor !important;
+  flex: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]):empty:is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]):empty:is(#nsmax-lv, *) {
+  display: none !important;
+}
 /* 页码：sb.sb .pagination-bar——在列表卡片外、上方 20px、居中 */
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > div[data-nsmax-pagerbox] {
   display: flex !important;
