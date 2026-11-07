@@ -12,20 +12,21 @@ for(const engine of engines){
  let browser;
  test.before(async()=>{browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
- test(`${engine} 手机楼层：时间和正文同一条左边线，操作和楼号对齐正文右边线，楼号和头像同一条中线`,async()=>{
-  // 2026-10-31：≥360px 时时间和「回复 引用 点赞 鸡腿 反对」同一行，楼号挪到作者行右边（见 tests/mobile-details.test.cjs）
+ test(`${engine} 手机楼层：时间和名字同一条左边线，最后一个胶囊和楼号对齐正文右边线，楼号和名字同一条中线`,async()=>{
+  // 2026-11-07 重做：时间收进作者栏名字下面，操作胶囊放到正文下面靠右（见 tests/mobile-details.test.cjs）
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true})});
   try{
    await ready(page);
    const s=await page.evaluate(()=>{
-    const li=document.querySelector("ul.comments>li.content-item"),items=[...li.querySelectorAll(".comment-menu>.menu-item")].filter(e=>e.offsetWidth).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left),last=items[items.length-1],link=li.querySelector(".floor-link"),body=li.querySelector("article.post-content").getBoundingClientRect(),avatar=li.querySelector(".nsmax-author-avatar").getBoundingClientRect();
+    const li=document.querySelector("ul.comments>li.content-item"),items=[...li.querySelectorAll(".comment-menu>.menu-item")].filter(e=>e.offsetWidth).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left),last=items[items.length-1],link=li.querySelector(".floor-link"),body=li.querySelector("article.post-content").getBoundingClientRect();
     const text=(el)=>{const r=document.createRange();r.selectNodeContents(el);return r.getBoundingClientRect();};
-    return{timeLeft:text(li.querySelector(".nsk-content-meta-info time")).left,bodyLeft:body.left,lastRight:last.getBoundingClientRect().right-parseFloat(getComputedStyle(last).paddingRight),right:text(link).right,bodyRight:body.right,linkMiddle:(text(link).top+text(link).bottom)/2,avatarMiddle:(avatar.top+avatar.bottom)/2,itemHeight:last.getBoundingClientRect().height};
+    const name=text(li.querySelector(".nsmax-author-name"));
+    return{timeLeft:text(li.querySelector(".nsk-content-meta-info time")).left,nameLeft:name.left,lastRight:last.getBoundingClientRect().right,right:text(link).right,bodyRight:body.right,linkMiddle:(text(link).top+text(link).bottom)/2,nameMiddle:(name.top+name.bottom)/2,itemHeight:last.getBoundingClientRect().height};
    });
-   assert.ok(near(s.timeLeft,s.bodyLeft,1.5),JSON.stringify(s));
+   assert.ok(near(s.timeLeft,s.nameLeft,1.5),JSON.stringify(s));
    assert.ok(near(s.lastRight,s.bodyRight,1.5),JSON.stringify(s));
    assert.ok(near(s.right,s.bodyRight,1.5),JSON.stringify(s));
-   assert.ok(near(s.linkMiddle,s.avatarMiddle,1.5),JSON.stringify(s));
+   assert.ok(near(s.linkMiddle,s.nameMiddle,1.5),JSON.stringify(s));
    assert.ok(s.itemHeight>=44,JSON.stringify(s));
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
