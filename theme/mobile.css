@@ -261,8 +261,29 @@ html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel>u
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel a{color:var(--text)!important;text-decoration:none!important;overflow-wrap:anywhere!important}
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel a[aria-current="page"]{color:var(--text-subtle)!important}
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel>.nsmax-recent-clear{top:0!important;right:-10px!important;min-height:44px!important;padding:0 10px!important;font-size:13px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay{max-height:var(--nsmax-overlay-height,100dvh)!important;border-radius:var(--r)!important;overflow-y:auto!important;overscroll-behavior:contain!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay :is(button,[role=tab]){min-width:44px!important;min-height:44px!important;border-radius:var(--r)!important;font-size:14px!important}
+/* 搜索面板（手机，2026-11-07 用户截图）：以前把「只有可见区那么高 + 圆角」加在遮罩本身上，键盘一弹出遮罩就只盖上半屏、底边还是圆的，
+   下面的列表照常露出来。改成：遮罩铺满整屏；面板贴顶、最多和可见区（键盘上面那一块）一样高，内容多了在面板里滚。
+   面板里：「搜索」按钮是框里右边一个实心小胶囊（以前是框右边一道竖线隔出来的灰字，像没对齐）；版块标签伸到面板两边、
+   右边渐隐，看得出能横着滑；「搜索历史」标题和「清空」行距收紧，历史胶囊 32px 好点 */
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay{position:fixed!important;inset:0!important;height:auto!important;max-height:none!important;padding:var(--nsmax-overlay-top,0px) 0 0!important;border-radius:0!important;overflow:hidden!important;overscroll-behavior:contain!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-card{width:100%!important;max-width:none!important;max-height:var(--nsmax-overlay-height,100dvh)!important;overflow-y:auto!important;overscroll-behavior:contain!important;border:0!important;border-radius:0 0 20px 20px!important;box-shadow:0 10px 30px rgb(0 0 0/.14)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs{height:48px!important;padding:env(safe-area-inset-top,0px) 4px 0 16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs>.tab-btn{height:48px!important;min-width:0!important;padding:0 4px!important;border-radius:0!important;font-size:15px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-close{width:44px!important;height:44px!important;border-radius:var(--r-pill)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-content{gap:12px!important;padding:14px 16px 16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group{height:46px!important;padding:0 0 0 14px!important;border-radius:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group>input{font-size:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-search-btn{align-self:center!important;min-width:0!important;min-height:0!important;height:34px!important;margin:0 6px 0 4px!important;padding:0 16px!important;border:0!important;border-radius:var(--r-pill)!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav{gap:8px!important;margin:0 -16px!important;padding:0 28px 0 16px!important;scroll-padding-inline:16px 28px!important;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important;mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav>.sub-pill{height:32px!important;padding:0 14px!important;border-radius:var(--r-pill)!important;font-size:13.5px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .search-history{padding:12px 0 0!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header{min-height:32px!important;margin:0 0 6px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header>span{font-size:13px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .clear-history-btn{min-width:44px!important;min-height:32px!important;margin:0 -10px 0 0!important;padding:0 10px!important;border-radius:var(--r-pill)!important;font-size:13px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-list{gap:8px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item{height:32px!important;padding:0 6px 0 13px!important;font-size:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-keyword{font-size:14px!important}
 html[data-nsmax-theme][data-nsmax-touch] :is(.viewer-button,.viewer-toolbar>ul>li){width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:var(--r-pill)!important}
 html[data-nsmax-theme][data-nsmax-touch] .viewer-toolbar>ul>li::before{margin:12px!important}
 html[data-nsmax-theme][data-nsmax-touch] dialog[open]{border-radius:var(--r)!important;animation:none!important}
