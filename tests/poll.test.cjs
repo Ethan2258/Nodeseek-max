@@ -25,7 +25,7 @@ const native = `document.addEventListener("DOMContentLoaded", () => {
   });
 });`;
 
-for (const engine of ["chromium", "webkit"]) {
+for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").split(",")) {
   let browser;
   test.before(async () => { browser = engine === "webkit" ? await webkit.launch() : await launch(); });
   test.after(async () => { await browser?.close(); });

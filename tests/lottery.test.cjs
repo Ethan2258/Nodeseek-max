@@ -1,7 +1,7 @@
 "use strict";
 const test=require("node:test"),assert=require("node:assert/strict");
 const {webkit,devices}=require("playwright"),{launch,open}=require("./harness.cjs"),P=require("./fixtures/pages.cjs");
-for(const engine of ["chromium","webkit"]){
+for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").split(",")){
  let browser;
  test.before(async()=>{browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});

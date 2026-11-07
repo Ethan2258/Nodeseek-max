@@ -3,8 +3,9 @@ const test=require("node:test"),assert=require("node:assert/strict"),fs=require(
 const {webkit,devices}=require("playwright");const {launch,open,ROOT}=require("./harness.cjs");const P=require("./fixtures/pages.cjs");
 const KEY="nspp:settings:www.nodeseek.com";
 let browser,chromium;
-test.before(async()=>{browser=await webkit.launch();chromium=await launch();});
-test.after(async()=>{await browser?.close();await chromium?.close();});
+// 云端 / 本地没装 WebKit 时（NSMAX_MOBILE_ENGINES=chromium）用 Chromium 代跑；CI 默认仍用 WebKit
+test.before(async()=>{chromium=await launch();browser=(process.env.NSMAX_MOBILE_ENGINES||"webkit").includes("webkit")?await webkit.launch():chromium;});
+test.after(async()=>{if(browser!==chromium)await browser?.close();await chromium?.close();});
 const mobile={device:{...devices["iPhone 13"],viewport:{width:390,height:844}},manager:{type:"userscripts",delay:20,legacyXhr:false}};
 const ready=p=>p.waitForFunction(()=>performance.getEntriesByName("nsmax:deferred-start").length&&!document.documentElement.hasAttribute("data-nsmax-mounting"));
 const settings=async page=>{await page.getByRole("button",{name:"NodeSeek Max 设置",exact:true}).tap();return page.locator("#nspp-settings");};

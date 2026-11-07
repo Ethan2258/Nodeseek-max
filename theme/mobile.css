@@ -198,8 +198,9 @@ html[data-nsmax-theme][data-nsmax-touch] :is(button:not(:disabled),.btn,.menu-it
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item:active{background:var(--panel-alt)!important}
 /* 文字链接的触控区：上下加内边距、用负外边距抵掉，排版不变 */
 html[data-nsmax-theme][data-nsmax-touch] :is(.nsmax-crumb>a,.nsmax-author-name,.nsmax-member-name,.nsmax-account-name,.login-btn-group a,.login-notes a,.comments-list>div>a,.ruling-log td a){padding-block:8px!important;margin-block:-8px!important}
-/* 标题后的小页码：点按范围上下扩到 44px */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-title>.nsmax-topic-pages>a{position:relative!important}
+/* 标题后的小页码：点按范围上下扩到 44px；胶囊本身至少 24px 宽、间距 4px（2026-11-07 真站手机实测只有 16px 宽、挨得很近，容易点错页） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-title>.nsmax-topic-pages{gap:4px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-title>.nsmax-topic-pages>a{position:relative!important;min-width:24px!important;padding-inline:6px!important;box-sizing:border-box!important;text-align:center!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-title>.nsmax-topic-pages>a::after{content:""!important;position:absolute!important;inset:-12px -2px!important}
 /* 设置页、注册页和别的页面同一条边线（外层版心已经留了 12px，这里不再多留一层） */
 html[data-nsmax-theme][data-nsmax-touch] #user-setting-panel{padding-inline:0!important}

@@ -13,7 +13,7 @@ const render = (current, count) => {
  if (current > 1) html = html.replace(/\/post-(\d+)-/g, (_,id) => `/post-${Number(id)+1000*(current-1)}-`);
  return html;
 };
-for (const engine of ["chromium", "webkit"]) {
+for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").split(",")) {
  let browser;
  test.before(async () => { browser = engine === "webkit" ? await webkit.launch() : await launch(); });
  test.after(async () => { await browser?.close(); });

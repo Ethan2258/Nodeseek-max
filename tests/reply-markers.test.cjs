@@ -11,7 +11,7 @@ const settings = { attendance: { enabled: false }, "modern-theme": { font: "syst
 const rulesInit = rules => `localStorage.setItem("nsmax:lottery-rules", ${JSON.stringify(JSON.stringify(rules))});`;
 const seed = value => ({ [SETTINGS]: settings, [STATE]: value });
 const ruleLink = (post, time, start = 1) => `<p><a href="https://www.nodeseek.com/lucky?post=${post}&amp;time=${time}&amp;count=1&amp;start=${start}&amp;duplicate=false">开奖链接</a></p>`;
-for (const engine of ["chromium", "webkit"]) {
+for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").split(",")) {
   let browser;
   test.before(async () => { browser = engine === "webkit" ? await webkit.launch() : await launch(); });
   test.after(async () => { await browser?.close(); });

@@ -213,7 +213,7 @@ test("关闭增强真实生效：图片、复制、高亮、Callout、备注、�
  } finally {await context.close();}
 });
 
-for(const engine of ["chromium","webkit"]) for(const asyncStorage of [false,true]) {
+for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").split(",")) for(const asyncStorage of [false,true]) {
  test(`设置跨标签页不互相覆盖：${engine} / ${asyncStorage?"Userscripts":"同步 GM"}`,async()=>{
   const instance=engine==="webkit"?await webkit.launch():await launch();
   const {context,page:a,errors}=await open(instance,"https://www.nodeseek.com/",{html:listPage(),manager:asyncStorage?{type:"userscripts",delay:30}:null});
@@ -250,7 +250,7 @@ for(const engine of ["chromium","webkit"]) for(const asyncStorage of [false,true
  });
 }
 
-for(const engine of ["chromium","webkit"]) test(`Userscripts 保存重试只重放未完成字段：${engine}`,async()=>{
+for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").split(",")) test(`Userscripts 保存重试只重放未完成字段：${engine}`,async()=>{
  const instance=engine==="webkit"?await webkit.launch():await launch();
  const {context,page:a,errors}=await open(instance,"https://www.nodeseek.com/",{html:listPage(),manager:{type:"userscripts",delay:20}});
  try {
@@ -273,7 +273,7 @@ for(const engine of ["chromium","webkit"]) test(`Userscripts 保存重试只重�
  }finally{await context.close();await instance.close();}
 });
 
-for(const engine of ["chromium","webkit"]) for(const dualApi of [false,true]) test(`设置事务等待真实跨页锁与确认落盘：${engine} / ${dualApi?"双 API":"仅同步 API"}`,async()=>{
+for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").split(",")) for(const dualApi of [false,true]) test(`设置事务等待真实跨页锁与确认落盘：${engine} / ${dualApi?"双 API":"仅同步 API"}`,async()=>{
  const instance=engine==="webkit"?await webkit.launch():await launch();
  const dualShim=`(()=>{const get=window.GM_getValue,set=window.GM_setValue;window.__settingsGMTrace=[];const trace=(op,key,value)=>{if(key.startsWith("nspp:settings:"))window.__settingsGMTrace.push({op,value:structuredClone(value)});};window.GM={async getValue(key,fallback){const value=get(key,fallback);trace("read",key,value);return value;},async setValue(key,value){trace("write-start",key,value);if(key.startsWith("nspp:settings:")&&window.__holdSettingsWrite){window.__settingsWriteStarted=true;await new Promise(resolve=>{window.__releaseSettingsWrite=resolve;});}set(key,value);trace("write-complete",key,value);}};})();`;
  const source=fs.readFileSync(process.env.NSMAX_SCRIPT_PATH||path.join(ROOT,"nodeseek-max.user.js"),"utf8");
