@@ -584,6 +584,7 @@ for(const engine of engines){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification",{viewport:{width:1440,height:900},seed,colorScheme:dark?"dark":"light",html:P.notificationPage({dark})});
    try{
     await ready(page);
+    await page.waitForSelector(".nsmax-notice-row[data-unread]");
     const s=await page.evaluate(()=>{
      const row=document.querySelector(".nsmax-notice-row[data-unread]"),c=getComputedStyle(row);
      const probe=document.createElement("i");probe.style.color="var(--brand-soft)";document.body.append(probe);const soft=getComputedStyle(probe).color;probe.remove();

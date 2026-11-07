@@ -13135,6 +13135,15 @@ html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-stats:is(#nsma
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 22px 16px !important;
 }
+/* 1200px 以上真资料卡的九格排成一行（见上面 .card-block），骨架也一行九格、卡片矮到同样高，资料到了不跳 */
+@media (min-width: 1200px) {
+  html[data-nsmax-theme][data-nsmax-page="space"]:not([data-nsmax-touch]) .nsmax-space-skel-stats:is(#nsmax-lv, *) {
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="space"]:not([data-nsmax-touch]) .nsmax-space-skel-head:is(#nsmax-lv, *) {
+    min-height: 246px !important;
+  }
+}
 html[data-nsmax-theme][data-nsmax-page="space"] .nsmax-space-skel-stat:is(#nsmax-lv, *) {
   display: flex !important;
   flex-direction: column !important;
