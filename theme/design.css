@@ -1330,6 +1330,16 @@ html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin {
   color: var(--text-subtle) !important;
   font-size: 12.5px !important;
 }
+/* 2026-11-07 对照 sb.sb：访客卡排在右栏最上面（sb.sb 访客卡 → 今日热门 → 最新帖子；以前在热榜、最近浏览下面），标题是正文色 14px/600 */
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel[data-nsmax-btnpanel] {
+  order: -1 !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel[data-nsmax-btnpanel] h4 {
+  margin: 0 0 4px !important;
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
 html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin[data-nsmax-btnrow] {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
@@ -14600,6 +14610,11 @@ html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .coins:is(#nsma
   color: #8a5a00 !important;
   font-size: 11.5px !important;
   font-weight: 600 !important;
+}
+/* 深色下鸡腿小胶囊不再是浅色模式那块亮米黄，跟着深色的标记色（2026-11-07） */
+html[data-nsmax-theme][data-nsmax-page="board"][data-nsmax-dark] .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  background: var(--mark-soft) !important;
+  color: var(--mark-soft-text) !important;
 }
 html[data-nsmax-theme][data-nsmax-page="board"] .board .load-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   display: flex !important;

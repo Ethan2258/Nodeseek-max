@@ -266,4 +266,25 @@ for(const engine of engines){
    assert.deepEqual(guest.errors,[]);
   }finally{await guest.context.close();}
  });
+ test(`${engine} 2026-11-07 对照 sb.sb：版块条只在列表页，访客卡在右栏最上，深浅色菜单 13.5px 正文色`,async()=>{
+  for(const [url,html,shown] of [["https://www.nodeseek.com/",P.listPage({mobile:true}),true],["https://www.nodeseek.com/post-1000-1",P.postPage({mobile:true}),false],["https://www.nodeseek.com/board",P.boardPage({mobile:true}),false]]){
+   const {context,page,errors}=await open(browser,url,{...phone(),html});
+   try{
+    await ready(page);
+    const visible=await page.evaluate(()=>{const nav=document.querySelector("body>header>ul.mobile-nav");return !!nav&&getComputedStyle(nav).display!=="none";});
+    assert.equal(visible,shown,url);assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  if(engine!=="chromium")return;
+  const desk=await open(browser,"https://www.nodeseek.com/invite",{viewport:{width:1440,height:900},html:P.invitePage(),seed});
+  try{
+   await ready(desk.page);
+   const first=await desk.page.evaluate(()=>{const side=document.querySelector("#nsk-right-panel-container");const top=[...side.children].filter(e=>e.getClientRects().length).sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)[0];return top&&top.querySelector(".btn")?.textContent.trim();});
+   assert.equal(first,"登录","访客卡排在右栏最上面");
+   await desk.page.locator("#nsk-head [data-nsmax-own-header=colors]").click();
+   const item=await desk.page.locator('.nsmax-pop[data-kind="colors"] .nsmax-pop-item').first().evaluate(e=>{const s=getComputedStyle(e);return{size:s.fontSize,weight:s.fontWeight};});
+   assert.deepEqual(item,{size:"13.5px",weight:"500"});
+   assert.deepEqual(desk.errors,[]);
+  }finally{await desk.context.close();}
+ });
 }
