@@ -53,7 +53,7 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 手机近期评论：时间和操作同一行，楼号在作者行右边；320px 仍分行`,async()=>{
+ test(`${engine} 手机楼层卡片（2026-11-07 重做）：时间在作者栏名字下面，楼号右上角，正文紧跟作者栏，五个操作胶囊在正文下面靠右一行排下`,async()=>{
   for(const width of [390,320]){
    // 此项检查相对时间的布局，日期随运行时间生成，避免固定日期在 30 天后变成长时间戳。
    const created=new Date(Date.now()-2*36e5).toISOString();
@@ -61,12 +61,16 @@ for(const engine of engines){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html});
    try{
     await ready(page);
-    const s=await page.evaluate(()=>{const li=document.querySelector("ul.comments>li.content-item"),r=e=>e.getBoundingClientRect().toJSON();return{li:r(li),head:r(li.querySelector(".nsmax-author-col")),time:r(li.querySelector(".nsk-content-meta-info>div:not([class])")),menu:r(li.querySelector(".comment-menu")),floor:r(li.querySelector(".floor-link")),body:r(li.querySelector("article.post-content"))};});
-    if(width>=360){
-     assert.ok(Math.abs(center(s.time)-center(s.menu))<3,JSON.stringify(s));assert.ok(s.menu.left>s.time.right,JSON.stringify(s));assert.ok(s.menu.right<=s.li.right,JSON.stringify(s));
-     assert.ok(s.floor.top>=s.head.top&&s.floor.bottom<=s.head.bottom+1,"楼号在作者行里");assert.ok(s.floor.right<=s.li.right,JSON.stringify(s));
-     assert.ok(s.body.top-s.head.bottom<70,`作者行到正文只隔一行：${JSON.stringify(s)}`);
-    }else assert.ok(s.menu.top>=s.time.bottom-1,"窄屏操作仍在时间下面");
+    const s=await page.evaluate(()=>{const li=document.querySelector("ul.comments>li.content-item"),r=e=>e.getBoundingClientRect().toJSON();const items=[...li.querySelectorAll(".comment-menu>.menu-item")].filter(e=>e.getClientRects().length);return{li:r(li),head:r(li.querySelector(".nsmax-author-col")),name:r(li.querySelector(".nsmax-author-name")),avatar:r(li.querySelector(".nsmax-author-avatar")),time:r(li.querySelector(".nsk-content-meta-info>div:not([class])")),floor:r(li.querySelector(".floor-link")),body:r(li.querySelector("article.post-content")),items:items.map(r),order:items.map(e=>e.dataset.nsmaxAction),pill:items.map(e=>{const c=getComputedStyle(e,"::after");return c.boxSizing==="border-box"?parseFloat(c.height):parseFloat(c.height)+parseFloat(c.borderTopWidth)*2;})};});
+    assert.ok(s.time.top>=s.head.top&&s.time.bottom<=s.head.bottom+0.5,`时间在作者栏里：${JSON.stringify(s)}`);
+    assert.ok(Math.abs(s.time.left-s.name.left)<1,"时间和名字左对齐");assert.ok(s.time.top>=s.name.top+10,"时间在名字下面");
+    assert.ok(s.floor.top>=s.head.top&&s.floor.bottom<=s.head.bottom+1&&s.floor.right<=s.li.right,"楼号在作者栏右上角");
+    assert.ok(Math.abs(s.body.top-s.head.bottom)<1,"正文紧跟作者栏");
+    assert.equal(new Set(s.items.map(i=>Math.round(i.top))).size,1,`${width}px 五个操作排一行：${JSON.stringify(s.items)}`);
+    assert.ok(s.items.every(i=>i.top>=s.body.bottom&&i.height>=44),"在正文下面，点按区 44px");
+    assert.ok(s.pill.every(h=>Math.abs(h-30)<1),"看得见的胶囊 30px");
+    assert.ok(Math.abs(s.items.at(-1).right-s.body.right)<1,"靠右，和正文右边线对齐");assert.equal(s.order.at(-1),"reply","「回复」在最右边");
+    if(width>=360)assert.ok(s.head.bottom-s.head.top<=66,`名字和小标一行放得下时作者栏只高 65px：${JSON.stringify(s)}`);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
@@ -145,8 +149,9 @@ for(const engine of engines){
   try{
    await ready(post.page);
    const s=await post.page.evaluate(()=>{const items=[...document.querySelectorAll(".nsk-post .comment-menu.topic-actions>.menu-item")].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect()),body=document.querySelector(".nsk-post article.post-content").getBoundingClientRect();return{widths:items.map(r=>Math.round(r.width)),first:items[0].left-body.left,gaps:items.slice(1).map((r,i)=>Math.round(r.left-items[i].right)),title:document.querySelector(".nsk-post>.post-title").getBoundingClientRect().height,author:document.querySelector(".nsk-post .nsmax-author-col").getBoundingClientRect().height};});
-   assert.ok(s.widths.length===4&&s.widths.every(w=>w===66),JSON.stringify(s));assert.ok(Math.abs(s.first)<1,"靠左");assert.deepEqual(s.gaps,[8,8,8]);
-   assert.ok(Math.abs(s.title-83.5)<1.5&&Math.abs(s.author-63)<1,JSON.stringify(s));assert.deepEqual(post.errors,[]);
+   // 2026-11-07 重做：点赞一排是一行四个平分的胶囊（以前照 sb.sb 是 66px 宽的两行小方块）；作者栏多了一行时间，高 65px
+   assert.ok(s.widths.length===4&&Math.max(...s.widths)-Math.min(...s.widths)<=1,JSON.stringify(s));assert.ok(Math.abs(s.first)<1,"从正文左边线开始");assert.deepEqual(s.gaps,[8,8,8]);
+   assert.ok(Math.abs(s.title-83.5)<1.5&&Math.abs(s.author-65)<1.5,JSON.stringify(s));assert.deepEqual(post.errors,[]);
   }finally{await post.context.close();}
  });
  test(`${engine} 手机帖子页细节照 sb.sb：面包屑 18px、奇数层作者栏深一档、楼主标签和楼号字号、主楼按钮淡灰、列表标题 14.5px`,async()=>{
@@ -156,7 +161,7 @@ for(const engine of engines){
     await ready(page);
     const s=await page.evaluate(()=>{const c=(e,p)=>getComputedStyle(e,p),q=x=>document.querySelector(x),li=[...document.querySelectorAll("ul.comments>li.content-item")],probe=document.createElement("i");probe.style.color="var(--text-disabled)";document.body.append(probe);const disabled=c(probe).color;probe.remove();const action=q(".nsk-post .comment-menu.topic-actions>.menu-item:not(.clicked)");return{crumb:c(q(".nsk-post>.nsmax-crumb")).paddingLeft,odd:c(li[0].querySelector(".nsmax-author-col")).backgroundColor,oddBody:c(li[0]).backgroundColor,even:c(li[1].querySelector(".nsmax-author-col")).backgroundColor,tag:c(q(".nsk-post .role-tag.is-poster")).fontSize,floor:c(li[0].querySelector(".floor-link")).fontSize,time:c(q(".nsk-post .nsk-content-meta-info time")).fontSize,action:c(action).color,disabled};});
     assert.equal(s.crumb,"18px");assert.notEqual(s.odd,s.oddBody,JSON.stringify(s));assert.equal(s.even,"rgba(0, 0, 0, 0)");
-    assert.equal(s.tag,"10.5px");assert.equal(s.floor,"12px");assert.equal(s.time,"12px");assert.equal(s.action,s.disabled,JSON.stringify(s));
+    assert.equal(s.tag,"10.5px");assert.equal(s.floor,"12px");assert.equal(s.time,"12.5px");assert.equal(s.action,s.disabled,JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }

@@ -313,34 +313,6 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-toast{bottom:calc(var(--nsmax-ov
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager :is([data-nsmax-page-skip],.ellipsis[hidden]){display:none!important}
 /* 列表行信息：照 sb.sb 现在的样子，作者、版块、浏览、评论、最后回复、时间之间隔 10px，放不下就整项换到下一行（行距也是 10px），名字不截短 */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info.post-meta{gap:10px!important}
-/* 评论楼层：时间和「回复 引用 点赞 鸡腿 反对」放同一行，楼号挪到作者那一行右边；时间和正文同一条左边线，最后一个按钮的文字和楼号都对齐正文右边线（以前时间、操作各占一行，每层正文前多空 50px）。
-   作者栏右边让出楼号的位置，名字太长时截短。完整时间戳可在时间栏内换行，不挤掉按钮；320px 宽放不下，仍按原来分行 */
-@media (min-width:360px){
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item{grid-template-columns:minmax(0,1fr) auto!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>*,
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>*{grid-column:1/-1!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>div:not([class]){grid-column:1!important;grid-row:2!important;align-self:center!important;min-height:44px!important;margin:0 0 0 12px!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>div:not([class]){min-width:0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info :is(.content-info,.date-created,time){white-space:normal!important;overflow-wrap:normal!important;word-break:keep-all!important}
-/* 2026-11-07：操作点按区宽度收到 36px 起（高仍 44px，和楼中楼一样；左右留白 6px，整排右边多让 2px，最后一个字仍对齐正文右边线），390px 宽时「2026-10-03 04:00」和五个操作能排进一行；放不下时时间只在日期和钟点之间换行，不再折成「2026-10-」「03 04:00」 */
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item{min-width:36px!important;padding:8px 6px!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions{display:contents!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu{grid-column:2!important;grid-row:2!important;justify-self:end!important;align-self:center!important;justify-content:flex-end!important;margin:0 6px 0 8px!important;padding:0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.floor-link-wrapper{grid-column:1/-1!important;grid-row:1!important;justify-self:end!important;align-self:center!important;position:relative!important;z-index:1!important;margin:0 12px 0 0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col{padding-right:56px!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-who{min-width:0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-}
-/* 360px 以下（2026-11-06）：时间和操作仍各占一行，但楼号也挪到作者那一行右边。以前楼号排在操作后面放不下，单独换到第三行，
-   每层操作下面空出 50px 的一行只有「#1」 */
-@media (max-width:359px){
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions{display:contents!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu{grid-column:1/-1!important;grid-row:3!important;justify-self:start!important;align-self:center!important;margin:0 0 0 4px!important;padding:0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.floor-link-wrapper{grid-column:1/-1!important;grid-row:1!important;justify-self:end!important;align-self:center!important;position:relative!important;z-index:1!important;margin:0 12px 0 0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col{padding-right:56px!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-who{min-width:0!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col .nsmax-author-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-}
 /* 简洁模式（手机，2026-11-07 用户截图）：以前照电脑排法，头像单独占左边一栏，正文、签名、按钮全都往右缩进 42px；
    「回复 引用 点赞 鸡腿 反对」挤在名字下面、正文上面单独一行，楼号放不下又掉到再下一行。改成：
    头像（36px）+ 名字 · 等级（下面一行时间）+ 右边楼号；正文、签名占满整宽；「回复 引用 …」放到正文下面，文字和正文同一条左边线。
@@ -499,3 +471,48 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-pager a[href]:is(.p
 html[data-nsmax-theme][data-nsmax-touch]:is([data-nsmax-page=post],[data-nsmax-page=space],[data-nsmax-page=auth],[data-nsmax-page=board]) body>header>ul.mobile-nav{display:none!important}
 /* 菜单里当前版块：深色下不再是黄字（sb.sb 当前项和普通项同色） */
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .category-mobile a[aria-current=page]>p{color:var(--text)!important}
+/* 手机楼层卡片重做（2026-11-07，用户截原站对照：原站的层次好看，但间距怪）。主楼和每层回复从上到下：
+   1. 作者栏：40px 头像，右边第一行名字 + UID、等级、活跃度小标，第二行时间（12.5px 淡色，主楼前面带「楼主」），回复的楼号在右上角。
+      时间以前在作者栏下面单独一行、和操作挤在一起；现在收进作者栏，正文紧跟作者栏。
+   2. 正文：上面留 12px，不再有虚线（作者栏底下已经有一条分隔线）。
+   3. 主楼「点赞 加鸡腿 反对 收藏」：以前是四个两行高的方块，改成一行四个平分的胶囊（图标、字、数字排一行）；390px 以下只留图标和数字。
+   4. 操作：照原站画成细线胶囊（看得见的胶囊 30px 高，点按区仍 44px 高），放到正文、签名下面靠右，「回复」在最右边拇指够得着的地方；
+      320px 宽也排得下一行。楼中楼仍在操作下面。 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item){grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto auto auto auto auto auto auto auto auto auto!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>*,
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>*,
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>*{grid-column:1!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsmax-author-col{align-items:flex-start!important;padding:12px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-author-col{padding-right:52px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsmax-author-col>.nsmax-author-who{align-content:flex-start!important;align-items:center!important;min-width:0!important;min-height:0!important;padding-bottom:18px!important;row-gap:4px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsmax-author-col .nsmax-author-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:15px!important;font-weight:600!important;line-height:21px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]){grid-row:1!important;position:relative!important;z-index:1!important;align-self:end!important;justify-self:start!important;display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important;min-height:0!important;height:auto!important;margin:0 12px 12px 62px!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsk-content-meta-info>div:not([class]){margin-right:52px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]) :is(.content-info,.date-created,time){color:var(--text-subtle)!important;font-size:12.5px!important;line-height:18px!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>.nsk-content-meta-info>div:not([class]) .role-tag.is-poster{line-height:16px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>article.post-content{grid-row:4!important;margin:0 12px!important;padding:12px 0 0!important;border-top:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)::after{grid-row:12!important;height:5px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions{display:contents!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.floor-link-wrapper{grid-row:1!important;justify-self:end!important;align-self:start!important;position:relative!important;z-index:1!important;margin:1px 6px 0 0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions .floor-link{justify-content:center!important;min-width:40px!important;padding:0 6px!important;color:var(--text-subtle)!important;font-family:var(--font-mono)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-box{grid-row:10!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(.nsk-post>.content-item,ul.comments>li.content-item)>[data-nsmax-inline]{grid-row:11!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions){grid-row:9!important;justify-self:stretch!important;align-self:center!important;display:flex!important;flex-wrap:wrap!important;justify-content:flex-end!important;gap:0 6px!important;height:auto!important;margin:6px 12px 0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions>a){position:relative!important;isolation:isolate!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:0!important;height:44px!important;min-height:44px!important;margin:0!important;padding:0 12px!important;border:0!important;background:transparent!important;color:var(--text-muted)!important;font-size:13px!important;line-height:1!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions>a)::after{content:""!important;display:block!important;position:absolute!important;inset:7px 0!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:transparent!important;pointer-events:none!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions>a):active::after{background:var(--panel-hover)!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item[data-nsmax-action=quote]{order:8!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item[data-nsmax-action=reply]{order:9!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions>.nsmax-op-report{order:-1!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .nsk-post>.content-item>.comment-menu.topic-actions{grid-row:7!important;display:flex!important;flex-wrap:nowrap!important;gap:8px!important;margin:14px 12px 0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .nsk-post>.content-item>.comment-menu.topic-actions>.menu-item{display:inline-flex!important;flex:1 1 0!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:0!important;width:auto!important;height:40px!important;margin:0!important;padding:0 6px!important;border-radius:var(--r-pill)!important;font-size:13px!important;line-height:1!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .nsk-post>.content-item>.comment-menu.topic-actions>.menu-item::before{flex:none!important;align-self:center!important;width:17px!important;height:17px!important;margin:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .nsk-post>.content-item>.comment-menu.topic-actions>.menu-item::after{order:1!important;align-self:center!important;margin:0!important;font-size:13px!important;line-height:1!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .nsk-post>.content-item>.comment-menu.topic-actions>.menu-item>[data-nsmax-action-count]{order:2!important;align-self:center!important;margin:0!important;font-size:13px!important;line-height:1!important;font-variant-numeric:tabular-nums!important}
+@media (max-width:389px){
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .nsk-post>.content-item>.comment-menu.topic-actions>.menu-item::after{display:none!important}
+}
+@media (max-width:359px){
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions){gap:0 4px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions>a){padding:0 10px!important}
+}
