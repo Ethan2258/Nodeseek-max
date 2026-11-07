@@ -680,7 +680,12 @@
 		open.textContent = match[2];
 		// 括号后面的空格也收进藏起来的那段：小标自带右边距，不然小标和标题之间空得比别处宽
 		close.textContent = match[4];
-		span.append(open, match[3], close);
+		// 字单独包一层（2026-11-07）：外层占满标题的整行高、内容竖直居中，小标就跟标题文字对齐，不再看字体度量
+		// （iPhone 苹方下 vertical-align: middle 会让小标比标题低 2px 左右）
+		const word = document.createElement("span");
+		word.className = "nsmax-mk-t";
+		word.textContent = match[3];
+		span.append(open, word, close);
 		tag.replaceWith(span);
 	}
 	// 抽奖帖怎么认（2026-10-18 起只认抽奖、只看正文；投票帖不再挂小标）：
