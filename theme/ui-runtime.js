@@ -2110,7 +2110,7 @@
 			if (userLink) userLink.classList.add("nsmax-board-username");
 		});
 	}
-	// 中文时间：time / .date-created / .date-updated 的文字换成「3 小时前」这类中文相对时间（超过 30 天显示完整日期）。
+	// 中文时间：time / .date-created / .date-updated 的文字换成「3 小时前」这类中文相对时间（超过 30 天显示到分钟的日期）。
 	// 不需要改时返回 null。页面解析阶段（nsmaxApplyChineseTimes）和「内容增强」模块共用。
 	function nsmaxChineseTimeText(el) {
 		const old = el.textContent;
