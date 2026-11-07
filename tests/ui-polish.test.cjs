@@ -307,7 +307,7 @@ for(const engine of engines){
    const {context,page,errors}=await open(browser,url,{...opts,html:marked});
    try{
     await ready(page);
-    const s=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-title > a")].map(a=>{const mk=a.querySelector(":scope > .nsmax-mk"),r=mk?.getBoundingClientRect(),title=a.getBoundingClientRect();return{text:a.textContent,kind:mk?.dataset.mk||"",shown:mk?mk.innerText.trim():"",color:mk?getComputedStyle(mk).color:"",bg:mk?getComputedStyle(mk).backgroundColor:"",inside:mk?r.left>=title.left-0.5:true}}));
+    const s=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-title > a")].map(a=>{const mk=a.querySelector(":scope > .nsmax-mk"),chip=mk?.querySelector(":scope > .nsmax-mk-t"),r=chip?.getBoundingClientRect(),title=a.getBoundingClientRect();const range=document.createRange();range.selectNodeContents(a.lastChild);const g=range.getClientRects()[0];return{text:a.textContent,kind:mk?.dataset.mk||"",shown:mk?mk.innerText.trim():"",color:chip?getComputedStyle(chip).color:"",bg:chip?getComputedStyle(chip).backgroundColor:"",radius:chip?parseFloat(getComputedStyle(chip).borderRadius):0,inside:mk?r.left>=title.left-0.5:true,offset:chip&&g?Math.abs((r.top+r.height/2)-(g.top+g.height/2)):0}}));
     const by=t=>s.find(x=>x.text.includes(t));
     assert.equal(by("美西").text,"【出】 美西 VPS 2C4G",label);
     assert.equal(by("美西").kind,"sell",label);
@@ -320,6 +320,9 @@ for(const engine of engines){
     assert.notEqual(by("美西").color,by("日本原生").color,label);
     assert.notEqual(by("美西").bg,"rgba(0, 0, 0, 0)",label);
     assert.ok(s.every(x=>x.inside),JSON.stringify(s));
+    // 2026-11-07 小标和标题文字竖直居中对齐（iPhone 上曾经低 2px），圆角模式下也是小圆角方块、不是药丸
+    assert.ok(s.every(x=>x.offset<=1),JSON.stringify(s));
+    assert.ok(s.filter(x=>x.kind).every(x=>x.radius<=4),JSON.stringify(s));
     await page.evaluate(()=>document.querySelector("ul.post-list").append(document.createElement("i")));await page.waitForTimeout(400);
     assert.equal(await page.locator(".post-list-item .nsmax-mk").count(),4,label);
     assert.deepEqual(errors,[]);

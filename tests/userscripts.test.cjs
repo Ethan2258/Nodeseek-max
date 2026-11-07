@@ -101,3 +101,41 @@ test("Userscripts：页面禁止桥接时保留可用的原生编辑器与设置
   await client.detach();
  }finally{await context.close();}
 });
+
+test("2026-11-07 Userscripts 等设置读回来时不先画出原站：body 先盖住、底色跟主题，读完就撤；记住深浅色",async()=>{
+ // Userscripts 只有异步存储，脚本要等设置读回来才开始套主题；这里让每次读存储慢 250ms，页面早就解析完了。
+ // 没记过深浅色时底色跟系统；套上主题后记下这次是深是浅，下次（这里刷新一次）按记下的铺底色
+ const probe=`document.addEventListener("DOMContentLoaded",()=>{const b=document.body;window.__bootProbe={themed:document.documentElement.hasAttribute("data-nsmax-theme"),visibility:getComputedStyle(b).visibility,bg:getComputedStyle(document.documentElement).backgroundColor,cover:!!document.getElementById("nsmax-boot-cover")};});`;
+ const LIGHT="rgb(247, 248, 250)",DARK="rgb(13, 14, 20)";
+ for(const [scheme,siteDark,first,again] of [["light",false,LIGHT,LIGHT],["dark",true,DARK,DARK],["light",true,LIGHT,DARK]]){
+  const label=`${scheme} 站点${siteDark?"深":"浅"}色`;
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...mobile,manager:{type:"userscripts",delay:250,legacyXhr:false},colorScheme:scheme,html:P.postPage({mobile:true,dark:siteDark}),init:probe});
+  try{
+   for(const [round,bg] of [first,again].entries()){
+    await page.waitForFunction(()=>window.__bootProbe);
+    const early=await page.evaluate(()=>window.__bootProbe);
+    assert.equal(early.themed,false,"这时设置还没读回来");
+    assert.equal(early.cover,true,label);
+    assert.equal(early.visibility,"hidden",`设置读回来之前原站不画出来：${label}`);
+    assert.equal(early.bg,bg,`底色：${label}`);
+    await ready(page);
+    assert.equal(await page.evaluate(()=>!!document.getElementById("nsmax-boot-cover")),false);
+    assert.equal(await page.evaluate(()=>getComputedStyle(document.body).visibility),"visible");
+    assert.equal(await page.evaluate(()=>localStorage.getItem("nsmax:boot-dark")),siteDark?"1":"0",label);
+    if(!round)await page.reload({waitUntil:"domcontentloaded"});
+   }
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ }
+});
+
+test("2026-11-07 Userscripts 设置一直读不回来时最多盖 1.5 秒",async()=>{
+ const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile,manager:{type:"userscripts",delay:5000,legacyXhr:false},html:P.listPage({mobile:true})});
+ try{
+  await page.waitForFunction(()=>document.getElementById("nsmax-boot-cover"),null,{timeout:3000}).catch(()=>{});
+  const start=Date.now();
+  await page.waitForFunction(()=>!document.getElementById("nsmax-boot-cover")&&getComputedStyle(document.body).visibility==="visible",null,{timeout:4000});
+  assert.ok(Date.now()-start<2500);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
