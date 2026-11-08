@@ -83,6 +83,8 @@ for(const engine of engines){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(width),html:P.searchOverlayPage({mobile:true,dark}),colorScheme:dark?"dark":"light"});
    try{
     await ready(page);await page.waitForSelector(".search-overlay .glass-card");
+    // 浮层样式首帧后才补上（WebKit 没有 requestIdleCallback，比 Chromium 晚一点）：等样式注入再量
+    await page.waitForFunction(()=>getComputedStyle(document.querySelector(".search-overlay .history-list")).flexDirection==="column",null,{timeout:5000}).catch(()=>{});
     const s=await page.evaluate(()=>{const r=e=>e.getBoundingClientRect().toJSON(),card=document.querySelector(".search-overlay .glass-card"),content=card.querySelector(".glass-content");return{w:innerWidth,h:innerHeight,card:r(card),content:r(content),pad:parseFloat(getComputedStyle(content).paddingLeft),overlayBg:getComputedStyle(document.querySelector(".search-overlay")).backgroundColor,cardBg:getComputedStyle(card).backgroundColor,tabs:[...card.querySelectorAll(".tab-btn")].filter(e=>e.getClientRects().length).map(r),pills:[...card.querySelectorAll(".sub-pill")].map(r),items:[...card.querySelectorAll(".history-item")].map(r),tag:getComputedStyle(card.querySelector(".history-scope-tag")).backgroundColor,list:(()=>{const c=getComputedStyle(card.querySelector(".history-list"));return c.display+"/"+c.flexDirection+"/"+c.flexWrap+"/"+c.height;})(),overflow:document.documentElement.scrollWidth>innerWidth+1};});
     assert.ok(s.card.top<=1&&s.card.left===0&&Math.abs(s.card.width-s.w)<1&&s.card.bottom>=s.h-1,`整屏：${JSON.stringify(s.card)}`);
     assert.equal(s.overlayBg,s.cardBg,"后面不露变暗的列表");
