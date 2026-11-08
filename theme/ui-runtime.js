@@ -193,6 +193,12 @@
 			// （2026-10-23：以前等接口回来才知道，站点先画好的话「介绍」标签过一会儿才藏起来，标签栏和下面的内容跳一下）
 			if (spaceId && hasIntro === undefined && (placeholder || !isEmpty && text.length >= 20)) nsmaxSpaceIntro.set(spaceId, !placeholder);
 		}
+		// 列表是空的时候：站点在卡片下面再画一个 200px 的「空」箱子插图（img[src$="/static/image/empty.svg"]，CSS 里藏掉），
+		// 卡片里只留一句，按当前标签说清楚是什么空了（2026-11-08 Yiheng 截图：「暂无内容」+ 大箱子两个空状态）
+		const emptyLabel = /^#\/?comments/.test(location.hash) ? "还没有回帖" : /^#\/?collection/.test(location.hash) ? "还没有收藏" : "还没有发过主题";
+		for (const list of document.querySelectorAll(".selector .discussion-wrapper, .comments-list")) {
+			if (list.getAttribute("data-nsmax-empty-label") !== emptyLabel) list.setAttribute("data-nsmax-empty-label", emptyLabel);
+		}
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
 		if (!head) return;
 
@@ -4845,9 +4851,13 @@ function nsmaxTagStructure() {
 		// 2026-11-08：「关注」在深色下是站点的亮蓝实心按钮，旁边私信、转账是细线按钮，很扎眼（Yiheng 截图）。三个按钮一律去掉站点
 		// 写在行内的底色 / 字色 / 边框色，统一按 sb.sb 的细线按钮排；「关注」只在悬停时变黄
 		for (const btn of document.querySelectorAll(":is(.nsmax-member-actions, .usercard-button-group) > .btn")) {
+			// 站点真实写法（2026-11-08 在 Yiheng 的 Chrome 里取的）：关注是 style="background-color: rgb(0, 157, 255) !important;"，
+			// 行内 !important 压过所有样式表，只能把这条行内样式拿掉。点了关注 / 取关以后站点会重画字和行内样式，见 nsmaxWatchFans
 			const label = btn.textContent.trim();
 			if (label === "取关") nsmaxSetAttr(btn, "data-nsmax-unfollow");
-			else if (label === "关注") nsmaxSetAttr(btn, "data-nsmax-follow");
+			else if (btn.hasAttribute("data-nsmax-unfollow")) btn.removeAttribute("data-nsmax-unfollow");
+			if (label === "关注") nsmaxSetAttr(btn, "data-nsmax-follow");
+			else if (btn.hasAttribute("data-nsmax-follow")) btn.removeAttribute("data-nsmax-follow");
 			for (const prop of ["background", "background-color", "color", "border", "border-color", "box-shadow"]) if (btn.style.getPropertyValue(prop)) btn.style.removeProperty(prop);
 		}
 		for (const tab of document.querySelectorAll(".fans-switcher > a.switcher-item")) {
@@ -5265,11 +5275,13 @@ function nsmaxTagStructure() {
 		if (nsmaxFansWatching || !/^\/fans(?:\/|$)/.test(location.pathname) || !document.body) return;
 		nsmaxFansWatching = true;
 		const relevant = (node) => node instanceof Element && (node.matches(".member-list, .user-card-wrapper-container, .user-card-wrapper, .user-card, .usercard-button-group, .fans-switcher, .switcher-item, .btn") || !!node.querySelector(".user-card, .fans-switcher"));
+		// 按钮自己变了（点关注 / 取关后站点改字、重新写行内底色）也要再整理一次
+		const inButton = (record) => { const el = record.target instanceof Element ? record.target : record.target.parentElement; return !!el?.closest(":is(.nsmax-member-actions, .usercard-button-group) > .btn"); };
 		const observer = new MutationObserver((records) => {
-			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
+			if (!records.some((record) => Array.from(record.addedNodes).some(relevant) || inButton(record))) return;
 			try { nsmaxPrepareFans(); } catch {}
 		});
-		observer.observe(document.body, { childList: true, subtree: true });
+		observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["style"] });
 		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxFansWatching = false; }, { once: true });
 		try { nsmaxPrepareFans(); } catch {}
 	}

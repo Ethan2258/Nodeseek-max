@@ -15862,3 +15862,27 @@ html[data-nsmax-theme] #nsk-body-left .content-item > .signature a:not([class]):
   color: var(--link-hover) !important;
   text-decoration-color: transparent !important;
 }
+/* 个人主页空列表（2026-11-08 Yiheng 截图「暂无内容是什么鬼」）：卡片里一句「暂无内容」，卡片下面站点又画了一个 200px 的「空」箱子插图，
+   两个空状态叠在一起。站点插图藏掉，卡片里按标签写「还没有发过主题 / 还没有回帖 / 还没有收藏」（nsmaxPrepareSpace 写 data-nsmax-empty-label） */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector div > img[src*="/static/image/empty.svg"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "暂无内容" !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 140px !important;
+  padding: 0 16px !important;
+  color: var(--text-muted) !important;
+  font: 400 13.5px/1.6 var(--font-sans) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list)[data-nsmax-empty-label="还没有发过主题"]:empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "还没有发过主题" !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list)[data-nsmax-empty-label="还没有回帖"]:empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "还没有回帖" !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list)[data-nsmax-empty-label="还没有收藏"]:empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "还没有收藏" !important;
+}

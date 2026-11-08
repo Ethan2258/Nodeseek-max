@@ -3567,6 +3567,9 @@ test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预
 			assert.ok(follow, JSON.stringify(rows));
 			for (const b of follow) for (const key of ["bg", "color", "border", "radius", "h"]) assert.equal(b[key], follow[1][key], `${dark ? "深色" : "浅色"} ${b.t} 的 ${key} 和私信一样：${JSON.stringify(follow)}`);
 			assert.notEqual(follow[0].bg, "rgb(0, 170, 255)");
+			// 站点点完关注 / 取关会重画字和行内底色：再写一次也要被拿掉
+			await f.page.evaluate(() => document.querySelector(".nsmax-member-actions > .btn[data-nsmax-follow]").style.setProperty("background-color", "rgb(0, 157, 255)", "important"));
+			await f.page.waitForFunction(() => !document.querySelector(".nsmax-member-actions > .btn[data-nsmax-follow]").style.getPropertyValue("background-color"), null, { timeout: 2000 });
 			assert.deepEqual(f.errors, []);
 		} finally { await f.context.close(); }
 	}
@@ -7521,4 +7524,35 @@ test("v1.8.44 新标签页也能统计预取复用；无统计 API、过期或�
 			assert.deepEqual(errors,[]);
 		} finally {await context.close();}
 	}
+});
+
+test("2026-11-08：顶栏「深浅色」换模式当场生效（以前只改 body 的 dark-layout，页面颜色要刷新才变）；个人主页空列表只留卡片里一句，站点的「空」箱子插图藏掉", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), colorScheme: "dark", viewport: { width: 1440, height: 900 }, seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { colorMode: "system" } } } });
+	try {
+		await page.waitForFunction(() => performance.getEntriesByName("nsmax:deferred-start").length && !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const state = () => page.evaluate(() => ({ dark: document.documentElement.hasAttribute("data-nsmax-dark"), bg: getComputedStyle(document.body).backgroundColor, boot: localStorage.getItem("nsmax:boot-dark") }));
+		const start = await state();
+		assert.equal(start.dark, true);
+		for (const [label, dark] of [["浅色", false], ["深色", true], ["跟随系统", true]]) {
+			await page.locator('.nsmax-header-action[aria-label*="深浅色"]').first().click();
+			await page.getByRole("menuitemradio", { name: label }).click();
+			await page.waitForTimeout(200);
+			const now = await state();
+			assert.equal(now.dark, dark, `${label}：${JSON.stringify(now)}`);
+			assert.equal(now.boot, dark ? "1" : "0", `${label} 记下次开机的底色`);
+			assert.notEqual(now.bg === start.bg, !dark, `${label} 页面底色跟着变：${JSON.stringify(now)}`);
+		}
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+
+	// 站点真实写法（2026-11-08 从真站取的）：空列表是空的 .discussion-wrapper，后面跟一个居中的 empty.svg 插图
+	const html = spaceTopicsPage({ dark: true }).replace(/<div class="discussion-wrapper" data-v-18f8c01b>[\s\S]*?<\/div>(?=<\/div><\/div><\/div>)/, '<div data-v-18f8c01b="" class="discussion-wrapper"></div> <div data-v-18f8c01b="" style="text-align: center; padding-bottom: 10px;"><img data-v-18f8c01b="" src="/static/image/empty.svg" alt="" style="width:200px;height:200px"></div>');
+	assert.ok(html.includes("empty.svg"));
+	const space = await open(browser, "https://www.nodeseek.com/space/10#/discussions", { html, colorScheme: "dark", viewport: { width: 1440, height: 900 } });
+	try {
+		await space.page.waitForFunction(() => document.querySelector(".discussion-wrapper[data-nsmax-empty-label]"));
+		const s = await space.page.evaluate(() => { const w = document.querySelector(".discussion-wrapper"); return { text: getComputedStyle(w, "::after").content, img: getComputedStyle(document.querySelector("img[src*='empty.svg']")).display }; });
+		assert.deepEqual(s, { text: '"还没有发过主题"', img: "none" });
+		assert.deepEqual(space.errors, []);
+	} finally { await space.context.close(); }
 });
