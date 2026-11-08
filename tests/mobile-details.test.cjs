@@ -26,7 +26,10 @@ for(const engine of engines){
      const link=t.querySelector(":scope>a");const walk=document.createTreeWalker(link,NodeFilter.SHOW_TEXT);let n,line=null;
      while((n=walk.nextNode())){if(n.parentElement.closest(".nsmax-mk")||!n.textContent.trim())continue;const r=document.createRange();r.selectNodeContents(n);const rects=r.getClientRects();line=rects[rects.length-1];break;}
      const els=[...t.querySelectorAll(":scope>:is(span[data-nsmax-pinned],.nsmax-topic-pages,span[data-nsmax-lock],.nsk-badge.read-only,a[href='/award']), :scope>.nsmax-topic-pages>a")];
-     return els.map(e=>{const r=e.getBoundingClientRect(),first=e.matches("[data-nsmax-pinned]");return{k:e.className||e.getAttribute("href")||e.tagName,h:+r.height.toFixed(1),d:+((r.top+r.bottom)/2-(first?(t.getClientRects()[0].top+parseFloat(getComputedStyle(t).lineHeight)/2):(line.top+line.bottom)/2)).toFixed(1),lines:e.getClientRects().length}});
+     // 小标记落在标题的哪一行就和那一行比：标题文字那一行用文字的中线；折到下一行的（窄屏字宽时推荐阅读会掉下去）用那一行行框的中线
+     const top=t.getBoundingClientRect().top,lh=parseFloat(getComputedStyle(t).lineHeight);
+     return els.map(e=>{const r=e.getBoundingClientRect(),mid=(r.top+r.bottom)/2,row=Math.floor((mid-top)/lh),sameRow=Math.floor(((line.top+line.bottom)/2-top)/lh)===row;
+      return{k:e.className||e.getAttribute("href")||e.tagName,h:+r.height.toFixed(1),d:+(mid-(sameRow?(line.top+line.bottom)/2:top+lh*(row+.5))).toFixed(1),lines:e.getClientRects().length}});
     }).flat());
     const kinds=new Set(rows.map(r=>String(r.k).split(" ")[0]));
     for(const k of ["nsmax-topic-pages","/award","nsk-badge"])assert.ok([...kinds].some(x=>x.includes(k)||x===k),`${label} 缺 ${k}：${JSON.stringify(rows)}`);
@@ -36,6 +39,15 @@ for(const engine of engines){
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
+ });
+ test(`${engine} 帖子页顶栏把帖子所在版块标成当前（2026-11-08 照 sb.sb）：交易版的帖子，顶栏「交易」是黑色胶囊，其它版块不是`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{viewport:{width:1440,height:900},seed,html:P.postPage({})});
+  try{
+   await ready(page);
+   const s=await page.evaluate(()=>{const on=[...document.querySelectorAll("#nsk-head a[data-nsmax-header-cat-on]")].filter(a=>a.offsetWidth);return{on:on.map(a=>a.textContent.trim()),bg:on[0]&&getComputedStyle(on[0]).backgroundColor,crumb:document.querySelector(".nsmax-crumb")?.textContent.replace(/\s+/g,"")};});
+   assert.deepEqual(s.on,["交易"],JSON.stringify(s));assert.notEqual(s.bg,"rgba(0, 0, 0, 0)",JSON.stringify(s));assert.equal(s.crumb,"首页/交易");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
  });
  test(`${engine} 手机旧评论：40 天和跨年完整时间戳可换行，操作仍为单行且保留 44px 点击区`,async()=>{
   for(const width of [390,360])for(const days of [40,400]){

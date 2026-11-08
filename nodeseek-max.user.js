@@ -20392,7 +20392,7 @@ var nsmaxRedirecting = false;
 				want(element, "data-nsmax-header-cat");
 				for (const link of element.matches("a[href]") ? [element] : element.querySelectorAll("a[href]")) {
 					const path = new URL(link.href, location.href).pathname.replace(/\/$/, "");
-					if (path.startsWith("/categories/") && (location.pathname === path || location.pathname.startsWith(`${path}/`))) want(link, "data-nsmax-header-cat-on");
+					if (nsmaxIsCurrentCategory(path)) want(link, "data-nsmax-header-cat-on");
 					// 手机版块那一排的「全部」（链到首页）：首页上首帧就标成当前（以前要等手机模块启动后才加 aria-current，晚 1 秒多才变成黑色胶囊）
 					else if (path === "" && location.pathname === "/" && link.closest("ul.mobile-nav")) want(link, "data-nsmax-header-cat-on");
 				}
@@ -20682,6 +20682,23 @@ var nsmaxRedirecting = false;
 	// 版块导航在顶栏（默认，像 sb.sb）时：左侧栏里有、顶栏原本没有的版块（如曝光、内版）补进顶栏那一排标签，
 	// 侧栏导航的快捷入口（NQ 等）放在搜索框前面。只加脚本自己的元素（带 data-nsmax-own-header），站点原有元素不动。
 	var nsmaxHeaderExtraCache = new Map();
+	// 顶栏里哪个版块算「当前」（2026-11-08 照 sb.sb：帖子页把帖子所在版块标成黑色胶囊）：版块页看地址，帖子页看帖子数据里的版块链接，
+	// 帖子数据没有时退回帖子头上的「in 版块」链接
+	function nsmaxCurrentCategoryPath() {
+		const here = location.pathname.replace(/\/$/, "");
+		if (here.startsWith("/categories/")) return here;
+		if (!/^\/post-\d+/.test(here)) return "";
+		let link = "";
+		try { link = unsafeWindow$1.__config__?.postData?.categoryLink || ""; } catch {}
+		if (typeof link !== "string" || !link) link = document.querySelector("#nsk-body-left .nsk-post .content-category a[href*='/categories/']")?.getAttribute("href") || "";
+		if (!link) return "";
+		try { return new URL(link, location.href).pathname.replace(/\/$/, ""); } catch { return ""; }
+	}
+	function nsmaxIsCurrentCategory(path) {
+		if (!path.startsWith("/categories/")) return false;
+		const current = nsmaxCurrentCategoryPath();
+		return !!current && (current === path || current.startsWith(`${path}/`));
+	}
 	function nsmaxHeaderExtras() {
 		const searchInput = document.getElementById("search-site2");
 		if (searchInput && searchInput.placeholder !== "搜索关键词") searchInput.placeholder = "搜索关键词";
@@ -20722,7 +20739,7 @@ var nsmaxRedirecting = false;
 			}
 			link.href = href;
 			const path = new URL(link.href, location.href).pathname.replace(/\/$/, "");
-			link.toggleAttribute("data-nsmax-header-cat-on", path.startsWith("/categories/") && (location.pathname === path || location.pathname.startsWith(`${path}/`)));
+			link.toggleAttribute("data-nsmax-header-cat-on", nsmaxIsCurrentCategory(path));
 			extras.push(link);
 		}
 		if (extras.length) {
