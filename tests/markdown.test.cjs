@@ -7,7 +7,7 @@ const pic = (w, h, color) => "data:image/svg+xml," + encodeURIComponent(`<svg xm
 const body = `<h1>一级</h1><p>段落</p><h2>二级</h2><h3>三级</h3><h4>四级</h4><blockquote><p>引用</p></blockquote>
 <pre><code class="language-bash">@Impart_VIP_Bot</code></pre><pre><code>no language</code></pre>
 <table><thead><tr><th>套餐</th><th>价格</th></tr></thead><tbody><tr><td>1C1G</td><td>¥99/年</td></tr></tbody></table>
-<p><img src="${pic(1600, 1000, "#4f7cff")}" alt="第一张" width="320" height="200"> <img src="${pic(900, 1400, "#22c55e")}" alt="第二张" width="200" height="300"></p>`;
+<p><img class="sticker" src="${pic(40, 40, "#f59e0b")}" alt="表情"> <img src="/nsmax-missing-image.png" alt="坏图"> <img src="${pic(1600, 1000, "#4f7cff")}" alt="第一张" width="320" height="200"> <img src="${pic(900, 1400, "#22c55e")}" alt="第二张" width="200" height="300"></p>`;
 const html = (options) => P.postPage(options).replace("</article>", body + "</article>");
 let browser;
 test.before(async () => { browser = await launch(); });
@@ -53,7 +53,7 @@ test("正文：代码块顶上是标题栏（语言名 + 常显的「复制」�
 	}
 });
 
-test("看大图：左上张数和尺寸、右上「原图」和关闭；电脑上左右大箭头翻页，工具栏有缩放比例（点了切原始大小），缩略图条没有黑底；图片不压顶栏", async () => {
+test("看大图：图集只收正文配图（表情包、裂图不算），左上张数和尺寸、右上「原图」和关闭；电脑上左右大箭头翻页，工具栏有缩放比例（点了切原始大小），缩略图条没有黑底；图片不压顶栏", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: html(), viewport: { width: 1440, height: 900 } });
 	try {
 		await ready(page);

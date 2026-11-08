@@ -5832,7 +5832,7 @@ var nsmaxRedirecting = false;
 				if (ctx.get("images")) window.addEventListener("click", (e) => {
 					if (!(e.target instanceof Element) || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 					const img = e.target.closest(`${contentSelector} img`);
-					if (!img) return;
+					if (!img || !nsmaxViewableImage(img)) return;
 					e.preventDefault();
 					e.stopImmediatePropagation();
 					// NodeSeek Max：改用悬停预览里的 Viewer.js 大图查看（深色遮罩、可缩放、同一楼多图切换），
@@ -15373,6 +15373,14 @@ var nsmaxRedirecting = false;
 		].join(""));
 		return nsmaxViewerClass = __toESM(nsmaxViewerModule(), 1).default;
 	}
+	// 能点开看大图的正文图片：不是表情包（站点的 img.sticker、表情目录里的图、emoji），也不是加载失败的图
+	function nsmaxViewableImage(img) {
+		if (img.matches(".sticker, .smoji, [class*=emoji], [class*=avatar]")) return false;
+		const src = img.getAttribute("src") || "";
+		if (/\/(?:sticker|stickers|smilies|emoji|emoticons?)\//i.test(src)) return false;
+		if (img.complete && img.getAttribute("src") && img.naturalWidth === 0) return false;
+		return true;
+	}
 	function openImagePreview(content, image, onClose) {
 		const dialog = document.createElement("dialog");
 		dialog.className = "nspp-image-preview";
@@ -15395,7 +15403,9 @@ var nsmaxRedirecting = false;
 			event.stopPropagation();
 			close();
 		});
-		const images = Array.from(content.querySelectorAll("img"));
+		// 图集只收正文配图：表情包、加载失败的图不进来（2026-11-08 真站：点第一张截图显示「6 / 15」，缩略图头尾是表情 GIF 和一个裂图）
+		const viewable = (img) => img === image || nsmaxViewableImage(img);
+		const images = Array.from(content.querySelectorAll("img")).filter(viewable);
 		const multiple = images.length > 1;
 		// 2026-11-08 看图重做：左上角「第几张 / 共几张 · 宽 × 高」，右上角「原图」+ 关闭；电脑上左右两边各一个大的上一张 / 下一张，
 		// 底部工具栏是「缩小 · 当前比例 · 放大 | 适应窗口」（点比例在原始大小和适应窗口之间切换），缩略图条不再垫一条黑底。
@@ -15411,7 +15421,8 @@ var nsmaxRedirecting = false;
 		};
 		viewer = new (nsmaxViewer())(content, {
 			container: dialog,
-			initialViewIndex: images.indexOf(image),
+			filter: viewable,
+			initialViewIndex: Math.max(0, images.indexOf(image)),
 			// 电脑上图片上下各让出 72px：顶上是张数和「原图 / 关闭」那一行，图片不压在它们下面（底栏的高度 Viewer.js 自己会让）
 			initialCoverage: touch ? .9 : Math.max(.6, Math.min(.9, 1 - 144 / Math.max(1, innerHeight - (multiple ? 130 : 80)))),
 			title: [true, function(_image, data) {
