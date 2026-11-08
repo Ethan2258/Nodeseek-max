@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open, themeCssOf } = require("./harness.cjs");
-const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage, progressPage } = require("./fixtures/pages.cjs");
+const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, findUserPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage, progressPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -7555,4 +7555,35 @@ test("2026-11-08：顶栏「深浅色」换模式当场生效（以前只改 bod
 		assert.deepEqual(s, { text: '"还没有发过主题"', img: "none" });
 		assert.deepEqual(space.errors, []);
 	} finally { await space.context.close(); }
+});
+
+test("2026-11-08：查找用户（/member?q=）按关注页的成员卡片排：上面一张标题 + 搜索框的卡片，「Joined 29days ago」写成「加入 29 天」，关注按钮没有站点的亮蓝底，Lv 0 写 Lv.0", async () => {
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/member?q=%E9%94%90%E8%AF%84%E7%8C%AB", { html: findUserPage({ dark }), colorScheme: dark ? "dark" : "light", viewport: { width: 1440, height: 900 } });
+		try {
+			await page.waitForSelector(".nsmax-member");
+			const s = await page.evaluate(() => ({
+				page: document.documentElement.dataset.nsmaxPage,
+				heading: getComputedStyle(document.querySelector(".member-list > h1")).display,
+				q: document.querySelector(".nsmax-find-user-input")?.value,
+				title: document.querySelector(".nsmax-find-user-title")?.textContent,
+				rows: [...document.querySelectorAll(".nsmax-member")].map((r) => ({ bio: r.querySelector(".nsmax-member-bio").textContent, lv: r.querySelector("[data-nsmax-level]")?.textContent, buttons: [...r.querySelectorAll(".nsmax-member-actions > .btn")].map((b) => ({ t: b.textContent.trim(), bg: getComputedStyle(b).backgroundColor, h: b.getBoundingClientRect().height })) }))
+			}));
+			assert.equal(s.page, "fans");
+			assert.equal(s.heading, "none", "站点 30px 大标题藏掉");
+			assert.equal(s.title, "查找用户");
+			assert.equal(s.q, "锐评猫");
+			assert.deepEqual(s.rows.map((r) => [r.bio, r.lv]), [["加入 29 天", "Lv.0"], ["加入 400 天", "Lv.2"]]);
+			for (const r of s.rows) {
+				assert.deepEqual(r.buttons.map((b) => b.t), ["关注", "私信", "转账"]);
+				assert.ok(r.buttons.every((b) => b.bg === r.buttons[1].bg && b.h === r.buttons[1].h), JSON.stringify(r.buttons));
+				assert.notEqual(r.buttons[0].bg, "rgb(0, 157, 255)");
+			}
+			// 换个词搜索：回车跳到 /member?q=新词
+			await page.fill(".nsmax-find-user-input", "cloud");
+			const [request] = await Promise.all([page.waitForRequest((req) => req.url().includes("/member?q=")), page.press(".nsmax-find-user-input", "Enter")]);
+			assert.equal(new URL(request.url()).searchParams.get("q"), "cloud");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
 });

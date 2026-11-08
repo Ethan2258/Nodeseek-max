@@ -6,7 +6,7 @@
 	}
 	// 页面类型：主题 CSS 按 html[data-nsmax-page] 分页面排版；搜索、账簿这类结构和列表页相同的页面都算 list
 	function nsmaxPageKind(path = location.pathname) {
-		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : /^\/lucky(?:\/|$)/.test(path) ? "lucky" : "list";
+		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) || nsmaxIsFindUser(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : /^\/lucky(?:\/|$)/.test(path) ? "lucky" : "list";
 	}
 	// 主题 CSS 按页面分块注入（2026-10-22）：构建时把编译后的样式拆成有序段（base + 各页面专属段，段序 = 原规则序），
 	// 这里按当前页面只拼需要的段：别的页面的规则完全不参与解析，列表页 / 帖子页 / 通知页少解析 25%–50% 的 CSS，
@@ -67,6 +67,14 @@
 		const css = nsmaxThemeUnpack(new Set(["overlay"]));
 		// 构建时已经短名化 / 压缩过，按「编译后样式」注入，跳过运行时再优化一遍
 		if (css) _css(css, true);
+	}
+	// 「查找用户🔍」（/member?q=关键词，站点的 findUser 页，2026-11-08 从真站取的结构）：和关注 / 粉丝页是同一个 memberList 组件、同一种用户卡片，
+	// 按关注页排。/member?t=名字 是另一回事（服务器直接跳到那人的主页，找不到就是「不存在该用户」），不算
+	function nsmaxIsFindUser(path = location.pathname) {
+		return path === "/member" && !new URLSearchParams(location.search).has("t");
+	}
+	function nsmaxIsMemberList(path = location.pathname) {
+		return /^\/fans(?:\/|$)/.test(path) || nsmaxIsFindUser(path);
 	}
 	function nsmaxSetAttr(el, name, value = "") {
 		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
@@ -4023,7 +4031,9 @@ function nsmaxTagStructure() {
 	// 等级徽章：NodeSeek 只有 Lv1–Lv6。凡是只写着等级的小标签都打上 data-nsmax-level=N（主题按等级配色、配徽记），
 	// 文字统一成 sb.sb 的「Lv.N」；Lv6 另外保留 data-nsmax-lv6（旧规则与外部样式在用）
 	function nsmaxApplyLevel(el, level) {
-		const n = Math.max(1, Math.min(6, Number(level) || 1));
+		// NodeSeek 有 Lv 0（鸡腿不到 100）：以前一律从 1 起，个人主页名字旁写 Lv.1、下面统计格和等级条写 Lv.0，自相矛盾（2026-11-08 真站截图）
+		const raw = level === null || level === undefined || level === "" ? NaN : Number(level);
+		const n = Number.isFinite(raw) ? Math.max(0, Math.min(6, Math.floor(raw))) : 1;
 		nsmaxSetAttr(el, "data-nsmax-level", String(n));
 		if (n === 6) nsmaxSetAttr(el, "data-nsmax-lv6", "true");
 		else nsmaxDropAttr(el, "data-nsmax-lv6");
@@ -4843,9 +4853,45 @@ function nsmaxTagStructure() {
 		skeleton.setAttribute("aria-hidden", "true");
 		mount.prepend(skeleton);
 	}
+	// 查找用户的标题栏：站点只有一个居中的 30px「查找用户🔍」大标题，想换个词还得改地址栏。换成和关注页标签栏一样的卡片：
+	// 左边「查找用户」，右边一个搜索框（回车或点「搜索」跳到 /member?q=新词），站点的大标题藏掉（2026-11-08 Yiheng：「太丑了，重新优化」）
+	function nsmaxFindUserBar() {
+		if (!nsmaxIsFindUser()) return;
+		const list = document.querySelector("#nsk-frame .member-list");
+		const heading = list?.querySelector(":scope > h1");
+		if (!list || !heading || list.querySelector(":scope > .nsmax-find-user")) return;
+		const bar = document.createElement("form");
+		bar.className = "nsmax-find-user";
+		bar.setAttribute("role", "search");
+		const title = document.createElement("span");
+		title.className = "nsmax-find-user-title";
+		title.textContent = "查找用户";
+		const input = document.createElement("input");
+		input.type = "search";
+		input.name = "q";
+		input.className = "nsmax-find-user-input";
+		input.placeholder = "输入用户名的一部分";
+		input.setAttribute("aria-label", "用户名");
+		input.autocomplete = "off";
+		input.value = new URLSearchParams(location.search).get("q") || "";
+		const submit = document.createElement("button");
+		submit.type = "submit";
+		submit.className = "nsmax-find-user-submit";
+		submit.textContent = "搜索";
+		bar.append(title, input, submit);
+		bar.addEventListener("submit", (event) => {
+			event.preventDefault();
+			const q = input.value.trim();
+			if (q) location.assign(`/member?q=${encodeURIComponent(q)}`);
+			else input.focus();
+		});
+		heading.setAttribute("data-nsmax-find-heading", "");
+		heading.after(bar);
+	}
 	function nsmaxPrepareFans() {
-		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
+		if (!nsmaxIsMemberList()) return;
 		nsmaxFansSkeleton();
+		nsmaxFindUserBar();
 		// 「取关」：站点给这个按钮写了行内的 background-color: gray !important（压过所有样式表），灰底灰字很怪；
 		// 去掉这条行内样式，按 sb.sb 的细线按钮排（悬停时浅红，提示是取消关注）
 		// 2026-11-08：「关注」在深色下是站点的亮蓝实心按钮，旁边私信、转账是细线按钮，很扎眼（Yiheng 截图）。三个按钮一律去掉站点
@@ -5272,7 +5318,7 @@ function nsmaxTagStructure() {
 	// 页面解析阶段（脚本注入得早时）就装上，模块挂载时再调一次不重复装
 	var nsmaxFansWatching = false;
 	function nsmaxWatchFans(ctx) {
-		if (nsmaxFansWatching || !/^\/fans(?:\/|$)/.test(location.pathname) || !document.body) return;
+		if (nsmaxFansWatching || !nsmaxIsMemberList() || !document.body) return;
 		nsmaxFansWatching = true;
 		const relevant = (node) => node instanceof Element && (node.matches(".member-list, .user-card-wrapper-container, .user-card-wrapper, .user-card, .usercard-button-group, .fans-switcher, .switcher-item, .btn") || !!node.querySelector(".user-card, .fans-switcher"));
 		// 按钮自己变了（点关注 / 取关后站点改字、重新写行内底色）也要再整理一次
@@ -5634,7 +5680,7 @@ function nsmaxTagStructure() {
 			nsmaxPrepareBoard();
 			if (/^\/board(?:\/|$)/.test(path)) nsmaxCheckinPage();
 			if (path === "/progress") nsmaxProgressPage();
-			if (/^\/fans(?:\/|$)/.test(path)) nsmaxPrepareFans();
+			if (nsmaxIsMemberList(path)) nsmaxPrepareFans();
 			if (/^\/credit(?:\/|$)/.test(path)) nsmaxPrepareCredit();
 			if (/^\/setting(?:\/|$)/.test(path)) nsmaxPrepareSetting();
 			nsmaxPrepareSidePage();
