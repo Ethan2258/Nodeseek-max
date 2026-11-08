@@ -15844,19 +15844,19 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h1:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   padding-bottom: 0.3em !important;
-  border-bottom: 1px solid var(--line-soft) !important;
+  border-bottom: 1px solid var(--line) !important;
   font-size: 1.4em !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h2:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   padding-bottom: 0.3em !important;
-  border-bottom: 1px solid var(--line-soft) !important;
+  border-bottom: 1px solid var(--line) !important;
   font-size: 1.25em !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h3:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   font-size: 1.12em !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h4:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  font-size: 1em !important;
+  font-size: 1.05em !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   color: var(--text-muted) !important;
@@ -16012,4 +16012,8 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies >
   padding: 0 !important;
   border: 0 !important;
   font-size: 13.5px !important;
+}
+/* 2026-11-08 真站复查：展开的折叠块标题下那道线原来是 line-soft，浅色白底上几乎看不见，和一二级标题的下划线一起换成 line */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert)[open] > summary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-bottom-color: var(--line) !important;
 }
