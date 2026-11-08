@@ -11,6 +11,32 @@ for(const engine of engines){
  let browser;
  test.before(async()=>{browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
+ test(`${engine} 列表标题前后的小标记（2026-11-08 用户截图：锁 + 等级、只读比标题低）：置顶、页码、锁、只读、推荐阅读都是 18px 高，对准标题那一行正中，电脑和手机一样`,async()=>{
+  // 站点真实结构（2026-11-08 从 nodeseek.com 取的原样 HTML）：锁 + 等级是带行内样式的 span，数字后面跟换行和空格；只读是 span.nsk-badge.read-only
+  const lock='<span style="color: rgb(255 152 152); font-family: sans-serif;"><svg class="iconpark-icon" style="vertical-align: baseline"><use href="#lock"></use></svg>1\n                    </span>';
+  const marks=html=>html.replace("出一台香港 CN2 GIA 小鸡，年付 99</a>",'出一台香港 CN2 GIA 小鸡，年付 99</a> <!----> <a href="/award" title="推荐阅读"><svg class="iconpark-icon award" style="width:15px;height:15px"><use href="#diamonds"></use></svg></a> <span title="置顶"><svg class="iconpark-icon pined circle-icon" style="width:15px;height:15px"><use href="#pin"></use></svg></span> <!---->')
+   .replace("求推荐稳定的美西 VPS</a>",`求推荐稳定的美西 VPS</a> ${lock} <!----> <!----> <span class="nsk-badge read-only">\n                                只读\n                            </span>`)
+   .replace("Cloudflare Tunnel 踩坑记录</a>",`Cloudflare Tunnel 踩坑记录</a> ${lock} <!----> <!----> <!---->`);
+  for(const [label,opts,mobile] of [["电脑 1440",{viewport:{width:1440,height:900},seed},false],["手机 390",phone(390),true],["手机 360",phone(360),true]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...opts,html:marks(P.listPage({mobile}))});
+   try{
+    await ready(page);
+    await page.waitForFunction(()=>document.querySelector(".post-list-item .post-title > span[data-nsmax-lock]")&&document.querySelector(".post-list-item .post-title > .nsmax-topic-pages")&&document.querySelector(".post-list-item .post-title > span[data-nsmax-pinned]"),null,{timeout:5000});
+    const rows=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-title")].map(t=>{
+     const link=t.querySelector(":scope>a");const walk=document.createTreeWalker(link,NodeFilter.SHOW_TEXT);let n,line=null;
+     while((n=walk.nextNode())){if(n.parentElement.closest(".nsmax-mk")||!n.textContent.trim())continue;const r=document.createRange();r.selectNodeContents(n);const rects=r.getClientRects();line=rects[rects.length-1];break;}
+     const els=[...t.querySelectorAll(":scope>:is(span[data-nsmax-pinned],.nsmax-topic-pages,span[data-nsmax-lock],.nsk-badge.read-only,a[href='/award']), :scope>.nsmax-topic-pages>a")];
+     return els.map(e=>{const r=e.getBoundingClientRect(),first=e.matches("[data-nsmax-pinned]");return{k:e.className||e.getAttribute("href")||e.tagName,h:+r.height.toFixed(1),d:+((r.top+r.bottom)/2-(first?(t.getClientRects()[0].top+parseFloat(getComputedStyle(t).lineHeight)/2):(line.top+line.bottom)/2)).toFixed(1),lines:e.getClientRects().length}});
+    }).flat());
+    const kinds=new Set(rows.map(r=>String(r.k).split(" ")[0]));
+    for(const k of ["nsmax-topic-pages","/award","nsk-badge"])assert.ok([...kinds].some(x=>x.includes(k)||x===k),`${label} 缺 ${k}：${JSON.stringify(rows)}`);
+    assert.ok(rows.every(r=>r.h===18),`${label} 都是 18px 高：${JSON.stringify(rows)}`);
+    assert.ok(rows.every(r=>Math.abs(r.d)<=1.5),`${label} 对准标题那一行正中：${JSON.stringify(rows)}`);
+    assert.ok(rows.every(r=>r.lines===1),`${label} 锁和数字不折成两行：${JSON.stringify(rows)}`);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
  test(`${engine} 手机旧评论：40 天和跨年完整时间戳可换行，操作仍为单行且保留 44px 点击区`,async()=>{
   for(const width of [390,360])for(const days of [40,400]){
    const created=new Date(Date.now()-days*864e5).toISOString();
@@ -118,13 +144,13 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 手机列表标题前的「已回复」小标：19px 高、字在框里正中，和标题第一行竖直居中`,async()=>{
+ test(`${engine} 手机列表标题前的「已回复」小标：18px 高（2026-11-08 和标题前后其它小标记统一）、字在框里正中，和标题第一行竖直居中`,async()=>{
   const state={"posts:1":{1000:[3]},"joined:1":{},"posts:1:synced":Date.now(),"posts:1:done":true};
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true}),seed:{...seed,"nspp:state:www.nodeseek.com:sb-my-replies":state}});
   try{
    await ready(page);await page.waitForSelector(".post-title>.nsmax-replied-badge");
    const s=await page.evaluate(()=>{const b=document.querySelector(".post-title>.nsmax-replied-badge"),t=b.parentElement,box=b.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(b);const text=range.getBoundingClientRect();const lh=parseFloat(getComputedStyle(t).lineHeight);const line=t.getBoundingClientRect().top;return{h:box.height,boxMid:box.top+box.height/2,textMid:text.top+text.height/2,lineMid:line+lh/2};});
-   assert.equal(s.h,19,JSON.stringify(s));
+   assert.equal(s.h,18,JSON.stringify(s));
    assert.ok(Math.abs(s.textMid-s.boxMid)<1.5,`字在框里正中：${JSON.stringify(s)}`);
    assert.ok(Math.abs(s.boxMid-s.lineMid)<1,`和标题第一行竖直居中：${JSON.stringify(s)}`);
    assert.deepEqual(errors,[]);

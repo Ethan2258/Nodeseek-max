@@ -538,7 +538,7 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 个人空间主题 / 回帖列表：包在 .selector-right-side 里也接进标签条的卡片（边框、下圆角），阅读权限标记是标题后面的小胶囊`,async()=>{
+ test(`${engine} 个人空间主题 / 回帖列表：包在 .selector-right-side 里也接进标签条的卡片（边框、下圆角），阅读权限标记是标题后面的浅红小方块（2026-11-08 和首页列表统一）`,async()=>{
   for(const [name,html,url] of [["主题",P.spaceTopicsPage({mobile:true}),"/space/10#/discussions"],["回帖",P.spaceCommentsPage({mobile:true}),"/space/10#/comments"]]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...phone(),html});
    try{
@@ -549,12 +549,12 @@ for(const engine of engines){
      const [title,mark]=first.querySelectorAll(":scope > span");const ct=getComputedStyle(title),cm=getComputedStyle(mark);
      const bar=document.querySelector(".selector > a.select-item.active, .selector > a.select-item.router-link-active").getBoundingClientRect();
      return{border:cw.borderLeftWidth+" "+cw.borderBottomWidth,radius:parseFloat(cw.borderBottomLeftRadius),left:w.getBoundingClientRect().left,right:w.getBoundingClientRect().right,vw:innerWidth,
-      titleSize:parseFloat(ct.fontSize),markSize:parseFloat(cm.fontSize),markBorder:cm.borderTopWidth,markColor:cm.color,titleColor:ct.color,
+      titleSize:parseFloat(ct.fontSize),markSize:parseFloat(cm.fontSize),markBorder:cm.borderTopWidth,markBg:cm.backgroundColor,markColor:cm.color,titleColor:ct.color,
       markMiddle:(mark.getBoundingClientRect().top+mark.getBoundingClientRect().bottom)/2,titleMiddle:(title.getBoundingClientRect().top+title.getBoundingClientRect().bottom)/2,below:w.getBoundingClientRect().top>=bar.bottom-1};
     });
     assert.equal(s.border,"1px 1px",name+JSON.stringify(s));
     assert.ok(s.radius>=8&&s.below&&s.left>=0&&s.right<=s.vw,name+JSON.stringify(s));
-    assert.ok(s.markSize<s.titleSize&&s.markBorder==="1px"&&s.markColor!==s.titleColor,name+JSON.stringify(s));
+    assert.ok(s.markSize<s.titleSize&&s.markBorder==="0px"&&s.markBg!=="rgba(0, 0, 0, 0)"&&s.markColor!==s.titleColor,name+JSON.stringify(s));
     assert.ok(near(s.markMiddle,s.titleMiddle,2.5),name+JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
