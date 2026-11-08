@@ -130,7 +130,7 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
- test(`${engine} 手机回复工具条：「只看楼主 直达底部 简洁模式」照 sb.sb 是 31px 细线胶囊，标题栏独立成卡片，320px 也排在一行`,async()=>{
+ test(`${engine} 手机回复工具条：「只看楼主 直达底部 简洁模式」和楼层胶囊一样 28px 细线胶囊（2026-11-08 统一，以前照 sb.sb 是 31px），标题栏独立成卡片，320px 也排在一行`,async()=>{
   for(const width of [390,320]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html:P.postPage({mobile:true})});
    try{
@@ -139,7 +139,7 @@ for(const engine of engines){
     assert.equal(s.tops.length,3);assert.equal(new Set(s.tops).size,1,JSON.stringify(s));assert.ok(s.title<=24,"标题不折行");
     assert.ok(s.heights.every(h=>h>=44),"保留 44px 点击区");assert.deepEqual(s.border,["0px","0px","0px"]);assert.ok(s.pill.every(r=>parseFloat(r)>=14),JSON.stringify(s));
     assert.ok(Math.abs(s.head-55)<1.5,`标题栏和 sb.sb .reply-head 一样高 55px：${JSON.stringify(s)}`);assert.ok(Math.abs(s.gap-10)<1,"和第一条回复隔 10px");assert.ok(parseFloat(s.headRadius)>=10,"标题栏是独立圆角卡片");
-    assert.deepEqual(s.size,["12px","12px","12px"]);assert.ok(s.pillHeight.every(h=>Math.abs(h-31)<1.5),JSON.stringify(s));
+    assert.deepEqual(s.size,["12px","12px","12px"]);assert.ok(s.pillHeight.every(h=>Math.abs(h-28)<1.5),JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
