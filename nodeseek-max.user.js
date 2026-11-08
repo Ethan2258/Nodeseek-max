@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.26
+// @version      1.9.27
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -905,7 +905,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.26";
+	var NSMAX_VERSION = "1.9.27";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -5068,8 +5068,10 @@ var nsmaxRedirecting = false;
 	var nsmaxUserNotes = null;
 	function nsmaxFilterSummary(filter) {
 		const hidden = filter.count();
+		const marked = filter.mode() === "highlight" ? filter.matched() : 0;
+		if (hidden && marked) return `本页标出 ${marked} 条，屏蔽 ${hidden} 条`;
 		if (hidden) return `本页已屏蔽 ${hidden} 条`;
-		if (filter.mode() === "highlight" && filter.matched()) return `本页标出 ${filter.matched()} 条`;
+		if (marked) return `本页标出 ${marked} 条`;
 		return filter.keywords().length ? "本页没有命中" : "";
 	}
 	var contentSelector = ":is(.post-content,.comment-content,.nsk-content,.markdown-body)";
@@ -6131,10 +6133,16 @@ var nsmaxRedirecting = false;
 				};
 				// 折叠：原位置留一行「已屏蔽一条帖子：命中「关键词」」小条，右侧「显示 / 收起」小胶囊（样式见主题「关键词屏蔽」一节）。
 				// 折叠和只高亮时，标题里命中的关键词都会标出来；直接隐藏时不用标。
-				const filter = (item, anchor, reason) => {
+				// 「只高亮」只管关键词：屏蔽的用户、等级不够打不开的帖子没有关键词可标，照样直接藏起来（以前什么都不做，
+				// 屏蔽名单和「隐藏等级不够的帖子」在这个模式下等于没开，工具条还写「本页标出 N 条」）
+				const hiddenItems = new WeakSet();
+				const filter = (item, anchor, reason, keyword) => {
 					const undo = [];
-					const mode = ctx.get("mode");
+					const chosen = ctx.get("mode");
+					const mode = chosen === "highlight" && !keyword ? "hide" : chosen;
 					if (mode !== "highlight") {
+						hiddenItems.add(item);
+						undo.push(() => hiddenItems.delete(item));
 						const wasHidden = item.hidden;
 						item.hidden = true;
 						undo.push(() => {
@@ -6186,7 +6194,7 @@ var nsmaxRedirecting = false;
 						const required = Number(lock?.closest("span")?.textContent?.match(/\d+/)?.[0] ?? NaN);
 						const keyword = matched(anchor?.textContent || "") || !anchor && comments && matched(item.querySelector(".post-content")?.textContent || "");
 						const reason = keyword ? `命中「${keyword.text}」` : blockedUser(author) ? `屏蔽的用户 ${author}` : Number.isFinite(level) && Number.isFinite(required) && required > level ? `需要 Lv${required}` : "";
-						if (reason) filtered.set(item, filter(item, anchor, reason));
+						if (reason) filtered.set(item, filter(item, anchor, reason, !!keyword));
 					});
 					if (filtered.size !== before) changed("nsmax:filter-count");
 				};
@@ -6234,8 +6242,8 @@ var nsmaxRedirecting = false;
 					// 侧栏热榜用：只高亮模式下命中的帖子照常显示
 					hides: (text) => ctx.get("mode") !== "highlight" && blocks(text),
 					mode: () => ctx.get("mode"),
-					matched: () => Array.from(filtered.keys()).filter((item) => item.isConnected).length,
-					count: () => (ctx.get("mode") === "highlight" ? 0 : Array.from(filtered.keys()).filter((item) => item.isConnected).length) + hotHidden,
+					matched: () => Array.from(filtered.keys()).filter((item) => item.isConnected && !hiddenItems.has(item)).length,
+					count: () => Array.from(filtered.keys()).filter((item) => item.isConnected && hiddenItems.has(item)).length + hotHidden,
 					reportHot(count) {
 						if (count === hotHidden) return;
 						hotHidden = count;
@@ -7122,7 +7130,9 @@ var nsmaxRedirecting = false;
 						control.setAttribute("aria-busy", "true");
 						const requestDay = day();
 						try {
-							await withTabLock(`attendance:${user.member_id}`, 1e4, async () => {
+							// 用上面认出来的 memberId：页面没有 __config__.user（只能从 Cookie / 资料卡链接认人）时，
+							// 以前这里读 user.member_id 直接报错，被下面的 catch 当成「签到失败」记成今天已签，其实一次都没签
+							await withTabLock(`attendance:${memberId}`, 1e4, async () => {
 								if (ctx.signal.aborted) return;
 								if (known()) {
 									complete(false);
