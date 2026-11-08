@@ -32,16 +32,18 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 手机主楼（2026-11-07 重做）：楼主和时间收进作者栏，「举报 引用 回复」胶囊在签名下面靠右，点赞一排一行平分；代码块不再空出一整行`,async()=>{
+ test(`${engine} 手机主楼（2026-11-08 照原版）：头像名字下面一行是「楼主 时间」和「举报 引用 回复」胶囊，正文上面一条虚线，点赞一排一行平分；代码块不再空出一整行`,async()=>{
   for(const width of [390,320]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(width),html:P.postPage({mobile:true})});
    try{
     await ready(page);
     const s=await page.evaluate(()=>{const r=e=>e.getBoundingClientRect(),head=r(document.querySelector(".nsk-post .nsmax-author-col")),meta=document.querySelector(".nsk-post .nsk-content-meta-info>div:not([class])"),ops=[...document.querySelectorAll(".nsk-post .nsmax-op-actions>a")].map(e=>r(e)),sig=r(document.querySelector(".nsk-post .signature")),body=r(document.querySelector(".nsk-post article.post-content")),pre=document.querySelector(".post-content .nsmax-code>pre"),copy=document.querySelector(".nsmax-code>[data-nspp-copy]"),items=[...document.querySelectorAll(".nsk-post .topic-actions>.menu-item")].map(e=>r(e));return{head,meta:r(meta),ops,sig,body,pre:r(pre).height,code:r(pre.querySelector("code")).top-r(pre).top,copy:r(copy),preTop:r(pre).top,items:items.map(i=>({w:Math.round(i.width),h:Math.round(i.height),top:Math.round(i.top)})),menu:r(document.querySelector(".nsk-post .topic-actions")),overflow:document.documentElement.scrollWidth>innerWidth+1};});
-    assert.ok(s.meta.top>=s.head.top&&s.meta.bottom<=s.head.bottom,`时间在作者栏里：${JSON.stringify(s)}`);
-    assert.ok(Math.abs(s.body.top-s.head.bottom)<1,"正文紧跟作者栏");
-    assert.equal(new Set(s.ops.map(o=>Math.round(o.top))).size,1,"三个按钮一行");assert.ok(s.ops.every(o=>o.top>=s.sig.bottom-1&&o.height>=44),JSON.stringify(s));
+    assert.ok(s.meta.top>=s.head.bottom-0.5&&s.meta.bottom<=s.body.top+0.5,`「楼主 时间」在作者栏下面、正文上面：${JSON.stringify(s)}`);
+    assert.ok(Math.abs(s.meta.left-s.body.left)<1,"和正文左边线对齐");
+    assert.equal(new Set(s.ops.map(o=>Math.round(o.top))).size,1,"三个按钮一行");assert.ok(s.ops.every(o=>o.top>=s.head.bottom-0.5&&o.bottom<=s.body.top+0.5&&o.height>=44),JSON.stringify(s));
+    assert.ok(s.ops.every(o=>Math.abs((o.top+o.bottom)/2-(s.meta.top+s.meta.bottom)/2)<2),`和「楼主 时间」同一条中线：${JSON.stringify(s)}`);
     assert.ok(Math.abs(Math.max(...s.ops.map(o=>o.right))-s.body.right)<1,"靠右，和正文右边线对齐");
+    assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector(".nsk-post article.post-content")).borderTopStyle),"dashed","正文上面一条虚线");
     assert.ok(s.copy.height>=43&&s.copy.width>=44,"复制按钮保留 44px 触控区");assert.ok(s.code<=46,JSON.stringify(s));assert.ok(s.copy.top-s.preTop<2,JSON.stringify(s));
     assert.equal(s.items.length,4);assert.equal(new Set(s.items.map(i=>i.top)).size,1,"点赞一排不折行");assert.ok(s.items.every(i=>i.h===40),JSON.stringify(s.items));
     assert.ok(Math.max(...s.items.map(i=>i.w))-Math.min(...s.items.map(i=>i.w))<=1,"四个平分");assert.ok(s.menu.right<=s.body.right+0.5,JSON.stringify(s));
