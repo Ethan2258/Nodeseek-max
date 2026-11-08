@@ -262,28 +262,37 @@ html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel a
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel a[aria-current="page"]{color:var(--text-subtle)!important}
 html[data-nsmax-theme][data-nsmax-touch] #left-slide-panel .nsmax-recent-panel>.nsmax-recent-clear{top:0!important;right:-10px!important;min-height:44px!important;padding:0 10px!important;font-size:13px!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay :is(button,[role=tab]){min-width:44px!important;min-height:44px!important;border-radius:var(--r)!important;font-size:14px!important}
-/* 搜索面板（手机，2026-11-07 用户截图）：以前把「只有可见区那么高 + 圆角」加在遮罩本身上，键盘一弹出遮罩就只盖上半屏、底边还是圆的，
-   下面的列表照常露出来。改成：遮罩铺满整屏；面板贴顶、最多和可见区（键盘上面那一块）一样高，内容多了在面板里滚。
-   面板里：「搜索」按钮是框里右边一个实心小胶囊（以前是框右边一道竖线隔出来的灰字，像没对齐）；版块标签伸到面板两边、
-   右边渐隐，看得出能横着滑；「搜索历史」标题和「清空」行距收紧，历史胶囊 32px 好点 */
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay{position:fixed!important;inset:0!important;height:auto!important;max-height:none!important;padding:var(--nsmax-overlay-top,0px) 0 0!important;border-radius:0!important;overflow:hidden!important;overscroll-behavior:contain!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-card{width:100%!important;max-width:none!important;max-height:var(--nsmax-overlay-height,100dvh)!important;overflow-y:auto!important;overscroll-behavior:contain!important;border:0!important;border-radius:0 0 20px 20px!important;box-shadow:0 10px 30px rgb(0 0 0/.14)!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs{height:48px!important;padding:env(safe-area-inset-top,0px) 4px 0 16px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs>.tab-btn{height:48px!important;min-width:0!important;padding:0 4px!important;border-radius:0!important;font-size:15px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-close{width:44px!important;height:44px!important;border-radius:var(--r-pill)!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-content{gap:12px!important;padding:14px 16px 16px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group{height:46px!important;padding:0 0 0 14px!important;border-radius:14px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group>input{font-size:16px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-search-btn{align-self:center!important;min-width:0!important;min-height:0!important;height:34px!important;margin:0 6px 0 4px!important;padding:0 16px!important;border:0!important;border-radius:var(--r-pill)!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14px!important;font-weight:500!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav{gap:8px!important;margin:0 -16px!important;padding:0 28px 0 16px!important;scroll-padding-inline:16px 28px!important;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important;mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav>.sub-pill{height:32px!important;padding:0 14px!important;border-radius:var(--r-pill)!important;font-size:13.5px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .search-history{padding:12px 0 0!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header{min-height:32px!important;margin:0 0 6px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header>span{font-size:13px!important}
+/* 搜索面板（手机，2026-11-08 用户截图「太丑了，重新弄」重做）：
+   以前是贴顶的一块白板，下面露出变暗的列表，版块标签一排横着滑、右边被渐隐切掉一截，搜索历史是一个个带「全部」小标的粗胶囊。
+   现在：整屏一张面板（键盘弹出时和可见区一样高，内容多了在面板里滚），后面什么也不露；
+   顶上「帖子 用户」是胶囊页签（选中的垫浅灰底），右边关闭；搜索框是浅灰底无边框的 44px 圆角框，「搜索」是框里右边的实心小胶囊；
+   版块标签换行排开、全部看得见（浅灰底、不描边，选中的实心）；搜索历史改成一行一条的列表：左边时钟图标、关键词、右边淡色范围小字，44px 好点 */
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay{position:fixed!important;inset:0!important;height:auto!important;max-height:none!important;padding:var(--nsmax-overlay-top,0px) 0 0!important;border-radius:0!important;overflow:hidden!important;overscroll-behavior:contain!important;background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-card{width:100%!important;max-width:none!important;height:var(--nsmax-overlay-height,100dvh)!important;max-height:var(--nsmax-overlay-height,100dvh)!important;overflow-y:auto!important;overscroll-behavior:contain!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs{gap:2px!important;height:auto!important;min-height:52px!important;padding:env(safe-area-inset-top,0px) 4px 0 10px!important;border:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs>.tab-btn{position:relative!important;isolation:isolate!important;height:44px!important;min-width:0!important;padding:0 14px!important;border-radius:0!important;background:none!important;color:var(--text-subtle)!important;font-size:15px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs>.tab-btn.active{color:var(--text-strong)!important;font-weight:600!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-tabs>.tab-btn.active::after{content:""!important;position:absolute!important;inset:6px 0!important;z-index:-1!important;width:auto!important;height:auto!important;border-radius:var(--r-pill)!important;background:var(--panel-hover)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-close{width:44px!important;height:44px!important;border-radius:var(--r-pill)!important;color:var(--text-muted)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-close svg{width:20px!important;height:20px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-content{gap:16px!important;padding:4px 16px 24px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group{height:44px!important;padding:0 0 0 14px!important;border:1px solid transparent!important;border-radius:12px!important;background:var(--panel-hover)!important;box-shadow:none!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group:focus-within{border-color:var(--brand-border)!important;background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-input-group>input{padding:0 8px!important;background:transparent!important;font-size:16px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .glass-search-btn{align-self:center!important;min-width:0!important;min-height:0!important;height:32px!important;margin:0 6px 0 4px!important;padding:0 14px!important;border:0!important;border-radius:var(--r-pill)!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14px!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav{flex-wrap:wrap!important;gap:8px!important;margin:0!important;padding:0!important;overflow:visible!important;-webkit-mask-image:none!important;mask-image:none!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav>.sub-pill{height:32px!important;padding:0 13px!important;border:0!important;border-radius:var(--r-pill)!important;background:var(--panel-hover)!important;color:var(--text-muted)!important;font-size:13.5px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .sub-nav>.sub-pill.active{background:var(--action)!important;color:var(--action-text)!important;font-weight:500!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .search-history{padding:4px 0 0!important;border:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header{min-height:32px!important;margin:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header>span{color:var(--text-subtle)!important;font-size:13px!important;font-weight:500!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .clear-history-btn{min-width:44px!important;min-height:32px!important;margin:0 -10px 0 0!important;padding:0 10px!important;border-radius:var(--r-pill)!important;font-size:13px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-list{gap:8px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item{height:32px!important;padding:0 6px 0 13px!important;font-size:14px!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-keyword{font-size:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-list{flex-direction:column!important;flex-wrap:nowrap!important;gap:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item{display:flex!important;width:100%!important;max-width:none!important;height:44px!important;gap:10px!important;padding:0!important;border:0!important;border-bottom:1px solid var(--line-soft)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item:last-child{border-bottom:0!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item::before{content:""!important;flex:none!important;width:16px!important;height:16px!important;background:var(--text-disabled)!important;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat!important;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-keyword{flex:1 1 auto!important;min-width:0!important;overflow:hidden!important;color:var(--text)!important;font-size:15px!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-scope-tag{flex:none!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;background:none!important;color:var(--text-subtle)!important;font-size:12.5px!important}
 html[data-nsmax-theme][data-nsmax-touch] :is(.viewer-button,.viewer-toolbar>ul>li){width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:var(--r-pill)!important}
 html[data-nsmax-theme][data-nsmax-touch] .viewer-toolbar>ul>li::before{margin:12px!important}
 html[data-nsmax-theme][data-nsmax-touch] dialog[open]{border-radius:var(--r)!important;animation:none!important}
