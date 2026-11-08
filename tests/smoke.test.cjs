@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { launch, open, themeCssOf } = require("./harness.cjs");
-const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage, progressPage } = require("./fixtures/pages.cjs");
+const { searchOverlayPage, providersPage, friendsPage, invitePage, creditGuestPage, notificationGuestPage, settingGuestPage, fansGuestPage, listPage, searchPage, luckyPage, postPage, notificationPage, settingPage, nativeMessagePage, nativeTalkPage, nativeSpacePage, newPostPage, spaceTopicsPage, spaceCommentsPage, boardPage, fansPage, findUserPage, creditPage, spaceCollectionsPage, signInPage, emailSignInPage, smsSignInPage, registerPage, rulingPage, boardRealPage, spaceGeneralPage, specialPostPage, progressPage } = require("./fixtures/pages.cjs");
 
 let browser;
 const wait = (page, ms = 500) => page.waitForTimeout(ms);
@@ -1113,6 +1113,8 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').innerText(), 'UID 10');
+		// 2026-11-08：UID 小标和名字旁的等级、活跃度小标一样 18px 高（以前 20.5px）
+		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').evaluate((e) => e.getBoundingClientRect().height), 18);
 		assert.equal(await pageSpace.locator('.head-container .card-block>.nsmax-user-stat:visible').count(), 9);
 		const progress = pageSpace.locator('.nsmax-space-progress');
 		assert.equal(await progress.getAttribute('data-nsmax-level-max') !== null, true);
@@ -2238,7 +2240,8 @@ test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字�
 				opacity: lines.map((p) => getComputedStyle(p).opacity),
 				margins: lines.map((p) => getComputedStyle(p).marginTop),
 				lastInside: lines.at(-1).getBoundingClientRect().bottom <= box.bottom + 0.5,
-				sameColor: getComputedStyle(sig.querySelector("a")).color === getComputedStyle(lines[1]).color
+				sameColor: getComputedStyle(sig.querySelector("a")).color === getComputedStyle(lines[1]).color,
+				link: (() => { const c = getComputedStyle(sig.querySelector("a")); return { line: c.textDecorationLine, thick: c.textDecorationThickness, offset: c.textUnderlineOffset }; })()
 			};
 		});
 		assert.deepEqual(state.links, ["引用", "回复", "编辑", "举报"]);
@@ -2247,7 +2250,9 @@ test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字�
 		assert.deepEqual(state.opacity, ["1", "1"]);
 		assert.deepEqual(state.margins, ["0px", "0px"]);
 		assert.equal(state.lastInside, true, "签名第二行不能被裁掉");
-		assert.equal(state.sameColor, true, "签名里的链接和文字同色");
+		// 2026-11-08 照 sb.sb .post-sig-text a：签名里的链接是链接色 + 2px 黄色下划线（以前和签名文字同色、没有下划线，看不出能点）
+		assert.equal(state.sameColor, false, "签名里的链接是链接色，和签名文字不同");
+		assert.deepEqual(state.link, { line: "underline", thick: "2px", offset: "3px" });
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -3550,6 +3555,24 @@ test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预
 		assert.notEqual(btn.bg, "rgb(128, 128, 128)");
 		assert.deepEqual(fans.errors, []);
 	} finally { await fans.context.close(); }
+	// 2026-11-08 用户截图：深色下「关注」是站点的亮蓝实心按钮，旁边私信、转账是细线按钮。三个按钮一样：同底色、同字色、同高、同圆角
+	for (const dark of [false, true]) {
+		let n = 0;
+		const html = fansPage({ dark }).replace(/<a class="btn">取关<\/a>/g, (m) => (n++ % 2 ? m : '<a class="btn" style="background-color: rgb(0, 170, 255) !important; color: white;">关注</a>'));
+		const f = await open(browser, "https://www.nodeseek.com/fans?type=fans", { html, colorScheme: dark ? "dark" : "light", viewport: { width: 1440, height: 900 } });
+		try {
+			await f.page.waitForSelector(".nsmax-member-actions > .btn[data-nsmax-follow]");
+			const rows = await f.page.evaluate(() => [...document.querySelectorAll(".nsmax-member-actions")].map((row) => [...row.children].map((b) => { const c = getComputedStyle(b); return { t: b.textContent.trim(), bg: c.backgroundColor, color: c.color, border: c.borderTopColor, radius: c.borderTopLeftRadius, h: b.getBoundingClientRect().height }; })));
+			const follow = rows.find((r) => r[0].t === "关注");
+			assert.ok(follow, JSON.stringify(rows));
+			for (const b of follow) for (const key of ["bg", "color", "border", "radius", "h"]) assert.equal(b[key], follow[1][key], `${dark ? "深色" : "浅色"} ${b.t} 的 ${key} 和私信一样：${JSON.stringify(follow)}`);
+			assert.notEqual(follow[0].bg, "rgb(0, 170, 255)");
+			// 站点点完关注 / 取关会重画字和行内底色：再写一次也要被拿掉
+			await f.page.evaluate(() => document.querySelector(".nsmax-member-actions > .btn[data-nsmax-follow]").style.setProperty("background-color", "rgb(0, 157, 255)", "important"));
+			await f.page.waitForFunction(() => !document.querySelector(".nsmax-member-actions > .btn[data-nsmax-follow]").style.getPropertyValue("background-color"), null, { timeout: 2000 });
+			assert.deepEqual(f.errors, []);
+		} finally { await f.context.close(); }
+	}
 	const post = postPage().replace(/<article class="post-content">[\s\S]*?<\/article>/, () => '<article class="post-content"><p>感觉流畅起来了 <img class="sticker" src="https://www.nodeseek.com/avatar/903.png" alt="xhj014"></p><p><img src="https://www.nodeseek.com/avatar/904.png" alt="image"><br>截图后面的字</p></article>');
 	const list = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 }, pages: { "/post-1000-1": post } });
 	try {
@@ -7501,5 +7524,67 @@ test("v1.8.44 新标签页也能统计预取复用；无统计 API、过期或�
 			if (kind === "shared") assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:prefetched")).length),0);
 			assert.deepEqual(errors,[]);
 		} finally {await context.close();}
+	}
+});
+
+test("2026-11-08：顶栏「深浅色」换模式当场生效（以前只改 body 的 dark-layout，页面颜色要刷新才变）；个人主页空列表只留卡片里一句，站点的「空」箱子插图藏掉", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), colorScheme: "dark", viewport: { width: 1440, height: 900 }, seed: { "nspp:settings:www.nodeseek.com": { "modern-theme": { colorMode: "system" } } } });
+	try {
+		await page.waitForFunction(() => performance.getEntriesByName("nsmax:deferred-start").length && !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		const state = () => page.evaluate(() => ({ dark: document.documentElement.hasAttribute("data-nsmax-dark"), bg: getComputedStyle(document.body).backgroundColor, boot: localStorage.getItem("nsmax:boot-dark") }));
+		const start = await state();
+		assert.equal(start.dark, true);
+		for (const [label, dark] of [["浅色", false], ["深色", true], ["跟随系统", true]]) {
+			await page.locator('.nsmax-header-action[aria-label*="深浅色"]').first().click();
+			await page.getByRole("menuitemradio", { name: label }).click();
+			await page.waitForTimeout(200);
+			const now = await state();
+			assert.equal(now.dark, dark, `${label}：${JSON.stringify(now)}`);
+			assert.equal(now.boot, dark ? "1" : "0", `${label} 记下次开机的底色`);
+			assert.notEqual(now.bg === start.bg, !dark, `${label} 页面底色跟着变：${JSON.stringify(now)}`);
+		}
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+
+	// 站点真实写法（2026-11-08 从真站取的）：空列表是空的 .discussion-wrapper，后面跟一个居中的 empty.svg 插图
+	const html = spaceTopicsPage({ dark: true }).replace(/<div class="discussion-wrapper" data-v-18f8c01b>[\s\S]*?<\/div>(?=<\/div><\/div><\/div>)/, '<div data-v-18f8c01b="" class="discussion-wrapper"></div> <div data-v-18f8c01b="" style="text-align: center; padding-bottom: 10px;"><img data-v-18f8c01b="" src="/static/image/empty.svg" alt="" style="width:200px;height:200px"></div>');
+	assert.ok(html.includes("empty.svg"));
+	const space = await open(browser, "https://www.nodeseek.com/space/10#/discussions", { html, colorScheme: "dark", viewport: { width: 1440, height: 900 } });
+	try {
+		await space.page.waitForFunction(() => document.querySelector(".discussion-wrapper[data-nsmax-empty-label]"));
+		const s = await space.page.evaluate(() => { const w = document.querySelector(".discussion-wrapper"); return { text: getComputedStyle(w, "::after").content, img: getComputedStyle(document.querySelector("img[src*='empty.svg']")).display }; });
+		assert.deepEqual(s, { text: '"还没有发过主题"', img: "none" });
+		assert.deepEqual(space.errors, []);
+	} finally { await space.context.close(); }
+});
+
+test("2026-11-08：查找用户（/member?q=）按关注页的成员卡片排：上面一张标题 + 搜索框的卡片，「Joined 29days ago」写成「加入 29 天」，关注按钮没有站点的亮蓝底，Lv 0 写 Lv.0", async () => {
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/member?q=%E9%94%90%E8%AF%84%E7%8C%AB", { html: findUserPage({ dark }), colorScheme: dark ? "dark" : "light", viewport: { width: 1440, height: 900 } });
+		try {
+			await page.waitForSelector(".nsmax-member");
+			const s = await page.evaluate(() => ({
+				page: document.documentElement.dataset.nsmaxPage,
+				heading: getComputedStyle(document.querySelector(".member-list > h1")).display,
+				q: document.querySelector(".nsmax-find-user-input")?.value,
+				title: document.querySelector(".nsmax-find-user-title")?.textContent,
+				rows: [...document.querySelectorAll(".nsmax-member")].map((r) => ({ bio: r.querySelector(".nsmax-member-bio").textContent, lv: r.querySelector("[data-nsmax-level]")?.textContent, buttons: [...r.querySelectorAll(".nsmax-member-actions > .btn")].map((b) => ({ t: b.textContent.trim(), bg: getComputedStyle(b).backgroundColor, h: b.getBoundingClientRect().height })) }))
+			}));
+			assert.equal(s.page, "fans");
+			assert.equal(s.heading, "none", "站点 30px 大标题藏掉");
+			assert.equal(s.title, "查找用户");
+			assert.equal(s.q, "锐评猫");
+			assert.deepEqual(s.rows.map((r) => [r.bio, r.lv]), [["加入 29 天", "Lv.0"], ["加入 400 天", "Lv.2"]]);
+			for (const r of s.rows) {
+				assert.deepEqual(r.buttons.map((b) => b.t), ["关注", "私信", "转账"]);
+				assert.ok(r.buttons.every((b) => b.bg === r.buttons[1].bg && b.h === r.buttons[1].h), JSON.stringify(r.buttons));
+				assert.notEqual(r.buttons[0].bg, "rgb(0, 157, 255)");
+			}
+			// 换个词搜索：回车跳到 /member?q=新词
+			await page.fill(".nsmax-find-user-input", "cloud");
+			const [request] = await Promise.all([page.waitForRequest((req) => req.url().includes("/member?q=")), page.press(".nsmax-find-user-input", "Enter")]);
+			assert.equal(new URL(request.url()).searchParams.get("q"), "cloud");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
 	}
 });

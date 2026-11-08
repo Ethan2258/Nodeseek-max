@@ -2968,7 +2968,7 @@ html[data-nsmax-theme] .nsmax-mk > .nsmax-mk-t {
   color: var(--mk-c) !important;
   font-size: 11px !important;
   font-weight: 500 !important;
-  line-height: 19px !important;
+  line-height: 18px !important;
   white-space: nowrap !important;
 }
 html[data-nsmax-theme] .nsmax-mk[data-mk="buy"] { --mk-c: #1d4ed8; }
@@ -3796,13 +3796,14 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-met
   font-weight: 400 !important;
   line-height: 20px !important;
 }
-/* UID：sb.sb .post-user-uid——浅底细框胶囊、等宽数字 11px */
+/* UID：sb.sb .post-user-uid——浅底细框胶囊、等宽数字 11px；2026-11-08 和名字旁的等级、活跃度小标一样 18px 高（以前 20.5px，比旁边的高一截） */
 html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-uid {
   display: inline-flex !important;
   flex: none !important;
   align-items: center !important;
-  height: auto !important;
-  padding: 1px 8px !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  padding: 0 7px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel-alt) !important;
@@ -3810,7 +3811,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-uid
   font-family: var(--font-mono) !important;
   font-size: 11px !important;
   font-weight: 400 !important;
-  line-height: 1.5 !important;
+  line-height: 16px !important;
   white-space: nowrap !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-join {
@@ -4325,7 +4326,7 @@ html[data-nsmax-theme] [data-nsmax-level]:is(#nsmax-lv, *):is(#nsmax-lv, *)::aft
   content: none !important;
   display: none !important;
 }
-html[data-nsmax-theme] [data-nsmax-level="1"]:is(#nsmax-lv, *):is(#nsmax-lv, *) {
+html[data-nsmax-theme] :is([data-nsmax-level="0"], [data-nsmax-level="1"]):is(#nsmax-lv, *):is(#nsmax-lv, *) {
   --lv: #7d8597;
   --lv-emblem: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.4' fill='none' stroke='%237d8597' stroke-width='1.5'/%3E%3Ccircle cx='6' cy='6' r='1.7' fill='%237d8597'/%3E%3C/svg%3E");
 }
@@ -16097,4 +16098,131 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies >
 /* 2026-11-08 真站复查：展开的折叠块标题下那道线原来是 line-soft，浅色白底上几乎看不见，和一二级标题的下划线一起换成 line */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert)[open] > summary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   border-bottom-color: var(--line) !important;
+}
+
+/* 签名里的链接（2026-11-08 照 sb.sb .post-sig-text a）：和正文链接一样是链接色 + 2px 黄色下划线（偏移 3px），悬停下划线消失、字换悬停色；
+   sb.sb 签名链接悬停不加正文那种黄色浅底。以前签名链接跟签名同色、没有下划线，看不出能点 */
+html[data-nsmax-theme] #nsk-body-left .content-item > .signature a:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--link) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--link-line) !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+  text-decoration-skip-ink: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .signature a:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--link-hover) !important;
+  text-decoration-color: transparent !important;
+}
+/* 个人主页空列表（2026-11-08 Yiheng 截图「暂无内容是什么鬼」）：卡片里一句「暂无内容」，卡片下面站点又画了一个 200px 的「空」箱子插图，
+   两个空状态叠在一起。站点插图藏掉，卡片里按标签写「还没有发过主题 / 还没有回帖 / 还没有收藏」（nsmaxPrepareSpace 写 data-nsmax-empty-label） */
+html[data-nsmax-theme][data-nsmax-page="space"] .selector div > img[src*="/static/image/empty.svg"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "暂无内容" !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 140px !important;
+  padding: 0 16px !important;
+  color: var(--text-muted) !important;
+  font: 400 13.5px/1.6 var(--font-sans) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list)[data-nsmax-empty-label="还没有发过主题"]:empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "还没有发过主题" !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list)[data-nsmax-empty-label="还没有回帖"]:empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "还没有回帖" !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .comments-list)[data-nsmax-empty-label="还没有收藏"]:empty:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: "还没有收藏" !important;
+}
+/* 查找用户（/member?q=，2026-11-08 Yiheng：「太丑了，重新优化」）：页面按关注页排（同一个 memberList 组件、同一种卡片，见 nsmaxIsFindUser），
+   站点居中的 30px「查找用户🔍」大标题藏掉，换成和关注页标签栏一样的卡片：左边标题，右边搜索框 + 搜索按钮 */
+html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > h1[data-nsmax-find-heading]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > form.nsmax-find-user:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 10px 10px 10px 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  color: var(--text) !important;
+  font: 600 15px/1.4 var(--font-sans) !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: 0 1 280px !important;
+  box-sizing: border-box !important;
+  width: 280px !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  outline: 0 !important;
+  background: var(--panel-alt) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  font: 400 13.5px/32px var(--font-sans) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *)::placeholder {
+  color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
+  border-color: var(--action-border, var(--line-strong)) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  box-sizing: border-box !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--action) !important;
+  box-shadow: none !important;
+  color: var(--action-text) !important;
+  font: 500 13.5px/34px var(--font-sans) !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--action-hover) !important;
+}
+@media (max-width: 640px) {
+  html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > form.nsmax-find-user:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex-wrap: wrap !important;
+    padding: 12px 12px 12px 14px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex: 1 0 100% !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    height: 44px !important;
+    font-size: 16px !important;
+    line-height: 42px !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    height: 44px !important;
+    line-height: 44px !important;
+  }
 }
