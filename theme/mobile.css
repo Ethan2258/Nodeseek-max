@@ -169,6 +169,33 @@ html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs{
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions{margin-top:8px!important;margin-left:auto!important;padding:0 0 6px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs+.nspp-messages-top-actions:only-of-type{padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .head-container{padding:16px 12px!important}
+/* 个人主页资料卡（手机，2026-11-08 用户截图「整个排列特别奇怪」重排）：
+   以前头像右边一竖条塞名字、小标、UID、加入时间、介绍，头像对着这一大坨竖直居中，两个黑底「私信 TG」大按钮浮在右边，
+   九格数据三行、中间一行多一行日均高出一截。现在：
+   1. 头像 60px 和「名字 小标」「UID 加入时间」两行并排，介绍单独一行占满宽度；
+   2. 「私信 TG」是下面一排等宽的细线胶囊（只有一个时占满）；
+   3. 数据四列两行，数字在上标签在下、居中：关注 粉丝 鸡腿 星辰 / 主题 回帖 收藏 注册天数（等级和名字旁边的小标、下面的进度条重复，手机上不再占一格），
+      日均写在主题、回帖标签下面一行小字 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.nsmax-space-top{display:grid!important;grid-template-columns:60px calc(50% - 66px) 12px minmax(0,1fr)!important;gap:0!important;align-items:start!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.nsmax-space-top>img{grid-column:1!important;grid-row:1/3!important;width:60px!important;height:60px!important;min-width:60px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container .nsmax-space-identity{display:contents!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container .nsmax-space-title-row{grid-column:2/-1!important;grid-row:1!important;align-self:end!important;margin:0 0 0 12px!important;gap:4px 6px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container .nsmax-space-title-row :is(.username,h1){font-size:19px!important;line-height:26px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container .nsmax-space-meta{grid-column:2/-1!important;grid-row:2!important;align-self:start!important;margin:6px 0 0 12px!important;gap:4px 8px!important;font-size:12.5px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container .nsmax-space-bio{grid-column:1/-1!important;grid-row:3!important;margin:12px 0 0!important;color:var(--text-muted)!important;font-size:14px!important;line-height:1.6!important;overflow-wrap:anywhere!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.nsmax-space-top>a{grid-row:4!important;grid-column:1/3!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;width:auto!important;height:38px!important;min-height:38px!important;margin:14px 0 0!important;padding:0 12px!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important;box-shadow:none!important;color:var(--text)!important;font-size:14px!important;font-weight:500!important;line-height:1!important;text-decoration:none!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.nsmax-space-top>a+a{grid-column:4/5!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.nsmax-space-top>a:only-of-type{grid-column:1/-1!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.card-block{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px 4px!important;margin-top:16px!important;padding-top:14px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.card-block>.nsmax-user-stat{align-items:center!important;gap:2px!important;min-width:0!important;text-align:center!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.card-block>.nsmax-user-stat:nth-child(8){display:none!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.card-block .nsmax-user-stat-value{order:-1!important;font-size:17px!important;font-weight:600!important;line-height:22px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.card-block .nsmax-user-stat-label{color:var(--text-subtle)!important;font-size:12px!important;line-height:16px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.card-block .nsmax-user-stat-rate{color:var(--text-subtle)!important;font-size:10.5px!important;line-height:14px!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .nsmax-space-skel-head{min-height:341px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .nsmax-space-skel-stats{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.nsmax-space-progress{grid-template-columns:auto auto minmax(0,1fr)!important;column-gap:8px!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=space] .head-container>.nsmax-space-progress>.nsmax-space-progress-next{justify-self:end!important;min-width:0!important;text-align:right!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-space-tabs{padding:0 12px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-space-tabs a{min-height:44px!important;font-size:14px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-member-actions>.btn{position:relative!important;isolation:isolate!important;min-height:44px!important;padding:8px 12px!important;border:0!important;background:transparent!important;color:var(--text-muted)!important;font-size:12.5px!important}
@@ -287,8 +314,9 @@ html[data-nsmax-theme][data-nsmax-touch] .search-overlay .search-history{padding
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header{min-height:32px!important;margin:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-header>span{color:var(--text-subtle)!important;font-size:13px!important;font-weight:500!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .clear-history-btn{min-width:44px!important;min-height:32px!important;margin:0 -10px 0 0!important;padding:0 10px!important;border-radius:var(--r-pill)!important;font-size:13px!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay :is(.sub-nav,.search-history,.history-list,.history-item){flex-shrink:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-list{flex-direction:column!important;flex-wrap:nowrap!important;gap:0!important}
-html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item{display:flex!important;width:100%!important;max-width:none!important;height:44px!important;gap:10px!important;padding:0!important;border:0!important;border-bottom:1px solid var(--line-soft)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item{display:flex!important;width:100%!important;max-width:none!important;height:44px!important;min-height:44px!important;gap:10px!important;padding:0!important;border:0!important;border-bottom:1px solid var(--line-soft)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item:last-child{border-bottom:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-item::before{content:""!important;flex:none!important;width:16px!important;height:16px!important;background:var(--text-disabled)!important;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat!important;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat!important}
 html[data-nsmax-theme][data-nsmax-touch] .search-overlay .history-keyword{flex:1 1 auto!important;min-width:0!important;overflow:hidden!important;color:var(--text)!important;font-size:15px!important;text-overflow:ellipsis!important;white-space:nowrap!important}
@@ -444,6 +472,10 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-in
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item:not(.topic-pinned):hover:not(:active){background:transparent!important}
 /* 标题后的小页码：照 sb.sb .topic-pages——等宽 11.5px、左右 4px、细线框；高 20px，数字不再被裁掉一半；「…」用次要色看得清 */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>a{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:20px!important;min-width:18px!important;padding:0 4px!important;overflow:visible!important;text-overflow:clip!important;font-family:var(--font-mono)!important;font-size:11.5px!important;line-height:18px!important}
+/* 列表标题前的「已回复 已参与 抽奖 投票 已结束」小标（2026-11-08 用户截图：iPhone 上字不在框中间、框比标题低）：
+   以前是 inline-block + vertical-align:middle，按字体的 x 高度对齐，苹方下整个小标往下坠、字贴着下边。
+   现在和交易小标一样：19px 高、行高等于框内高，顶对齐后用 margin-top 推到标题第一行正中（标题行高 = 字号 × 1.5） */
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-title>:is(.nsmax-replied-badge,.nsmax-joined-badge,.nsmax-prize-badge,.nsmax-poll-badge,.nsmax-ended-badge){display:inline-block!important;box-sizing:border-box!important;height:19px!important;margin:calc((var(--sb-title,15px)*1.5 - 19px)/2) 6px 0 0!important;padding:0 7px!important;font-size:11px!important;line-height:17px!important;vertical-align:top!important;white-space:nowrap!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>.nsmax-topic-pages-gap{color:var(--text-subtle)!important}
 /* 第二批 */
 /* 菜单里未登录的「登录 / 注册」：以前是透明胶囊、文字缩进 12px，看起来像普通文字。改成并排两个按钮：登录实心、注册描边，和上面的列表左边对齐 */
@@ -525,6 +557,9 @@ html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout] #nsk-body-left 
 @media (max-width:399px){
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions){gap:0 3px!important;margin:0 6px!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left :is(ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu>.menu-item,.nsk-post>.content-item>.nsk-content-meta-info>.nsmax-op-actions>a){padding:0 7px!important}
+/* 超过 30 天的完整日期（脚本给这一层打 data-nsmax-long-time）：日期一行写完，操作胶囊整排放到下面一行靠左，不和长日期挤一行 */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item[data-nsmax-long-time]>.nsmax-floor-actions>.comment-menu{grid-row:3!important;grid-column:1/-1!important;justify-content:flex-start!important;margin:-6px 12px 0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item[data-nsmax-long-time]>.nsk-content-meta-info>div:not([class]) time{max-width:none!important;white-space:nowrap!important}
 @media (max-width:379px){
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left ul.comments>li.content-item>.nsmax-floor-actions>.comment-menu{grid-row:3!important;grid-column:1/-1!important;justify-content:flex-start!important;margin:-6px 12px 0!important}
 }

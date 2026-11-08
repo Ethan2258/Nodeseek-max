@@ -13,8 +13,9 @@ for(const engine of engines){
  test.before(async()=>{browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
  test(`${engine} 手机楼层：时间贴正文左边线，楼号贴正文右边线，最后一个胶囊在楼号左边，三者同一条中线`,async()=>{
-  // 2026-11-08 照原版：时间、操作胶囊、楼号排在头像下面一行（见 tests/mobile-details.test.cjs）
-  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true})});
+  // 2026-11-08 照原版：时间、操作胶囊、楼号排在头像下面一行（见 tests/mobile-details.test.cjs）；相对时间（超过 30 天的长日期胶囊另起一行）
+  const created=new Date(Date.now()-2*36e5).toISOString();
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true}).replaceAll("2026-10-03T04:00:00.000Z",created).replaceAll("2026-10-03 12:00:00",created)});
   try{
    await ready(page);
    const s=await page.evaluate(()=>{

@@ -26,7 +26,7 @@ for(const engine of engines){
     assert.equal(state.stamp,created);
     assert.equal(state.menuHeight,44,JSON.stringify({width,days,...state}));
     assert.ok(state.buttons.every(height=>height>=44));
-    assert.ok(state.gap<(width>=380?70:110),JSON.stringify({width,days,...state}));
+    assert.ok(state.gap<110,JSON.stringify({width,days,...state}));
     assert.equal(state.overflow,false);assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
@@ -96,6 +96,37 @@ for(const engine of engines){
     assert.equal(s.overflow,false);assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
+ });
+ test(`${engine} 手机个人主页资料卡（2026-11-08 重排）：介绍占满一行，「私信 TG」是下面一排等宽细线胶囊，数据四列两行、等级不单占一格`,async()=>{
+  for(const width of [390,320]){
+   const html=P.nativeSpacePage({mobile:true}).replace("<p>一句话介绍自己</p>","<p>长期收号，永远比同行价高</p>");
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10",{...phone(width),html});
+   try{
+    await ready(page);
+    await page.evaluate(()=>{const a=document.createElement("a");a.className="btn nsmax-space-tg-btn";a.href="https://t.me/x";a.textContent="TG";document.querySelector(".nsmax-space-top").append(a);});
+    const s=await page.evaluate(()=>{const r=e=>e.getBoundingClientRect().toJSON(),top=document.querySelector(".head-container>.nsmax-space-top");return{top:r(top),img:r(top.querySelector("img")),bio:r(top.querySelector(".nsmax-space-bio")),meta:r(top.querySelector(".nsmax-space-meta")),btns:[...top.querySelectorAll(":scope>a")].map(a=>({...r(a),bg:getComputedStyle(a).backgroundColor,border:getComputedStyle(a).borderTopWidth})),panel:getComputedStyle(document.querySelector(".head-container")).backgroundColor,cells:[...document.querySelectorAll(".head-container>.card-block>.nsmax-user-stat")].filter(e=>e.getClientRects().length).map(e=>({label:e.querySelector(".nsmax-user-stat-label").textContent,top:Math.round(r(e).top),value:r(e.querySelector(".nsmax-user-stat-value")).top<r(e.querySelector(".nsmax-user-stat-label")).top}))};});
+    assert.ok(s.bio.top>=s.img.bottom-0.5&&Math.abs(s.bio.left-s.top.left)<1&&Math.abs(s.bio.right-s.top.right)<1,`介绍在头像下面占满一行：${JSON.stringify(s)}`);
+    assert.ok(s.meta.left>s.img.right,"UID 加入时间在头像右边");
+    assert.equal(s.btns.length,2);assert.equal(new Set(s.btns.map(b=>Math.round(b.top))).size,1,"两个按钮一排");
+    assert.ok(Math.abs(s.btns[0].width-s.btns[1].width)<1&&Math.abs(s.btns[0].left-s.top.left)<1&&Math.abs(s.btns[1].right-s.top.right)<1,`等宽、占满：${JSON.stringify(s.btns)}`);
+    assert.ok(s.btns.every(b=>b.top>=s.bio.bottom&&b.border==="1px"&&b.bg!=="rgb(28, 28, 30)"),`细线胶囊，不再是黑底：${JSON.stringify(s.btns)}`);
+    assert.deepEqual(s.cells.map(c=>c.label),["关注","粉丝","鸡腿","星辰","主题","回帖","收藏","注册天数"]);
+    assert.equal(new Set(s.cells.map(c=>c.top)).size,2,"四列两行");assert.ok(s.cells.every(c=>c.value),"数字在上");
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 手机列表标题前的「已回复」小标：19px 高、字在框里正中，和标题第一行竖直居中`,async()=>{
+  const state={"posts:1":{1000:[3]},"joined:1":{},"posts:1:synced":Date.now(),"posts:1:done":true};
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true}),seed:{...seed,"nspp:state:www.nodeseek.com:sb-my-replies":state}});
+  try{
+   await ready(page);await page.waitForSelector(".post-title>.nsmax-replied-badge");
+   const s=await page.evaluate(()=>{const b=document.querySelector(".post-title>.nsmax-replied-badge"),t=b.parentElement,box=b.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(b);const text=range.getBoundingClientRect();const lh=parseFloat(getComputedStyle(t).lineHeight);const line=t.getBoundingClientRect().top;return{h:box.height,boxMid:box.top+box.height/2,textMid:text.top+text.height/2,lineMid:line+lh/2};});
+   assert.equal(s.h,19,JSON.stringify(s));
+   assert.ok(Math.abs(s.textMid-s.boxMid)<1.5,`字在框里正中：${JSON.stringify(s)}`);
+   assert.ok(Math.abs(s.boxMid-s.lineMid)<1,`和标题第一行竖直居中：${JSON.stringify(s)}`);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
  });
  test(`${engine} 手机回复工具条：「只看楼主 直达底部 简洁模式」照 sb.sb 是 31px 细线胶囊，标题栏独立成卡片，320px 也排在一行`,async()=>{
   for(const width of [390,320]){
@@ -243,7 +274,7 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 手机旧评论（经典排法）：超过 30 天的时间只到分钟，日期和钟点分两行（只在空格处换行），五个操作排一行`,async()=>{
+ test(`${engine} 手机旧评论（经典排法）：超过 30 天的时间只到分钟、一行写完，五个操作整排放到时间下面一行`,async()=>{
   for(const width of [390,360]){
    const created=new Date(Date.now()-40*864e5).toISOString();
    const html=P.postPage({mobile:true}).replaceAll("2026-10-03T04:00:00.000Z",created).replaceAll("2026-10-03 12:00:00",created);
@@ -252,8 +283,8 @@ for(const engine of engines){
     await ready(page);
     const s=await page.evaluate(()=>{const li=document.querySelector("ul.comments>li.content-item"),time=li.querySelector(".date-created time");const range=document.createRange();range.selectNodeContents(time);const lines=[...range.getClientRects()].map(r=>Math.round(r.top));return{text:time.textContent,lines:[...new Set(lines)].length,menu:li.querySelector(".comment-menu").getBoundingClientRect().height,buttons:[...li.querySelectorAll(".comment-menu>.menu-item")].map(e=>{const r=e.getBoundingClientRect();return[r.width,r.height]})};});
     assert.match(s.text,/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/,JSON.stringify(s));
-    assert.ok(s.lines<=2,JSON.stringify(s));
-    {const range=await page.evaluate(()=>{const t=document.querySelector("ul.comments>li.content-item .date-created time"),r=document.createRange();const node=t.firstChild;const out=[];for(let i=0;i<node.length;i++){r.setStart(node,i);r.setEnd(node,i+1);out.push(Math.round(r.getBoundingClientRect().top));}return out;});const breakAt=range.findIndex((t,i)=>i&&t!==range[i-1]);assert.ok(breakAt===-1||s.text[breakAt-1]===" ",`只在空格处换行：${JSON.stringify({s,range})}`);}
+    assert.equal(s.lines,1,JSON.stringify(s));
+    assert.ok(await page.evaluate(()=>{const li=document.querySelector("ul.comments>li.content-item"),t=li.querySelector(".date-created time").getBoundingClientRect(),m=li.querySelector(".comment-menu").getBoundingClientRect();return li.hasAttribute("data-nsmax-long-time")&&m.top>=t.bottom-1;}),"长日期时胶囊整排在时间下面");
     assert.equal(s.menu,44);assert.ok(s.buttons.every(([w,h])=>w>=36&&h>=44),JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
