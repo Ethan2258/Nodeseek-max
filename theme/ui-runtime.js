@@ -6,7 +6,7 @@
 	}
 	// 页面类型：主题 CSS 按 html[data-nsmax-page] 分页面排版；搜索、账簿这类结构和列表页相同的页面都算 list
 	function nsmaxPageKind(path = location.pathname) {
-		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : /^\/lucky(?:\/|$)/.test(path) ? "lucky" : "list";
+		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) || nsmaxIsFindUser(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : /^\/lucky(?:\/|$)/.test(path) ? "lucky" : "list";
 	}
 	// 主题 CSS 按页面分块注入（2026-10-22）：构建时把编译后的样式拆成有序段（base + 各页面专属段，段序 = 原规则序），
 	// 这里按当前页面只拼需要的段：别的页面的规则完全不参与解析，列表页 / 帖子页 / 通知页少解析 25%–50% 的 CSS，
@@ -67,6 +67,14 @@
 		const css = nsmaxThemeUnpack(new Set(["overlay"]));
 		// 构建时已经短名化 / 压缩过，按「编译后样式」注入，跳过运行时再优化一遍
 		if (css) _css(css, true);
+	}
+	// 「查找用户🔍」（/member?q=关键词，站点的 findUser 页，2026-11-08 从真站取的结构）：和关注 / 粉丝页是同一个 memberList 组件、同一种用户卡片，
+	// 按关注页排。/member?t=名字 是另一回事（服务器直接跳到那人的主页，找不到就是「不存在该用户」），不算
+	function nsmaxIsFindUser(path = location.pathname) {
+		return path === "/member" && !new URLSearchParams(location.search).has("t");
+	}
+	function nsmaxIsMemberList(path = location.pathname) {
+		return /^\/fans(?:\/|$)/.test(path) || nsmaxIsFindUser(path);
 	}
 	function nsmaxSetAttr(el, name, value = "") {
 		if (el && el.getAttribute(name) !== value) el.setAttribute(name, value);
@@ -192,6 +200,12 @@
 			// 站点画出来的介绍就能说明写没写（写着「没有找到readme」= 没写；有正文 = 写了），不用等接口：「介绍」标签第一帧就对
 			// （2026-10-23：以前等接口回来才知道，站点先画好的话「介绍」标签过一会儿才藏起来，标签栏和下面的内容跳一下）
 			if (spaceId && hasIntro === undefined && (placeholder || !isEmpty && text.length >= 20)) nsmaxSpaceIntro.set(spaceId, !placeholder);
+		}
+		// 列表是空的时候：站点在卡片下面再画一个 200px 的「空」箱子插图（img[src$="/static/image/empty.svg"]，CSS 里藏掉），
+		// 卡片里只留一句，按当前标签说清楚是什么空了（2026-11-08 Yiheng 截图：「暂无内容」+ 大箱子两个空状态）
+		const emptyLabel = /^#\/?comments/.test(location.hash) ? "还没有回帖" : /^#\/?collection/.test(location.hash) ? "还没有收藏" : "还没有发过主题";
+		for (const list of document.querySelectorAll(".selector .discussion-wrapper, .comments-list")) {
+			if (list.getAttribute("data-nsmax-empty-label") !== emptyLabel) list.setAttribute("data-nsmax-empty-label", emptyLabel);
 		}
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
 		if (!head) return;
@@ -657,12 +671,17 @@
 	// NodeSeek 没有这类字段，楼主自己写在标题开头的【出】【收】【求】【换】【已出】这类就画成同样的小标：括号藏起来、
 	// 字留着并染色（出 / 售 橙、收 / 买 蓝、求 紫、换 / 租 绿、已出 / 已收 / 已售这类灰）。只拆文字节点不改字，
 	// 标题的 textContent 原样不变（屏蔽关键词、抽奖结束判断、复制标题都不受影响）
-	var NSMAX_MARKET_PREFIX = /^(\s*)([【\[［])(\s*(?:已出售?|已售出?|已收到?|已换|已租|已完成|出售|收购|求购|求租|出租|置换|交换|出|售|卖|收|买|求|换|租)\s*)([】\]］]\s*)/;
+	// 2026-11-08 加拼车（照 sb.sb 的「车等人」绿、「人等车」紫、「已满员」灰）：NodeSeek 上楼主写成【车找人】[车找人1/2]【人找车】【拼车 2/4】
+	// 【已满】这类，后面可以带人数（1/2、缺1）；还有【出鸡】【收鸡】（出 / 收 VPS）。sb.sb 的「可中介 / 中介」「已关闭 / 已过期」「旧帖」
+	// 来自它自己的交易信息卡，NodeSeek 没有这些数据，不加
+	var NSMAX_MARKET_PREFIX = /^(\s*)([【\[［])(\s*(?:已出售?|已售出?|已收到?|已换|已租|已完成|已满员?|已发车|满员|车满|出售|收购|求购|求租|出租|置换|交换|出鸡|收鸡|车找人|车等人|人找车|人等车|求上车|求车|拼车|发车|出|售|卖|收|买|求|换|租)(?:\s*[0-9０-９]+\s*[/／]\s*[0-9０-９]+|\s*缺\s*[0-9０-９]+)?\s*)([】\]］]\s*)/;
 	function nsmaxMarketKind(word) {
-		if (word.startsWith("已")) return "done";
-		if (/^(?:出售?|售|卖)$/.test(word)) return "sell";
-		if (/^(?:收购?|买)$/.test(word)) return "buy";
-		if (/^求/.test(word)) return "seek";
+		const base = word.replace(/\s*(?:[0-9０-９]+\s*[/／]\s*[0-9０-９]+|缺\s*[0-9０-９]+)$/, "").trim();
+		if (base.startsWith("已") || /^(?:满员|车满)$/.test(base)) return "done";
+		if (/^(?:出售?|售|卖|出鸡)$/.test(base)) return "sell";
+		if (/^(?:收购?|买|收鸡)$/.test(base)) return "buy";
+		if (/^(?:人找车|人等车|求上车|求车)$/.test(base)) return "seek";
+		if (/^求/.test(base)) return "seek";
 		return "offer";
 	}
 	function nsmaxMarketTag(link) {
@@ -4012,7 +4031,9 @@ function nsmaxTagStructure() {
 	// 等级徽章：NodeSeek 只有 Lv1–Lv6。凡是只写着等级的小标签都打上 data-nsmax-level=N（主题按等级配色、配徽记），
 	// 文字统一成 sb.sb 的「Lv.N」；Lv6 另外保留 data-nsmax-lv6（旧规则与外部样式在用）
 	function nsmaxApplyLevel(el, level) {
-		const n = Math.max(1, Math.min(6, Number(level) || 1));
+		// NodeSeek 有 Lv 0（鸡腿不到 100）：以前一律从 1 起，个人主页名字旁写 Lv.1、下面统计格和等级条写 Lv.0，自相矛盾（2026-11-08 真站截图）
+		const raw = level === null || level === undefined || level === "" ? NaN : Number(level);
+		const n = Number.isFinite(raw) ? Math.max(0, Math.min(6, Math.floor(raw))) : 1;
 		nsmaxSetAttr(el, "data-nsmax-level", String(n));
 		if (n === 6) nsmaxSetAttr(el, "data-nsmax-lv6", "true");
 		else nsmaxDropAttr(el, "data-nsmax-lv6");
@@ -4832,15 +4853,58 @@ function nsmaxTagStructure() {
 		skeleton.setAttribute("aria-hidden", "true");
 		mount.prepend(skeleton);
 	}
+	// 查找用户的标题栏：站点只有一个居中的 30px「查找用户🔍」大标题，想换个词还得改地址栏。换成和关注页标签栏一样的卡片：
+	// 左边「查找用户」，右边一个搜索框（回车或点「搜索」跳到 /member?q=新词），站点的大标题藏掉（2026-11-08 Yiheng：「太丑了，重新优化」）
+	function nsmaxFindUserBar() {
+		if (!nsmaxIsFindUser()) return;
+		const list = document.querySelector("#nsk-frame .member-list");
+		const heading = list?.querySelector(":scope > h1");
+		if (!list || !heading || list.querySelector(":scope > .nsmax-find-user")) return;
+		const bar = document.createElement("form");
+		bar.className = "nsmax-find-user";
+		bar.setAttribute("role", "search");
+		const title = document.createElement("span");
+		title.className = "nsmax-find-user-title";
+		title.textContent = "查找用户";
+		const input = document.createElement("input");
+		input.type = "search";
+		input.name = "q";
+		input.className = "nsmax-find-user-input";
+		input.placeholder = "输入用户名的一部分";
+		input.setAttribute("aria-label", "用户名");
+		input.autocomplete = "off";
+		input.value = new URLSearchParams(location.search).get("q") || "";
+		const submit = document.createElement("button");
+		submit.type = "submit";
+		submit.className = "nsmax-find-user-submit";
+		submit.textContent = "搜索";
+		bar.append(title, input, submit);
+		bar.addEventListener("submit", (event) => {
+			event.preventDefault();
+			const q = input.value.trim();
+			if (q) location.assign(`/member?q=${encodeURIComponent(q)}`);
+			else input.focus();
+		});
+		heading.setAttribute("data-nsmax-find-heading", "");
+		heading.after(bar);
+	}
 	function nsmaxPrepareFans() {
-		if (!/^\/fans(?:\/|$)/.test(location.pathname)) return;
+		if (!nsmaxIsMemberList()) return;
 		nsmaxFansSkeleton();
+		nsmaxFindUserBar();
 		// 「取关」：站点给这个按钮写了行内的 background-color: gray !important（压过所有样式表），灰底灰字很怪；
 		// 去掉这条行内样式，按 sb.sb 的细线按钮排（悬停时浅红，提示是取消关注）
+		// 2026-11-08：「关注」在深色下是站点的亮蓝实心按钮，旁边私信、转账是细线按钮，很扎眼（Yiheng 截图）。三个按钮一律去掉站点
+		// 写在行内的底色 / 字色 / 边框色，统一按 sb.sb 的细线按钮排；「关注」只在悬停时变黄
 		for (const btn of document.querySelectorAll(":is(.nsmax-member-actions, .usercard-button-group) > .btn")) {
-			if (btn.textContent.trim() !== "取关") continue;
-			nsmaxSetAttr(btn, "data-nsmax-unfollow");
-			if (btn.style.getPropertyValue("background-color")) btn.style.removeProperty("background-color");
+			// 站点真实写法（2026-11-08 在 Yiheng 的 Chrome 里取的）：关注是 style="background-color: rgb(0, 157, 255) !important;"，
+			// 行内 !important 压过所有样式表，只能把这条行内样式拿掉。点了关注 / 取关以后站点会重画字和行内样式，见 nsmaxWatchFans
+			const label = btn.textContent.trim();
+			if (label === "取关") nsmaxSetAttr(btn, "data-nsmax-unfollow");
+			else if (btn.hasAttribute("data-nsmax-unfollow")) btn.removeAttribute("data-nsmax-unfollow");
+			if (label === "关注") nsmaxSetAttr(btn, "data-nsmax-follow");
+			else if (btn.hasAttribute("data-nsmax-follow")) btn.removeAttribute("data-nsmax-follow");
+			for (const prop of ["background", "background-color", "color", "border", "border-color", "box-shadow"]) if (btn.style.getPropertyValue(prop)) btn.style.removeProperty(prop);
 		}
 		for (const tab of document.querySelectorAll(".fans-switcher > a.switcher-item")) {
 			const label = (tab.textContent || "").replace(/[^\u4e00-\u9fa5A-Za-z0-9 ]/g, "").trim();
@@ -5254,14 +5318,16 @@ function nsmaxTagStructure() {
 	// 页面解析阶段（脚本注入得早时）就装上，模块挂载时再调一次不重复装
 	var nsmaxFansWatching = false;
 	function nsmaxWatchFans(ctx) {
-		if (nsmaxFansWatching || !/^\/fans(?:\/|$)/.test(location.pathname) || !document.body) return;
+		if (nsmaxFansWatching || !nsmaxIsMemberList() || !document.body) return;
 		nsmaxFansWatching = true;
 		const relevant = (node) => node instanceof Element && (node.matches(".member-list, .user-card-wrapper-container, .user-card-wrapper, .user-card, .usercard-button-group, .fans-switcher, .switcher-item, .btn") || !!node.querySelector(".user-card, .fans-switcher"));
+		// 按钮自己变了（点关注 / 取关后站点改字、重新写行内底色）也要再整理一次
+		const inButton = (record) => { const el = record.target instanceof Element ? record.target : record.target.parentElement; return !!el?.closest(":is(.nsmax-member-actions, .usercard-button-group) > .btn"); };
 		const observer = new MutationObserver((records) => {
-			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
+			if (!records.some((record) => Array.from(record.addedNodes).some(relevant) || inButton(record))) return;
 			try { nsmaxPrepareFans(); } catch {}
 		});
-		observer.observe(document.body, { childList: true, subtree: true });
+		observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["style"] });
 		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxFansWatching = false; }, { once: true });
 		try { nsmaxPrepareFans(); } catch {}
 	}
@@ -5614,7 +5680,7 @@ function nsmaxTagStructure() {
 			nsmaxPrepareBoard();
 			if (/^\/board(?:\/|$)/.test(path)) nsmaxCheckinPage();
 			if (path === "/progress") nsmaxProgressPage();
-			if (/^\/fans(?:\/|$)/.test(path)) nsmaxPrepareFans();
+			if (nsmaxIsMemberList(path)) nsmaxPrepareFans();
 			if (/^\/credit(?:\/|$)/.test(path)) nsmaxPrepareCredit();
 			if (/^\/setting(?:\/|$)/.test(path)) nsmaxPrepareSetting();
 			nsmaxPrepareSidePage();
