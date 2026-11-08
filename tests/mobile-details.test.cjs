@@ -248,8 +248,9 @@ for(const engine of engines){
     const rows=await page.evaluate(()=>[...document.querySelectorAll("ul.post-list>li.post-list-item .post-info")].map(e=>({h:e.getBoundingClientRect().height,last:getComputedStyle(e.querySelector(".info-last-commenter")).display})));
     assert.ok(rows.length&&rows.every(r=>r.last==="none"),`${width}：${JSON.stringify(rows)}`);if(width===390)assert.ok(rows.slice(0,4).every(r=>r.h<=21),`390px 常见的帖子信息排一行：${JSON.stringify(rows)}`);
     await page.locator(".nsmax-mobile-filter").click();
+    // WebKit 会把 44px 量成 43.99998px：按半像素容差比较，免得 main 上的 CI 偶发失败、发布被跳过
     const pop=await page.locator('.nsmax-pop[data-kind="keywords"]').evaluate(e=>{const r=e.getBoundingClientRect(),b=e.querySelector("form button").getBoundingClientRect(),i=e.querySelector("form input").getBoundingClientRect();return{left:r.left,right:innerWidth-r.right,button:b.height,input:i.height};});
-    assert.ok(Math.abs(pop.left-12)<1&&Math.abs(pop.right-12)<1&&pop.button===pop.input&&pop.input>=44,JSON.stringify(pop));
+    assert.ok(Math.abs(pop.left-12)<1&&Math.abs(pop.right-12)<1&&Math.abs(pop.button-pop.input)<0.5&&pop.input>=43.5,JSON.stringify(pop));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
