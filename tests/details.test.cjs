@@ -45,7 +45,7 @@ for(const engine of engines){
     assert.ok(Math.abs(Math.max(...s.ops.map(o=>o.right))-s.body.right)<1,"靠右，和正文右边线对齐");
     assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector(".nsk-post article.post-content")).borderTopStyle),"dashed","正文上面一条虚线");
     assert.ok(s.copy.height>=43&&s.copy.width>=44,"复制按钮保留 44px 触控区");assert.ok(s.code<=46,JSON.stringify(s));assert.ok(s.copy.top-s.preTop<2,JSON.stringify(s));
-    assert.equal(s.items.length,4);assert.equal(new Set(s.items.map(i=>i.top)).size,1,"点赞一排不折行");assert.ok(s.items.every(i=>i.h===40),JSON.stringify(s.items));
+    assert.equal(s.items.length,4);assert.equal(new Set(s.items.map(i=>i.top)).size,1,"点赞一排不折行");assert.ok(s.items.every(i=>i.h===36),JSON.stringify(s.items));
     assert.ok(Math.max(...s.items.map(i=>i.w))-Math.min(...s.items.map(i=>i.w))<=1,"四个平分");assert.ok(s.menu.right<=s.body.right+0.5,JSON.stringify(s));
     assert.equal(s.overflow,false);assert.deepEqual(errors,[]);
    }finally{await context.close();}
