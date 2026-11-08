@@ -42,7 +42,7 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
         assert.equal(badge.color, dark ? "rgb(168, 171, 187)" : "rgb(85, 90, 106)");
         assert.equal(badge.background, dark ? "rgb(26, 27, 36)" : "rgb(250, 251, 252)");
         assert.equal(badge.border, dark ? "rgb(42, 44, 56)" : "rgb(224, 226, 232)");
-        assert.equal(badge.padding, mobile ? "0px 7px" : "1px 8px");
+        assert.equal(badge.padding, mobile ? "0px 7px" : "0px 8px");
         const labels=await page.locator("li.post-list-item").first().locator(".post-title").evaluate(e=>[...e.children].filter(n=>n.matches(".nsmax-prize-badge,.nsmax-joined-badge,.nsmax-replied-badge")).map(n=>n.textContent));
         assert.deepEqual(labels,["抽奖","已参与","已回复"]);
         await page.waitForTimeout(100);

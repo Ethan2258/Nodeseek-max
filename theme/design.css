@@ -797,6 +797,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   min-height: 0 !important;
   color: var(--text) !important;
   font-family: var(--font-sans) !important;
+  --nsmax-tlh: calc(var(--sb-title) * 1.5);
   font-size: var(--sb-title) !important;
   font-weight: 500 !important;
   line-height: 1.5 !important;
@@ -7985,6 +7986,7 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
     padding: 10px 12px !important;
   }
   html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    --nsmax-tlh: calc((var(--sb-title) - 0.5px) * 1.5);
     font-size: calc(var(--sb-title) - 0.5px) !important;
     line-height: 1.5 !important;
   }
@@ -15763,6 +15765,85 @@ html[data-nsmax-theme] dialog.nspp-post-preview > footer > a.nspp-preview-open:i
   html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content[data-fresh] > article:is(#nsmax-lv, *):is(#nsmax-b, *) {
     animation: none !important;
   }
+}
+
+/* ---------- 标题前后的小标记统一（2026-11-08 用户截图「后面这个小图标还是不行」：锁 + 等级、只读比标题低、样子各不一样） ----------
+   置顶、已回复 / 已参与 / 抽奖 / 投票 / 已结束，和标题后面的页码、等级锁、只读、推荐阅读图标：一律 18px 高，
+   顶对齐后用 margin-top 推到标题那一行正中（--nsmax-tlh = 标题行高 = 字号 × 1.5，写在设字号的同一条规则里）。
+   以前各用各的 vertical-align: middle，按字体的 x 高度对齐，中文字体下比字低 1～3px；高度也有 16、18、19.6、20、21.6px 好几种。
+   锁和只读改成同一种浅红小方块（以前锁是裸红字、只读是 10px 小字），锁和数字不再被折成两行。 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(span[data-nsmax-pinned], .nsmax-replied-badge, .nsmax-joined-badge, .nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge, .nsmax-topic-pages, span[data-nsmax-lock], .min-grade, .nsk-badge.read-only, .nspp-readonly, a[href="/award"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  min-height: 0 !important;
+  margin-top: calc((var(--nsmax-tlh, calc(var(--sb-title, 15px) * 1.5)) - 18px) / 2) !important;
+  margin-bottom: 0 !important;
+  vertical-align: top !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(span[data-nsmax-pinned], .nsmax-replied-badge, .nsmax-joined-badge, .nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > a:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  line-height: 1 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(span[data-nsmax-lock], .min-grade, .nsk-badge.read-only, .nspp-readonly):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 2px !important;
+  margin-left: 2px !important;
+  margin-right: 0 !important;
+  padding: 0 6px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: color-mix(in srgb, var(--danger) 9%, transparent) !important;
+  box-shadow: none !important;
+  color: var(--danger) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(span[data-nsmax-lock], .min-grade) > svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  width: 11px !important;
+  height: 11px !important;
+  margin: 0 !important;
+  vertical-align: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a[href="/award"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: 2px !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a[href="/award"] > svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0 !important;
+}
+/* 个人主页「主题帖」列表标题后面的锁 + 等级：和首页列表同一种浅红小方块、18px 高、对准标题那一行正中（以前是灰色描边胶囊、上提 2px，比字高出 2px） */
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  height: 18px !important;
+  margin: calc((var(--sb-title, 15px) * 1.5 - 18px) / 2) 0 0 6px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: color-mix(in srgb, var(--danger) 9%, transparent) !important;
+  color: var(--danger) !important;
+  font: 500 11px/1 var(--font-sans) !important;
+  vertical-align: top !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]) svg:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]) svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: inherit !important;
 }
 
 /* ---------- 2026-11-08 正文排版重做（电脑端为主，手机端跟着一致） ----------

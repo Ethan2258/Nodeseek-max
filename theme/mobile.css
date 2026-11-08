@@ -70,7 +70,7 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left :is(ul.post-list,.nsk-po
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item{box-sizing:border-box!important;min-height:0!important;margin:0!important;padding:10px 12px!important;gap:10px!important;border-radius:0!important;cursor:pointer!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item>a:first-child{flex:0 0 24px!important;width:24px!important;height:24px!important;margin:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item>a:first-child img{display:block!important;width:24px!important;height:24px!important;border-radius:var(--r-sm)!important}
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-title{font-size:var(--sb-title)!important;font-weight:500!important;line-height:1.5!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-title{--nsmax-tlh:calc(var(--sb-title) * 1.5);font-size:var(--sb-title)!important;font-weight:500!important;line-height:1.5!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-info{display:flex!important;flex-wrap:wrap!important;gap:4px 8px!important;margin-top:3px!important;font-size:12.5px!important;line-height:20px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item :is(.info-views,.info-last-commenter){display:inline-flex!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .info-author{order:0!important}
@@ -452,7 +452,7 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsmax-author-uid{displa
 /* 主楼「点赞 加鸡腿 反对 收藏」字和图标用更淡的灰（参照站 .topic-actions 是 text-disabled），点过的仍按原来的高亮色 */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post .comment-menu.topic-actions>.menu-item:not(.active,.selected,.clicked,[aria-pressed=true]){color:var(--text-disabled)!important}
 /* 列表标题：参照站 420px 以下是 14.5px；标准字号的手机以前被手机层盖回 15px。选了「大 / 特大」仍是 17 / 18px，和设置里写的一致 */
-@media (max-width:420px){html[data-nsmax-theme][data-nsmax-touch]:not([data-nsmax-size=large],[data-nsmax-size=xlarge]) #nsk-body-left .post-list-item .post-title{font-size:14.5px!important}}
+@media (max-width:420px){html[data-nsmax-theme][data-nsmax-touch]:not([data-nsmax-size=large],[data-nsmax-size=xlarge]) #nsk-body-left .post-list-item .post-title{--nsmax-tlh:21.75px;font-size:14.5px!important}}
 /* 签到排行榜：名字链接以前只有字那么高（约 17px），手机上很难点中。整格变成 44px 高的点击区，上下借用行内边距，每行只高 4px */
 html[data-nsmax-theme][data-nsmax-touch] .board .rank-row .member-name a{display:block!important;min-height:44px!important;margin:-7px 0!important;line-height:44px!important}
 /* 注册页「邮箱验证 / 手机号验证」单选和「同意」勾选：原生只有 13px，整行标签变成 44px 高的点击区，圆点和方框画成 18px */
@@ -473,11 +473,11 @@ html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-in
 /* 按住滑动时行背景不再留着悬停色（触屏的 :hover 会粘在最后点过的那一行上），按下仍有反馈 */
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item:not(.topic-pinned):hover:not(:active){background:transparent!important}
 /* 标题后的小页码：照 sb.sb .topic-pages——等宽 11.5px、左右 4px、细线框；高 20px，数字不再被裁掉一半；「…」用次要色看得清 */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>a{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:20px!important;min-width:18px!important;padding:0 4px!important;overflow:visible!important;text-overflow:clip!important;font-family:var(--font-mono)!important;font-size:11.5px!important;line-height:18px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>a{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:18px!important;min-width:18px!important;padding:0 4px!important;overflow:visible!important;text-overflow:clip!important;font-family:var(--font-mono)!important;font-size:11.5px!important;line-height:16px!important}
 /* 列表标题前的「已回复 已参与 抽奖 投票 已结束」小标（2026-11-08 用户截图：iPhone 上字不在框中间、框比标题低）：
    以前是 inline-block + vertical-align:middle，按字体的 x 高度对齐，苹方下整个小标往下坠、字贴着下边。
    现在和交易小标一样：19px 高、行高等于框内高，顶对齐后用 margin-top 推到标题第一行正中（标题行高 = 字号 × 1.5） */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-title>:is(.nsmax-replied-badge,.nsmax-joined-badge,.nsmax-prize-badge,.nsmax-poll-badge,.nsmax-ended-badge){display:inline-block!important;box-sizing:border-box!important;height:19px!important;margin:calc((var(--sb-title,15px)*1.5 - 19px)/2) 6px 0 0!important;padding:0 7px!important;font-size:11px!important;line-height:17px!important;vertical-align:top!important;white-space:nowrap!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-item .post-title>:is(.nsmax-replied-badge,.nsmax-joined-badge,.nsmax-prize-badge,.nsmax-poll-badge,.nsmax-ended-badge){display:inline-block!important;box-sizing:border-box!important;height:18px!important;margin:calc((var(--nsmax-tlh,calc(var(--sb-title,15px)*1.5)) - 18px)/2) 6px 0 0!important;padding:0 7px!important;font-size:11px!important;line-height:16px!important;vertical-align:top!important;white-space:nowrap!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.post-list>li.post-list-item .post-title>.nsmax-topic-pages>.nsmax-topic-pages-gap{color:var(--text-subtle)!important}
 /* 第二批 */
 /* 菜单里未登录的「登录 / 注册」：以前是透明胶囊、文字缩进 12px，看起来像普通文字。改成并排两个按钮：登录实心、注册描边，和上面的列表左边对齐 */
