@@ -111,7 +111,7 @@ test("帖子页：SB Theme UI 正文、代码块、回复流和操作块生效",
 		page: document.documentElement.dataset.nsmaxPage,
 		entry: document.querySelectorAll(".post-entry").length,
 		comments: document.querySelectorAll(".comment-item").length,
-		code: getComputedStyle(document.querySelector(".post-content pre")).borderRadius,
+		code: getComputedStyle(document.querySelector(".post-content .nsmax-code")).borderRadius,
 		actions: document.querySelector(".topic-actions") !== null,
 		editor: (() => { const editor = document.querySelector(".md-editor"); return !!editor && !!editor.getClientRects().length; })(),
 		fastNav: getComputedStyle(document.querySelector("#fast-nav-button-group")).display
@@ -5491,7 +5491,7 @@ test("第十四批（2026-10-19）：正文 Markdown 再对一遍 sb.sb——站
 				const li = art.querySelector("ul > li");
 				const token = (name) => { const probe = document.createElement("span"); probe.style.color = `var(${name})`; art.append(probe); const color = getComputedStyle(probe).color; probe.remove(); return color; };
 				const card = getComputedStyle(art.querySelector(".card.warning"));
-				const a = copy.getBoundingClientRect(), b = pre.getBoundingClientRect();
+				const a = copy.getBoundingClientRect(), b = pre.closest(".nsmax-code").getBoundingClientRect();
 				return {
 					copies: Array.from(art.querySelectorAll(".code-copy-btn, [data-nspp-copy]")).filter(shown).map((el) => el.className),
 					copyOpacity: getComputedStyle(copy).opacity,
@@ -6685,7 +6685,7 @@ test("v1.8.35 打开页面不卡：抽奖帖的抽奖卡片、代码块「复制
 	// 站点 index.js：页面加载后给 pre > code 加 button.code-copy-btn（.always：站点偏好「一直显示」）
 	html = html.replace("</body>", `<script>document.addEventListener("DOMContentLoaded", () => setTimeout(() => { for (const code of document.querySelectorAll("article.post-content pre > code")) { const pre = code.parentElement; pre.classList.add("code-copy-wrapper"); const button = document.createElement("button"); button.className = "code-copy-btn always"; button.type = "button"; pre.append(button); } }, 300));</script></body>`);
 	// 页面一解析完（DOMContentLoaded，第一帧之前）就记下正文里有什么；之后记下第一帧之后的布局跳动
-	const init = `(() => { if (window.top !== window) return; window.__shifts = []; new PerformanceObserver((list) => { for (const entry of list.getEntries()) window.__shifts.push({ t: entry.startTime, v: entry.value }); }).observe({ type: "layout-shift", buffered: true }); document.addEventListener("DOMContentLoaded", () => { const pre = document.querySelector(".nsk-post article pre"); window.__atDcl = { lottery: !!document.querySelector(".nsk-post article.post-content .nsmax-lottery"), copy: !!pre && pre.hasAttribute("data-nsmax-copy") && pre.hasAttribute("data-nsmax-copy-always"), pad: pre ? getComputedStyle(pre).paddingTop : "" }; }); })();`;
+	const init = `(() => { if (window.top !== window) return; window.__shifts = []; new PerformanceObserver((list) => { for (const entry of list.getEntries()) window.__shifts.push({ t: entry.startTime, v: entry.value }); }).observe({ type: "layout-shift", buffered: true }); document.addEventListener("DOMContentLoaded", () => { const pre = document.querySelector(".nsk-post article pre"); window.__atDcl = { lottery: !!document.querySelector(".nsk-post article.post-content .nsmax-lottery"), copy: !!pre && pre.hasAttribute("data-nsmax-copy") && pre.hasAttribute("data-nsmax-copy-always"), pad: pre ? Math.round(pre.getBoundingClientRect().top - pre.parentElement.getBoundingClientRect().top) + "+" + getComputedStyle(pre).paddingTop : "" }; }); })();`;
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1?nsmax-no-lazy-overlay", { html, init, viewport: { width: 1440, height: 900 } });
 	try {
 		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
@@ -6694,12 +6694,13 @@ test("v1.8.35 打开页面不卡：抽奖帖的抽奖卡片、代码块「复制
 		const state = await page.evaluate(() => {
 			const fcp = performance.getEntriesByType("paint").find((entry) => entry.name === "first-contentful-paint")?.startTime || 0;
 			const menu = document.querySelector("#nsk-head .nsmax-mobile-menu");
-			return { atDcl: window.__atDcl, pad: getComputedStyle(document.querySelector(".nsk-post article pre")).paddingTop, shifts: window.__shifts.filter((entry) => entry.t > fcp).reduce((sum, entry) => sum + entry.v, 0), menu: menu ? getComputedStyle(menu).display : "missing", overflow: document.getElementById("nsk-head").hasAttribute("data-nsmax-nav-overflow") };
+			return { atDcl: window.__atDcl, pad: (() => { const pre = document.querySelector(".nsk-post article pre"); return Math.round(pre.getBoundingClientRect().top - pre.parentElement.getBoundingClientRect().top) + "+" + getComputedStyle(pre).paddingTop; })(), shifts: window.__shifts.filter((entry) => entry.t > fcp).reduce((sum, entry) => sum + entry.v, 0), menu: menu ? getComputedStyle(menu).display : "missing", overflow: document.getElementById("nsk-head").hasAttribute("data-nsmax-nav-overflow") };
 		});
 		assert.equal(state.atDcl.lottery, true, "抽奖卡片第一帧就在正文里");
 		assert.equal(state.atDcl.copy, true, "代码块第一帧就标好「复制」一直显示");
-		assert.equal(state.atDcl.pad, "38px", "代码块顶上放「复制」的那一条第一帧就留好");
-		assert.equal(state.pad, "38px", "站点的按钮加上以后还是那一条");
+		// 2026-11-08：放「复制」的那一条是代码块的标题栏（1px 边 + 36px），代码离标题栏 12px
+		assert.equal(state.atDcl.pad, "37+12px", "代码块的标题栏第一帧就在");
+		assert.equal(state.pad, "37+12px", "站点的按钮加上以后还是那一条");
 		// 抽奖卡片晚插进来、「复制」那一条晚留出来，都是 0.05 以上的跳动
 		assert.ok(state.shifts < 0.005, `第一帧之后正文不跳：${state.shifts}`);
 		assert.equal(state.overflow, false);

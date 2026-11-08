@@ -15846,6 +15846,260 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discus
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]) svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
   color: inherit !important;
 }
+
+/* ---------- 2026-11-08 正文排版重做（电脑端为主，手机端跟着一致） ----------
+   以前各元素分好几批对 sb.sb，结果是：代码块「一直显示复制」时顶上空 38px 一条，复制按钮孤零零浮在里面，单行代码像排版坏了；
+   一到四级标题全是 16px 粗体，看不出层级；表格不管几列都拉满整行。这一节统一重排：
+   - 代码块：外框（.nsmax-code）是卡片，顶上 36px 标题栏，左边语言名（data-nsmax-lang），右边「复制」常显；代码从标题栏下面开始，
+     一行代码也不会空出一大块。pre 不再是定位容器，站点自己的复制按钮（脚本复制关掉时）也落在标题栏里，不随代码横向滚动
+   - 标题：1.4 / 1.25 / 1.12 / 1 / 0.93em，一二级下面一道细线
+   - 引用：次底色 + 左边 3px 线，和楼层引用卡片一个样子
+   - 列表、表格、分隔线、折叠块：间距收齐；表格按内容宽、放不下横向滚动 */
+html[data-nsmax-theme] .nsmax-code:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  position: relative !important;
+  margin: 0.9em 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel-alt) !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] .nsmax-code:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::before {
+  content: attr(data-nsmax-lang) !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  height: 36px !important;
+  padding: 0 96px 0 14px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: color-mix(in srgb, var(--line-soft) 45%, var(--panel-alt)) !important;
+  color: var(--text-subtle) !important;
+  font: 500 12px/35px var(--font-sans) !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+html[data-nsmax-theme] .nsmax-code:not([data-nsmax-lang]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::before {
+  content: "代码" !important;
+}
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-code > pre:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme] #nsk-body-left article.post-content .nsmax-code > pre[data-nsmax-copy]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  position: static !important;
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  line-height: 1.65 !important;
+}
+html[data-nsmax-theme] .nsmax-code > [data-nspp-copy]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  top: 5px !important;
+  right: 8px !important;
+  height: 26px !important;
+  padding: 0 10px !important;
+  line-height: 24px !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] .nsmax-code > [data-nspp-copy][data-copied="true"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: color-mix(in srgb, #1a7f37 45%, var(--line)) !important;
+  color: #1a7f37 !important;
+}
+html[data-nsmax-theme][data-nsmax-dark] .nsmax-code > [data-nspp-copy][data-copied="true"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: color-mix(in srgb, #3fb950 45%, var(--line)) !important;
+  color: #3fb950 !important;
+}
+html[data-nsmax-theme] .nsmax-code > pre > .code-copy-btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  top: 5px !important;
+  right: 8px !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+/* 标题 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 1.5em 0 0.6em !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text-strong) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.45 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h1:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding-bottom: 0.3em !important;
+  border-bottom: 1px solid var(--line) !important;
+  font-size: 1.4em !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h2:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding-bottom: 0.3em !important;
+  border-bottom: 1px solid var(--line) !important;
+  font-size: 1.25em !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h3:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  font-size: 1.12em !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) h4:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  font-size: 1.05em !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--text-muted) !important;
+  font-size: 0.93em !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) > :is(h1, h2, h3, h4, h5, h6):first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(strong, b):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--text-strong) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(del, s):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  color: var(--text-subtle) !important;
+}
+/* 引用（不含楼层引用卡片 [data-nsmax-quote]，那个另有头部；样子一致） */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) blockquote:not([data-nsmax-quote]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0.9em 0 !important;
+  padding: 8px 14px !important;
+  border: 0 !important;
+  border-left: 3px solid var(--line-strong) !important;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0 !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) blockquote:not([data-nsmax-quote]) p:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0.4em 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) blockquote:not([data-nsmax-quote]) > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin-top: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) blockquote:not([data-nsmax-quote]) > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin-bottom: 0 !important;
+}
+/* 列表：缩进 1.5em，项与项之间 0.2em；嵌套的列表贴紧上一项；有序列表的数字用次要色、等宽数字 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(ul, ol):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0.6em 0 0.85em !important;
+  padding-left: 1.5em !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) li :is(ul, ol):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0.2em 0 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) li:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0.2em 0 !important;
+  padding-left: 0.2em !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) li > p:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) ol > li::marker {
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) li > input[type="checkbox"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0 0.45em 0 0 !important;
+  vertical-align: -0.1em !important;
+  accent-color: var(--brand);
+}
+/* 分隔线 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) hr:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  height: 0 !important;
+  margin: 1.6em 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: none !important;
+}
+/* 表格：按内容宽（以前两列小表也拉满整行，一格里空一大片），放不下时整张横向滚动；表头次底色 600，隔行很浅的底色 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0.9em 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-input) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+/* 宽屏：表格按内容宽（width:auto 的表格最宽到正文宽，列多时照旧在格子里折行）；窄屏（≤1000px）沿用第十一批的横向滑动 */
+@media (min-width: 1001px) {
+  html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    display: table !important;
+    width: auto !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  padding: 7px 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  border-right: 1px solid var(--line-soft) !important;
+  text-align: left !important;
+  vertical-align: top !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td):last-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-right: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) tr:last-child > td:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-bottom: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) th:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-bottom-color: var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-strong) !important;
+  font-weight: 600 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td)[align="center"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  text-align: center !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td)[align="right"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  text-align: right !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) tbody tr:nth-child(even):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  background: color-mix(in srgb, var(--panel-alt) 60%, transparent) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) tbody tr:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  background: var(--panel-hover) !important;
+}
+/* 折叠块：标题一行前面一个会转的小三角（原生 ▶ 换成细线箭头），展开后标题下一道细线 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  margin: 0.9em 0 !important;
+  overflow: hidden !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert) > summary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  list-style: none !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert) > summary::-webkit-details-marker {
+  display: none;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert) > summary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::before {
+  content: "" !important;
+  flex: none !important;
+  width: 6px !important;
+  height: 6px !important;
+  margin: 0 2px 0 1px !important;
+  border: solid var(--text-subtle) !important;
+  border-width: 0 1.5px 1.5px 0 !important;
+  transform: rotate(-45deg) !important;
+  transition: transform 0.15s ease !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert)[open] > summary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::before {
+  transform: translateY(-2px) rotate(45deg) !important;
+}
+/* 楼中楼（展开的回复里套的回复）照旧紧凑：块之间 6px、标题不放大、不画线（见第 11000 行附近那一条） */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content > :is(blockquote, ul, ol, .nsmax-code, table, details, h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  margin: 6px 0 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content > :is(h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: 13.5px !important;
+}
+/* 2026-11-08 真站复查：展开的折叠块标题下那道线原来是 line-soft，浅色白底上几乎看不见，和一二级标题的下划线一起换成 line */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-editor-preview, .nspp-preview-content) details:not(.markdown-alert)[open] > summary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-bottom-color: var(--line) !important;
+}
+
 /* 签名里的链接（2026-11-08 照 sb.sb .post-sig-text a）：和正文链接一样是链接色 + 2px 黄色下划线（偏移 3px），悬停下划线消失、字换悬停色；
    sb.sb 签名链接悬停不加正文那种黄色浅底。以前签名链接跟签名同色、没有下划线，看不出能点 */
 html[data-nsmax-theme] #nsk-body-left .content-item > .signature a:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *) {

@@ -157,7 +157,9 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-editor-resize{display:none!impor
 /* 代码复制：44px 触控区贴住右上角，视觉胶囊缩到 30px，代码第一行只让出 44px（以前按钮占满 44px 再空 14px，单行命令要 93px 高）。 */
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>[data-nspp-copy]{top:0!important;right:0!important;isolation:isolate!important;box-sizing:border-box!important;min-height:44px!important;padding:0 16px!important;border:0!important;border-radius:var(--r-pill)!important;background:transparent!important;font-size:12.5px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>[data-nspp-copy]::before{content:""!important;position:absolute!important;inset:calc(50% - 14px) 6px!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important}
-html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>pre[data-nsmax-copy]{padding-top:44px!important}
+/* 2026-11-08：代码块顶上是标题栏（语言名 + 「复制」），触屏上标题栏 44px 高，正好是「复制」的触控区，代码从标题栏下面开始 */
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-code:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*)::before{height:44px!important;line-height:43px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-code>[data-nspp-copy]:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*){top:0!important;right:0!important;height:44px!important;padding:0 16px!important;line-height:44px!important}
 html[data-nsmax-theme][data-nsmax-touch] .post-content table:not(.nsmax-lottery-table){display:block!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
 html[data-nsmax-theme][data-nsmax-touch] :is(.member-list,.nspp-messages,.nspp-notice-workspace,.nspp-messages-bubble,.nspp-messages-peer:not(.nsmax-notice-row),.nspp-messages-nav button){border-radius:var(--r)!important;box-shadow:none!important}
 /* 消息中心、关注列表和其他页面同一条边线：以前外面再套 16px / 12px 边距，比列表页窄一圈。 */
