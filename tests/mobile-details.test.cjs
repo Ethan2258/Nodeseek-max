@@ -83,14 +83,14 @@ for(const engine of engines){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...phone(width),html:P.searchOverlayPage({mobile:true,dark}),colorScheme:dark?"dark":"light"});
    try{
     await ready(page);await page.waitForSelector(".search-overlay .glass-card");
-    const s=await page.evaluate(()=>{const r=e=>e.getBoundingClientRect().toJSON(),card=document.querySelector(".search-overlay .glass-card"),content=card.querySelector(".glass-content");return{w:innerWidth,h:innerHeight,card:r(card),content:r(content),pad:parseFloat(getComputedStyle(content).paddingLeft),overlayBg:getComputedStyle(document.querySelector(".search-overlay")).backgroundColor,cardBg:getComputedStyle(card).backgroundColor,tabs:[...card.querySelectorAll(".tab-btn")].filter(e=>e.getClientRects().length).map(r),pills:[...card.querySelectorAll(".sub-pill")].map(r),items:[...card.querySelectorAll(".history-item")].map(r),tag:getComputedStyle(card.querySelector(".history-scope-tag")).backgroundColor,overflow:document.documentElement.scrollWidth>innerWidth+1};});
+    const s=await page.evaluate(()=>{const r=e=>e.getBoundingClientRect().toJSON(),card=document.querySelector(".search-overlay .glass-card"),content=card.querySelector(".glass-content");return{w:innerWidth,h:innerHeight,card:r(card),content:r(content),pad:parseFloat(getComputedStyle(content).paddingLeft),overlayBg:getComputedStyle(document.querySelector(".search-overlay")).backgroundColor,cardBg:getComputedStyle(card).backgroundColor,tabs:[...card.querySelectorAll(".tab-btn")].filter(e=>e.getClientRects().length).map(r),pills:[...card.querySelectorAll(".sub-pill")].map(r),items:[...card.querySelectorAll(".history-item")].map(r),tag:getComputedStyle(card.querySelector(".history-scope-tag")).backgroundColor,list:(()=>{const c=getComputedStyle(card.querySelector(".history-list"));return c.display+"/"+c.flexDirection+"/"+c.flexWrap+"/"+c.height;})(),overflow:document.documentElement.scrollWidth>innerWidth+1};});
     assert.ok(s.card.top<=1&&s.card.left===0&&Math.abs(s.card.width-s.w)<1&&s.card.bottom>=s.h-1,`整屏：${JSON.stringify(s.card)}`);
     assert.equal(s.overlayBg,s.cardBg,"后面不露变暗的列表");
     assert.ok(s.tabs.every(t=>t.height>=44),JSON.stringify(s.tabs));
     const left=s.content.left+s.pad,right=s.content.right-s.pad;
     assert.ok(s.pills.length>=8&&s.pills.every(p=>p.left>=left-0.5&&p.right<=right+0.5),`版块标签全部在面板里：${JSON.stringify(s.pills)}`);
     assert.ok(new Set(s.pills.map(p=>Math.round(p.top))).size>=2,"放不下就换行，不横着滑");
-    assert.ok(s.items.length===4&&new Set(s.items.map(i=>Math.round(i.top))).size===4,"历史一行一条");
+    assert.ok(s.items.length===4&&new Set(s.items.map(i=>Math.round(i.top))).size===4,`历史一行一条：${s.list} ${JSON.stringify(s.items.map(i=>[Math.round(i.left),Math.round(i.top),Math.round(i.width),Math.round(i.height)]))}`);
     assert.ok(s.items.every(i=>i.height>=44&&Math.abs(i.left-left)<1&&Math.abs(i.right-right)<1),`历史行占满一行、44px：${JSON.stringify(s.items)}`);
     assert.equal(s.tag,"rgba(0, 0, 0, 0)","范围小字不再垫底色");
     assert.equal(s.overflow,false);assert.deepEqual(errors,[]);
