@@ -941,6 +941,14 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-inf
   background: var(--text-subtle) !important;
   -webkit-mask: var(--nsmax-meta-icon) center / 13px 13px no-repeat !important;
   mask: var(--nsmax-meta-icon) center / 13px 13px no-repeat !important;
+  /* 2026-11-08 用户截图「小图标怎么不在中间」：以前图标在 20px 行里按盒子居中，字体的上下留白不对称（中文字体下行留得多），
+     字的笔画整体偏上，图标看着比字低 1～2px。改成按文字基线对齐：图标底边落在基线上，再往下挪「半个图标 - 半个数字高」，
+     图标中线正好对着数字 / 汉字笔画的中线，不管哪种字体 */
+  position: relative !important;
+  top: calc(6.5px - 0.36em) !important;
+}
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > :is(.info-author, .info-views, .info-comments-count, .info-last-commenter, .nsmax-inline-category):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  align-items: baseline !important;
 }
 html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-info > .nsmax-inline-category:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
   margin: 0 !important;

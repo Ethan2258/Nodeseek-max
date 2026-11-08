@@ -2207,6 +2207,10 @@
 			const menu = item.querySelector(":scope > .comment-menu");
 			const floor = item.querySelector(":scope > .nsk-content-meta-info > .floor-link-wrapper");
 			let actions = item.querySelector(":scope > .nsmax-floor-actions");
+			// 超过 30 天的楼层时间是「2026-09-29 03:01」这种完整日期（其余是「3 小时前」）：手机上这一层的操作胶囊整排放到时间下面一行，
+			// 不和长日期挤在一行（字体宽一点就只剩「回复」一个掉到第二行，2026-11-08）
+			const stamp = item.querySelector(":scope > .nsk-content-meta-info time");
+			nsmaxFlag(item, "data-nsmax-long-time", /^\d{4}-\d/.test(stamp?.textContent.trim() || ""));
 			if (!actions && menu && floor) {
 				actions = document.createElement("div"); actions.className = "nsmax-floor-actions";
 				item.append(actions); actions.append(menu, floor);

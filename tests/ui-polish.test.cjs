@@ -12,21 +12,23 @@ for(const engine of engines){
  let browser;
  test.before(async()=>{browser=engine==="webkit"?await webkit.launch():await launch();});
  test.after(async()=>{await browser?.close();});
- test(`${engine} 手机楼层：时间和名字同一条左边线，最后一个胶囊和楼号对齐正文右边线，楼号和名字同一条中线`,async()=>{
-  // 2026-11-07 重做：时间收进作者栏名字下面，操作胶囊放到正文下面靠右（见 tests/mobile-details.test.cjs）
-  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true})});
+ test(`${engine} 手机楼层：时间贴正文左边线，楼号贴正文右边线，最后一个胶囊在楼号左边，三者同一条中线`,async()=>{
+  // 2026-11-08 照原版：时间、操作胶囊、楼号排在头像下面一行（见 tests/mobile-details.test.cjs）；相对时间（超过 30 天的长日期胶囊另起一行）
+  const created=new Date(Date.now()-2*36e5).toISOString();
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(),html:P.postPage({mobile:true}).replaceAll("2026-10-03T04:00:00.000Z",created).replaceAll("2026-10-03 12:00:00",created)});
   try{
    await ready(page);
    const s=await page.evaluate(()=>{
     const li=document.querySelector("ul.comments>li.content-item"),items=[...li.querySelectorAll(".comment-menu>.menu-item")].filter(e=>e.offsetWidth).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left),last=items[items.length-1],link=li.querySelector(".floor-link"),body=li.querySelector("article.post-content").getBoundingClientRect();
     const text=(el)=>{const r=document.createRange();r.selectNodeContents(el);return r.getBoundingClientRect();};
     const name=text(li.querySelector(".nsmax-author-name"));
-    return{timeLeft:text(li.querySelector(".nsk-content-meta-info time")).left,nameLeft:name.left,lastRight:last.getBoundingClientRect().right,right:text(link).right,bodyRight:body.right,linkMiddle:(text(link).top+text(link).bottom)/2,nameMiddle:(name.top+name.bottom)/2,itemHeight:last.getBoundingClientRect().height};
+    const time=text(li.querySelector(".nsk-content-meta-info time")),lr=last.getBoundingClientRect();
+    return{timeLeft:time.left,bodyLeft:body.left,lastRight:lr.right,lastMiddle:(lr.top+lr.bottom)/2,linkLeft:text(link).left,right:text(link).right,bodyRight:body.right,linkMiddle:(text(link).top+text(link).bottom)/2,timeMiddle:(time.top+time.bottom)/2,itemHeight:lr.height,name:name.width};
    });
-   assert.ok(near(s.timeLeft,s.nameLeft,1.5),JSON.stringify(s));
-   assert.ok(near(s.lastRight,s.bodyRight,1.5),JSON.stringify(s));
+   assert.ok(near(s.timeLeft,s.bodyLeft,1.5),JSON.stringify(s));
+   assert.ok(s.lastRight<=s.linkLeft,JSON.stringify(s));
    assert.ok(near(s.right,s.bodyRight,1.5),JSON.stringify(s));
-   assert.ok(near(s.linkMiddle,s.nameMiddle,1.5),JSON.stringify(s));
+   assert.ok(near(s.linkMiddle,s.timeMiddle,2)&&near(s.lastMiddle,s.timeMiddle,2),JSON.stringify(s));
    assert.ok(s.itemHeight>=44,JSON.stringify(s));
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
@@ -468,7 +470,7 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
- test(`${engine} 手机楼中楼：时间和「#楼号 回复 引用…」同一行同一条中线，时间贴内容左边线、操作靠右；窄屏楼号挪到作者行`,async()=>{
+ test(`${engine} 手机楼中楼：时间和「#楼号 回复 引用…」同一行同一条中线，时间贴内容左边线、操作靠右；外层楼号在头像下面那一行`,async()=>{
   // 2026-11-06 用户截图：时间单独在左上，操作行低半行、缩进一大截，一条回复占三行高
   const recent=`datetime="${new Date(Date.now()-3e4).toISOString()}"`;
   const html=P.postPage({mobile:true}).replace(/datetime="[^"]+"/g,recent)
@@ -484,7 +486,7 @@ for(const engine of engines){
      const text=(e)=>{const r=document.createRange();r.selectNodeContents(e);return r.getBoundingClientRect();};
      const time=text(li.querySelector(".content-info time")),article=box(li.querySelector("article.post-content")),actions=box(li.querySelector(".nsmax-floor-actions")),item=li.querySelector(".nsmax-floor-actions .menu-item"),liBox=box(li);
      const outer=document.querySelector("ul.comments>li.content-item"),link=box(outer.querySelector(".floor-link")),col=box(outer.querySelector(".nsmax-author-col")),menu=box(outer.querySelector(".nsmax-floor-actions>.comment-menu"));
-     return{timeMid:(time.top+time.bottom)/2,actMid:(actions.top+actions.bottom)/2,timeLeft:time.left,articleLeft:article.left,actRight:actions.right,liRight:liBox.right,itemHeight:box(item).height,overlap:actions.left<time.right,actTop:actions.top+5,timeBottom:time.bottom,linkInHead:link.top>=col.top&&link.bottom<=col.bottom+1,linkAboveMenu:link.bottom<=menu.top+1};
+     return{timeMid:(time.top+time.bottom)/2,actMid:(actions.top+actions.bottom)/2,timeLeft:time.left,articleLeft:article.left,actRight:actions.right,liRight:liBox.right,itemHeight:box(item).height,overlap:actions.left<time.right,actTop:actions.top+5,timeBottom:time.bottom,linkInHead:link.top>=col.bottom-1&&link.bottom<=box(outer.querySelector('article.post-content')).top+1,linkAboveMenu:Math.abs((link.top+link.bottom)/2-(menu.top+menu.bottom)/2)<2||text(outer.querySelector('.floor-link')).bottom<=menu.top+1};
     });
     // 390px 放得下：同一行同一条中线；340px 放不下时操作整排换到下一行，不压住时间
     if(width>=360){assert.ok(near(s.timeMid,s.actMid,2),JSON.stringify(s));assert.equal(s.overlap,false,JSON.stringify(s));}
@@ -492,7 +494,7 @@ for(const engine of engines){
     assert.ok(near(s.timeLeft,s.articleLeft,1.5),JSON.stringify(s));
     assert.ok(s.actRight<=s.liRight+6.5,JSON.stringify(s));
     assert.ok(s.itemHeight>=44,JSON.stringify(s));
-    assert.equal(s.linkInHead,true,`${width}px 外层楼号在作者行 ${JSON.stringify(s)}`);
+    assert.equal(s.linkInHead,true,`${width}px 外层楼号在作者栏下面、正文上面 ${JSON.stringify(s)}`);
     assert.equal(s.linkAboveMenu,true,JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
@@ -510,7 +512,7 @@ for(const engine of engines){
    await page.evaluate(()=>{const mount=document.querySelector(".nsk-post .comment-menu-mount");mount.replaceWith(document.getElementById("real-menu").content.cloneNode(true));});
    await page.waitForTimeout(300);
    const after=await measure();
-   assert.equal(before.columns,1,JSON.stringify(before));
+   assert.equal(before.columns,3,JSON.stringify(before));
    assert.deepEqual(after,before);
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
