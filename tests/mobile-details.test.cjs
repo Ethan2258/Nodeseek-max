@@ -139,7 +139,7 @@ for(const engine of engines){
     assert.equal(s.tops.length,3);assert.equal(new Set(s.tops).size,1,JSON.stringify(s));assert.ok(s.title<=24,"标题不折行");
     assert.ok(s.heights.every(h=>h>=44),"保留 44px 点击区");assert.deepEqual(s.border,["0px","0px","0px"]);assert.ok(s.pill.every(r=>parseFloat(r)>=14),JSON.stringify(s));
     assert.ok(Math.abs(s.head-55)<1.5,`标题栏和 sb.sb .reply-head 一样高 55px：${JSON.stringify(s)}`);assert.ok(Math.abs(s.gap-10)<1,"和第一条回复隔 10px");assert.ok(parseFloat(s.headRadius)>=10,"标题栏是独立圆角卡片");
-    assert.deepEqual(s.size,["12.5px","12.5px","12.5px"]);assert.ok(s.pillHeight.every(h=>Math.abs(h-28)<1.5),JSON.stringify(s));
+    assert.deepEqual(s.size,["12px","12px","12px"]);assert.ok(s.pillHeight.every(h=>Math.abs(h-28)<1.5),JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }

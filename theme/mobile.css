@@ -412,7 +412,7 @@ html[data-nsmax-theme][data-nsmax-touch] body>header>ul.mobile-nav>li>a{padding:
 /* 回复区标题「N 条回复」：参照站是独立的一张圆角卡片（.reply-head 高 55px），和下面第一条回复隔 10px，不再和第一楼粘成一块 */
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=classic] #nsk-body-left .comment-container>:is(div[data-nsmax-pagerbox],.nsmax-reply-head):first-child{margin:0 0 10px!important;border-bottom:1px solid var(--line)!important;border-radius:var(--r)!important}
 /* 「只看楼主 直达底部 简洁模式」：照参照站 .bot-toggle 画成 31px 高、12px 字的细线胶囊；按钮仍有 44px 点击区，上下各收 6.5px 让标题栏保持 55px */
-html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){margin-block:-6.5px!important;padding:0 12px!important;font-size:12.5px!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .comment-container :is(.nsmax-owner-only,.nsmax-jump-reply,.nsmax-layout-toggle){margin-block:-6.5px!important;padding:0 12px!important;font-size:12px!important}
 /* 简洁模式 320px 宽时「N 条回复 只看楼主 直达底部 退出简洁模式」一行放不下，最后一个按钮被卡片右边切掉一截：简洁模式下（按钮字多两个）这么窄时标题单独一行，三个按钮排在下面一行 */
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left .comment-container>div[data-nsmax-pagerbox]:first-child{flex-wrap:wrap!important;row-gap:13px!important}
 @media (max-width:359px){
