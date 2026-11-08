@@ -657,12 +657,17 @@
 	// NodeSeek 没有这类字段，楼主自己写在标题开头的【出】【收】【求】【换】【已出】这类就画成同样的小标：括号藏起来、
 	// 字留着并染色（出 / 售 橙、收 / 买 蓝、求 紫、换 / 租 绿、已出 / 已收 / 已售这类灰）。只拆文字节点不改字，
 	// 标题的 textContent 原样不变（屏蔽关键词、抽奖结束判断、复制标题都不受影响）
-	var NSMAX_MARKET_PREFIX = /^(\s*)([【\[［])(\s*(?:已出售?|已售出?|已收到?|已换|已租|已完成|出售|收购|求购|求租|出租|置换|交换|出|售|卖|收|买|求|换|租)\s*)([】\]］]\s*)/;
+	// 2026-11-08 加拼车（照 sb.sb 的「车等人」绿、「人等车」紫、「已满员」灰）：NodeSeek 上楼主写成【车找人】[车找人1/2]【人找车】【拼车 2/4】
+	// 【已满】这类，后面可以带人数（1/2、缺1）；还有【出鸡】【收鸡】（出 / 收 VPS）。sb.sb 的「可中介 / 中介」「已关闭 / 已过期」「旧帖」
+	// 来自它自己的交易信息卡，NodeSeek 没有这些数据，不加
+	var NSMAX_MARKET_PREFIX = /^(\s*)([【\[［])(\s*(?:已出售?|已售出?|已收到?|已换|已租|已完成|已满员?|已发车|满员|车满|出售|收购|求购|求租|出租|置换|交换|出鸡|收鸡|车找人|车等人|人找车|人等车|求上车|求车|拼车|发车|出|售|卖|收|买|求|换|租)(?:\s*[0-9０-９]+\s*[/／]\s*[0-9０-９]+|\s*缺\s*[0-9０-９]+)?\s*)([】\]］]\s*)/;
 	function nsmaxMarketKind(word) {
-		if (word.startsWith("已")) return "done";
-		if (/^(?:出售?|售|卖)$/.test(word)) return "sell";
-		if (/^(?:收购?|买)$/.test(word)) return "buy";
-		if (/^求/.test(word)) return "seek";
+		const base = word.replace(/\s*(?:[0-9０-９]+\s*[/／]\s*[0-9０-９]+|缺\s*[0-9０-９]+)$/, "").trim();
+		if (base.startsWith("已") || /^(?:满员|车满)$/.test(base)) return "done";
+		if (/^(?:出售?|售|卖|出鸡)$/.test(base)) return "sell";
+		if (/^(?:收购?|买|收鸡)$/.test(base)) return "buy";
+		if (/^(?:人找车|人等车|求上车|求车)$/.test(base)) return "seek";
+		if (/^求/.test(base)) return "seek";
 		return "offer";
 	}
 	function nsmaxMarketTag(link) {
@@ -4837,10 +4842,13 @@ function nsmaxTagStructure() {
 		nsmaxFansSkeleton();
 		// 「取关」：站点给这个按钮写了行内的 background-color: gray !important（压过所有样式表），灰底灰字很怪；
 		// 去掉这条行内样式，按 sb.sb 的细线按钮排（悬停时浅红，提示是取消关注）
+		// 2026-11-08：「关注」在深色下是站点的亮蓝实心按钮，旁边私信、转账是细线按钮，很扎眼（Yiheng 截图）。三个按钮一律去掉站点
+		// 写在行内的底色 / 字色 / 边框色，统一按 sb.sb 的细线按钮排；「关注」只在悬停时变黄
 		for (const btn of document.querySelectorAll(":is(.nsmax-member-actions, .usercard-button-group) > .btn")) {
-			if (btn.textContent.trim() !== "取关") continue;
-			nsmaxSetAttr(btn, "data-nsmax-unfollow");
-			if (btn.style.getPropertyValue("background-color")) btn.style.removeProperty("background-color");
+			const label = btn.textContent.trim();
+			if (label === "取关") nsmaxSetAttr(btn, "data-nsmax-unfollow");
+			else if (label === "关注") nsmaxSetAttr(btn, "data-nsmax-follow");
+			for (const prop of ["background", "background-color", "color", "border", "border-color", "box-shadow"]) if (btn.style.getPropertyValue(prop)) btn.style.removeProperty(prop);
 		}
 		for (const tab of document.querySelectorAll(".fans-switcher > a.switcher-item")) {
 			const label = (tab.textContent || "").replace(/[^\u4e00-\u9fa5A-Za-z0-9 ]/g, "").trim();

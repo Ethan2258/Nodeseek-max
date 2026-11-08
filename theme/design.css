@@ -2968,7 +2968,7 @@ html[data-nsmax-theme] .nsmax-mk > .nsmax-mk-t {
   color: var(--mk-c) !important;
   font-size: 11px !important;
   font-weight: 500 !important;
-  line-height: 19px !important;
+  line-height: 18px !important;
   white-space: nowrap !important;
 }
 html[data-nsmax-theme] .nsmax-mk[data-mk="buy"] { --mk-c: #1d4ed8; }
@@ -3796,13 +3796,14 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-met
   font-weight: 400 !important;
   line-height: 20px !important;
 }
-/* UID：sb.sb .post-user-uid——浅底细框胶囊、等宽数字 11px */
+/* UID：sb.sb .post-user-uid——浅底细框胶囊、等宽数字 11px；2026-11-08 和名字旁的等级、活跃度小标一样 18px 高（以前 20.5px，比旁边的高一截） */
 html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-uid {
   display: inline-flex !important;
   flex: none !important;
   align-items: center !important;
-  height: auto !important;
-  padding: 1px 8px !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  padding: 0 7px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel-alt) !important;
@@ -3810,7 +3811,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-uid
   font-family: var(--font-mono) !important;
   font-size: 11px !important;
   font-weight: 400 !important;
-  line-height: 1.5 !important;
+  line-height: 16px !important;
   white-space: nowrap !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .head-container .nsmax-space-join {
@@ -15844,4 +15845,20 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussi
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]) svg:is(#nsmax-lv, *):is(#nsmax-b, *),
 html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]) svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
   color: inherit !important;
+}
+/* 签名里的链接（2026-11-08 照 sb.sb .post-sig-text a）：和正文链接一样是链接色 + 2px 黄色下划线（偏移 3px），悬停下划线消失、字换悬停色；
+   sb.sb 签名链接悬停不加正文那种黄色浅底。以前签名链接跟签名同色、没有下划线，看不出能点 */
+html[data-nsmax-theme] #nsk-body-left .content-item > .signature a:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--link) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--link-line) !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+  text-decoration-skip-ink: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .content-item > .signature a:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--link-hover) !important;
+  text-decoration-color: transparent !important;
 }

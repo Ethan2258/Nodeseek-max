@@ -1113,6 +1113,8 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.equal(await pageSpace.locator('.nsmax-space-badge').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-online').count(), 0);
 		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').innerText(), 'UID 10');
+		// 2026-11-08：UID 小标和名字旁的等级、活跃度小标一样 18px 高（以前 20.5px）
+		assert.equal(await pageSpace.locator('.nsmax-space-meta .nsmax-space-uid').evaluate((e) => e.getBoundingClientRect().height), 18);
 		assert.equal(await pageSpace.locator('.head-container .card-block>.nsmax-user-stat:visible').count(), 9);
 		const progress = pageSpace.locator('.nsmax-space-progress');
 		assert.equal(await progress.getAttribute('data-nsmax-level-max') !== null, true);
@@ -2238,7 +2240,8 @@ test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字�
 				opacity: lines.map((p) => getComputedStyle(p).opacity),
 				margins: lines.map((p) => getComputedStyle(p).marginTop),
 				lastInside: lines.at(-1).getBoundingClientRect().bottom <= box.bottom + 0.5,
-				sameColor: getComputedStyle(sig.querySelector("a")).color === getComputedStyle(lines[1]).color
+				sameColor: getComputedStyle(sig.querySelector("a")).color === getComputedStyle(lines[1]).color,
+				link: (() => { const c = getComputedStyle(sig.querySelector("a")); return { line: c.textDecorationLine, thick: c.textDecorationThickness, offset: c.textUnderlineOffset }; })()
 			};
 		});
 		assert.deepEqual(state.links, ["引用", "回复", "编辑", "举报"]);
@@ -2247,7 +2250,9 @@ test("v1.8.1 自己的帖子：主帖「编辑」挪到楼主信息右侧小字�
 		assert.deepEqual(state.opacity, ["1", "1"]);
 		assert.deepEqual(state.margins, ["0px", "0px"]);
 		assert.equal(state.lastInside, true, "签名第二行不能被裁掉");
-		assert.equal(state.sameColor, true, "签名里的链接和文字同色");
+		// 2026-11-08 照 sb.sb .post-sig-text a：签名里的链接是链接色 + 2px 黄色下划线（以前和签名文字同色、没有下划线，看不出能点）
+		assert.equal(state.sameColor, false, "签名里的链接是链接色，和签名文字不同");
+		assert.deepEqual(state.link, { line: "underline", thick: "2px", offset: "3px" });
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -3550,6 +3555,21 @@ test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预
 		assert.notEqual(btn.bg, "rgb(128, 128, 128)");
 		assert.deepEqual(fans.errors, []);
 	} finally { await fans.context.close(); }
+	// 2026-11-08 用户截图：深色下「关注」是站点的亮蓝实心按钮，旁边私信、转账是细线按钮。三个按钮一样：同底色、同字色、同高、同圆角
+	for (const dark of [false, true]) {
+		let n = 0;
+		const html = fansPage({ dark }).replace(/<a class="btn">取关<\/a>/g, (m) => (n++ % 2 ? m : '<a class="btn" style="background-color: rgb(0, 170, 255) !important; color: white;">关注</a>'));
+		const f = await open(browser, "https://www.nodeseek.com/fans?type=fans", { html, colorScheme: dark ? "dark" : "light", viewport: { width: 1440, height: 900 } });
+		try {
+			await f.page.waitForSelector(".nsmax-member-actions > .btn[data-nsmax-follow]");
+			const rows = await f.page.evaluate(() => [...document.querySelectorAll(".nsmax-member-actions")].map((row) => [...row.children].map((b) => { const c = getComputedStyle(b); return { t: b.textContent.trim(), bg: c.backgroundColor, color: c.color, border: c.borderTopColor, radius: c.borderTopLeftRadius, h: b.getBoundingClientRect().height }; })));
+			const follow = rows.find((r) => r[0].t === "关注");
+			assert.ok(follow, JSON.stringify(rows));
+			for (const b of follow) for (const key of ["bg", "color", "border", "radius", "h"]) assert.equal(b[key], follow[1][key], `${dark ? "深色" : "浅色"} ${b.t} 的 ${key} 和私信一样：${JSON.stringify(follow)}`);
+			assert.notEqual(follow[0].bg, "rgb(0, 170, 255)");
+			assert.deepEqual(f.errors, []);
+		} finally { await f.context.close(); }
+	}
 	const post = postPage().replace(/<article class="post-content">[\s\S]*?<\/article>/, () => '<article class="post-content"><p>感觉流畅起来了 <img class="sticker" src="https://www.nodeseek.com/avatar/903.png" alt="xhj014"></p><p><img src="https://www.nodeseek.com/avatar/904.png" alt="image"><br>截图后面的字</p></article>');
 	const list = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1440, height: 900 }, pages: { "/post-1000-1": post } });
 	try {

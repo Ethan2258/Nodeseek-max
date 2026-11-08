@@ -16,7 +16,11 @@ for(const engine of engines){
   const lock='<span style="color: rgb(255 152 152); font-family: sans-serif;"><svg class="iconpark-icon" style="vertical-align: baseline"><use href="#lock"></use></svg>1\n                    </span>';
   const marks=html=>html.replace("出一台香港 CN2 GIA 小鸡，年付 99</a>",'出一台香港 CN2 GIA 小鸡，年付 99</a> <!----> <a href="/award" title="推荐阅读"><svg class="iconpark-icon award" style="width:15px;height:15px"><use href="#diamonds"></use></svg></a> <span title="置顶"><svg class="iconpark-icon pined circle-icon" style="width:15px;height:15px"><use href="#pin"></use></svg></span> <!---->')
    .replace("求推荐稳定的美西 VPS</a>",`求推荐稳定的美西 VPS</a> ${lock} <!----> <!----> <span class="nsk-badge read-only">\n                                只读\n                            </span>`)
-   .replace("Cloudflare Tunnel 踩坑记录</a>",`Cloudflare Tunnel 踩坑记录</a> ${lock} <!----> <!----> <!---->`);
+   .replace("Cloudflare Tunnel 踩坑记录</a>",`Cloudflare Tunnel 踩坑记录</a> ${lock} <!----> <!----> <!---->`)
+   // 2026-11-08 照 sb.sb 加的拼车 / 出鸡标签（真实标题写法：[车找人1/2]、【人找车】、[出鸡]）：和别的小标记一样 18px、对准标题中线
+   .replace("分享一个 Docker 一键部署脚本</a>","[车找人1/2] Google Gemini 家庭组</a>")
+   .replace("今天的 NodeSeek 签到抽奖结果</a>","【人找车】奈飞 4K 一位</a>")
+   .replace("【收】日本原生 IP 机器</a>","[出鸡] DMIT 洛杉矶 Pro</a>");
   for(const [label,opts,mobile] of [["电脑 1440",{viewport:{width:1440,height:900},seed},false],["手机 390",phone(390),true],["手机 360",phone(360),true]]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...opts,html:marks(P.listPage({mobile}))});
    try{
@@ -25,14 +29,14 @@ for(const engine of engines){
     const rows=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-title")].map(t=>{
      const link=t.querySelector(":scope>a");const walk=document.createTreeWalker(link,NodeFilter.SHOW_TEXT);let n,line=null;
      while((n=walk.nextNode())){if(n.parentElement.closest(".nsmax-mk")||!n.textContent.trim())continue;const r=document.createRange();r.selectNodeContents(n);const rects=r.getClientRects();line=rects[rects.length-1];break;}
-     const els=[...t.querySelectorAll(":scope>:is(span[data-nsmax-pinned],.nsmax-topic-pages,span[data-nsmax-lock],.nsk-badge.read-only,a[href='/award']), :scope>.nsmax-topic-pages>a")];
+     const els=[...t.querySelectorAll(":scope>:is(span[data-nsmax-pinned],.nsmax-topic-pages,span[data-nsmax-lock],.nsk-badge.read-only,a[href='/award']), :scope>.nsmax-topic-pages>a, :scope>a .nsmax-mk-t")];
      // 小标记落在标题的哪一行就和那一行比：标题文字那一行用文字的中线；折到下一行的（窄屏字宽时推荐阅读会掉下去）用那一行行框的中线
      const top=t.getBoundingClientRect().top,lh=parseFloat(getComputedStyle(t).lineHeight);
      return els.map(e=>{const r=e.getBoundingClientRect(),mid=(r.top+r.bottom)/2,row=Math.floor((mid-top)/lh),sameRow=Math.floor(((line.top+line.bottom)/2-top)/lh)===row;
-      return{k:e.className||e.getAttribute("href")||e.tagName,h:+r.height.toFixed(1),d:+(mid-(sameRow?(line.top+line.bottom)/2:top+lh*(row+.5))).toFixed(1),lines:e.getClientRects().length}});
+      return{k:e.closest(".nsmax-mk")?`mk-${e.closest(".nsmax-mk").dataset.mk}-${e.textContent.trim()}`:e.className||e.getAttribute("href")||e.tagName,h:+r.height.toFixed(1),d:+(mid-(sameRow?(line.top+line.bottom)/2:top+lh*(row+.5))).toFixed(1),lines:e.getClientRects().length}});
     }).flat());
     const kinds=new Set(rows.map(r=>String(r.k).split(" ")[0]));
-    for(const k of ["nsmax-topic-pages","/award","nsk-badge"])assert.ok([...kinds].some(x=>x.includes(k)||x===k),`${label} 缺 ${k}：${JSON.stringify(rows)}`);
+    for(const k of ["nsmax-topic-pages","/award","nsk-badge","mk-offer-车找人1/2","mk-seek-人找车","mk-sell-出鸡"])assert.ok([...kinds].some(x=>x.includes(k)||x===k),`${label} 缺 ${k}：${JSON.stringify(rows)}`);
     assert.ok(rows.every(r=>r.h===18),`${label} 都是 18px 高：${JSON.stringify(rows)}`);
     assert.ok(rows.every(r=>Math.abs(r.d)<=1.5),`${label} 对准标题那一行正中：${JSON.stringify(rows)}`);
     assert.ok(rows.every(r=>r.lines===1),`${label} 锁和数字不折成两行：${JSON.stringify(rows)}`);
