@@ -3960,6 +3960,8 @@ function nsmaxTagStructure() {
 			if (pre.querySelector(":scope > code.language-ansi")) continue;
 			const wrap = document.createElement("div");
 			wrap.className = "nsmax-code";
+			// 代码块顶上一条标题栏（2026-11-08）：左边写语言（code.language-xxx，没写就是「代码」），右边放「复制」
+			wrap.setAttribute("data-nsmax-lang", nsmaxCodeLanguage(pre));
 			const button = pre.querySelector(":scope > [data-nspp-copy]");
 			pre.before(wrap);
 			wrap.append(pre);
@@ -3971,6 +3973,17 @@ function nsmaxTagStructure() {
 			if (!pre.hasAttribute("data-nsmax-copy")) pre.setAttribute("data-nsmax-copy", "");
 			if (copy.always && !pre.hasAttribute("data-nsmax-copy-always")) pre.setAttribute("data-nsmax-copy-always", "");
 		}
+	}
+	const NSMAX_CODE_LANG_NAMES = { js: "JavaScript", javascript: "JavaScript", ts: "TypeScript", typescript: "TypeScript", py: "Python", python: "Python", sh: "Shell", shell: "Shell", bash: "Bash", zsh: "Zsh", console: "Shell", powershell: "PowerShell", ps1: "PowerShell", json: "JSON", yaml: "YAML", yml: "YAML", toml: "TOML", ini: "INI", xml: "XML", html: "HTML", css: "CSS", sql: "SQL", go: "Go", golang: "Go", rust: "Rust", rs: "Rust", java: "Java", kotlin: "Kotlin", c: "C", cpp: "C++", "c++": "C++", csharp: "C#", cs: "C#", php: "PHP", ruby: "Ruby", rb: "Ruby", lua: "Lua", nginx: "Nginx", dockerfile: "Dockerfile", docker: "Dockerfile", diff: "Diff", markdown: "Markdown", md: "Markdown", plaintext: "文本", text: "文本", txt: "文本" };
+	function nsmaxCodeLanguage(pre) {
+		const code = pre.querySelector(":scope > code") || pre;
+		for (const name of code.classList) {
+			const match = /^(?:language|lang)-(.+)$/.exec(name);
+			if (!match) continue;
+			const key = match[1].toLowerCase();
+			return NSMAX_CODE_LANG_NAMES[key] || (key.length <= 16 ? key : "代码");
+		}
+		return "代码";
 	}
 	// 「复制」按钮会不会加、站点的复制按钮上次是不是「一直显示」（内容增强看到站点的按钮时记在本机：nsmax:copy-always；
 	// 还没见过时按站点的默认「一直显示」）
