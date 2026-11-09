@@ -303,31 +303,20 @@ for(const engine of engines){
    assert.deepEqual(list.errors,[]);
   }finally{await list.context.close();}
  });
- test(`${engine} 交易小标：标题开头的【出】【收】【求】[已出] 画成 sb.sb .mk-tag 彩色小标，标题文字不变`,async()=>{
-  // 2026-11-06 sb.sb index.2b8d1ab929.css 新增 .mk-tag（我要卖 / 我要买）；NodeSeek 按楼主写在标题开头的标记画
+ test(`${engine} 交易小标已去掉（2026-11-09 用户：「出击呀收机呀那些我都不要了」）：标题开头的【出】【收】【求】[已出] 原样显示，不画小标`,async()=>{
   for(const [label,opts,url,html] of [["电脑",desk,"https://www.nodeseek.com/",P.listPage({count:6})],["手机",phone(),"https://www.nodeseek.com/",P.listPage({mobile:true,count:6})]]){
-   const marked=html.replace("求推荐稳定的美西 VPS","【出】 美西 VPS 2C4G").replace("分享一个 Docker 一键部署脚本","[已出] 分享一个 Docker").replace("Cloudflare Tunnel 踩坑记录","【求购】Cloudflare 账号");
+   const marked=html.replace("求推荐稳定的美西 VPS","【出】 美西 VPS 2C4G").replace("分享一个 Docker 一键部署脚本","[已出] 分享一个 Docker").replace("Cloudflare Tunnel 踩坑记录","[车找人1/2] Gemini 家庭组");
    const {context,page,errors}=await open(browser,url,{...opts,html:marked});
    try{
     await ready(page);
-    const s=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-title > a")].map(a=>{const mk=a.querySelector(":scope > .nsmax-mk"),chip=mk?.querySelector(":scope > .nsmax-mk-t"),r=chip?.getBoundingClientRect(),title=a.getBoundingClientRect();const range=document.createRange();range.selectNodeContents(a.lastChild);const g=range.getClientRects()[0];return{text:a.textContent,kind:mk?.dataset.mk||"",shown:mk?mk.innerText.trim():"",color:chip?getComputedStyle(chip).color:"",bg:chip?getComputedStyle(chip).backgroundColor:"",radius:chip?parseFloat(getComputedStyle(chip).borderRadius):0,inside:mk?r.left>=title.left-0.5:true,offset:chip&&g?Math.abs((r.top+r.height/2)-(g.top+g.height/2)):0}}));
+    const s=await page.evaluate(()=>[...document.querySelectorAll(".post-list-item .post-title > a")].map(a=>({text:a.textContent,shown:a.innerText.trim(),spans:a.querySelectorAll("span").length})));
     const by=t=>s.find(x=>x.text.includes(t));
-    assert.equal(by("美西").text,"【出】 美西 VPS 2C4G",label);
-    assert.equal(by("美西").kind,"sell",label);
-    assert.equal(by("美西").shown,"出",label);
-    assert.equal(by("Docker").kind,"done",label);
-    assert.equal(by("Cloudflare").kind,"seek",label);
-    assert.equal(by("日本原生").kind,"buy",label);
-    assert.equal(by("日本原生").shown,"收",label);
-    assert.equal(by("香港 CN2").kind,"",`标题中间的「出」不算：${label}`);
-    assert.notEqual(by("美西").color,by("日本原生").color,label);
-    assert.notEqual(by("美西").bg,"rgba(0, 0, 0, 0)",label);
-    assert.ok(s.every(x=>x.inside),JSON.stringify(s));
-    // 2026-11-07 小标和标题文字竖直居中对齐（iPhone 上曾经低 2px），圆角模式下也是小圆角方块、不是药丸
-    assert.ok(s.every(x=>x.offset<=1),JSON.stringify(s));
-    assert.ok(s.filter(x=>x.kind).every(x=>x.radius<=4),JSON.stringify(s));
-    await page.evaluate(()=>document.querySelector("ul.post-list").append(document.createElement("i")));await page.waitForTimeout(400);
-    assert.equal(await page.locator(".post-list-item .nsmax-mk").count(),4,label);
+    assert.equal(by("美西").shown,"【出】 美西 VPS 2C4G",label);
+    assert.equal(by("Docker").shown,"[已出] 分享一个 Docker",label);
+    assert.equal(by("Gemini").shown,"[车找人1/2] Gemini 家庭组",label);
+    assert.equal(by("日本原生").shown,"【收】日本原生 IP 机器",label);
+    assert.ok(s.every(x=>x.spans===0),JSON.stringify(s));
+    assert.equal(await page.locator(".nsmax-mk").count(),0,label);
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }

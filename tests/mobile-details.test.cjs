@@ -17,7 +17,7 @@ for(const engine of engines){
   const marks=html=>html.replace("出一台香港 CN2 GIA 小鸡，年付 99</a>",'出一台香港 CN2 GIA 小鸡，年付 99</a> <!----> <a href="/award" title="推荐阅读"><svg class="iconpark-icon award" style="width:15px;height:15px"><use href="#diamonds"></use></svg></a> <span title="置顶"><svg class="iconpark-icon pined circle-icon" style="width:15px;height:15px"><use href="#pin"></use></svg></span> <!---->')
    .replace("求推荐稳定的美西 VPS</a>",`求推荐稳定的美西 VPS</a> ${lock} <!----> <!----> <span class="nsk-badge read-only">\n                                只读\n                            </span>`)
    .replace("Cloudflare Tunnel 踩坑记录</a>",`Cloudflare Tunnel 踩坑记录</a> ${lock} <!----> <!----> <!---->`)
-   // 2026-11-08 照 sb.sb 加的拼车 / 出鸡标签（真实标题写法：[车找人1/2]、【人找车】、[出鸡]）：和别的小标记一样 18px、对准标题中线
+   // 带【车找人】[出鸡] 这类写法的标题（交易 / 拼车小标 2026-11-09 已去掉，标题原样显示）：标题后面的小标记照样对齐
    .replace("分享一个 Docker 一键部署脚本</a>","[车找人1/2] Google Gemini 家庭组</a>")
    .replace("今天的 NodeSeek 签到抽奖结果</a>","【人找车】奈飞 4K 一位</a>")
    .replace("【收】日本原生 IP 机器</a>","[出鸡] DMIT 洛杉矶 Pro</a>");
@@ -36,7 +36,7 @@ for(const engine of engines){
       return{k:e.closest(".nsmax-mk")?`mk-${e.closest(".nsmax-mk").dataset.mk}-${e.textContent.trim()}`:e.className||e.getAttribute("href")||e.tagName,h:+r.height.toFixed(1),d:+(mid-(sameRow?(line.top+line.bottom)/2:top+lh*(row+.5))).toFixed(1),lines:e.getClientRects().length}});
     }).flat());
     const kinds=new Set(rows.map(r=>String(r.k).split(" ")[0]));
-    for(const k of ["nsmax-topic-pages","/award","nsk-badge","mk-offer-车找人1/2","mk-seek-人找车","mk-sell-出鸡"])assert.ok([...kinds].some(x=>x.includes(k)||x===k),`${label} 缺 ${k}：${JSON.stringify(rows)}`);
+    for(const k of ["nsmax-topic-pages","/award","nsk-badge"])assert.ok([...kinds].some(x=>x.includes(k)||x===k),`${label} 缺 ${k}：${JSON.stringify(rows)}`);
     assert.ok(rows.every(r=>r.h===18),`${label} 都是 18px 高：${JSON.stringify(rows)}`);
     assert.ok(rows.every(r=>Math.abs(r.d)<=1.5),`${label} 对准标题那一行正中：${JSON.stringify(rows)}`);
     assert.ok(rows.every(r=>r.lines===1),`${label} 锁和数字不折成两行：${JSON.stringify(rows)}`);
