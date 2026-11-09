@@ -67,7 +67,9 @@ h2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-heigh
 .module-title{margin:0;color:var(--s-text-strong);font-size:14px;font-weight:600;line-height:1.5}
 /* 模块说明：sb.sb .settings-section-lead——12.5px 弱化字、行高 1.7 */
 .lead{margin:0;color:var(--s-muted);font-size:12.5px;line-height:1.7}
-.module[data-master] .lead,.module[data-master] .module-fields{padding-left:21px}
+.module[data-master] .lead,.module[data-master] .module-fields,.module[data-master] .pending{padding-left:21px}
+/* 改过、要刷新才生效的模块：标题下面一行品牌色小字 */
+.pending{margin:2px 0 0;color:var(--s-brand);font-size:12px;font-weight:500;line-height:1.6}
 .module-fields{display:grid;gap:14px;margin-top:12px}
 .module[data-off] .module-fields{opacity:.5}
 /* 勾选：sb.sb .check——15px 勾选框（品牌色）+ 13.5px 文字，间距 6px */

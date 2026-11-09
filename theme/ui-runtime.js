@@ -796,7 +796,7 @@
 	var nsmaxSpecialBusy = false;
 	// 2026-10-24：一页最多查 12 篇（以前 30 篇，v1.8.37 还给标题不像抽奖的另加 60 篇，十秒里取二十多篇，站点开始限流，
 	// 页面、图片跟着变慢）。标题不像抽奖的不在列表页后台查：点开它时按内容认（见 nsmaxPrizeBadges），
-	// 「抽奖」分类页里再在后台慢慢找（见 nsmaxCrawlNewPosts）
+	// 点开过就按开奖链接认出来
 	var nsmaxSpecialBudget = 12;
 	var nsmaxSpecialRecheckBudget = 4;
 	var nsmaxSpecialStaleBudget = 4;
@@ -1078,7 +1078,6 @@
 		if (nsmaxLotteryViewBusy) return;
 		if (!pending) {
 			nsmaxLotteryRecheckStale(ctx);
-			nsmaxLotteryCrawlLater(ctx);
 			return;
 		}
 		nsmaxLotteryViewBusy = true;
@@ -1109,7 +1108,6 @@
 		const next = document.querySelector("#nsk-body-left .nsk-pager a.pager-next[href]");
 		if (next && !ctx.signal.aborted && !nsmaxBackgroundPaused()) nsmaxWhenIdle("lottery-next", () => nsmaxPrefetchLotteryPage(ctx, next.getAttribute("href")));
 		nsmaxLotteryRecheckStale(ctx);
-		nsmaxLotteryCrawlLater(ctx);
 	}
 	// 「抽奖」页上查过不是、但 30 分钟以上没再查过的（2026-11-01：楼主常常先发帖、过几分钟才编辑补上开奖链接，刚发出来时查过一次「不是」
 	// 就一直藏着）：在后台再查一遍，一次打开页面最多 6 篇、从上往下。已经显示的行不等它们；认出来就按顺序接上
@@ -1127,26 +1125,9 @@
 			nsmaxLotteryRefresh();
 		}
 	}
-	// 抽奖页上：「新帖子」列表也在后台按内容查一遍（30 分钟最多一次），标题里没写「抽奖」的抽奖帖认出来就并进这一页
-	function nsmaxLotteryCrawlLater(ctx) {
-		if (ctx.signal.aborted || nsmaxBackgroundPaused() || !nsmaxLotteryIndexDue()) return;
-		nsmaxWhenIdle("lottery-crawl", () => nsmaxCrawlNewPosts(ctx));
-	}
-	// 后台提前识别到时间了没有（30 分钟最多一次，本机记时间）；到了就记下这一次
-	function nsmaxLotteryIndexDue() {
-		if (!unsafeWindow$1.__config__?.user) return false;
-		try {
-			if (Date.now() - (Number(localStorage.getItem(NSMAX_LOTTERY_INDEX_KEY)) || 0) < 30 * 60e3) return false;
-			localStorage.setItem(NSMAX_LOTTERY_INDEX_KEY, String(Date.now()));
-			return true;
-		} catch {
-			return false;
-		}
-	}
 	// 抽奖页查完当前页后，把下一页里没查过的帖子在后台低优先级查掉，翻到下一页时大多已经有结论，直接显示。一次最多查 25 篇。
 	// 站内搜索要登录，没登录不查；省流量模式、2G 网络下不查；页面切到后台、站点限流过（后台暂停中）就停。
 	// 2026-10-24：别的页面上不再每 30 分钟在后台查一遍「抽奖」搜索第一页和「新帖子」列表（一次几十篇，站点开始限流）
-	var NSMAX_LOTTERY_INDEX_KEY = "nsmax:lottery-index-at";
 	async function nsmaxPrefetchLotteryPage(ctx, url) {
 		if (!unsafeWindow$1.__config__?.user || navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "") || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
 		let html = "";
@@ -1160,34 +1141,8 @@
 		const ids = [...new Set(Array.from(doc.querySelectorAll("ul.post-list > li.post-list-item .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]))].filter((id) => id && !checked.has(id) && !known.has(id)).slice(0, 25);
 		while (ids.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) await nsmaxCheckSpecialPost(ctx, ids.shift());
 	}
-	// 按内容找抽奖帖（2026-10-23）：标题里不写「抽奖」的抽奖帖，站内搜索（只搜标题）找不到。只在「抽奖」分类页上（登录后、30 分钟最多一次）
-	// 读「新帖子」列表第一页，把没查过的帖子在后台低优先级一篇一篇查掉（主帖、第一页评论里有没有指向这一篇的开奖链接），一次最多 20 篇；
-	// 认出来的记下它在列表上的样子，并进「抽奖」分类（见 nsmaxMergeLotteryRows）。平时点开的帖子也会按内容认（见 nsmaxPrizeBadges）
-	async function nsmaxCrawlNewPosts(ctx) {
-		if (ctx.signal.aborted || document.hidden || navigator.connection?.saveData || nsmaxBackgroundPaused()) return;
-		let html = "";
-		try {
-			html = await ctx.request("/?sortBy=postTime", { responseType: "text", signal: ctx.signal, priority: "low" });
-		} catch {
-			return;
-		}
-		const doc = new DOMParser().parseFromString(html, "text/html");
-		const checked = nsmaxSpecialChecked(), known = nsmaxSpecialPostMap(), rows = nsmaxLotteryRows();
-		const todo = [];
-		for (const item of doc.querySelectorAll("ul.post-list > li.post-list-item")) {
-			const id = item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1];
-			if (!id) continue;
-			if ((known.get(id) || "").split(",").includes("lottery")) {
-				if (!rows.has(id)) nsmaxRememberLotteryRow(item);
-			} else if (!checked.has(id) && !known.has(id) && todo.length < 20) todo.push([id, item]);
-		}
-		while (todo.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) {
-			const [id, item] = todo.shift();
-			await nsmaxCheckSpecialPost(ctx, id, item);
-			// 正在看「抽奖」分类：认出来就并进列表
-			if (nsmaxIsLotteryView() && nsmaxMergeLotteryRows()) nsmaxLotteryRefresh();
-		}
-	}
+	// 2026-11-09 去掉了「抽奖」页上在后台读「新帖子」列表、一篇篇查标题没写「抽奖」的帖子（一次 20 篇，容易被限流）。
+	// 这类抽奖帖点开过就会按开奖链接认出来，并进「抽奖」页（见 nsmaxPrizeBadges、nsmaxMergeLotteryRows）
 	// 认出来的抽奖帖在列表上的样子（标题、作者、版块、浏览 / 回复数、最后回复、时间），记在本机，最多 200 篇（编号最大的那些）
 	var NSMAX_LOTTERY_ROWS_KEY = "nsmax:lottery-rows";
 	var nsmaxLotteryRowsMap;
@@ -2112,15 +2067,9 @@
 		const translated = (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
 		return old !== translated ? translated : null;
 	}
-	// 页面解析阶段就把时间改成中文（设置里关掉「中文时间」或「内容增强」时不改）；原文字记在 data-nsmax-time-orig，
+	// 页面解析阶段就把时间改成中文（2026-11-09 起一直开着）；原文字记在 data-nsmax-time-orig，
 	// 模块启动后据此登记还原。parsed 判断元素是否已经完整解析（文字没解析完时先不动）。
 	function nsmaxApplyChineseTimes(parsed) {
-		if (nsmaxChineseTimeEnabled == null) {
-			const all = GM_getValue$1(SETTINGS_KEY, {});
-			const reading = all?.["reading-content"];
-			nsmaxChineseTimeEnabled = reading?.enabled !== false && reading?.chineseTime !== false;
-		}
-		if (!nsmaxChineseTimeEnabled) return;
 		for (const el of document.querySelectorAll("time:not([data-nsmax-time-orig]), .date-created:not([data-nsmax-time-orig]), .date-updated:not([data-nsmax-time-orig])")) {
 			if (el.children.length || el.hasAttribute("data-nsmax-time-done") || parsed && !parsed(el) || nsmaxLateRows && el.closest(nsmaxLateRows)) continue;
 			el.setAttribute("data-nsmax-time-done", "");
@@ -2130,7 +2079,6 @@
 			el.textContent = value;
 		}
 	}
-	var nsmaxChineseTimeEnabled = null;
 	// NQ（NodeQuality 测机）的图标
 	// 列表工具条：NQ 入口挪到顶栏「精华」后面（见 nsmaxUpdateNavEssence），这里只清掉以前放在工具条上的那个；工具条加「投票」「抽奖」
 	function nsmaxEnsureNqEntry(parsed) {
@@ -4013,9 +3961,9 @@ function nsmaxTagStructure() {
 		nsmaxSetText(el, `Lv.${n}`);
 	}
 	// 活跃度标签（2026-10-31，融合「NodeSeek 用户发帖与评论频率」v1.1.0，MIT）：主题数、回帖数按注册天数折成日均，
-	// 按「主题 + 回帖」的日均分七档，再按发帖习惯最多补一个副标签。个人主页统计格、悬停资料卡、帖子作者栏都用这一份。
+	// 按「主题 + 回帖」的日均分七档，名字后面只标两头（潜水、话痨及以上）和新号；个人主页统计格、悬停资料卡、帖子作者栏都用这一份。
 	// 档位：潜水 <0.1（十天不到一次）· 佛系 0.1～0.5 · 正常 0.5～3 · 活跃 3～10 · 话痨 10～25 · 肝帝 25～50 ·
-	// 人机 ≥50（天天每 20 分钟一条，挂机脚本的节奏）。注册不满 30 天的只标「新号」，日均到话痨以上才另外标档位
+	// 人机 ≥50（天天每 20 分钟一条，挂机脚本的节奏）。注册不满 30 天的标「新号」，日均到话痨以上时改标档位
 	var NSMAX_ACTIVITY_TIERS = [
 		[50, "人机", "bot", "日均 50 条以上，天天每 20 分钟一条，像挂机脚本"],
 		[25, "肝帝", "hot", "日均 25～50 条，几乎整天泡在论坛"],
@@ -4048,14 +3996,12 @@ function nsmaxTagStructure() {
 		const postRate = posts / span, commentRate = comments / span, rate = postRate + commentRate;
 		const [, name, tone, hint] = NSMAX_ACTIVITY_TIERS.find(([min]) => rate >= min);
 		const detail = `日均 ${nsmaxRateText(rate)} 条（主题 ${nsmaxRateText(postRate)} + 回帖 ${nsmaxRateText(commentRate)}），注册 ${days} 天`;
+		// 2026-11-09 精简：只标两头。佛系、正常、活跃是大多数人，每个名字后面都挂一个没什么信息量，不再显示；
+		// 「高产楼主 / 只发帖 / 只回帖」副标签也去掉。名字后面最多一个标签
 		const tags = [];
-		if (days < 30) {
-			tags.push({ text: "新号", tone: "new", tip: `注册不满 30 天，日均还不稳定。${detail}` });
-			if (rate >= 10) tags.push({ text: name, tone, tip: `${hint}。${detail}` });
-		} else tags.push({ text: name, tone, tip: `${hint}。${detail}` });
-		// 副标签：日均 1 帖以上的高产楼主；主题比回帖还多的只发帖；一帖没发、回帖上百的只回帖
-		const side = postRate >= 1 ? ["高产楼主", "日均发 1 个主题以上"] : posts >= 10 && comments < posts ? ["只发帖", "主题比回帖还多"] : posts === 0 && comments >= 100 ? ["只回帖", "回帖上百，一个主题没发过"] : null;
-		if (side && tags.length < 2) tags.push({ text: side[0], tone: "style", tip: `${side[1]}。${detail}` });
+		const loud = rate >= 10, quiet = rate < 0.1;
+		if (days < 30) tags.push(loud ? { text: name, tone, tip: `注册不满 30 天。${hint}。${detail}` } : { text: "新号", tone: "new", tip: `注册不满 30 天，日均还不稳定。${detail}` });
+		else if (loud || quiet) tags.push({ text: name, tone, tip: `${hint}。${detail}` });
 		return { days, posts, comments, postRate, commentRate, rate, tags };
 	}
 	// 在 host 里放一组活跃度标签（class nsmax-activity-tag）；同样的内容不动 DOM。info 为 null 或功能关了时清掉

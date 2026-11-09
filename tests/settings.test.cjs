@@ -15,30 +15,6 @@ const settings = async page => {await page.getByRole("button",{name:"NodeSeek Ma
 // 同步 GM 的设置也经过跨标签页事务；以面板确认保存完成为准，再读持久化值或刷新。
 const saved = host => host.getByRole("button",{name:"刷新应用设置",exact:true}).waitFor();
 
-test("设置真实生效：个人主页主题帖计数只在开启时读取，关闭后不请求帖子",async()=>{
- for(const enabled of [true,false]) {
-  const calls=[];
-  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{
-   html:spaceTopicsPage(),seed:{[KEY]:{"discussion-stats":{enabled}}},
-   beforeNavigate:p=>p.route(/\/post-\d+-1$/,async route=>{
-    calls.push(route.request().url());
-    const id=Number(new URL(route.request().url()).pathname.match(/post-(\d+)/)[1]);
-    const data={postData:{postId:id,postPage:1,postPageCount:1,views:123,comments:[{floorIndex:3}]}};
-    await route.fulfill({status:200,contentType:"text/html",body:`<!doctype html><script id="temp-script" type="application/json">${Buffer.from(JSON.stringify(data)).toString("base64")}</script>`});
-   })
-  });
-  try {
-   await ready(page);
-   if(enabled) {
-    await page.waitForSelector(".nspp-discussion-stats[data-state=done]");
-    assert.match(await page.locator(".nspp-discussion-stats[data-state=done]").first().innerText(),/123/);
-    assert.ok(calls.length>0);
-   } else {await page.waitForTimeout(800);assert.equal(calls.length,0);assert.equal(await page.locator(".nspp-discussion-stats").count(),0);}
-   assert.deepEqual(errors,[]);
-  } finally {await context.close();}
- }
-});
-
 test("设置真实生效：粉丝页悬停资料卡开关控制卡片和资料请求",async()=>{
  for(const enabled of [true,false]) {
   const {context,page,errors,calls}=await open(browser,"https://www.nodeseek.com/fans?type=fans",{html:fansPage(),seed:{[KEY]:{"sb-person-hover":{enabled}}}});
@@ -53,14 +29,15 @@ test("设置真实生效：粉丝页悬停资料卡开关控制卡片和资料�
  }
 });
 
-test("设置真实生效：关闭中文时间后，列表时间刷新不再把英文改回中文；重复的旧开关移除",async()=>{
+test("中文时间一直开着：以前存的「关掉中文时间」不再生效；重复的旧开关移除，「内容增强」只剩外链直达",async()=>{
  const html=listPage().replace(/(<time\b[^>]*>)[^<]*(<\/time>)/g,"$13 days ago$2");
- const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html,seed:{[KEY]:{"reading-content":{enabled:true,chineseTime:false}}}});
+ const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html,seed:{[KEY]:{"reading-content":{enabled:false,chineseTime:false}}}});
  try {
   await ready(page);
-  assert.match(await page.locator(".info-last-comment-time").first().innerText(),/days ago/);
+  assert.doesNotMatch(await page.locator(".info-last-comment-time").first().innerText(),/days ago/);
   const host=await settings(page);
   assert.equal(await host.locator('.module[data-feature="list-interactions"]').count(),0);
+  assert.deepEqual(await host.locator('.module[data-feature="reading-content"] input[data-key]').evaluateAll(list=>list.map(i=>i.dataset.key)),["cleanLinks"]);
   assert.deepEqual(errors,[]);
  } finally {await context.close();}
 });
@@ -132,7 +109,7 @@ test("全部设置可保存：逐个操作所有可见字段和开关，重新�
  try {
   let host=await settings(page);
   const fields=await host.locator(".module input[data-key],.module select[data-key],.module textarea[data-key]").evaluateAll(nodes=>nodes.map(n=>({feature:n.dataset.feature,key:n.dataset.key,type:n.type,tab:n.closest(".page").dataset.tab,value:n.type==="checkbox"?n.checked:n.value,options:n.tagName==="SELECT"?[...n.options].map(o=>o.value):null})));
-  const names={appearance:"外观",reading:"浏览",people:"用户",tools:"工具",network:"网络"};
+  const names={appearance:"外观",reading:"浏览",people:"用户",tools:"工具"};
   const modules=new Set(fields.map(f=>f.feature));
   assert.equal(modules.size,22,"仅保留实际有作用的设置组");
   assert.ok(fields.length>=40,"遍历全部可见配置字段");
@@ -196,7 +173,7 @@ test("旧配置与导入仍可用：无总开关的功能不会被旧 disabled �
  } finally {await context.close();}
 });
 
-test("关闭增强真实生效：图片、复制、高亮、Callout、备注、折叠、签到、热榜和预取均不再启动",async()=>{
+test("关闭增强真实生效：高亮、备注、折叠、签到、热榜和预取均不再启动；看大图、代码复制一直开着",async()=>{
  const ids=["infinite-scroll","reading-content","reading-focus","content-filter","user-notes","attendance","compose","image-upload","hot-rankings","notification-categories","instant-pages","official-blocklist","code-highlight","post-preview","sb-recent-visits","sb-my-replies","sb-person-hover"];
  const config=Object.fromEntries(ids.map(id=>[id,{enabled:false}]));
  config["user-notes"].notes="seller=不应出现";config["content-filter"].keywords="线路";
@@ -204,11 +181,12 @@ test("关闭增强真实生效：图片、复制、高亮、Callout、备注、�
  const {context,page,errors,calls}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html,seed:{[KEY]:config}});
  try {
   await ready(page);
-  for(const selector of ["[data-nsmax-copy]",".hljs",".nspp-callout",".nspp-user-note",".nsmax-fold-toggle",".nsmax-hot-panel",".nsmax-recent-panel",".nsmax-my-replies","script[type=speculationrules]",".nspp-upload"]) assert.equal(await page.locator(selector).count(),0,selector);
+  for(const selector of [".hljs",".nspp-callout",".nspp-user-note",".nsmax-fold-toggle",".nsmax-hot-panel",".nsmax-recent-panel",".nsmax-my-replies","script[type=speculationrules]",".nspp-upload"]) assert.equal(await page.locator(selector).count(),0,selector);
   assert.equal(calls["/api/attendance"]||0,0);
   assert.equal(await page.evaluate(()=>window.__gmRequests.some(url=>url.includes("api.bimg.eu.org"))),false);
-  await page.getByAltText("开关验证图片").click();
-  assert.equal(await page.locator(".viewer-container").count(),0,"不拦截打开脚本图片查看器");
+  // 2026-11-09：「内容增强」不能整个关掉（存着的 enabled:false 不再生效），代码复制和看大图照常
+  assert.ok(await page.locator("[data-nsmax-copy]").count()>0,"代码复制一直开着");
+  assert.equal(await page.locator(".nspp-callout").count(),0,"Callout 已去掉");
   assert.deepEqual(errors,[]);
  } finally {await context.close();}
 });
@@ -229,22 +207,22 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
     panelB.getByRole("radiogroup",{name:"字体",exact:true}).getByRole("radio",{name:"系统字体",exact:true}).click()
    ]);
    await stored(a,"modern-theme","fontSize","xlarge");await stored(a,"modern-theme","font","system");
-   await panelB.getByRole("tab",{name:"浏览",exact:true}).click();
-   await panelB.locator('[data-feature="reading-content"][data-key="chineseTime"]').uncheck();
-   await stored(b,"reading-content","chineseTime",false);
+   await panelB.getByRole("tab",{name:"工具",exact:true}).click();
+   await panelB.locator('[data-feature="compose"][data-key="submitKey"]').uncheck();
+   await stored(b,"compose","submitKey",false);
    // A 面板仍显示旧的 sb.sb 字体；再次明确选它应覆盖 B 的该字段，其他字段不能回退。
    await panelA.getByRole("radiogroup",{name:"字体",exact:true}).getByRole("radio",{name:"sb.sb 同款",exact:true}).click();
    await stored(a,"modern-theme","font","sbsb");
-   let state=await read(a);assert.equal(state["modern-theme"].fontSize,"xlarge");assert.equal(state["reading-content"].chineseTime,false);
+   let state=await read(a);assert.equal(state["modern-theme"].fontSize,"xlarge");assert.equal(state["compose"].submitKey,false);
    await Promise.all([a.waitForEvent("domcontentloaded"),panelA.getByRole("button",{name:"刷新应用设置",exact:true}).click()]);
-   await ready(a);state=await read(a);assert.equal(state["modern-theme"].fontSize,"xlarge");assert.equal(state["reading-content"].chineseTime,false,"无新编辑的刷新不会回写旧面板");
+   await ready(a);state=await read(a);assert.equal(state["modern-theme"].fontSize,"xlarge");assert.equal(state["compose"].submitKey,false,"无新编辑的刷新不会回写旧面板");
    // 导入和恢复默认属于用户明确的整份配置操作，仍可替换其他标签页先前保存的值。
    const imported={format:"nodeseek-plus-plus",schema:1,settings:{"modern-theme":{fontSize:"large",font:"system"}}};
    await panelB.locator('input[type=file]').setInputFiles({name:"settings.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(imported))});
-   await stored(b,"modern-theme","font","system");await stored(b,"reading-content","chineseTime",true);
+   await stored(b,"modern-theme","font","system");await stored(b,"compose","submitKey",true);
    assert.equal((await read(b))["modern-theme"].fontSize,"large");
    await panelB.getByRole("button",{name:"恢复默认",exact:true}).click();await stored(b,"modern-theme","font","sbsb");
-   assert.equal((await read(b))["reading-content"].chineseTime,true);
+   assert.equal((await read(b))["compose"].submitKey,true);
    assert.deepEqual(errors,[]);
   }finally{await context.close();await instance.close();}
  });
@@ -257,18 +235,18 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
   const b=await context.newPage();b.on("pageerror",error=>errors.push(error.message));await b.goto("https://www.nodeseek.com/");await Promise.all([ready(a),ready(b)]);
   const panelA=await settings(a),panelB=await settings(b);
   await a.evaluate(()=>{window.__userscriptsFailSettings=true;});
-  await panelA.getByRole("tab",{name:"浏览",exact:true}).click();
-  await panelA.locator('[data-feature="reading-content"][data-key="chineseTime"]').uncheck();
+  await panelA.getByRole("tab",{name:"工具",exact:true}).click();
+  await panelA.locator('[data-feature="compose"][data-key="submitKey"]').uncheck();
   await panelA.getByRole("button",{name:"重试保存并刷新",exact:true}).waitFor();
-  const copyCode=panelA.locator('[data-feature="reading-content"][data-key="copyCode"]');
-  await copyCode.uncheck();await copyCode.check();await copyCode.uncheck();
+  const shortcuts=panelA.locator('[data-feature="compose"][data-key="shortcuts"]');
+  await shortcuts.uncheck();await shortcuts.check();await shortcuts.uncheck();
   await panelA.getByRole("button",{name:"重试保存并刷新",exact:true}).waitFor();
   await panelB.getByRole("radiogroup",{name:"列表标题字号",exact:true}).getByRole("radio",{name:"特大",exact:true}).click();
   await b.waitForFunction(key=>JSON.parse(localStorage.getItem("__gm__:"+key))?.["modern-theme"]?.fontSize==="xlarge",KEY);
   await a.evaluate(()=>{window.__userscriptsFailSettings=false;});
   await Promise.all([a.waitForEvent("domcontentloaded"),panelA.getByRole("button",{name:"重试保存并刷新",exact:true}).click()]);await ready(a);
   const state=await a.evaluate(key=>JSON.parse(localStorage.getItem("__gm__:"+key)),KEY);
-  assert.equal(state["reading-content"].chineseTime,false);assert.equal(state["reading-content"].copyCode,false,"失败后继续修改的字段和最后一次明确选择也会重放");assert.equal(state["modern-theme"].fontSize,"xlarge","不能用失败标签页的整份内存快照覆盖另一页的字号");
+  assert.equal(state["compose"].submitKey,false);assert.equal(state["compose"].shortcuts,false,"失败后继续修改的字段和最后一次明确选择也会重放");assert.equal(state["modern-theme"].fontSize,"xlarge","不能用失败标签页的整份内存快照覆盖另一页的字号");
   assert.deepEqual(errors,[]);
  }finally{await context.close();await instance.close();}
 });

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.33
+// @version      1.9.35
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -905,7 +905,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.33";
+	var NSMAX_VERSION = "1.9.35";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -2156,7 +2156,7 @@ var nsmaxRedirecting = false;
 		}
 		return svg;
 	}
-	var settings_sb_default = ":host{all:initial;color-scheme:light;\n--s-panel:var(--panel,#fff);--s-panel-alt:var(--panel-alt,#fafbfc);--s-panel-hover:var(--panel-hover,#f2f4f7);\n--s-line:var(--line,#e0e2e8);--s-line-soft:var(--line-soft,#eef0f3);--s-line-strong:var(--line-strong,#c7cad5);\n--s-text:var(--text,#1c1c1e);--s-text-strong:var(--text-strong,#1c1c1e);--s-muted:var(--text-muted,#555a6a);--s-subtle:var(--text-subtle,#6b6f7e);\n--s-brand:var(--brand,#33408f);--s-link:var(--link,#2f4fd0);--s-link-hover:var(--link-hover,#2440a8);\n--s-action:var(--action,#1c1c1e);--s-action-hover:var(--action-hover,#2c2c34);--s-action-text:var(--action-text,#fff);--s-action-border:var(--action-border,#1c1c1e);\n--s-field-focus:var(--field-focus,#e0a800);--s-field-ring:var(--field-ring,rgb(255 208 47/.18));\n--s-warning-soft:var(--warning-soft,#fff4c4);--s-warning-text:var(--warning-soft-text,#746019);\n--s-inverse:var(--inverse,#1c1c1e);--s-inverse-text:var(--inverse-text,#fff);--s-danger-fill:var(--danger-fill,#cf2b2b);--s-on-danger:var(--on-danger-fill,#fff);\n--s-backdrop:var(--backdrop,rgb(5 0 56/.42));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(5 0 56/.12));\n--s-r:var(--r,12px);--s-r-input:var(--r-input,8px);--s-r-pill:var(--r-pill,9999px);--s-r-sm:var(--r-sm,6px);--s-r-scale:var(--r-scale,1);\n--s-font:var(--font-sans,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Hiragino Sans GB\",\"Microsoft YaHei\",sans-serif);\n--s-mono:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);\n--s-ease:var(--ease-out,cubic-bezier(.23,1,.32,1))}\n:host([data-dark]){color-scheme:dark;\n--s-panel:var(--panel,#14151c);--s-panel-alt:var(--panel-alt,#1a1b24);--s-panel-hover:var(--panel-hover,#20222c);\n--s-line:var(--line,#2a2c38);--s-line-soft:var(--line-soft,#20222c);--s-line-strong:var(--line-strong,#3a3d4c);\n--s-text:var(--text,#e7e8ef);--s-text-strong:var(--text-strong,#f2f3f8);--s-muted:var(--text-muted,#a8abbb);--s-subtle:var(--text-subtle,#8b8fa1);\n--s-brand:var(--brand,#9aa6e8);--s-link:var(--link,#9aa6e8);--s-link-hover:var(--link-hover,#bcc4f0);\n--s-action:var(--action,#eef0f6);--s-action-hover:var(--action-hover,#fff);--s-action-text:var(--action-text,#14151c);--s-action-border:var(--action-border,#eef0f6);\n--s-field-focus:var(--field-focus,#ffd02f);--s-field-ring:var(--field-ring,rgb(255 208 47/.10));\n--s-warning-soft:var(--warning-soft,#2e2717);--s-warning-text:var(--warning-soft-text,#ffd977);\n--s-inverse:var(--inverse,#e7e8ef);--s-inverse-text:var(--inverse-text,#0d0e14);\n--s-backdrop:var(--backdrop,rgb(3 2 12/.66));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(0 0 0/.62))}\n*,*::before,*::after{box-sizing:border-box;letter-spacing:0}\n[hidden]{display:none!important}\n.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}\n:focus-visible{outline:2px solid var(--s-brand);outline-offset:2px}\nbutton{font:inherit;color:inherit;cursor:pointer}\nbutton:disabled{opacity:.6;cursor:default}\n/* 弹窗：sb.sb .modal-panel——细线框、卡片圆角、面板底、中号阴影；遮罩 --backdrop，不模糊；出现时 0.97 → 1 */\ndialog{position:fixed;inset:0;width:min(720px,calc(100vw - 32px));height:min(720px,calc(100dvh - 48px));max-width:none;max-height:none;margin:auto;padding:0;border:1px solid var(--s-line);border-radius:var(--s-r);background:var(--s-panel);color:var(--s-text);box-shadow:var(--s-shadow);font:14px/1.6 var(--s-font);overflow:hidden}\ndialog[open]{display:flex;flex-direction:column;animation:nspp-panel-in 180ms var(--s-ease)}\ndialog::backdrop{background:var(--s-backdrop)}\n@keyframes nspp-panel-in{from{opacity:0;transform:scale(.97)}}\nform{display:flex;flex:1;flex-direction:column;min-height:0;margin:0}\n/* 标题栏：sb.sb .modal-head——12px 16px、line-soft 细线；站点标志 + 名称 + 版本，右侧「检查更新」文字按钮和关闭 */\n.head{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--s-line-soft)}\n.brand{display:flex;align-items:center;gap:8px;min-width:0;margin-right:auto}\n.mark{flex:none;width:24px;height:24px;border-radius:calc(24px * 14 / 64 * var(--s-r-scale));background:var(--nsmax-logo-icon,none) center/100% 100% no-repeat}\n:host([data-dark]) .mark{filter:invert(1)}\nh2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-height:1.4;white-space:nowrap}\n.version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11.5px/20px var(--s-mono)}\n.link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap}\n.link:hover{text-decoration:underline}\n.close{display:grid;place-items:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle)}\n.close:hover{background:var(--s-panel-hover);color:var(--s-text)}\n.close svg{display:block;width:16px;height:16px}\n/* 分页：sb.sb .tab-bar / .tab——12px 4px、14px 弱化字，当前页正文色 500 + 底部 2px 墨色线；右侧搜索框 */\n.tabs-row{display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--s-line)}\n.tab-bar{display:flex;flex:1;align-items:center;gap:14px;min-width:0;overflow-x:auto;scrollbar-width:none}\n.tab-bar::-webkit-scrollbar{display:none}\n.tab{position:relative;flex:none;padding:12px 4px;border:0;border-radius:0;background:none;color:var(--s-muted);font-size:14px;line-height:1.6;white-space:nowrap}\n.tab:hover{color:var(--s-text)}\n.tab[aria-selected=true]{color:var(--s-text);font-weight:500}\n.tab[aria-selected=true]::after{content:\"\";position:absolute;right:0;bottom:0;left:0;height:2px;border-radius:calc(1px * var(--s-r-scale));background:var(--s-action)}\n.tab:focus-visible{outline-offset:-2px}\n/* 存储不可用的提示：sb.sb 警示色浅底 */\n.status{margin:0;padding:8px 16px;border-bottom:1px solid var(--s-line-soft);background:var(--s-warning-soft);color:var(--s-warning-text);font-size:12.5px}\n.status:empty{display:none}\n/* 内容区：每个模块一段，段与段之间 line-soft 细线；搜索时按分页加小标题 */\n.body{flex:1;min-height:0;padding:0 20px 8px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--s-line-strong) transparent}\n.page-title{margin:18px 0 0;color:var(--s-subtle);font-size:12.5px;font-weight:500;line-height:1.6}\n.module{padding:18px 0;border-top:1px solid var(--s-line-soft)}\n.page>.module:first-child,.page-title+.module{border-top:0}\n.module-head{display:flex;flex-direction:column;gap:2px}\n.module-title{margin:0;color:var(--s-text-strong);font-size:14px;font-weight:600;line-height:1.5}\n/* 模块说明：sb.sb .settings-section-lead——12.5px 弱化字、行高 1.7 */\n.lead{margin:0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.module[data-master] .lead,.module[data-master] .module-fields{padding-left:21px}\n.module-fields{display:grid;gap:14px;margin-top:12px}\n.module[data-off] .module-fields{opacity:.5}\n/* 勾选：sb.sb .check——15px 勾选框（品牌色）+ 13.5px 文字，间距 6px */\n.check{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;color:var(--s-text);font-size:13.5px;line-height:1.6;cursor:pointer}\n.check small{margin-left:2px;color:var(--s-subtle);font-size:12.5px}\n.module-toggle{gap:6px}\n.module-toggle .module-title{cursor:pointer}\ninput[type=checkbox]{flex:none;width:15px;height:15px;margin:0;accent-color:var(--s-brand);cursor:pointer}\n/* 字段：sb.sb .grid——标签 13.5px/500，下面 12.5px 弱化说明，最宽 520px */\n.grid{display:block;max-width:520px}\n.label{display:block;margin-bottom:5px;color:var(--s-text);font-size:13.5px;font-weight:500;line-height:1.6}\n.label small{display:block;margin-top:2px;color:var(--s-muted);font-size:12.5px;font-weight:400;line-height:1.6}\n/* 输入框：sb.sb——7px 10px、深一级细线、输入框圆角、面板底、14px；聚焦黄色描边 + 3px 浅黄光圈 */\ninput:not([type=checkbox]):not([type=file]),select,textarea{display:block;width:100%;min-width:0;margin:0;padding:7px 10px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-input);background:var(--s-panel);color:var(--s-text);font:inherit;font-size:14px;line-height:1.5;box-shadow:none}\ninput::placeholder,textarea::placeholder{color:var(--s-muted)}\ntextarea{min-height:96px;line-height:1.7;resize:vertical}\nselect{appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--s-muted) 50%),linear-gradient(135deg,var(--s-muted) 50%,transparent 50%);background-position:right 16px top 55%,right 11px top 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;cursor:pointer}\ninput:not([type=checkbox]):focus,select:focus,textarea:focus{border-color:var(--s-field-focus);outline:3px solid var(--s-field-ring);outline-offset:0}\n/* 搜索框、数字框：写在通用输入框规则后面、权重相同，覆盖它的整行宽度 */\n.tabs-row input.search{flex:none;width:200px;margin:8px 0;padding:5px 10px;font-size:13px}\n.grid input[type=number]{width:160px}\n/* 分段选择：sb.sb .tree-toggle——4px 11px 小胶囊、细线框、12px/500 弱化字；选中墨色实底 */\n.segments{display:flex;flex-wrap:wrap;gap:6px}\n.segments button{padding:4px 11px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12px;font-weight:500;line-height:1.6;white-space:nowrap}\n.segments button:hover{border-color:var(--s-line-strong);background:var(--s-panel-hover);color:var(--s-text)}\n.segments button[aria-checked=true],.segments button[aria-checked=true]:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.segment-note{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.6}\n.empty{margin:28px 0;color:var(--s-muted);font-size:13.5px;text-align:center}\n/* 搜索命中的字：浅黄底、文字原色，不加粗不改字距，避免整行重排 */\nmark{padding:0;border-radius:2px;background:var(--s-warning-soft);color:inherit;box-shadow:0 0 0 1px var(--s-warning-soft)}\n/* 底部：sb.sb .settings-actions——line-soft 细线；左边细线框小胶囊工具按钮，右边墨色实底主按钮 */\n.foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--s-line-soft)}\n.foot-tools{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto}\nbutton.alt{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500;line-height:1.6;white-space:nowrap}\nbutton.alt:hover{background:var(--s-panel-hover)}\nbutton.primary{padding:7px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:14px;font-weight:500;line-height:1.5;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}\nbutton.primary:hover{border-color:var(--s-action-hover);background:var(--s-action-hover)}\nbutton:not(:disabled):active{transform:translateY(1px)}\n/* 关于：标题 + 版本、说明、链接、功能列表、检查更新 */\n.about-content{padding:18px 0;font-size:13.5px;line-height:1.7}\n.about-heading{display:flex;align-items:baseline;gap:8px}\n.about-heading>strong{color:var(--s-text-strong);font-size:15px;font-weight:600}\n.about-version{color:var(--s-muted);font:400 12px var(--s-mono)}\n.about-content>p{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.about-content>p.about-timing[data-late]{color:var(--s-warning-text)}\n.about-content>p.about-preload[data-miss]{color:var(--s-warning-text)}\n.about-links{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}\n.about-links a{padding:3px 12px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12.5px;text-decoration:none}\n.about-links a:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.about-features{margin:0 0 16px;padding-left:18px;color:var(--s-muted);font-size:12.5px;line-height:1.75}\n.about-content>button{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500}\n.about-content>button:hover{background:var(--s-panel-hover)}\n/* 提示：sb.sb .toast——底部居中、反色底、卡片圆角、13.5px；出错用危险色实底 */\n.toast{position:fixed;inset:auto auto 24px 50%;z-index:2147483646;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);margin:0;padding:9px 10px 9px 16px;border:0;border-radius:var(--s-r);background:var(--s-inverse);color:var(--s-inverse-text);font:13.5px/1.5 var(--s-font);box-shadow:var(--s-shadow);transform:translateX(-50%)}\n.toast[data-type=error]{background:var(--s-danger-fill);color:var(--s-on-danger)}\n.toast-icon{display:flex;flex:none}\n.toast-icon svg{display:block;width:16px;height:16px}\n.toast-close{display:grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:inherit;opacity:.7}\n.toast-close:hover{opacity:1}\n.toast-close svg{display:block;width:13px;height:13px}\n@media(max-width:640px){\ndialog{width:calc(100vw - 16px);height:calc(100dvh - 24px)}\n.head{gap:10px;padding:10px 12px}\n.version{display:none}\n.tabs-row{flex-wrap:wrap;gap:0;padding:0 12px}\n.tabs-row input.search{order:-1;width:100%;margin:10px 0 2px}\n.tab-bar{flex:1 1 100%}\n.body{padding:0 14px 8px}\n.foot{flex-wrap:wrap;padding:10px 12px}\n.foot-tools{gap:6px}\nbutton.primary{margin-left:auto}\n}\n@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}\n@media(pointer:coarse) and (max-width:700px),(pointer:coarse) and (max-width:960px) and (max-height:600px){\ndialog{inset:auto 0 auto;top:var(--nsmax-overlay-top,0px);width:100%;height:var(--nsmax-overlay-height,100dvh);max-width:none;max-height:var(--nsmax-overlay-height,100dvh);margin:0;border:0;border-radius:0;animation:none!important}\ndialog:focus{outline:none}\n.head{min-height:56px;padding:6px max(12px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));gap:8px}\n.close{width:44px;height:44px;flex:0 0 44px}.head>.link{min-height:44px}\n.tabs-row{padding:0 12px;flex-wrap:wrap;gap:0}.tab-bar{gap:12px}.tab{min-height:44px;padding:10px 4px}\n.tabs-row input.search{width:100%;min-height:44px;margin:6px 0;font-size:16px}\n.body{padding:0 16px 8px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}\n.module{padding:18px 0}.module-title{font-size:15px}.lead{font-size:13px}.check{min-height:44px;align-items:center;gap:10px;font-size:14px;line-height:1.6}.check small{margin-left:4px}\ninput[type=checkbox]{width:20px;height:20px}.grid input[type=number]{width:100%;max-width:220px}\ninput:not([type=checkbox]),select,textarea{font-size:16px;min-height:44px}.label{font-size:14px}.segments button{min-height:44px;min-width:44px;padding:8px 12px;font-size:14px}.segments{gap:8px}.segment-note{font-size:13px}\n.foot{flex:none;gap:8px;padding:10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));flex-wrap:wrap;background:var(--s-panel)}\n.foot-tools{display:var(--nsmax-overlay-tools,flex);width:100%;margin:0;gap:6px;flex-wrap:nowrap}.foot-tools>button{flex:1 1 0;min-width:0;min-height:44px;padding:6px 3px;font-size:12.5px}\nbutton.primary{width:100%;min-height:48px;margin:0;font-size:16px}\n.toast{bottom:max(16px,env(safe-area-inset-bottom))}\n.head{min-height:52px;height:52px;padding-top:4px;padding-bottom:4px}\n.tabs-row input.search{margin:4px 0;min-height:40px;height:40px}\n.tab-bar{gap:14px}.tab{font-size:14px;padding:10px 1px}\n.body{padding:0 12px 8px}.module{padding:16px 0}.module-title{font-size:14.5px}.lead{font-size:12.5px}\n.segments{gap:6px}.segments button{position:relative;isolation:isolate;min-height:44px;padding:8px 10px;border:0!important;background:transparent!important;color:var(--s-muted)!important;font-size:13px}\n.segments button::before{content:\"\";position:absolute;inset:6px 0;z-index:-1;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel)}\n.segments button[aria-checked=true]{color:var(--s-action-text)!important}\n.segments button[aria-checked=true]::before{border-color:var(--s-action-border);background:var(--s-action)}\n.foot{gap:4px;padding-top:6px;padding-bottom:max(6px,env(safe-area-inset-bottom))}\n.foot-tools{gap:4px}.foot-tools>button{border:0;background:transparent;font-size:12px;padding:6px 2px}\nbutton.primary{min-height:44px;height:44px;font-size:14px}\n/* 2026-11-07 手机重做：上下固定的部分以前占了屏幕 38%（标题 52 + 搜索 48 + 页签 44 + 底栏 108），改成 48 + 44 + 44 + 82，留更多地方给设置本身 */\n.head{min-height:48px;height:48px}\n.tabs-row input.search{min-height:36px;height:36px;margin:4px 0;padding:0 12px;border-radius:var(--s-r-pill)}\n.tab-bar{justify-content:space-between;gap:0}.tab{flex:none}\n.foot{gap:2px;padding-top:2px}\n.foot-tools>button{min-height:36px;height:36px;padding:0 2px}\nbutton.primary{min-height:40px;height:40px}\n/* 勾选项：两行的说明时方框对齐第一行，不再挂在两行中间 */\n.check{align-items:flex-start;padding-block:11px;min-height:0}.check input[type=checkbox]{margin-top:1px}\ntextarea{resize:none}\n.head>.link{color:var(--s-muted)}\n}\n";
+	var settings_sb_default = ":host{all:initial;color-scheme:light;\n--s-panel:var(--panel,#fff);--s-panel-alt:var(--panel-alt,#fafbfc);--s-panel-hover:var(--panel-hover,#f2f4f7);\n--s-line:var(--line,#e0e2e8);--s-line-soft:var(--line-soft,#eef0f3);--s-line-strong:var(--line-strong,#c7cad5);\n--s-text:var(--text,#1c1c1e);--s-text-strong:var(--text-strong,#1c1c1e);--s-muted:var(--text-muted,#555a6a);--s-subtle:var(--text-subtle,#6b6f7e);\n--s-brand:var(--brand,#33408f);--s-link:var(--link,#2f4fd0);--s-link-hover:var(--link-hover,#2440a8);\n--s-action:var(--action,#1c1c1e);--s-action-hover:var(--action-hover,#2c2c34);--s-action-text:var(--action-text,#fff);--s-action-border:var(--action-border,#1c1c1e);\n--s-field-focus:var(--field-focus,#e0a800);--s-field-ring:var(--field-ring,rgb(255 208 47/.18));\n--s-warning-soft:var(--warning-soft,#fff4c4);--s-warning-text:var(--warning-soft-text,#746019);\n--s-inverse:var(--inverse,#1c1c1e);--s-inverse-text:var(--inverse-text,#fff);--s-danger-fill:var(--danger-fill,#cf2b2b);--s-on-danger:var(--on-danger-fill,#fff);\n--s-backdrop:var(--backdrop,rgb(5 0 56/.42));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(5 0 56/.12));\n--s-r:var(--r,12px);--s-r-input:var(--r-input,8px);--s-r-pill:var(--r-pill,9999px);--s-r-sm:var(--r-sm,6px);--s-r-scale:var(--r-scale,1);\n--s-font:var(--font-sans,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Hiragino Sans GB\",\"Microsoft YaHei\",sans-serif);\n--s-mono:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);\n--s-ease:var(--ease-out,cubic-bezier(.23,1,.32,1))}\n:host([data-dark]){color-scheme:dark;\n--s-panel:var(--panel,#14151c);--s-panel-alt:var(--panel-alt,#1a1b24);--s-panel-hover:var(--panel-hover,#20222c);\n--s-line:var(--line,#2a2c38);--s-line-soft:var(--line-soft,#20222c);--s-line-strong:var(--line-strong,#3a3d4c);\n--s-text:var(--text,#e7e8ef);--s-text-strong:var(--text-strong,#f2f3f8);--s-muted:var(--text-muted,#a8abbb);--s-subtle:var(--text-subtle,#8b8fa1);\n--s-brand:var(--brand,#9aa6e8);--s-link:var(--link,#9aa6e8);--s-link-hover:var(--link-hover,#bcc4f0);\n--s-action:var(--action,#eef0f6);--s-action-hover:var(--action-hover,#fff);--s-action-text:var(--action-text,#14151c);--s-action-border:var(--action-border,#eef0f6);\n--s-field-focus:var(--field-focus,#ffd02f);--s-field-ring:var(--field-ring,rgb(255 208 47/.10));\n--s-warning-soft:var(--warning-soft,#2e2717);--s-warning-text:var(--warning-soft-text,#ffd977);\n--s-inverse:var(--inverse,#e7e8ef);--s-inverse-text:var(--inverse-text,#0d0e14);\n--s-backdrop:var(--backdrop,rgb(3 2 12/.66));--s-shadow:var(--shadow-medium,0 16px 48px -8px rgb(0 0 0/.62))}\n*,*::before,*::after{box-sizing:border-box;letter-spacing:0}\n[hidden]{display:none!important}\n.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}\n:focus-visible{outline:2px solid var(--s-brand);outline-offset:2px}\nbutton{font:inherit;color:inherit;cursor:pointer}\nbutton:disabled{opacity:.6;cursor:default}\n/* 弹窗：sb.sb .modal-panel——细线框、卡片圆角、面板底、中号阴影；遮罩 --backdrop，不模糊；出现时 0.97 → 1 */\ndialog{position:fixed;inset:0;width:min(720px,calc(100vw - 32px));height:min(720px,calc(100dvh - 48px));max-width:none;max-height:none;margin:auto;padding:0;border:1px solid var(--s-line);border-radius:var(--s-r);background:var(--s-panel);color:var(--s-text);box-shadow:var(--s-shadow);font:14px/1.6 var(--s-font);overflow:hidden}\ndialog[open]{display:flex;flex-direction:column;animation:nspp-panel-in 180ms var(--s-ease)}\ndialog::backdrop{background:var(--s-backdrop)}\n@keyframes nspp-panel-in{from{opacity:0;transform:scale(.97)}}\nform{display:flex;flex:1;flex-direction:column;min-height:0;margin:0}\n/* 标题栏：sb.sb .modal-head——12px 16px、line-soft 细线；站点标志 + 名称 + 版本，右侧「检查更新」文字按钮和关闭 */\n.head{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--s-line-soft)}\n.brand{display:flex;align-items:center;gap:8px;min-width:0;margin-right:auto}\n.mark{flex:none;width:24px;height:24px;border-radius:calc(24px * 14 / 64 * var(--s-r-scale));background:var(--nsmax-logo-icon,none) center/100% 100% no-repeat}\n:host([data-dark]) .mark{filter:invert(1)}\nh2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-height:1.4;white-space:nowrap}\n.version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11.5px/20px var(--s-mono)}\n.link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap}\n.link:hover{text-decoration:underline}\n.close{display:grid;place-items:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle)}\n.close:hover{background:var(--s-panel-hover);color:var(--s-text)}\n.close svg{display:block;width:16px;height:16px}\n/* 分页：sb.sb .tab-bar / .tab——12px 4px、14px 弱化字，当前页正文色 500 + 底部 2px 墨色线；右侧搜索框 */\n.tabs-row{display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--s-line)}\n.tab-bar{display:flex;flex:1;align-items:center;gap:14px;min-width:0;overflow-x:auto;scrollbar-width:none}\n.tab-bar::-webkit-scrollbar{display:none}\n.tab{position:relative;flex:none;padding:12px 4px;border:0;border-radius:0;background:none;color:var(--s-muted);font-size:14px;line-height:1.6;white-space:nowrap}\n.tab:hover{color:var(--s-text)}\n.tab[aria-selected=true]{color:var(--s-text);font-weight:500}\n.tab[aria-selected=true]::after{content:\"\";position:absolute;right:0;bottom:0;left:0;height:2px;border-radius:calc(1px * var(--s-r-scale));background:var(--s-action)}\n.tab:focus-visible{outline-offset:-2px}\n/* 存储不可用的提示：sb.sb 警示色浅底 */\n.status{margin:0;padding:8px 16px;border-bottom:1px solid var(--s-line-soft);background:var(--s-warning-soft);color:var(--s-warning-text);font-size:12.5px}\n.status:empty{display:none}\n/* 内容区：每个模块一段，段与段之间 line-soft 细线；搜索时按分页加小标题 */\n.body{flex:1;min-height:0;padding:0 20px 8px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--s-line-strong) transparent}\n.page-title{margin:18px 0 0;color:var(--s-subtle);font-size:12.5px;font-weight:500;line-height:1.6}\n.module{padding:18px 0;border-top:1px solid var(--s-line-soft)}\n.page>.module:first-child,.page-title+.module{border-top:0}\n.module-head{display:flex;flex-direction:column;gap:2px}\n.module-title{margin:0;color:var(--s-text-strong);font-size:14px;font-weight:600;line-height:1.5}\n/* 模块说明：sb.sb .settings-section-lead——12.5px 弱化字、行高 1.7 */\n.lead{margin:0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.module[data-master] .lead,.module[data-master] .module-fields,.module[data-master] .pending{padding-left:21px}\n/* 改过、要刷新才生效的模块：标题下面一行品牌色小字 */\n.pending{margin:2px 0 0;color:var(--s-brand);font-size:12px;font-weight:500;line-height:1.6}\n.module-fields{display:grid;gap:14px;margin-top:12px}\n.module[data-off] .module-fields{opacity:.5}\n/* 勾选：sb.sb .check——15px 勾选框（品牌色）+ 13.5px 文字，间距 6px */\n.check{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;color:var(--s-text);font-size:13.5px;line-height:1.6;cursor:pointer}\n.check small{margin-left:2px;color:var(--s-subtle);font-size:12.5px}\n.module-toggle{gap:6px}\n.module-toggle .module-title{cursor:pointer}\ninput[type=checkbox]{flex:none;width:15px;height:15px;margin:0;accent-color:var(--s-brand);cursor:pointer}\n/* 字段：sb.sb .grid——标签 13.5px/500，下面 12.5px 弱化说明，最宽 520px */\n.grid{display:block;max-width:520px}\n.label{display:block;margin-bottom:5px;color:var(--s-text);font-size:13.5px;font-weight:500;line-height:1.6}\n.label small{display:block;margin-top:2px;color:var(--s-muted);font-size:12.5px;font-weight:400;line-height:1.6}\n/* 输入框：sb.sb——7px 10px、深一级细线、输入框圆角、面板底、14px；聚焦黄色描边 + 3px 浅黄光圈 */\ninput:not([type=checkbox]):not([type=file]),select,textarea{display:block;width:100%;min-width:0;margin:0;padding:7px 10px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-input);background:var(--s-panel);color:var(--s-text);font:inherit;font-size:14px;line-height:1.5;box-shadow:none}\ninput::placeholder,textarea::placeholder{color:var(--s-muted)}\ntextarea{min-height:96px;line-height:1.7;resize:vertical}\nselect{appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--s-muted) 50%),linear-gradient(135deg,var(--s-muted) 50%,transparent 50%);background-position:right 16px top 55%,right 11px top 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;cursor:pointer}\ninput:not([type=checkbox]):focus,select:focus,textarea:focus{border-color:var(--s-field-focus);outline:3px solid var(--s-field-ring);outline-offset:0}\n/* 搜索框、数字框：写在通用输入框规则后面、权重相同，覆盖它的整行宽度 */\n.tabs-row input.search{flex:none;width:200px;margin:8px 0;padding:5px 10px;font-size:13px}\n.grid input[type=number]{width:160px}\n/* 分段选择：sb.sb .tree-toggle——4px 11px 小胶囊、细线框、12px/500 弱化字；选中墨色实底 */\n.segments{display:flex;flex-wrap:wrap;gap:6px}\n.segments button{padding:4px 11px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12px;font-weight:500;line-height:1.6;white-space:nowrap}\n.segments button:hover{border-color:var(--s-line-strong);background:var(--s-panel-hover);color:var(--s-text)}\n.segments button[aria-checked=true],.segments button[aria-checked=true]:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.segment-note{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.6}\n.empty{margin:28px 0;color:var(--s-muted);font-size:13.5px;text-align:center}\n/* 搜索命中的字：浅黄底、文字原色，不加粗不改字距，避免整行重排 */\nmark{padding:0;border-radius:2px;background:var(--s-warning-soft);color:inherit;box-shadow:0 0 0 1px var(--s-warning-soft)}\n/* 底部：sb.sb .settings-actions——line-soft 细线；左边细线框小胶囊工具按钮，右边墨色实底主按钮 */\n.foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--s-line-soft)}\n.foot-tools{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto}\nbutton.alt{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500;line-height:1.6;white-space:nowrap}\nbutton.alt:hover{background:var(--s-panel-hover)}\nbutton.primary{padding:7px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:14px;font-weight:500;line-height:1.5;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}\nbutton.primary:hover{border-color:var(--s-action-hover);background:var(--s-action-hover)}\nbutton:not(:disabled):active{transform:translateY(1px)}\n/* 关于：标题 + 版本、说明、链接、功能列表、检查更新 */\n.about-content{padding:18px 0;font-size:13.5px;line-height:1.7}\n.about-heading{display:flex;align-items:baseline;gap:8px}\n.about-heading>strong{color:var(--s-text-strong);font-size:15px;font-weight:600}\n.about-version{color:var(--s-muted);font:400 12px var(--s-mono)}\n.about-content>p{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.7}\n.about-content>p.about-timing[data-late]{color:var(--s-warning-text)}\n.about-content>p.about-preload[data-miss]{color:var(--s-warning-text)}\n.about-links{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}\n.about-links a{padding:3px 12px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12.5px;text-decoration:none}\n.about-links a:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}\n.about-features{margin:0 0 16px;padding-left:18px;color:var(--s-muted);font-size:12.5px;line-height:1.75}\n.about-content>button{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500}\n.about-content>button:hover{background:var(--s-panel-hover)}\n/* 提示：sb.sb .toast——底部居中、反色底、卡片圆角、13.5px；出错用危险色实底 */\n.toast{position:fixed;inset:auto auto 24px 50%;z-index:2147483646;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);margin:0;padding:9px 10px 9px 16px;border:0;border-radius:var(--s-r);background:var(--s-inverse);color:var(--s-inverse-text);font:13.5px/1.5 var(--s-font);box-shadow:var(--s-shadow);transform:translateX(-50%)}\n.toast[data-type=error]{background:var(--s-danger-fill);color:var(--s-on-danger)}\n.toast-icon{display:flex;flex:none}\n.toast-icon svg{display:block;width:16px;height:16px}\n.toast-close{display:grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:inherit;opacity:.7}\n.toast-close:hover{opacity:1}\n.toast-close svg{display:block;width:13px;height:13px}\n@media(max-width:640px){\ndialog{width:calc(100vw - 16px);height:calc(100dvh - 24px)}\n.head{gap:10px;padding:10px 12px}\n.version{display:none}\n.tabs-row{flex-wrap:wrap;gap:0;padding:0 12px}\n.tabs-row input.search{order:-1;width:100%;margin:10px 0 2px}\n.tab-bar{flex:1 1 100%}\n.body{padding:0 14px 8px}\n.foot{flex-wrap:wrap;padding:10px 12px}\n.foot-tools{gap:6px}\nbutton.primary{margin-left:auto}\n}\n@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}\n@media(pointer:coarse) and (max-width:700px),(pointer:coarse) and (max-width:960px) and (max-height:600px){\ndialog{inset:auto 0 auto;top:var(--nsmax-overlay-top,0px);width:100%;height:var(--nsmax-overlay-height,100dvh);max-width:none;max-height:var(--nsmax-overlay-height,100dvh);margin:0;border:0;border-radius:0;animation:none!important}\ndialog:focus{outline:none}\n.head{min-height:56px;padding:6px max(12px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));gap:8px}\n.close{width:44px;height:44px;flex:0 0 44px}.head>.link{min-height:44px}\n.tabs-row{padding:0 12px;flex-wrap:wrap;gap:0}.tab-bar{gap:12px}.tab{min-height:44px;padding:10px 4px}\n.tabs-row input.search{width:100%;min-height:44px;margin:6px 0;font-size:16px}\n.body{padding:0 16px 8px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}\n.module{padding:18px 0}.module-title{font-size:15px}.lead{font-size:13px}.check{min-height:44px;align-items:center;gap:10px;font-size:14px;line-height:1.6}.check small{margin-left:4px}\ninput[type=checkbox]{width:20px;height:20px}.grid input[type=number]{width:100%;max-width:220px}\ninput:not([type=checkbox]),select,textarea{font-size:16px;min-height:44px}.label{font-size:14px}.segments button{min-height:44px;min-width:44px;padding:8px 12px;font-size:14px}.segments{gap:8px}.segment-note{font-size:13px}\n.foot{flex:none;gap:8px;padding:10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));flex-wrap:wrap;background:var(--s-panel)}\n.foot-tools{display:var(--nsmax-overlay-tools,flex);width:100%;margin:0;gap:6px;flex-wrap:nowrap}.foot-tools>button{flex:1 1 0;min-width:0;min-height:44px;padding:6px 3px;font-size:12.5px}\nbutton.primary{width:100%;min-height:48px;margin:0;font-size:16px}\n.toast{bottom:max(16px,env(safe-area-inset-bottom))}\n.head{min-height:52px;height:52px;padding-top:4px;padding-bottom:4px}\n.tabs-row input.search{margin:4px 0;min-height:40px;height:40px}\n.tab-bar{gap:14px}.tab{font-size:14px;padding:10px 1px}\n.body{padding:0 12px 8px}.module{padding:16px 0}.module-title{font-size:14.5px}.lead{font-size:12.5px}\n.segments{gap:6px}.segments button{position:relative;isolation:isolate;min-height:44px;padding:8px 10px;border:0!important;background:transparent!important;color:var(--s-muted)!important;font-size:13px}\n.segments button::before{content:\"\";position:absolute;inset:6px 0;z-index:-1;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel)}\n.segments button[aria-checked=true]{color:var(--s-action-text)!important}\n.segments button[aria-checked=true]::before{border-color:var(--s-action-border);background:var(--s-action)}\n.foot{gap:4px;padding-top:6px;padding-bottom:max(6px,env(safe-area-inset-bottom))}\n.foot-tools{gap:4px}.foot-tools>button{border:0;background:transparent;font-size:12px;padding:6px 2px}\nbutton.primary{min-height:44px;height:44px;font-size:14px}\n/* 2026-11-07 手机重做：上下固定的部分以前占了屏幕 38%（标题 52 + 搜索 48 + 页签 44 + 底栏 108），改成 48 + 44 + 44 + 82，留更多地方给设置本身 */\n.head{min-height:48px;height:48px}\n.tabs-row input.search{min-height:36px;height:36px;margin:4px 0;padding:0 12px;border-radius:var(--s-r-pill)}\n.tab-bar{justify-content:space-between;gap:0}.tab{flex:none}\n.foot{gap:2px;padding-top:2px}\n.foot-tools>button{min-height:36px;height:36px;padding:0 2px}\nbutton.primary{min-height:40px;height:40px}\n/* 勾选项：两行的说明时方框对齐第一行，不再挂在两行中间 */\n.check{align-items:flex-start;padding-block:11px;min-height:0}.check input[type=checkbox]{margin-top:1px}\ntextarea{resize:none}\n.head>.link{color:var(--s-muted)}\n}\n";
 	var loading_default = "[aria-busy=true],.nspp-sweep-shine{-webkit-text-fill-color:currentColor;cursor:progress;background-image:linear-gradient(110deg,#0000 35%,#ffffff80 50%,#0000 65%);background-repeat:no-repeat;background-size:250% 100%;animation:1.8s linear infinite nspp-busy-feedback;opacity:1!important}@keyframes nspp-busy-feedback{0%{background-position:150% 0}to{background-position:-150% 0}}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:transparent;background-image:linear-gradient(110deg,currentColor 35%,#ffffff80 50%,currentColor 65%);-webkit-background-clip:text;background-clip:text}.nspp-action[aria-busy=true]>svg{transform-origin:50%;animation:.7s ease-in-out infinite nspp-attendance-working}@keyframes nspp-attendance-working{0%,to{transform:translateY(0)rotate(-8deg)}50%{transform:translateY(-3px)rotate(8deg)}}@media (prefers-reduced-motion:reduce){[aria-busy=true],.nspp-sweep-shine,.nspp-action[aria-busy=true]>svg{background-image:none;animation:none}.nspp-user-badges[aria-busy=true]{-webkit-text-fill-color:currentColor;background-image:none}}";
 	// 锁的记录（上次什么时候跑、谁在跑）放 localStorage（见 nsmaxLocalWrite）：每读一次未读数都要写两次，以前写油猴存储
 	async function withTabLock(name, intervalMs, task) {
@@ -2407,8 +2407,10 @@ var nsmaxRedirecting = false;
 		const summary = document.createElement("p");
 		summary.textContent = `NodeSeek / DeepFlood 论坛增强 · v${NSMAX_VERSION} · 界面按 sb.sb 1:1 重做（浅色 / 深色） · GPL-3.0-only`;
 		// 这一页打开时油猴是在页面画出来之前还是之后注入的（见 nsmaxLateInjection）
+		// 2026-11-09：「关于」只留版本、链接和检查更新；注入时机、预加载统计这些诊断只在真有问题时出现
 		const timing = document.createElement("p");
 		timing.className = "about-timing";
+		timing.hidden = !nsmaxLateInjection;
 		timing.toggleAttribute("data-late", nsmaxLateInjection);
 		timing.textContent = nsmaxLateInjection
 			? nsmaxManagerName === "Userscripts" ? "这一页脚本在页面画出来之后运行，Safari 可能先显示网站原样再应用主题。Userscripts 更新后请从扩展菜单确认脚本已启用，并重新加载论坛页面。" : "这一页打开时，脚本在页面画出来之后才运行（油猴注入得晚），所以会先闪一下站点原来的样子：按下面最后一条改一下油猴设置。"
@@ -2418,7 +2420,7 @@ var nsmaxRedirecting = false;
 		preload.className = "about-preload";
 		const recent = nsmaxPrefetchRecent();
 		const hits = recent.filter(Boolean).length;
-		preload.hidden = !recent.length;
+		preload.hidden = !(recent.length >= 3 && !hits);
 		preload.toggleAttribute("data-miss", recent.length >= 3 && !hits);
 		preload.textContent = hits || recent.length < 3
 			? `悬停预加载：最近点开的 ${recent.length} 个页面里，${hits} 个是鼠标停上去时就提前下载好的。`
@@ -2455,21 +2457,15 @@ var nsmaxRedirecting = false;
 				button.textContent = "检查更新";
 			}
 		});
+		// 脚本管理器的提示：Userscripts 一直给（怎么确认安装、更新）；油猴只在这一页注入晚了时给（怎么改设置才不闪）
 		const features = document.createElement("ul");
 		features.className = "about-features";
-		for (const text of [
-			"列表、帖子、个人空间、关注与粉丝、账簿、消息、设置和发帖页逐页对照 sb.sb：同一套颜色、字号、圆角、图标与悬停效果。",
-			"首屏优先显示当前页；评论可自动接上下一页，帖子列表默认不自动翻页；页码统一放在列表下方居中。",
-			"回复与发帖保留 Markdown、附件、表情、预览、快捷粘贴图片和楼中楼整理，编辑器支持拖动或键盘调整高度。",
-			"右侧栏提供今日热门、最近浏览和个人资料卡；鼠标停在头像或用户名上弹出资料卡，可直接关注或私信。",
-			"保留关键词与用户屏蔽（和站点黑名单连在一起）、黑名单通知过滤、外链直达、代码复制和用户备注；列表和帖子里标出自己回复过的楼层。",
-			"设置保存在脚本管理器的存储中，支持搜索、恢复默认、清空缓存、导入导出配置和检查更新。",
-			nsmaxManagerName === "Userscripts" ? "Safari Userscripts：打开安装链接后，在 Safari 扩展菜单中打开 Userscripts 并确认安装或更新，再刷新论坛页面。保持脚本默认注入方式即可。" : "打开页面时先闪一下站点原来的样子？油猴默认要先从后台取脚本，注入得晚。油猴管理面板 → 设置，「配置模式」选「高级」，把「Content Script API」改成「UserScripts API Dynamic」并保存：脚本在页面画出来之前运行，首屏直接是整理好的完整页面。"
-		]) {
+		const tip = nsmaxManagerName === "Userscripts" ? "Safari Userscripts：打开安装链接后，在 Safari 扩展菜单中打开 Userscripts 并确认安装或更新，再刷新论坛页面。保持脚本默认注入方式即可。" : nsmaxLateInjection ? "打开页面时先闪一下站点原来的样子？油猴默认要先从后台取脚本，注入得晚。油猴管理面板 → 设置，「配置模式」选「高级」，把「Content Script API」改成「UserScripts API Dynamic」并保存：脚本在页面画出来之前运行，首屏直接是整理好的完整页面。" : "";
+		if (tip) {
 			const item = document.createElement("li");
-			item.textContent = text;
+			item.textContent = tip;
 			features.append(item);
-		}
+		} else features.hidden = true;
 		content.append(heading, summary, timing, preload, links, features, button);
 		return content;
 	}
@@ -2481,44 +2477,68 @@ var nsmaxRedirecting = false;
 	// 设置面板（v1.8.0 按 sb.sb 重做）：.modal-panel 弹窗 + .tab-bar 分页 + .grid 表单 + .check 勾选 + .tree-toggle 分段按钮。
 	// 颜色、圆角、字体都取页面上的 sb.sb 变量（自定义属性会穿过 Shadow DOM 继承下来），深浅色跟着页面走。
 	// 每一项改动立即写入油猴存储；「刷新应用设置」等待保存完成后刷新页面，让模块按新设置运行。
-	var NSMAX_SETTINGS_TABS = [["appearance", "外观"], ["reading", "浏览"], ["people", "用户"], ["tools", "工具"], ["network", "网络"], ["about", "关于"]];
+	// 2026-11-09：「网络」页只有「请求节奏」一项，并进「工具」页最后
+	var NSMAX_SETTINGS_TABS = [["appearance", "外观"], ["reading", "浏览"], ["people", "用户"], ["tools", "工具"], ["about", "关于"]];
 	// 每个模块放在哪一页、显示的标题和说明、有没有总开关（master: false 表示一直开着、只给子选项）、显示哪些字段（按顺序）。
 	// linked：总开关同时控制的子开关（这些子开关不单独显示）。
 	// 不在这里的模块不进面板：主题骨架（sb-page-controls）、并入主题的「紧凑帖子状态」，以及对 sb.sb 布局已经没有作用的旧选项
 	// （信息密度、顶栏与侧栏去重：sb.sb 顶栏模式下侧栏不显示版块，两者都不起作用）。
 	var NSMAX_SETTINGS_LAYOUT = {
-		"modern-theme": { tab: "appearance", title: "主题样式", description: "全站按 sb.sb 重做（圆角模式）。这里调整列表标题字号、字体和深浅色；改动自动保存，刷新页面后应用。", master: false, fields: ["fontSize", "font", "colorMode"] },
+		"modern-theme": { tab: "appearance", title: "主题样式", description: "全站按 sb.sb 重做（圆角模式）。这里调整列表标题字号、字体和深浅色，改了马上生效。", master: false, fields: ["fontSize", "font", "colorMode"] },
 		"sidebar-nav": { tab: "appearance", title: "顶栏版块", description: "顶栏按 sb.sb 只放版块标签；下面列出的版块和入口不显示。", master: false, fields: ["hidden"] },
 		"hot-rankings": { tab: "appearance", title: "今日热门", description: "右侧栏的单行日榜，使用缓存，页面可见时按需刷新。", linked: ["sidebar"], fields: ["sidebarCount"] },
 		"sb-recent-visits": { tab: "appearance", title: "最近浏览", description: "侧栏或手机菜单列出最近打开过的 10 个帖子，只保存在本机。" },
 		"infinite-scroll": { tab: "reading", fields: ["comments", "posts"] },
-		"reading-content": { tab: "reading" },
+		"reading-content": { tab: "reading", master: false, description: "点图看大图、代码块复制按钮、中文时间一直开着。帖子要不要在新标签页打开，跟随 NodeSeek 自己的「设置 → 常用偏好 → 新标签页打开主题帖」。" },
 		"reading-focus": { tab: "reading" },
 		"sb-my-replies": { tab: "reading", title: "我的回复", description: "显示已回复标签及自己的楼层；已确认符合起始楼层和开奖时间的抽奖另标已参与。记录按账号保存在本机，楼层链接遵循论坛每页楼数设置。" },
 		"sb-person-hover": { tab: "reading", title: "悬停资料卡", description: "鼠标停在头像或用户名上时弹出资料卡：等级、鸡腿、星辰、主题与评论数、关注与粉丝、注册时长，可以直接关注或私信。" },
 		"post-preview": { tab: "reading" },
 		"code-highlight": { tab: "reading", description: "帖子和回复里带语言标记的代码块按语言着色；页面里有代码块时才加载。" },
-		"discussion-stats": { tab: "reading" },
 		"instant-pages": { tab: "reading" },
 		"content-filter": { tab: "people" },
 		"user-notes": { tab: "people", description: "仅保存在本机，用户名后面显示一个备注标签。也可以在悬停资料卡底栏的「备注」里直接写。" },
-		"sb-activity-tags": { tab: "people", title: "活跃度标签", description: "主题和回帖按注册天数折成日均，个人主页统计格下面写出日均，名字后面标出档位：潜水、佛系、正常、活跃、话痨、肝帝、人机（日均 50 条以上）；注册不满 30 天标「新号」，另按习惯补「高产楼主」「只发帖」「只回帖」。悬停标签看具体数字。" },
+		"sb-activity-tags": { tab: "people", title: "活跃度标签", description: "主题和回帖按注册天数折成日均，个人主页统计格下面写出日均。名字后面只标两头：很少说话的「潜水」（日均不到 0.1 条），说得很多的「话痨」「肝帝」「人机」（日均 10、25、50 条以上），注册不满 30 天的「新号」；大多数正常发言的人不挂标签。悬停标签看具体数字。" },
 		"official-blocklist": { tab: "people", description: "按站点当前的屏蔽状态显示屏蔽 / 解除操作，添加或解除会修改站点黑名单；可隐藏黑名单用户发来的 @、回复与私信通知。" },
 		"attendance": { tab: "tools" },
 		"compose": { tab: "tools" },
 		"image-upload": { tab: "tools" },
 		"notification-categories": { tab: "tools", title: "通知未读提醒", description: "更新资料卡的通知角标；收到新的回复、@ 或私信时提醒。消息中心原有分类始终保留。" },
-		"request-settings": { tab: "network", master: false }
+		"private-messages": { tab: "tools", title: "消息中心整理", description: "消息页改成左边会话和通知分类、右边内容的两栏，私信可以用 Markdown 和传图。会话和消息按账号在本机存一份（翻得快、能看到更早的记录）。关掉后用站点原版消息页，本机不再存私信。" },
+		"request-settings": { tab: "tools", master: false }
 	};
 	// 选项少、名字短的下拉框改成 sb.sb .tree-toggle 那样一排小胶囊：值 → 胶囊上的短名（完整说明显示在下面）
 	var NSMAX_SETTINGS_SEGMENTS = {
 		fontSize: { site: "标准", large: "大", xlarge: "特大" },
 		font: { sbsb: "sb.sb 同款", inter: "Inter", system: "系统字体" },
 		colorMode: { site: "跟随站点", light: "浅色", dark: "深色", system: "跟随系统" },
-		mode: { hide: "隐藏", collapse: "折叠", highlight: "只高亮", fixed: "固定", random: "随机" },
+		mode: { hide: "隐藏", collapse: "折叠", fixed: "固定", random: "随机" },
 		pace: { standard: "标准", gentle: "稳妥", slow: "最慢" }
 	};
 	var NSMAX_SECRET_KEY = /^(api[-_]?key|token|password|secret|access[-_]?token)$/i;
+	// 设置面板里改了就当场换的几项（2026-11-09）：列表标题字号、字体、深浅色只是 <html> 上的属性和 body 的深色类，不用刷新。
+	// 返回 false 的要刷新页面才生效
+	var nsmaxLiveColors = null;
+	function nsmaxApplySettingLive(id, key, value) {
+		if (id !== "modern-theme") return false;
+		const root = document.documentElement;
+		try {
+			if (key === "fontSize" && ["site", "large", "xlarge"].includes(value)) {
+				root.dataset.nsmaxSize = value;
+				return true;
+			}
+			if (key === "font" && ["sbsb", "inter", "system"].includes(value)) {
+				if (value !== "system") loadWebFonts(value);
+				root.dataset.nsmaxFont = value;
+				return true;
+			}
+			if (key === "colorMode" && nsmaxLiveColors) {
+				nsmaxLiveColors.set(value);
+				return true;
+			}
+		} catch {}
+		return false;
+	}
 	function mountSettings(features) {
 		const host = element$1("div");
 		host.id = "nspp-settings";
@@ -2627,9 +2647,27 @@ var nsmaxRedirecting = false;
 		});
 		const byId = new Map(features.map((feature) => [feature.id, feature]));
 		let unsavedFields = {}, replaceUnsaved = false;
+		// 改过、要刷新才生效的模块（标题下面写「已保存，刷新页面后生效」）；字号、字体、深浅色当场换（见 nsmaxApplySettingLive）
+		const pendingModules = new Set();
+		const markPending = (id) => {
+			pendingModules.add(id);
+			const head = body.querySelector(`.module[data-feature="${id}"] > .module-head`);
+			if (head && !head.querySelector(".pending")) head.append(pendingNote());
+		};
+		const pendingNote = () => {
+			const note = element$1("p", "已保存，刷新页面后生效");
+			note.className = "pending";
+			return note;
+		};
 		const persist = (fields) => {
 			if (fields) for (const [id, keys] of Object.entries(fields)) unsavedFields[id] = [...new Set([...(unsavedFields[id] || []), ...keys])];
 			else replaceUnsaved = true;
+			if (fields) for (const [id, keys] of Object.entries(fields)) {
+				let live = true;
+				for (const key of keys) if (!nsmaxApplySettingLive(id, key, draft[id]?.[key])) live = false;
+				if (!live) markPending(id);
+				if (id === "modern-theme") syncHost();
+			}
 			try {
 				saveSettings(features, draft, replaceUnsaved ? undefined : unsavedFields);
 				unsavedFields = {}; replaceUnsaved = false;
@@ -2832,6 +2870,7 @@ var nsmaxRedirecting = false;
 				lead.className = "lead";
 				head.append(lead);
 			}
+			if (pendingModules.has(feature.id)) head.append(pendingNote());
 			module.append(head);
 			if (fields.length) module.append(list);
 			return module;
@@ -5068,10 +5107,7 @@ var nsmaxRedirecting = false;
 	var nsmaxUserNotes = null;
 	function nsmaxFilterSummary(filter) {
 		const hidden = filter.count();
-		const marked = filter.mode() === "highlight" ? filter.matched() : 0;
-		if (hidden && marked) return `本页标出 ${marked} 条，屏蔽 ${hidden} 条`;
 		if (hidden) return `本页已屏蔽 ${hidden} 条`;
-		if (marked) return `本页标出 ${marked} 条`;
 		return filter.keywords().length ? "本页没有命中" : "";
 	}
 	var contentSelector = ":is(.post-content,.comment-content,.nsk-content,.markdown-body)";
@@ -5378,266 +5414,21 @@ var nsmaxRedirecting = false;
 			mount: infinite
 		},
 		{
-			id: "reading-history",
-			title: "阅读历史与已读标记",
-			description: "本地保存实际浏览与最近关闭的帖子，默认 100 条、7 天，按天分组；不上传记录。",
-			group: "阅读",
-			defaults: {
-				enabled: true,
-				limit: 100,
-				days: 7
-			},
-			fields: {
-				limit: {
-					label: "保存上限",
-					type: "number"
-				},
-				days: {
-					label: "保存天数",
-					type: "number"
-				}
-			},
-			mount(ctx) {
-				const limit = Math.max(1, Math.floor(Number(ctx.get("limit")) || 100));
-				const maxAge = Math.max(1, Number(ctx.get("days")) || 7) * 864e5;
-				const key = (href) => postPath(href, location.href);
-				const load = (name) => {
-					const stored = ctx.get(name);
-					const clean = (Array.isArray(stored) ? stored : []).flatMap((entry) => {
-						const path = entry && typeof entry.path === "string" ? key(entry.path) : void 0;
-						return path && typeof entry.title === "string" && Number.isFinite(entry.time) && Date.now() - entry.time < maxAge ? [{
-							...entry,
-							path
-						}] : [];
-					}).sort((a, b) => b.time - a.time);
-					const seen = new Set();
-					const entries = clean.filter((entry) => {
-						if (seen.has(entry.path)) return false;
-						seen.add(entry.path);
-						return true;
-					}).slice(0, limit);
-					if (JSON.stringify(stored) !== JSON.stringify(entries)) ctx.set(name, entries);
-					return entries;
-				};
-				const record = (name) => {
-					const pd = unsafeWindow$1.__config__?.postData;
-					const path = pd?.postId ? key(`/post-${pd.postId}-1`) : key(location.href);
-					if (!path) return;
-					ctx.set(name, [{
-						path,
-						title: pd?.title || document.title,
-						time: Date.now(),
-						uid: pd?.op?.uid,
-						author: pd?.op?.name
-					}, ...load(name).filter((entry) => entry.path !== path)].slice(0, limit));
-				};
-				record("entries");
-				load("recent");
-				const markRead = () => {
-					const entries = load("entries");
-					document.querySelectorAll(".post-title a").forEach((a) => a.classList.toggle("nspp-read", entries.some((entry) => entry.path === key(a.href))));
-				};
-				const stop = ctx.watch(markRead);
-				window.addEventListener("beforeunload", () => record("recent"), {
-					capture: true,
-					signal: ctx.signal
-				});
-				const historyButton = document.createElement("button");
-				historyButton.type = "button";
-				historyButton.className = "nspp-tool-icon";
-				historyButton.title = "阅读历史";
-				historyButton.setAttribute("aria-label", "阅读历史");
-				historyButton.append(toolIcon("history"));
-				document.querySelector("#nspp-tools")?.append(historyButton);
-				let historyDialog;
-				historyButton.addEventListener("click", () => {
-					historyDialog?.remove();
-					historyDialog = document.createElement("dialog");
-					historyDialog.className = "nspp-history";
-					historyDialog.setAttribute("aria-label", "阅读历史");
-					const close = document.createElement("button");
-					close.textContent = "关闭";
-					close.type = "button";
-					close.addEventListener("click", () => historyDialog?.close(), { signal: ctx.signal });
-					const heading = document.createElement("h2");
-					heading.textContent = "阅读历史";
-					const search = document.createElement("input");
-					search.type = "search";
-					search.placeholder = "搜索历史标题";
-					search.setAttribute("aria-label", "搜索阅读历史");
-					const clear = document.createElement("button");
-					clear.type = "button";
-					clear.textContent = "清空历史";
-					const undoButton = document.createElement("button");
-					undoButton.type = "button";
-					undoButton.textContent = "撤销删除";
-					undoButton.hidden = true;
-					let previous;
-					let tab = "entries";
-					let entries = load(tab);
-					const tabs = document.createElement("div");
-					tabs.className = "nspp-history-toolbar";
-					for (const [name, label] of [["entries", "全部"], ["recent", "最近关闭"]]) {
-						const button = document.createElement("button");
-						button.type = "button";
-						button.textContent = label;
-						button.dataset.tab = name;
-						button.addEventListener("click", () => {
-							tab = name;
-							previous = void 0;
-							undoButton.hidden = true;
-							render();
-						});
-						tabs.append(button);
-					}
-					const list = document.createElement("ol");
-					const save = () => {
-						ctx.set(tab, entries);
-						markRead();
-					};
-					const render = () => {
-						list.replaceChildren();
-						entries = load(tab);
-						tabs.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.tab === tab)));
-						let lastDay = "";
-						const query = search.value.trim().toLowerCase();
-						const matches = entries.filter((entry) => entry.title.toLowerCase().includes(query));
-						for (const entry of matches) {
-							if (!/^\/post-\d+-1$/.test(entry.path)) continue;
-							const day = format(new Date(entry.time), "yyyy-MM-dd");
-							if (day !== lastDay) {
-								lastDay = day;
-								const group = document.createElement("li");
-								group.className = "nspp-history-day";
-								const label = document.createElement("span");
-								label.textContent = `${day === format(new Date(), "yyyy-MM-dd") ? "今天 - " : ""}${format(new Date(entry.time), "yyyy年M月d日 EEEE", { locale: zhCN })}`;
-								const clearDay = document.createElement("button");
-								clearDay.type = "button";
-								clearDay.textContent = "清除当天";
-								clearDay.addEventListener("click", () => {
-									previous = load(tab);
-									entries = previous.filter((item) => format(new Date(item.time), "yyyy-MM-dd") !== day);
-									undoButton.hidden = false;
-									save();
-									render();
-								});
-								group.append(label, clearDay);
-								list.append(group);
-							}
-							const li = document.createElement("li");
-							const link = document.createElement("a");
-							link.href = entry.path;
-							link.textContent = entry.title;
-							if (entry.uid && /^\d+$/.test(String(entry.uid))) {
-								const avatar = document.createElement("img");
-								avatar.className = "nspp-history-avatar";
-								avatar.src = `/avatar/${entry.uid}.png`;
-								avatar.alt = "";
-								avatar.title = entry.author ? `@${entry.author}` : "";
-								avatar.addEventListener("error", () => avatar.remove(), { once: true });
-								link.prepend(avatar);
-							}
-							const remove = document.createElement("button");
-							remove.type = "button";
-							remove.textContent = "删除";
-							remove.setAttribute("aria-label", `删除历史：${entry.title}`);
-							remove.addEventListener("click", () => {
-								previous = load(tab);
-								entries = previous.filter((item) => item.path !== entry.path);
-								undoButton.hidden = false;
-								save();
-								render();
-							}, { signal: ctx.signal });
-							const date = document.createElement("time");
-							const visitedAt = new Date(entry.time);
-							date.textContent = format(visitedAt, "HH:mm");
-							date.title = format(visitedAt, "yyyy-MM-dd HH:mm:ss");
-							link.title = entry.title;
-							li.append(link, date);
-							if (tab === "recent") {
-								const restore = document.createElement("button");
-								restore.type = "button";
-								restore.textContent = "恢复";
-								restore.addEventListener("click", () => window.open(entry.path, "_blank", "noopener"));
-								li.append(restore);
-							}
-							li.append(remove);
-							list.append(li);
-						}
-						if (!matches.length) {
-							const empty = document.createElement("li");
-							empty.textContent = query ? "没有匹配的记录" : "尚无阅读记录";
-							list.append(empty);
-						}
-					};
-					clear.addEventListener("click", () => {
-						previous = load(tab);
-						entries = [];
-						undoButton.hidden = false;
-						save();
-						render();
-					}, { signal: ctx.signal });
-					undoButton.addEventListener("click", () => {
-						if (previous) entries = previous;
-						previous = void 0;
-						undoButton.hidden = true;
-						save();
-						render();
-					}, { signal: ctx.signal });
-					search.addEventListener("input", render, { signal: ctx.signal });
-					const header = document.createElement("header");
-					header.append(heading, close);
-					const toolbar = document.createElement("div");
-					toolbar.className = "nspp-history-toolbar";
-					toolbar.append(search, clear, undoButton);
-					historyDialog.append(header, toolbar, tabs, list);
-					render();
-					document.body.append(historyDialog);
-					nsmaxShowDialog(historyDialog);
-				}, { signal: ctx.signal });
-				const remove = style(":is(.post-list-item,ul.post-list) .post-title a.nspp-read{opacity:.6;text-decoration:underline dotted}");
-				return () => {
-					stop();
-					remove();
-					historyButton.remove();
-					historyDialog?.remove();
-					document.querySelectorAll(".nspp-read").forEach((a) => a.classList.remove("nspp-read"));
-				};
-			}
-		},
-		{
 			id: "reading-content",
 			title: "内容增强",
-			description: "外链直达、图片预览、代码复制、Callout 和中文时间。帖子要不要在新标签页打开，跟随 NodeSeek 自己的「设置 → 常用偏好 → 新标签页打开主题帖」。",
+			description: "外链直达、点图看大图、代码复制和中文时间。帖子要不要在新标签页打开，跟随 NodeSeek 自己的「设置 → 常用偏好 → 新标签页打开主题帖」。",
 			group: "阅读",
+			// 2026-11-09：看大图、代码复制、中文时间不再单独给开关（没有要关的理由），一直开着；整个模块也不能关，
+			// 设置里只剩「外链直达」。Callout（> [!NOTE] 提示框）在 NodeSeek 上基本没人写，去掉了
+			alwaysEnabled: true,
 			defaults: {
 				enabled: true,
-				cleanLinks: true,
-				images: true,
-				copyCode: true,
-				callouts: true,
-				chineseTime: true
+				cleanLinks: true
 			},
 			fields: {
 				cleanLinks: {
 					label: "外链直达",
 					type: "boolean"
-				},
-				images: {
-					label: "图片预览",
-					type: "text"
-				},
-				copyCode: {
-					label: "代码复制",
-					type: "text"
-				},
-				callouts: {
-					label: "Callout 渲染",
-					type: "text"
-				},
-				chineseTime: {
-					label: "中文时间与列表时间刷新",
-					type: "text"
 				}
 			},
 			mount(ctx) {
@@ -5761,7 +5552,7 @@ var nsmaxRedirecting = false;
 							].forEach((key, i) => old[i] === null ? a.removeAttribute(key) : a.setAttribute(key, old[i])));
 						} catch {}
 					}
-					if (ctx.get("copyCode")) nsmaxEachTag("pre", `${contentSelector} pre`, null, (pre) => {
+					nsmaxEachTag("pre", `${contentSelector} pre`, null, (pre) => {
 						// 站点自己也给代码块加复制按钮（pre > button.code-copy-btn，2026-10 起）：脚本的「复制」在时站点的由样式藏起来（pre 标
 						// data-nsmax-copy）；站点偏好「一直显示」（按钮带 .always）时脚本的「复制」也一直显示。站点的按钮比脚本晚加，所以每次都看一眼。
 						// 站点的按钮还没加上时不动（页面解析阶段已经按上次看到的偏好留好了按钮那一条，见 nsmaxWrapCodeBlocks），看到了记下来给下次用
@@ -5785,7 +5576,7 @@ var nsmaxRedirecting = false;
 							pre.removeAttribute("data-nsmax-copy-always");
 						});
 					});
-					if (ctx.get("chineseTime")) [...document.getElementsByTagName("time"), ...document.getElementsByClassName("date-created"), ...document.getElementsByClassName("date-updated")].forEach((el) => {
+					[...document.getElementsByTagName("time"), ...document.getElementsByClassName("date-created"), ...document.getElementsByClassName("date-updated")].forEach((el) => {
 						if (processed.has(el) || el.children.length) return;
 						processed.add(el);
 						// 页面解析阶段已经改过的（见 nsmaxApplyChineseTimes）只登记还原；没改过的现在改
@@ -5800,26 +5591,6 @@ var nsmaxRedirecting = false;
 							el.textContent = old;
 						});
 					});
-					if (ctx.get("callouts")) nsmaxEachTag("blockquote", `${contentSelector} blockquote`, null, (el) => {
-						if (processed.has(el)) return;
-						processed.add(el);
-						const p = el.querySelector("p");
-						const match = p?.textContent?.match(/^\[!([a-z]+)\]([+-])?\s*([^\n]*)/i);
-						if (!p || !match) return;
-						const details = document.createElement("details");
-						details.className = "nspp-callout";
-						details.open = match[2] !== "-";
-						const title = document.createElement("summary");
-						title.textContent = match[3] || match[1].toUpperCase();
-						details.append(title);
-						const clone = el.cloneNode(true);
-						clone.querySelectorAll("[data-nspp-copy]").forEach((button) => button.remove());
-						const first = clone.querySelector("p");
-						if (first) first.textContent = (first.textContent || "").slice(match[0].length);
-						details.append(...Array.from(clone.childNodes));
-						el.replaceWith(details);
-						undo.push(() => details.replaceWith(el));
-					});
 				};
 				const stop = ctx.watch(scanLinks);
 				nsmaxReadSitePreference("openPostInNewPage").then((value) => {
@@ -5827,9 +5598,9 @@ var nsmaxRedirecting = false;
 					sitePref = value === true;
 					scanLinks();
 				});
-				const remove = style(".nspp-callout{border-inline-start:3px solid currentColor;padding:10px 16px;margin:1em 0}.nspp-callout summary{cursor:pointer;font-weight:600}.nspp-image-viewer{max-width:95vw;max-height:95vh;padding:12px}.nspp-image-viewer img{max-width:90vw;max-height:82vh;object-fit:contain}.nspp-image-viewer::backdrop{background:rgb(0 0 0 / .8)}");
+				const remove = style(".nspp-image-viewer{max-width:95vw;max-height:95vh;padding:12px}.nspp-image-viewer img{max-width:90vw;max-height:82vh;object-fit:contain}.nspp-image-viewer::backdrop{background:rgb(0 0 0 / .8)}");
 				let closeViewer;
-				if (ctx.get("images")) window.addEventListener("click", (e) => {
+				window.addEventListener("click", (e) => {
 					if (!(e.target instanceof Element) || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 					const img = e.target.closest(`${contentSelector} img`);
 					if (!img || !nsmaxViewableImage(img)) return;
@@ -5850,39 +5621,6 @@ var nsmaxRedirecting = false;
 					remove();
 					closeViewer?.();
 					undo.reverse().forEach((fn) => fn());
-				};
-			}
-		},
-		{
-			id: "reading-navigation",
-			title: "夜间模式与阅读导航",
-			description: "Alt + ↑ / ↓ 跳转页首或页尾，不占用编辑器按键。",
-			group: "外观",
-			defaults: {
-				enabled: true,
-				dark: false,
-				keyboard: true
-			},
-			fields: {
-				dark: {
-					label: "启用夜间模式",
-					type: "text"
-				},
-				keyboard: {
-					label: "启用阅读快捷键",
-					type: "text"
-				}
-			},
-			mount(ctx) {
-				const previous = document.body.classList.contains("dark-layout") && !nsmaxEarlyDark;
-				if (ctx.get("dark") && !nsmaxThemeOwnsDark()) document.body.classList.add("dark-layout");
-				if (ctx.get("keyboard")) document.addEventListener("keydown", (e) => {
-					if (!e.altKey || !["ArrowUp", "ArrowDown"].includes(e.key) || e.target.closest("input,textarea,select,[contenteditable=\"true\"]")) return;
-					e.preventDefault();
-					window.scrollTo(0, e.key === "ArrowUp" ? 0 : document.documentElement.scrollHeight);
-				}, { signal: ctx.signal });
-				return () => {
-					document.body.classList.toggle("dark-layout", previous);
 				};
 			}
 		}
@@ -6010,16 +5748,6 @@ var nsmaxRedirecting = false;
 			icon: "star-6negdgdk"
 		}
 	];
-	function postURL(href, base) {
-		try {
-			const url = new URL(href, base);
-			const match = url.pathname.match(/^\/post-(\d+)(?:-\d+)?(?:\.html)?\/?$/);
-			if (url.origin !== new URL(base).origin || !match) return null;
-			return new URL(`/post-${match[1]}-1`, base);
-		} catch {
-			return null;
-		}
-	}
 	function siteIcon(name) {
 		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 		svg.setAttribute("class", "iconpark-icon");
@@ -6058,10 +5786,6 @@ var nsmaxRedirecting = false;
 						{
 							label: "收成一行「已屏蔽」小条，点「显示」看原内容",
 							value: "collapse"
-						},
-						{
-							label: "不隐藏，只把标题里的关键词标出来（侧栏热榜也不隐藏）",
-							value: "highlight"
 						}
 					]
 				},
@@ -6083,6 +5807,10 @@ var nsmaxRedirecting = false;
 				}
 			},
 			mount(ctx) {
+				// 以前选的「只高亮」（2026-11-09 去掉）：校验时已经被换回默认的「隐藏」，这里照原值改成更接近的「折叠」并存下
+				try {
+					if (GM_getValue$1(SETTINGS_KEY, {})?.["content-filter"]?.mode === "highlight") ctx.set("mode", "collapse");
+				} catch {}
 				let matchers = compileKeywordMatchers(ctx.get("keywords"));
 				let users = filterLines(ctx.get("users"));
 				// 站点黑名单里的人也一起藏（2026-10-18：屏蔽和站点的黑名单连在一起；名单由「站点黑名单」模块缓存）
@@ -6132,15 +5860,13 @@ var nsmaxRedirecting = false;
 					}
 				};
 				// 折叠：原位置留一行「已屏蔽一条帖子：命中「关键词」」小条，右侧「显示 / 收起」小胶囊（样式见主题「关键词屏蔽」一节）。
-				// 折叠和只高亮时，标题里命中的关键词都会标出来；直接隐藏时不用标。
-				// 「只高亮」只管关键词：屏蔽的用户、等级不够打不开的帖子没有关键词可标，照样直接藏起来（以前什么都不做，
-				// 屏蔽名单和「隐藏等级不够的帖子」在这个模式下等于没开，工具条还写「本页标出 N 条」）
+				// 折叠时，展开后标题里命中的关键词会标出来；直接隐藏时不用标。
+				// 2026-11-09 去掉了「只高亮」（屏蔽了却照常显示，和屏蔽的用途反着来）：以前存的「只高亮」按「折叠」处理
 				const hiddenItems = new WeakSet();
-				const filter = (item, anchor, reason, keyword) => {
+				const filter = (item, anchor, reason) => {
 					const undo = [];
-					const chosen = ctx.get("mode");
-					const mode = chosen === "highlight" && !keyword ? "hide" : chosen;
-					if (mode !== "highlight") {
+					const mode = ctx.get("mode") === "hide" ? "hide" : "collapse";
+					{
 						hiddenItems.add(item);
 						undo.push(() => hiddenItems.delete(item));
 						const wasHidden = item.hidden;
@@ -6194,7 +5920,7 @@ var nsmaxRedirecting = false;
 						const required = Number(lock?.closest("span")?.textContent?.match(/\d+/)?.[0] ?? NaN);
 						const keyword = matched(anchor?.textContent || "") || !anchor && comments && matched(item.querySelector(".post-content")?.textContent || "");
 						const reason = keyword ? `命中「${keyword.text}」` : blockedUser(author) ? `屏蔽的用户 ${author}` : Number.isFinite(level) && Number.isFinite(required) && required > level ? `需要 Lv${required}` : "";
-						if (reason) filtered.set(item, filter(item, anchor, reason, !!keyword));
+						if (reason) filtered.set(item, filter(item, anchor, reason));
 					});
 					if (filtered.size !== before) changed("nsmax:filter-count");
 				};
@@ -6239,10 +5965,8 @@ var nsmaxRedirecting = false;
 						rerun();
 					},
 					blocks,
-					// 侧栏热榜用：只高亮模式下命中的帖子照常显示
-					hides: (text) => ctx.get("mode") !== "highlight" && blocks(text),
-					mode: () => ctx.get("mode"),
-					matched: () => Array.from(filtered.keys()).filter((item) => item.isConnected && !hiddenItems.has(item)).length,
+					// 侧栏热榜用
+					hides: blocks,
 					count: () => Array.from(filtered.keys()).filter((item) => item.isConnected && hiddenItems.has(item)).length + hotHidden,
 					reportHot(count) {
 						if (count === hotHidden) return;
@@ -7034,7 +6758,7 @@ var nsmaxRedirecting = false;
 		{
 			id: "attendance",
 			title: "签到",
-			description: "每天尝试一次，成功或失败均缓存当天记录并隐藏按钮，次日再试；按账户隔离。",
+			description: "每天签一次，站点回了结果（成功或今天已签过）就记下并隐藏按钮；没连上或被限流时按钮留着，自动签到 10 分钟后再试。按账户分开记。",
 			group: "操作辅助",
 			defaults: {
 				enabled: true,
@@ -7089,9 +6813,11 @@ var nsmaxRedirecting = false;
 						if (animation?.playState !== "running" && control.hidden !== signed) control.hidden = signed;
 					};
 					sync();
+					// 上次没签成（网络出错、站点限流）的时间：自动签到隔 10 分钟再试，手动点按钮随时可以
+					let failedAt = 0;
 					const tick = () => {
 						sync();
-						if (ctx.get("automatic") && !known() && !document.hidden && !control.disabled) run();
+						if (ctx.get("automatic") && !known() && !document.hidden && !control.disabled && Date.now() - failedAt > 10 * 60e3) run();
 					};
 					window.addEventListener("focus", tick, { signal: ctx.signal });
 					document.addEventListener("visibilitychange", tick, { signal: ctx.signal });
@@ -7145,11 +6871,20 @@ var nsmaxRedirecting = false;
 								else sync();
 								if (result?.success) ctx.notify(result.message || (Number.isFinite(Number(result.gain)) && result.gain !== null && result.gain !== "" ? `签到成功，获得 ${result.gain} 个鸡腿` : "签到成功"));
 							});
-						} catch {
+						} catch (error) {
+							// 2026-11-09：请求没成（断网、限流、站点验证、站点出错）不再记成今天已签：以前按钮当天就藏起来，一次都没签上也不会再试。
+							// 现在按钮留着，自动签到 10 分钟后再试（提示只弹一次）。站点明确拒绝的（4xx，比如今天已经签过）照旧记下
 							if (!ctx.signal.aborted) {
-								ctx.set(key, requestDay);
-								if (known()) complete(false);
-								else sync();
+								const status = Number(String(error?.message || "").match(/HTTP (\d+)/)?.[1]);
+								if (status >= 400 && status < 500 && status !== 403 && status !== 429) {
+									ctx.set(key, requestDay);
+									if (known()) complete(false);
+									else sync();
+								} else {
+									if (!failedAt) ctx.notify("签到没成功，10 分钟后自动再试，也可以点签到按钮重试");
+									failedAt = Date.now();
+									sync();
+								}
 							}
 						} finally {
 							control.disabled = false;
@@ -16080,14 +15815,14 @@ var nsmaxRedirecting = false;
 						preview.keepOpen();
 						clearTimeout(timer);
 						clearTimeout(fetchTimer);
-						// 停留 40ms 就开始取正文（2026-11-01：以前等卡片 80ms 弹出来才取，白等 80ms）；
-						// 扫过一排标题时每行只停一二十毫秒，不会给每篇都发请求。80ms 的显示时机不变，
-						// open/load 与 250ms 的预热仍共用同一份请求。
-						fetchTimer = setTimeout(() => preview.prefetch(link), 40);
-						timer = setTimeout(() => preview.open(link, "preview"), 80);
-						// 停留 0.25 秒以上（真的在看这一篇）才准备图片、头像和作者资料：鼠标扫过一排标题时不去下一堆东西
+						// 2026-11-09：停 0.5 秒才弹卡片（以前 0.08 秒，鼠标划过去点标题的路上也会弹出来）。
+						// 0.3 秒起先取正文，卡片弹出时内容多半已经到了；只是路过、马上点开的，不另外再下一份
+						// （点开要用的那份由「悬停预加载」取）。open/load 与预热共用同一份请求。
+						fetchTimer = setTimeout(() => preview.prefetch(link), 300);
+						timer = setTimeout(() => preview.open(link, "preview"), 500);
+						// 卡片弹出来（真的在看这一篇）才准备图片、头像和作者资料
 						clearTimeout(warmTimer);
-						warmTimer = setTimeout(() => preview.warm(link), 250);
+						warmTimer = setTimeout(() => preview.warm(link), 500);
 					};
 					// 页面滚动把标题带到鼠标下面的不算（见 nsmaxHoverFromScroll）：鼠标在标题上真的动一下再打开
 					let pending = false;
@@ -16110,72 +15845,13 @@ var nsmaxRedirecting = false;
 					}, { signal: ctx.signal });
 				});
 			});
-			// 首屏可见的前几篇帖子在空闲时先把主帖网页取好（只读到 </article>，和悬停预览共用缓存）：
-			// 鼠标停上去时卡片内容直接出来，不用再等服务器。只在桌面端、不做省流量模式、最多 4 篇
-			// 2026-10-23：哪几行在屏幕上交给 IntersectionObserver 在下一帧报（不读位置）。以前对每个标题读 getBoundingClientRect，
-			// 列表行是 content-visibility:auto，屏幕外的每一行都被逼着当场排版：真站首页 90 多行在 4 倍降速下卡 0.67 秒，
-			// 刚打开页面一滚动就卡一下
-			// 2026-10-24：站点限流过（后台暂停中，见 NSMAX_BG_PAUSE_KEY）就不取；「抽奖」分类页上不取（那里的行要识别完才显示，识别本身就会取主帖）。
-			// 这几篇用普通优先级：鼠标停上去时卡片用的就是这一份，不能排在页面上的图片后面
-			// 2026-11-01：滚动停下来以后也取：停稳 1 秒、屏幕上还没取过的前 3 篇，一页最多 10 篇（含开头 4 篇）。
-			// 这些用后台优先级（同时一个、隔开 0.6 秒，被限流就整体暂停），鼠标停上去时那一篇自动提到最前面（见 nsmaxPostHtml）
-			const prefetched = new Set();
-			let prefetchBudget = 10;
-			const prefetchable = () => !(navigator.connection?.saveData || matchMedia("(hover: none)").matches || nsmaxIsLotteryView() || nsmaxBackgroundPaused());
-			const prefetchRows = (rows, count, priority) => {
-				for (const row of rows) {
-					if (count <= 0 || prefetchBudget <= 0) return;
-					const link = row.querySelector(".post-title a");
-					if (!link) continue;
-					const url = new URL(link.href, location.origin);
-					if (url.origin !== location.origin || !/^\/post-\d+(?:-\d+)?(?:\.html)?\/?$/.test(url.pathname) || prefetched.has(url.href)) continue;
-					prefetched.add(url.href);
-					count--;
-					prefetchBudget--;
-					// 这个会话里读过的不再取
-					if (nsmaxPreviewRead(url.href)) continue;
-					nsmaxPostHtml(ctx.request, url.href, priority, { until: "</article>" }).catch(() => {});
-				}
-			};
-			const visibleRows = (callback) => {
-				const rows = Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).slice(0, 80);
-				if (!rows.length || typeof IntersectionObserver !== "function") return;
-				const observer = new IntersectionObserver((entries) => {
-					observer.disconnect();
-					const seen = new Set(entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target));
-					callback(rows.filter((row) => seen.has(row)));
-				});
-				for (const row of rows) observer.observe(row);
-				ctx.signal.addEventListener("abort", () => observer.disconnect(), { once: true });
-			};
-			const prefetchVisible = () => {
-				try {
-					if (!prefetchable()) return;
-					visibleRows((rows) => prefetchRows(rows, 4, "auto"));
-				} catch {}
-			};
-			let scrollTimer;
-			window.addEventListener("scroll", () => {
-				clearTimeout(scrollTimer);
-				if (prefetchBudget <= 0) return;
-				scrollTimer = setTimeout(() => {
-					try {
-						if (prefetchable()) visibleRows((rows) => prefetchRows(rows, 3, "low"));
-					} catch {}
-				}, 1e3);
-			}, { passive: true, signal: ctx.signal });
-			const prefetchOnce = () => {
-				if (typeof requestIdleCallback === "function") requestIdleCallback(prefetchVisible, { timeout: 1500 });
-				else setTimeout(prefetchVisible, 800);
-			};
-			if (document.readyState === "complete") prefetchOnce();
-			else window.addEventListener("load", prefetchOnce, { once: true });
+			// 2026-11-09 去掉了空闲时、滚动停下后在后台先取屏幕上几篇主帖（一页最多 10 篇）：卡片改成停 0.5 秒才弹，
+			// 不用提前备好，列表页少十来个请求
 			return () => {
 				stop();
 				clearTimeout(timer);
 				clearTimeout(fetchTimer);
 				clearTimeout(warmTimer);
-				clearTimeout(scrollTimer);
 				bound.forEach((title, link) => {
 					if (title !== null) link.setAttribute("title", title);
 				});
@@ -16247,197 +15923,6 @@ var nsmaxRedirecting = false;
 					else el.title = original.title;
 				});
 				stop();
-			};
-		}
-	};
-	function count(value) {
-		if (typeof value !== "number" && !(typeof value === "string" && /^\d+$/.test(value))) return null;
-		const number = Number(value);
-		return Number.isSafeInteger(number) && number >= 0 ? number : null;
-	}
-	function discussionStats(root, postId) {
-		const encoded = root.querySelector("#temp-script")?.textContent?.trim();
-		if (!encoded) throw new Error("帖子数据不可用");
-		const bytes = Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0));
-		const data = JSON.parse(new TextDecoder().decode(bytes))?.postData;
-		if (!data || String(data.postId) !== postId) throw new Error("帖子数据不匹配");
-		const page = count(data.postPage), lastPage = count(data.postPageCount);
-		const floors = Array.isArray(data.comments) ? data.comments.map((comment) => count(comment?.floorIndex)).filter((floor) => floor !== null) : [];
-		return {
-			views: count(data.views),
-			comments: page && page === lastPage && floors.length ? Math.max(...floors) : null,
-			lastPage: lastPage && lastPage > 0 ? lastPage : null
-		};
-	}
-	// 个人主页主题帖列表的浏览 / 评论数（2026-11-01 重写取数和占位）：
-	// 1. 每行一出现就放好胶囊（图标 + 「–」占位，宽度按 4 位浏览数、3 位评论数留好、高度不超过标题行），数字到了只换文字，行不变高、胶囊不参差；
-	// 2. 看得见的行按普通请求取（以前当后台请求排队：同时一个、隔 600 毫秒，一屏九行要五六秒才出齐），这里自己限同时 4 个；
-	// 3. 只读到帖子数据（#temp-script）为止，不下整页、不解析整页 DOM；
-	// 4. 取到的数记在本机 10 分钟，再打开同一个人的主页直接显示，过了 5 分钟的顺手在后台刷新
-	var NSMAX_DISCUSSION_STATS_KEY = "nsmax:discussion-stats";
-	var NSMAX_TEMP_SCRIPT = /<script\b[^>]*\bid=["']?temp-script["']?[^>]*>([^<]*)<\/script>/i;
-	var discussionStatsFeature = {
-		id: "discussion-stats",
-		title: "主题帖浏览与评论数",
-		group: "阅读",
-		description: "个人主页主题帖列表补全浏览数和评论数；默认关闭，开启后仅对可见行额外读取帖子，每帖最多两页，结果在本机记 10 分钟。",
-		defaults: { enabled: false },
-		mount(ctx) {
-			if (!/^\/space\/\d+\/?$/.test(location.pathname)) return;
-			const stored = nsmaxLocalGet(NSMAX_DISCUSSION_STATS_KEY, {});
-			const cache = new Map(stored && typeof stored === "object" ? Object.entries(stored).filter(([, value]) => Array.isArray(value) && Date.now() - value[2] < 6e5).map(([href, [views, comments, time]]) => [href, { views, comments, time }]) : []);
-			let saveTimer = 0;
-			const save = () => {
-				clearTimeout(saveTimer);
-				saveTimer = setTimeout(() => {
-					const entries = [...cache].filter(([, value]) => Date.now() - value.time < 6e5).slice(-200);
-					nsmaxLocalSet(NSMAX_DISCUSSION_STATS_KEY, Object.fromEntries(entries.map(([href, value]) => [href, [value.views, value.comments, value.time]])));
-				}, 500);
-			};
-			const pending = new Map();
-			const rows = new Map();
-			const waiting = [];
-			let inFlight = 0;
-			let route = "", controller = new AbortController();
-			const active = () => /^#\/discussions(?:\/\d+)?\/?(?:\?.*)?$/.test(location.hash);
-			// 自己限同时 4 个：一页最多二十来行，滚得快时不一下子把站点打满
-			const slot = (task) => new Promise((resolve, reject) => {
-				const run = () => {
-					inFlight++;
-					task().then(resolve, reject).finally(() => {
-						inFlight--;
-						waiting.shift()?.();
-					});
-				};
-				if (inFlight < 4) run();
-				else waiting.push(run);
-			});
-			const page = async (url, id, signal) => {
-				const html = await slot(() => ctx.request(url, {
-					responseType: "text",
-					until: NSMAX_TEMP_SCRIPT,
-					signal
-				}));
-				const encoded = html.match(NSMAX_TEMP_SCRIPT)?.[1]?.trim();
-				// 找不到（站点改了写法）时退回整页解析
-				const root = encoded ? { querySelector: () => ({ textContent: encoded }) } : new DOMParser().parseFromString(html, "text/html");
-				return discussionStats(root, id);
-			};
-			const read = (href) => {
-				const existing = pending.get(href);
-				if (existing) return existing;
-				const signal = controller.signal;
-				const promise = (async () => {
-					const id = href.match(/\/post-(\d+)-1$/)[1];
-					const first = await page(href, id, signal);
-					const counts = {
-						views: first.views,
-						comments: first.comments
-					};
-					if (first.lastPage && first.lastPage > 1) try {
-						counts.comments = (await page(`/post-${id}-${first.lastPage}`, id, signal)).comments;
-					} catch {
-						if (signal.aborted) throw new Error("读取已取消");
-					}
-					if (signal.aborted || ctx.signal.aborted) throw new Error("读取已取消");
-					if (counts.views !== null && counts.comments !== null) {
-						cache.delete(href);
-						cache.set(href, {
-							...counts,
-							time: Date.now()
-						});
-						if (cache.size > 200) cache.delete(cache.keys().next().value);
-						save();
-					}
-					return counts;
-				})();
-				pending.set(href, promise);
-				promise.finally(() => {
-					if (pending.get(href) === promise) pending.delete(href);
-				}).catch(() => {});
-				return promise;
-			};
-			const show = (entry, counts, state) => {
-				entry.stats.dataset.state = state;
-				entry.stats.querySelectorAll("[data-count]").forEach((value) => {
-					const key = value.dataset.count;
-					const known = counts && counts[key] !== null && counts[key] !== undefined;
-					const text = known ? String(counts[key]) : "–";
-					if (value.textContent !== text) value.textContent = text;
-					value.parentElement.title = known ? `${key === "views" ? "浏览" : "评论"}：${counts[key]}` : "";
-				});
-			};
-			const load = async (row) => {
-				const entry = rows.get(row);
-				if (!entry) return;
-				observer.unobserve(row);
-				const cached = cache.get(entry.href);
-				// 记下的数 5 分钟内直接用，不再请求
-				if (cached && Date.now() - cached.time < 3e5) return;
-				try {
-					const counts = await read(entry.href);
-					if (ctx.signal.aborted || !row.isConnected || rows.get(row) !== entry || !active()) return;
-					show(entry, counts, "done");
-				} catch {
-					if (ctx.signal.aborted || !row.isConnected || rows.get(row) !== entry) return;
-					// 取不到就保留「–」，胶囊不收起（收起会让标题换行、行高变）
-					if (!cached) show(entry, null, "failed");
-				}
-			};
-			const observer = new IntersectionObserver((entries) => {
-				for (const entry of entries) if (entry.isIntersecting) load(entry.target);
-			}, { rootMargin: "200px" });
-			const remove = (row) => {
-				observer.unobserve(row);
-				rows.get(row)?.stats.remove();
-				rows.delete(row);
-				row.classList.remove("nspp-discussion-row");
-			};
-			const scan = () => {
-				if (route !== location.href) {
-					route = location.href;
-					controller.abort();
-					controller = new AbortController();
-					pending.clear();
-					for (const row of rows.keys()) remove(row);
-				}
-				for (const [row, entry] of rows) if (!row.isConnected || postURL(row.querySelector("a")?.href || "", location.origin)?.href !== entry.href) remove(row);
-				if (!active()) return;
-				document.querySelectorAll(".discussion-wrapper > div.discussion-item").forEach((row) => {
-					if (rows.has(row)) return;
-					const url = postURL(row.querySelector("a")?.href || "", location.origin);
-					if (!url) return;
-					const stats = document.createElement("span");
-					stats.className = "nspp-discussion-stats";
-					for (const [key, icon] of [["views", "eyes"], ["comments", "comments"]]) {
-						const item = document.createElement("span");
-						const value = document.createElement("span");
-						value.dataset.count = key;
-						item.append(siteIcon(icon), value);
-						stats.append(item);
-					}
-					const entry = {
-						href: url.href,
-						stats
-					};
-					const cached = cache.get(url.href);
-					show(entry, cached, cached ? "done" : "loading");
-					row.classList.add("nspp-discussion-row");
-					row.append(stats);
-					rows.set(row, entry);
-					observer.observe(row);
-				});
-			};
-			const stop = ctx.watch(scan);
-			scan();
-			window.addEventListener("hashchange", scan, { signal: ctx.signal });
-			window.addEventListener("popstate", scan, { signal: ctx.signal });
-			return () => {
-				stop();
-				controller.abort();
-				observer.disconnect();
-				clearTimeout(saveTimer);
-				for (const row of rows.keys()) remove(row);
 			};
 		}
 	};
@@ -20576,15 +20061,6 @@ var nsmaxRedirecting = false;
 	function nsmaxColorModeIsDark(mode, media) {
 		return mode === "dark" || mode === "system" && (media || window.matchMedia("(prefers-color-scheme: dark)")).matches;
 	}
-	// 主题打开、深浅色不是「跟随站点」时，由主题决定 body 的 dark-layout（NodeSeek++ 的夜间模式不再另外加）。
-	function nsmaxThemeOwnsDark() {
-		try {
-			const options = themeOptions();
-			return options.enabled !== false && nsmaxColorMode(options) !== "site";
-		} catch {
-			return false;
-		}
-	}
 	// 顶栏右上角：点深浅色按钮弹出「浅色 / 深色 / 跟随系统」菜单；旁边的漏斗按钮打开关键词屏蔽（帖子与用户过滤模块打开时才显示）。
 	// 浮层挂在 body 上，固定在按钮下方右对齐；点外面、按 Esc、再点一次按钮都会关闭。
 	// 帖子页楼层对齐（参考 sb.sb）：站点上主楼和回复外面包的层数不同，头像、名字、正文、签名、按钮各有各的缩进，左边对不齐。
@@ -22592,6 +22068,8 @@ var nsmaxRedirecting = false;
 					applyColorMode();
 				}
 			};
+			nsmaxLiveColors = colors;
+			cleanups.push(() => { if (nsmaxLiveColors === colors) nsmaxLiveColors = null; });
 			cleanups.push(() => root.removeAttribute("data-nsmax-color-mode"));
 			const siteHeader = pickSiteHeader();
 			if (siteHeader) siteHeader.setAttribute("data-nsmax-header", "");
@@ -23683,9 +23161,6 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			queueMicrotask(step);
 		}
 	}
-	// NodeSeek++「夜间模式」原本要等页面加载完、模块启动时才给 body 加 dark-layout，刷新时会先亮一下再变暗；
-	// 这里在 body 一出现时就加上。nsmaxEarlyDark 记录是不是这里加的，关闭该选项时模块据此还原。
-	var nsmaxEarlyDark = false;
 	function whenBody(callback) {
 		if (document.body) return callback(document.body);
 		const observer = new MutationObserver(() => {
@@ -23695,15 +23170,6 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		});
 		observer.observe(document.documentElement || document, { childList: true, subtree: !document.documentElement });
 	}
-	(function applyNightModeEarly() {
-		const options = GM_getValue$1(SETTINGS_KEY, {})?.["reading-navigation"];
-		if (options?.enabled === false || options?.dark !== true || nsmaxThemeOwnsDark()) return;
-		whenBody((body) => {
-			if (body.classList.contains("dark-layout")) return;
-			body.classList.add("dark-layout");
-			nsmaxEarlyDark = true;
-		});
-	})();
 	// 首帧只算屏幕上的行（2026-10-30，样式见主题第 73 节）：按窗口高度分三档，一屏放得下的行直接画、只排一遍，后面的行第一帧画出来以后才开始算。
 	// 用屏幕高度和窗口外框高度估：innerHeight 会逼浏览器当场排一次版，手机上 viewport 还没解析时读到的还是按 980px 宽换算的。
 	// 脚本注入得晚、页面已经画过时不分档：那时再把行藏起来反而闪一下
@@ -24590,7 +24056,7 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 	var nsmaxSpecialBusy = false;
 	// 2026-10-24：一页最多查 12 篇（以前 30 篇，v1.8.37 还给标题不像抽奖的另加 60 篇，十秒里取二十多篇，站点开始限流，
 	// 页面、图片跟着变慢）。标题不像抽奖的不在列表页后台查：点开它时按内容认（见 nsmaxPrizeBadges），
-	// 「抽奖」分类页里再在后台慢慢找（见 nsmaxCrawlNewPosts）
+	// 点开过就按开奖链接认出来
 	var nsmaxSpecialBudget = 12;
 	var nsmaxSpecialRecheckBudget = 4;
 	var nsmaxSpecialStaleBudget = 4;
@@ -24872,7 +24338,6 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		if (nsmaxLotteryViewBusy) return;
 		if (!pending) {
 			nsmaxLotteryRecheckStale(ctx);
-			nsmaxLotteryCrawlLater(ctx);
 			return;
 		}
 		nsmaxLotteryViewBusy = true;
@@ -24903,7 +24368,6 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		const next = document.querySelector("#nsk-body-left .nsk-pager a.pager-next[href]");
 		if (next && !ctx.signal.aborted && !nsmaxBackgroundPaused()) nsmaxWhenIdle("lottery-next", () => nsmaxPrefetchLotteryPage(ctx, next.getAttribute("href")));
 		nsmaxLotteryRecheckStale(ctx);
-		nsmaxLotteryCrawlLater(ctx);
 	}
 	// 「抽奖」页上查过不是、但 30 分钟以上没再查过的（2026-11-01：楼主常常先发帖、过几分钟才编辑补上开奖链接，刚发出来时查过一次「不是」
 	// 就一直藏着）：在后台再查一遍，一次打开页面最多 6 篇、从上往下。已经显示的行不等它们；认出来就按顺序接上
@@ -24921,26 +24385,9 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			nsmaxLotteryRefresh();
 		}
 	}
-	// 抽奖页上：「新帖子」列表也在后台按内容查一遍（30 分钟最多一次），标题里没写「抽奖」的抽奖帖认出来就并进这一页
-	function nsmaxLotteryCrawlLater(ctx) {
-		if (ctx.signal.aborted || nsmaxBackgroundPaused() || !nsmaxLotteryIndexDue()) return;
-		nsmaxWhenIdle("lottery-crawl", () => nsmaxCrawlNewPosts(ctx));
-	}
-	// 后台提前识别到时间了没有（30 分钟最多一次，本机记时间）；到了就记下这一次
-	function nsmaxLotteryIndexDue() {
-		if (!unsafeWindow$1.__config__?.user) return false;
-		try {
-			if (Date.now() - (Number(localStorage.getItem(NSMAX_LOTTERY_INDEX_KEY)) || 0) < 30 * 60e3) return false;
-			localStorage.setItem(NSMAX_LOTTERY_INDEX_KEY, String(Date.now()));
-			return true;
-		} catch {
-			return false;
-		}
-	}
 	// 抽奖页查完当前页后，把下一页里没查过的帖子在后台低优先级查掉，翻到下一页时大多已经有结论，直接显示。一次最多查 25 篇。
 	// 站内搜索要登录，没登录不查；省流量模式、2G 网络下不查；页面切到后台、站点限流过（后台暂停中）就停。
 	// 2026-10-24：别的页面上不再每 30 分钟在后台查一遍「抽奖」搜索第一页和「新帖子」列表（一次几十篇，站点开始限流）
-	var NSMAX_LOTTERY_INDEX_KEY = "nsmax:lottery-index-at";
 	async function nsmaxPrefetchLotteryPage(ctx, url) {
 		if (!unsafeWindow$1.__config__?.user || navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "") || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
 		let html = "";
@@ -24954,34 +24401,8 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		const ids = [...new Set(Array.from(doc.querySelectorAll("ul.post-list > li.post-list-item .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]))].filter((id) => id && !checked.has(id) && !known.has(id)).slice(0, 25);
 		while (ids.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) await nsmaxCheckSpecialPost(ctx, ids.shift());
 	}
-	// 按内容找抽奖帖（2026-10-23）：标题里不写「抽奖」的抽奖帖，站内搜索（只搜标题）找不到。只在「抽奖」分类页上（登录后、30 分钟最多一次）
-	// 读「新帖子」列表第一页，把没查过的帖子在后台低优先级一篇一篇查掉（主帖、第一页评论里有没有指向这一篇的开奖链接），一次最多 20 篇；
-	// 认出来的记下它在列表上的样子，并进「抽奖」分类（见 nsmaxMergeLotteryRows）。平时点开的帖子也会按内容认（见 nsmaxPrizeBadges）
-	async function nsmaxCrawlNewPosts(ctx) {
-		if (ctx.signal.aborted || document.hidden || navigator.connection?.saveData || nsmaxBackgroundPaused()) return;
-		let html = "";
-		try {
-			html = await ctx.request("/?sortBy=postTime", { responseType: "text", signal: ctx.signal, priority: "low" });
-		} catch {
-			return;
-		}
-		const doc = new DOMParser().parseFromString(html, "text/html");
-		const checked = nsmaxSpecialChecked(), known = nsmaxSpecialPostMap(), rows = nsmaxLotteryRows();
-		const todo = [];
-		for (const item of doc.querySelectorAll("ul.post-list > li.post-list-item")) {
-			const id = item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1];
-			if (!id) continue;
-			if ((known.get(id) || "").split(",").includes("lottery")) {
-				if (!rows.has(id)) nsmaxRememberLotteryRow(item);
-			} else if (!checked.has(id) && !known.has(id) && todo.length < 20) todo.push([id, item]);
-		}
-		while (todo.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) {
-			const [id, item] = todo.shift();
-			await nsmaxCheckSpecialPost(ctx, id, item);
-			// 正在看「抽奖」分类：认出来就并进列表
-			if (nsmaxIsLotteryView() && nsmaxMergeLotteryRows()) nsmaxLotteryRefresh();
-		}
-	}
+	// 2026-11-09 去掉了「抽奖」页上在后台读「新帖子」列表、一篇篇查标题没写「抽奖」的帖子（一次 20 篇，容易被限流）。
+	// 这类抽奖帖点开过就会按开奖链接认出来，并进「抽奖」页（见 nsmaxPrizeBadges、nsmaxMergeLotteryRows）
 	// 认出来的抽奖帖在列表上的样子（标题、作者、版块、浏览 / 回复数、最后回复、时间），记在本机，最多 200 篇（编号最大的那些）
 	var NSMAX_LOTTERY_ROWS_KEY = "nsmax:lottery-rows";
 	var nsmaxLotteryRowsMap;
@@ -25906,15 +25327,9 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 		const translated = (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
 		return old !== translated ? translated : null;
 	}
-	// 页面解析阶段就把时间改成中文（设置里关掉「中文时间」或「内容增强」时不改）；原文字记在 data-nsmax-time-orig，
+	// 页面解析阶段就把时间改成中文（2026-11-09 起一直开着）；原文字记在 data-nsmax-time-orig，
 	// 模块启动后据此登记还原。parsed 判断元素是否已经完整解析（文字没解析完时先不动）。
 	function nsmaxApplyChineseTimes(parsed) {
-		if (nsmaxChineseTimeEnabled == null) {
-			const all = GM_getValue$1(SETTINGS_KEY, {});
-			const reading = all?.["reading-content"];
-			nsmaxChineseTimeEnabled = reading?.enabled !== false && reading?.chineseTime !== false;
-		}
-		if (!nsmaxChineseTimeEnabled) return;
 		for (const el of document.querySelectorAll("time:not([data-nsmax-time-orig]), .date-created:not([data-nsmax-time-orig]), .date-updated:not([data-nsmax-time-orig])")) {
 			if (el.children.length || el.hasAttribute("data-nsmax-time-done") || parsed && !parsed(el) || nsmaxLateRows && el.closest(nsmaxLateRows)) continue;
 			el.setAttribute("data-nsmax-time-done", "");
@@ -25924,7 +25339,6 @@ html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both
 			el.textContent = value;
 		}
 	}
-	var nsmaxChineseTimeEnabled = null;
 	// NQ（NodeQuality 测机）的图标
 	// 列表工具条：NQ 入口挪到顶栏「精华」后面（见 nsmaxUpdateNavEssence），这里只清掉以前放在工具条上的那个；工具条加「投票」「抽奖」
 	function nsmaxEnsureNqEntry(parsed) {
@@ -27807,9 +27221,9 @@ function nsmaxTagStructure() {
 		nsmaxSetText(el, `Lv.${n}`);
 	}
 	// 活跃度标签（2026-10-31，融合「NodeSeek 用户发帖与评论频率」v1.1.0，MIT）：主题数、回帖数按注册天数折成日均，
-	// 按「主题 + 回帖」的日均分七档，再按发帖习惯最多补一个副标签。个人主页统计格、悬停资料卡、帖子作者栏都用这一份。
+	// 按「主题 + 回帖」的日均分七档，名字后面只标两头（潜水、话痨及以上）和新号；个人主页统计格、悬停资料卡、帖子作者栏都用这一份。
 	// 档位：潜水 <0.1（十天不到一次）· 佛系 0.1～0.5 · 正常 0.5～3 · 活跃 3～10 · 话痨 10～25 · 肝帝 25～50 ·
-	// 人机 ≥50（天天每 20 分钟一条，挂机脚本的节奏）。注册不满 30 天的只标「新号」，日均到话痨以上才另外标档位
+	// 人机 ≥50（天天每 20 分钟一条，挂机脚本的节奏）。注册不满 30 天的标「新号」，日均到话痨以上时改标档位
 	var NSMAX_ACTIVITY_TIERS = [
 		[50, "人机", "bot", "日均 50 条以上，天天每 20 分钟一条，像挂机脚本"],
 		[25, "肝帝", "hot", "日均 25～50 条，几乎整天泡在论坛"],
@@ -27842,14 +27256,12 @@ function nsmaxTagStructure() {
 		const postRate = posts / span, commentRate = comments / span, rate = postRate + commentRate;
 		const [, name, tone, hint] = NSMAX_ACTIVITY_TIERS.find(([min]) => rate >= min);
 		const detail = `日均 ${nsmaxRateText(rate)} 条（主题 ${nsmaxRateText(postRate)} + 回帖 ${nsmaxRateText(commentRate)}），注册 ${days} 天`;
+		// 2026-11-09 精简：只标两头。佛系、正常、活跃是大多数人，每个名字后面都挂一个没什么信息量，不再显示；
+		// 「高产楼主 / 只发帖 / 只回帖」副标签也去掉。名字后面最多一个标签
 		const tags = [];
-		if (days < 30) {
-			tags.push({ text: "新号", tone: "new", tip: `注册不满 30 天，日均还不稳定。${detail}` });
-			if (rate >= 10) tags.push({ text: name, tone, tip: `${hint}。${detail}` });
-		} else tags.push({ text: name, tone, tip: `${hint}。${detail}` });
-		// 副标签：日均 1 帖以上的高产楼主；主题比回帖还多的只发帖；一帖没发、回帖上百的只回帖
-		const side = postRate >= 1 ? ["高产楼主", "日均发 1 个主题以上"] : posts >= 10 && comments < posts ? ["只发帖", "主题比回帖还多"] : posts === 0 && comments >= 100 ? ["只回帖", "回帖上百，一个主题没发过"] : null;
-		if (side && tags.length < 2) tags.push({ text: side[0], tone: "style", tip: `${side[1]}。${detail}` });
+		const loud = rate >= 10, quiet = rate < 0.1;
+		if (days < 30) tags.push(loud ? { text: name, tone, tip: `注册不满 30 天。${hint}。${detail}` } : { text: "新号", tone: "new", tip: `注册不满 30 天，日均还不稳定。${detail}` });
+		else if (loud || quiet) tags.push({ text: name, tone, tip: `${hint}。${detail}` });
 		return { days, posts, comments, postRate, commentRate, rate, tags };
 	}
 	// 在 host 里放一组活跃度标签（class nsmax-activity-tag）；同样的内容不动 DOM。info 为 null 或功能关了时清掉
@@ -31019,7 +30431,7 @@ function nsmaxTagStructure() {
 			requestSettings$1,
 			modernTheme,
 			leanUiFeature,
-			...readingFeatures.filter((feature) => feature.id !== "reading-history" && (isForum || isEditor || feature.id === "reading-content")),
+			...readingFeatures.filter((feature) => (isForum || isEditor || feature.id === "reading-content")),
 			...filteringFeatures.filter((feature) => !(isNotification || isSetting) || feature.id === "content-filter"),
 			...actionFeatures.filter((feature) => feature.id === "attendance" ? !(isNotification || isSetting) : isEditor ? ["compose", "image-upload"].includes(feature.id) : false),
 			...(isForum ? [hotRankings, recentVisitsFeature, personHoverFeature, myRepliesFeature] : isSide ? [hotRankings, recentVisitsFeature, personHoverFeature] : []),
@@ -31030,7 +30442,6 @@ function nsmaxTagStructure() {
 			...(isEditor ? [codeHighlight] : []),
 			...(!/^\/(?:new|edit)-discussion/.test(page) && !isNotification && !isSetting ? [postPreview] : []),
 			...(isForum ? [listInteractions] : []),
-			...(isSpace ? [discussionStatsFeature] : []),
 			sidebarNav
 		];
 		if (new Set(features.map((feature) => feature.id)).size !== features.length) throw new Error("重复功能 ID");
@@ -31038,7 +30449,7 @@ function nsmaxTagStructure() {
 		const settingsFeatures = [
 			requestSettings$1,
 			modernTheme,
-			...readingFeatures.filter(feature => !["reading-history", "reading-navigation"].includes(feature.id)),
+			...readingFeatures,
 			...filteringFeatures,
 			...actionFeatures.filter(feature => ["compose", "image-upload", "attendance"].includes(feature.id)),
 			hotRankings,
@@ -31046,13 +30457,13 @@ function nsmaxTagStructure() {
 			...relationshipFeatures,
 			codeHighlight,
 			postPreview,
-			discussionStatsFeature,
 			sidebarNav,
 			leanUiFeature,
 			recentVisitsFeature,
 			myRepliesFeature,
 			personHoverFeature,
-			activityTagsFeature
+			activityTagsFeature,
+			messagesFeature
 		];
 		let settingsUI;
 		let lastNotice = { message: "", at: 0 };
@@ -31080,8 +30491,8 @@ function nsmaxTagStructure() {
 			if (settings.compose) settings.compose.enabled = false;
 			if (settings["image-upload"]) settings["image-upload"].enabled = false;
 		}
-		// 列表时间刷新并入「中文时间」，旧的独立开关不再覆盖用户当前的选择。
-		if (settings["list-interactions"]) settings["list-interactions"].enabled = settings["reading-content"]?.enabled !== false && settings["reading-content"]?.chineseTime !== false;
+		// 列表时间刷新跟中文时间一样一直开着（2026-11-09 起没有开关），旧的独立开关不再起作用。
+		if (settings["list-interactions"]) settings["list-interactions"].enabled = true;
 		if (settings["modern-theme"]) settings["modern-theme"] = themeOptions();
 		const stop = startFeatures(features, settings, ui.notify);
 		requestAnimationFrame(revealAll);
