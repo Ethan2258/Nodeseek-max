@@ -15894,18 +15894,16 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   font-size: 1.05em !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  color: var(--text-muted) !important;
-  font-size: 0.93em !important;
+  font-size: 0.95em !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) > :is(h1, h2, h3, h4, h5, h6):first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   margin-top: 0 !important;
 }
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(strong, b):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  color: var(--text-strong) !important;
-  font-weight: 600 !important;
-}
+/* 删除线只画线、字色跟正文一样（2026-11-09 用户：「只是加了个删除线，你怎么把字变成灰的了」；v1.9.32 曾染成浅灰） */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) :is(del, s):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  color: var(--text-subtle) !important;
+  color: inherit !important;
+  opacity: 1 !important;
+  text-decoration: line-through !important;
 }
 /* 引用（不含楼层引用卡片 [data-nsmax-quote]，那个另有头部；样子一致） */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) blockquote:not([data-nsmax-quote]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {

@@ -4,7 +4,7 @@ const test = require("node:test"), assert = require("node:assert/strict");
 const { devices } = require("playwright"), { launch, open } = require("./harness.cjs"), P = require("./fixtures/pages.cjs");
 const ready = (p) => p.waitForFunction(() => performance.getEntriesByName("nsmax:deferred-start").length && !document.documentElement.hasAttribute("data-nsmax-mounting"));
 const pic = (w, h, color) => "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="${color}"/></svg>`);
-const body = `<h1>一级</h1><p>段落</p><h2>二级</h2><h3>三级</h3><h4>四级</h4><blockquote><p>引用</p></blockquote>
+const body = `<h1>一级</h1><p id="nsmax-del-probe">段落 <del>删掉的话</del> <strong>加粗</strong></p><h2>二级</h2><h3>三级</h3><h4>四级</h4><blockquote><p>引用</p></blockquote>
 <pre><code class="language-bash">@Impart_VIP_Bot</code></pre><pre><code>no language</code></pre>
 <table><thead><tr><th>套餐</th><th>价格</th></tr></thead><tbody><tr><td>1C1G</td><td>¥99/年</td></tr></tbody></table>
 <p><img class="sticker" src="${pic(40, 40, "#f59e0b")}" alt="表情"> <img src="/nsmax-missing-image.png" alt="坏图"> <img src="${pic(1600, 1000, "#4f7cff")}" alt="第一张" width="320" height="200"> <img src="${pic(900, 1400, "#22c55e")}" alt="第二张" width="200" height="300"></p>`;
@@ -27,7 +27,10 @@ test("正文：代码块顶上是标题栏（语言名 + 常显的「复制」�
 				const head = getComputedStyle(bash, "::before");
 				const size = (sel) => parseFloat(getComputedStyle(art.querySelector(sel)).fontSize);
 				const quote = getComputedStyle(art.querySelector("blockquote"));
+				const probe = art.querySelector("#nsmax-del-probe");
+				const del = getComputedStyle(probe.querySelector("del")), para = getComputedStyle(probe);
 				return {
+					del: [del.color === para.color, del.textDecorationLine, getComputedStyle(probe.querySelector("strong")).color === para.color],
 					labels: [bash.getAttribute("data-nsmax-lang"), plain.getAttribute("data-nsmax-lang")],
 					head: [head.content, head.height],
 					copyOpacity: getComputedStyle(copy).opacity,
@@ -39,6 +42,7 @@ test("正文：代码块顶上是标题栏（语言名 + 常显的「复制」�
 					table: r(art.querySelector("table")).width < r(art).width / 2
 				};
 			});
+			assert.deepEqual(s.del, [true, "line-through", true], "删除线和加粗只改线和字重，字色跟正文一样");
 			assert.deepEqual(s.labels, ["Bash", "代码"]);
 			assert.equal(s.head[1], "36px", "标题栏 36px");
 			assert.notEqual(s.head[0], "none", "标题栏有内容");
