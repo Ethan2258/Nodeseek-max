@@ -16321,3 +16321,182 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
     padding-block: 0 !important;
   }
 }
+
+/* ---------- 电脑端统一尺寸 · 第二批（2026-11-09，在用户自己的 Chrome 里逐页量出来的） ---------- */
+@media (min-width: 801px) {
+  /* 28px 小胶囊：回复框上面「使用 Markdown 编辑器 / 上传附件 / 表情 / 预览」（31.5px）、代码块「复制」（26px）、楼中楼「我也说一句」（27px）、
+     列表右边的版块小标（26.6px）、设置「关于」里的「检查更新」（31px） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) :is(.md-editor .nsmax-editor-controls > button, .nsmax-code .nspp-copy-button, #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-say, #nsk-body-left ul.post-list > li.post-list-item .post-info > .post-category):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    min-height: 0 !important;
+    padding-block: 0 !important;
+    font-size: 12px !important;
+    line-height: 26px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.post-list > li.post-list-item .post-info > .post-category:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding-inline: 10px !important;
+  }
+  /* 发帖页精简编辑器搭好之前的占位（见上面「精简编辑器要等站点建好 CodeMirror」那段）：工具按钮矮了 3.75px，占位也跟着矮，搭好时不跳 */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="new"] .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+    height: calc(var(--nsmax-editor-height, 150px) + 78.25px) !important;
+    padding-top: 78.25px !important;
+  }
+  /* 「加载下一页」：以前是一行没有边框的灰字，和别处「加载更多」不一样。现在同样是 28px 细线胶囊，居中 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .comment-container > button.nspp-action:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left > button.nspp-action:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    width: auto !important;
+    height: 28px !important;
+    margin: 12px auto 0 !important;
+    padding: 0 14px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r-pill) !important;
+    background: var(--panel) !important;
+    color: var(--text-muted) !important;
+    font-size: 12px !important;
+    line-height: 26px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .comment-container > button.nspp-action:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left > button.nspp-action:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-color: var(--line-strong) !important;
+    background: var(--panel-hover) !important;
+    color: var(--text) !important;
+  }
+  /* 34px：别人主页右上角「私信」「TG」（40px）、关键词屏蔽里的输入框（36px，旁边「添加」34px）、深浅色菜单的三项（36px、13.5px 字） */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .nsmax-space-top a.btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 34px !important;
+    min-height: 0 !important;
+    padding-block: 0 !important;
+    font-size: 13px !important;
+    line-height: 32px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-pop[data-kind=keywords] form.nsmax-pop-form input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 34px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-pop .nsmax-pop-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    min-height: 34px !important;
+  }
+  /* 帖子标题里的「已回复」「已参与」这类小标：列表里 18px，帖子标题里却是 26px、13px 字，和别处不是一套。统一 18px、11px */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge, .nsmax-replied-badge, .nsmax-joined-badge):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 18px !important;
+    padding: 0 7px !important;
+    font-size: 11px !important;
+    line-height: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-my-replies > .nsmax-my-replies-label:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 18px !important;
+    line-height: 18px !important;
+  }
+  /* 悬停预览卡的头部上 12 下 10，改成上下一样 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) dialog.nspp-post-preview > header:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding: 12px 14px !important;
+  }
+  /* 右栏：
+     - 三块面板的标题三种样子（今日热门 12.5px/500、最近浏览 13px/400 浅一级、版块简介 12.5px/500），统一 12.5px/500 弱化字；
+     - 行距三种（菜单 30.8px、最近浏览 31px、今日热门 31.5px），统一 32px 一行；
+     - 「最近浏览」右上角的「清空」是全页唯一的 6px 方角小字按钮，换成和别处一样的胶囊；
+     - 「我的通知」的未读数 10px 字，深色下还是粉底黑字，看不清；换成 11px、和浅色一样的红底白字 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-right-panel-container :is(.nsmax-recent-panel h2, .nsmax-hot-panel .nsmax-hot-title, .nsk-panel > h4):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--text-muted) !important;
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    line-height: 20px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-menu > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-block: 4px !important;
+    line-height: 24px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-right-panel-container .nsmax-recent-panel a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-block: 4px !important;
+    line-height: 24px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-hot-panel .nsmax-hot-list a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 32px !important;
+    padding-block: 6px !important;
+    line-height: 20px !important;
+  }
+  /* 热门还没到时的骨架行也是 32px（以前 31.5px，十行差 5px，热门一到页脚往下挪一下） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-hot-panel .nsmax-hot-list > li.nsmax-hot-skeleton:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    min-height: 32px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-hot-panel .nsmax-hot-list a > *:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    line-height: 20px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-recent-panel > .nsmax-recent-clear:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 22px !important;
+    padding: 0 8px !important;
+    border-radius: var(--r-pill) !important;
+    font-size: 12px !important;
+    line-height: 22px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-right-panel-container .nsmax-account-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    min-width: 16px !important;
+    height: 16px !important;
+    background: #d93025 !important;
+    color: #fff !important;
+    font-size: 11px !important;
+  }
+  /* 个人主页等级那一行：「Lv.6」往下错了 2px、中间「MAX」13px 比两边大，三样东西的字不在一条线上；按基线对齐，都是 12.5px。
+     进度条浅色下是墨色实心，太重；和深色一样用黄色 */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container > .nsmax-space-progress:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    align-items: baseline !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .nsmax-space-progress-level > .nsmax-level-n:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-top: 0 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container > .nsmax-space-progress > .nsmax-space-progress-percent:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12.5px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container > .nsmax-space-progress > i:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    align-self: center !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container > .nsmax-space-progress > i > b:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    background: var(--mark) !important;
+  }
+  /* 标题后面的小锁 / 只读：4px 方角，同一行的页码、已回复都是胶囊，两种角放在一起。也改成胶囊 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(span[data-nsmax-lock], .min-grade, .nsk-badge.read-only, .nspp-readonly):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .discussion-wrapper > :is(div.discussion-item > a, a.discussion-item) > span + span:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-radius: var(--r-pill) !important;
+  }
+}
+/* ---------- 电脑端统一尺寸 · 第三批（2026-11-09，通知 / 私信 / 粉丝页在用户 Chrome 里量的） ---------- */
+@media (min-width: 801px) {
+  /* 粉丝 / 关注 / 查找用户卡片上的「关注 · 私信 · 转账」：29px、13px → 28px、12px，和帖子里的楼层操作一档 */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions > .btn[data-nsmax-unfollow]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    padding: 0 11px !important;
+    font-size: 12px !important;
+    line-height: 26px !important;
+  }
+  /* 通知顶上「刷新 / 全部已读」12.5px → 12px，和同高的小胶囊一样 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top :is(.nsmax-notice-tools, .nspp-messages-top-actions) > button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12px !important;
+  }
+  /* 标签后面的未读数：10px 数字太小，深色模式下还是粉色（#ff9999）的底配白字，看不清。和右栏账号菜单的未读一样：红底白字 11px */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nsmax-message-tabs .nspp-messages-count:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    background: #d93025 !important;
+    color: #fff !important;
+    font-size: 11px !important;
+  }
+  /* 私信输入框下面「附件 / 预览」：30px、8px 角、12.5px → 28px 胶囊、12px，和右边的「发送」（第一批改成 34px）配一行 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-message-editor-toolbar > button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    padding: 0 11px !important;
+    border-radius: var(--r-pill) !important;
+    font-size: 12px !important;
+  }
+}
+/* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
+html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
+  content: "" !important;
+}

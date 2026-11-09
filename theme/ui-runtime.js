@@ -5283,6 +5283,37 @@ function nsmaxTagStructure() {
 		observer.observe(document.body, { childList: true, subtree: true });
 		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxSpaceWatching = false; }, { once: true });
 		try { nsmaxPrepareSpace(); } catch {}
+		// 切换「主题 / 回帖 / 收藏」标签（2026-11-09 在用户 Chrome 里实测）：站点先把旧列表清空、再去拿新的，中间 0.3–0.4 秒
+		// 列表是空的——卡片里先闪一下「还没有发过主题」，整块从 800px 缩到 100px 左右再长回去，页脚和右栏跟着上下跳。
+		// 点标签的那一刻记下卡片高度、先撑住，新内容到了（或者站点画出真正的空状态插图）再放开；这段时间不写「还没有……」
+		let release = null;
+		document.addEventListener("click", (event) => {
+			const tab = event.target instanceof Element && event.target.closest(".selector > a.select-item");
+			if (!tab || tab.classList.contains("active") || tab.classList.contains("router-link-exact-active")) return;
+			const box = tab.closest(".selector");
+			if (!box) return;
+			release?.();
+			box.style.setProperty("min-height", box.offsetHeight + "px", "important");
+			root.setAttribute("data-nsmax-space-switching", "");
+			let watch = null, timer = 0;
+			const done = () => {
+				if (release !== done) return;
+				release = null;
+				watch?.disconnect();
+				clearTimeout(timer);
+				box.style.removeProperty("min-height");
+				root.removeAttribute("data-nsmax-space-switching");
+			};
+			release = done;
+			// 点下去的时候已经在的行记下来；之后出现了不在这里面的行（或者站点画出空状态插图）才算新内容到了
+			const old = new WeakSet();
+			const fresh = '.discussion-wrapper > *, .comments-list > *, img[src*="/static/image/empty.svg"]';
+			for (const row of box.querySelectorAll(fresh)) old.add(row);
+			const arrived = () => [...box.querySelectorAll(fresh)].some((row) => !old.has(row));
+			watch = new MutationObserver(() => { if (arrived()) requestAnimationFrame(done); });
+			watch.observe(box, { childList: true, subtree: true });
+			timer = setTimeout(done, 1500);
+		}, { capture: true, signal: ctx.signal });
 	}
 	// Userscripts 的 content world 不能直接读页面 expando。桥只访问论坛配置和编辑器；不暴露任何 GM API 或存储。
 	function nsmaxCreateUserscriptsBridge() {
