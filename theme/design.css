@@ -2941,53 +2941,6 @@ html[data-nsmax-theme] .nsmax-prize-badge {
   line-height: 1.6 !important;
   vertical-align: middle !important;
 }
-/* 交易小标（2026-11-06 跟 sb.sb .mk-tag）：标题开头的【出】【收】……括号藏起来，字画成 0 6px、11px/500 的彩色小标，
-   字色是种类色、底色是种类色 12%；已出 / 已收这类次底色灰字。
-   2026-11-07 对齐：外层 .nsmax-mk 跟标题同字号同行高、顶对齐、高度正好一行，里面的 .nsmax-mk-t 才是看得见的小标，
-   在这一行里竖直居中——不靠 vertical-align: middle（那个按字体的 x 高度算，iPhone 苹方下小标比标题低）。
-   圆角最多 4px：圆角模式下 12px 的 --r 会把这么小的标签变成药丸 */
-html[data-nsmax-theme] .nsmax-mk {
-  --mk-c: #c2410c;
-  display: inline-flex !important;
-  align-items: center !important;
-  height: 1.5em !important;
-  height: 1lh !important;
-  margin: 0 5px 0 0 !important;
-  padding: 0 !important;
-  font-size: inherit !important;
-  line-height: inherit !important;
-  white-space: nowrap !important;
-  vertical-align: top !important;
-  text-decoration: none !important;
-}
-html[data-nsmax-theme] .nsmax-mk > .nsmax-mk-t {
-  display: block !important;
-  padding: 0 6px !important;
-  border-radius: min(var(--r), 4px) !important;
-  background: color-mix(in srgb, var(--mk-c) 12%, transparent) !important;
-  color: var(--mk-c) !important;
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  line-height: 18px !important;
-  white-space: nowrap !important;
-}
-html[data-nsmax-theme] .nsmax-mk[data-mk="buy"] { --mk-c: #1d4ed8; }
-html[data-nsmax-theme] .nsmax-mk[data-mk="offer"] { --mk-c: #047857; }
-html[data-nsmax-theme] .nsmax-mk[data-mk="seek"] { --mk-c: #6d28d9; }
-html[data-nsmax-theme] .nsmax-mk[data-mk="done"] { --mk-c: var(--text-muted); }
-html[data-nsmax-theme] .nsmax-mk[data-mk="done"] > .nsmax-mk-t { background: var(--panel-alt) !important; }
-html[data-nsmax-theme][data-nsmax-dark] .nsmax-mk { --mk-c: #fb923c; }
-html[data-nsmax-theme][data-nsmax-dark] .nsmax-mk[data-mk="buy"] { --mk-c: #60a5fa; }
-html[data-nsmax-theme][data-nsmax-dark] .nsmax-mk[data-mk="offer"] { --mk-c: #34d399; }
-html[data-nsmax-theme][data-nsmax-dark] .nsmax-mk[data-mk="seek"] { --mk-c: #a78bfa; }
-html[data-nsmax-theme][data-nsmax-dark] .nsmax-mk[data-mk="done"] { --mk-c: var(--text-muted); }
-html[data-nsmax-theme] .nsmax-mk > .nsmax-mk-b { display: none !important; }
-/* 帖子页大标题里大一号：sb.sb .mk-tag 正常 12px、0 7px */
-html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 .nsmax-mk > .nsmax-mk-t {
-  padding: 0 7px !important;
-  font-size: 12px !important;
-  line-height: 21px !important;
-}
 /* 到了开奖时间的抽奖帖：sb.sb .lottery-badge-done + .special-ended——次底色、细线框、弱化字的「抽奖」「已结束」 */
 html[data-nsmax-theme] .nsmax-ended-badge {
   display: inline-block !important;

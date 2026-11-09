@@ -667,46 +667,6 @@
 		} else if (!on && badge) badge.remove();
 		return on ? badge : null;
 	}
-	// 交易标签（2026-11-06 跟 sb.sb index.2b8d1ab929.css 的 .mk-tag）：sb.sb 给交易帖标题前加了彩色小标「我要卖 / 我要买」。
-	// NodeSeek 没有这类字段，楼主自己写在标题开头的【出】【收】【求】【换】【已出】这类就画成同样的小标：括号藏起来、
-	// 字留着并染色（出 / 售 橙、收 / 买 蓝、求 紫、换 / 租 绿、已出 / 已收 / 已售这类灰）。只拆文字节点不改字，
-	// 标题的 textContent 原样不变（屏蔽关键词、抽奖结束判断、复制标题都不受影响）
-	// 2026-11-08 加拼车（照 sb.sb 的「车等人」绿、「人等车」紫、「已满员」灰）：NodeSeek 上楼主写成【车找人】[车找人1/2]【人找车】【拼车 2/4】
-	// 【已满】这类，后面可以带人数（1/2、缺1）；还有【出鸡】【收鸡】（出 / 收 VPS）。sb.sb 的「可中介 / 中介」「已关闭 / 已过期」「旧帖」
-	// 来自它自己的交易信息卡，NodeSeek 没有这些数据，不加
-	var NSMAX_MARKET_PREFIX = /^(\s*)([【\[［])(\s*(?:已出售?|已售出?|已收到?|已换|已租|已完成|已满员?|已发车|满员|车满|出售|收购|求购|求租|出租|置换|交换|出鸡|收鸡|车找人|车等人|人找车|人等车|求上车|求车|拼车|发车|出|售|卖|收|买|求|换|租)(?:\s*[0-9０-９]+\s*[/／]\s*[0-9０-９]+|\s*缺\s*[0-9０-９]+)?\s*)([】\]］]\s*)/;
-	function nsmaxMarketKind(word) {
-		const base = word.replace(/\s*(?:[0-9０-９]+\s*[/／]\s*[0-9０-９]+|缺\s*[0-9０-９]+)$/, "").trim();
-		if (base.startsWith("已") || /^(?:满员|车满)$/.test(base)) return "done";
-		if (/^(?:出售?|售|卖|出鸡)$/.test(base)) return "sell";
-		if (/^(?:收购?|买|收鸡)$/.test(base)) return "buy";
-		if (/^(?:人找车|人等车|求上车|求车)$/.test(base)) return "seek";
-		if (/^求/.test(base)) return "seek";
-		return "offer";
-	}
-	function nsmaxMarketTag(link) {
-		const node = link.firstChild;
-		if (node?.nodeType !== 3) return;
-		const match = NSMAX_MARKET_PREFIX.exec(node.data);
-		if (!match) return;
-		const tag = node.splitText(match[1].length);
-		tag.splitText(match[0].length - match[1].length);
-		const span = document.createElement("span");
-		span.className = "nsmax-mk";
-		span.dataset.mk = nsmaxMarketKind(match[3].trim());
-		const open = document.createElement("span"), close = document.createElement("span");
-		open.className = close.className = "nsmax-mk-b";
-		open.textContent = match[2];
-		// 括号后面的空格也收进藏起来的那段：小标自带右边距，不然小标和标题之间空得比别处宽
-		close.textContent = match[4];
-		// 字单独包一层（2026-11-07）：外层占满标题的整行高、内容竖直居中，小标就跟标题文字对齐，不再看字体度量
-		// （iPhone 苹方下 vertical-align: middle 会让小标比标题低 2px 左右）
-		const word = document.createElement("span");
-		word.className = "nsmax-mk-t";
-		word.textContent = match[3];
-		span.append(open, word, close);
-		tag.replaceWith(span);
-	}
 	// 抽奖帖怎么认（2026-10-18 起只认抽奖、只看正文；投票帖不再挂小标）：
 	// 1. 打开过的帖子：主帖正文里有开奖链接（/lucky?…）才算是；
 	// 2. 列表里标题像的（抽奖 / 开奖 / 抽 N 个 / giveaway……）：在后台打开它的第一页看一眼主帖正文，页面在后台时不查；
@@ -1386,7 +1346,7 @@
 		nsmaxQueryEach([".post-list-item .post-title", ".nsk-post>.post-title h1"], (title) => {
 			const link = title.querySelector("a");
 			if (!link || nsmaxLateRows && title.closest(nsmaxLateRows)) return;
-			if (!link.firstElementChild?.classList.contains("nsmax-mk")) nsmaxMarketTag(link);
+			// 交易 / 拼车小标（【出】【收】【车找人】……）2026-11-09 按用户要求整类去掉，标题原样显示
 			const id = (link.getAttribute("href") || "").match(/\/post-(\d+)/)?.[1] || postId;
 			// 列表只标已确认的抽奖；投票页面标题按参考样式显示蓝色小标。
 			const lottery = (id && known.get(id) || "").split(",").includes("lottery");
