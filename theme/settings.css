@@ -43,7 +43,7 @@ h2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-heigh
 .version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11.5px/20px var(--s-mono)}
 .link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap}
 .link:hover{text-decoration:underline}
-.close{display:grid;place-items:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle)}
+.close{display:grid;place-items:center;flex:none;width:28px;height:28px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle)}
 .close:hover{background:var(--s-panel-hover);color:var(--s-text)}
 .close svg{display:block;width:16px;height:16px}
 /* 分页：sb.sb .tab-bar / .tab——12px 4px、14px 弱化字，当前页正文色 500 + 底部 2px 墨色线；右侧搜索框 */
@@ -73,27 +73,27 @@ h2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-heigh
 .module-fields{display:grid;gap:14px;margin-top:12px}
 .module[data-off] .module-fields{opacity:.5}
 /* 勾选：sb.sb .check——15px 勾选框（品牌色）+ 13.5px 文字，间距 6px */
-.check{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;color:var(--s-text);font-size:13.5px;line-height:1.6;cursor:pointer}
+.check{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;color:var(--s-text);font-size:13px;line-height:1.6;cursor:pointer}
 .check small{margin-left:2px;color:var(--s-subtle);font-size:12.5px}
 .module-toggle{gap:6px}
 .module-toggle .module-title{cursor:pointer}
 input[type=checkbox]{flex:none;width:15px;height:15px;margin:0;accent-color:var(--s-brand);cursor:pointer}
 /* 字段：sb.sb .grid——标签 13.5px/500，下面 12.5px 弱化说明，最宽 520px */
 .grid{display:block;max-width:520px}
-.label{display:block;margin-bottom:5px;color:var(--s-text);font-size:13.5px;font-weight:500;line-height:1.6}
+.label{display:block;margin-bottom:5px;color:var(--s-text);font-size:13px;font-weight:500;line-height:1.6}
 .label small{display:block;margin-top:2px;color:var(--s-muted);font-size:12.5px;font-weight:400;line-height:1.6}
 /* 输入框：sb.sb——7px 10px、深一级细线、输入框圆角、面板底、14px；聚焦黄色描边 + 3px 浅黄光圈 */
-input:not([type=checkbox]):not([type=file]),select,textarea{display:block;width:100%;min-width:0;margin:0;padding:7px 10px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-input);background:var(--s-panel);color:var(--s-text);font:inherit;font-size:14px;line-height:1.5;box-shadow:none}
+input:not([type=checkbox]):not([type=file]),select,textarea{display:block;width:100%;min-width:0;margin:0;padding:6px 10px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-input);background:var(--s-panel);color:var(--s-text);font:inherit;font-size:14px;line-height:20px;box-shadow:none}
 input::placeholder,textarea::placeholder{color:var(--s-muted)}
 textarea{min-height:96px;line-height:1.7;resize:vertical}
 select{appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--s-muted) 50%),linear-gradient(135deg,var(--s-muted) 50%,transparent 50%);background-position:right 16px top 55%,right 11px top 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;cursor:pointer}
 input:not([type=checkbox]):focus,select:focus,textarea:focus{border-color:var(--s-field-focus);outline:3px solid var(--s-field-ring);outline-offset:0}
 /* 搜索框、数字框：写在通用输入框规则后面、权重相同，覆盖它的整行宽度 */
-.tabs-row input.search{flex:none;width:200px;margin:8px 0;padding:5px 10px;font-size:13px}
+.tabs-row input.search{flex:none;width:200px;margin:6px 0;padding:6px 10px;font-size:13px}
 .grid input[type=number]{width:160px}
 /* 分段选择：sb.sb .tree-toggle——4px 11px 小胶囊、细线框、12px/500 弱化字；选中墨色实底 */
 .segments{display:flex;flex-wrap:wrap;gap:6px}
-.segments button{padding:4px 11px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12px;font-weight:500;line-height:1.6;white-space:nowrap}
+.segments button{padding:3px 11px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12px;font-weight:500;line-height:20px;white-space:nowrap}
 .segments button:hover{border-color:var(--s-line-strong);background:var(--s-panel-hover);color:var(--s-text)}
 .segments button[aria-checked=true],.segments button[aria-checked=true]:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}
 .segment-note{margin:6px 0 0;color:var(--s-muted);font-size:12.5px;line-height:1.6}
@@ -103,13 +103,13 @@ mark{padding:0;border-radius:2px;background:var(--s-warning-soft);color:inherit;
 /* 底部：sb.sb .settings-actions——line-soft 细线；左边细线框小胶囊工具按钮，右边墨色实底主按钮 */
 .foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--s-line-soft)}
 .foot-tools{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto}
-button.alt{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500;line-height:1.6;white-space:nowrap}
+button.alt{padding:6px 14px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:13px;font-weight:500;line-height:20px;white-space:nowrap}
 button.alt:hover{background:var(--s-panel-hover)}
-button.primary{padding:7px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:14px;font-weight:500;line-height:1.5;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}
+button.primary{padding:6px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:14px;font-weight:500;line-height:20px;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}
 button.primary:hover{border-color:var(--s-action-hover);background:var(--s-action-hover)}
 button:not(:disabled):active{transform:translateY(1px)}
 /* 关于：标题 + 版本、说明、链接、功能列表、检查更新 */
-.about-content{padding:18px 0;font-size:13.5px;line-height:1.7}
+.about-content{padding:18px 0;font-size:13px;line-height:1.7}
 .about-heading{display:flex;align-items:baseline;gap:8px}
 .about-heading>strong{color:var(--s-text-strong);font-size:15px;font-weight:600}
 .about-version{color:var(--s-muted);font:400 12px var(--s-mono)}
