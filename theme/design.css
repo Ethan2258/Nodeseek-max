@@ -16195,3 +16195,129 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
     height: 44px !important;
   }
 }
+
+/* ---------- 电脑端统一尺寸（2026-11-09，用户：「各种各样的排布排列间距。圆角字体字体大小。都给我仔细深刻优化」） ----------
+   以前同一类按钮各写各的：主帖「引用 回复 举报」26px、楼层操作 26px、回复栏「只看楼主」31px、分页 37px、顶栏导航 35px、NQ 33px、
+   「发帖」39px、「回复楼主」41px，UID 21px 而旁边的 Lv 18px。现在电脑端只有四档：
+   - 18px：小标（UID、Lv、楼主、话痨……）
+   - 28px：卡片里的细线小胶囊（主帖操作、楼层操作、回复栏三个开关），字 12px
+   - 34px：页面级控件（顶栏按钮、搜索框、导航、分页、私信里的输入框和按钮）
+   - 40px：主按钮（「发帖」「回复楼主」） */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) :is(#nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item, .nsk-post .nsmax-op-actions > .nsmax-op-action, #nsk-body-left .comment-container :is(.nsmax-owner-only, .nsmax-jump-reply, .nsmax-layout-toggle)):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    min-height: 0 !important;
+    padding-block: 0 !important;
+    padding-inline: 11px !important;
+    font-size: 12px !important;
+    line-height: 26px !important;
+    align-items: center !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.comments > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item > span[data-nsmax-action-count]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    font-size: 12px !important;
+    line-height: inherit !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsk-pager :is(.pager-pos, .pager-prev, .pager-next, .nsmax-pager-ellipsis):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    height: 34px !important;
+    min-width: 34px !important;
+    padding-block: 0 !important;
+    line-height: 32px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-head :is(ul.nav-menu > li > a, a[data-nsmax-header-cat], [data-nsmax-header-cat] > a):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    height: 34px !important;
+    padding-block: 0 !important;
+    line-height: 34px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-head ul.nav-menu > li > a.nsmax-nq-tab:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 34px !important;
+    padding-block: 0 !important;
+    border-radius: var(--r-input) !important;
+    line-height: 32px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-compose:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    height: 40px !important;
+    padding-block: 0 !important;
+    line-height: 40px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor :is(.topic-select, .submit-row) > :is(button.submit, .submit.btn, button[type="submit"]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    box-sizing: border-box !important;
+    height: 40px !important;
+    min-height: 0 !important;
+    padding-block: 0 !important;
+    line-height: 38px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-author-col .nsmax-author-uid:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    box-sizing: border-box !important;
+    height: 18px !important;
+    padding-block: 0 !important;
+    line-height: 16px !important;
+  }
+  /* 字号只用 11 / 12 / 12.5 / 13 / 14 / 15 / 17 / 20px 这几档：11.5px、13.5px、14.5px 这种夹在两档中间、旁边一比就像没对齐的，归到最近一档 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) :is(.nsmax-hot-panel .nsmax-hot-count, #nsk-body-left .nsmax-author-col .nsmax-author-stats > a > span, [data-nsmax-page="space"] .head-container > .card-block > .nsmax-user-stat > .nsmax-user-stat-rate):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12px !important;
+  }
+  /* 私信会话列表的时间和通知列表一样 12.5px（以前 11.5px） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-peer-title > time:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12.5px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 11px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-menu > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) body > footer .nsmax-footer-about:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-chat > .nspp-messages-heading > strong:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 15px !important;
+  }
+  /* 消息中心：
+     - 「加载更多」「刷新」这些按钮鼠标放上去时圆角从胶囊突然变成 12px 的方角，现在一直是胶囊；
+     - 搜索框圆角 9px，和别处输入框（8px）对不上；
+     - 会话列表顶上搜索框 34px 高，旁边的刷新按钮只有 25px，现在一样高；
+     - 通知页右上角筛选框 30px、旁边「刷新」「全部已读」28px，现在都是 28px；
+     - 有未读的会话右边多了一个黄点，把这一行的时间往左挤了 20px，和下面几行的时间对不齐。黄点挪到第二行右边，时间排成一列 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages :is(.nspp-messages-more, .nspp-messages-refresh, .nspp-messages-sync-retry, .nspp-messages-top-actions button, .nspp-messages-search button, .nspp-messages-back):hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-radius: var(--r-pill) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-search input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-radius: var(--r-input) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages[data-nsmax-view="message"] .nspp-messages-sidebar > .nspp-messages-search > button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    padding-block: 0 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top :is(.nsmax-notice-tools, .nspp-messages-top-actions) > :is(button, input):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    min-height: 0 !important;
+    padding-block: 0 !important;
+    line-height: 26px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-peer[data-unread]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    position: relative !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-peer > .nspp-messages-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    position: absolute !important;
+    top: calc(50% + 6px) !important;
+    right: 12px !important;
+    margin: 0 !important;
+  }
+  /* 「加载更多」「加载更多会话」30px → 28px，和旁边的小胶囊一档；私信「发送」32px → 34px，和输入框所在的一档 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    padding-block: 0 !important;
+    line-height: 26px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-compose-actions > .nspp-messages-send:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 34px !important;
+    min-height: 0 !important;
+    padding-block: 0 !important;
+  }
+}

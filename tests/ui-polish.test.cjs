@@ -219,8 +219,8 @@ for(const engine of engines){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...site,html:P.postPage({})});
    try{
     await ready(page);
-    assert.ok(near(await box(page,".nsmax-owner-only"),31,.6));
-    assert.ok(near(await box(page,".comment-container > div:first-child"),54,.6));
+    assert.ok(near(await box(page,".nsmax-owner-only"),28,.6),"回复栏开关和楼层操作一样 28px（2026-11-09 电脑端统一）");
+    assert.ok(near(await box(page,".comment-container > div:first-child"),51,.6),"回复头 51px，和列表工具条、通知标签栏一样高");
     assert.equal(await css(page,".nsk-post article.post-content p","marginBottom"),"12.75px");
     assert.equal(await css(page,".nsk-post > .post-title h1 a","letterSpacing"),"-0.21px");
     assert.deepEqual(errors,[]);
