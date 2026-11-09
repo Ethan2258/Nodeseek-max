@@ -2115,7 +2115,7 @@ test("v1.8.1 设置面板：sb.sb 弹窗与分页、改动自动保存、搜索�
 			await page.getByRole("button", { name: "NodeSeek Max 设置", exact: true }).click();
 			const host = page.locator("#nspp-settings");
 			await host.locator("dialog").waitFor({ state: "visible" });
-			assert.deepEqual(await host.getByRole("tab").allInnerTexts(), ["外观", "浏览", "用户", "工具", "网络", "关于"]);
+			assert.deepEqual(await host.getByRole("tab").allInnerTexts(), ["外观", "浏览", "用户", "工具", "关于"]);
 			const modules = await host.locator(".module").evaluateAll((list) => list.map((m) => ({ id: m.dataset.feature, title: m.querySelector(".module-title")?.textContent.trim() || "" })));
 			assert.ok(modules.length >= 20, `模块数 ${modules.length}`);
 			assert.deepEqual(modules.filter((m) => !m.title), [], "不能有没名字的空白开关");
@@ -2349,7 +2349,8 @@ test("v1.8.0 设置项重做（v1.9.9 起图床选项按所选图床显示）：
 		assert.ok(filter.includes("input:checkbox:lockedAbove"), filter.join());
 		assert.ok(!filter.some((c) => c.startsWith("input:number")), "不再手填当前等级");
 		assert.ok(!filter.includes("input:checkbox:highlight"), "高亮勾选合进「命中后」");
-		await host.getByRole("tab", { name: "网络", exact: true }).click();
+		// 2026-11-09：「网络」页并进「工具」页最后
+		await host.getByRole("tab", { name: "工具", exact: true }).click();
 		assert.deepEqual(await host.locator('.module[data-feature="request-settings"] [role=radio]').allInnerTexts(), ["标准", "稳妥", "最慢"]);
 		assert.equal(await host.locator('.module[data-feature="request-settings"] input[type=number]').count(), 0);
 		await host.getByRole("radio", { name: "稳妥", exact: true }).click();
@@ -2418,10 +2419,10 @@ test("v1.8.0 折叠超长回复（胶囊按钮、底部渐隐）与关键词屏�
 	} finally { await context.close(); }
 });
 
-test("v1.8.0 关键词「只高亮」不隐藏热榜；停在列表标题上不再整页读取看不见的计数、不再后台预渲染", async () => {
+test("v1.8.0 关键词「折叠」时展开的标题标出关键词；停在列表标题上不再整页读取看不见的计数、不再后台预渲染", async () => {
 	const pages = {};
 	for (let i = 0; i < 6; i++) pages[`/post-${1000 + i}-1`] = postPage();
-	const seed = { [OPT_KEY]: { "content-filter": { enabled: true, keywords: "VPS\n甲骨文", mode: "highlight" } } };
+	const seed = { [OPT_KEY]: { "content-filter": { enabled: true, keywords: "VPS\n甲骨文", mode: "collapse" } } };
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages, seed, viewport: { width: 1280, height: 900 } });
 	try {
 		const requests = [];
@@ -2430,7 +2431,6 @@ test("v1.8.0 关键词「只高亮」不隐藏热榜；停在列表标题上不�
 		assert.equal(await page.locator(".post-title mark").count(), 1);
 		const mark = await page.locator(".post-title mark").evaluate((m) => getComputedStyle(m).backgroundColor);
 		assert.notEqual(mark, "rgb(255, 255, 0)", "不是浏览器默认的亮黄");
-		assert.equal(await page.locator(".nsmax-hot-panel li a, .nsmax-hot-list li a").count() >= 10, true, "只高亮时热榜照常显示");
 		assert.equal(await page.locator(".nspp-list-actions").count(), 0, "没有看不见的互动计数条");
 		await page.locator("ul.post-list .post-title a").first().hover();
 		await wait(page, 900);
@@ -4242,7 +4242,9 @@ test("打开更快（2026-10-18）：油猴注入得晚（页面先画出来才�
 		await normal.page.getByRole("button", { name: "NodeSeek Max 设置", exact: true }).click();
 		const host = normal.page.locator("#nspp-settings");
 		await host.getByRole("tab", { name: "关于" }).click();
-		assert.match(await host.locator(".about-timing").innerText(), /画出来之前就运行了/);
+		// 2026-11-09：正常注入时「关于」不再写注入时机，也没有油猴设置提示
+		assert.equal(await host.locator(".about-timing").isHidden(), true);
+		assert.equal(await host.locator(".about-features").isHidden(), true);
 		assert.deepEqual(normal.errors, []);
 	} finally { await normal.context.close(); }
 });
@@ -6638,7 +6640,7 @@ test("v1.8.35 编辑增强：Ctrl+B / I / K / E（再按取消、能撤回）；
 });
 
 // 2026-10-23 第二十二批：新页面打开后不卡
-test("v1.8.35 打开页面不卡：列表首屏预取不再逐个读标题位置（content-visibility 的行不被逼着当场排版）；滚动把标题带到鼠标下面时不弹预览、不预取，鼠标真的动了才弹", async () => {
+test("v1.8.35 打开页面不卡：列表不读标题位置（content-visibility 的行不被逼着当场排版），2026-11-09 起也不在后台先取首屏帖子；滚动把标题带到鼠标下面时不弹预览、不预取，鼠标真的动了才弹", async () => {
 	const pages = {};
 	for (let index = 0; index < 30; index++) pages[`/post-${1000 + index}-1`] = postPage();
 	// 数一数脚本对列表标题读了几次位置
@@ -6646,14 +6648,10 @@ test("v1.8.35 打开页面不卡：列表首屏预取不再逐个读标题位置
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ count: 30 }), pages, init: init + CHECKED_INIT, viewport: { width: 1280, height: 900 } });
 	try {
 		await page.waitForFunction(() => !document.documentElement.hasAttribute("data-nsmax-mounting"));
-		// 标题带「抽奖」的另有后台核对也会取帖子，专门等首屏那 4 篇（2026-10-24 起和别的后台请求一样一篇一篇来、前后隔开）
-		await page.waitForFunction(() => new Set(performance.getEntriesByType("resource").map((entry) => entry.name.match(/\/post-(100[0-3])-1(?:\.html)?$/)?.[1]).filter(Boolean)).size === 4, null, { timeout: 10e3 });
-		await wait(page, 300);
+		// 2026-11-09 起卡片预览不再在空闲时先取首屏几篇；标题带「抽奖」的（每 6 篇一篇）另有后台核对，不算
+		await wait(page, 2500);
 		const prefetched = await page.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\/post-\d+-1(?:\.html)?$/.test(entry.name)).map((entry) => new URL(entry.name).pathname));
-		assert.ok(prefetched.includes("/post-1000-1"), `首屏第一篇预取了：${prefetched}`);
-		// 标题带「抽奖」的（每 6 篇一篇）另有后台核对，不算；其余屏幕外的不预取
-		const offscreen = prefetched.filter((path) => { const index = Number(path.match(/post-(\d+)/)[1]) - 1000; return index >= 8 && index % 6 !== 3; });
-		assert.deepEqual(offscreen, [], "只预取首屏那几篇");
+		assert.deepEqual(prefetched.filter((path) => (Number(path.match(/post-(\d+)/)[1]) - 1000) % 6 !== 3), [], "不再在后台先取帖子");
 		assert.equal(await page.evaluate(() => window.__titleRects), 0, "预取不读标题位置");
 		// 鼠标放在第 2 篇标题上（真的移过去）：预览打开；按 Esc 收起（鼠标还停在标题上）
 		const titles = page.locator("ul.post-list > li.post-list-item .post-title a");
@@ -6979,33 +6977,24 @@ test("2026-10-24 站点限流（429 / 503）时后台的活马上停下：不重
 	} finally { await context.close(); }
 });
 
-test("2026-10-24 按内容认抽奖帖（标题里没写「抽奖」的）：只在「抽奖」分类页上后台读「新帖子」列表第一页、一篇一篇查——开奖链接在主帖里、或者在评论里（指向这一篇）都算，评论里别的帖子的开奖链接不算；认出来的并进「抽奖」分类。点开帖子时也按内容认", async () => {
+test("按内容认抽奖帖（标题里没写「抽奖」的）：开奖链接在主帖里、或者在评论里（指向这一篇）都算，点开帖子时认出来；2026-11-09 起「抽奖」分类页不再在后台读「新帖子」列表一篇篇查", async () => {
 	const link = (id) => `<a href="https://www.nodeseek.com/lucky?post=${id}&amp;time=1893456000000&amp;count=3">https://www.nodeseek.com/lucky?post=${id}</a>`;
 	const pages = {
 		"/": listPage(),
 		// 1000：标题「出一台香港 CN2 GIA 小鸡」，主帖里有开奖链接
 		"/post-1000-1": postPage().replace("</article>", `<p>回复本帖参与 ${link(1000)}</p></article>`),
 		// 1002：主帖只说「评论区随机送出 3 份」，开奖链接是楼主贴在评论里的
-		"/post-1002-1": postPage().replace('href="/post-1000-1" class="post-title-link', 'href="/post-1002-1" class="post-title-link').replace("这是一段正文", "庆祝脚本上线，评论区随机送出 3 份").replace("收了，私信你", `开奖链接 ${link(1002)}`),
-		// 1004：主帖也说送，评论里贴的是别的帖子的开奖链接
-		"/post-1004-1": postPage().replace("这是一段正文", "评论区随机送出 1 份").replace("收了，私信你", `上次那个 ${link(777)}`)
+		"/post-1002-1": postPage().replace('href="/post-1000-1" class="post-title-link', 'href="/post-1002-1" class="post-title-link').replace("这是一段正文", "庆祝脚本上线，评论区随机送出 3 份").replace("收了，私信你", `开奖链接 ${link(1002)}`)
 	};
-	for (const id of [1001, 1003, 1005]) pages[`/post-${id}-1`] = postPage();
 	const asked = [];
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
 		html: searchPage({ count: 0 }), viewport: { width: 1280, height: 900 }, pages,
-		beforeNavigate: (p) => p.on("request", (request) => { const url = new URL(request.url()); if (url.pathname === "/") asked.push(url.search); })
+		beforeNavigate: (p) => p.on("request", (request) => { const url = new URL(request.url()); if (url.pathname === "/" || /^\/post-/.test(url.pathname)) asked.push(url.pathname + url.search); })
 	});
 	try {
-		await page.waitForFunction(() => { try { const c = JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}"); return ["1000", "1001", "1002", "1003", "1004", "1005"].every((id) => id in c); } catch { return false; } }, null, { timeout: 30e3 });
-		assert.deepEqual(asked, ["?sortBy=postTime"], "读的是「新帖子」列表");
-		await page.waitForFunction(() => document.querySelectorAll("li[data-nsmax-lottery-merged]").length === 2, null, { timeout: 5e3 });
-		const state = await page.evaluate(() => ({
-			merged: Array.from(document.querySelectorAll("li[data-nsmax-lottery-merged]"), (li) => li.querySelector(".post-title a").getAttribute("href")).sort(),
-			rows: Object.fromEntries(Object.entries(JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")).map(([id, row]) => [id, row.t]))
-		}));
-		assert.deepEqual(state.merged, ["/post-1000-1", "/post-1002-1"], "标题没写「抽奖」的也认出来、并进来了；评论里别的帖子的开奖链接不算");
-		assert.deepEqual(state.rows, { "1000": "出一台香港 CN2 GIA 小鸡，年付 99", "1002": "分享一个 Docker 一键部署脚本" }, "认出来的记下列表上的样子");
+		await page.waitForFunction(() => document.readyState === "complete");
+		await page.waitForTimeout(3000);
+		assert.deepEqual(asked, [], "不读「新帖子」列表、不在后台查帖子");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 	// 打开帖子本身：开奖链接在评论里，标题前也挂「抽奖」
@@ -7483,7 +7472,7 @@ test("v1.8.44 设置「关于」里说悬停预加载最近有没有用上：上
 		const host = page.locator("#nspp-settings");
 		await host.getByRole("tab", { name: "关于" }).click();
 		const line = host.locator(".about-preload");
-		return { text: await line.innerText(), miss: await line.evaluate((element) => element.hasAttribute("data-miss")), sessionLeft: await page.evaluate(() => JSON.parse(sessionStorage.getItem("nsmax:prefetched")).length) };
+		return { text: await line.evaluate((element) => element.textContent), hidden: await line.isHidden(), miss: await line.evaluate((element) => element.hasAttribute("data-miss")), sessionLeft: await page.evaluate(() => JSON.parse(sessionStorage.getItem("nsmax:prefetched")).length) };
 	};
 	const miss = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), init: seed(""), viewport: { width: 1440, height: 900 } });
 	try {
@@ -7499,6 +7488,7 @@ test("v1.8.44 设置「关于」里说悬停预加载最近有没有用上：上
 		const state = await about(hit.page);
 		assert.match(state.text, /最近点开的 3 个页面里，1 个是鼠标停上去时就提前下载好的/);
 		assert.equal(state.miss, false);
+		assert.equal(state.hidden, true, "2026-11-09：用上了就不在「关于」里显示（只在没用上时提醒）");
 		assert.deepEqual(hit.errors, []);
 	} finally { await hit.context.close(); }
 });

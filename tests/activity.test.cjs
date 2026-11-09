@@ -12,17 +12,30 @@ const ready = (page) => page.waitForFunction(() => document.documentElement.hasA
 const days = (n) => new Date(Date.now() - n * 864e5 - 6e5).toISOString();
 const tags = (page, selector) => page.evaluate((selector) => Array.from(document.querySelectorAll(selector), (el) => ({ text: el.textContent, tone: el.dataset.tone, title: el.title })), selector);
 
-test("个人主页：主题、回帖下面写日均，名字后面标活跃度档位，悬停看具体数字", async () => {
-	// 页面上：加入 659 天、主题 100、评论 873 → 日均 1.48 条，「正常」
+test("个人主页：主题、回帖下面写日均；名字后面只标两头（正常发言的不挂标签，很少说话的标「潜水」），悬停看具体数字", async () => {
+	// 页面上：加入 659 天、主题 100、评论 873 → 日均 1.48 条，「正常」：2026-11-09 起不挂标签
 	const detail = { member_id: 10, member_name: "Steve", rank: 3, coin: 1257, stardust: 26, nPost: 100, nComment: 873, follows: 11, fans: 155, created_at: days(659) };
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage(), api: { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail } }] } });
+	{
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: nativeSpacePage(), api: { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail } }] } });
+		try {
+			await page.waitForSelector(".head-container > .card-block > .nsmax-user-stat .nsmax-user-stat-rate");
+			const rates = await page.evaluate(() => Array.from(document.querySelectorAll(".head-container > .card-block > .nsmax-user-stat"), (cell) => [cell.querySelector(".nsmax-user-stat-label").textContent, cell.querySelector(".nsmax-user-stat-rate")?.textContent || ""]).filter(([, rate]) => rate));
+			assert.deepEqual(rates, [["主题", "日均 0.15 帖"], ["回帖", "日均 1.32 条"]]);
+			await page.waitForTimeout(300);
+			assert.equal(await page.locator(".nsmax-space-title-row .nsmax-activity-tag").count(), 0, "正常档不挂标签");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	// 加入 659 天、主题 5、评论 40 → 日均 0.07 条，「潜水」
+	const quiet = { ...detail, nPost: 5, nComment: 40 };
+	const quietPage = nativeSpacePage().replace("<div>主题帖数</div><div>100</div>", "<div>主题帖数</div><div>5</div>").replace("<div>评论数目</div><div>873</div>", "<div>评论数目</div><div>40</div>");
+	assert.notEqual(quietPage, nativeSpacePage(), "夹具里的统计格式变了");
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10", { html: quietPage, api: { "/api/account/getInfo/10": [{ status: 200, body: { success: true, detail: quiet } }] } });
 	try {
 		await page.waitForSelector(".nsmax-space-title-row .nsmax-activity-tag");
-		const rates = await page.evaluate(() => Array.from(document.querySelectorAll(".head-container > .card-block > .nsmax-user-stat"), (cell) => [cell.querySelector(".nsmax-user-stat-label").textContent, cell.querySelector(".nsmax-user-stat-rate")?.textContent || ""]).filter(([, rate]) => rate));
-		assert.deepEqual(rates, [["主题", "日均 0.15 帖"], ["回帖", "日均 1.32 条"]]);
 		const shown = await tags(page, ".nsmax-space-title-row .nsmax-activity-tag");
-		assert.deepEqual(shown.map(({ text, tone }) => [text, tone]), [["正常", "normal"]]);
-		assert.match(shown[0].title, /日均 1\.48 条（主题 0\.15 \+ 回帖 1\.32），注册 659 天/);
+		assert.deepEqual(shown.map(({ text, tone }) => [text, tone]), [["潜水", "quiet"]]);
+		assert.match(shown[0].title, /日均 0\.07 条（主题 <0\.01 \+ 回帖 0\.06），注册 659 天/);
 		const style = await page.locator(".nsmax-space-title-row .nsmax-activity-tag").evaluate((el) => ({ height: el.getBoundingClientRect().height, background: getComputedStyle(el).backgroundColor }));
 		assert.equal(style.height, 18);
 		assert.notEqual(style.background, "rgba(0, 0, 0, 0)", "档位有底色");
