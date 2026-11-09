@@ -16141,7 +16141,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper, .commen
   content: "还没有收藏" !important;
 }
 /* 查找用户（/member?q=，2026-11-08 Yiheng：「太丑了，重新优化」）：页面按关注页排（同一个 memberList 组件、同一种卡片，见 nsmaxIsFindUser），
-   站点居中的 30px「查找用户🔍」大标题藏掉，换成和关注页标签栏一样的卡片：左边标题，右边搜索框 + 搜索按钮 */
+   站点居中的 30px「查找用户🔍」大标题藏掉，换成和关注页标签栏一样的卡片：左边标题，右边一个和顶栏一样的搜索框（2026-11-09 去掉白底「搜索」按钮，改成框里的放大镜）*/
 html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > h1[data-nsmax-find-heading]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
 }
@@ -16164,65 +16164,83 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-us
   font: 600 15px/1.4 var(--font-sans) !important;
   white-space: nowrap !important;
 }
-html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  flex: 0 1 280px !important;
-  box-sizing: border-box !important;
-  width: 280px !important;
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-field:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: relative !important;
+  display: block !important;
+  flex: 0 1 260px !important;
+  width: 260px !important;
   min-width: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
   height: 34px !important;
   margin: 0 !important;
-  padding: 0 14px !important;
-  border: 1px solid var(--line-strong) !important;
-  border-radius: var(--r-pill) !important;
+  padding: 0 34px 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
   outline: 0 !important;
   background: var(--panel-alt) !important;
   box-shadow: none !important;
   color: var(--text) !important;
-  font: 400 13.5px/32px var(--font-sans) !important;
+  font: 400 14px/32px var(--font-sans) !important;
   -webkit-appearance: none !important;
   appearance: none !important;
+  transition: border-color .12s ease !important;
 }
-html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *)::placeholder {
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::placeholder {
   color: var(--text-subtle) !important;
 }
-html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
-  border-color: var(--action-border, var(--line-strong)) !important;
-  background: var(--panel) !important;
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(:hover, :focus, :focus-visible) {
+  border-color: var(--line-strong) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
 }
-html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  flex: none !important;
-  box-sizing: border-box !important;
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input::-webkit-search-cancel-button {
+  display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
   height: 34px !important;
   margin: 0 !important;
-  padding: 0 16px !important;
+  padding: 0 !important;
   border: 0 !important;
-  border-radius: var(--r-pill) !important;
-  background: var(--action) !important;
+  border-radius: 8px !important;
+  background: transparent !important;
   box-shadow: none !important;
-  color: var(--action-text) !important;
-  font: 500 13.5px/34px var(--font-sans) !important;
+  color: var(--text-muted) !important;
   cursor: pointer !important;
 }
-html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
-  background: var(--action-hover) !important;
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):hover {
+  color: var(--text) !important;
 }
 @media (max-width: 640px) {
   html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > form.nsmax-find-user:is(#nsmax-lv, *):is(#nsmax-b, *) {
     flex-wrap: wrap !important;
-    padding: 12px 12px 12px 14px !important;
+    padding: 12px 14px !important;
   }
   html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
     flex: 1 0 100% !important;
   }
-  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-field:is(#nsmax-lv, *):is(#nsmax-b, *) {
     flex: 1 1 auto !important;
     width: auto !important;
+  }
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
     height: 44px !important;
+    padding-right: 44px !important;
     font-size: 16px !important;
     line-height: 42px !important;
   }
-  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-submit:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    width: 44px !important;
     height: 44px !important;
-    line-height: 44px !important;
   }
 }
