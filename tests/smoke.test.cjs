@@ -7558,12 +7558,16 @@ test("2026-11-08：查找用户（/member?q=）按关注页的成员卡片排：
 				heading: getComputedStyle(document.querySelector(".member-list > h1")).display,
 				q: document.querySelector(".nsmax-find-user-input")?.value,
 				title: document.querySelector(".nsmax-find-user-title")?.textContent,
+				// 2026-11-09：搜索框和顶栏「搜索关键词」一个样子（同高、同圆角、同底色），按钮是框里的放大镜，不是白底「搜索」
+				field: (() => { const i = getComputedStyle(document.querySelector(".nsmax-find-user-input")), h = getComputedStyle(document.querySelector("form.search-box")), btn = getComputedStyle(document.querySelector(".nsmax-find-user-submit")); return { same: [i.height, i.borderTopLeftRadius, i.backgroundColor].join() === [h.height, h.borderTopLeftRadius, h.backgroundColor].join() || [i.height, i.borderTopLeftRadius, i.backgroundColor, h.height, h.borderTopLeftRadius, h.backgroundColor].join(), btnBg: btn.backgroundColor }; })(),
 				rows: [...document.querySelectorAll(".nsmax-member")].map((r) => ({ bio: r.querySelector(".nsmax-member-bio").textContent, lv: r.querySelector("[data-nsmax-level]")?.textContent, buttons: [...r.querySelectorAll(".nsmax-member-actions > .btn")].map((b) => ({ t: b.textContent.trim(), bg: getComputedStyle(b).backgroundColor, h: b.getBoundingClientRect().height })) }))
 			}));
 			assert.equal(s.page, "fans");
 			assert.equal(s.heading, "none", "站点 30px 大标题藏掉");
 			assert.equal(s.title, "查找用户");
 			assert.equal(s.q, "锐评猫");
+			assert.equal(s.field.same, true, JSON.stringify(s.field));
+			assert.equal(s.field.btnBg, "rgba(0, 0, 0, 0)");
 			assert.deepEqual(s.rows.map((r) => [r.bio, r.lv]), [["加入 29 天", "Lv.0"], ["加入 400 天", "Lv.2"]]);
 			for (const r of s.rows) {
 				assert.deepEqual(r.buttons.map((b) => b.t), ["关注", "私信", "转账"]);

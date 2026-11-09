@@ -4793,11 +4793,17 @@ function nsmaxTagStructure() {
 		input.setAttribute("aria-label", "用户名");
 		input.autocomplete = "off";
 		input.value = new URLSearchParams(location.search).get("q") || "";
+		// 搜索框和顶栏的「搜索关键词」一个样子：8px 圆角、细线框、右边一个放大镜（2026-11-09 Yiheng：白框 + 白底「搜索」按钮在深色下怪）
+		const field = document.createElement("span");
+		field.className = "nsmax-find-user-field";
 		const submit = document.createElement("button");
 		submit.type = "submit";
 		submit.className = "nsmax-find-user-submit";
-		submit.textContent = "搜索";
-		bar.append(title, input, submit);
+		submit.setAttribute("aria-label", "搜索");
+		submit.title = "搜索";
+		submit.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>';
+		field.append(input, submit);
+		bar.append(title, field);
 		bar.addEventListener("submit", (event) => {
 			event.preventDefault();
 			const q = input.value.trim();
