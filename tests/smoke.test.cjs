@@ -5621,7 +5621,9 @@ test("第十五批（2026-10-20）：帖子页首屏以外楼层的作者资料�
 
 // 第十六批（2026-10-20）
 test("第十六批（2026-10-20）：在新标签页打开的帖子链接，悬停时也用浏览器原生预取（Speculation Rules，新标签页里也用得上）；不再插 <link rel=prefetch>（站点网页没有缓存头，点开时用不上，每次悬停白取一遍）", async () => {
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), viewport: { width: 1280, height: 900 } });
+	// 卡片预览开着时帖子标题只在按下时预取（见下一条），这里关掉卡片预览看悬停预取本身
+	const seed = { [OPT_KEY]: { "post-preview": { enabled: false } } };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), seed, viewport: { width: 1280, height: 900 } });
 	try {
 		await wait(page, 1200);
 		const link = page.locator("ul.post-list .post-title a").nth(1);
@@ -5640,6 +5642,27 @@ test("第十六批（2026-10-20）：在新标签页打开的帖子链接，悬�
 		const otherHref = await other.evaluate((a) => a.href);
 		await other.evaluate((a) => a.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 1 })));
 		assert.equal(await page.evaluate((href) => Array.from(document.querySelectorAll("script[type=speculationrules]")).some((s) => s.textContent.includes(href)), otherHref), true, "中键按下也预取");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("2026-11-09 真站：卡片预览管的帖子标题，悬停时不再另外预取一份（卡片自己会取正文），按下时才预取", async () => {
+	const pages = {};
+	for (let i = 0; i < 6; i++) pages[`/post-${1000 + i}-1`] = postPage();
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), pages, viewport: { width: 1280, height: 900 } });
+	try {
+		await wait(page, 1200);
+		const rules = (href) => page.evaluate((href) => Array.from(document.querySelectorAll("script[type=speculationrules]")).some((s) => s.textContent.includes(href)), href);
+		const requests = [];
+		page.on("request", (r) => { if (/\/post-\d+/.test(r.url())) requests.push(new URL(r.url()).pathname); });
+		const link = page.locator("ul.post-list .post-title a").first();
+		const href = await link.evaluate((a) => a.href);
+		await link.hover();
+		await wait(page, 900);
+		assert.equal(await rules(href), false, "悬停不另外预取");
+		assert.ok(requests.filter((p) => p === new URL(href).pathname).length <= 1, `同一篇只取一次：${requests.join()}`);
+		await link.evaluate((a) => a.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 })));
+		assert.equal(await rules(href), true, "按下时预取");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

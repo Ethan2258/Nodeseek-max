@@ -287,3 +287,23 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
   assert.equal(stored.font,"system",diagnostic);assert.equal(stored.fontSize,"xlarge",diagnostic);assert.deepEqual(errors,[]);
  }finally{await context.close();await instance.close();}
 });
+
+test("「已保存，刷新页面后生效」只在和这一页在用的值不一样时出现：改回原值就撤掉（2026-11-09 真站）",async()=>{
+ const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html:listPage()});
+ try {
+  await ready(page);
+  const host=await settings(page);
+  await host.getByRole("tab",{name:"工具",exact:true}).click();
+  const module=host.locator('.module[data-feature="compose"]');
+  const box=host.locator('[data-feature="compose"][data-key="shortcuts"]');
+  const was=await box.isChecked();
+  await box.setChecked(!was);await saved(host);
+  assert.equal(await module.locator(".pending").count(),1,"改了要刷新的选项写提示");
+  await box.setChecked(was);await saved(host);
+  assert.equal(await module.locator(".pending").count(),0,"改回原值提示撤掉");
+  await box.setChecked(!was);await saved(host);
+  await host.getByRole("tab",{name:"外观",exact:true}).click();await host.getByRole("tab",{name:"工具",exact:true}).click();
+  assert.equal(await module.locator(".pending").count(),1,"换个标签页回来提示还在");
+  assert.deepEqual(errors,[]);
+ } finally {await context.close();}
+});

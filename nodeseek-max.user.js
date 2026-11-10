@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.38
+// @version      1.9.39
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -905,7 +905,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.38";
+	var NSMAX_VERSION = "1.9.39";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -2630,6 +2630,8 @@ var nsmaxRedirecting = false;
 		(document.getElementById("nspp-tools") || document.body).append(launch);
 		document.body.append(host);
 		let draft = loadSettings(features);
+		// 这一页实际在用的设置（面板跟着页面一起启动）：改回原值后就不用刷新了，「刷新页面后生效」那行要撤掉
+		const runningSettings = JSON.parse(JSON.stringify(draft));
 		// 设置面板里的提示也是 sb.sb 那种屏幕下方的深色小条（以前是面板自己的一张带图标、带关闭按钮的卡片）
 		const notify = (message, type = "info") => nsmaxToast(message, { error: type === "error" });
 		const updates = createUpdateChecker(notify, () => !document.hidden && !dialog.open && !document.querySelector("dialog[open]"));
@@ -2648,11 +2650,22 @@ var nsmaxRedirecting = false;
 		const byId = new Map(features.map((feature) => [feature.id, feature]));
 		let unsavedFields = {}, replaceUnsaved = false;
 		// 改过、要刷新才生效的模块（标题下面写「已保存，刷新页面后生效」）；字号、字体、深浅色当场换（见 nsmaxApplySettingLive）
-		const pendingModules = new Set();
-		const markPending = (id) => {
-			pendingModules.add(id);
+		// 记的是每个模块里改过、要刷新的那几项；全改回这一页在用的值，提示就撤掉（2026-11-09 真站：改回原值后提示还在）
+		const pendingModules = new Map();
+		const markPending = (id, keys) => {
+			const changed = pendingModules.get(id) || new Set();
+			for (const key of keys) {
+				if (JSON.stringify(draft[id]?.[key]) === JSON.stringify(runningSettings[id]?.[key])) changed.delete(key);
+				else changed.add(key);
+			}
 			const head = body.querySelector(`.module[data-feature="${id}"] > .module-head`);
-			if (head && !head.querySelector(".pending")) head.append(pendingNote());
+			if (changed.size) {
+				pendingModules.set(id, changed);
+				if (head && !head.querySelector(".pending")) head.append(pendingNote());
+			} else {
+				pendingModules.delete(id);
+				head?.querySelector(".pending")?.remove();
+			}
 		};
 		const pendingNote = () => {
 			const note = element$1("p", "已保存，刷新页面后生效");
@@ -2663,9 +2676,8 @@ var nsmaxRedirecting = false;
 			if (fields) for (const [id, keys] of Object.entries(fields)) unsavedFields[id] = [...new Set([...(unsavedFields[id] || []), ...keys])];
 			else replaceUnsaved = true;
 			if (fields) for (const [id, keys] of Object.entries(fields)) {
-				let live = true;
-				for (const key of keys) if (!nsmaxApplySettingLive(id, key, draft[id]?.[key])) live = false;
-				if (!live) markPending(id);
+				const later = keys.filter((key) => !nsmaxApplySettingLive(id, key, draft[id]?.[key]));
+				if (later.length) markPending(id, later);
 				if (id === "modern-theme") syncHost();
 			}
 			try {
@@ -7493,6 +7505,8 @@ var nsmaxRedirecting = false;
 					if (anchor === hovered) return;
 					hovered = anchor;
 					clearTimeout(timer);
+					// 卡片预览管的帖子标题只在按下时取（2026-11-09 真站：停一下就是预取一份、卡片再取一份，第二份还被回过 503）
+					if (anchor?.hasAttribute("data-nsmax-preview")) return;
 					const href = target(anchor);
 					if (href && !seen.has(href)) timer = setTimeout(() => prefetch(href), 65);
 				};
@@ -15811,13 +15825,15 @@ var nsmaxRedirecting = false;
 					if (link.origin !== location.origin || !/^\/post-\d+(?:-\d+)?(?:\.html)?\/?$/.test(link.pathname)) return;
 					bound.set(link, link.getAttribute("title"));
 					link.removeAttribute("title");
+					// 「悬停预加载」见到这个标记就只在按下时取（卡片自己会取正文，两边都在悬停时取就是同一篇请求两次）
+					link.setAttribute("data-nsmax-preview", "");
 					const enter = () => {
 						preview.keepOpen();
 						clearTimeout(timer);
 						clearTimeout(fetchTimer);
 						// 2026-11-09：停 0.5 秒才弹卡片（以前 0.08 秒，鼠标划过去点标题的路上也会弹出来）。
 						// 0.3 秒起先取正文，卡片弹出时内容多半已经到了；只是路过、马上点开的，不另外再下一份
-						// （点开要用的那份由「悬停预加载」取）。open/load 与预热共用同一份请求。
+						// （点开要用的那份由「悬停预加载」在按下时取）。open/load 与预热共用同一份请求。
 						fetchTimer = setTimeout(() => preview.prefetch(link), 300);
 						timer = setTimeout(() => preview.open(link, "preview"), 500);
 						// 卡片弹出来（真的在看这一篇）才准备图片、头像和作者资料
