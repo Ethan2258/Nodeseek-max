@@ -1921,6 +1921,7 @@
 			summary.title = summary.textContent;
 		}
 		nsmaxFlag(left, "data-nsmax-search-empty", empty);
+		if (!empty && keyword) nsmaxMarkSearchHits(left, keyword);
 		let panel = left.querySelector(":scope > .nsmax-search-empty");
 		for (const child of left.children) {
 			if (child === summary || child === panel) continue;
@@ -1959,6 +1960,37 @@
 		}
 		state.append(title, hint, actions);
 		panel.replaceChildren(state);
+	}
+	// 结果标题里把搜的词标出来（2026-11-10 Yiheng：「搜索的页面也不怎么好看」——结果和首页列表一模一样，看不出哪里对上了）。
+	// 只拆标题链接里的文字节点，字本身不变（textContent 一样，复制、预览、屏蔽词都照旧）；同一个词做过就不再动
+	function nsmaxMarkSearchHits(left, keyword) {
+		const terms = [...new Set(keyword.split(/\s+/).map((term) => term.trim()).filter((term) => term.length > 0 && term.length <= 40))].slice(0, 8);
+		if (!terms.length) return;
+		const pattern = new RegExp(terms.sort((a, b) => b.length - a.length).map((term) => term.replace(/[.*+?^{}()|[\]\\$]/g, (c) => "\\" + c)).join("|"), "gi");
+		for (const link of left.querySelectorAll("ul.post-list > li.post-list-item .post-title > a[href]")) {
+			if (link.getAttribute("data-nsmax-hit") === keyword) continue;
+			link.setAttribute("data-nsmax-hit", keyword);
+			for (const node of [...link.childNodes]) {
+				if (node.nodeType !== 3) continue;
+				const text = node.nodeValue;
+				pattern.lastIndex = 0;
+				if (!pattern.test(text)) continue;
+				pattern.lastIndex = 0;
+				const parts = [];
+				let last = 0, match;
+				while ((match = pattern.exec(text))) {
+					if (!match[0]) { pattern.lastIndex++; continue; }
+					if (match.index > last) parts.push(document.createTextNode(text.slice(last, match.index)));
+					const mark = document.createElement("mark");
+					mark.className = "nsmax-search-hit";
+					mark.textContent = match[0];
+					parts.push(mark);
+					last = match.index + match[0].length;
+				}
+				if (last < text.length) parts.push(document.createTextNode(text.slice(last)));
+				node.replaceWith(...parts);
+			}
+		}
 	}
 	function nsmaxPrepareBoard() {
 		if (!/^\/board(?:\/|$)/.test(location.pathname)) {
@@ -3101,6 +3133,17 @@ function nsmaxTagStructure() {
 			nsmaxFlag(span, "data-nsmax-lock", !!span.querySelector(':scope > svg > use[href="#lock"]'));
 			// 置顶标签挪到标题前面（sb.sb .topic-badge 和标题在同一段文字里）：长标题从标签下面接着折行，不再把标签单独挤到上面一行
 			if (span.hasAttribute("data-nsmax-pinned") && span.parentElement.firstElementChild !== span) span.parentElement.prepend(span);
+			// 等级锁也挪到标题前面（2026-11-10 Yiheng：「等级限制的位置不太对，图标设计得不好看」——长标题折行时锁会单独掉到下一行开头，
+			// 像浮在元信息上面）。站点写的是一个锁图标加一个数字「1」，看不出是什么；写成「Lv1」，图标换成主题自己的实心小锁（CSS 画）
+			if (span.hasAttribute("data-nsmax-lock")) {
+				const level = (span.textContent || "").trim();
+				if (level && span.getAttribute("data-nsmax-lock-level") !== level) {
+					span.setAttribute("data-nsmax-lock-level", level);
+					span.title = /^\d+$/.test(level) ? `等级 Lv${level} 及以上才能看` : level;
+				}
+				const title = span.parentElement, pinned = title.querySelector(":scope > span[data-nsmax-pinned]");
+				if (pinned ? pinned.nextElementSibling !== span : title.firstElementChild !== span) (pinned ? pinned.after(span) : title.prepend(span));
+			}
 		}
 		nsmaxTagImageLinks();
 	nsmaxDecorateSignatures();
@@ -3156,6 +3199,9 @@ function nsmaxTagStructure() {
 		}
 		for (const field of document.querySelectorAll(".md-editor .topic-select > div")) nsmaxFlag(field, "data-nsmax-topic-field", !!field.querySelector("select, .category-select") || !field.querySelector("button"));
 		if (/^\/new-discussion(?:\/|$)/.test(location.pathname)) nsmaxNewPostHint();
+		// 发帖页「版块」还没选的时候站点把 selectedIndex 置成 -1，框里是空白一条（2026-11-10 Yiheng 截图）。标出来，CSS 在框里写灰字「选择版块」
+		// （只在支持自定义下拉的浏览器里能画，见 design.css「下拉框」那段）；选了以后站点触发 change，再按新的值改
+		for (const select of document.querySelectorAll(".md-editor .topic-select select#category")) nsmaxMarkUnsetSelect(select, "选择版块");
 		// 通知 / 私信：消息中心已接管时原生标签栏隐藏；原生「全部已读」按钮外层
 		for (const box of document.querySelectorAll(".nsk-notification")) {
 			nsmaxFlag(box, "data-nsmax-msgcenter", !!box.querySelector(".nspp-messages"));
@@ -3178,6 +3224,15 @@ function nsmaxTagStructure() {
 		mail: "M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v10A1.5 1.5 0 0 1 20 18.5H4A1.5 1.5 0 0 1 2.5 17V7A1.5 1.5 0 0 1 4 5.5Z M3 7l9 6.5L21 7",
 		rss: "M5 11a8 8 0 0 1 8 8 M5 4.5A14.5 14.5 0 0 1 19.5 19 M6 19h.01"
 	};
+	function nsmaxMarkUnsetSelect(select, label) {
+		if (select.getAttribute("data-nsmax-placeholder") !== label) select.setAttribute("data-nsmax-placeholder", label);
+		const sync = () => { const unset = select.selectedIndex < 0 || !select.value && !select.selectedOptions[0]?.textContent.trim(); if (select.hasAttribute("data-nsmax-unset") !== unset) select.toggleAttribute("data-nsmax-unset", unset); };
+		sync();
+		if (select.nsmaxUnsetWatch) return;
+		select.nsmaxUnsetWatch = true;
+		select.addEventListener("change", sync);
+		select.addEventListener("blur", sync);
+	}
 	function nsmaxBuildFooter() {
 		const inner = document.querySelector("body > footer .contain");
 		if (!inner || inner.querySelector(":scope > .nsmax-footer-brand")) return;
