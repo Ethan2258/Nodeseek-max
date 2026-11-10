@@ -619,7 +619,9 @@ for(const engine of engines){
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage(),init:watch,beforeNavigate:p=>p.route("**/post-1000-1",async route=>{await new Promise(r=>setTimeout(r,900));await route.fulfill({status:200,contentType:"text/html; charset=utf-8",body:P.postPage()});})});
   try{
    await ready(page);
-   await page.locator('ul.post-list .post-title > a[href="/post-1000-1"]').click({noWaitAfter:true});
+   // 用脚本点（不移鼠标、不按下）：鼠标停上去 / 按下时脚本会先取这一篇，这里的响应故意晚 0.9 秒，取到一半被跳转打断，
+   // WebKit 会把被打断的请求报成页面错误（「… due to access control checks」），和进度条无关
+   await page.evaluate(()=>document.querySelector('ul.post-list .post-title > a[href="/post-1000-1"]').click());
    await page.waitForURL("**/post-1000-1");
    await ready(page);
    assert.deepEqual(JSON.parse(await page.evaluate(()=>sessionStorage.getItem("__bar"))),{top:0,h:2},"旧页面上出过进度条");
