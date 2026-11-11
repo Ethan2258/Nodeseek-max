@@ -629,4 +629,73 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 标题前后的小标和标题字同一条中线：标题链接按基线排，行框不被撑高（Windows 微软雅黑下以前小标比字高 2px）`,async()=>{
+  // 2026-11-11 Yiheng 截图：等级锁「不在中间」。标题链接以前是 vertical-align: middle，字被往下推 (升部−降部)/2 − x 高/2
+  // （微软雅黑 UI 17px 下 1.9px，测试机字体 0.6px），行框跟着撑高，按「行高正中」摆的小标就比字高。和字体无关的判据：链接的基线 = 这一行的基线
+  const html=P.listPage().replace('求推荐稳定的美西 VPS</a>','求推荐稳定的美西 VPS</a> <span style="color: rgb(255, 152, 152);"><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span>')
+   .replace("出一台香港 CN2 GIA 小鸡，年付 99</a>",'出一台香港 CN2 GIA 小鸡，年付 99</a> <!----> <a href="/award" title="推荐阅读"><svg class="iconpark-icon award" style="width:15px;height:15px"><use href="#diamonds"></use></svg></a> <span title="置顶"><svg class="iconpark-icon pined circle-icon" style="width:15px;height:15px"><use href="#pin"></use></svg></span> <!---->');
+  for(const fontSize of ["site","large"]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{viewport:desk.viewport,seed:{"nspp:settings:www.nodeseek.com":{"attendance":{enabled:false},"modern-theme":{font:"system",fontSize}}},html});
+   try{
+    await ready(page);
+    await page.waitForSelector(".post-title > span[data-nsmax-lock][data-nsmax-lock-level]");
+    const s=await page.evaluate(()=>[...document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item .post-title")].map(t=>{
+     const a=t.querySelector(':scope > a[href]:not([href="/award"])'),box=t.getBoundingClientRect(),lh=parseFloat(getComputedStyle(t).lineHeight);
+     // 链接里的基线和标题这一行自己的基线：各插一个 0 尺寸的行内块量底边
+     const base=(host)=>{const p=document.createElement("span");p.style.cssText="display:inline-block;width:0;height:0;vertical-align:baseline";host.prepend(p);const y=p.getBoundingClientRect().bottom;p.remove();return y;};
+     return{va:getComputedStyle(a).verticalAlign,pushed:+(base(a)-base(t)).toFixed(2),badges:[...t.children].filter(e=>e!==a&&e.offsetWidth).map(e=>{const b=e.getBoundingClientRect();return +((b.top+b.bottom)/2-(box.top+lh/2)).toFixed(2);})};
+    }));
+    assert.ok(s.length>=5&&s.some(r=>r.badges.length),JSON.stringify(s));
+    for(const row of s){
+     assert.equal(row.va,"baseline",JSON.stringify(row));
+     assert.ok(Math.abs(row.pushed)<=0.05,`${fontSize}：标题字没有被往下推 ${JSON.stringify(row)}`);
+     assert.ok(row.badges.every(d=>Math.abs(d)<=0.5),`${fontSize}：小标在这一行正中 ${JSON.stringify(row)}`);
+    }
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 帖子页大标题后的小标在标题那一行正中；通知里的「未读」和这一行的字按基线排`,async()=>{
+  const post=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html:P.specialPostPage({})});
+  try{
+   await ready(post.page);
+   await post.page.waitForSelector(".nsk-post > .post-title h1 > .nsmax-prize-badge, .nsk-post > .post-title h1 > .nsmax-poll-badge");
+   const s=await post.page.evaluate(()=>{const h=document.querySelector(".nsk-post > .post-title h1"),box=h.getBoundingClientRect(),lh=parseFloat(getComputedStyle(h).lineHeight);
+    return{lh,badges:[...h.querySelectorAll(":scope > .nsmax-prize-badge, :scope > .nsmax-poll-badge")].map(e=>{const b=e.getBoundingClientRect();return{h:b.height,line:Math.floor((b.top-box.top)/lh),d:+(((b.top+b.bottom)/2-box.top)%lh-lh/2).toFixed(2)};})};});
+   assert.ok(s.badges.length>0&&s.badges.every(b=>b.h===18&&Math.abs(b.d)<=0.5),JSON.stringify(s));
+   assert.deepEqual(post.errors,[]);
+  }finally{await post.context.close();}
+  const notice=await open(browser,"https://www.nodeseek.com/notification",{...desk,html:P.notificationPage({})});
+  try{
+   await ready(notice.page);
+   await notice.page.waitForSelector(".nsmax-notice-unread");
+   const s=await notice.page.evaluate(()=>{const p=document.querySelector(".nsmax-notice-unread"),row=p.parentElement.getBoundingClientRect(),b=p.getBoundingClientRect();return{self:getComputedStyle(p).alignSelf,inside:b.top>=row.top-0.5&&b.bottom<=row.bottom+0.5};});
+   assert.deepEqual(s,{self:"baseline",inside:true});
+   assert.deepEqual(notice.errors,[]);
+  }finally{await notice.context.close();}
+ });
+ test(`${engine} 未读数照 sb.sb：右栏「我的通知」是压在图标右上角的 14px 小圆点（外面一圈面板底色），通知页标签后面是 16px；深色粉底深字，浅色红底白字`,async()=>{
+  // 2026-11-11 Yiheng：「旁边的通知数字圆点，你给我看看原版是怎么做的」。sb.sb index.8ae5f9d33b.css 的 .notify-badge / .nav-user-item .notify-badge
+  for(const [scheme,bg,fg,panel] of [["dark","rgb(255, 153, 153)","rgb(20, 21, 28)","rgb(20, 21, 28)"],["light","rgb(207, 43, 43)","rgb(255, 255, 255)","rgb(255, 255, 255)"]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification",{...desk,colorScheme:scheme,html:P.notificationPage({dark:scheme==="dark"})});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nsmax-account-menu .nsmax-account-unread");
+    await page.waitForSelector(".nsmax-message-tabs .nspp-messages-count");
+    const s=await page.evaluate(()=>{
+     const dot=document.querySelector(".nsmax-account-menu .nsmax-account-unread"),link=dot.parentElement,icon=link.querySelector("svg, .nsmax-icon").getBoundingClientRect(),b=dot.getBoundingClientRect(),c=getComputedStyle(dot);
+     const label=document.createRange();label.selectNodeContents([...link.childNodes].find(n=>n.nodeType===3&&n.nodeValue.trim())||link);
+     const tab=document.querySelector(".nsmax-message-tabs .nspp-messages-count"),t=getComputedStyle(tab),tb=tab.getBoundingClientRect();
+     return{dot:[b.width,b.height,c.fontSize,c.backgroundColor,c.color,c.boxShadow.replace(/\s+/g," ")],corner:[+(icon.right-b.left).toFixed(1),+(b.bottom-icon.top).toFixed(1),b.top<link.getBoundingClientRect().top],row:link.getBoundingClientRect().height,tab:[tb.width,tb.height,t.fontSize,t.backgroundColor,t.color]};
+    });
+    assert.deepEqual(s.dot.slice(0,5),[14,14,"9px",bg,fg],JSON.stringify(s));
+    assert.ok(s.dot[5].includes(panel)&&/0px 0px 0px 2px/.test(s.dot[5]),`一圈 2px 面板底色：${s.dot[5]}`);
+    assert.deepEqual(s.corner.slice(0,1),[4],`压住图标右边 4px：${JSON.stringify(s.corner)}`);
+    assert.ok(s.corner[1]>0&&s.corner[1]<=3&&s.corner[2],`在图标右上角：${JSON.stringify(s.corner)}`);
+    assert.equal(s.row,32,"圆点不占位，这一行还是 32px");
+    assert.deepEqual(s.tab,[16,16,"10px",bg,fg],JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }
