@@ -5635,7 +5635,8 @@ function nsmaxTagStructure() {
 		// 手机上往下翻时把「回到顶部」收起来，往回翻或到页底再出来：以前它一直浮在右下角，压着正文和回复按钮
 		let lastY = scrollY, scrollFrame = 0;
 		const onScroll = () => {
-			if (scrollFrame) return;
+			// 电脑上（不是手机布局）这个收起用不上：不排帧、不读滚动位置和页面高度（以前每滚一帧都读一次，鼠标下面的行刚换了悬停样式时要当场重算）
+			if (scrollFrame || !media.matches && !root.hasAttribute("data-nsmax-scroll-down")) return;
 			scrollFrame = requestAnimationFrame(() => {
 				scrollFrame = 0;
 				const y = scrollY, delta = y - lastY;

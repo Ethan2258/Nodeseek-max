@@ -3307,22 +3307,20 @@ test("2026-10-17 第二批：未读数是 16px 小圆、今日热门标题下不
 	}
 });
 
-test("加载提速（2026-10-17）：帖子页挂载时不再当场量页面高度（以前阅读进度条一读 scrollHeight 就强制整页排版一次）", async () => {
+test("滚动不卡（2026-11-10）：帖子页不再挂看不见的阅读进度条，滚动时不读整页高度", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1440, height: 900 }, init: `(() => {
-		window.__forced = 0;
+		window.__reads = 0;
 		const desc = Object.getOwnPropertyDescriptor(Element.prototype, "scrollHeight");
-		Object.defineProperty(Element.prototype, "scrollHeight", { configurable: true, get() { if (this === document.documentElement && document.readyState !== "complete" && !window.__idle) window.__forced++; return desc.get.call(this); } });
-		document.addEventListener("DOMContentLoaded", () => requestAnimationFrame(() => requestAnimationFrame(() => { window.__idle = true; })));
+		Object.defineProperty(Element.prototype, "scrollHeight", { configurable: true, get() { if (this === document.documentElement && window.__scrolling) window.__reads++; return desc.get.call(this); } });
 	})();` });
 	try {
-		await page.waitForSelector("#nsmax-progress", { state: "attached" });
-		await wait(page, 800);
-		const state = await page.evaluate(() => ({ forced: window.__forced, idle: document.querySelector("#nsmax-progress").hasAttribute("data-idle"), marks: performance.getEntriesByType("mark").map((m) => m.name) }));
-		assert.equal(state.forced, 0, "首屏画出来之前不读整页高度");
-		assert.equal(state.idle, true, "刚打开时进度条按 0 显示");
-		for (const mark of ["nsmax:start", "nsmax:sync-end", "nsmax:primary-ready"]) assert.ok(state.marks.includes(mark), `有 ${mark} 打点`);
-		await page.evaluate(() => window.scrollTo(0, 600));
-		await page.waitForFunction(() => !document.querySelector("#nsmax-progress").hasAttribute("data-idle"));
+		await wait(page, 1500);
+		const marks = await page.evaluate(() => performance.getEntriesByType("mark").map((m) => m.name));
+		for (const mark of ["nsmax:start", "nsmax:sync-end", "nsmax:primary-ready"]) assert.ok(marks.includes(mark), `有 ${mark} 打点`);
+		assert.equal(await page.locator("#nsmax-progress").count(), 0, "没有阅读进度条");
+		await page.evaluate(() => { window.__scrolling = true; });
+		for (const y of [200, 400, 600]) { await page.evaluate((top) => window.scrollTo(0, top), y); await wait(page, 60); }
+		assert.equal(await page.evaluate(() => window.__reads), 0, "电脑上滚动时不读整页高度");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
