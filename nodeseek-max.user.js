@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.42
+// @version      1.9.44
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -905,7 +905,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.42";
+	var NSMAX_VERSION = "1.9.44";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -1810,7 +1810,7 @@ var nsmaxRedirecting = false;
 			// - 脚本自己插进页面的空壳（弹窗、进度条、@ 提示框）和站点的图标精灵表：插进来时是空的，里面以后的变化照常整理；
 			// - 脚本自己的组件里只换了文字：作者栏读到资料后填等级和数字（一页十几个作者，每回来一个填一次）、按钮上的字
 			const themed = document.documentElement.hasAttribute("data-nsmax-theme");
-			const shell = (node) => node.nodeType !== 1 || node.matches?.("dialog.nsmax-mobile-nav, dialog.nspp-post-preview, #nsmax-progress, .nsmax-mention, body > svg[aria-hidden=true]");
+			const shell = (node) => node.nodeType !== 1 || node.matches?.("dialog.nsmax-mobile-nav, dialog.nspp-post-preview, .nsmax-scroll-shield, .nsmax-mention, body > svg[aria-hidden=true]");
 			const textOnly = (record) => [...record.addedNodes, ...record.removedNodes].every((node) => node.nodeType === 3);
 			if (!records.some((record) => {
 				if (!record.addedNodes.length && !record.removedNodes.length) return false;
@@ -1819,7 +1819,7 @@ var nsmaxRedirecting = false;
 				if (target === document.body && [...record.addedNodes, ...record.removedNodes].every(shell)) return false;
 				if (textOnly(record) && target?.closest(".nsmax-author-col, button.nspp-action")) return false;
 				// .xterm：NodeSeek 把 ANSI 代码块渲染成的终端，内部节点频繁重画，和脚本的整理无关
-				return !target?.closest(".xterm, #nspp-tools, #nspp-settings, .CodeMirror, .markHtml-wrapper, .exp-container, .nsmax-sb-account, .nspp-messages, .nsmax-editor-preview, .nsmax-pop, .nsmax-person-pop, .nsmax-recent-panel, .nspp-monitor, .nspp-user-hover, .nspp-user-badges, .nspp-message-editor, .nspp-compose, .nsmax-hot-panel, #nsmax-progress, .nsmax-post-stats, .nsmax-op-actions");
+				return !target?.closest(".xterm, #nspp-tools, #nspp-settings, .CodeMirror, .markHtml-wrapper, .exp-container, .nsmax-sb-account, .nspp-messages, .nsmax-editor-preview, .nsmax-pop, .nsmax-person-pop, .nsmax-recent-panel, .nspp-monitor, .nspp-user-hover, .nspp-user-badges, .nspp-message-editor, .nspp-compose, .nsmax-hot-panel, .nsmax-post-stats, .nsmax-op-actions");
 			})) return;
 			// 资料页：整块主栏被替换（站点水合）时，先遮住这一帧，整理完再显示（每次加载最多遮一次）。
 			// 资料卡已经被 nsmaxWatchSpace 当场改好时不用遮（遮了反而整块闪一下）
@@ -28994,6 +28994,67 @@ function nsmaxTagStructure() {
 		const stop = ctx.watch(sync);
 		return () => { stopScroll(); stop(); cancelAnimationFrame(scrollFrame); root.removeAttribute("data-nsmax-scroll-down"); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
 	}
+	// 滚动时鼠标下面的东西先不算悬停（2026-11-10，用户：「滑动的时候卡卡的，鼠标不跟手」）。鼠标停着不动、滚轮一滚，内容从鼠标下面
+	// 一行行划过，每划过一行浏览器都要给那一行换一次悬停样式、重画一次：列表页 4 倍降速下滚 30 下，鼠标在列表上是样式 165ms、
+	// 重画 160ms、分层 215ms，鼠标挪到页面外是 9 / 25 / 45ms——滚动时的开销几乎全在这里。
+	// 做法：滚动期间在内容上面盖一层看不见的固定挡板（顶栏、回到顶部、弹出的卡片都在它上面，照常能用），鼠标落在挡板上，
+	// 下面的内容就不再一行行换悬停；停下 0.1 秒撤掉，那时鼠标下面是哪一行就悬停哪一行。只动挡板这一个元素的 display，
+	// 不碰 body 的 pointer-events（试过：Chrome 会把整页重画一遍，更慢）。
+	// 鼠标真的动了、按下了就马上撤掉；正好按在挡板上的那一下（滚完 0.1 秒内、鼠标没动就点）转给下面的元素，不会点了没反应。
+	// 按着鼠标（拖滚动条、拖选文字、中键滚动）时不盖。只在电脑上（能悬停的精确指针）做
+	function nsmaxCalmScrollHover(ctx) {
+		const fine = matchMedia("(hover: hover) and (pointer: fine)");
+		let shield = null, timer = 0, shown = false, pressed = false, driven = -1e9;
+		const hide = () => {
+			clearTimeout(timer);
+			timer = 0;
+			if (!shown) return;
+			shown = false;
+			shield.style.display = "none";
+		};
+		const options = { passive: true, signal: ctx.signal };
+		// 只管人滚出来的（滚轮、触控板、翻页键）：脚本自己跳到某一层、点「回到顶部」那种一步到位的滚动不盖，
+		// 不然刚跳过去马上要点的东西会被挡 0.1 秒
+		addEventListener("wheel", (event) => { if (!event.ctrlKey) driven = event.timeStamp; }, options);
+		addEventListener("keydown", (event) => { if (/^(?: |PageUp|PageDown|ArrowUp|ArrowDown|Home|End)$/.test(event.key)) driven = event.timeStamp; }, options);
+		addEventListener("scroll", (event) => {
+			if (pressed || !shown && event.timeStamp - driven > 400 || !fine.matches || !document.body) return;
+			if (!shield) {
+				shield = document.createElement("div");
+				shield.className = "nsmax-scroll-shield";
+				shield.setAttribute("aria-hidden", "true");
+				shield.style.cssText = "position:fixed!important;inset:0!important;z-index:39!important;display:none;margin:0!important;padding:0!important;border:0!important;background:none!important;opacity:1!important;pointer-events:auto!important";
+				// 正好按在挡板上：撤掉挡板，把这一下转给下面的元素（左键、没按修饰键的普通点击；其余的只撤挡板）
+				shield.addEventListener("pointerdown", (event) => {
+					hide();
+					if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+					const target = document.elementFromPoint(event.clientX, event.clientY);
+					if (!target || target === shield) return;
+					const x = event.clientX, y = event.clientY;
+					addEventListener("pointerup", (up) => {
+						if (Math.abs(up.clientX - x) > 4 || Math.abs(up.clientY - y) > 4) return;
+						const now = document.elementFromPoint(up.clientX, up.clientY);
+						if (!now || now !== target && !target.contains(now) && !now.contains(target)) return;
+						// 真按下去时输入框会拿到焦点，转交的点击不会，这里补上
+						target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")?.focus();
+						target.click();
+					}, { once: true, capture: true, signal: ctx.signal });
+				}, { signal: ctx.signal });
+				document.body.append(shield);
+			}
+			if (!shown) {
+				shown = true;
+				shield.style.display = "block";
+			}
+			clearTimeout(timer);
+			timer = setTimeout(hide, 100);
+		}, options);
+		addEventListener("pointermove", (event) => { if (shown && (event.movementX || event.movementY)) hide(); }, { ...options, capture: true });
+		addEventListener("pointerdown", (event) => { pressed = true; if (event.target !== shield) hide(); }, { ...options, capture: true });
+		for (const type of ["pointerup", "pointercancel"]) addEventListener(type, () => { pressed = false; }, { ...options, capture: true });
+		addEventListener("blur", () => { pressed = false; hide(); }, options);
+		ctx.signal.addEventListener("abort", () => { hide(); shield?.remove(); shield = null; }, { once: true });
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const stopTouchUi = nsmaxMountTouchUi(ctx);
@@ -29002,6 +29063,7 @@ function nsmaxTagStructure() {
 		nsmaxWatchFans(ctx);
 		nsmaxWatchSpace(ctx);
 		nsmaxFloorHover(ctx);
+		nsmaxCalmScrollHover(ctx);
 		nsmaxPrerenderRows(ctx);
 		const scan = () => {
 			const currentPage = nsmaxPageKind();

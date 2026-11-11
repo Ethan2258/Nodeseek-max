@@ -3325,6 +3325,69 @@ test("滚动不卡（2026-11-10）：帖子页不再挂看不见的阅读进度�
 	} finally { await context.close(); }
 });
 
+test("滚动不卡（2026-11-10）：电脑上滚动时鼠标下面的行不换悬停样式（盖一层看不见的挡板），停下就恢复；按在挡板上的点击转给下面的元素；手机上不盖", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage({ count: 50 }), seed: NO_PREVIEW, viewport: { width: 1440, height: 900 }, pages: { "/post-1003-1": postPage() } });
+	try {
+		await page.waitForFunction(() => performance.getEntriesByName("nsmax:deferred-start").length && !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await wait(page, 300);
+		const row = page.locator(".post-list-item").nth(3);
+		const box = await row.boundingBox();
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
+		assert.equal(await row.evaluate((el) => el.matches(":hover")), true, "没滚动时鼠标下面的行是悬停的");
+		const batches = await page.evaluate(() => performance.getEntriesByName("nsmax:batch").length);
+		// 滚动中：挡板盖着，鼠标下面没有任何一行是悬停的
+		for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, 40); await wait(page, 30); }
+		const during = await page.evaluate(() => {
+			const shield = document.querySelector(".nsmax-scroll-shield");
+			return { y: scrollY, shield: !!shield && getComputedStyle(shield).display, hovered: document.querySelectorAll(".post-list-item:hover").length, paints: shield ? getComputedStyle(shield).backgroundImage + getComputedStyle(shield).backgroundColor : "" };
+		});
+		assert.ok(during.y > 100, "滚轮确实把页面滚下去了：" + during.y);
+		assert.equal(during.shield, "block", "滚动时挡板盖着");
+		assert.equal(during.hovered, 0, "滚动时鼠标下面的行不算悬停");
+		assert.equal(during.paints, "nonergba(0, 0, 0, 0)", "挡板是透明的");
+		// 停下 0.1 秒后撤掉，鼠标下面的行恢复悬停
+		await page.waitForFunction(() => getComputedStyle(document.querySelector(".nsmax-scroll-shield")).display === "none");
+		await page.waitForFunction(() => document.querySelectorAll(".post-list-item:hover").length === 1);
+		// 挡板进出不算页面变动，不引起一轮整页整理
+		await wait(page, 300);
+		assert.equal(await page.evaluate(() => performance.getEntriesByName("nsmax:batch").length), batches, "挡板不触发整页整理");
+		// 脚本自己一步滚到位的（跳到某一层、回到顶部）不盖：刚跳过去就要点的东西不能被挡住
+		await page.evaluate(() => scrollBy(0, 40));
+		await wait(page, 80);
+		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nsmax-scroll-shield")).display), "none", "不是人滚的不盖挡板");
+		// 鼠标真的动了马上撤掉
+		await page.mouse.wheel(0, 40);
+		await page.waitForFunction(() => getComputedStyle(document.querySelector(".nsmax-scroll-shield")).display === "block");
+		await page.mouse.move(box.x + box.width / 2 + 6, box.y + box.height / 2 + 3);
+		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".nsmax-scroll-shield")).display), "none", "鼠标一动就撤掉挡板");
+		// 滚完马上点（鼠标没动、挡板还在）：这一下转给下面的标题链接，照常打开帖子
+		const link = page.locator('.post-list-item .post-title > a[href="/post-1003-1"]');
+		await link.evaluate((a) => { a.removeAttribute("target"); a.scrollIntoView({ block: "center" }); });
+		await wait(page, 250);
+		const at = await link.boundingBox();
+		await page.mouse.move(at.x + 12, at.y + at.height / 2, { steps: 2 });
+		await page.evaluate(() => {
+			addEventListener("pointerdown", (event) => { sessionStorage.setItem("nsmax-test-down", event.target.className || event.target.tagName); }, { capture: true, once: true });
+		});
+		await page.mouse.wheel(0, 1);
+		await page.waitForFunction(() => getComputedStyle(document.querySelector(".nsmax-scroll-shield")).display === "block");
+		await page.mouse.down();
+		await Promise.all([page.waitForURL("**/post-1003-1"), page.mouse.up()]);
+		assert.equal(await page.evaluate(() => sessionStorage.getItem("nsmax-test-down")), "nsmax-scroll-shield", "这一下确实按在挡板上");
+		assert.ok(page.url().endsWith("/post-1003-1"), "滚完马上点标题能打开帖子");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+	// 手机（触屏）上不盖挡板
+	const phone = await open(browser, "https://www.nodeseek.com/", { html: listPage({ count: 50, mobile: true }), device: { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } });
+	try {
+		await wait(phone.page, 900);
+		await phone.page.evaluate(() => { dispatchEvent(new WheelEvent("wheel", { deltaY: 300 })); scrollBy(0, 300); });
+		await wait(phone.page, 50);
+		assert.equal(await phone.page.locator(".nsmax-scroll-shield").count(), 0, "手机上没有挡板");
+		assert.deepEqual(phone.errors, []);
+	} finally { await phone.context.close(); }
+});
+
 // 第三批（2026-10-17）的测试用：第 2 层回复第 1 层、第 3 层回复第 2 层（都收进第 1 层的楼中楼框），第 1 层带签名
 const floorPost = (options = {}) => postPage(options)
 	.replace("<p>价格不错，帮顶</p>", `<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 价格不错，帮顶</p>`)

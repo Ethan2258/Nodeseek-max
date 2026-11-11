@@ -5651,6 +5651,67 @@ function nsmaxTagStructure() {
 		const stop = ctx.watch(sync);
 		return () => { stopScroll(); stop(); cancelAnimationFrame(scrollFrame); root.removeAttribute("data-nsmax-scroll-down"); observer.disconnect(); nsmaxMobileLock(panel, false); nsmaxMobileLock(nativeSearch, false); root.removeAttribute("data-nsmax-touch"); root.removeAttribute("data-nsmax-search-open"); document.querySelectorAll(".nsmax-search-close,.nsmax-drawer-head,.nsmax-drawer-tabs,.nsmax-drawer-hot,.nsmax-drawer-recent,.nsmax-drawer-tools").forEach(e=>e.remove()); };
 	}
+	// 滚动时鼠标下面的东西先不算悬停（2026-11-10，用户：「滑动的时候卡卡的，鼠标不跟手」）。鼠标停着不动、滚轮一滚，内容从鼠标下面
+	// 一行行划过，每划过一行浏览器都要给那一行换一次悬停样式、重画一次：列表页 4 倍降速下滚 30 下，鼠标在列表上是样式 165ms、
+	// 重画 160ms、分层 215ms，鼠标挪到页面外是 9 / 25 / 45ms——滚动时的开销几乎全在这里。
+	// 做法：滚动期间在内容上面盖一层看不见的固定挡板（顶栏、回到顶部、弹出的卡片都在它上面，照常能用），鼠标落在挡板上，
+	// 下面的内容就不再一行行换悬停；停下 0.1 秒撤掉，那时鼠标下面是哪一行就悬停哪一行。只动挡板这一个元素的 display，
+	// 不碰 body 的 pointer-events（试过：Chrome 会把整页重画一遍，更慢）。
+	// 鼠标真的动了、按下了就马上撤掉；正好按在挡板上的那一下（滚完 0.1 秒内、鼠标没动就点）转给下面的元素，不会点了没反应。
+	// 按着鼠标（拖滚动条、拖选文字、中键滚动）时不盖。只在电脑上（能悬停的精确指针）做
+	function nsmaxCalmScrollHover(ctx) {
+		const fine = matchMedia("(hover: hover) and (pointer: fine)");
+		let shield = null, timer = 0, shown = false, pressed = false, driven = -1e9;
+		const hide = () => {
+			clearTimeout(timer);
+			timer = 0;
+			if (!shown) return;
+			shown = false;
+			shield.style.display = "none";
+		};
+		const options = { passive: true, signal: ctx.signal };
+		// 只管人滚出来的（滚轮、触控板、翻页键）：脚本自己跳到某一层、点「回到顶部」那种一步到位的滚动不盖，
+		// 不然刚跳过去马上要点的东西会被挡 0.1 秒
+		addEventListener("wheel", (event) => { if (!event.ctrlKey) driven = event.timeStamp; }, options);
+		addEventListener("keydown", (event) => { if (/^(?: |PageUp|PageDown|ArrowUp|ArrowDown|Home|End)$/.test(event.key)) driven = event.timeStamp; }, options);
+		addEventListener("scroll", (event) => {
+			if (pressed || !shown && event.timeStamp - driven > 400 || !fine.matches || !document.body) return;
+			if (!shield) {
+				shield = document.createElement("div");
+				shield.className = "nsmax-scroll-shield";
+				shield.setAttribute("aria-hidden", "true");
+				shield.style.cssText = "position:fixed!important;inset:0!important;z-index:39!important;display:none;margin:0!important;padding:0!important;border:0!important;background:none!important;opacity:1!important;pointer-events:auto!important";
+				// 正好按在挡板上：撤掉挡板，把这一下转给下面的元素（左键、没按修饰键的普通点击；其余的只撤挡板）
+				shield.addEventListener("pointerdown", (event) => {
+					hide();
+					if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+					const target = document.elementFromPoint(event.clientX, event.clientY);
+					if (!target || target === shield) return;
+					const x = event.clientX, y = event.clientY;
+					addEventListener("pointerup", (up) => {
+						if (Math.abs(up.clientX - x) > 4 || Math.abs(up.clientY - y) > 4) return;
+						const now = document.elementFromPoint(up.clientX, up.clientY);
+						if (!now || now !== target && !target.contains(now) && !now.contains(target)) return;
+						// 真按下去时输入框会拿到焦点，转交的点击不会，这里补上
+						target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")?.focus();
+						target.click();
+					}, { once: true, capture: true, signal: ctx.signal });
+				}, { signal: ctx.signal });
+				document.body.append(shield);
+			}
+			if (!shown) {
+				shown = true;
+				shield.style.display = "block";
+			}
+			clearTimeout(timer);
+			timer = setTimeout(hide, 100);
+		}, options);
+		addEventListener("pointermove", (event) => { if (shown && (event.movementX || event.movementY)) hide(); }, { ...options, capture: true });
+		addEventListener("pointerdown", (event) => { pressed = true; if (event.target !== shield) hide(); }, { ...options, capture: true });
+		for (const type of ["pointerup", "pointercancel"]) addEventListener(type, () => { pressed = false; }, { ...options, capture: true });
+		addEventListener("blur", () => { pressed = false; hide(); }, options);
+		ctx.signal.addEventListener("abort", () => { hide(); shield?.remove(); shield = null; }, { once: true });
+	}
 	function mountLeanUi(ctx) {
 		const editors = new Map();
 		const stopTouchUi = nsmaxMountTouchUi(ctx);
@@ -5659,6 +5720,7 @@ function nsmaxTagStructure() {
 		nsmaxWatchFans(ctx);
 		nsmaxWatchSpace(ctx);
 		nsmaxFloorHover(ctx);
+		nsmaxCalmScrollHover(ctx);
 		nsmaxPrerenderRows(ctx);
 		const scan = () => {
 			const currentPage = nsmaxPageKind();
