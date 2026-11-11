@@ -16436,13 +16436,6 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
     font-size: 12px !important;
     line-height: 22px !important;
   }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-right-panel-container .nsmax-account-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    min-width: 16px !important;
-    height: 16px !important;
-    background: #d93025 !important;
-    color: #fff !important;
-    font-size: 11px !important;
-  }
   /* 个人主页等级那一行：「Lv.6」往下错了 2px、中间「MAX」13px 比两边大，三样东西的字不在一条线上；按基线对齐，都是 12.5px。
      进度条浅色下是墨色实心，太重；和深色一样用黄色 */
   html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container > .nsmax-space-progress:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
@@ -16480,12 +16473,6 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
   /* 通知顶上「刷新 / 全部已读」12.5px → 12px，和同高的小胶囊一样 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top :is(.nsmax-notice-tools, .nspp-messages-top-actions) > button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     font-size: 12px !important;
-  }
-  /* 标签后面的未读数：10px 数字太小，深色模式下还是粉色（#ff9999）的底配白字，看不清。和右栏账号菜单的未读一样：红底白字 11px */
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nsmax-message-tabs .nspp-messages-count:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    background: #d93025 !important;
-    color: #fff !important;
-    font-size: 11px !important;
   }
   /* 私信输入框下面「附件 / 预览」：30px、8px 角、12.5px → 28px 胶囊、12px，和右边的「发送」（第一批改成 34px）配一行 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-message-editor-toolbar > button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
@@ -16668,6 +16655,54 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   content: "Lv" attr(data-nsmax-lock-level) !important;
   font: 500 11px/1 var(--font-mono, ui-monospace, monospace) !important;
   letter-spacing: 0 !important;
+}
+/* ---------- 标签和旁边的字对不齐（2026-11-11 Yiheng 截图：「感觉这个不在中间，就是前面那个限制标签。你这种各种各样的标签都给我动好了呀，每回都会有点怪怪的」） ----------
+   原因在标题链接上的 vertical-align: middle：它把链接这一行的中线对到「基线 + 半个 x 高」，等于把标题字往下推 (升部 − 降部)/2 − x 高/2。
+   这个量跟字体走：测试机的文泉驿只有 0.6px，看不出来；Windows 的微软雅黑 UI（升部 2080、降部 521、x 高 1106 / 2048）在 17px 标题上是 1.9px，
+   行框也被撑高 1.9px。标题前后的小标（等级锁、置顶、已回复、页码……）是按「行高 25.5px 的正中」摆的，字被推下去了、它们没动，所以都比字高 2px。
+   链接（标题后面的「推荐阅读」图标也是个链接，它是小标、不算）改回按基线对齐：行框就是 1.5 倍行高，小标的正中就是字的正中（雅黑下差 0.4px）。手机的 PingFang 也有同样的 1.5px，一起好了 */
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > a:not([href="/award"]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  vertical-align: baseline !important;
+}
+@media (min-width: 801px) {
+  /* 帖子页大标题后面的「抽奖 / 投票 / 已结束 / 已回复 / 已参与」：vertical-align: middle 是按 x 高度对的，中文标题下比字低 1.7px。
+     和列表一样顶对齐再推到这一行正中（标题 21px × 1.45 = 30.45px 行高，小标 18px） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge, .nsmax-replied-badge, .nsmax-joined-badge):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-top: calc((21px * 1.45 - 18px) / 2) !important;
+    margin-bottom: 0 !important;
+    vertical-align: top !important;
+  }
+}
+/* 通知里「未读」小标：这一行按基线排，小标却单独按行框居中，比后面 12.5px 的「@了你」高 2px。也按基线排 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  align-self: baseline !important;
+}
+/* ---------- 未读数圆点照 sb.sb 现在的样子重做（2026-11-11 Yiheng：「旁边的通知数字圆点，你给我看看原版是怎么做的……它那个做的我觉得好，你这抄的一点都不好」） ----------
+   当天从 sb.sb 取的样式表（index.8ae5f9d33b.css）：
+     .notify-badge { min-width:16px; height:16px; padding:0 4px; 胶囊; background:var(--danger); color:var(--on-danger); 等宽 10px/1 }
+     .nav-user-item .notify-badge { position:absolute; top:-3px; left:21px; min-width:14px; height:14px; padding:0 3px; font-size:9px; box-shadow:0 0 0 2px var(--panel) }
+   也就是菜单里的未读数不排在文字后面，而是一个 14px 的小圆点压在图标右上角，外面一圈 2px 的面板底色把它和图标隔开；
+   浅色是红底白字（#cf2b2b / #fff），深色是粉底深色字（#ff9999 / #14151c）。v1.9.44 我改成的「文字后面 16px 红底白字 11px」撤掉。
+   sb.sb 的图标 15px、从 10px 起，圆点 left 21px = 压住图标右边 4px；这里图标 13px、从 0 起，所以 left 9px。top 一样 -3px */
+html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-menu > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  position: relative !important;
+}
+html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  position: absolute !important;
+  top: -3px !important;
+  left: 9px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  margin: 0 !important;
+  padding: 0 3px !important;
+  background: var(--danger) !important;
+  box-shadow: 0 0 0 2px var(--panel) !important;
+  color: var(--on-danger) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
 }
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
