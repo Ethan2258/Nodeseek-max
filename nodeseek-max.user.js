@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.45
+// @version      1.9.46
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -905,7 +905,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.45";
+	var NSMAX_VERSION = "1.9.46";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -29016,7 +29016,13 @@ function nsmaxTagStructure() {
 		// 只管人滚出来的（滚轮、触控板、翻页键）：脚本自己跳到某一层、点「回到顶部」那种一步到位的滚动不盖，
 		// 不然刚跳过去马上要点的东西会被挡 0.1 秒
 		addEventListener("wheel", (event) => { if (!event.ctrlKey) driven = event.timeStamp; }, options);
-		addEventListener("keydown", (event) => { if (/^(?: |PageUp|PageDown|ArrowUp|ArrowDown|Home|End)$/.test(event.key)) driven = event.timeStamp; }, options);
+		// 按键只算真去翻页的：在输入框里打空格、方向键被别的控件自己用掉（拖高输入框的把手、下拉选项）都不算，
+		// 不然紧跟着页面自己挪一下也会盖上挡板
+		addEventListener("keydown", (event) => {
+			if (event.defaultPrevented || !/^(?: |PageUp|PageDown|ArrowUp|ArrowDown|Home|End)$/.test(event.key)) return;
+			if (event.target?.closest?.("input, textarea, select, [contenteditable]:not([contenteditable=false])")) return;
+			driven = event.timeStamp;
+		}, options);
 		addEventListener("scroll", (event) => {
 			if (pressed || !shown && event.timeStamp - driven > 400 || !fine.matches || !document.body) return;
 			if (!shield) {
@@ -29024,21 +29030,53 @@ function nsmaxTagStructure() {
 				shield.className = "nsmax-scroll-shield";
 				shield.setAttribute("aria-hidden", "true");
 				shield.style.cssText = "position:fixed!important;inset:0!important;z-index:39!important;display:none;margin:0!important;padding:0!important;border:0!important;background:none!important;opacity:1!important;pointer-events:auto!important";
-				// 正好按在挡板上：撤掉挡板，把这一下转给下面的元素（左键、没按修饰键的普通点击；其余的只撤挡板）
+				// 正好按在挡板上：撤掉挡板，把这一下转给下面的元素（左键、没按修饰键的普通点击；其余的只撤挡板）。
+				// 按下、拖动、松开都要转（2026-11-12）：以前只转「点一下」，滚完马上按住拖——拖高输入框、拖选一段字——
+				// 第一下没反应，要再来一次。按下那一下照浏览器的顺序补发给下面的元素（脚本自己接管拖动的控件从这里开始）；
+				// 没人接管、下面又是普通文字，就按鼠标走过的位置把字选上
+				const caretAt = (x, y) => {
+					if (document.caretRangeFromPoint) { const range = document.caretRangeFromPoint(x, y); return range && [range.startContainer, range.startOffset]; }
+					const spot = document.caretPositionFromPoint?.(x, y);
+					return spot && [spot.offsetNode, spot.offset];
+				};
 				shield.addEventListener("pointerdown", (event) => {
 					hide();
 					if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-					const target = document.elementFromPoint(event.clientX, event.clientY);
-					if (!target || target === shield) return;
 					const x = event.clientX, y = event.clientY;
-					addEventListener("pointerup", (up) => {
-						if (Math.abs(up.clientX - x) > 4 || Math.abs(up.clientY - y) > 4) return;
+					const target = document.elementFromPoint(x, y);
+					if (!target || target === shield) return;
+					const init = { bubbles: true, cancelable: true, composed: true, view: window, clientX: x, clientY: y, screenX: event.screenX, screenY: event.screenY, button: 0, buttons: 1 };
+					// 和浏览器一样：pointerdown 被接管了就不再发 mousedown
+					let taken = !target.dispatchEvent(new PointerEvent("pointerdown", { ...init, pointerId: event.pointerId, pointerType: event.pointerType, isPrimary: event.isPrimary }));
+					if (!taken) taken = !target.dispatchEvent(new MouseEvent("mousedown", init));
+					// 链接、图片按住拖是「拖走」不是选字，输入框有自己的选区，这些不代选
+					let from = null;
+					if (!taken && !target.closest("input, textarea, select, button, a[href], img, [draggable=true], [contenteditable]:not([contenteditable=false])")) {
+						const style = getComputedStyle(target);
+						if ((style.userSelect || style.webkitUserSelect) !== "none") from = caretAt(x, y);
+					}
+					let dragged = false;
+					const move = (mv) => {
+						if (!dragged && Math.abs(mv.clientX - x) <= 4 && Math.abs(mv.clientY - y) <= 4) return;
+						dragged = true;
+						const to = from && caretAt(mv.clientX, mv.clientY);
+						if (to) { try { getSelection().setBaseAndExtent(from[0], from[1], to[0], to[1]); } catch (e) {} }
+					};
+					// 代选出来的字就在按下的位置，浏览器会当成「按住选中的字往外拖」，拖动一开始就把这次按住取消掉：这次按住期间不让它拖
+					const noDrag = (drag) => { if (taken || from) drag.preventDefault(); };
+					const done = (up) => {
+						for (const type of ["pointermove", "pointerup", "pointercancel"]) removeEventListener(type, type === "pointermove" ? move : done, true);
+						removeEventListener("dragstart", noDrag, true);
+						if (up.type !== "pointerup" || dragged || Math.abs(up.clientX - x) > 4 || Math.abs(up.clientY - y) > 4) return;
 						const now = document.elementFromPoint(up.clientX, up.clientY);
 						if (!now || now !== target && !target.contains(now) && !now.contains(target)) return;
 						// 真按下去时输入框会拿到焦点，转交的点击不会，这里补上
 						target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")?.focus();
 						target.click();
-					}, { once: true, capture: true, signal: ctx.signal });
+					};
+					addEventListener("pointermove", move, { capture: true, passive: true, signal: ctx.signal });
+					addEventListener("dragstart", noDrag, { capture: true, signal: ctx.signal });
+					for (const type of ["pointerup", "pointercancel"]) addEventListener(type, done, { capture: true, signal: ctx.signal });
 				}, { signal: ctx.signal });
 				document.body.append(shield);
 			}
