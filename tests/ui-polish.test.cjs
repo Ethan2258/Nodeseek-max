@@ -587,4 +587,46 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 个人主页切标签：新列表到之前卡片撑住原来的高度，不先闪「还没有……」，到了就放开`,async()=>{
+  // 2026-11-09 在用户 Chrome 里录的：站点先清空旧列表、0.3–0.4 秒后才放新的，中间卡片缩成一行「还没有发过主题」，页脚和右栏跟着跳
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/collections",{...desk,html:P.spaceCollectionsPage()});
+  try{
+   await ready(page);
+   await page.evaluate(()=>{
+    const box=document.querySelector(".selector"),list=box.querySelector(".discussion-wrapper"),tab=[...box.querySelectorAll("a.select-item")].find(a=>a.textContent==="主题");
+    window.__space={before:box.offsetHeight,min:Infinity,labels:new Set()};
+    const sample=()=>{if(window.__space.done)return;window.__space.min=Math.min(window.__space.min,box.offsetHeight);window.__space.labels.add(getComputedStyle(list,"::after").content);requestAnimationFrame(sample);};
+    tab.addEventListener("click",(event)=>{
+     event.preventDefault();
+     list.replaceChildren();
+     for(const a of box.querySelectorAll("a.select-item"))a.classList.toggle("active",a===tab);
+     requestAnimationFrame(sample);
+     setTimeout(()=>{window.__space.gap=box.style.getPropertyValue("min-height");window.__space.done=true;list.innerHTML=Array.from({length:3},(_,i)=>`<a class="discussion-item" href="/post-${6000+i}-1"><span>新主题 ${i+1}</span></a>`).join("");setTimeout(()=>{window.__space.after=true;},120);},400);
+    });
+   });
+   await page.locator(".selector a.select-item",{hasText:"主题"}).click();
+   await page.waitForFunction(()=>window.__space.after);
+   const s=await page.evaluate(()=>({before:window.__space.before,min:window.__space.min,labels:[...window.__space.labels],gap:window.__space.gap,hold:document.querySelector(".selector").style.minHeight,switching:document.documentElement.hasAttribute("data-nsmax-space-switching")}));
+   assert.ok(s.min>=s.before-1&&s.gap===s.before+"px",JSON.stringify(s));
+   assert.ok(s.labels.every(l=>!/还没有|暂无/.test(l)),JSON.stringify(s));
+   assert.deepEqual({hold:s.hold,switching:s.switching},{hold:"",switching:false});
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 点了站内链接、新页面还没回来：顶上出一条进度条；换到新页面后就没有了`,async()=>{
+  // 2026-11-10 在用户 Chrome 里测：换页要等 0.8–2 秒，旧页面一动不动像没点到。旧页面上看到进度条时记进 sessionStorage（跨页还在）
+  const watch=`addEventListener("DOMContentLoaded",()=>{if(location.pathname!=="/")return;new MutationObserver(()=>{const b=document.getElementById("nsmax-nav-progress");if(b&&b.hasAttribute("data-on")){const r=b.getBoundingClientRect();sessionStorage.setItem("__bar",JSON.stringify({top:r.top,h:r.height}));}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["data-on"]});});`;
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage(),init:watch,beforeNavigate:p=>p.route("**/post-1000-1",async route=>{await new Promise(r=>setTimeout(r,900));await route.fulfill({status:200,contentType:"text/html; charset=utf-8",body:P.postPage()});})});
+  try{
+   await ready(page);
+   // 用脚本点（不移鼠标、不按下）：鼠标停上去 / 按下时脚本会先取这一篇，这里的响应故意晚 0.9 秒，取到一半被跳转打断，
+   // WebKit 会把被打断的请求报成页面错误（「… due to access control checks」），和进度条无关
+   await page.evaluate(()=>document.querySelector('ul.post-list .post-title > a[href="/post-1000-1"]').click());
+   await page.waitForURL("**/post-1000-1");
+   await ready(page);
+   assert.deepEqual(JSON.parse(await page.evaluate(()=>sessionStorage.getItem("__bar"))),{top:0,h:2},"旧页面上出过进度条");
+   assert.equal(await page.locator("#nsmax-nav-progress").count(),0,"新页面上没有");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
 }

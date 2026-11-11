@@ -1065,7 +1065,7 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		assert.deepEqual(errorsList, []);
 	} finally { await ctxList.close(); }
 
-	// 1.2 等级限制放置在标题正后方紧凑排列
+	// 1.2 等级限制紧挨着标题、同一行。2026-11-10 起放在标题前面（Yiheng：「后面的这个东西位置不太对」——跟在后面时长标题一折行它就单独掉到下一行），写成「Lv1」
 	const listHtmlLock = listPage().replace(
 		'<div role="heading" aria-level="3" class="post-title"><a href="/post-1000-1" target="">出一台香港 CN2 GIA 小鸡，年付 99</a> <!----> <!----></div>',
 		'<div role="heading" aria-level="3" class="post-title"><a href="/post-1000-1" target="">短标题</a><span style="color: rgb(255, 152, 152);"><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span> <!----></div>'
@@ -1078,9 +1078,11 @@ test("用户需求还原：图一抽奖同行不换行、图二管理记录、�
 		const linkBox = await link.boundingBox();
 		const lockBox = await lock.boundingBox();
 		assert.ok(linkBox && lockBox, 'Link and lock bounding boxes exist');
-		assert.ok(lockBox.x > linkBox.x, 'Lock badge is after the title link');
-		const gap = lockBox.x - (linkBox.x + linkBox.width);
-		assert.ok(gap >= 0 && gap <= 10, `Lock badge directly follows title with small gap (gap: ${gap}px)`);
+		assert.ok(lockBox.x < linkBox.x, 'Lock badge is in front of the title link');
+		const gap = linkBox.x - (lockBox.x + lockBox.width);
+		assert.ok(gap >= 0 && gap <= 10, `Lock badge sits right before the title with a small gap (gap: ${gap}px)`);
+		assert.deepEqual(await lock.evaluate(e => [e.getAttribute("data-nsmax-lock-level"), getComputedStyle(e.querySelector("svg")).display, e.getBoundingClientRect().height]), ["1", "none", 18]);
+		assert.match(await lock.evaluate(e => getComputedStyle(e, "::after").content), /Lv/);
 		assert.ok(Math.abs(lockBox.y - linkBox.y) < 6, 'Lock badge is on the same line as title link');
 		assert.equal(await lock.evaluate(e => getComputedStyle(e).color), 'rgb(207, 43, 43)', '等级锁用 sb.sb 的 --danger');
 		assert.deepEqual(errorsLock, []);
@@ -2943,7 +2945,7 @@ test("搜索结果页没有结果：照 sb.sb 一行搜索摘要 + 空状态面�
 		});
 		assert.equal(info.summary, "搜索 甲骨文vps · 版块 技术 · 没有找到结果");
 		assert.notEqual(info.keywordColor, info.summaryColor);
-		assert.equal(info.summarySize, "13.5px");
+		assert.equal(info.summarySize, "15px", "2026-11-10：摘要是这一页的标题，15px");
 		assert.deepEqual(info.shown, ["nsmax-search-summary", "nsmax-search-empty"]);
 		assert.equal(info.padding, "44px 16px");
 		assert.equal(info.align, "center");
@@ -2969,8 +2971,11 @@ test("搜索结果页有结果：列表照常显示，上面一行搜索摘要�
 			rows: [...document.querySelectorAll("ul.post-list > li.post-list-item")].filter((element) => element.getClientRects().length > 0).length,
 			toolbar: document.querySelector(".post-list-controler").getClientRects().length > 0,
 			gap: Math.round(document.querySelector(".post-list-controler").getBoundingClientRect().top - document.querySelector(".nsmax-search-summary").getBoundingClientRect().bottom),
+			// 2026-11-10：标题里搜的词标出来（不分大小写），字本身不变
+			hits: [...document.querySelectorAll("ul.post-list .post-title mark.nsmax-search-hit")].map((mark) => mark.textContent),
+			title: document.querySelectorAll("ul.post-list .post-title > a")[1].textContent,
 		}));
-		assert.deepEqual(info, { summary: "搜索 vps · 第 2 页", empty: false, rows: 4, toolbar: true, gap: 8 });
+		assert.deepEqual(info, { summary: "搜索 vps · 第 2 页", empty: false, rows: 4, toolbar: true, gap: 12, hits: ["VPS"], title: "求推荐稳定的美西 VPS" });
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -3655,8 +3660,8 @@ test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预
 			const pills = Array.from(document.querySelectorAll(".search-overlay .sub-pill"), (p) => Math.round(p.getBoundingClientRect().top));
 			return { width: Math.round(card.width), input: Math.round(input.height), inputFirst: input.top < pills[0], oneRow: new Set(pills).size === 1 };
 		});
-		// 2026-10-19 第十三批改成 600px 卡片、44px 一体搜索框（输入框在框里，高 42px）
-		assert.deepEqual(overlay, { width: 600, input: 42, inputFirst: true, oneRow: true });
+		// 2026-10-19 第十三批改成 600px 卡片、44px 一体搜索框；2026-11-10 搜索框和主按钮同一档 40px（输入框在框里，高 38px）
+		assert.deepEqual(overlay, { width: 600, input: 38, inputFirst: true, oneRow: true });
 		assert.deepEqual(list.errors, []);
 	} finally { await list.context.close(); }
 });
@@ -4193,10 +4198,10 @@ test("第六批（2026-10-18）：标题后面的等级锁和标题文字中线�
 			const rects = Array.from(range.getClientRects());
 			const last = rects[rects.length - 1];
 			const box = span.getBoundingClientRect();
-			return { gap: box.left - last.right, diff: (box.top + box.bottom) / 2 - (last.top + last.bottom) / 2 };
+			return { gap: rects[0].left - box.right, diff: (box.top + box.bottom) / 2 - (rects[0].top + rects[0].bottom) / 2 };
 		});
 		assert.ok(Math.abs(state.diff) <= 1, `和标题文字中线对齐：差 ${state.diff.toFixed(1)}px`);
-		assert.ok(state.gap <= 8, `离标题近一点：${state.gap.toFixed(1)}px`);
+		assert.ok(state.gap >= 0 && state.gap <= 8, `2026-11-10 起在标题前面，隔 6px：${state.gap.toFixed(1)}px`);
 		assert.deepEqual(list.errors, []);
 	} finally { await list.context.close(); }
 	const view = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", { html: searchPage({ count: 3 }), viewport: { width: 1440, height: 900 } });

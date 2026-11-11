@@ -40,7 +40,7 @@ form{display:flex;flex:1;flex-direction:column;min-height:0;margin:0}
 .mark{flex:none;width:24px;height:24px;border-radius:calc(24px * 14 / 64 * var(--s-r-scale));background:var(--nsmax-logo-icon,none) center/100% 100% no-repeat}
 :host([data-dark]) .mark{filter:invert(1)}
 h2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-height:1.4;white-space:nowrap}
-.version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11.5px/20px var(--s-mono)}
+.version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11px/20px var(--s-mono)}
 .link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap}
 .link:hover{text-decoration:underline}
 .close{display:grid;place-items:center;flex:none;width:28px;height:28px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle)}
@@ -86,7 +86,9 @@ input[type=checkbox]{flex:none;width:15px;height:15px;margin:0;accent-color:var(
 input:not([type=checkbox]):not([type=file]),select,textarea{display:block;width:100%;min-width:0;margin:0;padding:6px 10px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-input);background:var(--s-panel);color:var(--s-text);font:inherit;font-size:14px;line-height:20px;box-shadow:none}
 input::placeholder,textarea::placeholder{color:var(--s-muted)}
 textarea{min-height:96px;line-height:1.7;resize:vertical}
-select{appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--s-muted) 50%),linear-gradient(135deg,var(--s-muted) 50%,transparent 50%);background-position:right 16px top 55%,right 11px top 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;cursor:pointer}
+/* 下拉框：和页面上的下拉框一样的 12px 细折线箭头，离右边 12px（2026-11-10） */
+select{appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%23555a6a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-position:right 12px center;background-size:12px 12px;background-repeat:no-repeat;cursor:pointer}
+:host([data-dark]) select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%23a8abbb' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
 input:not([type=checkbox]):focus,select:focus,textarea:focus{border-color:var(--s-field-focus);outline:3px solid var(--s-field-ring);outline-offset:0}
 /* 搜索框、数字框：写在通用输入框规则后面、权重相同，覆盖它的整行宽度 */
 .tabs-row input.search{flex:none;width:200px;margin:6px 0;padding:6px 10px;font-size:13px}
@@ -120,7 +122,7 @@ button:not(:disabled):active{transform:translateY(1px)}
 .about-links a{padding:3px 12px;border:1px solid var(--s-line-strong);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-muted);font-size:12.5px;text-decoration:none}
 .about-links a:hover{border-color:var(--s-action-border);background:var(--s-action);color:var(--s-action-text)}
 .about-features{margin:0 0 16px;padding-left:18px;color:var(--s-muted);font-size:12.5px;line-height:1.75}
-.about-content>button{padding:4px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12.5px;font-weight:500}
+.about-content>button{padding:3px 12px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:12px;font-weight:500;line-height:20px}
 .about-content>button:hover{background:var(--s-panel-hover)}
 /* 提示：sb.sb .toast——底部居中、反色底、卡片圆角、13.5px；出错用危险色实底 */
 .toast{position:fixed;inset:auto auto 24px 50%;z-index:2147483646;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);margin:0;padding:9px 10px 9px 16px;border:0;border-radius:var(--s-r);background:var(--s-inverse);color:var(--s-inverse-text);font:13.5px/1.5 var(--s-font);box-shadow:var(--s-shadow);transform:translateX(-50%)}
