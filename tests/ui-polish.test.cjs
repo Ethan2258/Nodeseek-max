@@ -620,7 +620,10 @@ for(const engine of engines){
   try{
    await ready(page);
    // 用脚本点（不移鼠标、不按下）：鼠标停上去 / 按下时脚本会先取这一篇，这里的响应故意晚 0.9 秒，取到一半被跳转打断，
-   // WebKit 会把被打断的请求报成页面错误（「… due to access control checks」），和进度条无关
+   // WebKit 会把被打断的请求报成页面错误（「… due to access control checks」），和进度条无关。
+   // 同理先等页面自己的请求走完再点：脚本一启动就查未读数（/api/notification/unread-count），点得太快它还在路上，
+   // 一跳页就被打断，报的是同一种错（2026-11-11 主干 CI 上撞到一次）
+   await page.waitForLoadState("networkidle");
    await page.evaluate(()=>document.querySelector('ul.post-list .post-title > a[href="/post-1000-1"]').click());
    await page.waitForURL("**/post-1000-1");
    await ready(page);
