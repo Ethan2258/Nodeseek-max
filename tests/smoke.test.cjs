@@ -3388,6 +3388,77 @@ test("滚动不卡（2026-11-10）：电脑上滚动时鼠标下面的行不换�
 	} finally { await phone.context.close(); }
 });
 
+test("滚完马上按住拖（2026-11-12）：按在挡板上的拖动也转给下面——拖选文字、拖高输入框第一下就有反应；被控件自己用掉的方向键、输入框里的空格不算翻页", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1440, height: 900 } });
+	const shieldIs = (state) => page.waitForFunction((want) => { const el = document.querySelector(".nsmax-scroll-shield"); return (el ? getComputedStyle(el).display : "none") === want; }, state);
+	// 滚一格把挡板盖上（已经到底就往上滚），鼠标不动
+	const nudge = async () => {
+		await page.mouse.wheel(0, await page.evaluate(() => scrollY + innerHeight >= document.documentElement.scrollHeight - 2 ? -1 : 1));
+		await shieldIs("block");
+	};
+	const downOn = () => page.evaluate(() => { addEventListener("pointerdown", (event) => { window.__nsmaxDown = event.target.className || event.target.tagName; }, { capture: true, once: true }); });
+	// 页面是平滑滚动的：滚到位（连续两次量到的位置一样）再去量、再去按
+	const bring = async (locator) => {
+		await locator.evaluate((el) => { el.scrollIntoView({ block: "center" }); window.__nsmaxTop = NaN; });
+		await locator.evaluate((el) => new Promise((resolve) => {
+			const check = () => { const top = el.getBoundingClientRect().top; if (top === window.__nsmaxTop) resolve(); else { window.__nsmaxTop = top; setTimeout(check, 120); } };
+			check();
+		}));
+		await shieldIs("none");
+	};
+	try {
+		await page.waitForFunction(() => performance.getEntriesByName("nsmax:deferred-start").length && !document.documentElement.hasAttribute("data-nsmax-mounting"));
+		await page.waitForSelector(".nsmax-editor-resize");
+		await wait(page, 300);
+		// 拖选正文里的字
+		const text = page.locator(".post-content").first();
+		await bring(text);
+		const at = await text.boundingBox();
+		await page.mouse.move(at.x + 10, at.y + 10, { steps: 2 });
+		await downOn();
+		await nudge();
+		await page.mouse.down();
+		await page.mouse.move(at.x + 150, at.y + 12, { steps: 5 });
+		await page.mouse.up();
+		assert.equal(await page.evaluate(() => window.__nsmaxDown), "nsmax-scroll-shield", "这一下确实按在挡板上");
+		assert.ok((await page.evaluate(() => getSelection().toString())).length >= 2, "滚完马上按住拖，字照样选得上");
+		assert.ok(page.url().endsWith("/post-1000-1"), "拖动不算点击");
+		// 拖高输入框
+		const input = page.locator(".md-editor textarea"), handle = page.getByRole("separator", { name: "调整输入框高度" });
+		await bring(handle);
+		const before = (await input.boundingBox()).height;
+		let box = await handle.boundingBox();
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 2 });
+		await downOn();
+		await nudge();
+		await page.mouse.down();
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + 60, { steps: 4 });
+		await page.mouse.up();
+		assert.equal(await page.evaluate(() => window.__nsmaxDown), "nsmax-scroll-shield", "这一下也按在挡板上");
+		const dragged = (await input.boundingBox()).height;
+		assert.ok(dragged >= before + 50, `滚完马上拖把手，输入框跟着变高：${before} → ${dragged}`);
+		await shieldIs("none");
+		// 把手上的方向键是调高度，不是翻页：紧跟着页面自己挪一下不盖挡板
+		await handle.focus();
+		await page.keyboard.press("ArrowDown");
+		assert.ok((await input.boundingBox()).height >= dragged + 25, "方向键照常调高度");
+		await page.evaluate(() => scrollBy(0, -6));
+		await wait(page, 60);
+		await shieldIs("none");
+		// 输入框里打空格也不算
+		await input.focus();
+		await page.keyboard.press(" ");
+		await page.evaluate(() => scrollBy(0, -6));
+		await wait(page, 60);
+		await shieldIs("none");
+		// 真去翻页的按键照旧盖
+		await page.evaluate(() => document.activeElement.blur());
+		await page.keyboard.press("ArrowUp");
+		await shieldIs("block");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
 // 第三批（2026-10-17）的测试用：第 2 层回复第 1 层、第 3 层回复第 2 层（都收进第 1 层的楼中楼框），第 1 层带签名
 const floorPost = (options = {}) => postPage(options)
 	.replace("<p>价格不错，帮顶</p>", `<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 价格不错，帮顶</p>`)
