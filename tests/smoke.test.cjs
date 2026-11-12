@@ -3272,7 +3272,7 @@ test("2026-10-17 第二批：未读数是 16px 小圆、今日热门标题下不
 			};
 		});
 		assert.equal(state.text.length, 1);
-		assert.deepEqual(state.size, [14, 14], "一位数的未读数是正圆（以前 24×16 的椭圆）；2026-11-11 起照 sb.sb 现在的样子：压在图标右上角的 14px 小圆点");
+		assert.deepEqual(state.size, [16, 16], "一位数的未读数是 16px 正圆（以前 24×16 的椭圆；v1.9.45 压在图标上的 14px 小点 2026-11-12 撤回）");
 		assert.equal(state.radius, true);
 		assert.deepEqual(state.titleMargin, ["0px", "0px"], "「今日热门」标题不再额外留外边距");
 		assert.equal(state.hoverCard, "none", "站点旧版资料卡（点头像弹出）不显示，资料卡只用 sb.sb 样式那张");

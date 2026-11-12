@@ -16677,32 +16677,35 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
 html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
   align-self: baseline !important;
 }
-/* ---------- 未读数圆点照 sb.sb 现在的样子重做（2026-11-11 Yiheng：「旁边的通知数字圆点，你给我看看原版是怎么做的……它那个做的我觉得好，你这抄的一点都不好」） ----------
-   当天从 sb.sb 取的样式表（index.8ae5f9d33b.css）：
-     .notify-badge { min-width:16px; height:16px; padding:0 4px; 胶囊; background:var(--danger); color:var(--on-danger); 等宽 10px/1 }
-     .nav-user-item .notify-badge { position:absolute; top:-3px; left:21px; min-width:14px; height:14px; padding:0 3px; font-size:9px; box-shadow:0 0 0 2px var(--panel) }
-   也就是菜单里的未读数不排在文字后面，而是一个 14px 的小圆点压在图标右上角，外面一圈 2px 的面板底色把它和图标隔开；
-   浅色是红底白字（#cf2b2b / #fff），深色是粉底深色字（#ff9999 / #14151c）。v1.9.44 我改成的「文字后面 16px 红底白字 11px」撤掉。
-   sb.sb 的图标 15px、从 10px 起，圆点 left 21px = 压住图标右边 4px；这里图标 13px、从 0 起，所以 left 9px。top 一样 -3px */
-html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-menu > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-  position: relative !important;
-}
+/* ---------- 右栏「我的通知」后面的未读数（2026-11-11 / 11-12 Yiheng） ----------
+   11-11：「旁边的通知数字圆点，你给我看看原版是怎么做的……它那个做的我觉得好，你这抄的一点都不好」（当时是文字后面红底白字 11px 的胶囊）。
+   v1.9.45 照 sb.sb 下拉菜单的写法（.nav-user-item .notify-badge：绝对定位 top:-3px、14px 高、左右 3px 内边距）搬成压在图标右上角的小点，
+   11-12 他看了：「怎么都跑到这里了……通知的感觉就是很奇怪，扁扁的」。原因两条：
+   1. 这里一行只有 32px、图标 13px、图标和字只隔 4px，照搬的 top:-3px 让圆点几乎整个浮在图标上面、顶进上一行，看着像放错了地方；
+   2. 高 14px、左右各 3px 内边距，两位数（他有 15 条）就是 17×14 的扁胶囊。
+   改回文字后面（sb.sb 的 .notify-badge 本体：16px 高、等宽 10px、--danger / --on-danger），并且保证是正圆：
+   一位数、两位数都是 16×16 的圆，不再有左右内边距；只有「99+」这种三个字的才是胶囊（data-nsmax-wide，见 nsmaxBuildAccountCardIn）。
+   浅色红底白字（#cf2b2b / #fff），深色粉底深色字（#ff9999 / #14151c） */
 html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-  position: absolute !important;
-  top: -3px !important;
-  left: 9px !important;
-  min-width: 14px !important;
-  height: 14px !important;
-  margin: 0 !important;
-  padding: 0 3px !important;
+  flex: none !important;
+  width: 16px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  margin: 0 0 0 2px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
   background: var(--danger) !important;
-  box-shadow: 0 0 0 2px var(--panel) !important;
   color: var(--on-danger) !important;
   font-family: var(--font-mono) !important;
-  font-size: 9px !important;
+  font-size: 10px !important;
   font-weight: 400 !important;
   line-height: 1 !important;
-  pointer-events: none !important;
+  letter-spacing: 0 !important;
+}
+html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-unread[data-nsmax-wide]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  width: auto !important;
+  padding: 0 4px !important;
+  border-radius: 999px !important;
 }
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
