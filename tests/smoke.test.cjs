@@ -3080,7 +3080,7 @@ test("我的通知重排（2026-10-17）：顶栏一套分类、@我是一整列
 				const last = Array.from(document.querySelectorAll(".nsmax-notice-row")).pop().getBoundingClientRect();
 				return { gap: Math.round(card.top - top.bottom), rowsFill: card.bottom - last.bottom };
 			});
-			assert.equal(geometry.gap, 18, "标签栏和通知卡片相隔 18px");
+			assert.equal(geometry.gap, width > 800 ? 20 : 18, "标签栏和通知卡片相隔 20px（电脑；手机 18px）");
 			assert.ok(geometry.rowsFill < 120, `通知卡片按内容高度，不撑满窗口（最后一条下面还空 ${geometry.rowsFill}px）`);
 			const link = rows.first().locator(".nsmax-notice-main");
 			await page.waitForFunction(() => document.querySelector(".nsmax-notice-main")?.target === "_blank");

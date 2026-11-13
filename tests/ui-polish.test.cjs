@@ -527,7 +527,7 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
- test(`${engine} 个人空间主题 / 回帖列表：包在 .selector-right-side 里也接进标签条的卡片（边框、下圆角），阅读权限标记是标题后面的浅红小方块（2026-11-08 和首页列表统一）`,async()=>{
+ test(`${engine} 个人空间主题 / 回帖列表：包在 .selector-right-side 里也接进标签条的卡片（边框、下圆角），阅读权限标记是标题前面的浅红「Lv1」小标（2026-11-13 和首页列表统一：以前跟在标题后面、只有一个「1」）`,async()=>{
   for(const [name,html,url] of [["主题",P.spaceTopicsPage({mobile:true}),"/space/10#/discussions"],["回帖",P.spaceCommentsPage({mobile:true}),"/space/10#/comments"]]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...phone(),html});
    try{
@@ -535,16 +535,17 @@ for(const engine of engines){
     const s=await page.evaluate(()=>{
      const w=document.querySelector(".selector-right-side > .discussion-wrapper"),cw=getComputedStyle(w);
      const first=w.querySelector(":scope > div.discussion-item > a, :scope > a.discussion-item");
-     const [title,mark]=first.querySelectorAll(":scope > span");const ct=getComputedStyle(title),cm=getComputedStyle(mark);
+     const mark=first.querySelector(":scope > span[data-nsmax-lock]"),title=first.querySelector(":scope > span:not([data-nsmax-lock])");const ct=getComputedStyle(title),cm=getComputedStyle(mark),ca=getComputedStyle(mark,"::after");
      const bar=document.querySelector(".selector > a.select-item.active, .selector > a.select-item.router-link-active").getBoundingClientRect();
      return{border:cw.borderLeftWidth+" "+cw.borderBottomWidth,radius:parseFloat(cw.borderBottomLeftRadius),left:w.getBoundingClientRect().left,right:w.getBoundingClientRect().right,vw:innerWidth,
-      titleSize:parseFloat(ct.fontSize),markSize:parseFloat(cm.fontSize),markBorder:cm.borderTopWidth,markBg:cm.backgroundColor,markColor:cm.color,titleColor:ct.color,
+      titleSize:parseFloat(ct.fontSize),markSize:parseFloat(ca.fontSize),label:ca.content,first:first.firstElementChild===mark,gap:title.getBoundingClientRect().left-mark.getBoundingClientRect().right,markBorder:cm.borderTopWidth,markBg:cm.backgroundColor,markColor:cm.color,titleColor:ct.color,
       markMiddle:(mark.getBoundingClientRect().top+mark.getBoundingClientRect().bottom)/2,titleMiddle:(title.getBoundingClientRect().top+title.getBoundingClientRect().bottom)/2,below:w.getBoundingClientRect().top>=bar.bottom-1};
     });
     assert.equal(s.border,"1px 1px",name+JSON.stringify(s));
     assert.ok(s.radius>=8&&s.below&&s.left>=0&&s.right<=s.vw,name+JSON.stringify(s));
     assert.ok(s.markSize<s.titleSize&&s.markBorder==="0px"&&s.markBg!=="rgba(0, 0, 0, 0)"&&s.markColor!==s.titleColor,name+JSON.stringify(s));
     assert.ok(near(s.markMiddle,s.titleMiddle,2.5),name+JSON.stringify(s));
+    assert.ok(s.first&&/Lv/.test(s.label)&&/1/.test(s.label)&&near(s.gap,6,1),name+" 锁在标题前面、写成 Lv1、和标题隔 6px："+JSON.stringify(s));
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
@@ -733,5 +734,87 @@ for(const engine of engines){
    assert.ok(/23\d/.test(s.title),`悬停提示里是准确数字：${s.title}`);
    assert.deepEqual(many.errors,[]);
   }finally{await many.context.close();}
+ });
+ test(`${engine} 电脑端第三轮（2026-11-13「继续优化各个地方」）：管理记录表头和内容对齐；个人主页的等级锁和首页一样；卡片之间都是 20px`,async()=>{
+  // 管理记录：五个表头的字和各自那一列内容的字左边对齐（以前表头居中、内容靠左）
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/ruling",{...desk,html:P.rulingPage()});
+  try{
+   await ready(page);
+   const s=await page.evaluate(()=>{
+    const left=(cell)=>{const r=document.createRange();r.selectNodeContents(cell);return r.getBoundingClientRect().left;};
+    const heads=[...document.querySelectorAll(".ruling-log table thead th")],cells=[...document.querySelectorAll(".ruling-log table tbody tr:first-child td")];
+    return{d:heads.map((h,i)=>+(left(h)-left(cells[i])).toFixed(1)),lines:heads.map(h=>Math.round(h.getBoundingClientRect().height))};
+   });
+   assert.equal(s.d.length,5);
+   assert.ok(s.d.every(d=>Math.abs(d)<=1),`表头和内容左边对齐：${JSON.stringify(s)}`);
+   assert.ok(s.lines.every(h=>h===s.lines[0]),`表头不折行：${JSON.stringify(s)}`);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+  // 个人主页主题 / 回帖：锁在标题前面、「Lv1」、站点的图标藏掉、在标题那一行正中；列表重画（翻页）以后还是这样
+  for(const [name,html,url] of [["主题",P.spaceTopicsPage(),"/space/10#/discussions"],["回帖",P.spaceCommentsPage(),"/space/10#/comments"]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
+   try{
+    await ready(page);
+    const read=()=>page.evaluate(()=>{
+     const link=document.querySelector(".discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item"),mark=link.querySelector(":scope > span[data-nsmax-lock]"),title=link.querySelector(":scope > span:not([data-nsmax-lock])");
+     if(!mark)return null;
+     const m=mark.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(title);const t=r.getBoundingClientRect(),after=getComputedStyle(mark,"::after"),head=document.querySelector(".head-container").getBoundingClientRect(),list=document.querySelector(".selector").getBoundingClientRect();
+     return{first:link.firstElementChild===mark,label:after.content,h:m.height,gap:+(t.left-m.right).toFixed(1),dy:+((m.top+m.bottom)/2-(t.top+t.bottom)/2).toFixed(1),svg:getComputedStyle(mark.querySelector("svg")).display,tip:mark.title,titleBg:getComputedStyle(title).backgroundColor,cardGap:Math.round(list.top-head.bottom)};
+    });
+    const s=await read();
+    assert.ok(s&&s.first&&/^"Lv/.test(s.label),name+JSON.stringify(s));
+    assert.ok(s.h===18&&near(s.gap,6,1)&&Math.abs(s.dy)<=1.5&&s.svg==="none"&&s.titleBg==="rgba(0, 0, 0, 0)",name+JSON.stringify(s));
+    assert.equal(s.tip,"等级 Lv1 及以上才能看");
+    assert.equal(s.cardGap,20,name+" 资料卡和列表卡片相隔 20px（以前 14px）");
+    // 站点重画这一行（锁又回到标题后面）
+    await page.evaluate(()=>{const link=document.querySelector(".discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item");const fresh=document.createElement("span");fresh.setAttribute("style","color:rgb(255,152,152)");fresh.innerHTML='<svg class="iconpark-icon"><use href="#lock"></use></svg> 2';link.querySelector("span[data-nsmax-lock]").remove();link.append(fresh);});
+    await page.waitForFunction(()=>document.querySelector(".discussion-wrapper span[data-nsmax-lock-level='2']"));
+    const again=await read();
+    assert.ok(again.first&&near(again.gap,6,1),name+" 重画后："+JSON.stringify(again));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 帖子页：投票卡片之间、投票和评论区之间都是 20px（以前 40px）；投票卡片上下留白一样；页码上下都是 16px（以前下面 36px）
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html:P.specialPostPage()});
+  try{
+   await ready(page);
+   await page.waitForSelector(".vote-panel[data-nsmax-detached]");
+   const s=await page.evaluate(()=>{
+    const kids=[...document.querySelector("#nsk-body-left > .nsk-post-wrapper").children].filter(e=>e.getBoundingClientRect().height>0),gaps=[];
+    for(let i=1;i<kids.length;i++)gaps.push([String(kids[i].className).split(" ")[0]||kids[i].tagName,Math.round(kids[i].getBoundingClientRect().top-kids[i-1].getBoundingClientRect().bottom)]);
+    const panel=document.querySelector(".vote-panel[data-nsmax-detached]"),p=panel.getBoundingClientRect(),head=panel.querySelector(".nsmax-poll-head").getBoundingClientRect(),foot=panel.querySelector("fieldset.op-buttons").getBoundingClientRect();
+    return{gaps,top:Math.round(head.top-p.top),bottom:Math.round(p.bottom-foot.bottom),radius:getComputedStyle(panel).borderTopLeftRadius,post:getComputedStyle(document.querySelector(".nsk-post .content-item")).borderBottomLeftRadius};
+   });
+   const of=(cls)=>s.gaps.filter(g=>g[0]===cls).map(g=>g[1]);
+   assert.deepEqual(of("vote-panel"),[20,20],JSON.stringify(s));
+   assert.deepEqual(of("comment-container"),[20],JSON.stringify(s));
+   assert.deepEqual([of("nsmax-detached-pager"),of("md-editor")],[[16],[16]],JSON.stringify(s));
+   assert.ok(near(s.top,s.bottom,1),`投票卡片上下留白一样：${JSON.stringify(s)}`);
+   assert.equal(s.radius,s.post,"单独成卡片的投票和帖子卡片同一种圆角");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+  // 私信页：外壳不涂底色（以前两栏之间、栏和标签栏之间是一片卡片色），标签栏、左右两栏之间都是 20px
+  for(const dark of [false,true]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification#/message?mode=list",{...desk,colorScheme:dark?"dark":"light",html:P.messageCenterPage({dark})});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nspp-messages-sidebar");
+    const s=await page.evaluate(()=>{
+     const shell=getComputedStyle(document.querySelector(".nspp-messages-container")),top=document.querySelector(".nspp-messages-top").getBoundingClientRect(),side=document.querySelector(".nspp-messages-sidebar").getBoundingClientRect(),chat=document.querySelector(".nspp-messages-chat").getBoundingClientRect();
+     return{bg:shell.backgroundColor,border:shell.borderTopWidth,v:Math.round(side.top-top.bottom),h:Math.round(chat.left-side.right)};
+    });
+    assert.deepEqual(s,{bg:"rgba(0, 0, 0, 0)",border:"0px",v:20,h:20});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 粉丝 / 关注：标签栏和成员卡片相隔 20px
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/fans?type=fans",{...desk,html:P.fansPage()});
+  try{
+   await ready(page);
+   await page.waitForSelector(".nsmax-member");
+   const gap=await page.evaluate(()=>{const grid=document.querySelector(".member-list > .user-card-wrapper-container"),prev=grid.previousElementSibling;return Math.round(grid.getBoundingClientRect().top-prev.getBoundingClientRect().bottom);});
+   assert.equal(gap,20);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
  });
 }

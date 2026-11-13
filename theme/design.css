@@ -4143,8 +4143,8 @@ html[data-nsmax-theme][data-nsmax-page="space"] .selector > .selector-right-side
 }
 /* 标题后面站点带的阅读权限标记（小锁 + 等级，站点是浅红字）：以前被「继承标题字号」带成和标题一样大的黑色数字，
    看着像标题里多了个「1」。改成标题后面的小号描边胶囊：锁 + 等级 */
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]):is(#nsmax-lv, *),
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]):is(#nsmax-lv, *) {
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]):is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]):is(#nsmax-lv, *) {
   display: inline-flex !important;
   align-items: center !important;
   gap: 2px !important;
@@ -4157,15 +4157,15 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussi
   vertical-align: 2px !important;
   white-space: nowrap !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]) svg:is(#nsmax-lv, *),
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]) svg:is(#nsmax-lv, *) {
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]) svg:is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]) svg:is(#nsmax-lv, *) {
   width: 11px !important;
   height: 11px !important;
   fill: currentColor !important;
   flex: none !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]):empty:is(#nsmax-lv, *),
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]):empty:is(#nsmax-lv, *) {
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]):empty:is(#nsmax-lv, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]):empty:is(#nsmax-lv, *) {
   display: none !important;
 }
 /* 页码：sb.sb .pagination-bar——在列表卡片外、上方 20px、居中 */
@@ -15783,8 +15783,8 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   margin: 0 !important;
 }
 /* 个人主页「主题帖」列表标题后面的锁 + 等级：和首页列表同一种浅红小方块、18px 高、对准标题那一行正中（以前是灰色描边胶囊、上提 2px，比字高出 2px） */
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *),
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]):is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: border-box !important;
   height: 18px !important;
   margin: calc((var(--sb-title, 15px) * 1.5 - 18px) / 2) 0 0 6px !important;
@@ -15795,8 +15795,8 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussi
   font: 500 11px/1 var(--font-sans) !important;
   vertical-align: top !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > span + span:not([class]) svg:is(#nsmax-lv, *):is(#nsmax-b, *),
-html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > span + span:not([class]) svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > div.discussion-item > a > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]) svg:is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a.discussion-item > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]) svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
   color: inherit !important;
 }
 
@@ -16455,7 +16455,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
   }
   /* 标题后面的小锁 / 只读：4px 方角，同一行的页码、已回复都是胶囊，两种角放在一起。也改成胶囊 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.post-list > li.post-list-item .post-title > :is(span[data-nsmax-lock], .min-grade, .nsk-badge.read-only, .nspp-readonly):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
-  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .discussion-wrapper > :is(div.discussion-item > a, a.discussion-item) > span + span:not([class]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] :is(.discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item) > :is(span:not([data-nsmax-lock]) + span:not([class]), span[data-nsmax-lock]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     border-radius: var(--r-pill) !important;
   }
 }
@@ -16631,7 +16631,8 @@ html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#n
    以前跟在标题后面，长标题一折行就单独掉到下一行开头，看着像浮在「内版 · 浏览数」上面；图标是站点的空心细线锁，后面一个光秃秃的「1」。
    现在和置顶一样放在标题前面（nsmaxPrepare 挪的），写成「Lv1」：18px 浅红胶囊，实心小锁 10px（CSS 画，站点的图标藏掉），
    11px 等宽数字，和标题隔 6px */
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item) > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
   gap: 3px !important;
   margin-left: 0 !important;
   margin-right: 6px !important;
@@ -16639,10 +16640,12 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   border-radius: var(--r-pill) !important;
   font-size: 0 !important;
 }
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) > svg {
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) > svg,
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item) > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) > svg {
   display: none !important;
 }
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::before {
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::before,
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item) > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::before {
   content: "" !important;
   flex: none !important;
   width: 10px !important;
@@ -16651,7 +16654,8 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.5 5V3.75a2.5 2.5 0 0 1 5 0V5' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Crect x='2' y='5' width='8' height='6' rx='1.6' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat !important;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.5 5V3.75a2.5 2.5 0 0 1 5 0V5' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Crect x='2' y='5' width='8' height='6' rx='1.6' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat !important;
 }
-html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after,
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item) > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
   content: "Lv" attr(data-nsmax-lock-level) !important;
   font: 500 11px/1 var(--font-mono, ui-monospace, monospace) !important;
   letter-spacing: 0 !important;
@@ -16742,6 +16746,55 @@ html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nsmax-messa
     align-content: center !important;
     text-align: center !important;
     text-box: trim-both cap alphabetic !important;
+  }
+}
+/* ---------- 电脑端细调第三轮（2026-11-13 Yiheng：「继续优化各个地方」；测试机上按他的字体和设置把 20 多个页面逐页看了一遍） ---------- */
+/* 个人主页「主题 / 回帖」列表的等级锁挪到标题前面以后（nsmaxTagStructure）：和首页列表一样右边留 6px，左边不留 */
+html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper > div.discussion-item > a, .discussion-wrapper > a.discussion-item) > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  margin-left: 0 !important;
+  margin-right: 6px !important;
+}
+/* 消息中心的外壳有时带着站点的 .nsk-panel（卡片底色）：通知栏和下面的列表、私信左右两栏之间的空隙被它涂成卡片色，
+   浅色下是一片白，两栏圆角外面还露出白色的直角。外壳不画东西，底色交给里面的三张卡片 */
+html[data-nsmax-theme]:root:root:root #nsk-frame .nsk-panel.nspp-messages-container:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 投票卡片底下比上面多空 12px：表单最后有一个站点留的空 div，表单是 12px 间距的竖排，空 div 也占一格间距。空的不占位 */
+html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form > div:empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+}
+@media (min-width: 801px) {
+  /* 管理记录：表头没写对齐方式，浏览器默认居中，下面的内容靠左——「ID / 用户 / 操作 / 管理员 / 时间」五个表头都不在自己那一列的字上面。
+     和账簿（/credit）一样表头、内容都靠左；表头和时间不折行 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .ruling-log table :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    text-align: left !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .ruling-log table :is(th, td:last-child):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    white-space: nowrap !important;
+  }
+  /* 帖子页里单独成卡片的投票：上下各 20px 外边距，外层是 flex 不合并，两张投票之间、投票和评论区之间成了 40px（别的卡片之间都是 20px）。
+     只留上面的 20px；圆角也和前后的卡片一样用 12px（嵌在正文里的投票还是输入框圆角） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .vote-panel[data-nsmax-detached]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin: 20px 0 0 !important;
+    border-radius: var(--r) !important;
+  }
+  /* 评论区下面的页码：上面离评论区 16px，下面离回复框 36px（自己的 16px + 回复框的 20px），看着像贴在评论区底下。上下都是 16px */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left > .nsk-post-wrapper > .nsmax-detached-pager + .md-editor:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-top: 0 !important;
+  }
+  /* 卡片和卡片之间的竖向间距：列表页、帖子页、右栏是 20px，个人主页是 14px，通知 / 私信 / 粉丝 / 查找用户是 18px。统一 20px */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] #nsk-frame > .nsk-container > .head-container:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-bottom: 20px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages[data-nsmax-view="message"] > .nspp-messages-workspace:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    gap: 20px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] .member-list > .user-card-wrapper-container:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-top: 20px !important;
   }
 }
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
