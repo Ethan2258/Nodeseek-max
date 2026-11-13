@@ -164,7 +164,26 @@ async function open(browser, url, { html, seed, fontFiles, manager, colorScheme 
 		return route.abort();
 	});
 	const page = await context.newPage();
-	page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+	// WebKit 把「页面跳走、刷新那一下还在路上的请求」报成页面错误（… due to access control checks），Chromium 不报。
+	// 这是浏览器在收尾，不是脚本出错：主干 CI 上两次撞到（脚本启动时查未读数的请求还没回来，测试就跳页 / 刷新）。
+	// 只放过紧挨着整页跳转的这一条（前后 2 秒内，报错和跳转请求谁先到都算）；页面没跳而请求被拦，照样记成错误
+	const cut = [];
+	let leaving = -Infinity;
+	page.on("request", (request) => {
+		if (!request.isNavigationRequest() || request.frame() !== page.mainFrame()) return;
+		leaving = Date.now();
+		for (const entry of cut.splice(0)) {
+			if (leaving - entry.at < 2000 && errors.includes(entry.text)) errors.splice(errors.indexOf(entry.text), 1);
+		}
+	});
+	page.on("pageerror", (error) => {
+		const text = `pageerror: ${error.message}`;
+		if (/due to access control checks\.?$/.test(error.message)) {
+			if (Date.now() - leaving < 2000) return;
+			cut.push({ text, at: Date.now() });
+		}
+		errors.push(text);
+	});
 	page.on("console", (message) => {
 		if (message.type() === "error" && !/Failed to load resource|net::ERR_FAILED/.test(message.text())) errors.push(`console: ${message.text()}`);
 	});

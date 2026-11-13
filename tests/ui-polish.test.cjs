@@ -677,28 +677,61 @@ for(const engine of engines){
    assert.deepEqual(notice.errors,[]);
   }finally{await notice.context.close();}
  });
- test(`${engine} 未读数照 sb.sb：右栏「我的通知」是压在图标右上角的 14px 小圆点（外面一圈面板底色），通知页标签后面是 16px；深色粉底深字，浅色红底白字`,async()=>{
-  // 2026-11-11 Yiheng：「旁边的通知数字圆点，你给我看看原版是怎么做的」。sb.sb index.8ae5f9d33b.css 的 .notify-badge / .nav-user-item .notify-badge
-  for(const [scheme,bg,fg,panel] of [["dark","rgb(255, 153, 153)","rgb(20, 21, 28)","rgb(20, 21, 28)"],["light","rgb(207, 43, 43)","rgb(255, 255, 255)","rgb(255, 255, 255)"]]){
+ test(`${engine} 未读数照 sb.sb 的 .notify-badge：右栏「我的通知」排在文字后面，一位数、两位数都是 16px 正圆，过百写「99+」才是胶囊；通知页标签后面也是 16px；深色粉底深字，浅色红底白字`,async()=>{
+  // 2026-11-11 Yiheng：「旁边的通知数字圆点，你给我看看原版是怎么做的」；11-12 看了 v1.9.45 压在图标右上角的小点：「怎么都跑到这里了……扁扁的」
+  for(const [scheme,bg,fg] of [["dark","rgb(255, 153, 153)","rgb(20, 21, 28)"],["light","rgb(207, 43, 43)","rgb(255, 255, 255)"]]){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification",{...desk,colorScheme:scheme,html:P.notificationPage({dark:scheme==="dark"})});
    try{
     await ready(page);
     await page.waitForSelector(".nsmax-account-menu .nsmax-account-unread");
     await page.waitForSelector(".nsmax-message-tabs .nspp-messages-count");
-    const s=await page.evaluate(()=>{
-     const dot=document.querySelector(".nsmax-account-menu .nsmax-account-unread"),link=dot.parentElement,icon=link.querySelector("svg, .nsmax-icon").getBoundingClientRect(),b=dot.getBoundingClientRect(),c=getComputedStyle(dot);
-     const label=document.createRange();label.selectNodeContents([...link.childNodes].find(n=>n.nodeType===3&&n.nodeValue.trim())||link);
-     const tab=document.querySelector(".nsmax-message-tabs .nspp-messages-count"),t=getComputedStyle(tab),tb=tab.getBoundingClientRect();
-     return{dot:[b.width,b.height,c.fontSize,c.backgroundColor,c.color,c.boxShadow.replace(/\s+/g," ")],corner:[+(icon.right-b.left).toFixed(1),+(b.bottom-icon.top).toFixed(1),b.top<link.getBoundingClientRect().top],row:link.getBoundingClientRect().height,tab:[tb.width,tb.height,t.fontSize,t.backgroundColor,t.color]};
+    const measure=()=>page.evaluate(()=>{
+     const dot=document.querySelector(".nsmax-account-menu .nsmax-account-unread"),link=dot.parentElement,row=link.getBoundingClientRect(),icon=link.querySelector("svg, .nsmax-icon").getBoundingClientRect(),b=dot.getBoundingClientRect(),c=getComputedStyle(dot);
+     const label=document.createRange();label.selectNodeContents([...link.childNodes].find(n=>n.nodeType===3&&n.nodeValue.trim()));const text=label.getBoundingClientRect();
+     const above=link.parentElement.children[[...link.parentElement.children].indexOf(link)-2]?.getBoundingClientRect();
+     return{dot:[b.width,b.height,c.fontSize,c.backgroundColor,c.color,c.boxShadow,c.position],radius:parseFloat(c.borderTopLeftRadius)>=8||c.borderTopLeftRadius==="50%",
+      after:+(b.left-text.right).toFixed(1),clearOfIcon:b.left>=icon.right,mid:+((b.top+b.bottom)/2-(row.top+row.bottom)/2).toFixed(1),inside:b.top>=row.top&&b.bottom<=row.bottom&&b.right<=row.right,
+      clearOfAbove:!above||b.top>=above.bottom,row:row.height,text:dot.textContent};
     });
-    assert.deepEqual(s.dot.slice(0,5),[14,14,"9px",bg,fg],JSON.stringify(s));
-    assert.ok(s.dot[5].includes(panel)&&/0px 0px 0px 2px/.test(s.dot[5]),`一圈 2px 面板底色：${s.dot[5]}`);
-    assert.deepEqual(s.corner.slice(0,1),[4],`压住图标右边 4px：${JSON.stringify(s.corner)}`);
-    assert.ok(s.corner[1]>0&&s.corner[1]<=3&&s.corner[2],`在图标右上角：${JSON.stringify(s.corner)}`);
-    assert.equal(s.row,32,"圆点不占位，这一行还是 32px");
-    assert.deepEqual(s.tab,[16,16,"10px",bg,fg],JSON.stringify(s));
+    // 夹具里是一位数（@我 5 + 回复 1 + 私信 1）
+    let s=await measure();
+    assert.deepEqual(s.dot,[16,16,"10px",bg,fg,"none","static"],JSON.stringify(s));
+    assert.ok(s.radius,"是圆的");
+    assert.ok(s.after>=4&&s.after<=8&&s.clearOfIcon,`排在文字后面，不压图标：${JSON.stringify(s)}`);
+    assert.ok(Math.abs(s.mid)<=0.5&&s.inside&&s.clearOfAbove,`在这一行正中，不顶到上一行：${JSON.stringify(s)}`);
+    assert.equal(s.row,32,"这一行还是 32px");
+    // 两位数还是正圆，不是扁胶囊
+    await page.evaluate(()=>{document.querySelector(".nsmax-account-menu .nsmax-account-unread").textContent="15";});
+    s=await measure();
+    assert.deepEqual(s.dot.slice(0,2),[16,16],`两位数也是 16×16：${JSON.stringify(s)}`);
+    assert.ok(await page.evaluate(()=>{const dot=document.querySelector(".nsmax-account-menu .nsmax-account-unread"),r=document.createRange();r.selectNodeContents(dot);const t=r.getBoundingClientRect(),b=dot.getBoundingClientRect();return t.left>=b.left+1&&t.right<=b.right-1;}),"两位数的字在圆里面，左右各留至少 1px");
+    const tab=await page.evaluate(()=>{const el=document.querySelector(".nsmax-message-tabs .nspp-messages-count");el.hidden=false;el.textContent="15";const t=getComputedStyle(el),tb=el.getBoundingClientRect();return [tb.width,tb.height,t.fontSize,t.backgroundColor,t.color];});
+    assert.deepEqual(tab,[16,16,"10px",bg,fg],"通知页标签后面的未读数两位数也是 16×16 的圆");
+    // 2026-11-13 Yiheng：「数字要在中间」。量数字本身（墨迹）的中心和圆心差多少：以前居中的是字体的行框，测试机上数字高 1.5px
+    const ink=await page.evaluate(()=>{
+     if(!CSS.supports("text-box","trim-both cap alphabetic"))return null;
+     const cv=document.createElement("canvas").getContext("2d");
+     return [".nsmax-account-menu .nsmax-account-unread",".nsmax-message-tabs .nspp-messages-count"].flatMap(sel=>["3","15"].map(text=>{
+      const el=document.querySelector(sel);el.textContent=text;
+      const r=document.createRange();r.selectNodeContents(el);const t=r.getBoundingClientRect(),b=el.getBoundingClientRect(),c=getComputedStyle(el);
+      cv.font=`${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;const f=cv.measureText(text);
+      const base=t.top+t.height*f.fontBoundingBoxAscent/(f.fontBoundingBoxAscent+f.fontBoundingBoxDescent);
+      return{sel,text,dy:+((base-f.actualBoundingBoxAscent+base+f.actualBoundingBoxDescent)/2-(b.top+b.bottom)/2).toFixed(2),dx:+(t.left-f.actualBoundingBoxLeft+t.left+f.actualBoundingBoxRight)/2-(b.left+b.right)/2};
+     }));
+    });
+    if(ink)for(const one of ink)assert.ok(Math.abs(one.dy)<=0.6&&Math.abs(one.dx)<=0.75,`数字在圆的正中：${JSON.stringify(one)}`);
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
+  // 过百：写成「99+」，这时才是胶囊
+  const many=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage().replace('<span class="notify-count">5</span>','<span class="notify-count">230</span>')});
+  try{
+   await ready(many.page);
+   await many.page.waitForSelector(".nsmax-account-menu .nsmax-account-unread");
+   const s=await many.page.evaluate(()=>{const dot=document.querySelector(".nsmax-account-menu .nsmax-account-unread"),b=dot.getBoundingClientRect();return{text:dot.textContent,wide:dot.hasAttribute("data-nsmax-wide"),size:[b.width>16,b.height],title:dot.title};});
+   assert.deepEqual([s.text,s.wide,s.size],["99+",true,[true,16]],JSON.stringify(s));
+   assert.ok(/23\d/.test(s.title),`悬停提示里是准确数字：${s.title}`);
+   assert.deepEqual(many.errors,[]);
+  }finally{await many.context.close();}
  });
 }
