@@ -16707,6 +16707,43 @@ html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-sb-account .nsmax-account-
   padding: 0 4px !important;
   border-radius: 999px !important;
 }
+/* 通知页标签后面的未读数同一个样子：两位数以前是 20×16 的扁胶囊，也改成 16×16 的圆 */
+html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nsmax-message-tabs .nspp-messages-count:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  flex: none !important;
+  box-sizing: border-box !important;
+  width: 16px !important;
+  min-width: 16px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  letter-spacing: 0 !important;
+}
+html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nsmax-message-tabs .nspp-messages-count[data-nsmax-wide]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  width: auto !important;
+  padding: 0 4px !important;
+  border-radius: 999px !important;
+}
+/* 圆里的数字要在正中（2026-11-13 Yiheng 看了 v1.9.47 的图：「数字要在中间」）。
+   以前靠「行高 1 的一行字在圆里居中」：居中的是字体的行框，不是数字本身，数字在行框里的位置每种字体都不一样——
+   测试机的等宽字体上数字比圆心高 1.5px（上面空 2px、下面空 5px），一眼就能看出偏上。
+   改成 text-box: trim-both cap alphabetic：把这一行上下裁到「大写字母顶 ～ 基线」，也就是数字本身的高度，再居中，
+   哪种字体都是数字的正中对圆的正中。裁边只对块容器生效，所以这里由 inline-flex 换成 inline-block + align-content: center。
+   不认识 text-box 的浏览器（Chrome 133、Safari 18.2 以前）保持原来的排法 */
+@supports (text-box: trim-both cap alphabetic) {
+  html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme] .nspp-messages-top > .nsmax-message-tabs .nspp-messages-count:not(:empty):not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    display: inline-block !important;
+    align-content: center !important;
+    text-align: center !important;
+    text-box: trim-both cap alphabetic !important;
+  }
+  /* 列表标题后面的小页码（18px 的小方块里一个数字）同理：测试机上数字高 1px */
+  html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-title > .nsmax-topic-pages > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+    display: block !important;
+    align-content: center !important;
+    text-align: center !important;
+    text-box: trim-both cap alphabetic !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;

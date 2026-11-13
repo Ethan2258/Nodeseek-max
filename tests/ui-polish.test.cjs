@@ -705,8 +705,21 @@ for(const engine of engines){
     s=await measure();
     assert.deepEqual(s.dot.slice(0,2),[16,16],`两位数也是 16×16：${JSON.stringify(s)}`);
     assert.ok(await page.evaluate(()=>{const dot=document.querySelector(".nsmax-account-menu .nsmax-account-unread"),r=document.createRange();r.selectNodeContents(dot);const t=r.getBoundingClientRect(),b=dot.getBoundingClientRect();return t.left>=b.left+1&&t.right<=b.right-1;}),"两位数的字在圆里面，左右各留至少 1px");
-    const tab=await page.evaluate(()=>{const el=document.querySelector(".nsmax-message-tabs .nspp-messages-count"),t=getComputedStyle(el),tb=el.getBoundingClientRect();return [tb.width,tb.height,t.fontSize,t.backgroundColor,t.color];});
-    assert.deepEqual(tab,[16,16,"10px",bg,fg]);
+    const tab=await page.evaluate(()=>{const el=document.querySelector(".nsmax-message-tabs .nspp-messages-count");el.hidden=false;el.textContent="15";const t=getComputedStyle(el),tb=el.getBoundingClientRect();return [tb.width,tb.height,t.fontSize,t.backgroundColor,t.color];});
+    assert.deepEqual(tab,[16,16,"10px",bg,fg],"通知页标签后面的未读数两位数也是 16×16 的圆");
+    // 2026-11-13 Yiheng：「数字要在中间」。量数字本身（墨迹）的中心和圆心差多少：以前居中的是字体的行框，测试机上数字高 1.5px
+    const ink=await page.evaluate(()=>{
+     if(!CSS.supports("text-box","trim-both cap alphabetic"))return null;
+     const cv=document.createElement("canvas").getContext("2d");
+     return [".nsmax-account-menu .nsmax-account-unread",".nsmax-message-tabs .nspp-messages-count"].flatMap(sel=>["3","15"].map(text=>{
+      const el=document.querySelector(sel);el.textContent=text;
+      const r=document.createRange();r.selectNodeContents(el);const t=r.getBoundingClientRect(),b=el.getBoundingClientRect(),c=getComputedStyle(el);
+      cv.font=`${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;const f=cv.measureText(text);
+      const base=t.top+t.height*f.fontBoundingBoxAscent/(f.fontBoundingBoxAscent+f.fontBoundingBoxDescent);
+      return{sel,text,dy:+((base-f.actualBoundingBoxAscent+base+f.actualBoundingBoxDescent)/2-(b.top+b.bottom)/2).toFixed(2),dx:+(t.left-f.actualBoundingBoxLeft+t.left+f.actualBoundingBoxRight)/2-(b.left+b.right)/2};
+     }));
+    });
+    if(ink)for(const one of ink)assert.ok(Math.abs(one.dy)<=0.6&&Math.abs(one.dx)<=0.75,`数字在圆的正中：${JSON.stringify(one)}`);
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
