@@ -3145,6 +3145,19 @@ function nsmaxTagStructure() {
 				if (pinned ? pinned.nextElementSibling !== span : title.firstElementChild !== span) (pinned ? pinned.after(span) : title.prepend(span));
 			}
 		}
+		// 个人主页「主题 / 回帖 / 收藏」列表的等级锁（a > span 标题 + span 锁和数字）：以前还是站点的空心锁加一个「1」、跟在标题后面，
+		// 和首页列表（v1.9.44 起是标题前面的「Lv1」）两个样。这里同样记下等级、挪到标题前面，样子由同一组 CSS 画
+		for (const use of document.querySelectorAll('.discussion-wrapper .discussion-item span > svg > use[href="#lock"]')) {
+			const span = use.parentElement.parentElement, link = span.parentElement;
+			if (!link || link.tagName !== "A" || span.className) continue;
+			nsmaxFlag(span, "data-nsmax-lock", true);
+			const level = (span.textContent || "").trim();
+			if (level && span.getAttribute("data-nsmax-lock-level") !== level) {
+				span.setAttribute("data-nsmax-lock-level", level);
+				span.title = /^\d+$/.test(level) ? `等级 Lv${level} 及以上才能看` : level;
+			}
+			if (link.firstElementChild !== span) link.prepend(span);
+		}
 		nsmaxTagImageLinks();
 	nsmaxDecorateSignatures();
 		// 页面骨架：左栏是否为空、是否帖子页；右栏是否为空
