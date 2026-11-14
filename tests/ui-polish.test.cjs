@@ -914,4 +914,40 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 电脑端第五轮（2026-11-14「继续」）：各页的字号和按钮高度都在档位上（没有 11.5 / 13.5 / 14.5 的字，按钮 28 / 34 / 40）`,async()=>{
+  const pages=[
+   ["/new-discussion",P.newPostPage(),[".md-editor > .topic-select > div > label",".md-editor .nsmax-editor-heading"]],
+   ["/setting",P.settingPage({}),["#user-setting-panel form fieldset > h2","#user-setting-panel form > div > button.btn"]],
+   ["/credit",P.creditPage(),[".credit-table table td"]],
+   ["/ruling",P.rulingPage(),[".ruling-log table td"]],
+   ["/notification#/message?mode=list",P.messageCenterPage(),[".nspp-messages strong"]],
+   ["/friends",P.friendsPage(),[".nsk-friends .friends-container > div > a > p"]],
+   ["/space/10#/comments",P.spaceCommentsPage(),[".discussion-wrapper > a:not(.discussion-item) > p"]],
+   ["/board",P.boardPage(),[".nsmax-board-banner-actions > .nsmax-board-btn"]],
+   ["/post-1000-1",P.specialPostPage(),[".nsmax-lottery td",".nsmax-lottery-unit",".nsmax-lottery-join",".nsmax-lottery-view",".vote-panel .pure-button",".nsmax-poll-voters-toggle"]],
+  ];
+  for(const [url,html,selectors] of pages){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
+   try{
+    await ready(page);
+    await page.waitForSelector(selectors[0]);
+    const s=await page.evaluate((selectors)=>{
+     const found={},bad=[];
+     for(const sel of selectors){
+      const list=[...document.querySelectorAll(sel)].filter(e=>e.getBoundingClientRect().height>0);
+      found[sel]=list.length;
+      for(const e of list){
+       const st=getComputedStyle(e),h=Math.round(e.getBoundingClientRect().height*100)/100;
+       if(["11.5px","13.5px","14.5px"].includes(st.fontSize))bad.push(sel+" 字号 "+st.fontSize);
+       if(/button|btn|join|view|toggle/.test(sel)&&![28,34,40].includes(h))bad.push(sel+" 高 "+h);
+      }
+     }
+     return{found,bad};
+    },selectors);
+    assert.ok(Object.values(s.found).every(n=>n>0),url+" "+JSON.stringify(s.found));
+    assert.deepEqual(s.bad,[],url);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }

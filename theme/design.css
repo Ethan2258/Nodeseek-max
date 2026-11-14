@@ -16855,6 +16855,69 @@ html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is
     line-height: 32px !important;
   }
 }
+/* ---------- 电脑端细调第五轮（2026-11-14 Yiheng：「继续」） ----------
+   字号和控件高度回到电脑端的档位上（字号不用 11.5 / 13.5 / 14.5，控件 18 / 28 / 34 / 40）。逐页量出来还没归档的：
+   发帖页「板块 / 内容 / 阅读限制」和个人设置「头像 / 简介 / 签名…」小标题 13.5 → 14；鸡腿记录、管理记录表格内容 13.5 → 13；
+   私信会话名 13.5 → 13；友情链接站名 14.5 → 14；个人主页回帖摘要 13.5 → 13；列表标题后页码之间的「…」11.5 → 11（和页码一样）；
+   帖子里抽奖卡片的字 13.5 → 13、倒计时单位 11.5 → 12、「回复参与」和投票按钮 38 → 34；私信空白处的提示 13.5 → 13；签到页两个按钮、「查看投票人」30 → 28；个人设置「确定」40.5 → 40 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor > .topic-select > div > label:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #user-setting-panel .selector-right-side form fieldset > h2:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 14px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .credit-table table td:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .ruling-log table td:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages strong:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-frame > .nsk-friends > .friends-container > div > a > p:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 14px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .discussion-wrapper > a:not(.discussion-item) > p:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-topic-pages > .nsmax-topic-pages-gap:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 11px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-lottery :is(td, .nsmax-lottery-join, .nsmax-lottery-view, .nsmax-lottery-result):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-lottery .nsmax-lottery-unit:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .vote-panel .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-lottery :is(.nsmax-lottery-join, .nsmax-lottery-view):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .vote-panel .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding-block: 0 !important;
+    line-height: 32px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-board-banner-actions > .nsmax-board-btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-poll-voters-toggle:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding-block: 0 !important;
+    line-height: 26px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #user-setting-panel .selector-right-side form > div > button.btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding-block: 0 !important;
+    line-height: 38px !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;
