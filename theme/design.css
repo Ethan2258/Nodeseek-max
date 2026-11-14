@@ -16918,6 +16918,51 @@ html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is
     line-height: 38px !important;
   }
 }
+/* ---------- 电脑端细调第六轮（2026-11-14 Yiheng：「继续」） ----------
+   签到页的卡片和别的页面对齐：别处卡片里面留 18px、卡片标题 17px / 600（「等级进度」），签到页是左右 20px、标题 18px / 700、
+   前面还多一根黄色竖条、离卡片顶 25px。去掉竖条，标题 17px / 600 贴着 18px 的内边距；上面「今日还未签到」那一条左右也是 18px；排行榜的名次和标题左边对齐。
+   关注 / 粉丝 / 查找用户：成员卡片左右 16 → 18px，头像和上面的标签、标题对齐 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left > .board-container:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left > .nsmax-board-banner:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .board-container .nsmax-board-title:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin: 0 0 14px !important;
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .board-container .nsmax-board-title > .nsmax-board-title-bar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    display: none !important;
+  }
+  /* 排行榜每一行左右留 12px 给悬停底色；整张表往外挪 12px，名次和标题左边对齐（以前名次比标题缩进一截） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .board-container > .board-list:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-inline: -12px !important;
+  }
+  /* 关注 / 粉丝 / 查找用户的成员卡片：左右 16px → 18px，头像和上面标签栏、「查找用户」标题的字左边对齐 */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] .nsmax-member:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  /* 登录 / 注册：输入框 44px、「登录」按钮 46px 比站内别处（主按钮 40px）高一截，电脑上统一到 40px；
+     「显示 / 隐藏」跟着 30 → 28px，仍在输入框正中 */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] [data-nsmax-auth-app] :is(input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input:not([type])):not([style*="display: none"]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 40px !important;
+    line-height: 38px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] [data-nsmax-auth-app] button:not([type="button"]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 40px !important;
+    line-height: 40px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] [data-nsmax-auth-app] :is(button[type="button"], input[type="button"]):not(.nsmax-password-toggle):not([style*="display: none"]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 40px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] [data-nsmax-auth-app] button.nsmax-password-toggle[type="button"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 28px !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;

@@ -2574,7 +2574,7 @@ test("登录 / 注册页：表单显示出来（以前 #nsk-body-left-block 被�
 			assert.equal(state.card.w, 980, `${url} 卡片 980px`);
 			assert.equal(state.hero.w, state.app.w, `${url} 左右两半一样宽`);
 			assert.ok(state.inputs >= inputs, `${url} 输入框显示出来：${state.inputs}`);
-			assert.equal(state.inputHeight, 44, `${url} 输入框 44px`);
+			assert.equal(state.inputHeight, 40, `${url} 输入框 40px（电脑端第六轮：和站内主按钮一档）`);
 			assert.ok(!state.side || state.side.w === 0, `${url} 不显示右栏`);
 			assert.deepEqual(state.tabs, url === "/register.html" ? ["登录", "注册*"] : ["登录*", "注册"]);
 			assert.deepEqual(errors, []);
