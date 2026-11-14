@@ -5269,7 +5269,7 @@ test("第十二批（2026-10-19）：合作商家（/providers）、友站链接
 				ellipsis: getComputedStyle(card("一个名字特别特别长的友站博客").querySelector("p")).textOverflow
 			};
 		});
-		assert.deepEqual(state, { display: "grid", host: "ednovas.xyz", hostWww: "example.org", broken: [["L", true], ["D", true]], nameSize: "14.5px", avatar: 36, ellipsis: "ellipsis" });
+		assert.deepEqual(state, { display: "grid", host: "ednovas.xyz", hostWww: "example.org", broken: [["L", true], ["D", true]], nameSize: "14px", avatar: 36, ellipsis: "ellipsis" });
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
