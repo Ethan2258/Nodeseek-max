@@ -235,7 +235,7 @@ for(const engine of engines){
     assert.equal(await css(page,"#stacked-email","paddingLeft"),"12px");
     assert.equal(await css(page,"#stacked-email","paddingTop"),"0px");
     assert.equal(await css(page,"#stacked-password","paddingRight"),"56px");
-    assert.ok(near(await box(page,".nsmax-password-toggle"),30,.6));
+    assert.ok(near(await box(page,".nsmax-password-toggle"),28,.6));
     assert.equal(await css(page,".nsmax-password-toggle","fontSize"),"12px");
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
@@ -946,6 +946,56 @@ for(const engine of engines){
     },selectors);
     assert.ok(Object.values(s.found).every(n=>n>0),url+" "+JSON.stringify(s.found));
     assert.deepEqual(s.bad,[],url);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 电脑端第六轮（2026-11-14「继续」）：签到页卡片、成员卡片和别的页面对齐，登录页控件 40px`,async()=>{
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/board",{...desk,html:P.boardPage()});
+   try{
+    await ready(page);
+    await page.waitForSelector(".board-container .nsmax-board-title-text");
+    const s=await page.evaluate(()=>{
+     const card=document.querySelector("#nsk-body-left > .board-container"),title=document.querySelector(".board-container .nsmax-board-title"),text=title.querySelector(".nsmax-board-title-text").getBoundingClientRect(),rank=document.querySelector(".board-list .nsmax-board-rank").getBoundingClientRect(),bar=title.querySelector(".nsmax-board-title-bar");
+     const st=getComputedStyle(title);
+     return{pad:getComputedStyle(card).paddingLeft,size:st.fontSize,weight:st.fontWeight,bar:bar?bar.getBoundingClientRect().width:0,dx:Math.round(rank.left-text.left),inset:Math.round(text.left-card.getBoundingClientRect().left-parseFloat(getComputedStyle(card).borderLeftWidth))};
+    });
+    assert.deepEqual(s,{pad:"18px",size:"17px",weight:"600",bar:0,dx:0,inset:18});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  for(const [url,html,ref] of [["/fans?type=fans",P.fansPage(),".fans-switcher > a"],["/member?q=a",P.findUserPage(),null]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nsmax-member .nsmax-member-avatar");
+    const s=await page.evaluate((ref)=>{
+     const m=document.querySelector(".nsmax-member"),av=m.querySelector(".nsmax-member-avatar").getBoundingClientRect();
+     let refLeft=null;
+     if(ref){const r=document.createRange();r.selectNodeContents(document.querySelector(ref));refLeft=Math.round(r.getBoundingClientRect().left);}
+     return{pad:getComputedStyle(m).paddingLeft,dx:refLeft==null?0:Math.round(av.left)-refLeft};
+    },ref);
+    assert.deepEqual(s,{pad:"18px",dx:0},url);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  for(const [url,html] of [["/signIn.html",P.signInPage({})],["/register.html",P.registerPage({})]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
+   try{
+    await ready(page);
+    await page.waitForSelector("input[data-nsmax-password]");
+    const s=await page.evaluate(()=>{
+     const app=document.querySelector("[data-nsmax-auth-app]"),bad=[];
+     for(const e of app.querySelectorAll("input:is([type=text],[type=password],[type=email]), button")){
+      const b=e.getBoundingClientRect();if(!b.height)continue;
+      const want=e.classList.contains("nsmax-password-toggle")?28:40;
+      if(Math.round(b.height)!==want)bad.push((e.id||e.className||e.type)+" "+b.height);
+     }
+     const f=document.querySelector("input[data-nsmax-password]").getBoundingClientRect(),t=document.querySelector(".nsmax-password-toggle").getBoundingClientRect();
+     return{bad,dy:Math.abs((t.top+t.height/2)-(f.top+f.height/2))<=1};
+    });
+    assert.deepEqual(s,{bad:[],dy:true},url);
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
