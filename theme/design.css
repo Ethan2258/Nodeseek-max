@@ -16797,6 +16797,63 @@ html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form > div:empty:is(
     margin-top: 20px !important;
   }
 }
+/* ---------- 电脑端细调第四轮（2026-11-14 Yiheng：「继续」） ---------- */
+/* Markdown 工具栏：一排文字符号（B I H ” <> 🔗 🖼️ • 1. ⊞ —）换成主题的线条图标以后，每个按钮都是 28×28 的圆，图标 16px。
+   以前按字的宽度撑开，「<>」「1.」比「B」宽一截，两个彩色表情又比别的大 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    flex: none !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+}
+/* 图标 16px：手机上按钮还是 44px 的触控大小，只是里面换成了图标 */
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn > svg:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: block !important;
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+/* 「一键抽奖」前面的礼物：线条图标 16px、弱化色（以前是彩色表情）。
+   选择器要带 .md-editor：光写 .nsmax-lucky-trigger 会被构建脚本当成抽奖页（/lucky）专属的规则，发帖页拿不到 */
+html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: block !important;
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--text-muted) !important;
+}
+/* 今日热门悬停：下划线只画在标题下面。第 75 节给侧栏所有链接加了悬停下划线，热门这一行的链接里还装着名次和浏览数，
+   结果一道线从「3」一直划到「960」 */
+@media (hover: hover) {
+  html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):hover {
+    text-decoration: none !important;
+  }
+  html[data-nsmax-theme] .nsmax-hot-panel .nsmax-hot-list a:hover > .nsmax-hot-text:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    text-decoration: underline !important;
+    text-decoration-thickness: auto !important;
+    text-decoration-color: currentColor !important;
+    text-underline-offset: 2px !important;
+  }
+}
+/* 没登录时右栏的欢迎卡：说明文字 15px、行高 26px，比侧栏别处（13px）大一号；「登录 / 注册」13.5px、高 37.6px，不在电脑端的档位上。
+   说明 13px / 22px，按钮 34px 高、13px */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-right-panel-container > .nsk-panel[data-nsmax-btnpanel] > h4 ~ :is(div, p):not([data-nsmax-btnrow]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+    line-height: 22px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-right-panel-container > .nsk-panel > .small-margin[data-nsmax-btnrow] > .btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 34px !important;
+    padding: 0 !important;
+    font-size: 13px !important;
+    line-height: 32px !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;
