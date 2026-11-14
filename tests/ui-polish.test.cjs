@@ -920,7 +920,7 @@ for(const engine of engines){
    ["/setting",P.settingPage({}),["#user-setting-panel form fieldset > h2","#user-setting-panel form > div > button.btn"]],
    ["/credit",P.creditPage(),[".credit-table table td"]],
    ["/ruling",P.rulingPage(),[".ruling-log table td"]],
-   ["/notification#/message?mode=list",P.messageCenterPage(),[".nspp-messages strong"]],
+   ["/notification#/message?mode=list",P.messageCenterPage(),[".nspp-messages-conversations > .nspp-messages-peer:not(.nsmax-notice-row) .nspp-messages-peer-title > strong"]],
    ["/friends",P.friendsPage(),[".nsk-friends .friends-container > div > a > p"]],
    ["/space/10#/comments",P.spaceCommentsPage(),[".discussion-wrapper > a:not(.discussion-item) > p"]],
    ["/board",P.boardPage(),[".nsmax-board-banner-actions > .nsmax-board-btn"]],
