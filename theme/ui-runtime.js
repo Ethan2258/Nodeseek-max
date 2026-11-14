@@ -5911,13 +5911,15 @@ function nsmaxTagStructure() {
 				mdeToolbar.className = "nsmax-custom-mde-toolbar";
 				mdeToolbar.hidden = true;
 
-				const addMdeTool = (label, title, onClick) => {
+				// 图标用主题自己的线条图标（toolIcon）。以前是一排文字符号：B I H ” <> 🔗 🖼️ • 1. ⊞ —，链接和图片是彩色表情，
+				// 其余是黑白字符，字符在不同系统的字体里大小、粗细、高低都不一样，一排看下去参差不齐（2026-11-14 逐页看时发现）
+				const addMdeTool = (icon, title, onClick) => {
 					const btn = document.createElement("button");
 					btn.type = "button";
 					btn.className = "nsmax-mde-btn";
 					btn.title = title;
 					btn.setAttribute("aria-label", title);
-					btn.textContent = label;
+					btn.append(toolIcon(icon));
 					btn.addEventListener("click", e => {
 						e.preventDefault();
 						onClick();
@@ -5930,20 +5932,20 @@ function nsmaxTagStructure() {
 					mdeToolbar.append(sep);
 				};
 
-				addMdeTool("B", "粗体", () => insertMarkdown("**", "**", "粗体文本"));
-				addMdeTool("I", "斜体", () => insertMarkdown("*", "*", "斜体文本"));
-				addMdeTool("H", "标题", () => insertMarkdown("### ", "", "标题"));
+				addMdeTool("bold", "粗体", () => insertMarkdown("**", "**", "粗体文本"));
+				addMdeTool("italic", "斜体", () => insertMarkdown("*", "*", "斜体文本"));
+				addMdeTool("heading", "标题", () => insertMarkdown("### ", "", "标题"));
 				addMdeSep();
-				addMdeTool("”", "引用", () => insertMarkdown("> ", "", "引用内容"));
-				addMdeTool("<>", "代码", () => insertMarkdown("`", "`", "代码"));
+				addMdeTool("quote", "引用", () => insertMarkdown("> ", "", "引用内容"));
+				addMdeTool("code", "代码", () => insertMarkdown("`", "`", "代码"));
 				addMdeSep();
-				addMdeTool("🔗", "链接", () => insertMarkdown("[", "](https://)", "链接文本"));
-				addMdeTool("🖼️", "图片", () => insertMarkdown("![", "](https://)", "图片描述"));
+				addMdeTool("link", "链接", () => insertMarkdown("[", "](https://)", "链接文本"));
+				addMdeTool("image", "图片", () => insertMarkdown("![", "](https://)", "图片描述"));
 				addMdeSep();
-				addMdeTool("•", "无序列表", () => insertMarkdown("- ", "", "列表项"));
-				addMdeTool("1.", "有序列表", () => insertMarkdown("1. ", "", "列表项"));
-				addMdeTool("⊞", "表格", () => insertMarkdown("\n| 表头 1 | 表头 2 |\n| :--- | :--- |\n| 内容 1 | 内容 2 |\n", "", ""));
-				addMdeTool("—", "分割线", () => insertMarkdown("\n\n---\n\n", "", ""));
+				addMdeTool("unordered", "无序列表", () => insertMarkdown("- ", "", "列表项"));
+				addMdeTool("ordered", "有序列表", () => insertMarkdown("1. ", "", "列表项"));
+				addMdeTool("table", "表格", () => insertMarkdown("\n| 表头 1 | 表头 2 |\n| :--- | :--- |\n| 内容 1 | 内容 2 |\n", "", ""));
+				addMdeTool("rule", "分割线", () => insertMarkdown("\n\n---\n\n", "", ""));
 
 				action("Markdown", "code", button => {
 					const on = editor.classList.toggle("nsmax-editor-tools");
@@ -6327,7 +6329,9 @@ function nsmaxTagStructure() {
 					const luckyBtn = document.createElement("button");
 					luckyBtn.type = "button";
 					luckyBtn.className = "nsmax-lucky-trigger";
-					luckyBtn.innerHTML = `<span>🎁</span><b>一键抽奖</b>`;
+					// 礼物图标也用线条图标（以前是彩色表情 🎁，和旁边的墨色「发布帖子」放在一起很跳）
+					const luckyLabel = document.createElement("b"); luckyLabel.textContent = "一键抽奖";
+					luckyBtn.append(toolIcon("gift"), luckyLabel);
 					luckyBtn.addEventListener("click", () => {
 						const titleInput = document.querySelector(".post-title-input,[name=title],input[placeholder*='标题']");
 						nsmaxOpenLuckyModal(titleInput, setEditorValue, cm, input);

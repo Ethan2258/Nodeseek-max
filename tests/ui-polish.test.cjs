@@ -260,7 +260,9 @@ for(const engine of engines){
    ["/",list,"#nsk-body-left .post-meta .post-forum-badge","textDecorationLine","none"],
    ["/",list,".nsmax-sb-account .nsmax-account-name","textDecorationLine","underline"],
    ["/",list,".nsmax-sb-account .nsmax-account-stat","textDecorationLine","underline"],
-   ["/",list,".nsmax-hot-list a","textDecorationLine","underline"],
+   // 今日热门：线只画在标题下面，整条链接（名次、浏览数）不画（v1.9.49）
+   ["/",list,".nsmax-hot-list a .nsmax-hot-text","textDecorationLine","underline"],
+   ["/",list,".nsmax-hot-list a","textDecorationLine","none"],
    ["/",list,"#nsk-right-panel-container a[href*='new-discussion']","textDecorationLine","none"],
    ["/post-1000-1",post,"ul.comments .floor-link","color","rgb(28, 28, 30)"],
    ["/post-1000-1",post,"ul.comments .floor-link","textDecorationLine","none"],
@@ -814,6 +816,68 @@ for(const engine of engines){
    await page.waitForSelector(".nsmax-member");
    const gap=await page.evaluate(()=>{const grid=document.querySelector(".member-list > .user-card-wrapper-container"),prev=grid.previousElementSibling;return Math.round(grid.getBoundingClientRect().top-prev.getBoundingClientRect().bottom);});
    assert.equal(gap,20);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+ });
+ test(`${engine} 电脑端第四轮（2026-11-14「继续」）：Markdown 工具栏和「一键抽奖」是线条图标；今日热门悬停只给标题画线、预览卡片标题只有帖子标题；访客欢迎卡的字号和按钮在档位上`,async()=>{
+  // 发帖页：11 个工具按钮都是 28×28、里面一个 16px 的图标、没有文字符号和表情；「一键抽奖」前面是图标不是 🎁
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/new-discussion",{...desk,html:P.newPostPage()});
+  try{
+   await ready(page);
+   await page.locator(".nsmax-editor-controls").getByRole("button",{name:"Markdown",exact:true}).click();
+   await page.waitForSelector(".md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn");
+   const s=await page.evaluate(()=>{
+    const box=(e)=>{const r=e.getBoundingClientRect();return[r.width,r.height];};
+    const buttons=[...document.querySelectorAll(".md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn")],lucky=document.querySelector(".nsmax-lucky-trigger");
+    return{tools:buttons.map(b=>{const svg=b.querySelector(":scope > svg"),r=b.getBoundingClientRect(),g=svg&&svg.getBoundingClientRect();return{box:box(b),svg:svg?box(svg):null,text:b.textContent,label:b.getAttribute("aria-label"),dx:g?+((g.left+g.right)/2-(r.left+r.right)/2).toFixed(1):null,dy:g?+((g.top+g.bottom)/2-(r.top+r.bottom)/2).toFixed(1):null};}),
+     lucky:{text:lucky.textContent,svg:lucky.querySelector(":scope > svg")?box(lucky.querySelector(":scope > svg")):null}};
+   });
+   assert.equal(s.tools.length,11);
+   assert.deepEqual(s.tools.map(t=>t.label),["粗体","斜体","标题","引用","代码","链接","图片","无序列表","有序列表","表格","分割线"]);
+   for(const t of s.tools){
+    assert.deepEqual(t.box,[28,28],JSON.stringify(t));
+    assert.deepEqual(t.svg,[16,16],JSON.stringify(t));
+    assert.equal(t.text,"",JSON.stringify(t));
+    assert.ok(Math.abs(t.dx)<=0.5&&Math.abs(t.dy)<=0.5,"图标在按钮正中："+JSON.stringify(t));
+   }
+   assert.equal(s.lucky.text,"一键抽奖");
+   assert.deepEqual(s.lucky.svg,[16,16]);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+  // 首页右栏：悬停今日热门的一行，下划线只在标题下面（以前连名次和浏览数一起划）；预览卡片的标题就是帖子标题（以前是「3……960」）
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage(),pages:{"/post-3002-1":P.postPage()}});
+  try{
+   await ready(page);
+   await page.waitForSelector(".nsmax-hot-panel:not([data-nsmax-hot-early]) .nsmax-hot-list > li:nth-child(3) > a .nsmax-hot-text");
+   const row=page.locator(".nsmax-hot-list > li:nth-child(3) > a[data-nsmax-preview]");
+   // 右栏会在未读数回来后重画一次，重画时悬停状态会丢（新的那一行没收到鼠标进入）：鼠标挪开再停上去，多试几次
+   let shown=false;
+   for(let i=0;i<6&&!shown;i++){
+    await page.mouse.move(300,300);
+    await row.hover();
+    shown=await page.waitForSelector("dialog.nspp-post-preview[open] header > a",{timeout:3000}).then(()=>true,()=>false);
+   }
+   assert.ok(shown,"悬停今日热门的一行会弹出预览卡片");
+   const s=await row.evaluate((a)=>{
+    const line=(e)=>getComputedStyle(e).textDecorationLine;
+    return{link:line(a),rank:line(a.querySelector(".nsmax-hot-rank")),text:line(a.querySelector(".nsmax-hot-text")),count:line(a.querySelector(".nsmax-hot-count")),title:a.querySelector(".nsmax-hot-text").textContent,card:document.querySelector("dialog.nspp-post-preview header > a").textContent,all:a.textContent};
+   });
+   assert.deepEqual([s.link,s.rank,s.text,s.count],["none","none","underline","none"],JSON.stringify(s));
+   assert.equal(s.card,s.title);
+   assert.notEqual(s.card,s.all.trim());
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+  // 没登录时右栏的欢迎卡：说明 13px / 22px（以前 15px / 26px），「登录 / 注册」34px 高、13px（以前 37.6px、13.5px）
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/invite",{...desk,html:P.invitePage()});
+  try{
+   await ready(page);
+   await page.waitForSelector("#nsk-right-panel-container > .nsk-panel[data-nsmax-btnpanel] [data-nsmax-btnrow] > .btn");
+   const s=await page.evaluate(()=>{
+    const panel=document.querySelector("#nsk-right-panel-container > .nsk-panel[data-nsmax-btnpanel]"),note=getComputedStyle(panel.querySelector(":scope > h4 + div"));
+    return{note:[note.fontSize,note.lineHeight],buttons:[...panel.querySelectorAll("[data-nsmax-btnrow] > .btn")].map(b=>[b.getBoundingClientRect().height,getComputedStyle(b).fontSize])};
+   });
+   assert.deepEqual(s.note,["13px","22px"]);
+   assert.deepEqual(s.buttons,[[34,"13px"],[34,"13px"]]);
    assert.deepEqual(errors,[]);
   }finally{await context.close();}}
  });
