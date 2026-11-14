@@ -260,7 +260,9 @@ for(const engine of engines){
    ["/",list,"#nsk-body-left .post-meta .post-forum-badge","textDecorationLine","none"],
    ["/",list,".nsmax-sb-account .nsmax-account-name","textDecorationLine","underline"],
    ["/",list,".nsmax-sb-account .nsmax-account-stat","textDecorationLine","underline"],
-   ["/",list,".nsmax-hot-list a","textDecorationLine","underline"],
+   // 今日热门：线只画在标题下面，整条链接（名次、浏览数）不画（v1.9.49）
+   ["/",list,".nsmax-hot-list a .nsmax-hot-text","textDecorationLine","underline"],
+   ["/",list,".nsmax-hot-list a","textDecorationLine","none"],
    ["/",list,"#nsk-right-panel-container a[href*='new-discussion']","textDecorationLine","none"],
    ["/post-1000-1",post,"ul.comments .floor-link","color","rgb(28, 28, 30)"],
    ["/post-1000-1",post,"ul.comments .floor-link","textDecorationLine","none"],
@@ -847,9 +849,15 @@ for(const engine of engines){
   try{
    await ready(page);
    await page.waitForSelector(".nsmax-hot-panel:not([data-nsmax-hot-early]) .nsmax-hot-list > li:nth-child(3) > a .nsmax-hot-text");
-   const row=page.locator(".nsmax-hot-list > li:nth-child(3) > a");
-   await row.hover();
-   await page.waitForSelector("dialog.nspp-post-preview[open] header > a");
+   const row=page.locator(".nsmax-hot-list > li:nth-child(3) > a[data-nsmax-preview]");
+   // 右栏会在未读数回来后重画一次，重画时悬停状态会丢（新的那一行没收到鼠标进入）：鼠标挪开再停上去，多试几次
+   let shown=false;
+   for(let i=0;i<6&&!shown;i++){
+    await page.mouse.move(300,300);
+    await row.hover();
+    shown=await page.waitForSelector("dialog.nspp-post-preview[open] header > a",{timeout:3000}).then(()=>true,()=>false);
+   }
+   assert.ok(shown,"悬停今日热门的一行会弹出预览卡片");
    const s=await row.evaluate((a)=>{
     const line=(e)=>getComputedStyle(e).textDecorationLine;
     return{link:line(a),rank:line(a.querySelector(".nsmax-hot-rank")),text:line(a.querySelector(".nsmax-hot-text")),count:line(a.querySelector(".nsmax-hot-count")),title:a.querySelector(".nsmax-hot-text").textContent,card:document.querySelector("dialog.nspp-post-preview header > a").textContent,all:a.textContent};
