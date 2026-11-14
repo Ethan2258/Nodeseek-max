@@ -15689,7 +15689,8 @@ html[data-nsmax-theme] dialog.nspp-post-preview > footer:is(#nsmax-lv, *):is(#ns
   min-height: 36px !important;
   padding: 0 14px !important;
   border-top: 1px solid var(--line-soft) !important;
-  background: var(--panel-alt) !important;
+  /* 2026-11-14 用户：「查看原帖……有点太明显」。底栏不再单独涂一块底色，和卡片同色，只留一道细线 */
+  background: transparent !important;
   font: 12px/20px var(--font-sans) !important;
 }
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-stats:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -15700,20 +15701,20 @@ html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-stats:is(#nsmax-lv
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
 }
+/* 「打开原帖」：和左边的浏览 / 回复数一样的弱化色、常规字重，不带箭头（以前比左边亮一档、500 字重、后面一个 →，
+   卡片底下一眼先看到它）。鼠标停上去变正文色、加下划线，找得到 */
 html[data-nsmax-theme] dialog.nspp-post-preview > footer > a.nspp-preview-open:is(#nsmax-lv, *):is(#nsmax-b, *) {
   flex: none !important;
   margin-left: auto !important;
-  color: var(--text-muted, var(--text)) !important;
-  font: 500 12px/20px var(--font-sans) !important;
+  color: var(--text-subtle) !important;
+  font: 400 12px/20px var(--font-sans) !important;
   text-decoration: none !important;
   opacity: 1 !important;
 }
-html[data-nsmax-theme] dialog.nspp-post-preview > footer > a.nspp-preview-open:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
-  content: " →" !important;
-}
 html[data-nsmax-theme] dialog.nspp-post-preview > footer > a.nspp-preview-open:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
-  color: var(--brand) !important;
-  text-decoration: none !important;
+  color: var(--text) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content[data-fresh] > article:is(#nsmax-lv, *):is(#nsmax-b, *) {

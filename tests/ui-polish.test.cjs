@@ -881,4 +881,37 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}}
  });
+ test(`${engine} 预览卡片底下的「打开原帖」不抢眼（2026-11-14 用户：「有点太明显」）：和浏览 / 回复数同一个弱化色、常规字重、没有箭头，底栏和卡片同色`,async()=>{
+  for(const dark of [false,true]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,colorScheme:dark?"dark":"light",html:P.listPage({dark,count:4}),pages:{"/post-1000-1":P.postPage({dark})}});
+   try{
+    await ready(page);
+    let shown=false;
+    for(let i=0;i<6&&!shown;i++){
+     await page.mouse.move(600,860);
+     await page.locator(".post-list-item .post-title a").first().hover();
+     shown=await page.waitForSelector("dialog.nspp-post-preview[open] article",{timeout:3000}).then(()=>true,()=>false);
+    }
+    assert.ok(shown,"悬停标题弹出预览卡片");
+    const s=await page.evaluate(()=>{
+     const view=document.querySelector("dialog.nspp-post-preview"),foot=view.querySelector(":scope > footer"),link=foot.querySelector("a.nspp-preview-open"),stats=foot.querySelector(".nspp-preview-stats");
+     const ls=getComputedStyle(link);
+     return{link:ls.color,stats:getComputedStyle(stats).color,weight:ls.fontWeight,after:getComputedStyle(link,"::after").content,deco:ls.textDecorationLine,foot:getComputedStyle(foot).backgroundColor,text:link.textContent};
+    });
+    assert.equal(s.text,"打开原帖");
+    assert.equal(s.link,s.stats,JSON.stringify(s));
+    assert.equal(s.weight,"400");
+    assert.ok(s.after==="none"||s.after==="normal",JSON.stringify(s));
+    assert.equal(s.deco,"none");
+    assert.equal(s.foot,"rgba(0, 0, 0, 0)");
+    // 鼠标停上去：变亮、加下划线
+    await page.locator("dialog.nspp-post-preview > footer > a.nspp-preview-open").hover();
+    await page.waitForTimeout(400);
+    const h=await page.locator("dialog.nspp-post-preview > footer > a.nspp-preview-open").evaluate(a=>({c:getComputedStyle(a).color,d:getComputedStyle(a).textDecorationLine}));
+    assert.notEqual(h.c,s.link);
+    assert.equal(h.d,"underline");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }
