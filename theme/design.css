@@ -16963,6 +16963,47 @@ html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is
     height: 28px !important;
   }
 }
+/* ---------- 电脑端细调第七轮（2026-11-15 Yiheng：「继续」） ----------
+   抽奖工具页（/lucky）：卡片里面左右 16 → 18px（和别的卡片一样）；说明文字 13.5 → 13px，「主题帖ID / 开奖时间…」和「楼层去重」13.5 → 14px；
+   四个输入框 36 → 40px（站内输入框都是 40px）。
+   个人设置、发帖标题的单行输入框 40.5 → 40px（行高算出来多半像素）。
+   「用户未登录 / 去登录」那个按钮 13.5px、高 31px → 13px、34px，和别的次要按钮一档 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="lucky"] .sample-panel > form > fieldset > legend:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-checkbox:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-inline: 18px !important;
+    font-size: 14px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="lucky"] .sample-panel > form .pure-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-left: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="lucky"] .sample-panel > header > .intro:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="lucky"] .sample-panel > form > fieldset > .pure-g label:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 14px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="lucky"] .sample-panel > form :is(input[type="number"], input.mx-input):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 40px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #user-setting-panel form fieldset > input:is([type="text"], :not([type])):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="new"] .md-editor > .title-input input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 40px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-frame :is(div, h2)[data-nsmax-site-error] > .nsmax-site-error-login:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 34px !important;
+    padding-block: 0 !important;
+    font-size: 13px !important;
+    line-height: 32px !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;
