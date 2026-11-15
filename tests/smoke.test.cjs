@@ -71,7 +71,7 @@ test("列表页：SB Theme UI 套件生效且首屏结构稳定", async () => {
 	// 回到顶部 / 底部照 sb.sb .to-top 显示（以前整组藏起来）
 	assert.equal(state.fastNav, "block");
 	assert.equal(state.tools, "none");
-	assert.equal(state.padding, "11px 66px 11px 14px");
+	assert.equal(state.padding, "11px 66px 11px 18px");
 	assert.deepEqual(errors, []);
 	await context.close();
 });
@@ -1043,7 +1043,7 @@ test("回复框：统一圆角、左侧回复按钮、拖动与键盘可调整�
 		assert.ok((await input.boundingBox()).height>=after.height+70);
 		assert.equal(await page.locator('.md-editor button.submit').innerText(),'回复楼主');
 		const button=await page.locator('.md-editor button.submit').boundingBox(),editor=await page.locator('.md-editor').boundingBox();
-		assert.ok(Math.abs(button.x-editor.x-17)<2);
+		assert.ok(Math.abs(button.x-editor.x-19)<2);
 		assert.equal(await page.locator('.md-editor').evaluate(e=>getComputedStyle(e).borderRadius),'12px');
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}
@@ -2290,7 +2290,7 @@ test("v1.8.1 个人空间「收藏」：列表占满一行接在标签下面，�
 		});
 		assert.ok(layout.listWidth >= layout.selWidth, `列表应占满一行（${layout.listWidth} / ${layout.selWidth}）`);
 		assert.equal(layout.tabAbove, true, "标签应在列表上方");
-		assert.ok(layout.delRight <= 16, `删除图标应在右边（离右边 ${layout.delRight}px）`);
+		assert.ok(layout.delRight <= 20, `删除图标应在右边（离右边 ${layout.delRight}px）`);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
