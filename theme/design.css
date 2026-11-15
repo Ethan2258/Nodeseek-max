@@ -17004,6 +17004,32 @@ html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is
     line-height: 32px !important;
   }
 }
+/* ---------- 电脑端细调第八轮（2026-11-15，第一次在 Yiheng 自己的 Chrome 里看真站） ----------
+   登录后的签到页（真站结构：「每日签到」卡片 + 排行榜卡片，测试机上的 boardRealPage）：
+   排行榜标题 15px 比上面「每日签到」17px 小一截 → 17px / 600；用户名 13.5 → 14px；鸡腿数 11.5 → 12px；
+   日历格子里的「+5」10.5 → 11px；「签到 / 今日已签到」按钮在 YaHei UI 下高 42px → 40px（站内主按钮一档） */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="board"] .board h1:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 17px !important;
+    font-weight: 600 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="board"] .board .rank-row .member-name :is(a, span):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="board"] .board .rank-row .member-name:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 14px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="board"] .board .rank-row .coins:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-checkin .nsmax-checkin-day > i:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 11px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-checkin .nsmax-checkin-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 40px !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;
