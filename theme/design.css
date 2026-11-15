@@ -17030,6 +17030,35 @@ html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is
     line-height: 1 !important;
   }
 }
+/* ---------- 电脑端细调第九轮（2026-11-15 Yiheng：「再看看每个细节」） ----------
+   帖子页「N 条回复」那一条、底下回复框的标题栏和内容区左右是 16px，别的卡片（面包屑、标题、楼层）都是 18px，
+   字比上面「首页 / 交易」和帖子标题往左 2px → 统一 18px。
+   帖子列表、通知列表每行左边 14px，头像比上面标签栏的字靠左 4px → 18px */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .comment-container > :is(div[data-nsmax-pagerbox], .nsmax-reply-head):first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor.nsmax-compact-reply > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor.nsmax-compact-reply .nsmax-editor-head:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-inline: -18px !important;
+    padding-inline: 18px !important;
+  }
+  /* 首页 / 搜索 / 个人主页的帖子列表、通知列表：每行左边 14 → 18px，头像和上面「新评论 / 新帖子」「@我」标签的字对齐 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-conversations > .nsmax-notice-row:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-left: 18px !important;
+  }
+  /* 个人主页「主题 / 回帖 / 收藏」列表每行也是左右 14px，比上面资料卡（头像、关注、Lv）的 18px 靠左 4px → 18px；
+     标签条的字在 34px，首页标签条是 35px，整排右移 1px */
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .discussion-wrapper > :is(div.discussion-item, a.discussion-item, a:not(.discussion-item)):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector > a.select-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    left: 1px !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;

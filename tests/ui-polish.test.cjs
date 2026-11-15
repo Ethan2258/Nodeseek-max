@@ -566,7 +566,7 @@ for(const engine of engines){
     assert.equal(s.count,9,JSON.stringify(s));
     assert.equal(s.cols,cols,width+JSON.stringify(s));
     assert.equal(s.rows,9/cols,width+JSON.stringify(s));
-    assert.equal(s.firstTabGap,14,width+JSON.stringify(s));
+    assert.equal(s.firstTabGap,15,width+JSON.stringify(s));
     assert.ok(s.gaps.every(g=>g===14),width+JSON.stringify(s));
     assert.equal(s.overflow,0);
     assert.deepEqual(errors,[]);
@@ -946,6 +946,51 @@ for(const engine of engines){
     },selectors);
     assert.ok(Object.values(s.found).every(n=>n>0),url+" "+JSON.stringify(s.found));
     assert.deepEqual(s.bad,[],url);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 电脑端第九轮（2026-11-15「再看看每个细节」）：帖子列表 / 通知 / 个人主页列表每行左边 18px，和标签条的字对齐；回复框标题栏和内容区 18px`,async()=>{
+  const txt=e=>{const r=document.createRange();r.selectNodeContents(e);return Math.round(r.getBoundingClientRect().left);};
+  for(const [url,html,rowSel,tabSel] of [
+   ["/",P.listPage({count:5}),"#nsk-body-left .post-list-item","#nsk-body-left a.selected"],
+   ["/space/1#/discussions",P.spaceTopicsPage({}),".discussion-wrapper > div.discussion-item",".selector > a.select-item"],
+   ["/space/1#/comments",P.spaceCommentsPage({}),".discussion-wrapper > a.discussion-item",".selector > a.select-item"],
+   ["/space/1#/collections",P.spaceCollectionsPage({}),".discussion-wrapper > a.discussion-item",".selector > a.select-item"],
+  ]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
+   try{
+    await ready(page);
+    await page.waitForSelector(rowSel);
+    const s=await page.evaluate(([rowSel,tabSel,txtSrc])=>{
+     const txt=eval(txtSrc),rows=[...document.querySelectorAll(rowSel)].filter(e=>e.offsetWidth);
+     const firstLeft=e=>Math.round(e.getBoundingClientRect().left+parseFloat(getComputedStyle(e).paddingLeft));
+     return{pad:[...new Set(rows.map(e=>getComputedStyle(e).paddingLeft))],tab:txt([...document.querySelectorAll(tabSel)].find(e=>e.offsetWidth)),row:firstLeft(rows[0])};
+    },[rowSel,tabSel,txt.toString()]);
+    assert.deepEqual(s.pad,["18px"],url);
+    assert.ok(Math.abs(s.row-s.tab)<=1,url+" "+JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification",{...desk,html:P.notificationPage({})});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nspp-messages-conversations > .nsmax-notice-row");
+    const pads=await page.evaluate(()=>[...new Set([...document.querySelectorAll(".nspp-messages-conversations > .nsmax-notice-row")].map(e=>getComputedStyle(e).paddingLeft))]);
+    assert.deepEqual(pads,["18px"]);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html:P.postPage({})});
+   try{
+    await ready(page);
+    await page.waitForSelector(".md-editor.nsmax-compact-reply > #editor-body");
+    const s=await page.evaluate(()=>{const st=e=>e&&getComputedStyle(e);const b=st(document.querySelector(".md-editor.nsmax-compact-reply > #editor-body")),h=st(document.querySelector(".md-editor.nsmax-compact-reply .nsmax-editor-head"));
+     return{body:[b.paddingLeft,b.paddingRight],head:h?[h.paddingLeft,h.paddingRight]:null};});
+    assert.deepEqual(s.body,["18px","18px"]);
+    if(s.head)assert.deepEqual(s.head,["18px","18px"]);
     assert.deepEqual(errors,[]);
    }finally{await context.close();}
   }
