@@ -950,6 +950,19 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 电脑端第八轮（2026-11-15 真站核对）：登录后的签到页排行榜标题 17px、用户名 14px、鸡腿数 12px、日历「+5」11px、签到按钮 40px`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/board",{...desk,html:P.boardRealPage({})});
+  try{
+   await ready(page);
+   await page.waitForSelector(".nsmax-checkin .nsmax-checkin-button");
+   const s=await page.evaluate(()=>{
+    const q=x=>document.querySelector(x),fs=e=>e?getComputedStyle(e).fontSize:null;
+    return{h1:fs(q(".board h1")),title:fs(q(".nsmax-checkin-title")),name:fs(q(".board .rank-row .member-name a")),coins:fs(q(".board .rank-row .coins")),day:fs(q(".nsmax-checkin-day > i")),btn:q(".nsmax-checkin .nsmax-checkin-button").getBoundingClientRect().height};
+   });
+   assert.deepEqual(s,{h1:"17px",title:"17px",name:"14px",coins:"12px",day:s.day===null?null:"11px",btn:40});
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
  test(`${engine} 电脑端第七轮（2026-11-15「继续」）：抽奖工具页卡片内边距 18、字号和输入框归档，设置 / 发帖标题输入框整 40px，「去登录」34px`,async()=>{
   {
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/lucky",{...desk,html:P.luckyPage()});
