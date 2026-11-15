@@ -2980,7 +2980,7 @@ test("搜索结果页有结果：列表照常显示，上面一行搜索摘要�
 	} finally { await context.close(); }
 });
 
-test("抽奖页：顶上一条细线栏（链接 + 右侧三个按钮），标题和简介照常显示，表单是 sb.sb 面板（四格一排、36px 输入框、主题色按钮）；手机上不出界", async () => {
+test("抽奖页：顶上一条细线栏（链接 + 右侧三个按钮），标题和简介照常显示，表单是 sb.sb 面板（四格一排、输入框电脑上 40px、主题色按钮）；手机上不出界", async () => {
 	{
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/lucky", { html: luckyPage(), viewport: { width: 1280, height: 900 } });
 		try {
@@ -3015,7 +3015,7 @@ test("抽奖页：顶上一条细线栏（链接 + 右侧三个按钮），标�
 			assert.equal(info.intro, true);
 			assert.ok(info.formBelowIntro, JSON.stringify(info));
 			assert.equal(info.legendWeight, "600");
-			assert.equal(info.inputHeight, 36);
+			assert.equal(info.inputHeight, 40, "电脑端第七轮：输入框和站内一档 40px");
 			assert.equal(new Set(info.fieldTops).size, 1, JSON.stringify(info.fieldTops));
 			assert.notEqual(info.button, "rgb(0, 120, 231)");
 			assert.equal(info.overflow, 0);

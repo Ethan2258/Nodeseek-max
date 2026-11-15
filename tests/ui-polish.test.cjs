@@ -950,6 +950,45 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 电脑端第七轮（2026-11-15「继续」）：抽奖工具页卡片内边距 18、字号和输入框归档，设置 / 发帖标题输入框整 40px，「去登录」34px`,async()=>{
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/lucky",{...desk,html:P.luckyPage()});
+   try{
+    await ready(page);
+    await page.waitForSelector(".sample-panel > form .pure-g label");
+    const s=await page.evaluate(()=>{
+     const form=document.querySelector(".sample-panel > form").getBoundingClientRect(),inset=e=>Math.round(e.getBoundingClientRect().left-form.left-1);
+     const label=document.querySelector(".sample-panel > form .pure-g label"),box=document.querySelector(".sample-panel > form > fieldset > .pure-checkbox"),btn=document.querySelector(".sample-panel > form .pure-button"),legend=document.querySelector(".sample-panel > form > fieldset > legend");
+     return{label:inset(label),box:inset(box),btn:inset(btn),legend:getComputedStyle(legend).paddingLeft,labelSize:getComputedStyle(label).fontSize,boxSize:getComputedStyle(box).fontSize,intro:getComputedStyle(document.querySelector(".sample-panel > header > .intro")).fontSize,
+      inputs:[...document.querySelectorAll('.sample-panel > form :is(input[type="number"], input.mx-input)')].filter(e=>e.offsetWidth).map(e=>e.getBoundingClientRect().height)};
+    });
+    assert.ok(s.inputs.length>=3&&s.inputs.every(h=>h===40),JSON.stringify(s.inputs));
+    delete s.inputs;
+    assert.deepEqual(s,{label:18,box:18,btn:18,legend:"18px",labelSize:"14px",boxSize:"14px",intro:"13px"});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  for(const [url,html,sel] of [["/setting",P.settingPage({}),"#user-setting-panel form fieldset > input"],["/new-discussion",P.newPostPage(),".md-editor > .title-input input"]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
+   try{
+    await ready(page);
+    await page.waitForSelector(sel);
+    const hs=await page.evaluate((sel)=>[...document.querySelectorAll(sel)].filter(e=>e.offsetWidth&&e.type!=="file").map(e=>e.getBoundingClientRect().height),sel);
+    assert.ok(hs.length>0&&hs.every(h=>h===40),url+" "+JSON.stringify(hs));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/invite",{...desk,html:P.invitePage()});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nsmax-site-error-login");
+    const s=await page.evaluate(()=>{const e=document.querySelector(".nsmax-site-error-login");return{h:e.getBoundingClientRect().height,size:getComputedStyle(e).fontSize};});
+    assert.deepEqual(s,{h:34,size:"13px"});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
  test(`${engine} 电脑端第六轮（2026-11-14「继续」）：签到页卡片、成员卡片和别的页面对齐，登录页控件 40px`,async()=>{
   {
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com/board",{...desk,html:P.boardPage()});
