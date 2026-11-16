@@ -12,7 +12,7 @@
 	{
 		"id": "redirect",
 		"name": "redirect 外链跳转",
-		"version": "1.67.0",
+		"version": "1.67.1",
 		"license": "MIT",
 		"page": "https://greasyfork.org/scripts/416338",
 		"meta": "https://update.greasyfork.org/scripts/416338/redirect%20%E5%A4%96%E9%93%BE%E8%B7%B3%E8%BD%AC.meta.js",

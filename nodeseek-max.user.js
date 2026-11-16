@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.56
+// @version      1.9.57
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -123,7 +123,7 @@ NodeSeek Max 合并了以下四个用户脚本，并在其基础上新增现代�
 Source: https://github.com/rirh/nodeseek-plus
 License: GPL-3.0-only
 
-## redirect 外链跳转 1.67.0
+## redirect 外链跳转 1.67.1
 
 Source: https://github.com/sakura-flutter/tampermonkey-scripts
 Author: sakura-flutter
@@ -308,7 +308,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* ========================================================================
- * Part 1 · 外链跳转（基于 redirect 外链跳转 1.67.0，sakura-flutter，MIT）
+ * Part 1 · 外链跳转（基于 redirect 外链跳转 1.67.1，sakura-flutter，MIT）
  * 在 document-start 运行：命中中转页时隐藏页面并直接跳到目标地址。
  * 论坛模块会读取 nsmaxRedirecting，跳转进行中时不再启动。
  * ===================================================================== */
@@ -450,6 +450,16 @@ var nsmaxRedirecting = false;
 			window.open(href);
 		}, true);
 	};
+	function parseQQNTUrl(search) {
+		for (const pair of search.replace(/^\?/, "").split("&")) {
+			const eq = pair.indexOf("=");
+			if (eq === -1 || pair.slice(0, eq) !== "url") continue;
+			const raw = pair.slice(eq + 1);
+			const value = /(%2f)$/i.test(raw) ? raw.slice(0, -3) : raw;
+			return value ? decodeURIComponent(value) : void 0;
+		}
+	}
+	var QQNT = () => parseQQNTUrl(location.search);
 	var pixiv = ({ query }) => {
 		let link;
 		for (const [key, value] of Object.entries(query)) {
@@ -529,7 +539,7 @@ var nsmaxRedirecting = false;
 		{
 			name: "QQNT",
 			match: /^c\.pc\.qq\.com\/(pc|ios|android)\.html/,
-			parse: ({ query }) => query.url
+			parse: QQNT
 		},
 		{
 			name: "腾讯文档",
@@ -905,7 +915,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.56";
+	var NSMAX_VERSION = "1.9.57";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
