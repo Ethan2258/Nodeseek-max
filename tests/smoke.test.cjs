@@ -41,10 +41,13 @@ test.after(async () => {
 	await browser?.close();
 });
 
-test("外链跳转：知乎中转页直达目标地址", async () => {
+test("外链跳转：知乎与 QQNT 中转页直达目标地址（去掉 QQNT 末尾多余的 %2F）", async () => {
 	const { context, page } = await open(browser, "https://link.zhihu.com/?target=https%3A%2F%2Fexample.com%2Fpath%3Fa%3D1");
 	await page.waitForURL("https://example.com/path?a=1", { timeout: 5e3 });
 	await context.close();
+	const qq = await open(browser, "https://c.pc.qq.com/pc.html?url=https%3A%2F%2Fexample.com%2Fpath%3Fa%3D1%2F");
+	await qq.page.waitForURL("https://example.com/path?a=1", { timeout: 5e3 });
+	await qq.context.close();
 });
 
 test("列表页：SB Theme UI 套件生效且首屏结构稳定", async () => {

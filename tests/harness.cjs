@@ -160,7 +160,7 @@ async function open(browser, url, { html, seed, fontFiles, manager, colorScheme 
 			if (/^\/avatar\//.test(target.pathname)) return route.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' fill='#9aa5b1'/></svg>" });
 			return route.fulfill({ status: 404, body: "not found" });
 		}
-		if (["example.com", "example.org", "link.zhihu.com"].includes(target.hostname)) return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><title>${target.hostname}</title><p>${target.href}</p>` });
+		if (["example.com", "example.org", "link.zhihu.com", "c.pc.qq.com"].includes(target.hostname)) return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><title>${target.hostname}</title><p>${target.href}</p>` });
 		return route.abort();
 	});
 	const page = await context.newPage();
