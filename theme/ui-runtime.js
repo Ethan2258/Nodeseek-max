@@ -557,10 +557,8 @@
 						const h = tab.getAttribute("href");
 						if (h && h.startsWith("#")) {
 							if (location.hash !== h) location.hash = h;
-							setTimeout(() => {
-								syncActiveTabs();
-								nsmaxPrepareSpace();
-							}, 30);
+							syncActiveTabs();
+							nsmaxPrepareSpace();
 						}
 					});
 				}
@@ -1874,8 +1872,23 @@
 				for (const icon of inline.querySelectorAll("svg, .iconpark-icon")) icon.remove();
 			}
 			// 2026-10-20 实时 sb.sb .post-meta：作者 · 时间 · 版块 · 浏览 · 回复 · 最后回复人。
-			// NodeSeek 的时间仍取原生最后回复时间，仅调整显示顺序；宽屏另有右侧版块标签。一次挪完
-			info.append(...[author, time, inline, views, count, last, category].filter(Boolean));
+			// NodeSeek 的时间仍取原生最后回复时间，仅调整显示顺序；宽屏另有右侧版块标签。只移动位置不对的节点，尽量减少 DOM 变动
+			const desired = [author, time, inline, views, count, last, category].filter(Boolean);
+			if (author && author.parentElement === info) {
+				const afterAuthor = [time, inline].filter(Boolean);
+				if (afterAuthor.length && !(afterAuthor[0].previousElementSibling === author && (!afterAuthor[1] || afterAuthor[0].nextElementSibling === afterAuthor[1]))) {
+					author.after(...afterAuthor);
+				}
+			}
+			let anchor = null;
+			for (const el of desired) {
+				if (!anchor) {
+					if (info.firstElementChild !== el) info.prepend(el);
+				} else if (anchor.nextElementSibling !== el) {
+					anchor.after(el);
+				}
+				anchor = el;
+			}
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
 	}
@@ -4640,7 +4653,19 @@ function nsmaxTagStructure() {
 	function nsmaxPrepareSidePage(early = false) {
 		const newPost = nsmaxNewPostPage();
 		if (!nsmaxSidePage() && !newPost) return;
-		if (document.getElementById("nsk-right-panel-container")) return;
+		const existing = document.getElementById("nsk-right-panel-container");
+		if (existing) {
+			if (!early && existing.classList.contains("nsmax-side-panel") && !existing.hasAttribute("data-nsmax-side-refreshed")) {
+				const config = unsafeWindow$1.__config__?.user;
+				const stored = nsmaxStoredAccount();
+				const id = Number(config?.member_id ?? stored.id);
+				if (Number.isSafeInteger(id) && id > 0) {
+					existing.setAttribute("data-nsmax-side-refreshed", "");
+					nsmaxRefreshSideAccount(id);
+				}
+			}
+			return;
+		}
 		const frame = document.querySelector("section#nsk-frame");
 		if (!frame) return;
 		let host;
@@ -4713,7 +4738,10 @@ function nsmaxTagStructure() {
 		} catch (error) { nsmaxRecordError("early:side-hot", error); }
 		try { nsmaxEarlyRecentPanel(side); } catch (error) { nsmaxRecordError("early:side-recent", error); }
 		// 站点配置里没有主题帖、评论数（签到、管理记录、发帖页都没有）：页面解析完读一次自己的资料补上
-		if (known && !early) nsmaxRefreshSideAccount(id);
+		if (known && !early) {
+			side.setAttribute("data-nsmax-side-refreshed", "");
+			nsmaxRefreshSideAccount(id);
+		}
 	}
 	function nsmaxRefreshSideAccount(id) {
 		// 自己的个人主页上，主页资料卡已经在读同一个人的资料（nsmaxSpaceInfo）：共用那一次，不再多发一个请求
@@ -4781,6 +4809,27 @@ function nsmaxTagStructure() {
 		}
 		for (const h2 of right.querySelectorAll(":scope > div > h2, :scope > form > h2")) nsmaxFlag(h2, "data-nsmax-dup-title", !!current && h2.textContent.trim() === current);
 		for (const row of right.querySelectorAll("form > div")) nsmaxFlag(row, "data-nsmax-setting-actions", row.children.length > 0 && Array.from(row.children).every((child) => child.matches("button, .btn")));
+	}
+	var nsmaxSettingWatching = false;
+	function nsmaxWatchSetting(ctx) {
+		if (nsmaxSettingWatching || !/^\/setting(?:\/|$)/.test(location.pathname) || !document.body) return;
+		nsmaxSettingWatching = true;
+		let observer;
+		const run = () => {
+			try { nsmaxPrepareSetting(); } catch {}
+			observer?.takeRecords();
+		};
+		observer = new MutationObserver((records) => {
+			if (!records.some((record) => {
+				const el = record.target instanceof Element ? record.target : record.target.parentElement;
+				return el && !!el.closest("#user-setting-panel");
+			})) return;
+			run();
+		});
+		observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+		window.addEventListener("hashchange", run, { signal: ctx.signal });
+		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxSettingWatching = false; }, { once: true });
+		run();
 	}
 	// 关注 / 粉丝页第一帧：数据是站点前端画的（先是一张转圈 gif + 英文 Loading，整块换掉）。
 	// 照列表骨架放 4 行占位（头像圆 + 两行灰条），比一张大空卡片中间一个小转圈好看，数据到了自然消失
@@ -5341,10 +5390,15 @@ function nsmaxTagStructure() {
 			root.setAttribute("data-nsmax-space-pending", "");
 			setTimeout(() => root.removeAttribute("data-nsmax-space-pending"), 4e3);
 		}
-		const relevant = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container, .card-block, .readme, .selector") || !!node.querySelector(".head-container, .card-block, .readme"));
+		const relevant = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container, .card-block, .readme, .selector, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager") || !!node.querySelector(".head-container, .card-block, .readme, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager"));
 		const observer = new MutationObserver((records) => {
 			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
-			try { nsmaxPrepareSpace(); } catch {}
+			try {
+				nsmaxPrepareSpace();
+				nsmaxTagStructure();
+				nsmaxMarkLevels();
+				nsmaxTidyPagers();
+			} catch {}
 			if (drawn()) root.removeAttribute("data-nsmax-space-pending");
 			observer.takeRecords();
 		});
@@ -5353,12 +5407,17 @@ function nsmaxTagStructure() {
 		try { nsmaxPrepareSpace(); } catch {}
 		// 切换「主题 / 回帖 / 收藏」标签（2026-11-09 在用户 Chrome 里实测）：站点先把旧列表清空、再去拿新的，中间 0.3–0.4 秒
 		// 列表是空的——卡片里先闪一下「还没有发过主题」，整块从 800px 缩到 100px 左右再长回去，页脚和右栏跟着上下跳。
-		// 点标签的那一刻记下卡片高度、先撑住，新内容到了（或者站点画出真正的空状态插图）再放开；这段时间不写「还没有……」
+		// 点标签或页码的那一刻记下卡片高度、先撑住，新内容到了（或者站点画出真正的空状态插图）再放开；这段时间不写「还没有……」
 		let release = null;
 		document.addEventListener("click", (event) => {
-			const tab = event.target instanceof Element && event.target.closest(".selector > a.select-item");
-			if (!tab || tab.classList.contains("active") || tab.classList.contains("router-link-exact-active")) return;
-			const box = tab.closest(".selector");
+			const target = event.target instanceof Element ? event.target : null;
+			const tab = target?.closest(".selector > a.select-item");
+			const pagerLink = !tab && target?.closest(".selector .nsk-pager a.pager-pos");
+			const trigger = tab || pagerLink;
+			if (!trigger) return;
+			if (tab && (tab.classList.contains("active") || tab.classList.contains("router-link-exact-active"))) return;
+			if (pagerLink && (pagerLink.classList.contains("pager-cur") || pagerLink.hasAttribute("data-nsmax-pg-cur") || pagerLink.classList.contains("active") || pagerLink.classList.contains("current"))) return;
+			const box = trigger.closest(".selector");
 			if (!box) return;
 			release?.();
 			box.style.setProperty("min-height", box.offsetHeight + "px", "important");
@@ -5770,6 +5829,7 @@ function nsmaxTagStructure() {
 		nsmaxWatchMsc(ctx);
 		nsmaxWatchFans(ctx);
 		nsmaxWatchSpace(ctx);
+		nsmaxWatchSetting(ctx);
 		nsmaxFloorHover(ctx);
 		nsmaxCalmScrollHover(ctx);
 		nsmaxPrerenderRows(ctx);

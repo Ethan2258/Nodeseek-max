@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.57
+// @version      1.9.58
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -915,7 +915,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.57";
+	var NSMAX_VERSION = "1.9.58";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -5487,12 +5487,8 @@ var nsmaxRedirecting = false;
 							if (isPost) {
 								if (nsmaxSamePost(url.pathname, location.pathname) || a.closest(".nsk-pager")) return;
 								if (sitePref === null) return;
-								if (!newTabWanted()) {
-									a.removeAttribute("target");
-									a.target = "_self";
-									event.preventDefault();
-									event.stopImmediatePropagation();
-									location.href = url.href;
+												if (!newTabWanted()) {
+									if (a.getAttribute("target") && a.getAttribute("target") !== "_self") a.setAttribute("target", "_self");
 								} else if (!url.hash) {
 									a.target = "_blank";
 									a.rel = "noopener noreferrer";
@@ -5513,8 +5509,7 @@ var nsmaxRedirecting = false;
 							const isPost = (/^\/post-\d+/.test(url.pathname) || a.matches(".post-title a, .post-item a, .post-list-item .post-title a, .post-list-item a[href*='/post-'], .nsmax-hot-panel a, .nsmax-recent-list a, .discussion-item a, a.post-title-link, a[href*='/post-']")) && !url.pathname.includes("/space/");
 							if (isPost && sitePref === false) {
 								if (nsmaxSamePost(url.pathname, location.pathname) || a.closest(".nsk-pager")) return;
-								a.removeAttribute("target");
-								a.target = "_self";
+								if (a.getAttribute("target") && a.getAttribute("target") !== "_self") a.setAttribute("target", "_self");
 							}
 						}
 					} catch {}
@@ -5568,7 +5563,7 @@ var nsmaxRedirecting = false;
 										set("rel", "noopener noreferrer");
 									}
 								} else if (sitePref !== null) {
-									if (isPostLink) set("target", "_self");
+									if (isPostLink && a.getAttribute("target") && a.getAttribute("target") !== "_self") set("target", "_self");
 								}
 							}
 							// 真改了才登记还原（以前每个链接都存一个，一页上千个）；跳转链接换成了不是网页的地址也要能还原
@@ -7495,7 +7490,7 @@ var nsmaxRedirecting = false;
 					} catch {
 						return null;
 					}
-					if (url.origin !== location.origin || !/^\/(?:post-\d+(?:-\d+)?|page-\d+|categor(?:y|ies)\/[\w-]+(?:\/page-\d+)?|space\/\w+|t\/\d+)?\/?$/.test(url.pathname)) return null;
+					if (url.origin !== location.origin || !/^\/(?:post-\d+(?:-\d+)?|page-\d+|award(?:\/page-\d+)?|categor(?:y|ies)\/[\w-]+(?:\/page-\d+)?|space\/\w+|t\/\d+|board|notifications?|credit|progress|fans|setting|new-discussion|lucky|ruling)?\/?$/.test(url.pathname)) return null;
 					url.hash = "";
 					return url.href === location.href.replace(/#.*$/, "") ? null : url.href;
 				};
@@ -22854,26 +22849,144 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 @keyframes nsmax-vt-in{from{opacity:0}to{opacity:1}}
 html::view-transition-group(*){animation-duration:120ms;animation-timing-function:var(--ease-out)}
 html::view-transition-old(root){animation:nsmax-vt-out 120ms var(--ease-out) both}
-html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both}}
-@media (prefers-reduced-motion:no-preference) and (hover:hover) and (pointer:fine){html[data-nsmax-theme] body>header{view-transition-name:nsmax-head}
+html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both}
+html[data-nsmax-theme] body>header{view-transition-name:nsmax-head}
 html::view-transition-group(nsmax-head){animation-duration:0s}}
+@media (prefers-reduced-motion:no-preference) and (min-width:801px){html[data-nsmax-theme] :is(#nsk-body,section#nsk-frame[data-nsmax-side-page])>#nsk-right-panel-container{view-transition-name:nsmax-side}
+html::view-transition-group(nsmax-side){animation-duration:0s}
+html::view-transition-old(nsmax-side):only-child{animation:nsmax-vt-out 120ms var(--ease-out) both}
+html::view-transition-new(nsmax-side):only-child{animation:nsmax-vt-in 120ms var(--ease-out) both}}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pending]{color:var(--link-hover)!important}
 #nsmax-nav-progress{position:fixed;top:0;left:0;right:0;z-index:2147483647;height:2px;pointer-events:none;background:var(--mark,#f5c518);opacity:0;transform:scaleX(0);transform-origin:0 50%;transition:transform 6s cubic-bezier(.08,.8,.2,1),opacity .15s ease}
 #nsmax-nav-progress[data-on]{opacity:1;transform:scaleX(.9)}
 @media (prefers-reduced-motion:reduce){#nsmax-nav-progress{transition:opacity .15s ease}#nsmax-nav-progress[data-on]{transform:scaleX(.6)}}`);
 		nsmaxNavProgress();
 	}
 	// 点了链接、新页面还没回来的这段（2026-11-10 在用户 Chrome 里测：0.8–2 秒，服务器响应 + 脚本管理器注入 + 首屏整理）
-	// 旧页面一动不动，看着像没点到。顶上画一条 2px 的进度条：点下去 0.12 秒后还没换页才出现（往返缓存瞬间回来的不闪），
-	// 慢慢走到九成，新页面画出来时整页换掉它就没了；导航被取消、被站点自己拦下（单页切换、下载）就收掉
+	// 旧页面一动不动，看着像没点到。顶上画一条 2px 的进度条：点下去 0.08 秒后还没换页才出现（往返缓存瞬间回来的不闪），
+	// 并立刻切换顶栏版块/排序/页码的高亮态（往返缓存离开或返回时自动还原），慢慢走到九成；导航被取消或被站点自己拦下就收掉
 	function nsmaxNavProgress() {
-		let timer = 0, giveUp = 0;
-		const stop = () => {
+		let timer = 0, giveUp = 0, revert = [], lastClick = null;
+		const clearBar = () => {
 			clearTimeout(timer);
-			clearTimeout(giveUp);
+			timer = 0;
 			document.getElementById("nsmax-nav-progress")?.remove();
 		};
-		const start = () => {
+		const stop = () => {
+			clearBar();
+			clearTimeout(giveUp);
+			giveUp = 0;
+			while (revert.length) try { revert.pop()(); } catch {}
+		};
+		const saveClass = (el, cls, add) => {
+			const had = el.classList.contains(cls);
+			if (had === add) return;
+			el.classList.toggle(cls, add);
+			revert.push(() => el.classList.toggle(cls, had));
+		};
+		const saveAttr = (el, name, val) => {
+			const had = el.hasAttribute(name);
+			const old = had ? el.getAttribute(name) : null;
+			if (val === null) {
+				if (!had) return;
+				el.removeAttribute(name);
+			} else {
+				if (had && old === val) return;
+				el.setAttribute(name, val);
+			}
+			revert.push(() => {
+				if (had) el.setAttribute(name, old);
+				else el.removeAttribute(name);
+			});
+		};
+		const norm = (href) => {
+			try {
+				const u = new URL(href, location.href);
+				if (u.origin !== location.origin) return "";
+				return (u.pathname.replace(/\/$/, "") || "/") + u.search;
+			} catch {
+				return "";
+			}
+		};
+		const markActive = (url, clicked) => {
+			const targetFull = (url.pathname.replace(/\/$/, "") || "/") + url.search;
+			const targetPath = url.pathname.replace(/\/$/, "") || "/";
+			const navMenus = [];
+			for (const menu of document.querySelectorAll("#nsk-head ul.nav-menu, body > header > ul.mobile-nav")) {
+				if (!menu.querySelector(":scope > #toggle-left-panel")) navMenus.push(menu);
+			}
+			const inHeaderNav = clicked && navMenus.some((menu) => menu.contains(clicked));
+			const hasHeaderMatch = inHeaderNav || targetPath === "/" || navMenus.some((menu) => Array.from(menu.querySelectorAll("a[href]")).some((a) => (norm(a.href).split("?")[0] || "") === targetPath));
+			if (hasHeaderMatch) {
+				for (const menu of navMenus) {
+					const links = Array.from(menu.querySelectorAll("a[href]"));
+					const hits = links.filter((a) => a === clicked || (norm(a.href).split("?")[0] || "") === targetPath);
+					if (!hits.length && targetPath !== "/") continue;
+					for (const a of links) {
+						const li = a.parentElement?.tagName === "LI" ? a.parentElement : null;
+						const on = hits.includes(a);
+						saveAttr(a, "data-nsmax-header-cat-on", on ? "" : null);
+						saveAttr(a, "aria-current", on ? "page" : null);
+						saveClass(a, "active", on);
+						saveClass(a, "router-link-exact-active", on);
+						if (li) {
+							saveClass(li, "active", on);
+							saveClass(li, "current-category", on);
+						}
+					}
+				}
+			}
+			const controller = document.querySelector("#nsk-body-left > .post-list-controler");
+			if (controller) {
+				const sorter = controller.querySelector(":scope > .sorter");
+				if (sorter) {
+					const sorterLinks = Array.from(sorter.querySelectorAll("a"));
+					const matchedSorter = sorterLinks.find((a) => (clicked && a === clicked) || (a.hasAttribute("href") && norm(a.href) === targetFull));
+					if (matchedSorter) {
+						for (const a of sorterLinks) {
+							const on = a === matchedSorter;
+							saveClass(a, "selected", on);
+							saveClass(a, "active", on);
+							saveAttr(a, "aria-current", on ? "page" : null);
+						}
+					}
+				}
+				const kindLinks = Array.from(controller.querySelectorAll(".nsmax-kind-tab, a.nsmax-essence-tab"));
+				const matchedKind = kindLinks.find((a) => (clicked && a === clicked) || (a.hasAttribute("href") && norm(a.href) === targetFull));
+				if (matchedKind) {
+					for (const a of kindLinks) {
+						const on = a === matchedKind;
+						saveAttr(a, "data-nsmax-on", on ? "" : null);
+						saveClass(a, "active", on);
+						saveAttr(a, "aria-current", on ? "page" : null);
+					}
+					saveAttr(controller, "data-nsmax-kind-on", "");
+				}
+			}
+			for (const pager of document.querySelectorAll(".nsk-pager")) {
+				const matched = Array.from(pager.querySelectorAll("a.pager-pos[href]")).find((a) => (clicked && pager.contains(clicked) && a === clicked) || norm(a.href) === targetFull);
+				if (!matched) continue;
+				for (const cur of pager.querySelectorAll(".pager-cur, [data-nsmax-pg-cur]")) {
+					saveClass(cur, "pager-cur", false);
+					saveClass(cur, "active", false);
+					saveClass(cur, "current", false);
+					saveAttr(cur, "data-nsmax-pg-cur", null);
+				}
+				saveClass(matched, "pager-cur", true);
+				saveClass(matched, "active", true);
+				saveAttr(matched, "data-nsmax-pg-cur", "");
+				saveAttr(matched, "aria-current", "page");
+			}
+			for (const a of document.querySelectorAll(".nsmax-account-menu a[href]")) {
+				const hrefNorm = norm(a.href);
+				if (a === clicked || (hrefNorm && (hrefNorm === targetFull || hrefNorm.split("?")[0] === targetPath))) {
+					saveAttr(a, "data-nsmax-nav-pending", "");
+				}
+			}
+		};
+		const start = (url, clicked) => {
 			stop();
+			if (url) markActive(url, clicked);
 			timer = setTimeout(() => {
 				const host = document.body || document.documentElement;
 				if (!host) return;
@@ -22883,10 +22996,17 @@ html::view-transition-group(nsmax-head){animation-duration:0s}}
 				host.append(bar);
 				void bar.offsetWidth;
 				bar.setAttribute("data-on", "");
-			}, 120);
+			}, 80);
 			giveUp = setTimeout(stop, 15e3);
 		};
-		window.addEventListener("pageshow", (event) => { if (event.persisted) stop(); });
+		window.addEventListener("pageswap", clearBar);
+		window.addEventListener("pagehide", stop);
+		window.addEventListener("pageshow", stop);
+		window.addEventListener("click", (event) => {
+			if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+			const link = event.target instanceof Element ? event.target.closest("a") : null;
+			if (link) lastClick = { el: link, at: performance.now() };
+		}, true);
 		const nav = window.navigation;
 		if (nav && typeof nav.addEventListener === "function") {
 			nav.addEventListener("navigate", (event) => {
@@ -22894,7 +23014,9 @@ html::view-transition-group(nsmax-head){animation-duration:0s}}
 					if (event.hashChange || event.downloadRequest || event.destination?.sameDocument) return;
 					const url = new URL(event.destination.url);
 					if (url.origin !== location.origin) return;
-					start();
+					const clicked = lastClick && performance.now() - lastClick.at < 300 ? lastClick.el : null;
+					lastClick = null;
+					start(url, clicked);
 				} catch {}
 			});
 			nav.addEventListener("navigateerror", stop);
@@ -22908,7 +23030,7 @@ html::view-transition-group(nsmax-head){animation-duration:0s}}
 			let url;
 			try { url = new URL(link.href, location.href); } catch { return; }
 			if (url.origin !== location.origin || url.pathname === location.pathname && url.search === location.search) return;
-			start();
+			start(url, link);
 		});
 	}
 
@@ -23096,10 +23218,16 @@ html::view-transition-group(nsmax-head){animation-duration:0s}}
 			const earlyPath = location.pathname;
 			// 先按地址判断再调用：nsmaxPrepareSpace 有近 400 行，别的页面上调用一次就要先整段编译（首帧前 4 倍降速下约 5ms），进去又马上返回
 			if (/^\/space\/\d+/.test(earlyPath)) nsmaxPrepareSpace();
+			if (earlyPath === "/search" && parsed(document.getElementById("nsk-body-left"))) nsmaxPrepareSearch();
+			if (/^\/board(?:\/|$)/.test(earlyPath) && parsed(document.querySelector(".board-container, #nsk-body-left"))) nsmaxPrepareBoard();
+			if (/^\/credit(?:\/|$)/.test(earlyPath)) nsmaxPrepareCredit();
 			// 登录 / 注册页的卡片、设置页的页签：站点表单一解析出来就排好。以前等模块挂载才改，表单先满宽画出来再缩成卡片，
 			// 设置页先画表单再被插进来的页签往下推 50px（2026-10-30）
 			if (NSMAX_AUTH_PAGES[earlyPath]) nsmaxPrepareAuth();
-			if (/^\/setting(?:\/|$)/.test(earlyPath)) nsmaxPrepareSetting();
+			if (/^\/setting(?:\/|$)/.test(earlyPath)) {
+				nsmaxPrepareSetting();
+				nsmaxWatchSetting({ signal: new AbortController().signal });
+			}
 			// 我的关注 / 粉丝、个人主页：站点画出卡片的那一刻就改好（见 nsmaxWatchFans / nsmaxWatchSpace），不等模块挂载
 			nsmaxWatchFans({ signal: new AbortController().signal });
 			nsmaxWatchSpace({ signal: new AbortController().signal });
@@ -23145,9 +23273,11 @@ html::view-transition-group(nsmax-head){animation-duration:0s}}
 				nsmaxSyncSidenav();
 				if (options.minimalHeader) nsmaxHeaderExtras();
 			});
-			// 发帖页：原站没有右栏，主栏一解析完就按记下的资料补一个（照 sb.sb /t/new/），首屏就是两栏
+			// 发帖页与无右栏子页面（/board、/ruling、/space/*）：主栏 / 外框一解析完就按记下的资料补一个右栏，首屏就是两栏，避免首帧后再横向跳 280px
 			if (nsmaxNewPostPage() && document.getElementById("nsk-body-left") && parsed(document.getElementById("nsk-body-left"))) {
 				try { nsmaxPrepareSidePage(true); } catch (error) { nsmaxRecordError("early:new-side", error); }
+			} else if (nsmaxSidePage() && document.getElementById("nsk-frame") && parsed(document.getElementById("nsk-frame"))) {
+				try { nsmaxPrepareSidePage(true); } catch (error) { nsmaxRecordError("early:side-page", error); }
 			}
 			// 右栏：服务器只给资料卡一个 #usercard-me 骨架，站点脚本解析到它后面时才画出真正的资料卡（真实站点上晚约 0.2 秒）。
 			// 等资料卡画好再整理、再显示：侧栏资料卡、今日热门、最近浏览在同一帧一起出现，不先露出骨架、再一张张补上。
@@ -23917,10 +24047,8 @@ html::view-transition-group(nsmax-head){animation-duration:0s}}
 						const h = tab.getAttribute("href");
 						if (h && h.startsWith("#")) {
 							if (location.hash !== h) location.hash = h;
-							setTimeout(() => {
-								syncActiveTabs();
-								nsmaxPrepareSpace();
-							}, 30);
+							syncActiveTabs();
+							nsmaxPrepareSpace();
 						}
 					});
 				}
@@ -25234,8 +25362,23 @@ html::view-transition-group(nsmax-head){animation-duration:0s}}
 				for (const icon of inline.querySelectorAll("svg, .iconpark-icon")) icon.remove();
 			}
 			// 2026-10-20 实时 sb.sb .post-meta：作者 · 时间 · 版块 · 浏览 · 回复 · 最后回复人。
-			// NodeSeek 的时间仍取原生最后回复时间，仅调整显示顺序；宽屏另有右侧版块标签。一次挪完
-			info.append(...[author, time, inline, views, count, last, category].filter(Boolean));
+			// NodeSeek 的时间仍取原生最后回复时间，仅调整显示顺序；宽屏另有右侧版块标签。只移动位置不对的节点，尽量减少 DOM 变动
+			const desired = [author, time, inline, views, count, last, category].filter(Boolean);
+			if (author && author.parentElement === info) {
+				const afterAuthor = [time, inline].filter(Boolean);
+				if (afterAuthor.length && !(afterAuthor[0].previousElementSibling === author && (!afterAuthor[1] || afterAuthor[0].nextElementSibling === afterAuthor[1]))) {
+					author.after(...afterAuthor);
+				}
+			}
+			let anchor = null;
+			for (const el of desired) {
+				if (!anchor) {
+					if (info.firstElementChild !== el) info.prepend(el);
+				} else if (anchor.nextElementSibling !== el) {
+					anchor.after(el);
+				}
+				anchor = el;
+			}
 			row.setAttribute("data-nsmax-meta-ordered", "");
 		}
 	}
@@ -28000,7 +28143,19 @@ function nsmaxTagStructure() {
 	function nsmaxPrepareSidePage(early = false) {
 		const newPost = nsmaxNewPostPage();
 		if (!nsmaxSidePage() && !newPost) return;
-		if (document.getElementById("nsk-right-panel-container")) return;
+		const existing = document.getElementById("nsk-right-panel-container");
+		if (existing) {
+			if (!early && existing.classList.contains("nsmax-side-panel") && !existing.hasAttribute("data-nsmax-side-refreshed")) {
+				const config = unsafeWindow$1.__config__?.user;
+				const stored = nsmaxStoredAccount();
+				const id = Number(config?.member_id ?? stored.id);
+				if (Number.isSafeInteger(id) && id > 0) {
+					existing.setAttribute("data-nsmax-side-refreshed", "");
+					nsmaxRefreshSideAccount(id);
+				}
+			}
+			return;
+		}
 		const frame = document.querySelector("section#nsk-frame");
 		if (!frame) return;
 		let host;
@@ -28073,7 +28228,10 @@ function nsmaxTagStructure() {
 		} catch (error) { nsmaxRecordError("early:side-hot", error); }
 		try { nsmaxEarlyRecentPanel(side); } catch (error) { nsmaxRecordError("early:side-recent", error); }
 		// 站点配置里没有主题帖、评论数（签到、管理记录、发帖页都没有）：页面解析完读一次自己的资料补上
-		if (known && !early) nsmaxRefreshSideAccount(id);
+		if (known && !early) {
+			side.setAttribute("data-nsmax-side-refreshed", "");
+			nsmaxRefreshSideAccount(id);
+		}
 	}
 	function nsmaxRefreshSideAccount(id) {
 		// 自己的个人主页上，主页资料卡已经在读同一个人的资料（nsmaxSpaceInfo）：共用那一次，不再多发一个请求
@@ -28141,6 +28299,27 @@ function nsmaxTagStructure() {
 		}
 		for (const h2 of right.querySelectorAll(":scope > div > h2, :scope > form > h2")) nsmaxFlag(h2, "data-nsmax-dup-title", !!current && h2.textContent.trim() === current);
 		for (const row of right.querySelectorAll("form > div")) nsmaxFlag(row, "data-nsmax-setting-actions", row.children.length > 0 && Array.from(row.children).every((child) => child.matches("button, .btn")));
+	}
+	var nsmaxSettingWatching = false;
+	function nsmaxWatchSetting(ctx) {
+		if (nsmaxSettingWatching || !/^\/setting(?:\/|$)/.test(location.pathname) || !document.body) return;
+		nsmaxSettingWatching = true;
+		let observer;
+		const run = () => {
+			try { nsmaxPrepareSetting(); } catch {}
+			observer?.takeRecords();
+		};
+		observer = new MutationObserver((records) => {
+			if (!records.some((record) => {
+				const el = record.target instanceof Element ? record.target : record.target.parentElement;
+				return el && !!el.closest("#user-setting-panel");
+			})) return;
+			run();
+		});
+		observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+		window.addEventListener("hashchange", run, { signal: ctx.signal });
+		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxSettingWatching = false; }, { once: true });
+		run();
 	}
 	// 关注 / 粉丝页第一帧：数据是站点前端画的（先是一张转圈 gif + 英文 Loading，整块换掉）。
 	// 照列表骨架放 4 行占位（头像圆 + 两行灰条），比一张大空卡片中间一个小转圈好看，数据到了自然消失
@@ -28701,10 +28880,15 @@ function nsmaxTagStructure() {
 			root.setAttribute("data-nsmax-space-pending", "");
 			setTimeout(() => root.removeAttribute("data-nsmax-space-pending"), 4e3);
 		}
-		const relevant = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container, .card-block, .readme, .selector") || !!node.querySelector(".head-container, .card-block, .readme"));
+		const relevant = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container, .card-block, .readme, .selector, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager") || !!node.querySelector(".head-container, .card-block, .readme, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager"));
 		const observer = new MutationObserver((records) => {
 			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
-			try { nsmaxPrepareSpace(); } catch {}
+			try {
+				nsmaxPrepareSpace();
+				nsmaxTagStructure();
+				nsmaxMarkLevels();
+				nsmaxTidyPagers();
+			} catch {}
 			if (drawn()) root.removeAttribute("data-nsmax-space-pending");
 			observer.takeRecords();
 		});
@@ -28713,12 +28897,17 @@ function nsmaxTagStructure() {
 		try { nsmaxPrepareSpace(); } catch {}
 		// 切换「主题 / 回帖 / 收藏」标签（2026-11-09 在用户 Chrome 里实测）：站点先把旧列表清空、再去拿新的，中间 0.3–0.4 秒
 		// 列表是空的——卡片里先闪一下「还没有发过主题」，整块从 800px 缩到 100px 左右再长回去，页脚和右栏跟着上下跳。
-		// 点标签的那一刻记下卡片高度、先撑住，新内容到了（或者站点画出真正的空状态插图）再放开；这段时间不写「还没有……」
+		// 点标签或页码的那一刻记下卡片高度、先撑住，新内容到了（或者站点画出真正的空状态插图）再放开；这段时间不写「还没有……」
 		let release = null;
 		document.addEventListener("click", (event) => {
-			const tab = event.target instanceof Element && event.target.closest(".selector > a.select-item");
-			if (!tab || tab.classList.contains("active") || tab.classList.contains("router-link-exact-active")) return;
-			const box = tab.closest(".selector");
+			const target = event.target instanceof Element ? event.target : null;
+			const tab = target?.closest(".selector > a.select-item");
+			const pagerLink = !tab && target?.closest(".selector .nsk-pager a.pager-pos");
+			const trigger = tab || pagerLink;
+			if (!trigger) return;
+			if (tab && (tab.classList.contains("active") || tab.classList.contains("router-link-exact-active"))) return;
+			if (pagerLink && (pagerLink.classList.contains("pager-cur") || pagerLink.hasAttribute("data-nsmax-pg-cur") || pagerLink.classList.contains("active") || pagerLink.classList.contains("current"))) return;
+			const box = trigger.closest(".selector");
 			if (!box) return;
 			release?.();
 			box.style.setProperty("min-height", box.offsetHeight + "px", "important");
@@ -29130,6 +29319,7 @@ function nsmaxTagStructure() {
 		nsmaxWatchMsc(ctx);
 		nsmaxWatchFans(ctx);
 		nsmaxWatchSpace(ctx);
+		nsmaxWatchSetting(ctx);
 		nsmaxFloorHover(ctx);
 		nsmaxCalmScrollHover(ctx);
 		nsmaxPrerenderRows(ctx);
@@ -30747,7 +30937,7 @@ function nsmaxTagStructure() {
 			...(isForum ? [hotRankings, recentVisitsFeature, personHoverFeature, myRepliesFeature] : isSide ? [hotRankings, recentVisitsFeature, personHoverFeature] : []),
 			...(isNotification ? [messagesFeature, personHoverFeature] : []),
 			...(isPeople && !isSide ? [personHoverFeature] : []),
-			...serviceFeatures.filter((feature) => feature.id === "instant-pages" ? isForum : !(isNotification || isSetting)),
+			...serviceFeatures.filter((feature) => feature.id === "instant-pages" ? true : !(isNotification || isSetting)),
 			...(!(isNotification || isSetting) ? relationshipFeatures : []),
 			...(isEditor ? [codeHighlight] : []),
 			...(!/^\/(?:new|edit)-discussion/.test(page) && !isNotification && !isSetting ? [postPreview] : []),
