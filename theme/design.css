@@ -17059,6 +17059,62 @@ html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is
     left: 1px !important;
   }
 }
+/* ---------- 帖子页回复框：进帖子时不再「闪一下」（2026-11-16 Yiheng：「每进到一个新帖子，这个地方都会切换一下样式」） ----------
+   精简回复框要等站点建好 CodeMirror、脚本空下来才搭（真站上进帖子后约 1 秒）。在那之前露出的是站点原样：「内容 / 预览 / 对照」页签、
+   表情条、没有「发表回复」标题，搭好那一下整块换样子、还高了 18px。现在搭好之前就按搭好后的样子占位：标题行画出来，
+   原生页签和表情条收起，输入框画成同样大小的框，发布按钮留在原位，搭好时只是按钮行和输入框里的字出现，位置一点不动。
+   顺带：真站的「回复楼主」按钮在 .topic-select 里，左边还是 16px，比上面工具按钮和输入框（18px）靠左 2px → 18px */
+/* 回复框外面那层 #editor：脚本扫描到它里面有 .md-editor 才标上 data-nsmax-editor-box、去掉卡片样式；标上之前（站点刚把编辑器挂上去）
+   它自己也画成一张卡片，回复框外面套着两层框，底下多出一条边。真站登录后这一格就是空的 #editor（编辑器挂在里面），
+   没登录是 .login-notes（2026-11-16 比过两种页面源码），所以按 id 直接认，不等标记 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > #editor:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsk-post-wrapper .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    position: relative !important;
+    padding: 94.875px 18px 22px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsk-post-wrapper .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::before {
+    content: "发表回复" !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    box-sizing: border-box !important;
+    height: 44.875px !important;
+    padding: 11px 18px !important;
+    border-bottom: 1px solid var(--line-soft) !important;
+    color: var(--text) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    line-height: 21.875px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsk-post-wrapper .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body > :is(.tab-select, .mde-toolbar, .expression, .exp-container):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    display: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsk-post-wrapper .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body > .content-area:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: var(--nsmax-editor-height, 150px) !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--line-strong) !important;
+    border-radius: var(--r-input) !important;
+    background: var(--panel) !important;
+    overflow: hidden !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsk-post-wrapper .md-editor:not(.nsmax-compact-reply, [data-nsmax-native-editor]) > #editor-body > .content-area > *:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    visibility: hidden !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsk-post-wrapper .md-editor:not([data-nsmax-native-editor]) > .topic-select:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+}
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;

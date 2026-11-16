@@ -950,6 +950,42 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 帖子页回复框搭好前就按搭好后的样子占位（2026-11-16「每进到一个新帖子都会闪一下」）：标题行、输入框、按钮位置前后一样，按钮和输入框对齐`,async()=>{
+  // 真站结构的回复框；先不放输入框（站点还没建好 CodeMirror），脚本就搭不起精简回复框，停在「搭好之前」
+  const html=P.postPage({editorMode:"real"}).replace(/<textarea placeholder="鼓励友善发言[^>]*><\/textarea>/,'<div class="cm-pending"></div>');
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html});
+  try{
+   await ready(page);
+   await page.waitForSelector(".md-editor .content-area");
+   const measure=()=>page.evaluate(()=>{
+    const e=document.querySelector(".md-editor"),top=e.getBoundingClientRect().top,body=e.querySelector("#editor-body");
+    const box=x=>{const r=x.getBoundingClientRect();return[Math.round(r.left),Math.round(r.top-top),Math.round(r.width),Math.round(r.height)]};
+    const shown=sel=>[...e.querySelectorAll(sel)].some(x=>x.offsetWidth||x.offsetHeight);
+    const prev=document.querySelector("#editor").previousElementSibling;
+    return{compact:e.classList.contains("nsmax-compact-reply"),editor:Math.round(e.getBoundingClientRect().height),gap:Math.round(e.getBoundingClientRect().top-prev.getBoundingClientRect().bottom),area:box(e.querySelector(".content-area")),submit:box(e.querySelector("button.submit")),
+     native:shown(".tab-select, .expression"),head:getComputedStyle(body,"::before").content,headH:Math.round(parseFloat(getComputedStyle(body,"::before").height)||0),
+     controls:e.querySelector(".nsmax-editor-controls")&&box(e.querySelector(".nsmax-editor-controls")),realHead:e.querySelector(".nsmax-editor-head")&&box(e.querySelector(".nsmax-editor-head"))};
+   });
+   const pre=await measure();
+   assert.equal(pre.compact,false);
+   assert.equal(pre.native,false,"站点原样的页签、表情条不该露出来："+JSON.stringify(pre));
+   assert.equal(pre.head,'"发表回复"');
+   // 脚本还没给外层 #editor 标上 data-nsmax-editor-box 的那一下，外层也不画成第二层框
+   const outer=await page.evaluate(()=>{const box=document.querySelector("#editor");box.removeAttribute("data-nsmax-editor-box");const c=getComputedStyle(box),e=box.querySelector(".md-editor");return[c.borderTopWidth,c.backgroundColor,c.paddingTop,Math.round(e.getBoundingClientRect().top-box.previousElementSibling.getBoundingClientRect().bottom)];});
+   assert.deepEqual(outer,["0px","rgba(0, 0, 0, 0)","0px",pre.gap]);
+   await page.evaluate(()=>{const t=document.createElement("textarea");t.placeholder="鼓励友善发言，禁止人身攻击";document.querySelector(".cm-pending").replaceWith(t);});
+   await page.waitForSelector(".md-editor.nsmax-compact-reply");
+   await page.waitForTimeout(300);
+   const post=await measure();
+   assert.equal(post.editor,pre.editor,"搭好前后整块一样高："+JSON.stringify({pre,post}));
+   assert.ok(post.gap===pre.gap&&post.gap>=16,"和上面楼层隔开的距离不变："+JSON.stringify({pre:pre.gap,post:post.gap}));
+   assert.deepEqual(post.area,pre.area,"输入框位置大小不变");
+   assert.deepEqual(post.submit,pre.submit,"按钮不动");
+   assert.equal(post.realHead[3],pre.headH,"标题行一样高");
+   assert.equal(post.submit[0],post.controls[0],"「回复楼主」和上面的工具按钮左边对齐");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
  test(`${engine} 电脑端第九轮（2026-11-15「再看看每个细节」）：帖子列表 / 通知 / 个人主页列表每行左边 18px，和标签条的字对齐；回复框标题栏和内容区 18px`,async()=>{
   const txt=e=>{const r=document.createRange();r.selectNodeContents(e);return Math.round(r.getBoundingClientRect().left);};
   for(const [url,html,rowSel,tabSel] of [
