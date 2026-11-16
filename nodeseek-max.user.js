@@ -22849,8 +22849,8 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 @keyframes nsmax-vt-in{from{opacity:0}to{opacity:1}}
 html::view-transition-group(*){animation-duration:120ms;animation-timing-function:var(--ease-out)}
 html::view-transition-old(root){animation:nsmax-vt-out 120ms var(--ease-out) both}
-html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both}
-html[data-nsmax-theme] body>header{view-transition-name:nsmax-head}
+html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both}}
+@media (prefers-reduced-motion:no-preference) and (hover:hover) and (pointer:fine){html[data-nsmax-theme]:not([data-nsmax-mhead]) body>header{view-transition-name:nsmax-head}
 html::view-transition-group(nsmax-head){animation-duration:0s}}
 @media (prefers-reduced-motion:no-preference) and (min-width:801px){html[data-nsmax-theme] :is(#nsk-body,section#nsk-frame[data-nsmax-side-page])>#nsk-right-panel-container{view-transition-name:nsmax-side}
 html::view-transition-group(nsmax-side){animation-duration:0s}
