@@ -1133,4 +1133,82 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 页面切换丝滑度：右栏视图过渡固定、分页点击即时高亮与 pagehide 还原、设置/空间切页零延迟整理`,async()=>{
+  const list=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage({count:4}),beforeNavigate:async(p)=>{
+   await p.route("**/page-2",async(route)=>{
+    await new Promise(r=>setTimeout(r,800));
+    await route.fulfill({status:200,contentType:"text/html; charset=utf-8",body:P.listPage({count:4})});
+   });
+  }});
+  try{
+   await ready(list.page);
+   const cssText=await list.page.evaluate(()=>[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n"));
+   assert.ok(cssText.includes("view-transition-name:nsmax-side")&&cssText.includes("html::view-transition-group(nsmax-side)"));
+   if(engine==="chromium"){
+    assert.equal(await list.page.evaluate(()=>getComputedStyle(document.getElementById("nsk-right-panel-container")).viewTransitionName),"nsmax-side");
+   }
+   await list.page.waitForLoadState("networkidle");
+   await list.page.evaluate(()=>{
+    const snap=()=>({
+     p1:[...document.querySelectorAll(".nsk-pager .pager-pos:not([href])")].map(el=>el.classList.contains("pager-cur")),
+     p2:[...document.querySelectorAll('.nsk-pager a.pager-pos[href="/page-2"]')].map(el=>[el.classList.contains("pager-cur"),el.hasAttribute("data-nsmax-pg-cur"),el.getAttribute("aria-current")]),
+     bar:!!document.querySelector("#nsmax-nav-progress[data-on]"),
+     barEl:!!document.getElementById("nsmax-nav-progress")
+    });
+    const host=window.navigation||window,ev=window.navigation?"navigate":"click";
+    host.addEventListener(ev,()=>{
+     const at0=snap();
+     sessionStorage.setItem("__nsmax_nav_test",JSON.stringify({at0}));
+     setTimeout(()=>{
+      const at140=snap();
+      window.dispatchEvent(new Event("pagehide"));
+      const afterHide=snap();
+      sessionStorage.setItem("__nsmax_nav_test",JSON.stringify({at0,at140,afterHide}));
+     },140);
+    });
+    document.querySelector('.nsk-pager.pager-bottom a.pager-pos[href="/page-2"]').click();
+   });
+   await list.page.waitForURL("**/page-2");
+   await ready(list.page);
+   const navRes=await list.page.evaluate(()=>JSON.parse(sessionStorage.getItem("__nsmax_nav_test")||"null"));
+   assert.ok(navRes&&navRes.at140&&navRes.afterHide,JSON.stringify(navRes));
+   assert.ok(navRes.at0.p1.every(v=>v===false),JSON.stringify(navRes.at0));
+   assert.ok(navRes.at0.p2.length>=2&&navRes.at0.p2.every(([c,a,cur])=>c&&a&&cur==="page"),JSON.stringify(navRes.at0));
+   assert.equal(navRes.at140.bar,true,JSON.stringify(navRes.at140));
+   assert.equal(navRes.afterHide.barEl,false,JSON.stringify(navRes.afterHide));
+   assert.ok(navRes.afterHide.p1.every(v=>v===true),JSON.stringify(navRes.afterHide));
+   assert.ok(navRes.afterHide.p2.every(([c,a])=>!c&&!a),JSON.stringify(navRes.afterHide));
+   assert.deepEqual(list.errors,[]);
+  }finally{await list.context.close();}
+  const setting=await open(browser,"https://www.nodeseek.com/setting",{...desk,html:P.settingPage({})});
+  try{
+   await ready(setting.page);
+   const s=await setting.page.evaluate(()=>new Promise(resolve=>{
+    const tabs=[...document.querySelectorAll("#user-setting-panel .selector-left-side a.select-item")];
+    for(const t of tabs)t.classList.toggle("selected",t.getAttribute("href")==="#security");
+    const right=document.querySelector("#user-setting-panel .selector-right-side");
+    right.innerHTML='<form class="pure-form"><fieldset><h2>Readme</h2><textarea></textarea></fieldset></form>';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     const h2=right.querySelector("fieldset > h2");
+     resolve({title:right.getAttribute("data-nsmax-setting-title"),heading:h2?.textContent.trim(),hint:!!h2?.nextElementSibling?.classList.contains("nsmax-setting-hint")});
+    }));
+   }));
+   assert.deepEqual(s,{title:"安全",heading:"主页介绍",hint:true});
+   assert.deepEqual(setting.errors,[]);
+  }finally{await setting.context.close();}
+  const space=await open(browser,"https://www.nodeseek.com/space/1#discussions",{...desk,html:P.spaceTopicsPage({})});
+  try{
+   await ready(space.page);
+   const s=await space.page.evaluate(()=>new Promise(resolve=>{
+    const wrap=document.querySelector(".discussion-wrapper");
+    wrap.innerHTML='<div class="discussion-item"><a href="/post-4999-1"><span>动态加载主题</span><span style="color:rgb(255,152,152)"><svg class="iconpark-icon"><use href="#lock"></use></svg> 3</span></a><span></span></div>';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     const a=wrap.querySelector(".discussion-item > a"),lock=a?.querySelector("span[data-nsmax-lock]");
+     resolve({hasLock:!!lock,level:lock?.getAttribute("data-nsmax-lock-level"),first:a?.firstElementChild===lock});
+    }));
+   }));
+   assert.deepEqual(s,{hasLock:true,level:"3",first:true});
+   assert.deepEqual(space.errors,[]);
+  }finally{await space.context.close();}
+ });
 }
