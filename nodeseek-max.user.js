@@ -16049,9 +16049,26 @@ var nsmaxRedirecting = false;
 		const scrollArea = node("div", "nspp-messages-contact-list nspp-notice-list-scroll");
 		scrollArea.append(list, info, more);
 		root.append(scrollArea);
-		let category, page = 1, busy = false, loaded = false, autoPaused = false;
+		let category, page = 1, busy = false, loaded = false, autoPaused = false, openInNewTab = null;
 		let controller = new AbortController();
 		const notices = new Map();
+		const applyNoticeTargets = () => {
+			if (openInNewTab === null) return;
+			for (const a of list.querySelectorAll(".nsmax-notice-main")) {
+				if (openInNewTab) {
+					a.target = "_blank";
+					a.rel = "noopener noreferrer";
+				} else {
+					a.target = "_self";
+					a.removeAttribute("rel");
+				}
+			}
+		};
+		nsmaxReadSitePreference("openPostInNewPage").then((value) => {
+			if (ctx.signal.aborted) return;
+			openInNewTab = value === true;
+			applyNoticeTargets();
+		});
 		const current = () => !ctx.signal.aborted && !root.hidden && !!category;
 		const signal = () => nsmaxSignalAny([ctx.signal, controller.signal]);
 		blockedMembers.subscribe(() => {
@@ -16132,8 +16149,11 @@ var nsmaxRedirecting = false;
 				}
 				const main = node("a", "nspp-messages-peer-details nsmax-notice-main");
 				main.href = noticeHref(item);
-				main.target = "_blank";
-				main.rel = "noopener noreferrer";
+				if (openInNewTab === false) main.target = "_self";
+				else {
+					main.target = "_blank";
+					main.rel = "noopener noreferrer";
+				}
 				const heading = node("span", "nspp-messages-peer-title");
 				heading.append(node("strong", "", actor), node("span", "nspp-notice-action", category === "atMe" ? "@了你" : "回复了你的主题"));
 				const floor = noticeFloor(item);
