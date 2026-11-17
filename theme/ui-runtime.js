@@ -1301,10 +1301,9 @@
 			if (!link || nsmaxLateRows && title.closest(nsmaxLateRows)) return;
 			// 交易 / 拼车小标（【出】【收】【车找人】……）2026-11-09 按用户要求整类去掉，标题原样显示
 			const id = (link.getAttribute("href") || "").match(/\/post-(\d+)/)?.[1] || postId;
-			// 列表只标已确认的抽奖；投票页面标题按参考样式显示蓝色小标。
+			// 列表与帖子详情页均不再在标题前挂「投票」小标，只保留「抽奖 / 已结束」。
 			const lottery = (id && known.get(id) || "").split(",").includes("lottery");
-			const poll = !!title.closest(".nsk-post") && (id && known.get(id) || "").split(",").includes("poll");
-			nsmaxTopicBadge(title, link, "nsmax-poll-badge", "投票", poll);
+			nsmaxTopicBadge(title, link, "nsmax-poll-badge", "投票", false);
 			// 到了开奖时间（sb.sb .lottery-badge-done + .special-ended）：「抽奖」变成细线框灰字，后面多一个「已结束」
 			const time = lottery ? nsmaxLotteryTimes().get(id) : 0;
 			const ended = lottery && ((!!time && time <= Date.now()) || nsmaxLotteryEnded().has(id) || NSMAX_LOTTERY_ENDED_TITLE.test(link.textContent || ""));
@@ -1317,17 +1316,37 @@
 	var nsmaxPollSequence = 0;
 	var nsmaxPollObservers = new WeakMap();
 	var nsmaxPollArticleObservers = new WeakMap();
+	var nsmaxPollArticleAborts = new WeakSet();
 	function nsmaxWatchPollMount(signal) {
-		const article = document.querySelector("#nsk-body-left .nsk-post > .content-item > article.post-content");
-		if (!article || nsmaxPollArticleObservers.has(article)) return;
-		const observer = new MutationObserver((records) => {
-			if (records.some((record) => Array.from(record.addedNodes).some((node) => node.nodeType === 1 && (node.matches(".vote-panel") || node.querySelector(".vote-panel"))))) {
-				nsmaxPreparePolls(article, signal);
-			}
-		});
-		observer.observe(article, { childList: true, subtree: true });
-		nsmaxPollArticleObservers.set(article, observer);
-		signal?.addEventListener("abort", () => { observer.disconnect(); nsmaxPollArticleObservers.delete(article); }, { once: true });
+		const contentItem = document.querySelector("#nsk-body-left .nsk-post > .content-item");
+		if (!contentItem) return;
+		let observer = nsmaxPollArticleObservers.get(contentItem);
+		if (!observer) {
+			observer = new MutationObserver((records) => {
+				let hasVote = false;
+				let hasMenu = false;
+				for (const record of records) {
+					for (const node of record.addedNodes) {
+						if (node.nodeType !== 1) continue;
+						if (!hasVote && (node.matches(".vote-panel") || node.querySelector(".vote-panel"))) hasVote = true;
+						if (!hasMenu && (node.matches(".comment-menu, .menu-item") || node.querySelector(".comment-menu"))) hasMenu = true;
+					}
+				}
+				if (hasMenu) {
+					const menu = contentItem.querySelector(":scope > .comment-menu");
+					if (menu) nsmaxCleanPostActions(menu);
+					else nsmaxCleanPostActions();
+				}
+				if (hasVote) nsmaxPreparePolls(contentItem, signal);
+				if (hasMenu || hasVote) observer.takeRecords();
+			});
+			observer.observe(contentItem, { childList: true, subtree: true });
+			nsmaxPollArticleObservers.set(contentItem, observer);
+		}
+		if (signal && !nsmaxPollArticleAborts.has(observer)) {
+			nsmaxPollArticleAborts.add(observer);
+			signal.addEventListener("abort", () => { observer.disconnect(); nsmaxPollArticleObservers.delete(contentItem); }, { once: true });
+		}
 	}
 	function nsmaxEnsurePollSkeleton(heading) {
 		const panel = heading?.parentElement;
@@ -3753,6 +3772,8 @@ function nsmaxTagStructure() {
 		nsmaxWrapCodeBlocks(parsed);
 		nsmaxDecorateQuotes(parsed);
 		nsmaxReserveMoreRow(parsed);
+		nsmaxWatchPollMount();
+		nsmaxPreparePolls(document);
 		// 统计（浏览数、回复数）要等评论区解析完才准，不然先显示一个偏小的回复数再变
 		const comments = document.querySelector(".comment-container");
 		if (!parsed || document.readyState !== "loading" || comments && parsed(comments)) {

@@ -133,8 +133,9 @@ html[data-nsmax-theme] #nsk-body-left .comment-menu [title="反对"] {--nsmax-ac
 html[data-nsmax-theme] #nsk-body-left .comment-menu [title="引用"] {--nsmax-action-icon:var(--nsmax-icon-quote);}
 html[data-nsmax-theme] #nsk-body-left .comment-menu [title="回复"] {--nsmax-action-icon:var(--nsmax-icon-reply);}
 html[data-nsmax-theme] #nsk-body-left .comment-menu [title="收藏"] {--nsmax-action-icon:var(--nsmax-icon-star);}
+html[data-nsmax-theme] #nsk-body-left .comment-menu [title="编辑"] {--nsmax-action-icon:var(--nsmax-icon-edit);}
 html[data-nsmax-theme] #nsk-body-left .comment-menu .menu-item::after {content:none!important;display:none!important;}
-html[data-nsmax-theme] #nsk-body-left .comment-menu .menu-item>:is(svg,.nsmax-icon):not([data-nsmax-icon-orig]) {display:block!important;width:16px!important;height:16px!important;flex:none!important;}
+html[data-nsmax-theme] #nsk-body-left .comment-menu .menu-item>svg:not(.nsmax-icon) {display:none!important;width:0!important;height:0!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments .comment-menu .menu-item {opacity:1!important;color:var(--text-subtle)!important;}
 html[data-nsmax-theme] #nsk-body-left ul.comments .comment-menu .menu-item:hover {color:var(--text)!important;}
 html[data-nsmax-theme] #nsk-body-left article.post-content blockquote {border-left-color:var(--brand)!important;background:var(--panel-alt)!important;}
