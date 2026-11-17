@@ -1211,4 +1211,88 @@ for(const engine of engines){
    assert.deepEqual(space.errors,[]);
   }finally{await space.context.close();}
  });
+ test(`${engine} v1.9.59 页面切换进阶：手机顶栏与侧栏导航过渡固定、过渡不挡点击、中文时间零多余属性与搜索预加载`,async()=>{
+  const mob=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true,count:6})});
+  try{
+   await ready(mob.page);
+   const mobState=await mob.page.evaluate(()=>{
+    const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n");
+    return{
+     mhead:document.documentElement.hasAttribute("data-nsmax-mhead"),
+     headCss:css.includes("[data-nsmax-mhead] #nsk-head{view-transition-name:nsmax-head}"),
+     noBlockCss:css.includes("html::view-transition{pointer-events:none}"),
+     vtHead:getComputedStyle(document.getElementById("nsk-head")).viewTransitionName,
+     origAttrs:document.querySelectorAll("[data-nsmax-time-orig]").length,
+     doneTimes:document.querySelectorAll("time[data-nsmax-time-done]").length
+    };
+   });
+   assert.equal(mobState.mhead,true);
+   assert.equal(mobState.headCss,true);
+   assert.equal(mobState.noBlockCss,true);
+   assert.equal(mobState.origAttrs,0);
+   assert.ok(mobState.doneTimes>=6);
+   if(engine==="chromium")assert.equal(mobState.vtHead,"nsmax-head");
+   assert.deepEqual(mob.errors,[]);
+  }finally{await mob.context.close();}
+  const sidebarSeed={"nspp:settings:www.nodeseek.com":{"attendance":{enabled:false},"modern-theme":{font:"system",navPosition:"sidebar"}}};
+  const deskNav=await open(browser,"https://www.nodeseek.com/",{...desk,seed:sidebarSeed,html:P.listPage({count:8}),beforeNavigate:async(p)=>{
+   await p.route("**/categories/tech",async(route)=>{
+    await new Promise(r=>setTimeout(r,250));
+    await route.fulfill({status:200,contentType:"text/html; charset=utf-8",body:P.listPage({count:8})});
+   });
+   await p.route("**/post-1000-1",async(route)=>{
+    await new Promise(r=>setTimeout(r,250));
+    await route.fulfill({status:200,contentType:"text/html; charset=utf-8",body:P.postPage()});
+   });
+  }});
+  try{
+   await ready(deskNav.page);
+   const s=await deskNav.page.evaluate(()=>{
+    const left=document.getElementById("nsk-left-panel-container");
+    return{navAttr:document.documentElement.dataset.nsmaxNav,vtNav:left?getComputedStyle(left).viewTransitionName:null};
+   });
+   assert.equal(s.navAttr,"sidebar");
+   if(engine==="chromium")assert.equal(s.vtNav,"nsmax-nav");
+   await deskNav.page.evaluate(()=>{
+    const leftLink=document.querySelector('#nsk-left-panel-container a[href="/categories/tech"]');
+    const host=window.navigation||window,ev=window.navigation?"navigate":"click";
+    host.addEventListener(ev,()=>{
+     const activeNow=leftLink.hasAttribute("data-nsmax-header-cat-on")&&leftLink.getAttribute("aria-current")==="page";
+     window.dispatchEvent(new Event("pagehide"));
+     const reverted=!leftLink.hasAttribute("data-nsmax-header-cat-on")&&leftLink.getAttribute("aria-current")!=="page";
+     sessionStorage.setItem("__nsmax_v59_nav",JSON.stringify({activeNow,reverted}));
+    },{once:true});
+    leftLink.click();
+   });
+   await deskNav.page.waitForURL("**/categories/tech");
+   await ready(deskNav.page);
+   const navRes=await deskNav.page.evaluate(()=>JSON.parse(sessionStorage.getItem("__nsmax_v59_nav")||"null"));
+   assert.deepEqual(navRes,{activeNow:true,reverted:true});
+   if(engine==="chromium"){
+    await deskNav.page.evaluate(()=>{
+     const a=document.createElement("a");a.id="nsmax-search-prefetch";a.href="/search?q=test";a.textContent="搜索";
+     document.querySelector("#nsk-head").append(a);
+     a.dispatchEvent(new PointerEvent("pointerover",{bubbles:true}));
+    });
+    await deskNav.page.waitForTimeout(80);
+    const hasSearchRule=await deskNav.page.evaluate(()=>[...document.querySelectorAll("script[type=speculationrules]")].some(s=>s.textContent.includes("/search?q=test")));
+    assert.equal(hasSearchRule,true);
+   }
+   await deskNav.page.evaluate(()=>{
+    const postLink=document.querySelector('#nsk-body-left .post-list-item .post-title > a[href="/post-1000-1"]');
+    const host=window.navigation||window,ev=window.navigation?"navigate":"click";
+    host.addEventListener(ev,()=>{
+     const pendingPost=postLink.hasAttribute("data-nsmax-nav-pending");
+     window.dispatchEvent(new Event("pagehide"));
+     sessionStorage.setItem("__nsmax_v59_post",JSON.stringify({pendingPost,cleared:!postLink.hasAttribute("data-nsmax-nav-pending")}));
+    },{once:true});
+    postLink.click();
+   });
+   await deskNav.page.waitForURL("**/post-1000-1");
+   await ready(deskNav.page);
+   const postPending=await deskNav.page.evaluate(()=>JSON.parse(sessionStorage.getItem("__nsmax_v59_post")||"null"));
+   assert.deepEqual(postPending,{pendingPost:true,cleared:true});
+   assert.deepEqual(deskNav.errors,[]);
+  }finally{await deskNav.context.close();}
+ });
 }
