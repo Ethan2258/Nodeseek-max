@@ -3281,8 +3281,8 @@ test("2026-10-17 第二批：未读数是 16px 小圆、今日热门标题下不
 		assert.equal(state.hoverCard, "none", "站点旧版资料卡（点头像弹出）不显示，资料卡只用 sb.sb 样式那张");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
-	// 私信：系统通知有未读时，会话行带未读标记（摘要金色加粗 + 右边黄点）
-	const unread = [{ id: 61, sender_id: 5230, receiver_id: 1, sender_name: "系统通知", receiver_name: "tester", content: "你的帖子被加入了推荐阅读", viewed: 0, created_at: new Date().toISOString() }];
+	// 私信：系统通知有未读时，会话行带未读标记（摘要金色加粗 + 右边黄点，且长摘要省略号不与黄点贴死重叠）
+	const unread = [{ id: 61, sender_id: 5230, receiver_id: 1, sender_name: "系统通知", receiver_name: "tester", content: "你关注的用户mjjmjjyyds发布了一篇新的帖子这是一段足够长到一定会被省略号截断的未读系统消息摘要文本", viewed: 0, created_at: new Date().toISOString() }];
 	const messages = await open(browser, "https://www.nodeseek.com/notification#/message?mode=list", { html: nativeTalkPage(), viewport: { width: 1440, height: 900 }, api: { "/api/notification/message/list": [{ status: 200, body: { success: true, msgArray: unread } }] } });
 	try {
 		await messages.page.waitForSelector(".nspp-messages-peer[data-id]");
@@ -3290,12 +3290,27 @@ test("2026-10-17 第二批：未读数是 16px 小圆、今日热门标题下不
 		const row = await messages.page.evaluate(() => {
 			const peer = Array.from(document.querySelectorAll(".nspp-messages-peer[data-id]")).find((el) => el.textContent.includes("系统消息"));
 			const dot = peer?.querySelector(".nspp-messages-unread");
-			return { unread: peer?.hasAttribute("data-unread"), dot: dot ? [getComputedStyle(dot).display, getComputedStyle(dot).width] : null, snippet: peer ? getComputedStyle(peer.querySelector(".nspp-messages-snippet")).fontWeight : "" };
+			const snippet = peer?.querySelector(".nspp-messages-snippet");
+			const sCs = snippet ? getComputedStyle(snippet) : null;
+			const sRect = snippet?.getBoundingClientRect();
+			const dRect = dot?.getBoundingClientRect();
+			const pr = sCs ? parseFloat(sCs.paddingRight) || 0 : 0;
+			return {
+				unread: peer?.hasAttribute("data-unread"),
+				dot: dot ? [getComputedStyle(dot).display, getComputedStyle(dot).width] : null,
+				snippet: sCs ? sCs.fontWeight : "",
+				paddingRight: sCs ? sCs.paddingRight : "",
+				overflows: snippet ? snippet.scrollWidth > snippet.clientWidth : false,
+				dotGap: sRect && dRect ? Math.round((dRect.left - (sRect.right - pr)) * 10) / 10 : null,
+			};
 		});
 		assert.equal(row.unread, true, "系统通知的会话带未读标记");
 		assert.notEqual(row.dot?.[0], "none", "未读黄点要显示");
 		assert.equal(row.dot?.[1], "8px");
 		assert.equal(row.snippet, "600", "未读会话的摘要加粗");
+		assert.equal(row.paddingRight, "16px", "未读会话摘要右侧预留 16px，避免省略号压到未读黄点");
+		assert.equal(row.overflows, true, "长摘要应触发省略号截断");
+		assert.ok(row.dotGap >= 4, `未读黄点与摘要内容右缘应保留安全间距，实际为 ${JSON.stringify(row)}`);
 		assert.deepEqual(messages.errors, []);
 	} finally { await messages.context.close(); }
 	// 个人主页：看别人的主页没有「收藏」标签（只有自己看得到收藏），看自己的才有

@@ -1316,7 +1316,36 @@
 	// 投票保留原生表单与事件，只整理为主楼下方的独立卡片。
 	var nsmaxPollSequence = 0;
 	var nsmaxPollObservers = new WeakMap();
+	var nsmaxPollArticleObservers = new WeakMap();
+	function nsmaxWatchPollMount(signal) {
+		const article = document.querySelector("#nsk-body-left .nsk-post > .content-item > article.post-content");
+		if (!article || nsmaxPollArticleObservers.has(article)) return;
+		const observer = new MutationObserver((records) => {
+			if (records.some((record) => Array.from(record.addedNodes).some((node) => node.nodeType === 1 && (node.matches(".vote-panel") || node.querySelector(".vote-panel"))))) {
+				nsmaxPreparePolls(article, signal);
+			}
+		});
+		observer.observe(article, { childList: true, subtree: true });
+		nsmaxPollArticleObservers.set(article, observer);
+		signal?.addEventListener("abort", () => { observer.disconnect(); nsmaxPollArticleObservers.delete(article); }, { once: true });
+	}
+	function nsmaxEnsurePollSkeleton(heading) {
+		const panel = heading?.parentElement;
+		let box = panel?.querySelector(":scope > .nsmax-poll-skeleton");
+		if (box || !panel) return box;
+		box = document.createElement("div");
+		box.className = "nsmax-poll-skeleton";
+		box.setAttribute("aria-hidden", "true");
+		for (const cls of ["nsmax-poll-skel-title", "nsmax-poll-skel-choice", "nsmax-poll-skel-choice", "nsmax-poll-skel-btn"]) {
+			const bar = document.createElement("span");
+			bar.className = "nsmax-skeleton-line " + cls;
+			box.append(bar);
+		}
+		heading.after(box);
+		return box;
+	}
 	function nsmaxPreparePolls(root = document, signal) {
+		if (root === document) nsmaxWatchPollMount(signal);
 		for (const panel of root.matches?.(".vote-panel") ? [root] : root.querySelectorAll("#nsk-body-left .vote-panel")) {
 			const form = panel.querySelector("form.pure-form");
 			if (!form) continue;
@@ -1360,21 +1389,34 @@
 			// 站点在投票下面用一行灰字写 App 深链接和「（公开投票）」：深链接网页上用不上，整行由 CSS 收起，公开 / 匿名挪到总票数前面
 			const kind = Array.from(panel.querySelectorAll("form > div")).map(div => div.textContent.match(/[(（]\s*((?:公开|匿名)投票)\s*[)）]/)?.[1]).find(Boolean);
 			const head = panel.querySelector("form > h2");
-			if (head) nsmaxSetAttr(head, "data-nsmax-total", (kind ? kind + " · " : "") + `${total} 票`);
+			const hasMask = !!form.querySelector(".skeleton.form-mask");
+			const hasError = !!form.querySelector(".vote-error");
+			const hasContent = hasError || !!(head?.textContent || "").trim() || stats.some((stat) => stat.classList.contains("voted") || !!(stat.querySelector(".vote-item-text")?.textContent || "").trim());
+			const loading = !hasContent || hasMask && !panel.hasAttribute("data-nsmax-poll-ready");
+			if (hasContent && !hasMask) nsmaxSetAttr(panel, "data-nsmax-poll-ready", "");
+			nsmaxFlag(panel, "data-nsmax-poll-loading", loading);
+			if (head && !loading) nsmaxSetAttr(head, "data-nsmax-total", (kind ? kind + " · " : "") + `${total} 票`);
+			else if (head && loading) nsmaxDropAttr(head, "data-nsmax-total");
 			const single = stats.length > 0 && stats.every(stat => stat.querySelector("input")?.type === "radio");
 			const summary = heading.querySelector(".nsmax-poll-total");
-			const summaryText = complete ? single ? `${total} 人已参与` : `${total} 票` : single ? "单选" : "多选";
+			const summaryText = loading ? "加载中…" : complete ? single ? `${total} 人已参与` : `${total} 票` : single ? "单选" : "多选";
 			if (summary.textContent !== summaryText) summary.textContent = summaryText;
+			const skeleton = nsmaxEnsurePollSkeleton(heading);
+			if (skeleton && skeleton.hidden === loading) skeleton.hidden = !loading;
 			const actions = form.querySelector(".op-buttons");
-			if (!actions) continue;
+			if (!actions) {
+				nsmaxPollObservers.get(panel)?.takeRecords();
+				continue;
+			}
 			let kindLabel = actions.querySelector(".nsmax-poll-kind");
 			if (!kindLabel) {
 				kindLabel = document.createElement("span");
 				kindLabel.className = "nsmax-poll-kind";
 				actions.append(kindLabel);
 			}
-			if (kindLabel.textContent !== (kind || "")) kindLabel.textContent = kind || "";
-			kindLabel.hidden = !kind;
+			const nextKind = loading ? "" : kind || "";
+			if (kindLabel.textContent !== nextKind) kindLabel.textContent = nextKind;
+			if (kindLabel.hidden !== !nextKind) kindLabel.hidden = !nextKind;
 			let toggle = actions.querySelector(".nsmax-poll-voters-toggle");
 			if (!toggle) {
 				toggle = document.createElement("button");
@@ -1393,7 +1435,9 @@
 			const list = form.querySelector(".vote-stat-wrapper");
 			if (list && !list.id) list.id = "nsmax-poll-options-" + ++nsmaxPollSequence;
 			if (list) nsmaxSetAttr(toggle, "aria-controls", list.id);
-			toggle.hidden = !form.querySelector(".voter-avatar-container > a, .voter-avatar-container > .i-icon");
+			const hideToggle = loading || !form.querySelector(".voter-avatar-container > a, .voter-avatar-container > .i-icon");
+			if (toggle.hidden !== hideToggle) toggle.hidden = hideToggle;
+			nsmaxPollObservers.get(panel)?.takeRecords();
 		}
 	}
 	// 开奖时间记在本机（帖子 ID → 时间，最多 400 篇）：列表里已经到了开奖时间的抽奖帖，标签照 sb.sb 换成细线框的「抽奖」「已结束」

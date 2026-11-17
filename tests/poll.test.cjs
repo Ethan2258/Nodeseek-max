@@ -115,4 +115,141 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
       assert.deepEqual(errors, []);
     } finally { await context.close(); }
   });
+
+  test(`${engine} 异步双投票：未水合占位显示骨架不露空单选，切选项不反复改动开关属性，提交遮罩不被隐藏`, async () => {
+    const html = specialPostPage({ mobile: engine !== "chromium" && false })
+      .replace(/<p><div class="vote-panel">[\s\S]*?<\/div><\/div><\/p><p>没投过的投票：<\/p><p><div class="vote-panel">[\s\S]*?<\/div><\/div><\/p>/,
+        '<p>投票1：</p><p><a data-href="nsapp://vote?id=3599"></a></p><p>投票2：</p><p><a data-href="nsapp://vote?id=3600"></a></p>');
+    const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+      html, seed, viewport: { width: 1440, height: 900 }
+    });
+    try {
+      await page.waitForSelector(".nsk-post .post-content");
+      const firstFrame = await page.evaluate(() => new Promise((resolve) => {
+        const content = document.querySelector(".nsk-post article.post-content");
+        const makeUnhydrated = (id) => {
+          const panel = document.createElement("div");
+          panel.className = "vote-panel";
+          panel.innerHTML = `<div class="embed-vote"><form class="pure-form"><h2 style="text-align:center;font-size:1.2rem;"></h2><fieldset class="vote-stat-wrapper"><div class="vote-stat"><input id="v-${id}-1" name="vote-item" type="radio"><label for="v-${id}-1" class="pure-checkbox"><div class="vote-item-text"></div></label></div></fieldset><fieldset class="op-buttons"><button type="button" class="pure-button pure-button-primary">提交投票</button></fieldset><div style="text-align:center;color:gray;font-size:10px;font-weight:300;">nsapp://vote?id=${id} (公开投票)</div><div class="skeleton form-mask"></div></form></div>`;
+          return panel;
+        };
+        const anchors = content.querySelectorAll('a[data-href^="nsapp://vote"]');
+        anchors[0].replaceWith(makeUnhydrated(3599));
+        anchors[1].replaceWith(makeUnhydrated(3600));
+        requestAnimationFrame(() => {
+          const panels = Array.from(document.querySelectorAll(".vote-panel"));
+          resolve(panels.map((p) => {
+            const embed = p.querySelector(".embed-vote");
+            const sk = p.querySelector(".nsmax-poll-skeleton");
+            return {
+              inPost: !!p.closest(".nsk-post"),
+              detached: p.hasAttribute("data-nsmax-detached"),
+              loading: p.hasAttribute("data-nsmax-poll-loading"),
+              total: p.querySelector(".nsmax-poll-total")?.textContent || "",
+              embedDisplay: embed ? getComputedStyle(embed).display : "",
+              skeletonVisible: !!sk && getComputedStyle(sk).display !== "none" && sk.getBoundingClientRect().height > 20,
+            };
+          }));
+        });
+      }));
+      assert.equal(firstFrame.length, 2);
+      for (const state of firstFrame) {
+        assert.equal(state.inPost, false, "Vue 挂载未水合投票应在首帧前移出正文区");
+        assert.equal(state.detached, true);
+        assert.equal(state.loading, true);
+        assert.equal(state.total, "加载中…");
+        assert.equal(state.embedDisplay, "none", "未水合表单隐藏，避免露出空白单选圈");
+        assert.equal(state.skeletonVisible, true, "加载中显示骨架占位");
+      }
+
+      // 投票 1 先完成加载，投票 2 仍处于未水合等待状态
+      await page.evaluate(() => {
+        const [p1] = document.querySelectorAll(".vote-panel");
+        const form = p1.querySelector("form");
+        form.querySelector("h2").textContent = "怎么选？";
+        form.querySelector("fieldset.vote-stat-wrapper").innerHTML = [
+          [1, "200m前置IX", 1, "50%"],
+          [2, "300m亚太三网", 1, "50%"]
+        ].map(([id, label, cnt, pct]) => `<div class="vote-stat voted"><input id="v-3599-${id}" name="vote-item" type="radio" disabled><label for="v-3599-${id}" class="pure-checkbox"><div class="vote-item-text">${label}</div><div class="vote-stat-count"><div class="vote-stat-count-bar-wrapper"><div class="vote-stat-count-bar" title="${pct}" style="width:${pct}"></div></div><div class="vote-item-voter"><div class="vote-stat-count-value">${cnt}</div></div></div></label></div>`).join("");
+        form.querySelector(".form-mask")?.remove();
+      });
+      await page.waitForFunction(() => {
+        const p1 = document.querySelectorAll(".vote-panel")[0];
+        return p1 && !p1.hasAttribute("data-nsmax-poll-loading") && p1.querySelector(".nsmax-poll-total")?.textContent === "2 人已参与";
+      });
+      const mixed = await page.evaluate(() => {
+        const [p1, p2] = document.querySelectorAll(".vote-panel");
+        const sk1 = p1.querySelector(".nsmax-poll-skeleton");
+        return {
+          p1Ready: p1.hasAttribute("data-nsmax-poll-ready"),
+          p1EmbedDisplay: getComputedStyle(p1.querySelector(".embed-vote")).display,
+          p1SkeletonHidden: !sk1 || getComputedStyle(sk1).display === "none",
+          p2Loading: p2.hasAttribute("data-nsmax-poll-loading"),
+          p2Total: p2.querySelector(".nsmax-poll-total")?.textContent || "",
+          p2EmbedDisplay: getComputedStyle(p2.querySelector(".embed-vote")).display,
+        };
+      });
+      assert.deepEqual(mixed, {
+        p1Ready: true,
+        p1EmbedDisplay: "block",
+        p1SkeletonHidden: true,
+        p2Loading: true,
+        p2Total: "加载中…",
+        p2EmbedDisplay: "none",
+      });
+
+      // 投票 2 完成加载，测试切选项不产生冗余 hidden 属性变更，以及提交态 .form-mask 可见
+      await page.evaluate(() => {
+        const p2 = document.querySelectorAll(".vote-panel")[1];
+        const form = p2.querySelector("form");
+        form.querySelector("h2").textContent = "加个富哥选项？";
+        form.querySelector("fieldset.vote-stat-wrapper").innerHTML = [
+          [11, "方案 A"],
+          [12, "方案 B"]
+        ].map(([id, label]) => `<div class="vote-stat"><input id="v-3600-${id}" name="vote-item" type="radio" value="${id}"><label for="v-3600-${id}" class="pure-checkbox"><div class="vote-item-text">${label}</div></label></div>`).join("");
+        form.querySelector(".form-mask")?.remove();
+      });
+      await page.waitForFunction(() => {
+        const p2 = document.querySelectorAll(".vote-panel")[1];
+        return p2 && !p2.hasAttribute("data-nsmax-poll-loading") && p2.querySelector(".nsmax-poll-total")?.textContent === "单选";
+      });
+
+      await page.evaluate(() => {
+        const toggle = document.querySelectorAll(".vote-panel")[1].querySelector(".nsmax-poll-voters-toggle");
+        window.__toggleHiddenMutations = 0;
+        window.__toggleObserver = new MutationObserver((records) => { window.__toggleHiddenMutations += records.length; });
+        window.__toggleObserver.observe(toggle, { attributes: true, attributeFilter: ["hidden"] });
+      });
+      const p2Card = page.locator(".vote-panel").nth(1);
+      await p2Card.getByRole("radio", { name: "方案 A", exact: true }).check();
+      await p2Card.getByRole("radio", { name: "方案 B", exact: true }).check();
+      await page.waitForTimeout(160);
+      const hiddenMutations = await page.evaluate(() => {
+        window.__toggleObserver?.disconnect();
+        return window.__toggleHiddenMutations;
+      });
+      assert.equal(hiddenMutations, 0, "未投过的单选切换选项时，不再反复写入 hidden 属性");
+
+      const maskState = await page.evaluate(() => {
+        const p2 = document.querySelectorAll(".vote-panel")[1];
+        const form = p2.querySelector("form");
+        const mask = document.createElement("div");
+        mask.className = "skeleton form-mask";
+        form.append(mask);
+        return new Promise((resolve) => setTimeout(() => {
+          resolve({
+            loading: p2.hasAttribute("data-nsmax-poll-loading"),
+            embedDisplay: getComputedStyle(p2.querySelector(".embed-vote")).display,
+            maskDisplay: getComputedStyle(mask).display,
+          });
+        }, 160));
+      });
+      assert.deepEqual(maskState, {
+        loading: false,
+        embedDisplay: "block",
+        maskDisplay: "block",
+      }, "已水合投票点击提交时，原生 .skeleton.form-mask 不被 :empty 规则隐藏");
+      assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+  });
 }

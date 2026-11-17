@@ -16308,6 +16308,9 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
     right: 12px !important;
     margin: 0 !important;
   }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-peer[data-unread] .nspp-messages-snippet:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-right: 16px !important;
+  }
   /* 「加载更多」「加载更多会话」30px → 28px，和旁边的小胶囊一档；私信「发送」32px → 34px，和输入框所在的一档 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     box-sizing: border-box !important;
@@ -16763,9 +16766,60 @@ html[data-nsmax-theme]:root:root:root #nsk-frame .nsk-panel.nspp-messages-contai
   background: transparent !important;
   box-shadow: none !important;
 }
-/* 投票卡片底下比上面多空 12px：表单最后有一个站点留的空 div，表单是 12px 间距的竖排，空 div 也占一格间距。空的不占位 */
-html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form > div:empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+/* 投票卡片底下比上面多空 12px：表单最后有一个站点留的空 div，表单是 12px 间距的竖排，空 div 也占一格间距。
+   只收起真正的空占位 div，不碰加载中的 .form-mask / .skeleton（以前误杀 .form-mask，接口返回前会直接露出未初始化的空标题与空白单选框） */
+html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form > div:empty:not(.form-mask, .skeleton):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
   display: none !important;
+}
+/* 主楼正文中还没挪到主楼外面的 .vote-panel 先不占位，免得站点刚挂上去的那一下先把操作栏/签名往下顶、下一帧挪走又弹回来（2026-11-17） */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > article.post-content > :is(.vote-panel:not([data-nsmax-detached]), :not(blockquote) .vote-panel:not([data-nsmax-detached])):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  position: relative !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form > .skeleton.form-mask:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: block !important;
+  z-index: 2 !important;
+  border-radius: var(--r-sm) !important;
+  background: color-mix(in srgb, var(--panel-alt) 72%, transparent) !important;
+  animation: none !important;
+}
+/* 投票数据还在请求（或接口异常没拿到选项）时，隐藏站点占位用的空表单，先画与真卡等高的骨架 */
+html[data-nsmax-theme] #nsk-body-left .vote-panel[data-nsmax-poll-loading] > .embed-vote:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel > .nsmax-poll-skeleton:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel > .nsmax-poll-skeleton[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel > .nsmax-poll-skeleton > .nsmax-poll-skel-title:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  width: 34% !important;
+  max-width: 180px !important;
+  height: 14px !important;
+  margin: 2px 0 2px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel > .nsmax-poll-skeleton > .nsmax-poll-skel-choice:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  width: 100% !important;
+  height: 42px !important;
+  border-radius: var(--r-input) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel > .nsmax-poll-skeleton > .nsmax-poll-skel-btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  width: 90px !important;
+  height: 34px !important;
+  margin-top: 2px !important;
+  border-radius: var(--r-input) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel .vote-stat:not(.voted) > input:focus:not(:focus-visible):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  outline: 0 !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel .vote-stat:not(.voted) > input:focus-visible:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px !important;
 }
 @media (min-width: 801px) {
   /* 管理记录：表头没写对齐方式，浏览器默认居中，下面的内容靠左——「ID / 用户 / 操作 / 管理员 / 时间」五个表头都不在自己那一列的字上面。
