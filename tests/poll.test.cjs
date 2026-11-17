@@ -43,7 +43,7 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
         const card = page.locator(".vote-panel").first();
         assert.equal(await card.locator(".nsmax-poll-total").innerText(), "152 人已参与");
         assert.equal(await card.locator(".nsmax-poll-head strong").innerText(), "投票");
-        assert.equal(await page.locator(".nsk-post .post-title .nsmax-poll-badge").innerText(), "投票");
+        assert.equal(await page.locator(".nsk-post .post-title .nsmax-poll-badge").count(), 0);
         assert.equal(await card.locator(".voter-avatar-container img").first().isVisible(), false);
         assert.equal(await card.evaluate(e => !!e.closest(".nsk-post")), false);
         assert.equal(await page.evaluate(() => __pollNative.every(({panel,form,input}) => panel.isConnected && panel.querySelector("form") === form && panel.querySelector("input") === input)), true);
@@ -249,6 +249,88 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
         embedDisplay: "block",
         maskDisplay: "block",
       }, "已水合投票点击提交时，原生 .skeleton.form-mask 不被 :empty 规则隐藏");
+      assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+  });
+
+  test(`${engine} 进帖无标签与无图标切换闪烁：不挂投票标签、预收起投票链接、异步挂载操作栏首帧零原生图标、未读更新不重拆账户卡`, async () => {
+    const html = specialPostPage({ mobile: false })
+      .replace(/<p><div class="vote-panel">[\s\S]*?<\/div><\/div><\/p><p>没投过的投票：<\/p><p><div class="vote-panel">[\s\S]*?<\/div><\/div><\/p>/,
+        '<p>正文<br><a href="javascript://void(0)" data-href="nsapp://vote?id=3599">nsapp://vote?id=3599</a></p>')
+      .replace(/<div class="topic-warning"><\/div> <div class="comment-menu">[\s\S]*?<\/div>(?=\s*<\/div>\s*<div class="comment-container">)/,
+        '<div class="topic-warning"></div> <div class="comment-menu-mount"></div>');
+    const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+      html, seed, viewport: { width: 1440, height: 900 }
+    });
+    try {
+      await page.waitForSelector(".nsk-post .comment-menu-mount");
+      const pre = await page.evaluate(() => {
+        const voteLink = document.querySelector('.nsk-post article.post-content a[data-href^="nsapp://vote"]');
+        return {
+          pollBadges: document.querySelectorAll(".nsk-post .post-title .nsmax-poll-badge").length,
+          voteLinkDisplay: voteLink ? getComputedStyle(voteLink).display : "",
+          colorSwitcherDisplay: (() => {
+            const el = document.querySelector("#nsk-head .color-theme-switcher");
+            return el ? getComputedStyle(el).display : "";
+          })(),
+          sbCardPresent: !!document.querySelector("#nsk-right-panel-container .nsmax-sb-account")
+        };
+      });
+      assert.equal(pre.pollBadges, 0, "帖子标题前不出现「投票」小标");
+      assert.equal(pre.voteLinkDisplay, "none", "nsapp://vote 占位链接预先隐藏");
+      assert.equal(pre.colorSwitcherDisplay, "none", "开启精简顶栏时原生深浅色图标自始隐藏");
+
+      const firstMenuFrame = await page.evaluate(() => new Promise((resolve) => {
+        const mount = document.querySelector(".nsk-post .comment-menu-mount");
+        const menu = document.createElement("div");
+        menu.className = "comment-menu";
+        menu.innerHTML = [
+          ["点赞", "good-one", "0"],
+          ["加鸡腿", "chicken-leg", "0"],
+          ["反对", "bad-one", "0"],
+          ["收藏", "star-abc", "0"]
+        ].map(([title, href, cnt]) => `<div title="${title}" class="menu-item"><svg class="iconpark-icon"><use href="#${href}"></use></svg><span>${cnt}</span></div>`).join("");
+        mount.replaceWith(menu);
+        requestAnimationFrame(() => {
+          resolve(Array.from(menu.querySelectorAll(".menu-item"), (item) => {
+            const svg = item.querySelector(":scope > svg");
+            const csBefore = getComputedStyle(item, "::before");
+            const mask = csBefore.webkitMaskImage || csBefore.maskImage || "";
+            return {
+              title: item.title,
+              action: item.getAttribute("data-nsmax-action"),
+              svgDisplay: svg ? getComputedStyle(svg).display : "",
+              hasMask: mask.includes("data:image/svg+xml")
+            };
+          }));
+        });
+      }));
+      assert.deepEqual(firstMenuFrame, [
+        { title: "点赞", action: "thumbup", svgDisplay: "none", hasMask: true },
+        { title: "加鸡腿", action: "drumstick", svgDisplay: "none", hasMask: true },
+        { title: "反对", action: "thumbdown", svgDisplay: "none", hasMask: true },
+        { title: "收藏", action: "star", svgDisplay: "none", hasMask: true }
+      ], "异步挂载 .comment-menu 首帧即隐藏原生 SVG 并直出目标图标");
+
+      await page.waitForSelector("#nsk-right-panel-container .nsmax-sb-account");
+      const sbReuse = await page.evaluate(() => new Promise((resolve) => {
+        const stat = document.querySelector("#nsk-right-panel-container [data-nsmax-stat] .stat-block");
+        const beforeCard = document.querySelector("#nsk-right-panel-container .nsmax-sb-account");
+        const extra = document.createElement("a");
+        extra.href = "/notification#/message?mode=list";
+        extra.className = "nspp-notification-link";
+        extra.innerHTML = '<svg class="iconpark-icon"><use href="#envelope-one"></use></svg><span>私信 </span><span class="notify-count">5</span>';
+        stat?.append(extra);
+        setTimeout(() => {
+          const afterCard = document.querySelector("#nsk-right-panel-container .nsmax-sb-account");
+          const badge = afterCard?.querySelector(".nsmax-account-unread")?.textContent || "";
+          const visibleOrig = Array.from(document.querySelectorAll("#nsk-right-panel-container .user-stat a > svg:not(.nsmax-icon)")).filter((s) => getComputedStyle(s).display !== "none" && getComputedStyle(s).visibility !== "hidden").length;
+          resolve({ sameNode: beforeCard === afterCard && !!afterCard, badge, visibleOrig });
+        }, 180);
+      }));
+      assert.equal(sbReuse.sameNode, true, "未读变化原地更新角标，不销毁重建账户卡");
+      assert.ok(Number(sbReuse.badge) >= 5, `账户卡未读角标应包含私信未读数：${JSON.stringify(sbReuse)}`);
+      assert.equal(sbReuse.visibleOrig, 0, "右栏统计原生 IconPark 图标不再闪烁露出");
       assert.deepEqual(errors, []);
     } finally { await context.close(); }
   });

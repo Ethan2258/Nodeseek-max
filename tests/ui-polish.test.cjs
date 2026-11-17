@@ -665,10 +665,10 @@ for(const engine of engines){
   const post=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html:P.specialPostPage({})});
   try{
    await ready(post.page);
-   await post.page.waitForSelector(".nsk-post > .post-title h1 > .nsmax-prize-badge, .nsk-post > .post-title h1 > .nsmax-poll-badge");
+   await post.page.waitForSelector(".nsk-post > .post-title h1 > .nsmax-prize-badge");
    const s=await post.page.evaluate(()=>{const h=document.querySelector(".nsk-post > .post-title h1"),box=h.getBoundingClientRect(),lh=parseFloat(getComputedStyle(h).lineHeight);
-    return{lh,badges:[...h.querySelectorAll(":scope > .nsmax-prize-badge, :scope > .nsmax-poll-badge")].map(e=>{const b=e.getBoundingClientRect();return{h:b.height,line:Math.floor((b.top-box.top)/lh),d:+(((b.top+b.bottom)/2-box.top)%lh-lh/2).toFixed(2)};})};});
-   assert.ok(s.badges.length>0&&s.badges.every(b=>b.h===18&&Math.abs(b.d)<=0.5),JSON.stringify(s));
+    return{lh,pollCount:h.querySelectorAll(":scope > .nsmax-poll-badge").length,badges:[...h.querySelectorAll(":scope > .nsmax-prize-badge")].map(e=>{const b=e.getBoundingClientRect();return{h:b.height,line:Math.floor((b.top-box.top)/lh),d:+(((b.top+b.bottom)/2-box.top)%lh-lh/2).toFixed(2)};})};});
+   assert.ok(s.pollCount===0&&s.badges.length>0&&s.badges.every(b=>b.h===18&&Math.abs(b.d)<=0.5),JSON.stringify(s));
    assert.deepEqual(post.errors,[]);
   }finally{await post.context.close();}
   const notice=await open(browser,"https://www.nodeseek.com/notification",{...desk,html:P.notificationPage({})});

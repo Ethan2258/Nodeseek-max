@@ -3171,8 +3171,8 @@ test("投票卡片：总票数、每项票数和百分比、8px 进度条；投�
 			assert.equal(state.radio, "none", "投过票的选项不显示单选框");
 			assert.equal(state.openChoice, "solid", "没投过的投票：每项一张细线框小卡片");
 			assert.equal(state.openButton, "rgb(28, 28, 30)", "投票按钮：墨色实底");
-			assert.deepEqual(state.badge, { text: "投票", bg: "rgb(59, 111, 224)", color: "rgb(255, 255, 255)" }, "投票页面标题显示蓝色小标");
-			assert.equal(state.remembered, "lottery,poll", "打开过的投票 / 抽奖帖记在本机，列表里也带小标");
+			assert.equal(state.badge, null, "投票页面标题前不再显示「投票」标签");
+			assert.equal(state.remembered, "lottery,poll", "打开过的投票 / 抽奖帖记在本机");
 			assert.equal(state.overflow, false);
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }

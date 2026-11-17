@@ -1,5 +1,18 @@
 # 更新日志
 
+## 1.9.61
+
+**去掉帖子标题前的「投票」小标，并消除进帖时的图标切换与布局闪烁**：
+
+- **移除标题前「投票」标签**：帖子详情页标题不再额外插入蓝色 `.nsmax-poll-badge`「投票」小标，进帖时标题文字也不再因异步发现投票而被推开。
+- **操作栏与图标零切换直出**：
+  - 修复 `sb-adapter.css` / `design.css` 在 JS 打标前强制显示 `.comment-menu .menu-item > svg` 的规则，所有原站 IconPark 操作图标从挂起即保持隐藏，主帖「点赞 / 加鸡腿 / 反对 / 收藏」直接以线条图标渲染。
+  - 在 `nsmaxEarlyVisuals` 阶段即持续监听 `.nsk-post > .content-item`，消除了 `DOMContentLoaded` 至主模块 `primary-ready` 之间的空白监测窗口，Vue 挂载 `.comment-menu` 与 `.vote-panel` 在同一微任务内立即接管拆离。
+  - 预先收起正文内 `a[data-href^="nsapp://vote"]` 占位链接，避免 `vote.js` 替换时正文骤缩引起下方操作栏与签名上下跳动。
+- **顶栏与侧栏图标稳定**：
+  - 启用精简顶栏时自 `document-start` 起挂上 `data-nsmax-minimal-header` 隐藏原生 `.color-theme-switcher`；侧栏导航、搜索框与统计区原站图标在换标前保持不可见（未映射项保留 `data-nsmax-icon-kept`）。
+  - 账户卡 `nsmaxBuildAccountCardIn` 在核心数据未变时仅原地更新「我的通知」链接与未读角标，不再因未读异步填充而销毁重建整张卡片；`unread` 优先读取页面自带未读数并在放置后同步执行右栏换标，并补齐「通知 / 收藏」统计图标。
+
 ## 1.9.60
 
 **修复投票卡片未加载完成时露出空白单选与切换闪烁，以及桌面端私信未读黄点压住省略号**：

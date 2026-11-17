@@ -16771,9 +16771,25 @@ html[data-nsmax-theme]:root:root:root #nsk-frame .nsk-panel.nspp-messages-contai
 html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form > div:empty:not(.form-mask, .skeleton):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
   display: none !important;
 }
-/* 主楼正文中还没挪到主楼外面的 .vote-panel 先不占位，免得站点刚挂上去的那一下先把操作栏/签名往下顶、下一帧挪走又弹回来（2026-11-17） */
+/* 主楼正文中还没挪到主楼外面的 .vote-panel 先不占位，免得站点刚挂上去的那一下先把操作栏/签名往下顶、下一帧挪走又弹回来（2026-11-17）；
+   站点的 nsapp://vote?id=... 占位链接在 vote.js 替换后高度消失会导致操作栏和签名回弹，也预先收起 */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > article.post-content a[data-href^="nsapp://vote"]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+}
 html[data-nsmax-theme] #nsk-body-left .nsk-post > .content-item > article.post-content > :is(.vote-panel:not([data-nsmax-detached]), :not(blockquote) .vote-panel:not([data-nsmax-detached])):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
   display: none !important;
+}
+/* 评论操作原站图标未打标前也不先露出来切换，待脚本接管/换标后再由 .nsmax-icon 或 ::before 显示 */
+html[data-nsmax-theme] #nsk-body-left .content-item .comment-menu > .menu-item > svg:not(.nsmax-icon):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+html[data-nsmax-theme][data-nsmax-minimal-header] #nsk-head .color-theme-switcher:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] :is(#nsk-head .color-theme-switcher > svg:not(.nsmax-icon):not([data-nsmax-icon-kept]), #nsk-head form.search-box > svg.search-icon:not(.nsmax-icon):not([data-nsmax-icon-kept]), #nsk-left-panel-container a > svg:not(.nsmax-icon):not([data-nsmax-icon-kept]), #nsk-right-panel-container .user-stat a > svg:not(.nsmax-icon):not([data-nsmax-icon-kept])):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  visibility: hidden !important;
 }
 html[data-nsmax-theme] #nsk-body-left .vote-panel form.pure-form:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
   position: relative !important;
