@@ -1814,23 +1814,26 @@ var nsmaxRedirecting = false;
 		};
 		document.addEventListener("visibilitychange", visibility);
 		visibility();
+		const themedShell = (node) => node.nodeType !== 1 || node.matches?.("dialog.nsmax-mobile-nav, dialog.nspp-post-preview, .nsmax-scroll-shield, .nsmax-mention, body > svg[aria-hidden=true]");
+		const textOnly = (record) => [...record.addedNodes, ...record.removedNodes].every((node) => node.nodeType === 3);
+		const hasMeaningfulRecords = (records) => {
+			const themed = document.documentElement.hasAttribute("data-nsmax-theme");
+			return records.some((record) => {
+				if (!record.addedNodes.length && !record.removedNodes.length) return false;
+				const target = record.target instanceof Element ? record.target : record.target.parentElement;
+				if (themed && target?.closest(".topic-carousel-wrapper")) return false;
+				if (target === document.body && [...record.addedNodes, ...record.removedNodes].every(themedShell)) return false;
+				if (textOnly(record) && target?.closest(".nsmax-author-col, button.nspp-action")) return false;
+				// .xterm：NodeSeek 把 ANSI 代码块渲染成的终端，内部节点频繁重画，和脚本的整理无关
+				return !target?.closest(".xterm, #nspp-tools, #nspp-settings, .CodeMirror, .markHtml-wrapper, .exp-container, .nsmax-sb-account, .nspp-messages, .nsmax-editor-preview, .nsmax-pop, .nsmax-person-pop, .nsmax-recent-panel, .nspp-monitor, .nspp-user-hover, .nspp-user-badges, .nspp-message-editor, .nspp-compose, .nsmax-hot-panel, .nsmax-post-stats, .nsmax-op-actions");
+			});
+		};
 		const observer = new MutationObserver((records) => {
 			// 不用跟着把所有模块整理一遍的变动（2026-10-23）：
 			// - 首页顶上站点自己的置顶轮播：主题开着时整块藏着（各项整理也都跳过它），它每隔几秒换一条；
 			// - 脚本自己插进页面的空壳（弹窗、进度条、@ 提示框）和站点的图标精灵表：插进来时是空的，里面以后的变化照常整理；
 			// - 脚本自己的组件里只换了文字：作者栏读到资料后填等级和数字（一页十几个作者，每回来一个填一次）、按钮上的字
-			const themed = document.documentElement.hasAttribute("data-nsmax-theme");
-			const shell = (node) => node.nodeType !== 1 || node.matches?.("dialog.nsmax-mobile-nav, dialog.nspp-post-preview, .nsmax-scroll-shield, .nsmax-mention, body > svg[aria-hidden=true]");
-			const textOnly = (record) => [...record.addedNodes, ...record.removedNodes].every((node) => node.nodeType === 3);
-			if (!records.some((record) => {
-				if (!record.addedNodes.length && !record.removedNodes.length) return false;
-				const target = record.target instanceof Element ? record.target : record.target.parentElement;
-				if (themed && target?.closest(".topic-carousel-wrapper")) return false;
-				if (target === document.body && [...record.addedNodes, ...record.removedNodes].every(shell)) return false;
-				if (textOnly(record) && target?.closest(".nsmax-author-col, button.nspp-action")) return false;
-				// .xterm：NodeSeek 把 ANSI 代码块渲染成的终端，内部节点频繁重画，和脚本的整理无关
-				return !target?.closest(".xterm, #nspp-tools, #nspp-settings, .CodeMirror, .markHtml-wrapper, .exp-container, .nsmax-sb-account, .nspp-messages, .nsmax-editor-preview, .nsmax-pop, .nsmax-person-pop, .nsmax-recent-panel, .nspp-monitor, .nspp-user-hover, .nspp-user-badges, .nspp-message-editor, .nspp-compose, .nsmax-hot-panel, .nsmax-post-stats, .nsmax-op-actions");
-			})) return;
+			if (!hasMeaningfulRecords(records)) return;
 			// 资料页：整块主栏被替换（站点水合）时，先遮住这一帧，整理完再显示（每次加载最多遮一次）。
 			// 资料卡已经被 nsmaxWatchSpace 当场改好时不用遮（遮了反而整块闪一下）
 			if (!spaceSwap && document.documentElement.getAttribute("data-nsmax-page") === "space" && !document.querySelector(".head-container > .nsmax-space-top") && records.some((record) => {
@@ -1928,6 +1931,15 @@ var nsmaxRedirecting = false;
 				} catch (error) {
 					nsmaxRecordError(feature.id, error);
 					notify(`${feature.title}启动失败，其他模块可继续使用`);
+				}
+			}
+			// 挂载期间页面脚本或站点水合若已改动 DOM，在撤掉 data-nsmax-mounting 前立即完成这一轮扫描，避免延迟 100ms 后才更新。
+			if (!stopped && !document.hidden) {
+				if (hasMeaningfulRecords(observer.takeRecords())) dirty = true;
+				if (dirty) {
+					if (timer) { clearTimeout(timer); timer = void 0; }
+					if (idleHandle !== void 0) { cancelIdle(idleHandle); idleHandle = void 0; }
+					await runBatch();
 				}
 			}
 		})().finally(() => {
