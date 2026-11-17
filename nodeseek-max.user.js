@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.58
+// @version      1.9.59
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -915,7 +915,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.58";
+	var NSMAX_VERSION = "1.9.59";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -5598,21 +5598,18 @@ var nsmaxRedirecting = false;
 							pre.removeAttribute("data-nsmax-copy-always");
 						});
 					});
-					[...document.getElementsByTagName("time"), ...document.getElementsByClassName("date-created"), ...document.getElementsByClassName("date-updated")].forEach((el) => {
-						if (processed.has(el) || el.children.length) return;
-						processed.add(el);
-						// 页面解析阶段已经改过的（见 nsmaxApplyChineseTimes）只登记还原；没改过的现在改
-						const old = el.hasAttribute("data-nsmax-time-orig") ? el.getAttribute("data-nsmax-time-orig") : el.textContent;
-						if (!el.hasAttribute("data-nsmax-time-orig")) {
+					const translateTimes = (collection) => {
+						for (let i = 0; i < collection.length; i++) {
+							const el = collection[i];
+							if (el.hasAttribute("data-nsmax-time-done") || el.children.length) continue;
+							el.setAttribute("data-nsmax-time-done", "");
 							const value = nsmaxChineseTimeText(el);
-							if (value === null) return;
-							el.textContent = value;
+							if (value !== null) el.textContent = value;
 						}
-						el.removeAttribute("data-nsmax-time-orig");
-						undo.push(() => {
-							el.textContent = old;
-						});
-					});
+					};
+					translateTimes(document.getElementsByTagName("time"));
+					translateTimes(document.getElementsByClassName("date-created"));
+					translateTimes(document.getElementsByClassName("date-updated"));
 				};
 				const stop = ctx.watch(scanLinks);
 				nsmaxReadSitePreference("openPostInNewPage").then((value) => {
@@ -7490,7 +7487,7 @@ var nsmaxRedirecting = false;
 					} catch {
 						return null;
 					}
-					if (url.origin !== location.origin || !/^\/(?:post-\d+(?:-\d+)?|page-\d+|award(?:\/page-\d+)?|categor(?:y|ies)\/[\w-]+(?:\/page-\d+)?|space\/\w+|t\/\d+|board|notifications?|credit|progress|fans|setting|new-discussion|lucky|ruling)?\/?$/.test(url.pathname)) return null;
+					if (url.origin !== location.origin || !/^\/(?:post-\d+(?:-\d+)?|page-\d+|award(?:\/page-\d+)?|categor(?:y|ies)\/[\w-]+(?:\/page-\d+)?|space\/\w+|t\/\d+|board|notifications?|credit|progress|fans|setting|new-discussion|lucky|ruling|search)?\/?$/.test(url.pathname)) return null;
 					url.hash = "";
 					return url.href === location.href.replace(/#.*$/, "") ? null : url.href;
 				};
@@ -7523,6 +7520,7 @@ var nsmaxRedirecting = false;
 				let timer;
 				let pending = false;
 				nsmaxHoverFromScroll();
+				const chromeNav = "#nsk-head, body > header > ul.mobile-nav, #nsk-left-panel-container, .post-list-controler, .nsk-pager, .nsmax-account-menu";
 				const over = (event) => {
 					const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
 					if (anchor === hovered) return;
@@ -7531,7 +7529,7 @@ var nsmaxRedirecting = false;
 					// 卡片预览管的帖子标题只在按下时取（2026-11-09 真站：停一下就是预取一份、卡片再取一份，第二份还被回过 503）
 					if (anchor?.hasAttribute("data-nsmax-preview")) return;
 					const href = target(anchor);
-					if (href && !seen.has(href)) timer = setTimeout(() => prefetch(href), 65);
+					if (href && !seen.has(href)) timer = setTimeout(() => prefetch(href), anchor.closest(chromeNav) ? 20 : 65);
 				};
 				// 页面滚动把链接带到鼠标下面的不预取（见 nsmaxHoverFromScroll）：滚过去的一路链接不再一个个去取，鼠标真的动了再算
 				document.addEventListener("pointerover", (event) => {
@@ -15933,19 +15931,18 @@ var nsmaxRedirecting = false;
 		mount(ctx) {
 			const times = new Map();
 			const seen = new WeakSet();
-			const refreshTimes = () => {
-				times.forEach((original, el) => {
-					if (!el.isConnected) {
-						times.delete(el);
-						return;
-					}
-					const result = forumTime(original.value);
-					if (result) {
-						if (el.textContent !== result.text) el.textContent = result.text;
-						if (el.title !== result.full) el.title = result.full;
-					}
-				});
+			const updateTime = (original, el) => {
+				if (!el.isConnected) {
+					times.delete(el);
+					return;
+				}
+				const result = forumTime(original.value);
+				if (result) {
+					if (el.textContent !== result.text) el.textContent = result.text;
+					if (el.title !== result.full) el.title = result.full;
+				}
 			};
+			const refreshTimes = () => times.forEach(updateTime);
 			const timeTimer = setInterval(refreshTimes, 6e4);
 			const stop = ctx.watch(() => {
 				ctx.root.querySelectorAll(".post-list-item:not(.topic-carousel-item) .info-last-comment-time").forEach((time) => {
@@ -15958,12 +15955,13 @@ var nsmaxRedirecting = false;
 						text
 					].find((value) => value && forumTime(value));
 					if (!value) return;
-					times.set(time, {
+					const entry = {
 						value,
 						text,
 						title: time.getAttribute("title")
-					});
-					refreshTimes();
+					};
+					times.set(time, entry);
+					updateTime(entry, time);
 				});
 			});
 			return () => {
@@ -22235,7 +22233,22 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 				};
 				// 帖子页的发送按钮只显示箭头：把按钮文字（「发布评论」等）放进悬停提示。
 				const titled = new Set();
+				const editorSig = new WeakMap();
+				const editorSignature = (editor) => {
+					const body = editor.querySelector("#editor-body");
+					const toolbar = editor.querySelector(".mde-toolbar");
+					const tabs = editor.querySelector(".tab-select");
+					return `${editor.childElementCount}|${body ? body.childElementCount : -1}|${toolbar ? toolbar.childElementCount : -1}|${tabs ? tabs.childElementCount : -1}|${toolbar?.querySelector(".toolbar-item:not([data-nsmax-tool]):not(.right)") ? 1 : 0}`;
+				};
 				const modernize = () => {
+					let dirtyEditors = false;
+					for (const editor of document.querySelectorAll(".md-editor")) {
+						if (editorSig.get(editor) !== editorSignature(editor)) {
+							dirtyEditors = true;
+							break;
+						}
+					}
+					if (!dirtyEditors) return;
 					hideHints();
 					markEditors();
 					for (const button of document.querySelectorAll(".md-editor :is(button.submit,.btn.submit):not([title])")) {
@@ -22263,6 +22276,7 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 						item.setAttribute("data-nsmax-tool", "");
 						marked.add(item);
 					}
+					for (const editor of document.querySelectorAll(".md-editor")) editorSig.set(editor, editorSignature(editor));
 				};
 				const stop = ctx.watch(modernize);
 				cleanups.push(() => {
@@ -22843,23 +22857,33 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 	// 系统开启「减弱动态效果」时不播放；不支持的浏览器忽略这些规则，行为与原来一样。
 	// 2026-11-09：电脑上顶栏单独拿出来（view-transition-name），位置不动、只在内容不同处（当前版块高亮）淡一下，不再跟着整页一起闪。
 	// 过渡的伪元素都挂在根元素上：选择器前面写上 html（2026-10-24）。不写的话浏览器每次重算样式都拿页面上每个元素试这三条（真站首页约 2.4ms 一次）
+	var nsmaxVtRevealed = false;
 	function enablePageTransitions() {
 		_css(`@media (prefers-reduced-motion:no-preference){@view-transition{navigation:auto}
 @keyframes nsmax-vt-out{from{opacity:1}to{opacity:0}}
 @keyframes nsmax-vt-in{from{opacity:0}to{opacity:1}}
+html::view-transition{pointer-events:none}
 html::view-transition-group(*){animation-duration:120ms;animation-timing-function:var(--ease-out)}
 html::view-transition-old(root){animation:nsmax-vt-out 120ms var(--ease-out) both}
-html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both}}
-@media (prefers-reduced-motion:no-preference) and (hover:hover) and (pointer:fine){html[data-nsmax-theme]:not([data-nsmax-mhead]) body>header{view-transition-name:nsmax-head}
+html::view-transition-new(root){animation:nsmax-vt-in 120ms var(--ease-out) both}
+html[data-nsmax-theme]:not([data-nsmax-mhead]) body>header{view-transition-name:nsmax-head}
+html[data-nsmax-theme][data-nsmax-mhead] #nsk-head{view-transition-name:nsmax-head}
 html::view-transition-group(nsmax-head){animation-duration:0s}}
 @media (prefers-reduced-motion:no-preference) and (min-width:801px){html[data-nsmax-theme] :is(#nsk-body,section#nsk-frame[data-nsmax-side-page])>#nsk-right-panel-container{view-transition-name:nsmax-side}
-html::view-transition-group(nsmax-side){animation-duration:0s}
-html::view-transition-old(nsmax-side):only-child{animation:nsmax-vt-out 120ms var(--ease-out) both}
-html::view-transition-new(nsmax-side):only-child{animation:nsmax-vt-in 120ms var(--ease-out) both}}
+html[data-nsmax-theme][data-nsmax-nav="sidebar"] #nsk-left-panel-container{view-transition-name:nsmax-nav}
+html::view-transition-group(nsmax-side),html::view-transition-group(nsmax-nav){animation-duration:0s}
+html::view-transition-old(nsmax-side):only-child,html::view-transition-old(nsmax-nav):only-child{animation:nsmax-vt-out 120ms var(--ease-out) both}
+html::view-transition-new(nsmax-side):only-child,html::view-transition-new(nsmax-nav):only-child{animation:nsmax-vt-in 120ms var(--ease-out) both}}
 html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pending]{color:var(--link-hover)!important}
+html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[data-nsmax-nav-pending]:not([aria-current="page"]){opacity:.72;transition:opacity 80ms ease}
 #nsmax-nav-progress{position:fixed;top:0;left:0;right:0;z-index:2147483647;height:2px;pointer-events:none;background:var(--mark,#f5c518);opacity:0;transform:scaleX(0);transform-origin:0 50%;transition:transform 6s cubic-bezier(.08,.8,.2,1),opacity .15s ease}
 #nsmax-nav-progress[data-on]{opacity:1;transform:scaleX(.9)}
 @media (prefers-reduced-motion:reduce){#nsmax-nav-progress{transition:opacity .15s ease}#nsmax-nav-progress[data-on]{transform:scaleX(.6)}}`);
+		window.addEventListener("pagereveal", (event) => {
+			if (!event?.viewTransition) return;
+			nsmaxVtRevealed = true;
+			document.documentElement?.removeAttribute("data-nsmax-boot-fade");
+		});
 		nsmaxNavProgress();
 	}
 	// 点了链接、新页面还没回来的这段（2026-11-10 在用户 Chrome 里测：0.8–2 秒，服务器响应 + 脚本管理器注入 + 首屏整理）
@@ -22983,6 +23007,27 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 					saveAttr(a, "data-nsmax-nav-pending", "");
 				}
 			}
+			const leftNav = document.getElementById("nsk-left-panel-container");
+			if (leftNav) {
+				const leftLinks = Array.from(leftNav.querySelectorAll("a[href]"));
+				const leftHit = leftLinks.find((a) => a === clicked || (norm(a.href).split("?")[0] || "") === targetPath);
+				if (leftHit) {
+					for (const a of leftLinks) {
+						const on = a === leftHit;
+						const li = a.parentElement?.tagName === "LI" ? a.parentElement : null;
+						saveAttr(a, "data-nsmax-header-cat-on", on ? "" : null);
+						saveAttr(a, "aria-current", on ? "page" : null);
+						saveClass(a, "active", on);
+						if (li) {
+							saveClass(li, "active", on);
+							saveClass(li, "current-category", on);
+						}
+					}
+				}
+			}
+			if (clicked && clicked instanceof Element && clicked.closest("#nsk-body, #nsk-frame, #nsk-left-panel-container") && !clicked.hasAttribute("aria-current")) {
+				saveAttr(clicked, "data-nsmax-nav-pending", "");
+			}
 		};
 		const start = (url, clicked) => {
 			stop();
@@ -23048,9 +23093,9 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 		nsmaxReleaseBody?.();
 		const regions = Array.isArray(typeof NSMAX_BOOT_REGIONS !== "undefined" ? NSMAX_BOOT_REGIONS : null) ? NSMAX_BOOT_REGIONS : ["header", "left", "right"];
 		if (!root || !regions.some((region) => root.hasAttribute(`data-nsmax-boot-${region}`))) return;
-		root.setAttribute("data-nsmax-boot-fade", "");
+		if (!nsmaxVtRevealed) root.setAttribute("data-nsmax-boot-fade", "");
 		for (const region of regions) revealRegion(region);
-		setTimeout(() => root.removeAttribute("data-nsmax-boot-fade"), 400);
+		if (!nsmaxVtRevealed) setTimeout(() => root.removeAttribute("data-nsmax-boot-fade"), 400);
 	}
 	// 页面加载完后才插入的块（侧栏热榜、NQ 快捷入口）：页面解析阶段按上次实测的高度先在原位置留出空白，
 	// 插入时同一帧撤掉，内容不会被顶开。没有记录（第一次使用）时不预留；2.5 秒后无论如何撤掉。
@@ -23135,24 +23180,28 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 		add(list, "post-list");
 		// 每一行、每一层只整理一次（2026-10-23：以前解析阶段每一遍、之后每次扫描都把 95 行各查 4 遍）：行上已经有 post-item /
 		// comment-item 就是整理过了——站点重画这一行时这个类会跟着没了，那时再整理；还没解析完的行先不动，下一遍再来
-		for (const item of document.querySelectorAll("ul.post-list > li.post-list-item")) {
-			if (item.classList.contains("post-item") || !nsmaxParsedPast(item)) continue;
-			add(item, "post-item");
-			if (item.querySelector(".post-title svg.pined, .post-title .pined")) add(item, "topic-pinned");
-			add(item.querySelector(".post-list-content"), "post-body");
-			add(item.querySelector(".post-info"), "post-meta");
-			add(item.querySelector(".post-category"), "post-forum-badge");
+		if (document.getElementsByClassName("post-list-item").length) {
+			for (const item of document.querySelectorAll("ul.post-list > li.post-list-item:not(.post-item)")) {
+				if (!nsmaxParsedPast(item)) continue;
+				add(item, "post-item");
+				if (item.querySelector(".post-title svg.pined, .post-title .pined")) add(item, "topic-pinned");
+				add(item.querySelector(".post-list-content"), "post-body");
+				add(item.querySelector(".post-info"), "post-meta");
+				add(item.querySelector(".post-category"), "post-forum-badge");
+			}
 		}
 
 		const post = document.querySelector(".nsk-post");
 		add(post, "post-entry");
-		for (const item of document.querySelectorAll("ul.comments > li.content-item")) {
-			if (item.classList.contains("comment-item") || !nsmaxParsedPast(item)) continue;
-			add(item, "comment-item");
-			add(item.querySelector(".nsk-content-meta-info"), "post-head");
-			add(item.querySelector(".author-info > a.author-name, .author-info > a"), "post-author");
-			add(item.querySelector(".floor-link"), "post-reply-no");
-			add(item.querySelector(".comment-menu"), "post-ops");
+		if (document.getElementsByClassName("content-item").length) {
+			for (const item of document.querySelectorAll("ul.comments > li.content-item:not(.comment-item)")) {
+				if (!nsmaxParsedPast(item)) continue;
+				add(item, "comment-item");
+				add(item.querySelector(".nsk-content-meta-info"), "post-head");
+				add(item.querySelector(".author-info > a.author-name, .author-info > a"), "post-author");
+				add(item.querySelector(".floor-link"), "post-reply-no");
+				add(item.querySelector(".comment-menu"), "post-ops");
+			}
 		}
 		add(document.querySelector(".nsk-post .comment-menu"), "topic-actions");
 
@@ -23196,9 +23245,9 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 			if (!bodyHeld) return;
 			bodyHeld = false;
 			try { performance.mark("nsmax:body-release"); } catch {}
-			root.setAttribute("data-nsmax-boot-fade", "");
+			if (!nsmaxVtRevealed) root.setAttribute("data-nsmax-boot-fade", "");
 			root.removeAttribute("data-nsmax-boot-body");
-			setTimeout(() => root.removeAttribute("data-nsmax-boot-fade"), 400);
+			if (!nsmaxVtRevealed) setTimeout(() => root.removeAttribute("data-nsmax-boot-fade"), 400);
 		};
 		nsmaxReleaseBody = releaseBody;
 		try {
@@ -23211,8 +23260,10 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 				try { performance.mark("nsmax:body-hold"); } catch {}
 			}
 		} catch {}
+		let domRevision = 1, stepRevision = 0;
 		const step = () => {
 			if (!document.body) return;
+			stepRevision = domRevision;
 			if (document.getElementById("nsk-right-panel-container")) nsmaxThemeRequire("side");
 			nsmaxApplySbSuiteAliases();
 			const earlyPath = location.pathname;
@@ -23336,7 +23387,7 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 					nsmaxReleaseRender();
 				}
 			}
-			if (!pending.size && listSeen && document.readyState !== "loading") observer.disconnect();
+			if (!pending.size && (listSeen || !document.querySelector("ul.post-list")) && document.readyState !== "loading") observer.disconnect();
 		};
 		nsmaxEarlyStep = step;
 		let listSeen = false;
@@ -23350,6 +23401,7 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 		}, 2500);
 		let queued = 0;
 		const observer = new MutationObserver(() => {
+			domRevision++;
 			// render hold 会一起挡住 rAF：页面尾部已齐时同步做最后一轮，才能在慢脚本之前放行。
 			if (nsmaxReleaseRender && !document.querySelector("#usercard-me.skeleton")) {
 				const footer = document.querySelector("body > footer, #nsk-frame > footer");
@@ -23377,12 +23429,14 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 				if (document.readyState !== "interactive") return;
 				cancelAnimationFrame(queued);
 				queued = 0;
+				domRevision++;
 				step();
 			}, { once: true });
 			document.addEventListener("DOMContentLoaded", () => {
 				observer.disconnect();
 				cancelAnimationFrame(queued);
-				step();
+				queued = 0;
+				if (stepRevision !== domRevision || pending.size) step();
 			}, { once: true });
 			if (document.body) queueMicrotask(step);
 		} else {
@@ -25283,6 +25337,7 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 	}
 	function nsmaxCleanSearchOverlay() {
 		// 先找搜索浮层（多数页面没有），再在浮层里找谷歌那一项（以前三段带祖先的选择器整页查，每次 1.2ms）
+		if (!document.getElementsByClassName("search-overlay").length) return;
 		for (const overlay of document.querySelectorAll(".search-overlay")) {
 			for (const link of overlay.querySelectorAll(".googleSearch, [data-tab=google], [data-type=google]")) link.remove();
 			for (const element of overlay.querySelectorAll(".tab-btn")) if (/谷歌|google/i.test(element.textContent.trim())) element.remove();
@@ -25336,6 +25391,7 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 		link.after(holder);
 	}
 	function nsmaxProcessPostListRows() {
+		if (!document.getElementsByClassName("post-list-item").length) return;
 		for (const row of document.querySelectorAll("ul.post-list:not(.topic-carousel-panel)>li.post-list-item")) {
 			if (nsmaxProcessedRows.has(row)) continue;
 			const info = row.querySelector(".post-info");
@@ -25602,16 +25658,14 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 		const translated = (old || "").replace(/just now/gi, "刚刚").replace(/^edited\s*/i, "编辑于 ").replace(/(\d+)\s*(mo(?:nths?)?|min(?:utes?)?|y(?:ears?)?|d(?:ays?)?|h(?:ours?)?|s(?:econds?)?)\b/gi, (_, n, unit) => `${n}${units[unit.toLowerCase().startsWith("mo") ? "mo" : unit.toLowerCase().startsWith("min") ? "min" : unit[0].toLowerCase()]}`).replace(/\s*ago/gi, "前");
 		return old !== translated ? translated : null;
 	}
-	// 页面解析阶段就把时间改成中文（2026-11-09 起一直开着）；原文字记在 data-nsmax-time-orig，
-	// 模块启动后据此登记还原。parsed 判断元素是否已经完整解析（文字没解析完时先不动）。
+	// 页面解析阶段就把时间改成中文（2026-11-09 起一直开着）；
+	// parsed 判断元素是否已经完整解析（文字没解析完时先不动）。
 	function nsmaxApplyChineseTimes(parsed) {
-		for (const el of document.querySelectorAll("time:not([data-nsmax-time-orig]), .date-created:not([data-nsmax-time-orig]), .date-updated:not([data-nsmax-time-orig])")) {
-			if (el.children.length || el.hasAttribute("data-nsmax-time-done") || parsed && !parsed(el) || nsmaxLateRows && el.closest(nsmaxLateRows)) continue;
+		for (const el of document.querySelectorAll("time:not([data-nsmax-time-done]), .date-created:not([data-nsmax-time-done]), .date-updated:not([data-nsmax-time-done])")) {
+			if (el.children.length || parsed && !parsed(el) || nsmaxLateRows && el.closest(nsmaxLateRows)) continue;
 			el.setAttribute("data-nsmax-time-done", "");
 			const value = nsmaxChineseTimeText(el);
-			if (value === null) continue;
-			el.setAttribute("data-nsmax-time-orig", el.textContent);
-			el.textContent = value;
+			if (value !== null) el.textContent = value;
 		}
 	}
 	// NQ（NodeQuality 测机）的图标
@@ -25891,6 +25945,45 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 		try { return localStorage.getItem("nsmax:post-layout") === "simple" ? "simple" : "classic"; } catch { return "classic"; }
 	}
 	// 每层（主帖和回复，楼中楼不算）前面放一栏作者；名字或作者变了（站点重新渲染）就重做，否则不动 DOM
+	var nsmaxAuthorColTemplate = null;
+	function nsmaxCreateAuthorColTemplate() {
+		const column = document.createElement("aside");
+		column.className = "nsmax-author-col";
+		const avatar = document.createElement("a");
+		avatar.className = "nsmax-author-avatar";
+		avatar.tabIndex = -1;
+		avatar.setAttribute("aria-hidden", "true");
+		const image = document.createElement("img");
+		image.alt = "";
+		image.decoding = "async";
+		avatar.append(image);
+		const who = document.createElement("div");
+		who.className = "nsmax-author-who";
+		const link = document.createElement("a");
+		link.className = "nsmax-author-name";
+		const uid = document.createElement("span");
+		uid.className = "nsmax-author-uid";
+		const level = document.createElement("span");
+		level.className = "nsmax-author-level";
+		level.setAttribute("data-nsmax-pending", "");
+		nsmaxApplyLevel(level, 1);
+		const stats = document.createElement("div");
+		stats.className = "nsmax-author-stats";
+		stats.setAttribute("data-nsmax-pending", "");
+		for (const [text, title] of [["帖子", "主题和评论加起来，点开看 TA 的主题"], ["鸡腿", "鸡腿"], ["星辰", "星辰"]]) {
+			const cell = document.createElement("a");
+			cell.title = title;
+			const b = document.createElement("b");
+			b.textContent = "—";
+			const span = document.createElement("span");
+			span.textContent = text;
+			cell.append(b, span);
+			stats.append(cell);
+		}
+		who.append(link, uid, level, stats);
+		column.append(avatar, who);
+		return column;
+	}
 	function nsmaxBuildAuthorColumns(parsed) {
 		if (!/^\/post-\d+/.test(location.pathname)) return;
 		for (const floor of document.querySelectorAll("#nsk-body-left .nsk-post > .content-item, #nsk-body-left ul.comments > li.content-item")) {
@@ -25902,51 +25995,22 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-menu>a[data-nsmax-nav-pe
 			let column = floor.querySelector(":scope > .nsmax-author-col");
 			if (column && column.dataset.nsmaxUid === id && column.dataset.nsmaxName === label) continue;
 			column?.remove();
-			column = document.createElement("aside");
-			column.className = "nsmax-author-col";
+			column = (nsmaxAuthorColTemplate ||= nsmaxCreateAuthorColTemplate()).cloneNode(true);
 			column.dataset.nsmaxUid = id;
 			column.dataset.nsmaxName = label;
-			const avatar = document.createElement("a");
-			avatar.className = "nsmax-author-avatar";
-			avatar.href = "/space/" + id;
-			avatar.tabIndex = -1;
-			avatar.setAttribute("aria-hidden", "true");
-			const image = document.createElement("img");
-			image.src = floor.querySelector(":scope > .nsk-content-meta-info .avatar-wrapper img")?.getAttribute("src") || "/avatar/" + id + ".png";
-			image.alt = "";
-			image.decoding = "async";
-			avatar.append(image);
-			const who = document.createElement("div");
-			who.className = "nsmax-author-who";
-			const link = document.createElement("a");
-			link.className = "nsmax-author-name";
-			link.href = "/space/" + id;
+			const spaceHref = "/space/" + id;
+			const avatar = column.firstElementChild;
+			avatar.href = spaceHref;
+			avatar.firstElementChild.src = floor.querySelector(":scope > .nsk-content-meta-info .avatar-wrapper img")?.getAttribute("src") || "/avatar/" + id + ".png";
+			const who = avatar.nextElementSibling;
+			const link = who.firstElementChild;
+			link.href = spaceHref;
 			link.textContent = label;
-			const uid = document.createElement("span");
-			uid.className = "nsmax-author-uid";
-			uid.textContent = "UID " + id;
-			// 等级徽章和三格数字先放好、占好位置（等级没读到时看不见，数字是「—」），读到资料只换字
-			const level = document.createElement("span");
-			level.className = "nsmax-author-level";
-			level.setAttribute("data-nsmax-pending", "");
-			// 先按 Lv.1 的样子排（徽章的字号、内边距跟着 data-nsmax-level 走），读到真实等级只换字和颜色，大小不变
-			nsmaxApplyLevel(level, 1);
-			const stats = document.createElement("div");
-			stats.className = "nsmax-author-stats";
-			stats.setAttribute("data-nsmax-pending", "");
-			for (const [text, href, title] of [["帖子", `/space/${id}#/discussions`, "主题和评论加起来，点开看 TA 的主题"], ["鸡腿", `/space/${id}`, "鸡腿"], ["星辰", `/space/${id}`, "星辰"]]) {
-				const cell = document.createElement("a");
-				cell.href = href;
-				cell.title = title;
-				const b = document.createElement("b");
-				b.textContent = "—";
-				const span = document.createElement("span");
-				span.textContent = text;
-				cell.append(b, span);
-				stats.append(cell);
-			}
-			who.append(link, uid, level, stats);
-			column.append(avatar, who);
+			link.nextElementSibling.textContent = "UID " + id;
+			const cells = who.lastElementChild.children;
+			cells[0].href = `${spaceHref}#/discussions`;
+			cells[1].href = spaceHref;
+			cells[2].href = spaceHref;
 			floor.prepend(column);
 			nsmaxPrefetchAuthor(column);
 		}
@@ -26594,15 +26658,17 @@ function nsmaxDecorateSignatures() {
 	// 签名只用来「收集」这个人的 Telegram 联系方式（资料卡上显示成和「私信」一样的按钮）；
 	// 签名下面不再额外插标签：帖子里签名本来就会写出来，再插一行是重复的（2026-10-22）。
 	// 每个签名、这一页的帖子数据都只看一次（2026-10-23：以前每次扫描都把每个签名的文字、链接重新匹配一遍）
-	for (const signature of document.querySelectorAll(".signature")) {
-		if (nsmaxSignaturesSeen.has(signature)) continue;
-		// 页面解析到一半时签名可能还没写完：解析完了才算看过
-		if (document.readyState !== "loading") nsmaxSignaturesSeen.add(signature);
-		const contacts = nsmaxTelegramContacts(signature);
-		if (!contacts.length) continue;
-		const ownerLink = signature.closest(".content-item, .post-list-item, .user-head, .user-card")?.querySelector('a[href*="/space/"]');
-		const uid = ownerLink?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
-		if (uid) nsmaxTelegramCache.set(uid, contacts);
+	if (document.getElementsByClassName("signature").length) {
+		for (const signature of document.querySelectorAll(".signature")) {
+			if (nsmaxSignaturesSeen.has(signature)) continue;
+			// 页面解析到一半时签名可能还没写完：解析完了才算看过
+			if (document.readyState !== "loading") nsmaxSignaturesSeen.add(signature);
+			const contacts = nsmaxTelegramContacts(signature);
+			if (!contacts.length) continue;
+			const ownerLink = signature.closest(".content-item, .post-list-item, .user-head, .user-card")?.querySelector('a[href*="/space/"]');
+			const uid = ownerLink?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
+			if (uid) nsmaxTelegramCache.set(uid, contacts);
+		}
 	}
 	// 帖子数据里这一页每位作者的签名（登录后才有）：有 Telegram 的、没有的都记下，以后在列表页悬停时不用再去查
 	const config = unsafeWindow$1.__config__;
@@ -26619,47 +26685,53 @@ function nsmaxDecorateSignatures() {
 }
 function nsmaxTagStructure() {
 		// 页码外层：列表页底部、帖子评论区上下（底部那个会被移到评论区外面）、个人空间列表下方
-		for (const pager of document.querySelectorAll(".nsk-pager")) {
-			const box = pager.parentElement;
-			// 账簿的页码和表格在同一个 div 里，不算页码外层（否则会被排成左右两栏）
-			if (!box || box.matches("body, #nsk-body, #nsk-body-left, .post-list-controler, .comment-container, .selector, .nsk-post-wrapper, .credit-table > div")) continue;
-			nsmaxFlag(box, "data-nsmax-pagerbox", true, pager.matches(".pager-top, .post-top-pager") ? "top" : "bottom");
+		if (document.getElementsByClassName("nsk-pager").length) {
+			for (const pager of document.querySelectorAll(".nsk-pager")) {
+				const box = pager.parentElement;
+				// 账簿的页码和表格在同一个 div 里，不算页码外层（否则会被排成左右两栏）
+				if (!box || box.matches("body, #nsk-body, #nsk-body-left, .post-list-controler, .comment-container, .selector, .nsk-post-wrapper, .credit-table > div")) continue;
+				nsmaxFlag(box, "data-nsmax-pagerbox", true, pager.matches(".pager-top, .post-top-pager") ? "top" : "bottom");
+			}
+			for (const box of document.querySelectorAll("[data-nsmax-pagerbox]")) if (!box.querySelector(":scope > .nsk-pager")) nsmaxDropAttr(box, "data-nsmax-pagerbox");
 		}
-		for (const box of document.querySelectorAll("[data-nsmax-pagerbox]")) if (!box.querySelector(":scope > .nsk-pager")) nsmaxDropAttr(box, "data-nsmax-pagerbox");
 		for (const container of document.querySelectorAll(".comment-container")) {
 			nsmaxFlag(container, "data-nsmax-empty", !container.querySelector(":scope > ul.comments > li.content-item"));
 			nsmaxFlag(container, "data-nsmax-bottom-pager", !!container.querySelector(":scope > div > .post-bottom-pager, :scope > .post-bottom-pager"));
 		}
 		// 列表标题后面的小标：置顶（svg.pined）、等级锁（#lock）
-		for (const span of document.querySelectorAll(".post-list-item .post-title > span")) {
-			nsmaxFlag(span, "data-nsmax-pinned", !!span.querySelector(":scope > svg.pined"));
-			nsmaxFlag(span, "data-nsmax-lock", !!span.querySelector(':scope > svg > use[href="#lock"]'));
-			// 置顶标签挪到标题前面（sb.sb .topic-badge 和标题在同一段文字里）：长标题从标签下面接着折行，不再把标签单独挤到上面一行
-			if (span.hasAttribute("data-nsmax-pinned") && span.parentElement.firstElementChild !== span) span.parentElement.prepend(span);
-			// 等级锁也挪到标题前面（2026-11-10 Yiheng：「等级限制的位置不太对，图标设计得不好看」——长标题折行时锁会单独掉到下一行开头，
-			// 像浮在元信息上面）。站点写的是一个锁图标加一个数字「1」，看不出是什么；写成「Lv1」，图标换成主题自己的实心小锁（CSS 画）
-			if (span.hasAttribute("data-nsmax-lock")) {
+		if (document.getElementsByClassName("post-list-item").length) {
+			for (const span of document.querySelectorAll(".post-list-item .post-title > span")) {
+				nsmaxFlag(span, "data-nsmax-pinned", !!span.querySelector(":scope > svg.pined"));
+				nsmaxFlag(span, "data-nsmax-lock", !!span.querySelector(':scope > svg > use[href="#lock"]'));
+				// 置顶标签挪到标题前面（sb.sb .topic-badge 和标题在同一段文字里）：长标题从标签下面接着折行，不再把标签单独挤到上面一行
+				if (span.hasAttribute("data-nsmax-pinned") && span.parentElement.firstElementChild !== span) span.parentElement.prepend(span);
+				// 等级锁也挪到标题前面（2026-11-10 Yiheng：「等级限制的位置不太对，图标设计得不好看」——长标题折行时锁会单独掉到下一行开头，
+				// 像浮在元信息上面）。站点写的是一个锁图标加一个数字「1」，看不出是什么；写成「Lv1」，图标换成主题自己的实心小锁（CSS 画）
+				if (span.hasAttribute("data-nsmax-lock")) {
+					const level = (span.textContent || "").trim();
+					if (level && span.getAttribute("data-nsmax-lock-level") !== level) {
+						span.setAttribute("data-nsmax-lock-level", level);
+						span.title = /^\d+$/.test(level) ? `等级 Lv${level} 及以上才能看` : level;
+					}
+					const title = span.parentElement, pinned = title.querySelector(":scope > span[data-nsmax-pinned]");
+					if (pinned ? pinned.nextElementSibling !== span : title.firstElementChild !== span) (pinned ? pinned.after(span) : title.prepend(span));
+				}
+			}
+		}
+		// 个人主页「主题 / 回帖 / 收藏」列表的等级锁（a > span 标题 + span 锁和数字）：以前还是站点的空心锁加一个「1」、跟在标题后面，
+		// 和首页列表（v1.9.44 起是标题前面的「Lv1」）两个样。这里同样记下等级、挪到标题前面，样子由同一组 CSS 画
+		if (document.getElementsByClassName("discussion-wrapper").length) {
+			for (const use of document.querySelectorAll('.discussion-wrapper .discussion-item span > svg > use[href="#lock"]')) {
+				const span = use.parentElement.parentElement, link = span.parentElement;
+				if (!link || link.tagName !== "A" || span.className) continue;
+				nsmaxFlag(span, "data-nsmax-lock", true);
 				const level = (span.textContent || "").trim();
 				if (level && span.getAttribute("data-nsmax-lock-level") !== level) {
 					span.setAttribute("data-nsmax-lock-level", level);
 					span.title = /^\d+$/.test(level) ? `等级 Lv${level} 及以上才能看` : level;
 				}
-				const title = span.parentElement, pinned = title.querySelector(":scope > span[data-nsmax-pinned]");
-				if (pinned ? pinned.nextElementSibling !== span : title.firstElementChild !== span) (pinned ? pinned.after(span) : title.prepend(span));
+				if (link.firstElementChild !== span) link.prepend(span);
 			}
-		}
-		// 个人主页「主题 / 回帖 / 收藏」列表的等级锁（a > span 标题 + span 锁和数字）：以前还是站点的空心锁加一个「1」、跟在标题后面，
-		// 和首页列表（v1.9.44 起是标题前面的「Lv1」）两个样。这里同样记下等级、挪到标题前面，样子由同一组 CSS 画
-		for (const use of document.querySelectorAll('.discussion-wrapper .discussion-item span > svg > use[href="#lock"]')) {
-			const span = use.parentElement.parentElement, link = span.parentElement;
-			if (!link || link.tagName !== "A" || span.className) continue;
-			nsmaxFlag(span, "data-nsmax-lock", true);
-			const level = (span.textContent || "").trim();
-			if (level && span.getAttribute("data-nsmax-lock-level") !== level) {
-				span.setAttribute("data-nsmax-lock-level", level);
-				span.title = /^\d+$/.test(level) ? `等级 Lv${level} 及以上才能看` : level;
-			}
-			if (link.firstElementChild !== span) link.prepend(span);
 		}
 		nsmaxTagImageLinks();
 	nsmaxDecorateSignatures();
@@ -26749,7 +26821,9 @@ function nsmaxTagStructure() {
 		select.addEventListener("change", sync);
 		select.addEventListener("blur", sync);
 	}
+	var nsmaxFooterBrand = null;
 	function nsmaxBuildFooter() {
+		if (nsmaxFooterBrand?.isConnected) return;
 		const inner = document.querySelector("body > footer .contain");
 		if (!inner || inner.querySelector(":scope > .nsmax-footer-brand")) return;
 		const brand = document.createElement("div");
@@ -26803,6 +26877,7 @@ function nsmaxTagStructure() {
 		brand.append(logo, about);
 		if (social.childElementCount) brand.append(social);
 		inner.prepend(brand);
+		nsmaxFooterBrand = brand;
 	}
 	// 首帧前就要完成的界面整理：页面解析阶段每解析出一段执行一次（parsed 判断元素是否已解析完），
 	// 之后 mountLeanUi 的 scan 也调用同一套（都可重复执行），所以首屏就是最终的样子，不会先显示原样再变。
@@ -27600,7 +27675,10 @@ function nsmaxTagStructure() {
 	function nsmaxMarkLevels() {
 		const mark = (el) => {
 			if (el.children.length) return;
-			const text = (el.textContent || "").replace(/\s+/g, "");
+			const cur = el.getAttribute("data-nsmax-level");
+			const raw = el.textContent || "";
+			if (cur !== null && raw === `Lv.${cur}`) return;
+			const text = raw.replace(/\s+/g, "");
 			const match = text.match(/^(?:Lv\.?|Level|等级)(\d)$/i);
 			if (match) nsmaxApplyLevel(el, match[1]);
 		};
