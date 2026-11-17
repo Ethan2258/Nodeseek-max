@@ -404,7 +404,7 @@ html[data-nsmax-theme][data-nsmax-touch] .member-list>.user-card-wrapper-contain
 /* 私信列表：未读圆点放在行尾的固定位置，不再把这一行的时间往左挤（有未读和没未读的行，时间对不齐） */
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer{position:relative!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer>.nspp-messages-unread{position:absolute!important;top:calc(50% + 6px)!important;right:12px!important;margin:0!important}
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer .nspp-messages-snippet{padding-right:14px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-peer .nspp-messages-snippet{padding-right:16px!important}
 /* 编辑器：「内容」标题、切换按钮、输入框之间的空白收紧（以前标题下空 30px，按钮下再空 22px） */
 html[data-nsmax-theme][data-nsmax-touch] .md-editor .nsmax-editor-head{margin-bottom:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .md-editor .nsmax-editor-controls{margin-bottom:6px!important}
