@@ -6627,6 +6627,7 @@ function nsmaxTagStructure() {
 			item.append(link);
 			return item;
 		}));
+		if (typeof nsmaxBindPreviewScope === "function") nsmaxBindPreviewScope(panel);
 	}
 	// 页面解析阶段和资料卡、今日热门一起放进右栏（见 startEarlyPass 的 region("right")）：以前要等模块挂载
 	// （真实站点上比其他卡片晚一两秒）才插进来，侧栏一块一块地出现

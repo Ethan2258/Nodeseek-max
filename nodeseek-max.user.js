@@ -15873,6 +15873,7 @@ var nsmaxRedirecting = false;
 			}
 		};
 	}
+	var nsmaxBindPreviewScope = null;
 	var postPreview = {
 		id: "post-preview",
 		title: "帖子卡片预览",
@@ -15886,52 +15887,62 @@ var nsmaxRedirecting = false;
 			let fetchTimer;
 			let warmTimer;
 			nsmaxHoverFromScroll();
+			const previewSelector = ".post-list-item .post-title > a, .nsmax-hot-list a, .nsmax-hot-panel a, .nsmax-recent-panel a, #nsk-right-panel-container a[href*='/post-']";
+			const bindLink = (link) => {
+				if (link.origin !== location.origin || !/^\/post-\d+(?:-\d+)?(?:\.html)?\/?$/.test(link.pathname)) return;
+				bound.set(link, link.getAttribute("title"));
+				link.removeAttribute("title");
+				// 「悬停预加载」见到这个标记就只在按下时取（卡片自己会取正文，两边都在悬停时取就是同一篇请求两次）
+				link.setAttribute("data-nsmax-preview", "");
+				const enter = () => {
+					preview.keepOpen();
+					clearTimeout(timer);
+					clearTimeout(fetchTimer);
+					// 2026-11-09：停 0.5 秒才弹卡片（以前 0.08 秒，鼠标划过去点标题的路上也会弹出来）。
+					// 0.3 秒起先取正文，卡片弹出时内容多半已经到了；只是路过、马上点开的，不另外再下一份
+					// （点开要用的那份由「悬停预加载」在按下时取）。open/load 与预热共用同一份请求。
+					fetchTimer = setTimeout(() => preview.prefetch(link), 300);
+					timer = setTimeout(() => preview.open(link, "preview"), 500);
+					// 卡片弹出来（真的在看这一篇）才准备图片、头像和作者资料
+					clearTimeout(warmTimer);
+					warmTimer = setTimeout(() => preview.warm(link), 500);
+				};
+				// 页面滚动把标题带到鼠标下面的不算（见 nsmaxHoverFromScroll）：鼠标在标题上真的动一下再打开
+				let pending = false;
+				link.addEventListener("mouseenter", (event) => {
+					if (!matchMedia("(hover: hover)").matches) return;
+					pending = nsmaxHoverFromScroll(event);
+					if (!pending) enter();
+				}, { signal: ctx.signal });
+				link.addEventListener("pointermove", (event) => {
+					if (!pending || !(event.movementX || event.movementY)) return;
+					pending = false;
+					enter();
+				}, { passive: true, signal: ctx.signal });
+				link.addEventListener("mouseleave", () => {
+					pending = false;
+					clearTimeout(timer);
+					clearTimeout(fetchTimer);
+					clearTimeout(warmTimer);
+					preview.scheduleClose();
+				}, { signal: ctx.signal });
+			};
+			nsmaxBindPreviewScope = (scope) => {
+				if (!scope?.getElementsByTagName || ctx.signal.aborted) return;
+				for (const link of Array.from(scope.getElementsByTagName("a"))) {
+					if (bound.has(link) || !link.getAttribute("href")?.includes("post-")) continue;
+					if (link.matches(previewSelector)) bindLink(link);
+				}
+			};
 			const stop = ctx.watch(() => {
 				for (const link of bound.keys()) if (!link.isConnected) bound.delete(link);
 				// 先看 href 字面像不像帖子地址，像的才拿选择器 matches（一页上千个链接，帖子标题只有几十个）
-				nsmaxEachTag("a", ".post-list-item .post-title > a, .nsmax-hot-list a, .nsmax-hot-panel a, .nsmax-recent-panel a, #nsk-right-panel-container a[href*='/post-']", (link) => bound.has(link) || !link.getAttribute("href")?.includes("post-"), (link) => {
-					if (link.origin !== location.origin || !/^\/post-\d+(?:-\d+)?(?:\.html)?\/?$/.test(link.pathname)) return;
-					bound.set(link, link.getAttribute("title"));
-					link.removeAttribute("title");
-					// 「悬停预加载」见到这个标记就只在按下时取（卡片自己会取正文，两边都在悬停时取就是同一篇请求两次）
-					link.setAttribute("data-nsmax-preview", "");
-					const enter = () => {
-						preview.keepOpen();
-						clearTimeout(timer);
-						clearTimeout(fetchTimer);
-						// 2026-11-09：停 0.5 秒才弹卡片（以前 0.08 秒，鼠标划过去点标题的路上也会弹出来）。
-						// 0.3 秒起先取正文，卡片弹出时内容多半已经到了；只是路过、马上点开的，不另外再下一份
-						// （点开要用的那份由「悬停预加载」在按下时取）。open/load 与预热共用同一份请求。
-						fetchTimer = setTimeout(() => preview.prefetch(link), 300);
-						timer = setTimeout(() => preview.open(link, "preview"), 500);
-						// 卡片弹出来（真的在看这一篇）才准备图片、头像和作者资料
-						clearTimeout(warmTimer);
-						warmTimer = setTimeout(() => preview.warm(link), 500);
-					};
-					// 页面滚动把标题带到鼠标下面的不算（见 nsmaxHoverFromScroll）：鼠标在标题上真的动一下再打开
-					let pending = false;
-					link.addEventListener("mouseenter", (event) => {
-						if (!matchMedia("(hover: hover)").matches) return;
-						pending = nsmaxHoverFromScroll(event);
-						if (!pending) enter();
-					}, { signal: ctx.signal });
-					link.addEventListener("pointermove", (event) => {
-						if (!pending || !(event.movementX || event.movementY)) return;
-						pending = false;
-						enter();
-					}, { passive: true, signal: ctx.signal });
-					link.addEventListener("mouseleave", () => {
-						pending = false;
-						clearTimeout(timer);
-						clearTimeout(fetchTimer);
-						clearTimeout(warmTimer);
-						preview.scheduleClose();
-					}, { signal: ctx.signal });
-				});
+				nsmaxEachTag("a", previewSelector, (link) => bound.has(link) || !link.getAttribute("href")?.includes("post-"), bindLink);
 			});
 			// 2026-11-09 去掉了空闲时、滚动停下后在后台先取屏幕上几篇主帖（一页最多 10 篇）：卡片改成停 0.5 秒才弹，
 			// 不用提前备好，列表页少十来个请求
 			return () => {
+				nsmaxBindPreviewScope = null;
 				stop();
 				clearTimeout(timer);
 				clearTimeout(fetchTimer);
@@ -19878,6 +19889,7 @@ var nsmaxRedirecting = false;
 			toggle.setAttribute("aria-expanded", String(expanded));
 			status.classList.toggle("nsmax-hot-error", failed);
 			status.textContent = busy ? "正在更新…" : failed ? snapshot ? "更新失败，显示上次结果" : "连接失败" : relativeUpdate(snapshot?.updated || snapshot?.fetched);
+			if (typeof nsmaxBindPreviewScope === "function") nsmaxBindPreviewScope(panel);
 		}
 		// 每次打开网站（这个标签页里的第一个页面）先刷新一次；之后停留期间每 10 分钟刷新一次，站内翻页时用缓存
 		let fresh = false;
@@ -30264,6 +30276,7 @@ function nsmaxTagStructure() {
 			item.append(link);
 			return item;
 		}));
+		if (typeof nsmaxBindPreviewScope === "function") nsmaxBindPreviewScope(panel);
 	}
 	// 页面解析阶段和资料卡、今日热门一起放进右栏（见 startEarlyPass 的 region("right")）：以前要等模块挂载
 	// （真实站点上比其他卡片晚一两秒）才插进来，侧栏一块一块地出现
