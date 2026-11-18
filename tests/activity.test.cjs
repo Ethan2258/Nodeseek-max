@@ -70,10 +70,60 @@ test("帖子作者栏和悬停资料卡：高频账号标「人机」，新号�
 		// 标签在等级徽章后面、三格数字前面
 		const order = await page.evaluate((bot) => Array.from(document.querySelector(`.nsmax-author-col[data-nsmax-uid="${bot}"] .nsmax-author-who`).children, (el) => el.className.split(" ")[0]), bot);
 		assert.ok(order.indexOf("nsmax-author-level") < order.indexOf("nsmax-activity-tag") && order.indexOf("nsmax-activity-tag") < order.indexOf("nsmax-author-stats"), order.join(","));
+		// 同一行排布：UID、等级、活跃度标签 top 对齐（不折行推高作者栏）
+		const aligned = await page.evaluate((uid) => {
+			const who = document.querySelector(`.nsmax-author-col[data-nsmax-uid="${uid}"] .nsmax-author-who`);
+			const rects = [".nsmax-author-uid", ".nsmax-author-level", ".nsmax-activity-tag"].map((sel) => who.querySelector(sel).getBoundingClientRect());
+			return { tops: rects.map((r) => Math.round(r.top)), maxDiff: Math.max(...rects.map((r) => r.top)) - Math.min(...rects.map((r) => r.top)) };
+		}, bot);
+		assert.ok(aligned.maxDiff <= 2, `胶囊应在同一行：${JSON.stringify(aligned)}`);
 		// 悬停资料卡
 		await page.locator(`.nsmax-author-col[data-nsmax-uid="${bot}"] .nsmax-author-name`).first().hover();
 		await page.waitForSelector(".nsmax-person-pop .nsmax-person-meta .nsmax-activity-tag");
 		assert.equal(await page.locator(".nsmax-person-pop .nsmax-activity-tag").first().textContent(), "人机");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("5 位数 UID 作者异步填入活跃度标签不折行且不触发整页 nsmax:batch 扫描", async () => {
+	const base = postPage();
+	const ids = [...new Set(Array.from(base.matchAll(/class="author-info"[\s\S]*?href="\/space\/(\d+)"/g), (m) => m[1]))];
+	assert.ok(ids.length >= 2);
+	const uid5 = "76994";
+	const replaced = base.replaceAll(`/space/${ids[1]}"`, `/space/${uid5}"`).replaceAll(`href="/space/${ids[1]}"`, `href="/space/${uid5}"`);
+	const api = {};
+	for (const id of ids) {
+		const target = id === ids[1] ? uid5 : id;
+		api[`/api/account/getInfo/${target}`] = target === uid5
+			? [{ delay: 1100, status: 200, body: { success: true, detail: { member_id: Number(uid5), rank: 0, coin: 26, stardust: 0, nPost: 1, nComment: 8, created_at: days(10) } } }]
+			: [{ status: 200, body: { success: true, detail: { member_id: Number(id), rank: 3, coin: 100, nPost: 10, nComment: 80, created_at: days(400) } } }];
+	}
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: replaced, api, viewport: { width: 1440, height: 900 } });
+	try {
+		await ready(page);
+		await page.waitForTimeout(700);
+		const before = await page.evaluate((uid) => ({
+			hasTag: !!document.querySelector(`.nsmax-author-col[data-nsmax-uid="${uid}"] .nsmax-activity-tag`),
+			batches: performance.getEntriesByName("nsmax:batch").length
+		}), uid5);
+		assert.equal(before.hasTag, false, "延迟资料到达前尚未插入活跃度标签");
+		await page.waitForFunction((uid) => document.querySelector(`.nsmax-author-col[data-nsmax-uid="${uid}"] .nsmax-activity-tag`), uid5, { timeout: 5e3 });
+		await page.waitForTimeout(500);
+		const state = await page.evaluate((uid) => {
+			const who = document.querySelector(`.nsmax-author-col[data-nsmax-uid="${uid}"] .nsmax-author-who`);
+			const uidBox = who.querySelector(".nsmax-author-uid").getBoundingClientRect();
+			const lvBox = who.querySelector(".nsmax-author-level").getBoundingClientRect();
+			const tagBox = who.querySelector(".nsmax-activity-tag").getBoundingClientRect();
+			const tops = [uidBox.top, lvBox.top, tagBox.top];
+			return {
+				tag: who.querySelector(".nsmax-activity-tag").textContent,
+				maxDiff: Math.max(...tops) - Math.min(...tops),
+				batchesAfter: performance.getEntriesByName("nsmax:batch").length
+			};
+		}, uid5);
+		assert.equal(state.tag, "新号");
+		assert.ok(state.maxDiff <= 2, `5 位数 UID + 等级 + 新号应保持同一行：${JSON.stringify(state)}`);
+		assert.equal(state.batchesAfter, before.batches, "异步插入 .nsmax-activity-tag 不触发新的 nsmax:batch");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

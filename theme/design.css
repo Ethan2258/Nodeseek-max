@@ -1627,6 +1627,7 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title > .nsmax-post-stat
   margin: 4px 0 0 !important;
   color: var(--text-subtle) !important;
   font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums !important;
   font-size: 12px !important;
   line-height: 1.75 !important;
 }
@@ -10459,7 +10460,7 @@ html[data-nsmax-theme][data-nsmax-post-layout="classic"] #nsk-body-left .content
   box-sizing: border-box !important;
   min-width: 0 !important;
   margin: 0 !important;
-  padding: 18px 12px !important;
+  padding: 18px 8px !important;
   border-right: 1px solid var(--line-soft) !important;
   background: var(--panel-alt) !important;
   text-align: center !important;
@@ -10491,7 +10492,7 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-author-col > .nsmax-author-who {
   justify-content: center !important;
   align-items: center !important;
   align-self: stretch !important;
-  gap: 5px 6px !important;
+  gap: 5px 4px !important;
   min-width: 0 !important;
 }
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name {
@@ -10509,18 +10510,31 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-name:hover
   text-decoration: underline !important;
   text-underline-offset: 2px !important;
 }
-/* UID：sb.sb .post-user-uid——1px 8px 小胶囊、细线框、等宽 11px 弱化字 */
+/* UID：sb.sb .post-user-uid——18px 等高胶囊、细线框、等宽 10.5px 弱化字，与等级/活跃度标签在 180px 作者栏内同行排布不折行 */
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-uid {
+  display: inline-flex !important;
   flex: none !important;
-  padding: 1px 8px !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  padding: 0 5px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
   color: var(--text-muted) !important;
   font-family: var(--font-mono) !important;
-  font-size: 11px !important;
-  line-height: 1.5 !important;
+  font-size: 10.5px !important;
+  line-height: 16px !important;
   white-space: nowrap !important;
+}
+html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-author-col .nsmax-author-level:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  gap: 2px !important;
+  padding: 0 5px 0 4px !important;
+  font-size: 10.5px !important;
+}
+html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-author-col .nsmax-activity-tag:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  padding: 0 5px !important;
+  font-size: 10.5px !important;
 }
 /* 帖子 / 鸡腿 / 星辰：sb.sb .post-author-stats——三格、上下虚线、数字 14px/700、标签 11.5px 淡字 */
 html[data-nsmax-theme] #nsk-body-left .nsmax-author-col .nsmax-author-stats {
@@ -13879,14 +13893,11 @@ html[data-nsmax-theme] .nsmax-skeleton-line:is(#nsmax-lv, *) {
   height: 12px !important;
   border-radius: 6px !important;
   background-color: var(--nsmax-skeleton-bg) !important;
-  background-image: linear-gradient(90deg, transparent 0%, var(--nsmax-skeleton-sheen) 50%, transparent 100%) !important;
-  background-repeat: no-repeat !important;
-  background-size: 60% 100% !important;
   animation: nsmax-skeleton-sweep 1.4s ease-in-out infinite !important;
 }
 @keyframes nsmax-skeleton-sweep {
-  0% { background-position: -80% 0; }
-  100% { background-position: 180% 0; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.48; }
 }
 /* 自动翻页按钮：加载中带一个小转圈 */
 html[data-nsmax-theme] #nsk-body-left button.nspp-action[aria-busy="true"]:is(#nsmax-lv, *)::before {

@@ -4263,7 +4263,7 @@ function nsmaxTagStructure() {
 		const page = Number(data.postPage) || Number(location.pathname.match(/^\/post-\d+-(\d+)/)?.[1]) || 1;
 		const floors = Array.from(document.querySelectorAll("#nsk-body-left ul.comments li.content-item[id]"), (li) => Number(li.id)).filter(Number.isFinite);
 		const here = floors.length ? Math.max(...floors) : 0;
-		if (page >= pages && document.readyState !== "loading") {
+		if (page >= pages && (document.readyState !== "loading" || Boolean(unsafeWindow$1.__config__?.postData))) {
 			nsmaxRememberReplyCount(id, here);
 			return here;
 		}
@@ -4307,6 +4307,12 @@ function nsmaxTagStructure() {
 	}
 	// 把回复总数写到标题栏、评论区标题、抽奖卡片上（拿到最后一页的数以后也调一次）
 	function nsmaxShowPostReplyCount() {
+		const configViews = unsafeWindow$1.__config__?.postData?.views;
+		if (configViews !== undefined && configViews !== null && Number.isFinite(Number(configViews))) {
+			const viewsStat = document.querySelector("#nsk-body-left .nsk-post .nsmax-post-stats .nsmax-post-stat-item:first-child > span");
+			const viewsText = String(Number(configViews));
+			if (viewsStat && viewsStat.textContent !== viewsText) viewsStat.textContent = viewsText;
+		}
 		const count = nsmaxPostReplyCount();
 		const stat = document.querySelector("#nsk-body-left .nsk-post .nsmax-post-stats .nsmax-post-stat-item:last-child > span");
 		const heading = document.querySelector("#nsk-body-left .comment-container .nsmax-reply-title");
