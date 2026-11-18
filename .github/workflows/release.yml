@@ -50,9 +50,10 @@ jobs:
         if: steps.version.outputs.exists == 'false'
         run: |
           passed=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml \
-            --commit "$SHA" --branch main --event push --status success \
-            --limit 1 --json databaseId --jq 'length')
-          if [ "$passed" != 1 ]; then
+            --commit "$SHA" --branch main --event push \
+            --limit 10 --json status,conclusion \
+            --jq '[.[] | select(.status == "completed" and .conclusion == "success")] | length')
+          if [ "$passed" -lt 1 ]; then
             echo "::error::This commit has no successful main push CI. Run CI before publishing."
             exit 1
           fi
