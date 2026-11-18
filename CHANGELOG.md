@@ -1,5 +1,14 @@
 # 更新日志
 
+## 1.9.62
+
+**消除帖子页作者栏换行抖动、标题栏统计首帧跳变与冗余全页扫描**：
+
+- **帖子页作者栏同行稳态布局**：收紧桌面端经典布局作者栏水平内边距（`18px 8px`）与 `UID / 等级 / 活跃度` 胶囊间距与字号（`10.5px`），`5~6` 位 UID（如 `UID 76994`）异步填入「新号 / 潜水 / 人机」标签时保持单行 `18px` 高度不再折行，消除评论区 `23px` 二次下移。
+- **标题栏统计（`.nsmax-post-stats`）首帧精准直出**：评论区就绪且 `window.__config__?.postData` 已加载时，`nsmaxPostReplyCount` 直接在首帧输出准确回复数并同步补全浏览量，同时启用等宽数字（`tabular-nums`），避免首帧先显示 `"N+"` 随后缩回 `"N"` 的水平偏移。
+- **GPU 合成层骨架呼吸动画**：将 `.nsmax-hot-line` / `.nsmax-skeleton-line` 的 `nsmax-skeleton-sweep` 由主线程重绘属性 `background-position` 替换为合成层 `opacity` 动画。
+- **消除启动与异步填充后的冗余全页扫描**：将 `.nsmax-author-col`、`.nsmax-poll-skeleton`、`.nsmax-my-replies` 纳入变更过滤，并在模块挂载与扫描回调执行前后使用 `observer.takeRecords()` 吸收脚本自身同步 DOM 改动，避免在 `nsmax:deferred-start` 之后触发多余的 `nsmax:batch` 全页扫描。
+
 ## 1.9.61
 
 **去掉帖子标题前的「投票」小标，并消除进帖时的图标切换与布局闪烁**：
