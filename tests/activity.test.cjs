@@ -124,6 +124,16 @@ test("5 位数 UID 作者异步填入活跃度标签不折行且不触发整页 
 		assert.equal(state.tag, "新号");
 		assert.ok(state.maxDiff <= 2, `5 位数 UID + 等级 + 新号应保持同一行：${JSON.stringify(state)}`);
 		assert.equal(state.batchesAfter, before.batches, "异步插入 .nsmax-activity-tag 不触发新的 nsmax:batch");
+		await page.evaluate(() => {
+			const toast = document.createElement("div");
+			toast.className = "nsmax-toast";
+			toast.textContent = "已签到";
+			document.body.append(toast);
+			toast.textContent = "今日已签到";
+			toast.remove();
+		});
+		await page.waitForTimeout(500);
+		assert.equal(await page.evaluate(() => performance.getEntriesByName("nsmax:batch").length), state.batchesAfter, "插入/更新/移除 .nsmax-toast 不触发新的 nsmax:batch");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

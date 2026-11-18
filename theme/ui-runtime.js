@@ -2194,9 +2194,12 @@
 		nsmaxKindTabs(parsed);
 	}
 	// 分页：只留首页、末页和当前页前后，中间用省略号；「上一页 / 下一页」写成文字。
+	var nsmaxTidiedPagers = new WeakMap();
 	function nsmaxTidyPagers() {
+		const pagerSig = (pager, current) => `${current}|${pager.childElementCount}|${pager.textContent}|${pager.getAttribute("data-nsmax-last-page") || ""}|${pager.querySelector("a.pager-next[href]") ? 1 : 0}`;
 		for (const pager of document.querySelectorAll(".nsk-pager")) {
 			const current = Number(pager.querySelector(".pager-cur,[aria-current=page]:not(a)")?.textContent) || 1;
+			if (nsmaxTidiedPagers.get(pager) === pagerSig(pager, current)) continue;
 			const pages = Array.from(pager.querySelectorAll(".pager-pos"));
 			const number = element => Number(element.textContent.match(/(\d+)\s*$/)?.[1]);
 			const confirmedLast = Number(pager.getAttribute("data-nsmax-last-page"));
@@ -2233,9 +2236,11 @@
 				// 手机像 sb.sb 一样只画箭头，保留读屏和键盘可辨认的翻页名称。
 				nsmaxSetAttr(link, "aria-label", label);
 			}
+			nsmaxTidiedPagers.set(pager, pagerSig(pager, current));
 		}
 	}
 	// 帖子页每层的操作（点赞、回复……）和楼号放进同一行
+	var nsmaxGroupedFloors = new WeakMap();
 	function nsmaxGroupFloorActions(parsed) {
 		for (const item of document.querySelectorAll("ul.comments li.content-item")) {
 			if (parsed && !parsed(item)) continue;
@@ -2245,7 +2250,9 @@
 			// 超过 30 天的楼层时间是「2026-09-29 03:01」这种完整日期（其余是「3 小时前」）：手机上这一层的操作胶囊整排放到时间下面一行，
 			// 不和长日期挤在一行（字体宽一点就只剩「回复」一个掉到第二行，2026-11-08）
 			const stamp = item.querySelector(":scope > .nsk-content-meta-info time");
-			nsmaxFlag(item, "data-nsmax-long-time", /^\d{4}-\d/.test(stamp?.textContent.trim() || ""));
+			const stampText = stamp?.textContent.trim() || "";
+			if (actions && !menu && !actions.querySelector(".menu-item:not([data-nsmax-compact-action]), .hot-badge") && nsmaxGroupedFloors.get(item) === stampText) continue;
+			nsmaxFlag(item, "data-nsmax-long-time", /^\d{4}-\d/.test(stampText));
 			if (!actions && menu && floor) {
 				actions = document.createElement("div"); actions.className = "nsmax-floor-actions";
 				item.append(actions); actions.append(menu, floor);
@@ -2267,6 +2274,7 @@
 				}
 				action.setAttribute("data-nsmax-compact-action", "");
 			}
+			if (!item.querySelector(":scope > .comment-menu") && !actions.querySelector(".menu-item:not([data-nsmax-compact-action]), .hot-badge")) nsmaxGroupedFloors.set(item, stampText);
 		}
 	}
 	// 正文图片：一出现就排成最终样子（sb.sb .post-image-link：左对齐、单独一块、小圆角），不等图片下载完。以前要下载完、量过尺寸才换，
@@ -4091,11 +4099,14 @@ function nsmaxTagStructure() {
 		} catch {}
 		return { enabled, always };
 	}
+	var nsmaxEssenceMenus = new WeakMap();
 	function nsmaxUpdateNavEssence() {
 		// 手机版顶栏的 ul.nav-menu 是 ≡ / 标志 / 搜索 / 深浅色那一排，版块在 header > ul.mobile-nav：「精华」加进版块那一排
 		const navMenus = [];
 		nsmaxQueryEach(["ul.nav-menu", "header > ul.mobile-nav"], (menu) => { if (!navMenus.includes(menu) && !menu.querySelector(":scope > #toggle-left-panel")) navMenus.push(menu); });
+		const menuSig = (menu) => `${menu.childElementCount}|${menu.lastElementChild?.className || ""}|${menu.querySelector(":scope > li:not([data-nsmax-own-hide]) a[href*='/categories/promotion']") ? 1 : 0}|${menu.querySelector(":scope > li.nsmax-essence-tab-item") ? 1 : 0}`;
 		for (const navMenu of navMenus) {
+			if (nsmaxEssenceMenus.get(navMenu) === menuSig(navMenu)) continue;
 			for (const item of navMenu.querySelectorAll(":scope > li")) {
 				const a = item.querySelector("a");
 				if (!a) continue;
@@ -4114,6 +4125,7 @@ function nsmaxTagStructure() {
 				nqLi.append(nsmaxNqLink("nsmax-nq-tab"));
 			}
 			if (nqLi.parentElement !== navMenu || nqLi.nextElementSibling) navMenu.append(nqLi);
+			nsmaxEssenceMenus.set(navMenu, menuSig(navMenu));
 		}
 	}
 	// 等级徽章：NodeSeek 只有 Lv1–Lv6。凡是只写着等级的小标签都打上 data-nsmax-level=N（主题按等级配色、配徽记），
@@ -6615,6 +6627,7 @@ function nsmaxTagStructure() {
 			item.append(link);
 			return item;
 		}));
+		if (typeof nsmaxBindPreviewScope === "function") nsmaxBindPreviewScope(panel);
 	}
 	// 页面解析阶段和资料卡、今日热门一起放进右栏（见 startEarlyPass 的 region("right")）：以前要等模块挂载
 	// （真实站点上比其他卡片晚一两秒）才插进来，侧栏一块一块地出现
