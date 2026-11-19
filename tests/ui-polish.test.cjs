@@ -1295,4 +1295,102 @@ for(const engine of engines){
    assert.deepEqual(deskNav.errors,[]);
   }finally{await deskNav.context.close();}
  });
+ test(`${engine} v1.9.63 流畅度与样式净化：零 :has()、桌面不加载触控规则、真站时间结构刷新零 batch、离页不拆毁主题 DOM`,async()=>{
+  const twoDaysIso=new Date(Date.now()-2*864e5).toISOString();
+  const listHtml=P.listPage({count:4}).replace(
+   `<a href="/post-1000-1#0" class="info-item info-last-comment-time"><time title="2026-10-03 12:00:00" datetime="2026-10-03T04:00:00.000Z">1 分钟前</time></a>`,
+   `<a href="/post-1000-1#0" class="info-item info-last-comment-time"><time title="2026-10-01 12:00:00" datetime="${twoDaysIso}">2days ago</time></a>`
+  );
+  const deskList=await open(browser,"https://www.nodeseek.com/",{...desk,html:listHtml,beforeNavigate:async(p)=>{
+   await p.route("**/page-2",async(route)=>{
+    await new Promise(r=>setTimeout(r,1200));
+    await route.fulfill({status:200,contentType:"text/html; charset=utf-8",body:P.listPage({count:4})});
+   });
+  }});
+  try{
+   await ready(deskList.page);
+   await deskList.page.waitForTimeout(200);
+   const listState=await deskList.page.evaluate(()=>{
+    const cssText=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n");
+    const firstTimeAnchor=document.querySelector('.post-list-item a[href^="/post-1000-1"].info-last-comment-time');
+    const innerTime=firstTimeAnchor?.querySelector("time");
+    return{
+     hasPseudoCss:cssText.includes(":has("),
+     hasTouchRule:cssText.replace(/:not\(\[data-nsmax-touch\]\)/g,"").includes("[data-nsmax-touch]"),
+     hasTimeTag:!!innerTime,
+     timeText:innerTime?.textContent||"",
+     toolsDisplay:getComputedStyle(document.getElementById("nspp-tools")).display,
+     toolsHasAttr:document.getElementById("nspp-tools")?.hasAttribute("data-nsmax-has-tools"),
+     rootBgAttr:document.documentElement.hasAttribute("data-nspp-background")
+    };
+   });
+   assert.equal(listState.hasPseudoCss,false,"桌面列表页样式不应包含 :has()");
+   assert.equal(listState.hasTouchRule,false,"桌面列表页样式不应注入触控专属规则");
+   assert.equal(listState.hasTimeTag,true,"保留原生 <time> 节点");
+   assert.equal(listState.timeText,"2 天前",JSON.stringify(listState));
+   assert.equal(listState.toolsDisplay,"none","#nspp-tools 无可见按钮时应隐藏");
+   assert.equal(listState.toolsHasAttr,false);
+   assert.equal(listState.rootBgAttr,false);
+   const batchRes=await deskList.page.evaluate(()=>new Promise(resolve=>{
+    const before=performance.getEntriesByName("nsmax:batch").length;
+    const t=document.querySelector('.post-list-item a[href^="/post-1000-1"].info-last-comment-time time');
+    if(t?.firstChild)t.firstChild.data="刚刚";
+    Object.defineProperty(document,"hidden",{configurable:true,get:()=>true});
+    document.dispatchEvent(new Event("visibilitychange"));
+    const bgOnHidden=document.documentElement.hasAttribute("data-nspp-background");
+    Object.defineProperty(document,"hidden",{configurable:true,get:()=>false});
+    document.dispatchEvent(new Event("visibilitychange"));
+    const bgOnVisible=document.documentElement.hasAttribute("data-nspp-background");
+    setTimeout(()=>resolve({before,afterTimeAndVis:performance.getEntriesByName("nsmax:batch").length,bgOnHidden,bgOnVisible,timeTextAfterVis:t?.textContent||""}),250);
+   }));
+   assert.equal(batchRes.bgOnHidden,false,"切后台不再给 html 挂 data-nspp-background");
+   assert.equal(batchRes.bgOnVisible,false);
+   assert.equal(batchRes.afterTimeAndVis,batchRes.before,"<time> 刷新与回前台唤醒不触发 nsmax:batch");
+   assert.equal(batchRes.timeTextAfterVis,"2 天前","listInteractions 绑定内部 <time> 并在回前台时刷新相对时间");
+   await deskList.page.evaluate(()=>{
+    const before=performance.getEntriesByName("nsmax:batch").length;
+    const host=window.navigation||window,ev=window.navigation?"navigate":"click";
+    host.addEventListener(ev,()=>{
+     setTimeout(()=>{
+      const duringBatches=performance.getEntriesByName("nsmax:batch").length;
+      const barPresent=!!document.querySelector("#nsmax-nav-progress[data-on]");
+      const themeBefore=document.documentElement.hasAttribute("data-nsmax-theme");
+      window.dispatchEvent(new Event("pagehide"));
+      const barAfterHide=!!document.getElementById("nsmax-nav-progress");
+      const themeAfterHide=document.documentElement.hasAttribute("data-nsmax-theme");
+      const headerKept=!!document.querySelector("[data-nsmax-header]");
+      const p1Restored=[...document.querySelectorAll(".nsk-pager .pager-pos:not([href])")].every(el=>el.classList.contains("pager-cur"));
+      sessionStorage.setItem("__nsmax_v63_nav",JSON.stringify({before,duringBatches,barPresent,barAfterHide,themeBefore,themeAfterHide,headerKept,p1Restored}));
+     },240);
+    },{once:true});
+    document.querySelector('.nsk-pager.pager-bottom a.pager-pos[href="/page-2"]').click();
+   });
+   await deskList.page.waitForURL("**/page-2");
+   await ready(deskList.page);
+   const navState=await deskList.page.evaluate(()=>JSON.parse(sessionStorage.getItem("__nsmax_v63_nav")||"null"));
+   assert.ok(navState,"应记录页面切换瞬间状态");
+   assert.equal(navState.barPresent,true);
+   assert.equal(navState.duringBatches,navState.before,"#nsmax-nav-progress 插入不触发 nsmax:batch");
+   assert.equal(navState.barAfterHide,false,"pagehide 清除进度条");
+   assert.equal(navState.p1Restored,true,"pagehide 还原待跳转分页高亮");
+   assert.equal(navState.themeBefore&&navState.themeAfterHide&&navState.headerKept,true,"非 bfcache 离页不拆毁主题 DOM");
+   assert.deepEqual(deskList.errors,[]);
+  }finally{await deskList.context.close();}
+  const deskPost=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html:P.postPage({comments:4})});
+  try{
+   await ready(deskPost.page);
+   const postCss=await deskPost.page.evaluate(()=>[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n"));
+   assert.equal(postCss.includes(":has("),false,"桌面帖子页样式不应包含 :has()");
+   assert.equal(postCss.replace(/:not\(\[data-nsmax-touch\]\)/g,"").includes("[data-nsmax-touch]"),false,"桌面帖子页样式不应注入触控专属规则");
+   assert.deepEqual(deskPost.errors,[]);
+  }finally{await deskPost.context.close();}
+  const mobList=await open(browser,"https://www.nodeseek.com/",{...phone(),html:P.listPage({mobile:true,count:4})});
+  try{
+   await ready(mobList.page);
+   const mobCss=await mobList.page.evaluate(()=>[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n"));
+   assert.equal(mobCss.includes(":has("),false,"手机列表页样式不应包含 :has()");
+   assert.equal(mobCss.includes("[data-nsmax-touch]"),true,"手机触控页正常加载 [data-nsmax-touch] 规则");
+   assert.deepEqual(mobList.errors,[]);
+  }finally{await mobList.context.close();}
+ });
 }
