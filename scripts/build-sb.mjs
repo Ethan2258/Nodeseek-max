@@ -350,6 +350,7 @@ const bootSheet = (name) => {
   sheet.raws.after = "";
   const short = shortenPads(sheet.toString()), merged = mergePads(short);
   checkMergedPads(short, merged, name);
+  if (merged.includes(":has(")) throw new Error(`${name}.css 不能包含 :has()`);
   return merged;
 };
 for (const [variable, name] of [["nsmax_tools_css", "tools"], ["nsmax_header_css", "header"]]) {
@@ -482,20 +483,25 @@ const wideHits = (selector) => {
 	flush();
 	return hits;
 };
+const hasTouchMarker = (selector) => wideHits(selectorParser().astSync(selector).nodes[0]).has("touch");
 const wideChunkOf = (selector) => {
 	if (overlaySelector.test(withoutNot(selector)) || pageScopeOf(selector).size) return "base";
 	const hits = wideHits(selectorParser().astSync(selector).nodes[0]);
-	return wideMarkers.find(([name]) => hits.has(name))?.[0] ?? "base";
+	if (hits.has("touch")) {
+		if (hits.has("body")) return "body+touch";
+		if (hits.has("side")) return "side+touch";
+		return "touch";
+	}
+	return hits.has("body") ? "body" : hits.has("side") ? "side" : "base";
 };
 // 一条规则放进哪些段：[[段, 规则文本], …]
 const piecesOfRule = (rule) => {
 	const chunk = chunkOfRule(rule);
-	if (chunk !== "base") return [[chunk, rule.toString()]];
 	const groups = new Map();
 	for (const selector of rule.selectors) {
-		const wide = wideChunkOf(selector);
-		if (!groups.has(wide)) groups.set(wide, []);
-		groups.get(wide).push(selector);
+		const target = chunk === "base" ? wideChunkOf(selector) : (hasTouchMarker(selector) ? `${chunk}+touch` : chunk);
+		if (!groups.has(target)) groups.set(target, []);
+		groups.get(target).push(selector);
 	}
 	return [...groups].map(([name, selectors]) => {
 		if (groups.size === 1) return [name, rule.toString()];
@@ -511,32 +517,38 @@ const pushSegment = (chunk, text) => {
 	else segments.push([chunk, text]);
 };
 const segmentRoot = postcss.parse(shipped);
+const emitAtRule = (node, emit) => {
+	let run = null;
+	let children = 0;
+	const flush = () => {
+		if (!run) return;
+		emit(run.chunk, `@${node.name} ${node.params}{${run.css}}`);
+		run = null;
+	};
+	const add = (chunk, text) => {
+		if (run && run.chunk === chunk) run.css += text;
+		else { flush(); run = { chunk, css: text }; }
+	};
+	for (const child of node.nodes || []) {
+		children++;
+		if (child.type === "rule") {
+			for (const [chunk, text] of piecesOfRule(child)) add(chunk, text);
+		} else if (child.type === "atrule" && ["media", "supports"].includes(child.name)) {
+			emitAtRule(child, add);
+		} else {
+			flush();
+			emit("base", `@${node.name} ${node.params}{${child.toString()}}`);
+		}
+	}
+	flush();
+	if (!children) emit("base", node.toString());
+};
 for (const node of segmentRoot.nodes) {
 	if (node.type === "rule") { for (const [chunk, text] of piecesOfRule(node)) pushSegment(chunk, text); continue; }
 	if (node.type !== "atrule") continue;
 	// @keyframes / @font-face 之类的整块放 base（各页面的动画都可能用到它）
 	if (!["media", "supports"].includes(node.name)) { pushSegment("base", node.toString()); continue; }
-	let run = null;
-	let children = 0;
-	const flush = () => {
-		if (!run) return;
-		pushSegment(run.chunk, `@${node.name} ${node.params}{${run.css}}`);
-		run = null;
-	};
-	for (const child of node.nodes || []) {
-		children++;
-		if (child.type === "rule") {
-			for (const [chunk, text] of piecesOfRule(child)) {
-				if (run && run.chunk === chunk) run.css += text;
-				else { flush(); run = { chunk, css: text }; }
-			}
-		} else {
-			flush();
-			pushSegment("base", `@${node.name} ${node.params}{${child.toString()}}`);
-		}
-	}
-	flush();
-	if (!children) pushSegment("base", node.toString());
+	emitAtRule(node, pushSegment);
 }
 // 校验：拆出来的段按顺序拼起来，规则（连同所在 @media 外壳）、顺序、选择器、声明必须和整份 CSS 完全一致；
 // 一条规则拆成的几段紧挨着，选择器合起来正好是原来那些

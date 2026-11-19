@@ -18,7 +18,7 @@
 		// 首页、版块、搜索这几种纯列表页没有帖子正文、提醒卡片这些结构（body 段）
 		if (kind !== "list" || !/^\/(?:page-\d+\/?|categories\/.*|search\/?)?$/.test(location.pathname)) keys.add("body");
 		// 手机布局的规则只有粗指针设备用得上；手机版网页没有右栏。判断错了也没事，真用到时 nsmaxThemeRequire 补上
-		if (matchMedia("(pointer: coarse)").matches) keys.add("touch");
+		if (matchMedia("(pointer: coarse)").matches || nsmaxTouchLayout()) keys.add("touch");
 		if (!nsmaxTouchLayout()) keys.add("side");
 		// 抽奖页里嵌了一块排行榜预览（.board .rank-row），这两块要一起给
 		if (kind === "lucky") keys.add("board");
@@ -29,7 +29,7 @@
 		}
 		try {
 			// 自测 / 排查：地址上带 ?nsmax-all-css（或在页面里设 window.__NSMAX_ALL_CSS）时注入全部段
-			if (unsafeWindow$1.__NSMAX_ALL_CSS || new URLSearchParams(location.search).has("nsmax-all-css") || localStorage.getItem("nsmax:all-css") === "1") for (const [name] of nsmax_theme_segments) keys.add(name);
+			if (unsafeWindow$1.__NSMAX_ALL_CSS || new URLSearchParams(location.search).has("nsmax-all-css") || localStorage.getItem("nsmax:all-css") === "1") for (const [name] of nsmax_theme_segments) for (const part of name.split("+")) keys.add(part);
 		} catch {}
 		return keys;
 	}
@@ -45,7 +45,10 @@
 	// 把需要的段拼起来，还原构建时换成单字符的高频长串（见 build-sb.mjs 的 themeTokens）
 	function nsmaxThemeUnpack(keys) {
 		let css = "";
-		for (const [name, text] of nsmax_theme_segments) if (keys.has(name)) css += text;
+		for (const [name, text] of nsmax_theme_segments) {
+			const hit = name.includes("+") ? (keys.has(name) || name.split("+").every((part) => keys.has(part))) : keys.has(name);
+			if (hit) css += text;
+		}
 		return css.replace(/[`$|&§¶¤]/g, (token) => nsmax_theme_tokens[token]);
 	}
 	// 运行中才发现要用到的段（手机上遇到带右栏的网页、平板切到手机布局）：按原来的段序重新拼好写回去，层叠结果和一开始就注入一样
@@ -56,6 +59,11 @@
 		const css = nsmaxThemeCss.cache = nsmaxThemeUnpack(keys);
 		if (nsmaxThemeCss.element?.isConnected) nsmaxThemeCss.element.textContent = css;
 		else _css(css, true);
+		if (name === "touch" && nsmaxEnsureOverlayCss.done && !nsmaxEnsureOverlayCss.withTouch) {
+			nsmaxEnsureOverlayCss.withTouch = true;
+			const extra = nsmaxThemeUnpack(new Set(["overlay+touch"]));
+			if (extra) _css(extra, true);
+		}
 	}
 	// 浮层样式（弹窗、用户卡、搜索面板、toast、图片预览……）按需注入：首帧只注入页面本体需要的段，
 	// 主内容就绪后的空闲时段再补这段；用户提前交互（移动 / 按键 / 打开弹窗）时也会先补上，不会出现没样式的浮层。
@@ -64,7 +72,9 @@
 		// 排查 / 测试用：?nsmax-no-overlay-css 完全不注入浮层段（连 toast / 预览打开前的显式补注入也不做）
 		try { if (new URLSearchParams(location.search).has("nsmax-no-overlay-css")) return; } catch {}
 		nsmaxEnsureOverlayCss.done = true;
-		const css = nsmaxThemeUnpack(new Set(["overlay"]));
+		const withTouch = !!nsmaxThemeCss.keys?.has("touch");
+		nsmaxEnsureOverlayCss.withTouch = withTouch;
+		const css = nsmaxThemeUnpack(new Set(withTouch ? ["overlay", "overlay+touch"] : ["overlay"]));
 		// 构建时已经短名化 / 压缩过，按「编译后样式」注入，跳过运行时再优化一遍
 		if (css) _css(css, true);
 	}
@@ -5812,13 +5822,14 @@ function nsmaxTagStructure() {
 		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
 		// 手机上往下翻时把「回到顶部」收起来，往回翻或到页底再出来：以前它一直浮在右下角，压着正文和回复按钮
-		let lastY = scrollY, scrollFrame = 0;
+		let lastY = 0, lastYReady = false, scrollFrame = 0;
 		const onScroll = () => {
 			// 电脑上（不是手机布局）这个收起用不上：不排帧、不读滚动位置和页面高度（以前每滚一帧都读一次，鼠标下面的行刚换了悬停样式时要当场重算）
 			if (scrollFrame || !media.matches && !root.hasAttribute("data-nsmax-scroll-down")) return;
 			scrollFrame = requestAnimationFrame(() => {
 				scrollFrame = 0;
-				const y = scrollY, delta = y - lastY;
+				const y = scrollY, delta = lastYReady ? y - lastY : 0;
+				lastYReady = true;
 				if (Math.abs(delta) < 8 && y > 0) return;
 				const atEnd = y + innerHeight >= document.documentElement.scrollHeight - 24;
 				const down = media.matches && delta > 0 && y > 120 && !atEnd;
@@ -6508,6 +6519,12 @@ function nsmaxTagStructure() {
 				// 纯文本框（没有 CodeMirror）时：内容超过默认高度就跟着长高（最多 800px），删短了再缩回；用户手动拖过就不再自动改
 				const adjustInputHeight = () => {
 					if (!input || cm || editor.hasAttribute("data-nsmax-resized")) return;
+					if (!input.value) {
+						if (editor.style.getPropertyValue("--nsmax-editor-height") && editor.style.getPropertyValue("--nsmax-editor-height") !== "150px") {
+							editor.style.setProperty("--nsmax-editor-height", "150px");
+						}
+						return;
+					}
 					const box = heightBox();
 					editor.style.setProperty("--nsmax-editor-height", "150px");
 					const needed = input.scrollHeight + (box.offsetHeight - input.clientHeight);
@@ -6519,7 +6536,7 @@ function nsmaxTagStructure() {
 				else {
 					input.addEventListener("input", render, { signal: ctx.signal });
 					input.addEventListener("input", adjustInputHeight, { signal: ctx.signal });
-					setTimeout(adjustInputHeight, 0);
+					if (input.value) setTimeout(adjustInputHeight, 0);
 				}
 				editors.set(editor, () => { cm?.off("change", render); head.remove(); controls.remove(); mdeToolbar.remove(); preview.remove(); });
 			}

@@ -1,5 +1,15 @@
 # 更新日志
 
+## 1.9.63
+
+**页面切换零回流、清零残余 `:has()` 与触控规则桌面分流**：
+
+- **离页零回流与导航进度条 GPU 合成**：非 bfcache 离开旧页面时仅中止在途请求与监听，不再拆毁垂死页面的 DOM 或调用 `control.getAnimations()`，彻底消除离页瞬间的全页 `UpdateLayoutTree` + `Layout`；顶部 `#nsmax-nav-progress` 改用 GPU `@keyframes` 动画并纳入 `themedShell` 过滤，移除 `void bar.offsetWidth` 同步强排且不触发 `nsmax:batch`。
+- **消除启动与扫描链同步强制回流**：延后 `nsmaxMountTouchUi`、`infinite-scroll` 的首帧 `scrollY` 同步读取，`adjustInputHeight` 对空回复框跳过高度探测，`settleStat` 先同步释放高度预留、延后至绘制后测量并记录高度。
+- **彻底清零全站残余 `:has()` 并局部化 `data-nspp-background`**：`theme/header.css` 与 `theme/tools.css` 全部改由精确控制的 data 属性选择器（`nsmaxSyncHeaderFlags` / `nsmaxSyncToolsVisible`）替代 `:has()` 并在构建脚本强制校验；`data-nspp-background` 仅挂载在 `#nspp-tools` / `.nspp-user-hover`，不再改动 `document.documentElement` 触发整页样式失效。
+- **修复真站列表时间刷新并消除每秒空轮询**：`listInteractions` 正确定位 `.info-last-comment-time > time`、通过 `characterData`（`firstChild.data`）原地更新并在切回前台时立即刷新，不触发 60s `nsmax:batch`；`attendance` 与 `notification-categories` 初始化完成后立即释放 1s 启动轮询与监听器。
+- **构建期分流桌面端触控样式**：`build-sb.mjs` 按触控标记将原泄漏到页面/基础段的 258 条 `[data-nsmax-touch]` 规则拆为 `<chunk>+touch` 复合段，桌面端彻底跳过触控规则解析。
+
 ## 1.9.62
 
 **消除帖子页作者栏换行抖动、标题栏统计首帧跳变与冗余全页扫描**：

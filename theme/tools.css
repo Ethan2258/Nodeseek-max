@@ -1,9 +1,9 @@
 #nspp-tools{z-index:999;box-sizing:border-box;border:1px solid var(--border-color,#d1d9e0);background:var(--bg-color,Canvas);width:44px;max-height:55dvh;color:var(--text-color,CanvasText);isolation:isolate;border-radius:12px;flex-direction:column;align-items:center;gap:2px;padding:6px;display:flex;position:fixed;bottom:max(88px,12dvh);right:72px;overflow-y:auto;box-shadow:0 4px 16px #0000000d}
-#nspp-tools:not(:has(button:not([hidden]))){display:none}
+#nspp-tools:not([data-nsmax-has-tools]){display:none}
 #nspp-tools{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light}
 .dark-layout #nspp-tools{--bg-color:#262626;--text-color:#dedede;--border-color:#454545;--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark}
 html[data-nspp-settings-open] #nspp-tools,html[data-nspp-settings-open] [data-nspp-ai-launcher]{display:none!important}
-html[data-nspp-background] #nspp-tools *,html[data-nspp-background] .nspp-user-hover *{animation-play-state:paused!important}
+#nspp-tools[data-nspp-background] *,.nspp-user-hover[data-nspp-background] *{animation-play-state:paused!important}
 @media (width<=700px),(hover:none){.nspp-user-hover{display:none!important}
 #nspp-tools{right:auto;left:max(8px, env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));gap:2px;width:44px;max-width:44px;max-height:36dvh;padding:6px}
 #nspp-tools .nspp-tool-icon{width:30px;height:30px}
