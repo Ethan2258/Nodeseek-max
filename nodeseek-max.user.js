@@ -2086,8 +2086,8 @@ var nsmaxRedirecting = false;
 	var nsmaxLayerRoots = new WeakSet();
 	function nsmaxTouchLayout() {
 		if (matchMedia("(pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-width: 960px) and (max-height: 600px)").matches) return true;
-		// document-start 早于 viewport meta：iPhone 的初始布局宽度可能仍是 980px，先用真实屏幕宽度识别。
-		return !document.querySelector('meta[name="viewport"]') && matchMedia("(pointer: coarse)").matches && (screen.width <= 700 || screen.width <= 960 && screen.height <= 600);
+		// document-start 早于 viewport meta：iPhone 的初始布局宽度可能仍是 980px，且 WebKit 此时 (pointer: coarse) 可能尚未生效，先用触控能力与真实屏幕尺寸识别。
+		return !document.querySelector('meta[name="viewport"]') && (matchMedia("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0) && (screen.width <= 700 || screen.width <= 960 && screen.height <= 600);
 	}
 	var nsmaxMobileScrollOwners = new Set();
 	var nsmaxMobileScrollState = null;
@@ -23032,7 +23032,10 @@ html:not([data-nsmax-theme]) :is(.nsmax-tool-icon,.nsmax-icon){display:none}`);
 				whenBody((body) => {
 					// viewport meta 已解析，重新校准设备默认字号；显式保存的字号仍由 themeOptions 保留。
 					nsmaxSetAttr(root, "data-nsmax-size", themeOptions().fontSize);
-					if (root.hasAttribute("data-nsmax-touch") !== nsmaxTouchLayout()) root.toggleAttribute("data-nsmax-touch", nsmaxTouchLayout());
+					const touch = nsmaxTouchLayout();
+					if (root.hasAttribute("data-nsmax-touch") !== touch) root.toggleAttribute("data-nsmax-touch", touch);
+					if (touch || matchMedia("(pointer: coarse)").matches) nsmaxThemeRequire("touch");
+					if (!touch) nsmaxThemeRequire("side");
 					const mode = nsmaxColorMode(options);
 					const media = window.matchMedia("(prefers-color-scheme: dark)");
 					const owned = mode !== "site";
@@ -23780,7 +23783,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		// 首页、版块、搜索这几种纯列表页没有帖子正文、提醒卡片这些结构（body 段）
 		if (kind !== "list" || !/^\/(?:page-\d+\/?|categories\/.*|search\/?)?$/.test(location.pathname)) keys.add("body");
 		// 手机布局的规则只有粗指针设备用得上；手机版网页没有右栏。判断错了也没事，真用到时 nsmaxThemeRequire 补上
-		if (matchMedia("(pointer: coarse)").matches) keys.add("touch");
+		if (matchMedia("(pointer: coarse)").matches || nsmaxTouchLayout()) keys.add("touch");
 		if (!nsmaxTouchLayout()) keys.add("side");
 		// 抽奖页里嵌了一块排行榜预览（.board .rank-row），这两块要一起给
 		if (kind === "lucky") keys.add("board");

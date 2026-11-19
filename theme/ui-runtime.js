@@ -18,7 +18,7 @@
 		// 首页、版块、搜索这几种纯列表页没有帖子正文、提醒卡片这些结构（body 段）
 		if (kind !== "list" || !/^\/(?:page-\d+\/?|categories\/.*|search\/?)?$/.test(location.pathname)) keys.add("body");
 		// 手机布局的规则只有粗指针设备用得上；手机版网页没有右栏。判断错了也没事，真用到时 nsmaxThemeRequire 补上
-		if (matchMedia("(pointer: coarse)").matches) keys.add("touch");
+		if (matchMedia("(pointer: coarse)").matches || nsmaxTouchLayout()) keys.add("touch");
 		if (!nsmaxTouchLayout()) keys.add("side");
 		// 抽奖页里嵌了一块排行榜预览（.board .rank-row），这两块要一起给
 		if (kind === "lucky") keys.add("board");
