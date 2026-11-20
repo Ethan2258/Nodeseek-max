@@ -98,6 +98,62 @@ test("看大图：图集只收正文配图（表情包、裂图不算），左�
 	} finally { await context.close(); }
 });
 
+test("2026-11-20 看大图更顺：从帖子里那张图放大出来、Esc 缩回去；滚轮按滚动量缩放（触控板一抹不再飞到几百倍），比例实时跟着变；长截图按宽度铺开从顶上看、滚轮上下滚；遮罩不用毛玻璃", async () => {
+	const tallBody = `<p><img src="${pic(1600, 1000, "#4f7cff")}" alt="横图" width="320" height="200"></p><p><img src="${pic(1080, 6000, "#94a3b8")}" alt="长图" width="200" height="1111"></p>`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: P.postPage().replace("</article>", tallBody + "</article>"), viewport: { width: 1440, height: 900 } });
+	try {
+		await ready(page);
+		const thumb = await page.locator(".nsk-post article.post-content img[alt='横图']").boundingBox();
+		await page.evaluate(() => {
+			window.__first = null;
+			const tick = () => {
+				const img = document.querySelector("dialog.nspp-image-preview .viewer-canvas img");
+				if (img && img.getBoundingClientRect().width) window.__first = img.getBoundingClientRect().toJSON();
+				else requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
+		});
+		await page.locator(".nsk-post article.post-content img[alt='横图']").click();
+		await page.waitForFunction(() => window.__first);
+		const first = await page.evaluate(() => window.__first);
+		assert.ok(Math.abs(first.width - thumb.width) < thumb.width * .35, `第一帧接近缩略图大小：${first.width} vs ${thumb.width}`);
+		await page.waitForTimeout(450);
+		const read = () => page.evaluate(() => {
+			const d = document.querySelector("dialog.nspp-image-preview"), img = d.querySelector(".viewer-canvas img"), r = img.getBoundingClientRect();
+			return { x: r.x, y: r.y, w: r.width, h: r.height, zoom: d.querySelector(".nsmax-viewer-zoom").textContent, ratio: Math.round(r.width / 16) + "%" };
+		});
+		const fit = await read();
+		assert.ok(fit.w > 900 && fit.y >= 72, `横图铺开在顶栏下面：${JSON.stringify(fit)}`);
+		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("dialog.nspp-image-preview"), "::backdrop").backdropFilter), "none", "遮罩不用毛玻璃（大页面上每一帧都要重算模糊）");
+		await page.mouse.move(720, 400);
+		for (let i = 0; i < 30; i++) await page.mouse.wheel(0, -4);
+		await page.waitForTimeout(100);
+		const pad = await read();
+		assert.ok(pad.w / fit.w > 1.1 && pad.w / fit.w < 1.5, `触控板细滚 30 下只放大一点：${fit.w} → ${pad.w}`);
+		assert.equal(pad.zoom, pad.ratio, "比例跟着实际大小走");
+		await page.locator(".nspp-image-preview .viewer-toolbar [data-viewer-action=reset]").click();
+		await page.waitForTimeout(350);
+		const back = await read();
+		assert.equal(back.zoom, back.ratio, "「适应窗口」后比例也对");
+		assert.ok(Math.abs(back.w - fit.w) < 1, "回到铺开的大小");
+		await page.keyboard.press("ArrowRight");
+		await page.waitForFunction(() => /^2 \/ 2/.test(document.querySelector(".nspp-image-preview .viewer-title")?.textContent || ""));
+		await page.waitForTimeout(250);
+		const tall = await page.evaluate(() => document.querySelector("dialog.nspp-image-preview .viewer-canvas img").getBoundingClientRect().toJSON());
+		assert.ok(tall.width >= 700 && tall.width <= 880 && Math.round(tall.y) === 72, `长图按宽度铺开、顶端在顶栏下面：${JSON.stringify(tall)}`);
+		for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 100);
+		await page.waitForTimeout(100);
+		const scrolled = await page.evaluate(() => document.querySelector("dialog.nspp-image-preview .viewer-canvas img").getBoundingClientRect().toJSON());
+		assert.ok(Math.abs(scrolled.y - (tall.y - 300)) < 1 && scrolled.width === tall.width, `长图滚轮往下滚、不缩放：${tall.y} → ${scrolled.y}`);
+		await page.keyboard.press("Escape");
+		await page.waitForTimeout(60);
+		assert.equal(await page.locator("dialog.nspp-image-preview").count(), 1, "Esc 后先播关闭动画");
+		await page.waitForSelector("dialog.nspp-image-preview", { state: "detached", timeout: 1e3 });
+		assert.equal(await page.evaluate(() => document.documentElement.classList.contains("nsmax-viewing")), false);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
 test("手机：代码块标题栏 44px，「复制」触控区就是标题栏；看大图翻页还在工具栏（44px），张数和原图在顶上", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: html(), viewport: { width: 390, height: 844 }, device: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } } });
 	try {
