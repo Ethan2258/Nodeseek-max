@@ -2003,7 +2003,8 @@ test("v1.7.27 发帖按钮全宽胶囊与文字完整性、顶栏精华跟随分
 				searchX: search ? Math.round(search.getBoundingClientRect().x) : 0,
 				navRight: nav ? Math.round(nav.getBoundingClientRect().right) : 0,
 				headWidth: head ? Math.round(head.getBoundingClientRect().width) : 0,
-				bodyWidth: body ? Math.round(body.getBoundingClientRect().width) : 0
+				bodyWidth: body ? Math.round(body.getBoundingClientRect().width) : 0,
+				viewportWidth: Math.round(document.documentElement.getBoundingClientRect().width)
 			};
 		});
 
@@ -2014,7 +2015,8 @@ test("v1.7.27 发帖按钮全宽胶囊与文字完整性、顶栏精华跟随分
 		assert.equal(layout.essenceFollows, false, "顶栏不再有精华标签");
 		assert.equal(layout.logoX, layout.leftX, `Logo 起始坐标 (${layout.logoX}px) 必须与帖子列表卡片起始坐标 (${layout.leftX}px) 垂直绝对对齐`);
 		assert.ok(layout.searchX >= layout.navRight, `搜索框 (${layout.searchX}px) 严禁遮挡分类菜单 (${layout.navRight}px)`);
-		assert.ok(layout.rightRight >= 1000, `右侧面板必须铺展至视口右边缘 (实际 ${layout.rightRight}px)，杜绝死白右侧空隙`);
+		// 电脑端给滚动条留位（scrollbar-gutter: stable，v1.9.64），按可用视口宽度（不含滚动条那 15px）算
+		assert.ok(layout.rightRight >= layout.viewportWidth - 24, `右侧面板必须铺展至视口右边缘 (实际 ${layout.rightRight}px)，杜绝死白右侧空隙`);
 		assert.deepEqual(errors, []);
 	} finally {
 		await context.close();
@@ -2830,7 +2832,7 @@ test("提示：NodeSeek 一句话提示框改成 sb.sb toast；要确认的提�
 		const confirm = await page.evaluate(() => {
 			const content = document.querySelector(".msc-confirm .msc-content");
 			const r = content.getBoundingClientRect();
-			return { width: Math.round(r.width), centered: Math.abs((r.left + r.right) / 2 - innerWidth / 2) <= 1, bg: getComputedStyle(content).backgroundColor, head: getComputedStyle(content, "::before").content, title: getComputedStyle(content.querySelector(".msc-title")).fontSize, buttons: Array.from(content.querySelectorAll(".msc-action > button")).map((b) => [b.textContent, Math.round(b.getBoundingClientRect().left)]) };
+			return { width: Math.round(r.width), centered: Math.abs((r.left + r.right) / 2 - Math.round(document.documentElement.getBoundingClientRect().width) / 2) <= 1, bg: getComputedStyle(content).backgroundColor, head: getComputedStyle(content, "::before").content, title: getComputedStyle(content.querySelector(".msc-title")).fontSize, buttons: Array.from(content.querySelectorAll(".msc-action > button")).map((b) => [b.textContent, Math.round(b.getBoundingClientRect().left)]) };
 		});
 		assert.equal(confirm.width, 440);
 		assert.equal(confirm.centered, true);
@@ -2887,7 +2889,7 @@ test("编辑主帖：标题栏写「编辑帖子」、标题框排在标题栏�
 					fieldAbove: rect(field).bottom <= rect(button).top,
 					selectRight: Math.round(rect(select).right),
 					editorRight: Math.round(rect(editor).right),
-					overflow: document.documentElement.scrollWidth - innerWidth,
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width),
 				};
 			});
 			assert.equal(info.heading, "编辑帖子");
@@ -3006,7 +3008,7 @@ test("抽奖页：顶上一条细线栏（链接 + 右侧三个按钮），标�
 					inputHeight: Math.round(rect("#post-id").height),
 					fieldTops: [...document.querySelectorAll(".pure-g > *")].map((element) => Math.round(element.getBoundingClientRect().top)),
 					button: getComputedStyle(document.querySelector(".sample-panel .pure-button-primary")).backgroundColor,
-					overflow: document.documentElement.scrollWidth - innerWidth,
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width),
 				};
 			});
 			assert.equal(info.page, "lucky");
@@ -3041,7 +3043,7 @@ test("抽奖页：顶上一条细线栏（链接 + 右侧三个按钮），标�
 					boardLeft: Math.round(rect(board).left),
 					formLeft: Math.round(rect(document.querySelector(".sample-panel > form")).left),
 					rows: document.querySelectorAll(".board .rank-row").length,
-					overflow: document.documentElement.scrollWidth - innerWidth,
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width),
 				};
 			});
 			assert.deepEqual(info.links, ["主页", "抽奖贴"]);
@@ -4121,7 +4123,7 @@ test("v1.8.39 个人主页加右栏（照 sb.sb /u/…/）：主栏 + 260px 右�
 					gap: Math.round(box(side).left - box(main).right),
 					topAligned: Math.abs(box(side).top - box(head).top) <= 1,
 					card: side.querySelector(".user-card .Username")?.textContent,
-					overflow: document.documentElement.scrollWidth - innerWidth
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 				};
 			});
 			if (width === 1440) {
@@ -4708,7 +4710,7 @@ test("第九批（2026-10-18）：一键抽奖、管理记录弹窗——站点�
 					previewScroll: preview.scrollHeight - preview.clientHeight,
 					prize: dialog.querySelector(".nsmax-lottery-prize").textContent,
 					clock: dialog.querySelectorAll(".nsmax-lottery-seg").length,
-					overflow: document.documentElement.scrollWidth - innerWidth
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 				};
 			});
 			assert.equal(layout.sideBy, !mobile, JSON.stringify(layout));
@@ -4810,7 +4812,7 @@ test("第九批（2026-10-18）：我的关注 / 粉丝——站点数据到之�
 			}
 			assert.equal(new Set(rows.map((row) => row.width)).size, 1, "卡片一样宽：" + rows.map((row) => row.width));
 			assert.equal(new Set(rows.map((row) => row.height)).size, 1, "卡片一样高：" + rows.map((row) => row.height));
-			assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0);
+			assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)), 0);
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
@@ -4862,7 +4864,7 @@ test("第十批（2026-10-18）：手机侧滑菜单（≡）里的资料卡换�
 				menu: Array.from(account.querySelectorAll(".nsmax-account-menu > a"), (a) => a.textContent.replace(/\d+$/, "").trim()),
 				compose: account.querySelector(".nsmax-account-compose")?.getAttribute("href"),
 				inside: box.left >= 0 && box.right <= 300 + 1,
-				overflow: document.documentElement.scrollWidth - innerWidth
+				overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 			};
 		});
 		assert.deepEqual(state.nativeShown, []);
@@ -4929,7 +4931,7 @@ test("第十一批（2026-10-19）：帖子页中等宽度（801～1000px，右�
 					avatar: Math.round(floor.querySelector(".nsmax-author-avatar").getBoundingClientRect().width),
 					ratio: article.width / main.width,
 					side: document.querySelector("#nsk-right-panel-container").getClientRects().length > 0,
-					overflow: document.documentElement.scrollWidth - innerWidth
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 				};
 			});
 			assert.equal(state.side, true, `${width}：右栏还在`);
@@ -4966,7 +4968,7 @@ test("第十一批（2026-10-19）：正文里列多的表格在窄屏（≤1000
 					inside: box.left >= article.left - 1 && box.right <= article.right + 1,
 					thLines: Math.round(th.getBoundingClientRect().height / parseFloat(getComputedStyle(th).lineHeight)),
 					full: Math.abs(box.width - article.width) <= 1,
-					overflow: document.documentElement.scrollWidth - innerWidth
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 				};
 			});
 			assert.equal(state.inside, true, `${width}：表格不超出正文`);
@@ -5062,7 +5064,7 @@ test("第十一批（2026-10-19）：页脚各列不再被站点的 width:33% / 
 					cut: cols.flatMap((col) => [...col.querySelectorAll("a")]).filter((a) => a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()),
 					weight: getComputedStyle(cols[0].querySelector("li")).fontWeight,
 					spacing: getComputedStyle(head).letterSpacing,
-					overflow: document.documentElement.scrollWidth - innerWidth
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 				};
 			});
 			assert.equal(state.count, 5, `${width}：五列都在`);
@@ -5263,7 +5265,7 @@ test("第十二批（2026-10-19）：合作商家（/providers）、友站链接
 					grid: getComputedStyle(box.querySelector(".provider-grid-container")).display,
 					tile: getComputedStyle(tile).backgroundColor === color("color-mix(in srgb, var(--text) 40%, var(--panel))"),
 					sameRow: tiles.filter((r) => Math.abs(r.top - tiles[0].top) < 1).length,
-					overflow: document.documentElement.scrollWidth - innerWidth
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 				};
 			});
 			assert.deepEqual({ ...state, sameRow: state.sameRow >= 5 }, { panel: true, gradient: false, border: "1px", title: ["15px", "left"], grid: "grid", tile: true, sameRow: true, overflow: 0 }, dark ? "深色" : "浅色");
@@ -5338,7 +5340,7 @@ test("第十二批（2026-10-19）：没登录时打开通知、设置、关注�
 			const state = await page.evaluate(() => {
 				const box = document.querySelector(".nsmax-guest-empty");
 				const r = box.getBoundingClientRect();
-				return { text: box.firstChild.textContent, login: box.querySelector("a").getAttribute("href"), centered: Math.abs(r.left + r.width / 2 - innerWidth / 2) < 2, count: document.querySelectorAll(".nsmax-guest-empty").length };
+				return { text: box.firstChild.textContent, login: box.querySelector("a").getAttribute("href"), centered: Math.abs(r.left + r.width / 2 - Math.round(document.documentElement.getBoundingClientRect().width) / 2) < 2, count: document.querySelectorAll(".nsmax-guest-empty").length };
 			});
 			assert.equal(state.text, text, url);
 			assert.equal(state.login, "/signIn.html");
@@ -5401,7 +5403,8 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 					buttonDivider: buttonStyle.borderLeftWidth,
 					buttonBackground: buttonStyle.backgroundColor,
 					card: [Math.round(c.left), Math.round(c.top), Math.round(c.width), Math.round(c.height)],
-					overflow: document.documentElement.scrollWidth - innerWidth
+					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width),
+					viewportWidth: Math.round(document.documentElement.getBoundingClientRect().width)
 				};
 			});
 			assert.equal(state.tabIcons, 0, "标签只留文字");
@@ -5427,7 +5430,7 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 				assert.ok(state.card[3] < 400, `手机：高度跟内容走（${state.card[3]}）`);
 			} else {
 				assert.equal(state.card[2], 600);
-				assert.equal(state.card[0], (width - 600) / 2, "居中");
+				assert.ok(Math.abs(state.card[0] - (state.viewportWidth - 600) / 2) <= 1, `居中（${state.card[0]}）`);
 			}
 			assert.ok(state.overflow <= 0);
 			await page.locator(".search-overlay .glass-input-group input").focus();
@@ -7327,7 +7330,7 @@ test("2026-10-24 等级进度（/progress）照 sb.sb「我的烧饼」：第一
 			note: document.querySelector(".nsmax-progress-note").textContent,
 			checkin: document.querySelector('.nsmax-progress-item[data-key="checkin"] .nsmax-progress-item-num').textContent,
 			post: document.querySelector('.nsmax-progress-item[data-key="post"] .nsmax-progress-item-num').textContent,
-			overflow: document.documentElement.scrollWidth - innerWidth
+			overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width)
 		}));
 		assert.deepEqual(state.head, ["Lv.3", "42%", "Lv.4"]);
 		assert.equal(state.note, "距离 Lv.4 还差 400 个鸡腿（1200 / 1600）");

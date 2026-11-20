@@ -17119,10 +17119,10 @@ html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger > svg:is(#nsmax-lv, *):is
   html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .comment-container > :is(div[data-nsmax-pagerbox], .nsmax-reply-head):first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     padding-inline: 18px !important;
   }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor.nsmax-compact-reply > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]):not([data-nsmax-page="new"]) .md-editor.nsmax-compact-reply > #editor-body:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     padding-inline: 18px !important;
   }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor.nsmax-compact-reply .nsmax-editor-head:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]):not([data-nsmax-page="new"]) .md-editor.nsmax-compact-reply .nsmax-editor-head:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     margin-inline: -18px !important;
     padding-inline: 18px !important;
   }
@@ -17199,4 +17199,51 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > #editor:is(#nsmax-lv, 
 /* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;
+}
+/* ---------- 电脑端细调第十轮（2026-11-20 Yiheng：「再优化个地方……各个」） ----------
+   1. 页面右边的滚动条有的页有、有的页没有（消息中心「私信」、站点设置这种短页面没有），整页内容和顶栏就跟着左右挪 15px：
+      从首页点进「我的通知」，顶栏的搜索框、三个圆按钮一下往右跳。滚动条的位置一直留着（scrollbar-gutter: stable），
+      长页短页、切标签时都不再横跳。图片大图（Viewer.js）打开时原本要给 body 补滚动条宽度的右边距，留了位置就不补
+   2. 发帖页「内容」那一块（标题、工具按钮、输入框）比上面「板块」「标题」、下面「阅读限制」往里缩了 18px，右边也短一截：
+      第九轮给帖子页回复框加的左右 18px 也套到了发帖页（发帖页的编辑器同样带 nsmax-compact-reply）。那两条已排除发帖页
+   3. 「我的关注 / 我的粉丝」标签条：站点把它限死 200px 宽、两个标签平分居中，卡片只有 230px 一小截，
+      和消息中心、首页那种通栏、字靠左的标签条不一样 → 通栏，字靠左，和别的标签条同一个起点
+   4. 签到页：签过以后「今日已签到」灰字再叠一层半透明，几乎看不见 → 正常的弱化字；
+      日历里「今天」签过以后是黑底，原来那圈黑色描边跟底色一样，看不出哪天是今天 → 里面一圈黄色
+   5. 私信列表：搜索框旁边的刷新按钮 40.6×34，椭圆的 → 34×34 正圆（和顶栏圆按钮一样）；
+      「系统消息」那一行只有一个光秃秃的铃铛，别的会话都是 34px 圆角头像 → 铃铛放在同样大小的浅底方块里
+   6. 帖子页单独成卡片的投票：左右 16px，「投票」标题和选项比上面主楼、下面「N 条回复」的字靠左 2px（第九轮把别的卡片都统一成 18px 时漏了它）→ 18px */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) {
+    scrollbar-gutter: stable;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] .member-list > .fans-switcher:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    max-width: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] .fans-switcher > a.switcher-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: none !important;
+    text-align: left !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-checkin .nsmax-checkin-button:disabled:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--text-muted) !important;
+    opacity: 1 !important;
+    cursor: default !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-checkin .nsmax-checkin-day[data-today][data-signed]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    outline: 0 !important;
+    box-shadow: inset 0 0 0 2px var(--mark) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-search .nspp-messages-refresh:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: none !important;
+    box-sizing: border-box !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    padding: 0 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .vote-panel[data-nsmax-detached]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding-inline: 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-peer[data-nsmax-system] > .nspp-messages-avatar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    background: var(--panel-hover) !important;
+  }
 }
