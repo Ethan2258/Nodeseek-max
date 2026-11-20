@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.65
+// @version      1.9.66
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -915,7 +915,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.65";
+	var NSMAX_VERSION = "1.9.66";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -13410,6 +13410,10 @@ var nsmaxRedirecting = false;
 							var item = document.createElement("li");
 							var img = document.createElement("img");
 							inheritAttributes(img, image, options.inheritedAttributes);
+							// NodeSeek Max：缩略图条按需加载、低优先级，不跟正在看的那张大图抢带宽（一楼二十多张图时尤其明显）
+							img.loading = "lazy";
+							img.decoding = "async";
+							try { img.fetchPriority = "low"; } catch {}
 							if (options.navbar) img.src = src || url;
 							img.alt = alt;
 							img.setAttribute("data-original-url", url || src);
@@ -13469,7 +13473,10 @@ var nsmaxRedirecting = false;
 					var gutter = parseInt(window.getComputedStyle(next || item).marginLeft, 10);
 					var offsetWidth = item.offsetWidth;
 					var outerWidth = offsetWidth + gutter;
-					setStyle(this.list, assign({ width: outerWidth * this.items.length - gutter }, getTransforms({ translateX: (this.viewerData.width - offsetWidth) / 2 - item.offsetLeft })));
+					var listWidth = outerWidth * this.items.length - gutter;
+					// NodeSeek Max：缩略图放得下时整条居中（以前总把当前这张摆在正中，图少时整条偏到一边）
+					var translateX = listWidth <= this.viewerData.width - 48 ? (this.viewerData.width - listWidth) / 2 : (this.viewerData.width - offsetWidth) / 2 - item.offsetLeft;
+					setStyle(this.list, assign({ width: listWidth }, getTransforms({ translateX })));
 				},
 				resetList: function resetList() {
 					var list = this.list;
@@ -13494,13 +13501,29 @@ var nsmaxRedirecting = false;
 						var width = viewerWidth;
 						var height = viewerHeight;
 						_this2.imageInitializing = false;
-						if (viewerHeight * aspectRatio > viewerWidth) height = viewerWidth / aspectRatio;
-						else width = viewerHeight * aspectRatio;
-						initialCoverage = isNumber(initialCoverage) ? initialCoverage : .9;
-						width = Math.min(width * initialCoverage, naturalWidth);
-						height = Math.min(height * initialCoverage, naturalHeight);
+						// NodeSeek Max：insets = 顶栏 / 两侧翻页按钮 / 底栏上方要让出的距离；给了就在剩下的区域里铺满（不再按比例缩一圈）并在这块区域里居中
+						var insets = options.insets;
+						if (insets) {
+							var areaWidth = Math.max(80, viewerWidth - 2 * (insets.side || 0));
+							var areaHeight = Math.max(80, viewerHeight - (insets.top || 0) - (insets.bottom || 0));
+							if (areaHeight * aspectRatio > areaWidth) {
+								width = areaWidth;
+								height = areaWidth / aspectRatio;
+							} else {
+								width = areaHeight * aspectRatio;
+								height = areaHeight;
+							}
+							width = Math.min(width, naturalWidth);
+							height = Math.min(height, naturalHeight);
+						} else {
+							if (viewerHeight * aspectRatio > viewerWidth) height = viewerWidth / aspectRatio;
+							else width = viewerHeight * aspectRatio;
+							initialCoverage = isNumber(initialCoverage) ? initialCoverage : .9;
+							width = Math.min(width * initialCoverage, naturalWidth);
+							height = Math.min(height * initialCoverage, naturalHeight);
+						}
 						var left = (viewerWidth - width) / 2;
-						var top = (viewerHeight - height) / 2;
+						var top = insets ? (insets.top || 0) + (viewerHeight - (insets.top || 0) - (insets.bottom || 0) - height) / 2 : (viewerHeight - height) / 2;
 						var imageData = {
 							left,
 							top,
@@ -14123,6 +14146,8 @@ var nsmaxRedirecting = false;
 					var alt = img.getAttribute("alt");
 					var image = document.createElement("img");
 					inheritAttributes(image, img, options.inheritedAttributes);
+					try { image.fetchPriority = "high"; } catch {}
+					image.decoding = "async";
 					image.src = url;
 					image.alt = alt;
 					if (isFunction(options.view)) addListener(element, EVENT_VIEW, options.view, { once: true });
@@ -15203,25 +15228,25 @@ var nsmaxRedirecting = false;
 	function nsmaxViewer() {
 		if (nsmaxViewerClass) return nsmaxViewerClass;
 		_css("/*!\n * Viewer.js v1.14.0\n * https://fengyuanchen.github.io/viewerjs\n *\n * Copyright 2015-present Chen Fengyuan\n * Released under the MIT license\n *\n * Date: 2026-09-12T12:12:27.170Z\n */\n.viewer-zoom-in:before,.viewer-zoom-out:before,.viewer-one-to-one:before,.viewer-reset:before,.viewer-prev:before,.viewer-play:before,.viewer-next:before,.viewer-rotate-left:before,.viewer-rotate-right:before,.viewer-flip-horizontal:before,.viewer-flip-vertical:before,.viewer-fullscreen:before,.viewer-fullscreen-exit:before,.viewer-close:before{color:#0000;background-image:url(\"data:image/svg+xml,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 560 40%22%3E%3Cpath fill%3D%22%23fff%22 d%3D%22M49.6 17.9h20.2v3.9H49.6zm123.1 2 10.9-11 2.7 2.8-8.2 8.2 8.2 8.2-2.7 2.7-10.9-10.9zm94 0-10.8-11-2.7 2.8 8.1 8.2-8.1 8.2 2.7 2.7 10.8-10.9zM212 9.3l20.1 10.6L212 30.5V9.3zm161.5 4.6-7.2 6 7.2 5.9v-4h12.4v4l7.3-5.9-7.3-6v4h-12.4v-4zm40.2 12.3 5.9 7.2 5.9-7.2h-4V13.6h4l-5.9-7.3-5.9 7.3h4v12.6h-4zm35.9-16.5h6.3v2h-4.3V16h-2V9.7Zm14 0h6.2V16h-2v-4.3h-4.2v-2Zm6.2 14V30h-6.2v-2h4.2v-4.3h2Zm-14 6.3h-6.2v-6.3h2v4.4h4.3v2Zm-438 .1v-8.3H9.6v-3.9h8.2V9.7h3.9v8.2h8.1v3.9h-8.1v8.3h-3.9zM93.6 9.7h-5.8v3.9h2V30h3.8V9.7zm16.1 0h-5.8v3.9h1.9V30h3.9V9.7zm-11.9 4.1h3.9v3.9h-3.9zm0 8.2h3.9v3.9h-3.9zm244.6-11.7 7.2 5.9-7.2 6v-3.6c-5.4-.4-7.8.8-8.7 2.8-.8 1.7-1.8 4.9 2.8 8.2-6.3-2-7.5-6.9-6-11.3 1.6-4.4 8-5 11.9-4.9v-3.1Zm147.2 13.4h6.3V30h-2v-4.3h-4.3v-2zm14 6.3v-6.3h6.2v2h-4.3V30h-1.9zm6.2-14h-6.2V9.7h1.9V14h4.3v2zm-13.9 0h-6.3v-2h4.3V9.7h2V16zm33.3 12.5 8.6-8.6-8.6-8.7 1.9-1.9 8.6 8.7 8.6-8.7 1.9 1.9-8.6 8.7 8.6 8.6-1.9 2-8.6-8.7-8.6 8.7-1.9-2zM297 10.3l-7.1 5.9 7.2 6v-3.6c5.3-.4 7.7.8 8.7 2.8.8 1.7 1.7 4.9-2.9 8.2 6.3-2 7.5-6.9 6-11.3-1.6-4.4-7.9-5-11.8-4.9v-3.1Zm-157.3-.6c2.3 0 4.4.7 6 2l2.5-3 1.9 9.2h-9.3l2.6-3.1a6.2 6.2 0 0 0-9.9 5.1c0 3.4 2.8 6.3 6.2 6.3 2.8 0 5.1-1.9 6-4.4h4c-1 4.7-5 8.3-10 8.3a10 10 0 0 1-10-10.2 10 10 0 0 1 10-10.2Z%22%2F%3E%3C%2Fsvg%3E\");background-repeat:no-repeat;background-size:280px;width:20px;height:20px;font-size:0;line-height:0;display:block}.viewer-zoom-in:before{content:\"Zoom In\";background-position:0 0}.viewer-zoom-out:before{content:\"Zoom Out\";background-position:-20px 0}.viewer-one-to-one:before{content:\"One to One\";background-position:-40px 0}.viewer-reset:before{content:\"Reset\";background-position:-60px 0}.viewer-prev:before{content:\"Previous\";background-position:-80px 0}.viewer-play:before{content:\"Play\";background-position:-100px 0}.viewer-next:before{content:\"Next\";background-position:-120px 0}.viewer-rotate-left:before{content:\"Rotate Left\";background-position:-140px 0}.viewer-rotate-right:before{content:\"Rotate Right\";background-position:-160px 0}.viewer-flip-horizontal:before{content:\"Flip Horizontal\";background-position:-180px 0}.viewer-flip-vertical:before{content:\"Flip Vertical\";background-position:-200px 0}.viewer-fullscreen:before{content:\"Enter Full Screen\";background-position:-220px 0}.viewer-fullscreen-exit:before{content:\"Exit Full Screen\";background-position:-240px 0}.viewer-close:before{content:\"Close\";background-position:-260px 0}.viewer-container{-webkit-tap-highlight-color:transparent;-ms-touch-action:none;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;direction:ltr;font-size:0;line-height:0;position:absolute;inset:0;overflow:hidden}.viewer-container::-moz-selection{background-color:#0000}.viewer-container ::-moz-selection{background-color:#0000}.viewer-container::selection{background-color:#0000}.viewer-container ::selection{background-color:#0000}.viewer-container:focus{outline:0}.viewer-container img{width:100%;height:auto;display:block;min-width:0!important;max-width:none!important;min-height:0!important;max-height:none!important}.viewer-canvas{position:absolute;inset:0;overflow:hidden}.viewer-canvas>img{width:auto;height:auto;margin:15px auto;max-width:90%!important}.viewer-magnifier{box-sizing:border-box;pointer-events:none;z-index:2;background-color:#fff;background-repeat:no-repeat;border:2px solid #fff;border-radius:50%;display:none;position:absolute;top:16px;left:16px;overflow:hidden;box-shadow:0 1px 5px #00000080}.viewer-magnifier.viewer-show{display:block}.viewer-magnifier-image{transform-origin:50%;position:absolute;top:0;left:0;max-width:none!important}.viewer-navigation{position:absolute;top:50%;left:0;right:0}.viewer-navigation>.viewer-prev,.viewer-navigation>.viewer-next{cursor:pointer;background-color:#00000080;border-radius:50%;width:40px;height:40px;margin-top:-20px;position:absolute}.viewer-navigation>.viewer-prev:focus,.viewer-navigation>.viewer-next:focus,.viewer-navigation>.viewer-prev:hover,.viewer-navigation>.viewer-next:hover{background-color:#000c}.viewer-navigation>.viewer-prev:focus,.viewer-navigation>.viewer-next:focus{outline:0;box-shadow:0 0 3px #fff}.viewer-navigation>.viewer-prev:before,.viewer-navigation>.viewer-next:before{margin:10px}.viewer-navigation>.viewer-prev{left:15px}.viewer-navigation>.viewer-next{right:15px}.viewer-navigation>.viewer-large{width:48px;height:48px;margin-top:-24px}.viewer-navigation>.viewer-large:before{margin:14px}.viewer-navigation>.viewer-small{width:32px;height:32px;margin-top:-16px}.viewer-navigation>.viewer-small:before{margin:6px}.viewer-footer{text-align:center;position:absolute;bottom:0;left:0;right:0;overflow:hidden}.viewer-navbar{background-color:#00000080;overflow:hidden}.viewer-navbar.viewer-small>.viewer-list{height:40px}.viewer-navbar.viewer-small>.viewer-list>li{width:24px;height:40px}.viewer-navbar.viewer-large>.viewer-list{height:60px}.viewer-navbar.viewer-large>.viewer-list>li{width:36px;height:60px}.viewer-list{box-sizing:content-box;height:50px;margin:0;padding:1px 0;overflow:hidden}.viewer-list>li{color:#0000;cursor:pointer;float:left;opacity:.5;width:30px;height:50px;font-size:0;line-height:0;transition:opacity .15s;overflow:hidden}.viewer-list>li:focus,.viewer-list>li:hover{opacity:.75}.viewer-list>li:focus{outline:0}.viewer-list>li+li{margin-left:1px}.viewer-list>.viewer-loading{position:relative}.viewer-list>.viewer-loading:after{border-width:2px;width:20px;height:20px;margin-top:-10px;margin-left:-10px}.viewer-list>.viewer-active,.viewer-list>.viewer-active:focus,.viewer-list>.viewer-active:hover{opacity:1}.viewer-player{cursor:none;z-index:1;background-color:#000;display:none;position:absolute;inset:0}.viewer-player>img{position:absolute;top:0;left:0}.viewer-toolbar>ul{margin:0 auto 5px;padding:6px 3px;display:inline-block;overflow:hidden}.viewer-toolbar>ul>li{cursor:pointer;float:left;background-color:#00000080;border-radius:50%;width:24px;height:24px;transition:background-color .15s;overflow:hidden}.viewer-toolbar>ul>li:focus,.viewer-toolbar>ul>li:hover{background-color:#000c}.viewer-toolbar>ul>li:focus{z-index:1;outline:0;position:relative;box-shadow:0 0 3px #fff}.viewer-toolbar>ul>li:before{margin:2px}.viewer-toolbar>ul>li+li{margin-left:1px}.viewer-toolbar>ul>.viewer-small{width:18px;height:18px;margin-top:3px;margin-bottom:3px}.viewer-toolbar>ul>.viewer-small:before{margin:-1px}.viewer-toolbar>ul>.viewer-large{width:30px;height:30px;margin-top:-3px;margin-bottom:-3px}.viewer-toolbar>ul>.viewer-large:before{margin:5px}.viewer-tooltip{color:#fff;text-align:center;background-color:#000c;border-radius:10px;width:50px;height:20px;margin-top:-10px;margin-left:-25px;font-size:12px;line-height:20px;display:none;position:absolute;top:50%;left:50%}.viewer-title{color:#ccc;opacity:.8;text-overflow:ellipsis;white-space:nowrap;max-width:90%;min-height:14px;margin:5px 5%;font-size:12px;line-height:1.2;transition:opacity .15s;display:inline-block;overflow:hidden}.viewer-title:hover{opacity:1}.viewer-button{-webkit-app-region:no-drag;cursor:pointer;background-color:#00000080;border-radius:50%;width:80px;height:80px;transition:background-color .15s;position:absolute;top:-40px;right:-40px;overflow:hidden}.viewer-button:focus,.viewer-button:hover{background-color:#000c}.viewer-button:focus{outline:0;box-shadow:0 0 3px #fff}.viewer-button:before{position:absolute;bottom:15px;left:15px}.viewer-fixed{position:fixed}.viewer-open{overflow:hidden}.viewer-show{display:block}.viewer-hide{display:none}.viewer-backdrop{background-color:#00000080}.viewer-invisible{visibility:hidden}.viewer-move{cursor:move;cursor:grab}.viewer-fade{opacity:0}.viewer-in{opacity:1}.viewer-transition{transition:all .3s}@keyframes viewer-spinner{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.viewer-loading:after{content:\"\";z-index:1;border:4px solid #ffffff1a;border-left-color:#ffffff80;border-radius:50%;width:40px;height:40px;margin-top:-20px;margin-left:-20px;animation:1s linear infinite viewer-spinner;display:inline-block;position:absolute;top:50%;left:50%}@media (width<=767px){.viewer-hide-xs-down{display:none}}@media (width<=991px){.viewer-hide-sm-down{display:none}}@media (width<=1199px){.viewer-hide-md-down{display:none}}");
-		_css(".nspp-image-preview{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:0 0;border:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;position:fixed;inset:0;overflow:hidden}.nspp-image-preview::backdrop{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:#0b0e14eb}.nspp-image-preview .viewer-backdrop{background:0 0}.nspp-image-preview .viewer-footer{padding:0 12px max(20px, env(safe-area-inset-bottom));box-sizing:border-box}.nspp-image-preview .viewer-toolbar>ul{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);background:#252a34e6;border:1px solid #ffffff26;border-radius:999px;gap:4px;padding:6px;display:inline-flex;box-shadow:0 8px 32px #0005}.nspp-image-preview .viewer-toolbar>ul>li{background:0 0;border-radius:50%;place-items:center;width:36px;height:36px;margin:0;padding:0;display:grid}.nspp-image-preview .viewer-toolbar>ul>li:hover,.nspp-image-preview .viewer-button:hover{background-color:#ffffff24}.nspp-image-preview .viewer-button{top:max(16px, env(safe-area-inset-top));right:max(16px, env(safe-area-inset-right));background:#252a34e6;border:1px solid #ffffff26;border-radius:50%;width:40px;height:40px}.nspp-image-preview .viewer-button:before{margin:9px;position:static}.nspp-image-preview .viewer-list{margin-top:12px}.nspp-image-preview .viewer-list>li{opacity:.5;border:2px solid #0000;border-radius:6px}.nspp-image-preview .viewer-list>.viewer-active{opacity:1;border-color:#fff}.nspp-image-preview [role=button]:focus-visible{outline-offset:3px;outline:2px solid #fff}.nspp-preview-content img{cursor:zoom-in}.nspp-preview-content img:focus-visible{outline:2px solid var(--link-color,#0969da);outline-offset:3px;border-radius:3px}");
+		_css(".nspp-image-preview{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:0 0;border:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;position:fixed;inset:0;overflow:hidden}.nspp-image-preview::backdrop{;background:#0b0e14eb}.nspp-image-preview .viewer-backdrop{background:0 0}.nspp-image-preview .viewer-footer{padding:0 12px max(20px, env(safe-area-inset-bottom));box-sizing:border-box}.nspp-image-preview .viewer-toolbar>ul{;background:#252a34e6;border:1px solid #ffffff26;border-radius:999px;gap:4px;padding:6px;display:inline-flex;box-shadow:0 8px 32px #0005}.nspp-image-preview .viewer-toolbar>ul>li{background:0 0;border-radius:50%;place-items:center;width:36px;height:36px;margin:0;padding:0;display:grid}.nspp-image-preview .viewer-toolbar>ul>li:hover,.nspp-image-preview .viewer-button:hover{background-color:#ffffff24}.nspp-image-preview .viewer-button{top:max(16px, env(safe-area-inset-top));right:max(16px, env(safe-area-inset-right));background:#252a34e6;border:1px solid #ffffff26;border-radius:50%;width:40px;height:40px}.nspp-image-preview .viewer-button:before{margin:9px;position:static}.nspp-image-preview .viewer-list{margin-top:12px}.nspp-image-preview .viewer-list>li{opacity:.5;border:2px solid #0000;border-radius:6px}.nspp-image-preview .viewer-list>.viewer-active{opacity:1;border-color:#fff}.nspp-image-preview [role=button]:focus-visible{outline-offset:3px;outline:2px solid #fff}.nspp-preview-content img{cursor:zoom-in}.nspp-preview-content img:focus-visible{outline:2px solid var(--link-color,#0969da);outline-offset:3px;border-radius:3px}");
 		// 2026-11-08 看图重做（见 openImagePreview）：深色半透明的圆角浮层统一一个样子（底色、细边、圆角），图片带一层阴影；
 		// 缩略图 44px 方块、裁成正方形，当前那张白框。选择器前面加 html 压过旧主题层和 Viewer.js 自带样式
 		_css([
-			"html .nspp-image-preview{--nsmax-vw-glass:rgb(28 30 36/.8);--nsmax-vw-line:rgb(255 255 255/.12);--nsmax-vw-hover:rgb(255 255 255/.14);--nsmax-vw-text:rgb(255 255 255/.88);--nsmax-vw-font:500 13px/1 system-ui,-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif}",
-			"html .nspp-image-preview::backdrop{background:rgb(9 10 13/.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}",
+			"html .nspp-image-preview{--nsmax-vw-glass:rgb(30 32 38/.94);--nsmax-vw-line:rgb(255 255 255/.12);--nsmax-vw-hover:rgb(255 255 255/.14);--nsmax-vw-text:rgb(255 255 255/.88);--nsmax-vw-font:500 13px/1 system-ui,-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif}",
+			"html .nspp-image-preview::backdrop{background:rgb(9 10 13/.94)}",
 			"html .nspp-image-preview .viewer-canvas>img{border-radius:4px;box-shadow:0 18px 60px rgb(0 0 0/.5)}",
-			"html .nspp-image-preview .viewer-title{position:absolute;z-index:3;top:max(16px,env(safe-area-inset-top));left:max(16px,env(safe-area-inset-left));box-sizing:border-box;max-width:calc(100% - 220px);height:40px;margin:0;padding:0 16px;border:1px solid var(--nsmax-vw-line);border-radius:999px;background:var(--nsmax-vw-glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--nsmax-vw-text);font:var(--nsmax-vw-font);line-height:38px;font-variant-numeric:tabular-nums;opacity:1;white-space:nowrap}",
+			"html .nspp-image-preview .viewer-title{position:absolute;z-index:3;top:max(16px,env(safe-area-inset-top));left:max(16px,env(safe-area-inset-left));box-sizing:border-box;max-width:calc(100% - 220px);height:40px;margin:0;padding:0 16px;border:1px solid var(--nsmax-vw-line);border-radius:999px;background:var(--nsmax-vw-glass);color:var(--nsmax-vw-text);font:var(--nsmax-vw-font);line-height:38px;font-variant-numeric:tabular-nums;opacity:1;white-space:nowrap}",
 			"html .nspp-image-preview .viewer-title:empty:not([data-nsmax-count]){display:none}",
 			"html .nspp-image-preview .viewer-title:empty::before{content:attr(data-nsmax-count)}",
-			"html .nspp-image-preview .viewer-button{top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));box-sizing:border-box;width:40px;height:40px;border:1px solid var(--nsmax-vw-line);background:var(--nsmax-vw-glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}",
+			"html .nspp-image-preview .viewer-button{top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));box-sizing:border-box;width:40px;height:40px;border:1px solid var(--nsmax-vw-line);background:var(--nsmax-vw-glass)}",
 			"html .nspp-image-preview .viewer-button:before{margin:9px;position:static}",
-			"html .nspp-image-preview .nsmax-viewer-open{position:absolute;z-index:3;top:max(16px,env(safe-area-inset-top));right:calc(max(16px,env(safe-area-inset-right)) + 48px);display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;height:40px;padding:0 14px;border:1px solid var(--nsmax-vw-line);border-radius:999px;background:var(--nsmax-vw-glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--nsmax-vw-text);font:var(--nsmax-vw-font);text-decoration:none;transition:background-color .15s}",
+			"html .nspp-image-preview .nsmax-viewer-open{position:absolute;z-index:3;top:max(16px,env(safe-area-inset-top));right:calc(max(16px,env(safe-area-inset-right)) + 48px);display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;height:40px;padding:0 14px;border:1px solid var(--nsmax-vw-line);border-radius:999px;background:var(--nsmax-vw-glass);color:var(--nsmax-vw-text);font:var(--nsmax-vw-font);text-decoration:none;transition:background-color .15s}",
 			"html .nspp-image-preview .nsmax-viewer-open svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}",
 			"html .nspp-image-preview :is(.nsmax-viewer-open,.viewer-button,.viewer-navigation>div):hover{background-color:rgb(64 68 78/.9);color:#fff}",
 			"html[data-nsmax-touch] .nspp-image-preview .nsmax-viewer-open{right:calc(max(16px,env(safe-area-inset-right)) + 52px);height:44px}",
 			"html[data-nsmax-touch] .nspp-image-preview .viewer-button:before{margin:11px}",
 			"html[data-nsmax-touch] .nspp-image-preview .viewer-title{height:44px;line-height:42px;max-width:calc(100% - 180px)}",
-			"html .nspp-image-preview .viewer-navigation>.viewer-prev,html .nspp-image-preview .viewer-navigation>.viewer-next{box-sizing:border-box;width:48px;height:48px;margin-top:-24px;border:1px solid var(--nsmax-vw-line);background:var(--nsmax-vw-glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:background-color .15s}",
+			"html .nspp-image-preview .viewer-navigation>.viewer-prev,html .nspp-image-preview .viewer-navigation>.viewer-next{box-sizing:border-box;width:48px;height:48px;margin-top:-24px;border:1px solid var(--nsmax-vw-line);background:var(--nsmax-vw-glass);transition:background-color .15s}",
 			"html .nspp-image-preview .viewer-navigation>.viewer-prev{left:max(24px,env(safe-area-inset-left))}",
 			"html .nspp-image-preview .viewer-navigation>.viewer-next{right:max(24px,env(safe-area-inset-right))}",
 			"html .nspp-image-preview .viewer-navigation>div:before{margin:13px}",
@@ -15238,7 +15263,16 @@ var nsmaxRedirecting = false;
 			"html .nspp-image-preview .viewer-list>li.viewer-active{opacity:1;border-color:#fff}",
 			"html .nspp-image-preview .viewer-list>li.viewer-active:is(#nsmax-lv,*):is(#nsmax-b,*):is(#nsmax-c,*):is(#nsmax-d,*):is(:focus,:focus-visible){outline:0!important;box-shadow:none}",
 			"html .nspp-image-preview .viewer-list>li>img{width:100%!important;height:100%!important;margin:0!important;border-radius:5px;object-fit:cover;transform:none!important}",
-			"html .nspp-image-preview .viewer-tooltip{width:auto;min-width:56px;height:28px;margin-top:-14px;margin-left:-28px;padding:0 10px;box-sizing:border-box;border:1px solid var(--nsmax-vw-line);border-radius:999px;background:var(--nsmax-vw-glass);font:var(--nsmax-vw-font);line-height:26px}"
+			"html .nspp-image-preview .viewer-tooltip{width:auto;min-width:56px;height:28px;margin-top:-14px;margin-left:-28px;padding:0 10px;box-sizing:border-box;border:1px solid var(--nsmax-vw-line);border-radius:999px;background:var(--nsmax-vw-glass);font:var(--nsmax-vw-font);line-height:26px}",
+			// 2026-11-20：打开时遮罩和按钮淡入（大图自己从缩略图放大出来，见 openImagePreview）；页面右侧留着滚动条位（scrollbar-gutter: stable）时，那一条在顶层之外、遮罩盖不到，看图期间把根元素的底色压暗，不再留一条亮边；
+			// 「适应窗口」换成四角取景框图标（原来的圆箭头像刷新 / 旋转）；比例在加载时空着也占住宽度，工具栏不跳
+			"@keyframes nsmax-vw-in{from{opacity:0}}",
+			"html.nsmax-viewing{background-color:rgb(23 24 27)!important}","html.nsmax-viewing[data-nsmax-dark]{background-color:rgb(10 11 14)!important}",
+			"html .nspp-image-preview[open]::backdrop{animation:nsmax-vw-in .22s ease-out}",
+			"html .nspp-image-preview .viewer-container>:not(.viewer-canvas){animation:nsmax-vw-in .22s ease-out}",
+			"@media (prefers-reduced-motion:reduce){html .nspp-image-preview[open]::backdrop,html .nspp-image-preview .viewer-container>*{animation:none}}",
+			"html .nspp-image-preview .viewer-toolbar .viewer-reset:before{background:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4'/%3E%3C/svg%3E\") 0 0/20px 20px no-repeat}",
+			"html .nspp-image-preview .viewer-toolbar>ul>li:focus-visible,html .nspp-image-preview .viewer-navigation>div:focus-visible{outline:2px solid #fff;outline-offset:2px}"
 		].join(""));
 		return nsmaxViewerClass = __toESM(nsmaxViewerModule(), 1).default;
 	}
@@ -15256,22 +15290,22 @@ var nsmaxRedirecting = false;
 		dialog.setAttribute("aria-label", "图片预览");
 		document.body.append(dialog);
 		nsmaxShowDialog(dialog);
+		document.documentElement.classList.add("nsmax-viewing");
 		let viewer;
 		let closed = false;
+		let leaving = false;
+		let anim = null;
 		const close = () => {
 			if (closed) return;
 			closed = true;
+			anim?.cancel();
 			viewer?.destroy();
 			dialog.close();
 			dialog.remove();
+			if (!document.querySelector("dialog.nspp-image-preview")) document.documentElement.classList.remove("nsmax-viewing");
 			if (image.isConnected) image.focus({ preventScroll: true });
 			onClose();
 		};
-		dialog.addEventListener("cancel", (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			close();
-		});
 		// 图集只收正文配图：表情包、加载失败的图不进来（2026-11-08 真站：点第一张截图显示「6 / 15」，缩略图头尾是表情 GIF 和一个裂图）
 		const viewable = (img) => img === image || nsmaxViewableImage(img);
 		const images = Array.from(content.querySelectorAll("img")).filter(viewable);
@@ -15280,20 +15314,117 @@ var nsmaxRedirecting = false;
 		// 底部工具栏是「缩小 · 当前比例 · 放大 | 适应窗口」（点比例在原始大小和适应窗口之间切换），缩略图条不再垫一条黑底。
 		// 手机上工具栏照旧（上一张 / 下一张在工具栏里，按钮 44px），不显示比例
 		const touch = nsmaxTouchLayout();
+		// 2026-11-20 电脑上看图再做一轮（要「丝滑」）：
+		// - 打开时大图从帖子里那张缩略图的位置放大出来，关闭时缩回去（缩略图不在屏幕里就原地淡出）；Esc、点空白、点关闭都一样。
+		//   动画只动 transform / opacity（交给合成器），Viewer.js 自带的过渡（每帧改宽高和外边距、要重排）全部关掉
+		// - 滚轮按滚动量连续缩放（触控板细腻、鼠标一格约 1.2 倍，经过 100% 停一下），以前每个事件固定 10% 还限流，触控板一抹就飞到几百倍；
+		//   点按钮 / 双击 / 键盘缩放带 0.2 秒过渡
+		// - 长截图（高是宽的 2.2 倍以上）不再缩成一条看不清的细条：按宽度铺开、从顶上开始，滚轮上下滚着看（Ctrl + 滚轮或双指捏合缩放）
+		// - 图片铺满顶栏和底栏之间的区域，左右给翻页按钮留位
+		const motion = !touch && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const EASE = "cubic-bezier(.2,.8,.2,1)";
+		const insets = touch ? null : { top: 72, side: multiple ? 88 : 24, bottom: 12 };
 		let zoomLabel = null;
 		let openLink = null;
-		const syncChrome = () => {
+		let tall = false;
+		let animateNext = false;
+		let lastBox = null;
+		let opened = false;
+		let footerHeight = 0;
+		const flagAnimate = () => {
+			animateNext = true;
+			setTimeout(() => { animateNext = false; });
+		};
+		const boxOf = (data) => data && data.width ? { x: data.x, y: data.y, w: data.width, h: data.height } : null;
+		const containerRect = () => (viewer?.viewer || dialog).getBoundingClientRect();
+		const liveBox = () => {
+			const img = viewer?.image;
+			if (!img) return null;
+			const r = img.getBoundingClientRect(), c = containerRect();
+			return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height };
+		};
+		// 帖子里那张图在看图层里的位置；不在屏幕里（滚走了、被折叠）就返回 null
+		const thumbBox = (el) => {
+			if (!el || !el.isConnected) return null;
+			const r = el.getBoundingClientRect();
+			if (r.width < 8 || r.height < 8 || r.bottom <= 0 || r.right <= 0 || r.top >= innerHeight || r.left >= innerWidth) return null;
+			const c = containerRect();
+			return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height };
+		};
+		const flipFrames = (from, to) => [
+			{ transformOrigin: "0 0", transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) scale(${from.w / to.w}, ${from.h / to.h})` },
+			{ transformOrigin: "0 0", transform: "none" }
+		];
+		const area = () => {
+			const data = viewer.viewerData;
+			return insets ? { top: insets.top, bottom: data.height - footerHeight - insets.bottom, left: 0, right: data.width } : { top: 0, bottom: data.height - footerHeight, left: 0, right: data.width };
+		};
+		const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+		const panBy = (dx, dy) => {
+			const data = viewer.imageData, a = area();
+			const x = data.width > a.right - a.left ? clamp(data.x + dx, a.right - data.width, a.left) : data.x;
+			const y = data.height > a.bottom - a.top ? clamp(data.y + dy, a.bottom - data.height, a.top) : data.y;
+			if (x !== data.x || y !== data.y) viewer.moveTo(x, y);
+		};
+		const zoomAround = (ratio, pivot) => {
+			const a = area();
+			viewer.zoomTo(ratio, false, pivot || { x: (a.left + a.right) / 2, y: (a.top + a.bottom) / 2 });
+		};
+		// 「原图」：图片外面包着指向图片的链接时用链接（往往是图床的大图），否则用图片地址
+		const originalHref = (index, fallback) => {
+			const link = viewer?.images?.[index]?.closest?.("a[href]");
+			return link && /\.(?:png|jpe?g|gif|webp|avif|bmp)(?:[?#]|$)/i.test(link.href) ? link.href : fallback;
+		};
+		const syncLabel = () => {
 			const ratio = viewer?.imageData?.ratio;
 			if (zoomLabel) zoomLabel.textContent = ratio ? `${Math.round(ratio * 100)}%` : "";
-			const src = viewer?.image?.src;
-			if (openLink && src) openLink.href = src;
 		};
+		const syncChrome = () => {
+			syncLabel();
+			const src = viewer?.image?.src;
+			if (openLink && src) openLink.href = originalHref(viewer.index, src);
+		};
+		// 关闭：大图缩回帖子里那张图的位置（不在屏幕里就原地缩小淡出），遮罩和按钮一起淡出，结束后再真正关掉
+		const animateOut = () => {
+			if (closed || leaving) return;
+			leaving = true;
+			dialog.style.pointerEvents = "none";
+			if (!motion) return close();
+			anim?.cancel();
+			anim = null;
+			const img = viewer?.viewed ? viewer.image : null;
+			const box = img && boxOf(viewer.imageData);
+			const runs = [];
+			try {
+				// 放大到比窗口还大时不做缩回动画（整张大图要先栅格化成一层，慢机器上关闭会卡一下），直接藏起来，只淡出遮罩
+				if (img && box && (box.w > viewer.viewerData.width * 1.2 || box.h > viewer.viewerData.height * 1.2)) img.style.visibility = "hidden";
+				else if (img && box) {
+					const thumb = thumbBox(viewer.images[viewer.index]);
+					runs.push(thumb ? img.animate(flipFrames(thumb, box).reverse(), { duration: 240, easing: EASE, fill: "forwards" }) : img.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.96)" }], { duration: 180, easing: "ease-in", fill: "forwards" }));
+				}
+				dialog.querySelectorAll(".viewer-container > :not(.viewer-canvas)").forEach((el) => runs.push(el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" })));
+				runs.push(dialog.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: "ease-in", fill: "forwards", pseudoElement: "::backdrop" }));
+			} catch {}
+			Promise.all(runs.map((run) => run.finished.catch(() => {}))).then(close);
+			setTimeout(close, 450);
+		};
+		dialog.addEventListener("cancel", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			animateOut();
+		});
 		viewer = new (nsmaxViewer())(content, {
 			container: dialog,
 			filter: viewable,
+			// 懒加载的图（data-src 里才是真地址）也能看大图
+			url: (img) => img.getAttribute("data-src") || img.currentSrc || img.src,
 			initialViewIndex: Math.max(0, images.indexOf(image)),
-			// 电脑上图片上下各让出 72px：顶上是张数和「原图 / 关闭」那一行，图片不压在它们下面（底栏的高度 Viewer.js 自己会让）
-			initialCoverage: touch ? .9 : Math.max(.6, Math.min(.9, 1 - 144 / Math.max(1, innerHeight - (multiple ? 130 : 80)))),
+			initialCoverage: .9,
+			insets,
+			minZoomRatio() {
+				return Math.min(1, this.initialImageData?.ratio || 1) * .2;
+			},
+			maxZoomRatio: 16,
 			title: [true, function(_image, data) {
 				const size = data && data.naturalWidth ? `${data.naturalWidth} × ${data.naturalHeight}` : "";
 				return [multiple ? `${this.index + 1} / ${this.length}` : "", size].filter(Boolean).join("　·　");
@@ -15312,19 +15443,53 @@ var nsmaxRedirecting = false;
 			fullscreen: false,
 			rotatable: false,
 			scalable: false,
+			// 电脑上滚轮由下面自己的处理接管（按滚动量缩放、长图滚动）
+			zoomOnWheel: touch,
+			slideOnWheel: touch,
 			inheritedAttributes: ["referrerPolicy"],
-			transition: !touch && !matchMedia("(prefers-reduced-motion: reduce)").matches,
-			// 换图时（大图还在加载）：张数先写上、「原图」先指向新图、比例先显示「—」，不再空着或还指着上一张
+			transition: false,
+			// 换图时（大图还在加载）：张数先写上、「原图」先指向新图、比例先空着，不再空着或还指着上一张
 			view(event) {
 				const next = event.detail?.image || event.detail?.originalImage;
 				// Viewer.js 换图时会清空标题，加载完才写回；清空期间由样式把这个属性显示出来
 				const title = dialog.querySelector(".viewer-title");
 				if (title && multiple) title.setAttribute("data-nsmax-count", `${(event.detail?.index ?? 0) + 1} / ${images.length}`);
-				if (openLink && next?.src) openLink.href = next.src;
-				if (zoomLabel) zoomLabel.textContent = "—";
+				if (openLink && next?.src) openLink.href = originalHref(event.detail?.index, next.src);
+				if (zoomLabel) zoomLabel.textContent = "";
+				anim?.cancel();
+				anim = null;
 			},
-			viewed: syncChrome,
-			zoomed: syncChrome,
+			viewed(event) {
+				const first = !opened;
+				opened = true;
+				const data = viewer.imageData;
+				footerHeight = viewer.footer?.offsetHeight || 0;
+				// 长截图：按宽度铺开（最宽 880px，不放大），顶端对齐顶栏下沿；「适应窗口」也回到这里
+				tall = !touch && data.naturalHeight / data.naturalWidth > 2.2 && data.height < data.naturalHeight && data.naturalHeight > area().bottom - area().top;
+				if (tall) {
+					const width = Math.min(data.naturalWidth, 880, viewer.viewerData.width - 2 * insets.side);
+					if (width / data.naturalWidth > data.ratio) {
+						viewer.zoomTo(width / data.naturalWidth);
+						viewer.moveTo((viewer.viewerData.width - viewer.imageData.width) / 2, insets.top);
+						viewer.initialImageData = Object.assign({}, viewer.imageData);
+					}
+				}
+				syncChrome();
+				const img = viewer.image, box = boxOf(viewer.imageData);
+				if (!motion || !img || !box) return;
+				try {
+					if (first) {
+						const thumb = thumbBox(event.detail?.originalImage || image);
+						anim = thumb ? img.animate(flipFrames(thumb, box), { duration: 280, easing: EASE }) : img.animate([{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: EASE });
+					} else anim = img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: "ease-out" });
+				} catch {}
+			},
+			// 关闭都走同一个动画（点空白处、点关闭按钮）
+			hide(event) {
+				if (closed) return;
+				event.preventDefault();
+				animateOut();
+			},
 			ready() {
 				const labels = {
 					"zoom-in": "放大",
@@ -15372,10 +15537,115 @@ var nsmaxRedirecting = false;
 						reset.before(sep);
 					}
 				}
+				// 工具栏按钮和左右翻页能用 Tab 走到、回车触发
+				dialog.querySelectorAll(".viewer-toolbar [data-viewer-action], .viewer-navigation [data-viewer-action]").forEach((control) => control.tabIndex = 0);
 				syncChrome();
 			},
 			hidden: close
 		});
+		// 每次摆放图片之后：比例跟着改（以前只在缩放过渡结束时更新，连续滚动或「适应窗口」后会停在旧数字）；
+		// 点按钮 / 双击 / 键盘触发的这一次带 transform 过渡（从当前看到的位置过去，连点也不跳）
+		const renderImage = viewer.renderImage;
+		viewer.renderImage = function(done) {
+			const running = anim && anim.playState === "running";
+			const from = animateNext && this.viewed ? running ? liveBox() : lastBox : null;
+			if (running && !from) {
+				anim.cancel();
+				anim = null;
+			}
+			const result = renderImage.call(this, done);
+			const to = boxOf(this.imageData);
+			if (from && to && motion) {
+				animateNext = false;
+				anim?.cancel();
+				try { anim = this.image.animate(flipFrames(from, to), { duration: 200, easing: EASE }); } catch {}
+			}
+			lastBox = to;
+			syncLabel();
+			return result;
+		};
+		if (!touch) {
+			const reset = () => {
+				flagAnimate();
+				viewer.reset();
+			};
+			// 工具栏：放大 / 缩小一次 1.25 倍、以屏幕中心为准；点比例在 100% 和适应窗口之间切换（长图切到 100% 时保持顶端不动）
+			dialog.addEventListener("click", (event) => {
+				const control = event.target instanceof Element ? event.target.closest(".viewer-toolbar [data-viewer-action]") : null;
+				if (!control || !viewer?.viewed) return;
+				const action = control.dataset.viewerAction;
+				const data = viewer.imageData;
+				if (action === "zoom-in" || action === "zoom-out") {
+					flagAnimate();
+					zoomAround(data.ratio * (action === "zoom-in" ? 1.25 : .8));
+				} else if (action === "one-to-one") {
+					if (data.ratio === 1) reset();
+					else {
+						flagAnimate();
+						zoomAround(1, tall ? { x: viewer.viewerData.width / 2, y: Math.max(data.y, insets.top) } : null);
+					}
+				} else if (action === "reset") reset();
+				else return;
+				event.preventDefault();
+				event.stopPropagation();
+			}, true);
+			dialog.addEventListener("dblclick", flagAnimate, true);
+			let slideAt = -1e4;
+			dialog.addEventListener("wheel", (event) => {
+				event.preventDefault();
+				if (!viewer?.viewed || leaving) return;
+				const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1;
+				let dx = event.deltaX * unit, dy = event.deltaY * unit;
+				if (event.shiftKey && !dx) {
+					dx = dy;
+					dy = 0;
+				}
+				// 在缩略图条上滚：换图
+				if (viewer.navbar?.contains(event.target)) {
+					if (event.timeStamp - slideAt < 180 || !(dx || dy)) return;
+					slideAt = event.timeStamp;
+					(Math.abs(dy) >= Math.abs(dx) ? dy : dx) > 0 ? viewer.next(true) : viewer.prev(true);
+					return;
+				}
+				// 长图：滚轮上下（Shift / 触控板横向左右）滚着看；按住 Ctrl（触控板捏合也是 Ctrl）才缩放
+				if (tall && !event.ctrlKey && !event.metaKey) {
+					panBy(-dx, -dy);
+					return;
+				}
+				if (!dy) return;
+				anim?.cancel();
+				anim = null;
+				const data = viewer.imageData;
+				let ratio = data.ratio * Math.exp(-dy * (event.ctrlKey ? .01 : .002));
+				// 经过 100% 时停在 100%（下一下再接着缩放）
+				if (data.ratio < 1 && ratio > 1 || data.ratio > 1 && ratio < 1) ratio = 1;
+				const c = containerRect();
+				viewer.zoomTo(ratio, false, { x: event.clientX - c.left, y: event.clientY - c.top });
+			}, { capture: true, passive: false });
+			dialog.addEventListener("keydown", (event) => {
+				if (!viewer?.viewed || event.altKey || event.isComposing) return;
+				const page = area().bottom - area().top - 60;
+				const data = viewer.imageData;
+				const key = event.key;
+				if (!event.ctrlKey && !event.metaKey && (key === "+" || key === "=")) {
+					flagAnimate();
+					zoomAround(data.ratio * 1.25);
+				} else if (!event.ctrlKey && !event.metaKey && key === "-") {
+					flagAnimate();
+					zoomAround(data.ratio * .8);
+				} else if (!event.ctrlKey && !event.metaKey && key === "0") reset();
+				else if (tall && (key === "ArrowDown" || key === "ArrowUp")) panBy(0, key === "ArrowDown" ? -96 : 96);
+				else if (tall && (key === "PageDown" || key === "PageUp" || key === " ")) panBy(0, key === "PageUp" || key === " " && event.shiftKey ? page : -page);
+				else if (tall && (key === "Home" || key === "End")) panBy(0, key === "Home" ? 1e6 : -1e6);
+				else if (key === "ArrowUp" || key === "ArrowDown" || event.ctrlKey && (key === "0" || key === "1")) {
+					// 交给 Viewer.js 自己的键盘缩放，只是这一下带过渡
+					flagAnimate();
+					return;
+				} else return;
+				event.preventDefault();
+				event.stopPropagation();
+			}, true);
+		}
 		viewer.show();
 		return close;
 	}
