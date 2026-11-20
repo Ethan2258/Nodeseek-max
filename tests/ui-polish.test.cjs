@@ -561,7 +561,7 @@ for(const engine of engines){
      const cells=[...document.querySelectorAll(".head-container > .card-block > .nsmax-user-stat")].filter(c=>c.offsetWidth);
      const tabs=[...document.querySelectorAll(".selector > a.select-item")].filter(t=>t.offsetWidth);
      return{cols:new Set(cells.map(c=>Math.round(c.getBoundingClientRect().left))).size,rows:new Set(cells.map(c=>Math.round(c.getBoundingClientRect().top))).size,count:cells.length,
-      firstTabGap:Math.round(tabs[0].getBoundingClientRect().left-document.querySelector(".selector").getBoundingClientRect().left),gaps:tabs.slice(1).map((t,i)=>Math.round(t.getBoundingClientRect().left-tabs[i].getBoundingClientRect().right)),overflow:document.documentElement.scrollWidth-innerWidth};
+      firstTabGap:Math.round(tabs[0].getBoundingClientRect().left-document.querySelector(".selector").getBoundingClientRect().left),gaps:tabs.slice(1).map((t,i)=>Math.round(t.getBoundingClientRect().left-tabs[i].getBoundingClientRect().right)),overflow:document.documentElement.scrollWidth-Math.round(document.documentElement.getBoundingClientRect().width)};
     });
     assert.equal(s.count,9,JSON.stringify(s));
     assert.equal(s.cols,cols,width+JSON.stringify(s));
@@ -1392,5 +1392,36 @@ for(const engine of engines){
    assert.equal(mobCss.includes("[data-nsmax-touch]"),true,"手机触控页正常加载 [data-nsmax-touch] 规则");
    assert.deepEqual(mobList.errors,[]);
   }finally{await mobList.context.close();}
+ });
+ test(`${engine} 电脑端第十轮：滚动条留位、发帖页内容框不缩进、没有工具条的页面不漏设置按钮、签到页今天看得出`,async()=>{
+  if(engine!=="chromium")return;
+  // 发帖页：「内容」那块（编辑器）和「板块 / 标题 / 阅读限制」左右边对齐
+  const np=await open(browser,"https://www.nodeseek.com/new-discussion",{...desk,html:P.newPostPage()});
+  try{
+   await ready(np.page);
+   const s=await np.page.evaluate(()=>{const box=e=>{const r=document.querySelector(e).getBoundingClientRect();return[Math.round(r.left),Math.round(r.right)];};return{title:box(".md-editor > .title-input"),area:box("#editor-body .content-area"),category:box("select#category"),gutter:getComputedStyle(document.documentElement).scrollbarGutter};});
+   assert.deepEqual(s.area,s.title,JSON.stringify(s));
+   assert.deepEqual(s.area,s.category,JSON.stringify(s));
+   assert.equal(s.gutter,"stable","电脑端给滚动条留位，长页短页顶栏不左右跳");
+   assert.deepEqual(np.errors,[]);
+  }finally{await np.context.close();}
+  // 站点设置页没有浮动工具条：打开再关上设置面板后，页面上不留没样式的按钮
+  const st=await open(browser,"https://www.nodeseek.com/setting",{...desk,html:P.settingPage()});
+  try{
+   await ready(st.page);
+   await st.page.locator(".nsmax-settings-button").click();
+   await st.page.locator("#nspp-settings").evaluate(h=>new Promise(r=>{const t=()=>h.shadowRoot?.querySelector("dialog[open]")?r():requestAnimationFrame(t);t();}));
+   await st.page.keyboard.press("Escape");
+   assert.equal(await st.page.evaluate(()=>document.querySelectorAll("body > .nspp-tool-icon, body > [data-nspp-settings-launcher]").length),0);
+   assert.deepEqual(st.errors,[]);
+  }finally{await st.context.close();}
+  // 签到页：签过以后今天那格里面一圈黄色；「今日已签到」不再半透明
+  const bd=await open(browser,"https://www.nodeseek.com/board",{...desk,html:P.boardRealPage()});
+  try{
+   await bd.page.waitForSelector(".nsmax-checkin-day[data-today][data-signed]");
+   const b=await bd.page.evaluate(()=>({ring:getComputedStyle(document.querySelector(".nsmax-checkin-day[data-today][data-signed]")).boxShadow,opacity:getComputedStyle(document.querySelector(".nsmax-checkin-button:disabled")).opacity}));
+   assert.match(b.ring,/inset/,JSON.stringify(b));
+   assert.equal(b.opacity,"1",JSON.stringify(b));
+  }finally{await bd.context.close();}
  });
 }

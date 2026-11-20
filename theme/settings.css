@@ -60,6 +60,7 @@ h2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-heigh
 .status:empty{display:none}
 /* 内容区：每个模块一段，段与段之间 line-soft 细线；搜索时按分页加小标题 */
 .body{flex:1;min-height:0;padding:0 20px 8px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--s-line-strong) transparent}
+textarea{scrollbar-width:thin;scrollbar-color:var(--s-line-strong) transparent}
 .page-title{margin:18px 0 0;color:var(--s-subtle);font-size:12.5px;font-weight:500;line-height:1.6}
 .module{padding:18px 0;border-top:1px solid var(--s-line-soft)}
 .page>.module:first-child,.page-title+.module{border-top:0}
