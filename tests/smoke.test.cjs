@@ -3617,6 +3617,57 @@ test("回复某一层（2026-10-17 图六）：回复框挪到那一层下面，
 	} finally { await context.close(); }
 });
 
+test("回复手感（2026-11-20）：回复框挂进楼层后输入框拿到焦点、光标在最后；状态字写「回复 #楼号」（@ 链接不算字）；回复的那一条楼中楼标上 data-nsmax-reply-target；只有 @ 时 Ctrl+Enter 不发；表情面板开着时 Esc 先收面板；落地的那一层闪一下", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: floorPost(), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".md-editor .nsmax-editor-head");
+		await page.waitForSelector("li[id='1'] > .nsmax-floor-box li[id='3']");
+		await wait(page, 300);
+		let submits = 0;
+		await page.exposeFunction("__countSubmit", () => { submits += 1; });
+		await page.evaluate(() => {
+			document.querySelector("li[id='3'] .menu-item[title='回复']").addEventListener("click", () => {
+				const input = document.querySelector(".md-editor textarea");
+				Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set.call(input, "@curious [#3](https://www.nodeseek.com/post-1000-1#3) ");
+				input.dispatchEvent(new Event("input", { bubbles: true }));
+			});
+			document.querySelector(".md-editor button.submit").addEventListener("click", () => window.__countSubmit());
+		});
+		await page.locator("li[id='3'] .menu-item[title='回复']").click();
+		await page.waitForFunction(() => document.activeElement === document.querySelector(".md-editor textarea"));
+		const state = await page.evaluate(() => {
+			const input = document.querySelector(".md-editor textarea");
+			return {
+				caret: input.selectionStart === input.value.length,
+				status: document.querySelector(".nsmax-editor-status").textContent,
+				target: Array.from(document.querySelectorAll("[data-nsmax-reply-target]"), (el) => el.id),
+				hint: document.querySelector(".md-editor button.submit").title,
+				animation: getComputedStyle(document.querySelector("[data-nsmax-inline]")).animationName
+			};
+		});
+		assert.deepEqual(state, { caret: true, status: "回复 #3", target: ["3"], hint: "Ctrl + Enter 发送", animation: "nsmax-reply-in" });
+		await page.keyboard.press("Control+Enter");
+		assert.equal(submits, 0, "只有 @ 某某 #楼号 时 Ctrl+Enter 不发");
+		await page.keyboard.type("我也想问");
+		assert.equal(await page.evaluate(() => document.querySelector(".nsmax-editor-status").textContent), "回复 #3 · 已写 4 字");
+		await page.locator(".nsmax-editor-controls > button[title='表情']").click();
+		await page.locator(".md-editor textarea").focus();
+		await page.keyboard.press("Escape");
+		assert.deepEqual(await page.evaluate(() => ({ emoji: document.querySelector(".md-editor").classList.contains("nsmax-editor-emoji"), inline: !!document.querySelector("[data-nsmax-inline]") })), { emoji: false, inline: true }, "第一次 Esc 只收表情面板");
+		await page.keyboard.press("Escape");
+		assert.deepEqual(await page.evaluate(() => ({ inline: !!document.querySelector("[data-nsmax-inline]"), target: document.querySelectorAll("[data-nsmax-reply-target]").length, focused: document.activeElement === document.querySelector(".md-editor textarea") })), { inline: false, target: 0, focused: false });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+	const landed = await open(browser, "https://www.nodeseek.com/post-1000-1#3", { html: postPage(), viewport: { width: 1440, height: 900 } });
+	try {
+		await landed.page.waitForSelector("li[id='3'] > .nsmax-author-col");
+		const shadow = await landed.page.evaluate(() => getComputedStyle(document.querySelector("li[id='3']")).boxShadow);
+		assert.match(shadow, /rgb\(255, 244, 196\) 0px 0px 0px \d+px inset/, "落地那一层先铺一层浅品牌色：" + shadow);
+		await landed.page.waitForFunction(() => /rgba\(0, 0, 0, 0\)/.test(getComputedStyle(document.querySelector("li[id='3']")).boxShadow), null, { timeout: 4000 });
+		assert.deepEqual(landed.errors, []);
+	} finally { await landed.context.close(); }
+});
+
 test("回复框照 sb.sb（2026-10-17）：标题栏 45px「发表回复 · 说两句」、「预览」在工具按钮里、输入框用系统字体（不是等宽字）、提示字「写下你的回复…」", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: postPage(), viewport: { width: 1440, height: 900 } });
 	try {
@@ -5219,6 +5270,81 @@ test("第十一批（2026-10-19）：楼中楼一条在框窄时（≤1200px，�
 	}
 });
 
+test("楼中楼细调（2026-11-20）：超过 5 条只露前 3 条、框底「展开其余 N 条 / 收起」，后来再收进来的照样收着，链接到的那条一直露着；#楼号 高亮不挪排版；悬停只有那一条变色，外层楼层不跟着变", async () => {
+	const base = floorPost();
+	const li3 = base.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0];
+	const floor = (n) => li3.replace('id="3"', `id="${n}"`).replace('href="#3" class="floor-link">#3<', `href="#${n}" class="floor-link">#${n}<`)
+		.replace(/<p><a href="\/member\?t=passerby">@passerby<\/a> <a href="\/post-1000-1#2" target="_self">#2<\/a>[\s\S]*?<\/article>/, `<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 第 ${n} 层</p></article>`);
+	const html = base.replace(/(<li class="content-item" id="3">[\s\S]*?<\/li>)/, (all) => all + [4, 5, 6, 7].map(floor).join(""));
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector("li[id='1'] > .nsmax-floor-box li[id='7']", { state: "attached" });
+		await wait(page, 300);
+		const look = () => page.evaluate(() => {
+			const box = document.querySelector("li[id='1'] > .nsmax-floor-box");
+			const rows = [...box.querySelectorAll(":scope > .nsmax-nested-replies > li.content-item")];
+			const more = box.querySelector(".nsmax-fb-more");
+			return {
+				shown: rows.filter((row) => row.getBoundingClientRect().height > 0).map((row) => row.id),
+				count: box.querySelector(".nsmax-fb-count").textContent,
+				more: getComputedStyle(more).display === "none" ? "" : more.textContent,
+				moreHeight: Math.round(more.getBoundingClientRect().height)
+			};
+		});
+		assert.deepEqual(await look(), { shown: ["2", "3", "4"], count: "共 6 条回复", more: "展开其余 3 条", moreHeight: 28 });
+		// 自动翻页 / 站点再加进来一层：照样收着，按钮上的数跟着变
+		await page.evaluate((markup) => document.querySelector("#nsk-body-left ul.comments").insertAdjacentHTML("beforeend", markup), floor(8));
+		await page.waitForFunction(() => document.querySelector("li[id='1'] > .nsmax-floor-box .nsmax-fb-more")?.textContent === "展开其余 4 条", null, { timeout: 5000 });
+		assert.deepEqual((await look()).shown, ["2", "3", "4"]);
+		await page.locator("li[id='1'] .nsmax-fb-more").click();
+		assert.deepEqual(await look(), { shown: ["2", "3", "4", "5", "6", "7", "8"], count: "共 7 条回复", more: "收起", moreHeight: 28 });
+		await page.locator("li[id='1'] .nsmax-fb-more").click();
+		assert.deepEqual((await look()).shown, ["2", "3", "4"]);
+		// 链接到收着的那一条：露出来（别的照旧收着），高亮不改这一条的位置和高度，下面那条不往下挪
+		const before = await page.evaluate(() => ({ four: document.getElementById("4").getBoundingClientRect().height }));
+		await page.evaluate(() => { location.hash = "#6"; });
+		await page.waitForFunction(() => document.getElementById("6").getBoundingClientRect().height > 0);
+		await wait(page, 200);
+		const target = await page.evaluate(() => {
+			const row = document.getElementById("6");
+			const cs = getComputedStyle(row);
+			const flash = getComputedStyle(row, "::after");
+			const inner = row.querySelector("article").getBoundingClientRect();
+			return { margin: cs.marginLeft + " " + cs.marginTop, padding: cs.paddingLeft, flash: flash.backgroundColor, opacity: Number(flash.opacity), articleLeft: inner.left, refLeft: document.getElementById("2").querySelector("article").getBoundingClientRect().left, height: row.getBoundingClientRect().height, shown: [...document.querySelectorAll("li[id='1'] > .nsmax-floor-box > .nsmax-nested-replies > li.content-item")].filter((li) => li.getBoundingClientRect().height > 0).map((li) => li.id) };
+		});
+		assert.deepEqual(target.shown, ["2", "3", "4", "6"], "链接到的那条露出来");
+		assert.equal(target.margin, "0px 0px", "高亮不加外边距");
+		assert.equal(target.padding, "0px");
+		assert.equal(target.articleLeft, target.refLeft, "内容和别的条同一条左边线");
+		assert.ok(Math.abs(target.height - before.four) < 1, "和一样内容的别的条一样高：" + target.height + " / " + before.four);
+		assert.ok(target.opacity > 0.5, "刚链接到时亮着：" + target.opacity);
+		await page.waitForFunction(() => Number(getComputedStyle(document.getElementById("6"), "::after").opacity) === 0, null, { timeout: 5000 });
+		// 悬停：这一条自己变色（左右伸出、不挪排版），外层楼层底色不变
+		await page.evaluate(() => { history.replaceState(null, "", location.pathname); scrollTo(0, 0); });
+		const outer = () => page.evaluate(() => getComputedStyle(document.querySelector("ul.comments > li[id='1']")).backgroundColor);
+		await page.locator("ul.comments > li[id='1'] > article.post-content").hover();
+		const outerAlone = await outer();
+		const left = await page.evaluate(() => document.getElementById("3").querySelector("article").getBoundingClientRect().left);
+		await page.locator("li[id='3'] > article").hover();
+		await wait(page, 250);
+		const hovered = await page.evaluate(() => {
+			const row = document.getElementById("3");
+			const after = getComputedStyle(row, "::after");
+			const actions = getComputedStyle(document.getElementById("2").querySelector(".menu-item[data-nsmax-action=reply]")).color;
+			return { opacity: after.opacity, bg: after.backgroundColor, wider: row.getBoundingClientRect().width < parseFloat(after.width), left: row.querySelector("article").getBoundingClientRect().left, otherOpacity: getComputedStyle(document.getElementById("2"), "::after").opacity, idle: actions, counted: getComputedStyle(document.getElementById("2").querySelector(".menu-item[data-nsmax-action=thumbup]")).color };
+		});
+		assert.equal(hovered.opacity, "1", "指着的这一条有底色");
+		assert.equal(hovered.otherOpacity, "0", "别的条没有");
+		assert.equal(hovered.wider, true, "底色左右伸出去");
+		assert.equal(hovered.left, left, "悬停不挪排版");
+		assert.notEqual(hovered.idle, hovered.counted, "没数字的操作平时更淡，带数字的照常");
+		const outerInBox = await outer();
+		assert.equal(outerInBox, await page.evaluate(() => getComputedStyle(document.querySelector("ul.comments > li[id='1']")).backgroundColor));
+		assert.notEqual(outerAlone, outerInBox, "鼠标在框里时外层楼层不再整块变色");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
 // 第十二批（2026-10-19）
 // DeepFlood 首页：顶栏版块是它自己的（AI、摸鱼、情感……），站点配置里的版块表也是 DeepFlood 的
 const deepFloodList = () => listPage()
@@ -6669,9 +6795,10 @@ test("v1.8.33 楼中楼一条的头部：时间 / #楼号 / 回复引用点赞�
 		});
 		assert.ok(state.count >= 7, "时间 + #楼号 + 5 个操作都量到");
 		assert.deepEqual(state.fonts, ["12px"]);
-		assert.deepEqual(state.lines, ["21px"]);
+		// 2026-11-20：和内容第一行（行高 24px）、头像（24px）同一条 24px 高的行（以前 21px，中线比内容低 1～2px）
+		assert.deepEqual(state.lines, ["24px"]);
 		assert.ok(Math.max(...state.tops) - Math.min(...state.tops) <= 1, "同一基线：" + JSON.stringify(state.tops));
-		assert.deepEqual(state.heights, [21]);
+		assert.deepEqual(state.heights, [24]);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

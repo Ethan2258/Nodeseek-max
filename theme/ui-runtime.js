@@ -636,6 +636,8 @@
 					if (/^[\d.,]+(?:[kKwW万千])?$/.test(text)) { nsmaxSetAttr(span, "data-nsmax-action-count"); span.toggleAttribute("hidden", /^0+(?:\.0+)?$/.test(text.replace(/[kKwW万千]/gi, ""))); }
 					else nsmaxSetAttr(span, "data-nsmax-action-label");
 				}
+				// 有数字（点赞 1）的按钮：楼中楼里平时操作字调淡，带数字的照常显示（见主题「楼中楼样式细调」）
+				nsmaxFlag(action, "data-nsmax-counted", !!action.querySelector(":scope > span[data-nsmax-action-count]:not([hidden])"));
 			}
 			nsmaxCleanedMenus.set(menu, signatureOf(menu));
 		}
@@ -2655,9 +2657,84 @@
 		say.textContent = "我也说一句";
 		// 「我也说一句」就是回复这一层：点外层楼层自己的「回复」（站点填「@层主 #楼号」，回复框挪到这里）
 		say.addEventListener("click", () => rootFloor.querySelector(":scope > .nsmax-floor-actions .menu-item[title='回复'], :scope > .comment-menu .menu-item[title='回复']")?.click());
-		foot.append(count, say);
+		// 回复多（超过 5 条）时只露前 3 条，框底「展开其余 N 条」；展开后同一个按钮写「收起」（见 nsmaxFoldFloorBox）
+		const more = document.createElement("button");
+		more.type = "button";
+		more.className = "nsmax-fb-more";
+		more.hidden = true;
+		more.addEventListener("click", () => {
+			const open = !box.hasAttribute("data-nsmax-fb-open");
+			const before = foot.getBoundingClientRect().top;
+			box.toggleAttribute("data-nsmax-fb-open", open);
+			nsmaxFoldFloorBox(box);
+			// 收起时框底留在鼠标下面（框上面的几条收掉了，页面跟着往回滚同样的距离），不会一下跳到别的楼层
+			const shift = foot.getBoundingClientRect().top - before;
+			if (!open && shift) window.scrollBy(0, shift);
+		});
+		foot.append(count, more, say);
 		box.append(replies, foot);
+		// 鼠标在框里时外层楼层不再跟着整块变色（只有框里那一条变色）；没有 :has()，用属性告诉样式
+		box.addEventListener("pointerenter", () => rootFloor.setAttribute("data-nsmax-fb-hover", ""));
+		box.addEventListener("pointerleave", () => rootFloor.removeAttribute("data-nsmax-fb-hover"));
 		return box;
+	}
+	// 楼中楼收起：看得见的回复（站点隐藏的、关键词「直接隐藏」的不算）超过 5 条时，第 4 条起打上 data-nsmax-fb-fold，样式只在
+	// 框带 data-nsmax-fb-collapsed 时藏它们（电脑端，只看楼主时不收）。链接到的那条（#楼号）、正在回复的那条、自己刚回的最后一条
+	// 一直露着。之后翻页 / 自动加载再收进来的回复每次整理都重新算，照样收着。返回看得见的条数（框底「共 N 条回复」）
+	var nsmaxFoldHashBound = false;
+	function nsmaxFoldFloorBox(box) {
+		const list = box.querySelector(":scope > .nsmax-nested-replies");
+		if (!list) return 0;
+		// 地址栏换到某一条楼中楼（点「回复 某某」、站内 #楼号 链接）：那条要是收着，先露出来再滚过去（藏着时浏览器滚不过去）
+		if (!nsmaxFoldHashBound) {
+			nsmaxFoldHashBound = true;
+			window.addEventListener("hashchange", () => {
+				let row = null;
+				try { row = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch {}
+				const owner = row?.closest("#nsk-body-left .nsmax-floor-box");
+				if (!owner) return;
+				const folded = row.hasAttribute("data-nsmax-fb-fold");
+				nsmaxFoldFloorBox(owner);
+				if (folded) row.scrollIntoView({ block: "start" });
+			});
+		}
+		const rows = [];
+		let shown = 0;
+		for (const child of list.children) {
+			if (child.matches("li.content-item")) {
+				if (child.hidden) {
+					nsmaxDropAttr(child, "data-nsmax-fb-fold");
+					continue;
+				}
+				shown++;
+				// 「已屏蔽一条回复」小条后面点「显示」露出来的那条：跟着小条走，不另占一条
+				if (!child.previousElementSibling?.matches("li.nsmax-filtered")) rows.push(child);
+			} else if (child.matches("li.nsmax-filtered")) rows.push(child);
+		}
+		let target = "";
+		try { target = decodeURIComponent(location.hash.slice(1)); } catch {}
+		const me = unsafeWindow$1.__config__?.user?.member_id;
+		const last = rows[rows.length - 1];
+		const pinned = (row) => !!row.id && row.id === target || row.hasAttribute("data-nsmax-reply-target") || row.hasAttribute("data-nsmax-replying") ||
+			row === last && !!me && !!row.querySelector(`:scope > .nsk-content-meta-info .author-info > a.author-name[href$="/space/${me}"]`);
+		const fold = rows.length > 5 && !box.hasAttribute("data-nsmax-fb-open");
+		let folded = 0;
+		rows.forEach((row, index) => {
+			const follower = row.matches("li.nsmax-filtered") && row.nextElementSibling?.matches("li.content-item:not([hidden])") ? row.nextElementSibling : null;
+			const on = fold && index >= 3 && !pinned(row) && !(follower && pinned(follower));
+			if (on) folded++;
+			nsmaxFlag(row, "data-nsmax-fb-fold", on);
+			if (follower) nsmaxFlag(follower, "data-nsmax-fb-fold", on);
+		});
+		nsmaxFlag(box, "data-nsmax-fb-collapsed", folded > 0);
+		const more = box.querySelector(":scope > .nsmax-fb-foot > .nsmax-fb-more");
+		if (more) {
+			const label = folded ? `展开其余 ${folded} 条` : rows.length > 5 ? "收起" : "";
+			nsmaxSetText(more, label);
+			if (more.hidden !== !label) more.hidden = !label;
+			nsmaxSetAttr(more, "aria-expanded", String(!folded));
+		}
+		return shown;
 	}
 	// 每一层第一次出现时在页面上的先后（站点把热评排在最前面）：简洁模式下把楼中楼摊平回去时按这个顺序排（见 nsmaxFlattenNestedReplies）
 	var nsmaxFloorOrder = new WeakMap();
@@ -2727,7 +2804,10 @@
 		const boxes = list.querySelectorAll(":scope > li.content-item > .nsmax-floor-box");
 		if (!boxes.length) return;
 		const nested = Array.from(list.querySelectorAll(":scope > li.content-item > .nsmax-floor-box > .nsmax-nested-replies > li.content-item"));
-		for (const item of nested) nsmaxNestedMoved.delete(item);
+		for (const item of nested) {
+			nsmaxNestedMoved.delete(item);
+			nsmaxDropAttr(item, "data-nsmax-fb-fold");
+		}
 		const rank = (item) => nsmaxFloorOrder.has(item) ? nsmaxFloorOrder.get(item) : Infinity;
 		const floors = Array.from(list.children).filter((item) => item.matches("li.content-item[id]")).concat(nested).sort((a, b) => rank(a) - rank(b) || Number(a.id) - Number(b.id));
 		let prev = null;
@@ -2751,7 +2831,7 @@
 	function nsmaxDecorateFloorBoxes() {
 		for (const box of document.querySelectorAll("#nsk-body-left .nsmax-floor-box")) {
 			const items = box.querySelectorAll(":scope > .nsmax-nested-replies > li.content-item");
-			nsmaxSetText(box.querySelector(":scope > .nsmax-fb-foot > .nsmax-fb-count"), `共 ${items.length} 条回复`);
+			nsmaxSetText(box.querySelector(":scope > .nsmax-fb-foot > .nsmax-fb-count"), `共 ${nsmaxFoldFloorBox(box)} 条回复`);
 			const rootFloor = box.closest("li.content-item");
 			for (const item of items) {
 				const article = item.querySelector(":scope > article.post-content");
@@ -2875,8 +2955,27 @@
 		const floor = editor.closest("li.content-item");
 		const host = floor?.querySelector(".author-name")?.textContent.trim();
 		const name = match[1];
-		if (!floor || !host || host === name) return "回复层主";
+		// 回复框在页面底部（刷新后站点放回的草稿、自己在底部写的 @某某 #楼号）：没有「层主」可言，直接写回复的是谁
+		if (!floor || !host) return `回复 ${name.length > 10 ? name.slice(0, 10) + "…" : name}`;
+		if (host === name) return "回复层主";
 		return `回复 ${name.length > 10 ? name.slice(0, 10) + "…" : name}`;
+	}
+	// 编辑器开头站点填的「@某某 #楼号」/「@某某 [#楼号](链接)」：拆出名字、楼号和后面真正写的字（状态字、高亮回复的那一条用）
+	function nsmaxReplyMention(value) {
+		const match = /^\s*@(\S+)\s+(?:#(\d+)(?!\d)|\[#(\d+)\]\([^)\s]*\))\s*/.exec(value || "");
+		if (!match) return null;
+		return { name: match[1], floor: match[2] || match[3], rest: value.slice(match[0].length).trim() };
+	}
+	// 回复框挂在某一层下面、回复的是楼中楼里的某一条时，给那一条标上 data-nsmax-reply-target（主题给一层浅品牌色底），
+	// 一眼看出在回谁；取消、换一层、改掉开头的 @ 就去掉
+	function nsmaxSyncReplyTarget() {
+		const host = nsmaxComposer?.host;
+		const inline = !!host?.isConnected && host.hasAttribute("data-nsmax-inline");
+		const mention = inline ? nsmaxReplyMention(nsmaxEditorValue(nsmaxComposer.md)) : null;
+		const floor = mention ? host.closest("ul.comments > li.content-item") : null;
+		const target = floor && floor.id !== mention.floor ? floor.querySelector(`:scope > .nsmax-floor-box > .nsmax-nested-replies > li.content-item[id="${mention.floor}"]`) : null;
+		for (const old of document.querySelectorAll("li.content-item[data-nsmax-reply-target]")) if (old !== target) old.removeAttribute("data-nsmax-reply-target");
+		if (target && !target.hasAttribute("data-nsmax-reply-target")) target.setAttribute("data-nsmax-reply-target", "");
 	}
 	function nsmaxEditorValue(root) {
 		const cm = root?.querySelector(".CodeMirror")?.CodeMirror;
@@ -2925,11 +3024,7 @@
 			cancel.className = "nsmax-reply-cancel";
 			cancel.textContent = "取消回复";
 			cancel.hidden = true;
-			cancel.addEventListener("click", () => {
-				const floor = host.closest("li.content-item");
-				restore(true);
-				floor?.scrollIntoView({ block: "nearest" });
-			}, { signal: ctx.signal });
+			cancel.addEventListener("click", () => leave(), { signal: ctx.signal });
 			submit.after(cancel);
 			return cancel;
 		};
@@ -2950,6 +3045,25 @@
 			if (button) button.hidden = true;
 			refresh();
 		};
+		// 光标放到最后、不让浏览器自己跳：先（必要时）平滑滚到回复框刚好看全，再不带滚动地聚焦。
+		// 以前挪过去之后焦点留在 body 上（2026-11-20 在真站实测），得再点一下输入框才能打字
+		const focusEnd = () => {
+			if (!host.isConnected || md.closest("[hidden]")) return;
+			md.scrollIntoView();
+			const cm = md.querySelector(".CodeMirror")?.CodeMirror;
+			if (cm) {
+				try {
+					cm.setCursor(cm.lineCount(), 0, { scroll: false });
+					cm.getInputField().focus({ preventScroll: true });
+				} catch {}
+				return;
+			}
+			const input = md.querySelector("textarea:not(.CodeMirror textarea)");
+			if (!input) return;
+			input.focus({ preventScroll: true });
+			try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
+		};
+		let focusTimer = 0;
 		const moveTo = (floor) => {
 			if (floating.matches || !floor) return;
 			clearMentions();
@@ -2960,6 +3074,20 @@
 			const button = ensureCancel();
 			if (button) button.hidden = false;
 			refresh();
+			// 站点的 reply() / quote() 在同一次点击里稍后才把「@某某 #楼号」填进去：等它填完（下两帧）再滚动、聚焦
+			cancelAnimationFrame(focusTimer);
+			focusTimer = requestAnimationFrame(() => { focusTimer = requestAnimationFrame(() => { refresh(); focusEnd(); }); });
+		};
+		// 取消回复 / Esc：放回页面底部。楼层留在原地（回复框在它下面，收起不影响上面）；楼层不在窗口里时才平滑滚回去
+		const leave = () => {
+			const floor = host.closest("li.content-item");
+			const focused = md.contains(document.activeElement);
+			restore(true);
+			if (focused) document.activeElement?.blur?.();
+			if (!floor) return;
+			const rect = floor.getBoundingClientRect();
+			const top = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+			if (rect.bottom < top + 40 || rect.top > innerHeight - 40) floor.scrollIntoView({ block: "nearest", behavior: "smooth" });
 		};
 		document.addEventListener("click", (event) => {
 			const target = event.target instanceof Element ? event.target : null;
@@ -2973,11 +3101,15 @@
 			if (target.closest(".menu-item[data-nsmax-action='edit'], .nsmax-floor-edit, .nsmax-op-edit")) restore(false);
 		}, { capture: true, signal: ctx.signal });
 		// 回复框挂在某一层下面时按 Esc：和「取消回复」一样放回页面底部（只有「@某某 #楼号」时一起清掉，写了别的内容照样留着）
+		// 表情面板开着时 Esc 先收起表情面板，再按一次才取消回复
 		md.addEventListener("keydown", (event) => {
-			if (event.key !== "Escape" || !host.hasAttribute("data-nsmax-inline") || document.querySelector("dialog[open]")) return;
-			const floor = host.closest("li.content-item");
-			restore(true);
-			floor?.scrollIntoView({ block: "nearest" });
+			if (event.key !== "Escape" || event.isComposing || !host.hasAttribute("data-nsmax-inline") || document.querySelector("dialog[open]")) return;
+			if (md.classList.contains("nsmax-editor-emoji")) {
+				md.classList.remove("nsmax-editor-emoji");
+				md.querySelector(".nsmax-editor-controls > button[title='表情']")?.setAttribute("aria-pressed", "false");
+				return;
+			}
+			leave();
 		}, { signal: ctx.signal });
 		nsmaxComposer = { host, md, moveTo, restore };
 		ctx.signal.addEventListener("abort", () => {
@@ -5168,6 +5300,7 @@ function nsmaxTagStructure() {
 				if (head.nextElementSibling !== title) editor.insertBefore(head, title);
 			} else if (head && body && head.parentElement !== body) body.prepend(head);
 		}
+		nsmaxSyncReplyTarget();
 	}
 	// 一句话提示：照 sb.sb showToast——屏幕下方居中的深色小条（出错时红底），停留 4 秒，字多时每多一个字多 0.16 秒
 	// （最多 10 秒，出错至少 6 秒）；连续触发时换文字、重新计时。2026-10-18 起脚本所有提示（各模块的通知、站点的提示框）都走这里。
@@ -6452,12 +6585,16 @@ function nsmaxTagStructure() {
 					alerts.observe(document.body, { childList: true });
 					ctx.signal.addEventListener("abort", () => alerts.disconnect(), { once: true });
 				}
-				// 写了字时状态字换成「已写 N 字」（2026-10-23），清空回到「说两句」；提交中、已回复照旧
+				// 写了字时状态字换成「已写 N 字」（2026-10-23），清空回到「说两句」；提交中、已回复照旧。
+				// 回复某一层时开头站点填的「@某某 [#楼号](链接)」不算字（以前一点回复就显示「已写 57 字」），状态字写「回复 #楼号」
 				const syncDraft = () => {
 					const value = (cm ? cm.getValue() : input?.value || "").trim();
 					if (draftClear) draftClear.hidden = !value;
+					const mention = isPost ? nsmaxReplyMention(value) : null;
+					const typed = mention ? mention.rest : value;
+					const idle = (mention ? `回复 #${mention.floor}` : "") + (mention && typed ? " · " : "") + (typed ? `已写 ${[...typed].length} 字` : mention ? "" : "说两句");
 					if (status.textContent === "提交中" && !value) setStatus("已回复");
-					else if (status.textContent !== "提交中" && !(status.textContent === "已回复" && !value)) setStatus(value ? `已写 ${[...value].length} 字` : "说两句");
+					else if (status.textContent !== "提交中" && !(status.textContent === "已回复" && !value)) setStatus(idle);
 					nsmaxSyncEditorMode();
 				};
 				// 站点会把这个帖子没发出去的草稿放回编辑器：照 sb.sb 提示一句「已恢复未发出的草稿」。
