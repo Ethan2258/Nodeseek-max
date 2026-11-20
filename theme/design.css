@@ -6862,48 +6862,6 @@ html[data-nsmax-theme] #nsk-body-left .content-item .nsmax-floor-edit {
 html[data-nsmax-theme] #nsk-body-left .content-item .nsmax-floor-edit:hover {
   color: var(--text) !important;
 }
-/* 楼中楼：接在外层楼层正文下面，左边一条 2px 细导线；右边不缩进、不留内边距，操作行和外层楼层右边对齐；
-   每条回复上下 12px，之间一条细分隔线，头像 24px，名字 15px（比外层小一号，层级一眼分得清） */
-html[data-nsmax-theme] #nsk-body-left ul.comments li.content-item > .nsmax-nested-replies:is(#nsmax-lv, *) {
-  grid-column: 2 / -1 !important;
-  display: block !important;
-  margin: 12px 0 2px !important;
-  padding: 0 0 0 14px !important;
-  border: 0 !important;
-  border-left: 2px solid var(--line-soft) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  list-style: none !important;
-}
-html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *) {
-  display: grid !important;
-  grid-template-columns: 24px minmax(0, 1fr) !important;
-  gap: 4px 10px !important;
-  margin: 0 !important;
-  padding: 12px 0 !important;
-  border: 0 !important;
-  border-top: 1px solid var(--line-soft) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item:first-child:is(#nsmax-lv, *) {
-  padding-top: 2px !important;
-  border-top: 0 !important;
-}
-html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item:last-child:is(#nsmax-lv, *) {
-  padding-bottom: 2px !important;
-}
-html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .avatar-wrapper:is(#nsmax-lv, *),
-html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .avatar-wrapper > a:is(#nsmax-lv, *),
-html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .avatar-wrapper img:is(#nsmax-lv, *) {
-  width: 24px !important;
-  height: 24px !important;
-  border-radius: var(--r-sm) !important;
-}
-html[data-nsmax-theme] #nsk-body-left .nsmax-nested-replies > li.content-item .author-info > a.author-name:is(#nsmax-lv, *) {
-  font-size: 15px !important;
-}
 /* ---------- 33. 2026-10-14 第二批：右栏固定可单独滚动、签到 / 管理记录补右栏、消息中心对齐 ---------- */
 /* 右栏固定在顶栏下面，不随页面滚动；内容比屏幕高时，鼠标放在右栏上滚动只滚右栏（滚到头也不带动页面），放在别处滚动只滚帖子。
    滚动条不显示（滚轮照常可滚）。程序顺带滚动右栏的情况由 nsmaxGuardSidebarScroll 挡掉 */
@@ -17245,5 +17203,245 @@ html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(
   }
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-peer[data-nsmax-system] > .nspp-messages-avatar:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     background: var(--panel-hover) !important;
+  }
+}
+
+/* ---------- 2026-11-20：回复手感（回复框挪进楼层、聚焦、标题写回复对象、发完落地闪一下） ---------- */
+/* @@REPLY-FEEL@@ */
+/* 回复框挂进楼层时从上往下淡入一下（180ms），不再「啪」地冒出来一大块；减少动态效果时不动 */
+@keyframes nsmax-reply-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.comments > li.content-item > [data-nsmax-inline]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  animation: nsmax-reply-in 0.18s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+/* 发完回复站点会刷新到「…#楼号」：落地的那一层整层浅品牌色底闪一下再淡掉（1.6s），一眼找到自己刚发的那条；
+   左边 2px 品牌色竖线照旧。用注册过的颜色变量做动画（box-shadow 本身是 !important，动画盖不过它） */
+@property --nsmax-land {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
+}
+@keyframes nsmax-land {
+  0%, 35% { --nsmax-land: var(--brand-soft); }
+  100% { --nsmax-land: transparent; }
+}
+html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  box-shadow: inset 2px 0 0 var(--brand), inset 0 0 0 100vmax var(--nsmax-land) !important;
+  animation: nsmax-land 1.6s ease-out 0.15s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item > [data-nsmax-inline]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme] #nsk-body-left ul.comments > li.content-item:target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    animation: none !important;
+  }
+}
+
+/* ---------- 2026-11-20：楼中楼样式细调（电脑端） ---------- */
+/* @@FLOOR-BOX@@ */
+/* 「展开其余 N 条」只在电脑端用（手机上楼中楼照旧全部显示）；有 hidden 时一律不显示 */
+html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: none !important;
+}
+@keyframes nsmax-fb-flash {
+  0%, 40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (min-width: 801px) {
+  /* 一条一条的对齐：内容第一行、时间、#楼号和操作、头像都放在同一条 24px 高的行里（中线都在 12px）。以前内容行高 23.1px、
+     时间 21px 往下垫 1.5px、操作垫 3px、头像 28px，四样东西的中线差了 2～3px（YaHei UI 下内容比时间高一截） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    position: relative !important;
+    isolation: isolate !important;
+    grid-template-columns: 24px minmax(0, 1fr) auto auto !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .avatar-wrapper:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .avatar-wrapper :is(a, img):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    line-height: 24px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info :is(time, span, a, .date-created):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > :is(.comment-menu, .floor-link-wrapper):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item > span:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 24px !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 24px !important;
+  }
+  /* 名字很长时最多 12 个字宽，多出来的省略（不把一句话挤到下一行）；vertical-align: top 让它和这一行的字照旧同一条基线 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box .nsmax-fb-who > :is(.nsmax-fb-name, .nsmax-fb-target):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    display: inline-block !important;
+    max-width: 12em !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    vertical-align: top !important;
+  }
+  /* 操作字平时更淡一点（一排 5～6 个 12px 字很抢眼），鼠标移到这一条上回到弱化字，指着的那个是正文色；
+     带数字的（点赞 1）照常显示，时间也照常 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:not([data-nsmax-counted]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--text-disabled) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(:hover, :focus-within, [data-nsmax-reply-target]) > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(:hover, :focus-within, [data-nsmax-reply-target]) > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+    color: var(--text-subtle) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *):is(:hover, :focus-visible),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions .floor-link:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *):is(:hover, :focus-visible) {
+    color: var(--text) !important;
+  }
+  /* 每一条自己的底色（悬停、被链接到、正在回复）：画在一层 ::after 上，左右各伸出 8px、圆角，不改这一条的边距，排版不动。
+     ::after 在这一条自己的层叠上下文里垫在字下面（isolation），盖住这一条上面那道虚线 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: -1px -8px 0 !important;
+    z-index: -1 !important;
+    border-radius: var(--r-sm) !important;
+    background: var(--panel-hover) !important;
+    opacity: 0;
+    pointer-events: none !important;
+  }
+  /* 被链接到的那一条（#楼号，sb.sb .floor-box-item.post-highlight）：品牌浅底亮一下、2.4s 里淡掉。以前是一直亮着，
+     还用 4px -6px 外边距把这一条撑大 8px，下面的回复整体往下挪 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin: 0 !important;
+    padding-inline: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:first-child:target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-top: 0 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+    background: var(--brand-soft) !important;
+    animation: nsmax-fb-flash 2.4s ease-out 0.1s both;
+  }
+  /* 正在回复的那一条（回复框挂在这一层下面时）：一直是品牌浅底，回复的是谁一眼看得出来；上下两道虚线收起 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item[data-nsmax-reply-target]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+    background: color-mix(in srgb, var(--brand-soft) 70%, var(--panel-alt)) !important;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item[data-nsmax-reply-target] + li:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-top-color: transparent !important;
+  }
+  /* 图片：框里的截图最高 240px（按比例缩小），长截图不再把一条回复撑成一整屏 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content img.nsmax-post-image:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    width: auto !important;
+    height: auto !important;
+    max-height: 240px !important;
+    object-fit: contain !important;
+  }
+  /* 回复里的引用、列表、代码、标题：13px（以前 13.5px，不在字号档位里） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content > :is(blockquote, ul, ol, pre, .nsmax-code, table, details, h1, h2, h3, h4, h5, h6):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+    line-height: 1.65 !important;
+  }
+  /* 框底：12px（以前 12.5px）；左边「共 N 条回复」后面是「展开其余 N 条 / 收起」（弱化字小按钮，和「我也说一句」一样 28px 高） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 28px !important;
+    min-height: 0 !important;
+    margin: 0 0 0 -2px !important;
+    padding: 0 8px !important;
+    border: 0 !important;
+    border-radius: var(--r-pill) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--text-muted) !important;
+    font-family: var(--font-sans) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 28px !important;
+    cursor: pointer !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+    content: "" !important;
+    width: 5px !important;
+    height: 5px !important;
+    margin-top: -3px !important;
+    border: solid currentColor !important;
+    border-width: 0 1.5px 1.5px 0 !important;
+    transform: rotate(45deg) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more[aria-expanded="true"]:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+    margin-top: 2px !important;
+    transform: rotate(-135deg) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(:hover, :focus-visible) {
+    background: var(--panel-hover) !important;
+    color: var(--text) !important;
+  }
+  /* 收起的几条（第 4 条起，见 nsmaxFoldFloorBox）；只看楼主时不收，按钮也不显示 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.comments:not([data-nsmax-owner-only]) > li.content-item > .nsmax-floor-box[data-nsmax-fb-collapsed] > .nsmax-nested-replies > li[data-nsmax-fb-fold]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left ul.comments[data-nsmax-owner-only] > li.content-item > .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+    display: none !important;
+  }
+}
+@media (min-width: 801px) and (hover: hover) and (pointer: fine) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+    background: var(--panel-hover) !important;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:hover + li:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-top-color: transparent !important;
+  }
+  /* 鼠标在楼中楼框里：外层楼层不再整块变色（只有指着的那一条变色），见 nsmaxCreateFloorBox 的 data-nsmax-fb-hover */
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"]:not([data-nsmax-touch]) #nsk-body-left ul.comments > li.content-item[data-nsmax-fb-hover]:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    background: var(--panel) !important;
+  }
+  html[data-nsmax-theme][data-nsmax-post-layout="classic"]:not([data-nsmax-touch]) #nsk-body-left ul.comments > li.content-item:nth-child(odd)[data-nsmax-fb-hover]:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    background: color-mix(in srgb, var(--brand-soft) 22%, var(--panel)) !important;
+  }
+}
+/* 窄一点的电脑屏（≤1200px，时间和操作在内容下面一行）：时间一列、操作一列，挤的时候操作自己换行，不会叠到时间上 */
+@media (min-width: 801px) and (max-width: 1200px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    grid-template-columns: 24px auto minmax(0, 1fr) !important;
+    row-gap: 2px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > article.post-content:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    grid-column: 2 / -1 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item .content-info:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    grid-column: 3 !important;
+    grid-row: 2 !important;
+    justify-self: end !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+    height: auto !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item > .nsmax-floor-actions > .comment-menu:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    height: auto !important;
+    min-height: 24px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-nested-replies > li.content-item:target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+    animation-timing-function: steps(1, end) !important;
   }
 }
