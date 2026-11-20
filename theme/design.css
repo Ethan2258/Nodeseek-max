@@ -6863,8 +6863,9 @@ html[data-nsmax-theme] #nsk-body-left .content-item .nsmax-floor-edit:hover {
   color: var(--text) !important;
 }
 /* ---------- 33. 2026-10-14 第二批：右栏固定可单独滚动、签到 / 管理记录补右栏、消息中心对齐 ---------- */
-/* 右栏固定在顶栏下面，不随页面滚动；内容比屏幕高时，鼠标放在右栏上滚动只滚右栏（滚到头也不带动页面），放在别处滚动只滚帖子。
-   滚动条不显示（滚轮照常可滚）。程序顺带滚动右栏的情况由 nsmaxGuardSidebarScroll 挡掉 */
+/* 右栏固定在顶栏下面，不随页面滚动；内容比屏幕高时，鼠标放在右栏上滚动先滚右栏，放在别处滚动只滚帖子。
+   右栏滚到头以后接着滚页面（2026-11-20，用户：「鼠标滚动……有点果冻、粘滞感」）：以前滚到头就卡住不动，右栏又没有滚动条，
+   鼠标一停到右栏上滚轮就像失灵了一样。滚动条不显示（滚轮照常可滚）。程序顺带滚动右栏的情况由 nsmaxGuardSidebarScroll 挡掉 */
 @media (min-width: 801px) {
   html[data-nsmax-theme] #nsk-body > #nsk-right-panel-container:is(#nsmax-lv, *):is(#nsmax-b, *),
   html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > #nsk-right-panel-container:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -6874,7 +6875,7 @@ html[data-nsmax-theme] #nsk-body-left .content-item .nsmax-floor-edit:hover {
     max-height: calc(100vh - 97px) !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
-    overscroll-behavior: contain !important;
+    overscroll-behavior: auto !important;
     scrollbar-width: none !important;
   }
   html[data-nsmax-theme] :is(#nsk-body, section#nsk-frame) > #nsk-right-panel-container::-webkit-scrollbar {
@@ -15336,6 +15337,10 @@ html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-contai
 /* 首屏照旧用 content-visibility:auto 先不排屏幕外的行（第 53 节）；页面整理完以后脚本在浏览器空闲时一批批给行打上
    data-nsmax-cv-done（见 nsmaxPrerenderRows），这些行改回 visible、提前排好：往下滚的时候不用在滚动的那一帧里现排 */
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  content-visibility: visible !important;
+}
+/* 电脑上帖子页楼层同样在空闲时排好（第 55 节的 auto 只管第一帧之前；见 nsmaxPrerenderRows）：往下滚时不用在滚动那一帧里现排一层。手机不变 */
+html[data-nsmax-theme][data-nsmax-cv]:not([data-nsmax-touch]) #nsk-body-left ul.comments > li.content-item[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: visible !important;
 }
 

@@ -117,7 +117,7 @@
 		let reqPromise = window.__nsmax_space_api_cache.get(uid);
 		if (reqPromise) return reqPromise;
 		// 没取到（被拦、断网、接口报错）时给 null、不留缓存：以前当成「没写介绍」记下来，「介绍」标签就被藏掉了，同一页也不会再取
-		reqPromise = fetch("/api/account/getInfo/" + uid + "?readme=1", { headers: { "Accept": "application/json" } })
+		reqPromise = nsmaxFetch("/api/account/getInfo/" + uid + "?readme=1", { headers: { "Accept": "application/json" } })
 			.then(res => {
 				if (!res.ok) throw new Error(String(res.status));
 				return res.json();
@@ -2390,7 +2390,7 @@
 		return new Promise((resolve, reject) => {
 			const run = () => {
 				nsmaxEarlyFetchActive++;
-				fetch(url, { credentials: "same-origin", headers: { accept: "application/json" }, priority }).then((response) => {
+				nsmaxFetch(url, { credentials: "same-origin", headers: { accept: "application/json" }, priority }).then((response) => {
 					if (!response.ok) throw new Error(`请求失败（HTTP ${response.status}）`);
 					return response.json();
 				}).then(resolve, reject).finally(() => {
@@ -3265,14 +3265,14 @@ function nsmaxLookupTelegram(uid) {
 	if (!/^\d+$/.test(uid) || !unsafeWindow$1.__config__?.user) return Promise.resolve([]);
 	const pending = nsmaxTelegramLookups.get(uid);
 	if (pending) return pending;
-	const json = (url) => fetch(url, { credentials: "same-origin", priority: "low" }).then((response) => response.ok ? response.json() : null);
+	const json = (url) => nsmaxFetch(url, { credentials: "same-origin", priority: "low" }).then((response) => response.ok ? response.json() : null);
 	const ownerOf = (root) => root?.querySelector(".nsk-content-meta-info .author-info a[href*='/space/']")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
 	const promise = (async () => {
 		let contacts = [];
 		const discussions = await json(`/api/content/list-discussions?uid=${uid}&page=1`);
 		const postId = discussions?.discussions?.[0]?.post_id;
 		if (postId) {
-			const response = await fetch(`/post-${postId}-1`, { credentials: "same-origin", priority: "low" });
+			const response = await nsmaxFetch(`/post-${postId}-1`, { credentials: "same-origin", priority: "low" });
 			const html = response.ok && response.body ? await readUntil(response, "comment-menu-mount") : "";
 			const op = new DOMParser().parseFromString(html, "text/html").querySelector(".nsk-post > .content-item");
 			if (op && ownerOf(op) === uid) contacts = nsmaxTelegramContacts(op.querySelector(".signature") || "");
@@ -3281,7 +3281,7 @@ function nsmaxLookupTelegram(uid) {
 			const floor = Number(comment?.floor_id);
 			if (comment?.post_id && floor > 0) {
 				const perPage = Number(unsafeWindow$1.__config__?.commmentPerPage) || 10;
-				const response = await fetch(`/post-${comment.post_id}-${Math.floor((floor - 1) / perPage) + 1}`, { credentials: "same-origin", priority: "low" });
+				const response = await nsmaxFetch(`/post-${comment.post_id}-${Math.floor((floor - 1) / perPage) + 1}`, { credentials: "same-origin", priority: "low" });
 				const item = new DOMParser().parseFromString(response.ok ? await response.text() : "", "text/html").querySelector(`ul.comments > li.content-item[id="${floor}"]`);
 				if (item && ownerOf(item) === uid) contacts = nsmaxTelegramContacts(item.querySelector(".signature") || "");
 			}
@@ -3844,7 +3844,7 @@ function nsmaxTagStructure() {
 		calendar.replaceChildren(...tiles);
 	}
 	async function nsmaxLoadCheckin(uid, card) {
-		const json = (url) => fetch(url, { credentials: "same-origin" }).then((res) => res.json());
+		const json = (url) => nsmaxFetch(url, { credentials: "same-origin" }).then((res) => res.json());
 		// 今日排名、今日签到人数
 		json("/api/attendance/board?page=1").then((data) => {
 			if (!data?.success && !Array.isArray(data?.list)) return;
@@ -3939,6 +3939,14 @@ function nsmaxTagStructure() {
 	// 自动接上来的下一页也照这样排（每轮整理时调用 nsmaxPrerenderKick）
 	var nsmaxPrerenderKick = null;
 	var NSMAX_PRERENDER_ROWS = "#nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:not([data-nsmax-cv-done])";
+	// 帖子页第 9 层以后的楼层（第 55 节，content-visibility:auto）在电脑上也这样排（2026-11-20，用户：「浏览的顺滑感」）：以前一直是 auto，
+	// 往下滚时每露出一层就在滚动那一帧里现算样式、现排版（80 层的长帖 4 倍降速滚 40 下：样式 67ms、排版 49ms，不装脚本几乎为 0；排好以后 9 / 7ms）。
+	// 手机（触屏布局）不变。楼层比列表行重、排出来的高度和预留的 240px 不一样，每排一批后面整页都要挪一次（预绘制、分层按整页算），
+	// 一批至少 4 层：一层一批时 80 层空闲时合计 3.2 秒（4 倍降速），4 层一批 1.3 秒，最长一次 89ms
+	var NSMAX_PRERENDER_FLOORS = "#nsk-body-left ul.comments > li.content-item:not([data-nsmax-cv-done])";
+	function nsmaxPrerenderTargets() {
+		return document.documentElement.hasAttribute("data-nsmax-touch") ? NSMAX_PRERENDER_ROWS : NSMAX_PRERENDER_ROWS + ", " + NSMAX_PRERENDER_FLOORS;
+	}
 	function nsmaxPrerenderRows(ctx) {
 		const root = document.documentElement;
 		if (!root.hasAttribute("data-nsmax-cv") || nsmaxPrerenderKick) return;
@@ -3948,13 +3956,14 @@ function nsmaxTagStructure() {
 		// 空闲回调的 timeRemaining 管不到。以前固定 8 行，手机 4 倍降速下离首屏远的行一批要 50–60ms，这一帧里点东西要等。
 		// 现在从 4 行起，上一批那一帧主线程花了 10ms 以上就减半（最少 1 行），不到 4ms 就加倍（最多 16 行）
 		let batch = 4;
+		const least = /^\/post-\d+/.test(location.pathname) ? 4 : 1;
 		const step = (deadline) => {
 			if (ctx.signal.aborted || !root.hasAttribute("data-nsmax-cv")) {
 				running = false;
 				return;
 			}
 			let done = 0;
-			for (const row of document.querySelectorAll(NSMAX_PRERENDER_ROWS)) {
+			for (const row of document.querySelectorAll(nsmaxPrerenderTargets())) {
 				row.setAttribute("data-nsmax-cv-done", "");
 				if (++done >= batch || deadline.timeRemaining() < 4) break;
 			}
@@ -3967,7 +3976,7 @@ function nsmaxTagStructure() {
 				const start = performance.now();
 				setTimeout(() => {
 					const cost = performance.now() - start;
-					if (cost > 10) batch = Math.max(1, batch >> 1);
+					if (cost > 10) batch = Math.max(least, batch >> 1);
 					else if (cost < 4) batch = Math.min(16, batch * 2);
 					idle(step);
 				}, 0);
@@ -4427,7 +4436,7 @@ function nsmaxTagStructure() {
 			nsmaxReplyFetching.add(id);
 			let ok = false;
 			// 等页面自己加载完再取（2026-10-24：不和正文图片抢网速）
-			nsmaxPageLoaded().then(() => fetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" })).then((response) => response.ok ? response.text() : "").then((html) => {
+			nsmaxPageLoaded().then(() => nsmaxFetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" })).then((response) => response.ok ? response.text() : "").then((html) => {
 				if (!html) return;
 				const doc = new DOMParser().parseFromString(html, "text/html");
 				const last = Array.from(doc.querySelectorAll("ul.comments li.content-item[id]"), (li) => Number(li.id)).filter(Number.isFinite);
@@ -4995,7 +5004,7 @@ function nsmaxTagStructure() {
 	function nsmaxRefreshSideAccount(id) {
 		// 自己的个人主页上，主页资料卡已经在读同一个人的资料（nsmaxSpaceInfo）：共用那一次，不再多发一个请求
 		const own = location.pathname.match(/^\/space\/(\d+)/)?.[1] === String(id);
-		(own ? nsmaxSpaceInfo(String(id)).then((detail) => ({ detail })) : fetch(`/api/account/getInfo/${id}`, { credentials: "same-origin" }).then((res) => res.json())).then((json) => {
+		(own ? nsmaxSpaceInfo(String(id)).then((detail) => ({ detail })) : nsmaxFetch(`/api/account/getInfo/${id}`, { credentials: "same-origin" }).then((res) => res.json())).then((json) => {
 			const data = json?.detail || json?.data;
 			if (!data || json?.success === false) return;
 			const values = { "等级": data.rank !== undefined ? `Lv ${data.rank}` : undefined, "鸡腿": data.coin, "星辰": data.stardust, "主题帖": data.nPost, "评论数": data.nComment };
@@ -6106,8 +6115,8 @@ function nsmaxTagStructure() {
 			nsmaxEnsureNqEntry();
 			nsmaxTidyPagers();
 			nsmaxProcessPostListRows();
-			// 新接上来的列表行（自动翻页）也在空闲时排好
-			if (nsmaxPrerenderKick && document.querySelector(NSMAX_PRERENDER_ROWS)) nsmaxPrerenderKick();
+			// 新接上来的列表行、楼层（自动翻页）也在空闲时排好
+			if (nsmaxPrerenderKick && document.querySelector(nsmaxPrerenderTargets())) nsmaxPrerenderKick();
 			// 只属于某一页的整理，调用前先按地址判断（和各函数开头的判断一样）：别的页面上不调用，浏览器也就不用编译这些大函数
 			// （2026-10-23：列表页第一次扫描时光编译这些用不上的函数就要 6ms，CPU 4 倍降速下）
 			const path = location.pathname;
@@ -7147,7 +7156,7 @@ function nsmaxTagStructure() {
 	var nsmaxOfficialBlocksCache = null;
 	function nsmaxOfficialBlocks() {
 		if (!unsafeWindow$1.__config__?.user?.member_id) return Promise.resolve(null);
-		return nsmaxOfficialBlocksCache ||= fetch("/api/block-list/list", { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
+		return nsmaxOfficialBlocksCache ||= nsmaxFetch("/api/block-list/list", { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
 			const rows = Array.isArray(json?.data) ? json.data : [];
 			return { ids: new Set(rows.map((row) => String(row?.block_member_id ?? ""))), names: new Set(rows.map((row) => String(row?.block_member_name ?? ""))) };
 		}).catch(() => {
@@ -7178,7 +7187,7 @@ function nsmaxTagStructure() {
 		const key = search ? `${page}?${search}` : String(page);
 		const hit = nsmaxRulingPages.get(key);
 		if (hit && Date.now() - hit.at < 3e5) return hit.rows;
-		const res = await fetch(`/api/admin/ruling/page-${page}${search ? "?search=" + encodeURIComponent(search) : ""}`, { credentials: "same-origin" });
+		const res = await nsmaxFetch(`/api/admin/ruling/page-${page}${search ? "?search=" + encodeURIComponent(search) : ""}`, { credentials: "same-origin" });
 		const json = await res.json().catch(() => ({}));
 		if (!res.ok || !json?.success) throw new Error(json?.message || `读取失败（${res.status}）`);
 		const rows = Array.isArray(json.data) ? json.data : [];
@@ -7632,7 +7641,7 @@ function nsmaxTagStructure() {
 			let entry = cache.get(id);
 			if (entry && Date.now() - entry.at < 6e5) return entry.promise;
 			const stored = nsmaxPersonCached(id);
-			const promise = stored ? Promise.resolve(stored) : fetch("/api/account/getInfo/" + id + "?readme=1", { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
+			const promise = stored ? Promise.resolve(stored) : nsmaxFetch("/api/account/getInfo/" + id + "?readme=1", { credentials: "same-origin" }).then((res) => res.json()).then((json) => {
 				const data = json?.detail || json?.data || {};
 				if (json?.success === false || !data || typeof data !== "object") throw new Error(json?.message || "读取失败");
 				nsmaxPersonStore(id, data);

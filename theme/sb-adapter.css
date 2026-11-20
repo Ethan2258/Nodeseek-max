@@ -692,7 +692,7 @@ html[data-nsmax-theme] #nsk-body-left article.post-content img.nsmax-post-image:
 html[data-nsmax-theme] #nsk-body-left article.post-content img.nsmax-post-image:not(a img):hover {outline:2px solid var(--line-strong)!important;outline-offset:1px!important;}
 
 @media(min-width:861px){
-html[data-nsmax-theme] #nsk-body>#nsk-right-panel-container {position:sticky!important;top:76px!important;align-self:start!important;max-height:calc(100vh - 86px)!important;overflow-y:auto!important;overscroll-behavior:contain!important;scrollbar-width:none!important;scrollbar-color:transparent transparent;gap:16px!important;padding-bottom:16px!important;}
+html[data-nsmax-theme] #nsk-body>#nsk-right-panel-container {position:sticky!important;top:76px!important;align-self:start!important;max-height:calc(100vh - 86px)!important;overflow-y:auto!important;overscroll-behavior:auto!important;scrollbar-width:none!important;scrollbar-color:transparent transparent;gap:16px!important;padding-bottom:16px!important;}
 html[data-nsmax-theme] #nsk-body>#nsk-right-panel-container::-webkit-scrollbar {display:none!important;width:0!important;height:0!important;}
 html[data-nsmax-theme] #nsk-body>#nsk-right-panel-container>* {flex-shrink:0!important;}
 }

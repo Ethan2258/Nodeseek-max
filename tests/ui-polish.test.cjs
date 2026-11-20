@@ -1424,4 +1424,52 @@ for(const engine of engines){
    assert.equal(b.opacity,"1",JSON.stringify(b));
   }finally{await bd.context.close();}
  });
+ test(`${engine} 离页不留请求：停在标题上马上按下不再取卡片正文；pagehide 时还没回来的读取请求都取消（带着请求进往返缓存会被赶出来，后退变整页重载）`,async()=>{
+  // 记下脚本发的每个 fetch 和它的中止信号
+  const init="window.__fetches=[];const f=window.fetch;window.fetch=function(input,options){window.__fetches.push({url:String(input&&input.url||input),signal:options&&options.signal||null});return f.apply(this,arguments);};";
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage({count:6}),init,api:{"/api/account/getInfo/11":[{delay:3000,status:200,body:{success:true,detail:{member_id:11,member_name:"user1"}}}]}});
+  try{
+   await ready(page);
+   await page.evaluate(()=>addEventListener("click",(e)=>e.preventDefault(),{capture:true,once:true}));
+   const title=page.locator(".post-list-item:nth-child(1) .post-title a");
+   const box=await title.boundingBox();
+   await page.mouse.move(box.x+10,box.y+box.height/2,{steps:2});
+   await page.waitForTimeout(120);
+   await page.mouse.down();
+   // 不按下时 0.3 秒开始取正文、0.5 秒弹卡片；按下去了就都不要
+   await page.waitForTimeout(700);
+   const pressed=await page.evaluate(()=>({posts:window.__fetches.filter(x=>/\/post-1000-1/.test(x.url)).length,open:!!document.querySelector("dialog.nspp-post-preview[open]")}));
+   await page.mouse.up();
+   assert.deepEqual(pressed,{posts:0,open:false});
+   // 停在名字上：资料卡开始读资料（接口 3 秒才回），这时离页
+   const author=page.locator(".post-list-item:nth-child(2) .info-author a");
+   await author.hover();
+   await page.waitForFunction(()=>window.__fetches.some(x=>x.url.includes("/api/account/getInfo/11")));
+   const before=await page.evaluate(()=>window.__fetches.filter(x=>x.url.includes("/api/account/getInfo/11")).map(x=>!!x.signal?.aborted));
+   assert.deepEqual(before,[false]);
+   await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent("pagehide",{persisted:true}));window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));});
+   const after=await page.evaluate(()=>window.__fetches.filter(x=>x.url.includes("/api/account/getInfo/11")).map(x=>!!x.signal?.aborted));
+   assert.deepEqual(after,[true],"离页时还在路上的资料请求要取消");
+   // 回来后的新请求照常（不沿用已经中止的信号）
+   await page.mouse.move(5,5);
+   await page.locator(".post-list-item:nth-child(3) .info-author a").hover();
+   await page.waitForFunction(()=>window.__fetches.some(x=>x.url.includes("/api/account/getInfo/12")));
+   assert.equal(await page.evaluate(()=>window.__fetches.find(x=>x.url.includes("/api/account/getInfo/12")).signal?.aborted),false);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 滚动跟手（2026-11-20）：电脑上长帖第 9 层以后的楼层空闲时提前排好；右栏滚到头以后接着滚页面`,async()=>{
+  const base=P.postPage(),third=base.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0];
+  const extra=Array.from({length:21},(_,i)=>third.replace('id="3"',`id="${i+4}"`).replace(/#3\b/g,"#"+(i+4))).join("");
+  const html=base.replace(third,third+extra);
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html});
+  try{
+   await ready(page);
+   assert.equal(await page.evaluate(()=>document.querySelectorAll("ul.comments>li.content-item").length),24);
+   await page.waitForFunction(()=>[...document.querySelectorAll("ul.comments>li.content-item")].every(li=>li.hasAttribute("data-nsmax-cv-done")),null,{timeout:15000});
+   const s=await page.evaluate(()=>{const li=document.querySelectorAll("ul.comments>li.content-item")[20],side=document.getElementById("nsk-right-panel-container");return{cv:getComputedStyle(li).contentVisibility,side:side&&getComputedStyle(side).overscrollBehaviorY,sideOverflow:side&&getComputedStyle(side).overflowY};});
+   assert.deepEqual(s,{cv:"visible",side:"auto",sideOverflow:"auto"});
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
 }
