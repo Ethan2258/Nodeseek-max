@@ -154,6 +154,30 @@ test("2026-11-20 看大图更顺：从帖子里那张图放大出来、Esc 缩�
 	} finally { await context.close(); }
 });
 
+test("2026-11-21 看大图收回不闪：主题的弹窗进场动画不套在看图层上；缩回去时帖子里那张图先藏起来（同时只露一张），落地后再露出来；遮罩跟大图同时淡完", async () => {
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: html(), viewport: { width: 1440, height: 900 } });
+	try {
+		await ready(page);
+		const thumb = page.locator(".nsk-post article.post-content img[alt='第一张']");
+		await thumb.click();
+		await page.waitForSelector("dialog.nspp-image-preview .viewer-canvas img");
+		await page.waitForTimeout(500);
+		assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("dialog.nspp-image-preview")).animationName), "none", "看图层整层不再淡入、下移");
+		assert.equal(await thumb.evaluate((el) => getComputedStyle(el).visibility), "visible", "打开动画结束后原图露出来（在遮罩下面）");
+		await page.mouse.click(120, 200);
+		await page.waitForTimeout(80);
+		const mid = await page.evaluate(() => ({
+			thumb: getComputedStyle(document.querySelector(".nsk-post article.post-content img[alt='第一张']")).visibility,
+			backdrop: Number(getComputedStyle(document.querySelector("dialog.nspp-image-preview"), "::backdrop").opacity)
+		}));
+		assert.equal(mid.thumb, "hidden", "缩回去的过程中原图藏着，不叠两张");
+		assert.ok(mid.backdrop > .05 && mid.backdrop < 1, `遮罩在淡出：${mid.backdrop}`);
+		await page.waitForSelector("dialog.nspp-image-preview", { state: "detached", timeout: 1500 });
+		assert.equal(await thumb.evaluate((el) => getComputedStyle(el).visibility), "visible", "落地后原图露出来");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
 test("手机：代码块标题栏 44px，「复制」触控区就是标题栏；看大图翻页还在工具栏（44px），张数和原图在顶上", async () => {
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: html(), viewport: { width: 390, height: 844 }, device: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } } });
 	try {
