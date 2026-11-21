@@ -2748,6 +2748,54 @@ test("消息中心：通知列表名字和动作挨在一起、时间靠右成�
 	} finally { await system.context.close(); }
 });
 
+test("消息中心：系统消息每条前面一个种类小标（新帖 / 鸡腿 / 点赞），用户名加粗、要点链接用小标颜色（2026-11-21 Yiheng：一眼看出是什么）", async () => {
+	const S = "https://www.nodeseek.com", now = Date.now();
+	const msg = (id, content, ago) => ({ id, sender_id: 5230, receiver_id: 1, content, is_markdown: 1, viewed: 1, created_at: new Date(now - ago).toISOString() });
+	const msgArray = [
+		msg(91, `你关注的用户[stgunner](${S}/space/1001)发布了一篇[新的帖子](${S}/post-1055945-1)`, 5e6),
+		msg(92, `您的 [评论](${S}/post-1063359-1#6) 被用户 [鸡腿王](${S}/space/72870) 星辰点赞`, 4e6),
+		msg(93, `您的 [评论](${S}/post-1069866-1#5) 被用户 [heming](${S}/space/14633) 投喂鸡腿`, 3e6),
+		msg(94, "站点维护通知：今晚 23 点停机", 6e6)
+	];
+	const list = { success: true, msgArray: [{ receiver_id: 1, sender_id: 5230, max_id: 94, content: msgArray[2].content, created_at: msgArray[2].created_at, viewed: 1, sender_name: "系统通知", receiver_name: "tester" }] };
+	for (const dark of [false, true]) {
+		const { context, page, errors } = await open(browser, S + "/notification#/message?mode=talk&to=5230", { html: nativeTalkPage({ dark }), colorScheme: dark ? "dark" : "light", viewport: { width: 1440, height: 900 }, api: { "/api/notification/message/with/5230": [{ status: 200, body: { success: true, talkTo: { member_id: 5230, member_name: "系统通知" }, msgArray } }], "/api/notification/message/list": [{ status: 200, body: list }] } });
+		try {
+			await page.waitForSelector(".is-system-thread .is-system .nspp-messages-system-tag");
+			await wait(page, 300);
+			const state = await page.evaluate(() => {
+				const rows = [...document.querySelectorAll(".is-system-thread .nspp-messages-message.is-system")];
+				return {
+					kinds: rows.map((row) => row.querySelector(".nspp-messages-system-tag").textContent),
+					lefts: rows.map((row) => Math.round(row.querySelector(".nspp-messages-system-tag").getBoundingClientRect().left)),
+					widths: rows.map((row) => Math.round(row.querySelector(".nspp-messages-system-tag").getBoundingClientRect().width)),
+					heights: rows.map((row) => Math.round(row.querySelector(".nspp-messages-system-tag").getBoundingClientRect().height)),
+					bells: rows.filter((row) => row.querySelector(":scope > img")).length,
+					tagBg: rows.slice(1).map((row) => getComputedStyle(row.querySelector(".nspp-messages-system-tag")).backgroundColor),
+					mid: rows.map((row) => { const tag = row.querySelector(".nspp-messages-system-tag").getBoundingClientRect(), text = row.querySelector(".nspp-messages-bubble").getBoundingClientRect(); return Math.abs((tag.top + tag.bottom) / 2 - (text.top + text.bottom) / 2); }),
+					text: rows[1].querySelector(".nspp-messages-bubble").textContent.trim(),
+					userWeight: getComputedStyle(rows[1].querySelector(".nspp-messages-system-user")).fontWeight,
+					targetColor: getComputedStyle(rows[1].querySelector(".nspp-messages-system-target")).color,
+					bodyColor: getComputedStyle(rows[1].querySelector(".nspp-messages-bubble")).color,
+					snippetTag: document.querySelector(".nspp-messages-peer[data-nsmax-system] .nspp-messages-snippet > .nspp-messages-system-tag")?.textContent
+				};
+			});
+			assert.deepEqual(state.kinds, ["通知", "新帖", "点赞", "鸡腿"], "按句式认种类，用户名里的「鸡腿」不影响");
+			assert.equal(state.bells, 0, "左边一列换成小标，不再是每条一样的铃铛");
+			assert.equal(new Set(state.lefts).size, 1, "小标对齐成一列");
+			assert.equal(new Set(state.widths).size, 1, "小标一样宽");
+			assert.deepEqual([...new Set(state.heights)], [18], "小标 18px（电脑端小标的统一高度）");
+			assert.equal(new Set(state.tagBg).size, 3, "三种小标三种颜色");
+			for (const gap of state.mid) assert.ok(gap <= 1.5, `小标和正文同一条中线：差 ${gap}`);
+			assert.equal(state.text, "你关注的用户 stgunner 发布了一篇新的帖子", "用户名前后补空格");
+			assert.ok(Number(state.userWeight) >= 600, "用户名加粗");
+			assert.notEqual(state.targetColor, state.bodyColor, "「新的帖子」和正文不是一个颜色");
+			assert.equal(state.snippetTag, "鸡腿", "左边会话列表的摘要前也有小标");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
 test("今日热门在页面解析阶段就按缓存画出来（不再等整页解析完才「卡着进来」），模块挂载时原地接管、不重复", async () => {
 	const posts = Array.from({ length: 12 }, (_, i) => ({ id: 3000 + i, title: `缓存热帖 ${i + 1}`, author: `a${i}`, views: 900 - i * 10, comments: 5, score: 1000 - i }));
 	const seed = { "nspp:state:www.nodeseek.com:hot-rankings": { "snapshot:daily": { posts, fetched: Date.now() - 6e4, updated: Date.now() - 6e4 } } };
