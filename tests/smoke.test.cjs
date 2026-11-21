@@ -2062,7 +2062,7 @@ test("v1.8.1 我的关注 / 粉丝：sb.sb 成员卡片、按钮挪进卡片、�
 			assert.equal(await page.locator(".nsmax-member").count(), 5);
 			assert.deepEqual(await page.locator(".fans-switcher > a.switcher-item").allInnerTexts(), ["我的关注", "我的粉丝"]);
 			assert.equal(await page.locator(".nsmax-member").first().locator(".nsmax-member-actions > .btn").count(), 3);
-			assert.equal(await page.locator(".usercard-button-group > .btn").count(), 0);
+			assert.equal(await page.locator(".usercard-button-group > .btn").evaluateAll((els) => els.filter((el) => el.getClientRects().length).length), 0, "站点的按钮原地藏着（2026-11-21 起不再挪节点，卡片里是转发点击的按钮）");
 			assert.equal(await page.locator(".hover-user-card").evaluate((el) => getComputedStyle(el).display), "none", "NodeSeek 自己的悬停资料卡没触发时不能显示出来");
 			assert.equal(await page.locator(".user-card-wrapper [data-nsmax-usercard]").count(), 0, "成员卡片不能被当成侧栏资料卡");
 			assert.equal(await page.locator(".nsmax-member").nth(1).locator(".nsmax-member-bio").innerText(), "加入 1316 天");
@@ -3809,8 +3809,8 @@ test("列表工具条「精华」「抽奖」（2026-10-18，照 sb.sb 的 精�
 test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预览里表情贴图和文字竖直居中、其他图片单独一行带细线框；搜索面板照 sb.sb 重排", async () => {
 	const fans = await open(browser, "https://www.nodeseek.com/fans?type=follow", { html: fansPage().replaceAll('<a class="btn">取关</a>', '<a class="btn" style="background-color: gray !important;">取关</a>'), viewport: { width: 1440, height: 900 } });
 	try {
-		await fans.page.waitForSelector(".btn[data-nsmax-unfollow]");
-		const btn = await fans.page.evaluate(() => { const b = document.querySelector(".btn[data-nsmax-unfollow]"); return { inline: b.style.getPropertyValue("background-color"), bg: getComputedStyle(b).backgroundColor }; });
+		await fans.page.waitForSelector(".nsmax-member-actions > .btn[data-nsmax-unfollow]");
+		const btn = await fans.page.evaluate(() => { const b = document.querySelector(".nsmax-member-actions > .btn[data-nsmax-unfollow]"); return { inline: b.style.getPropertyValue("background-color"), bg: getComputedStyle(b).backgroundColor }; });
 		assert.equal(btn.inline, "", "站点写死的灰底去掉");
 		assert.notEqual(btn.bg, "rgb(128, 128, 128)");
 		assert.deepEqual(fans.errors, []);

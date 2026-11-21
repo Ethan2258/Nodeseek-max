@@ -4355,6 +4355,8 @@ function nsmaxTagStructure() {
 		return activity;
 	}
 	var activityTagsFeature = { id: "sb-activity-tags", defaults: { enabled: true }, mount() {} };
+	// 站点头衔的英文名 → 中文显示名（2026-11-21 从 /api/account/getInfo 的 roles 里读到的 name / display_text）
+	var NSMAX_ROLE_NAMES = { banned: "违规禁止", fraud: "骗子", suspend: "临时禁言", provider: "商家", admin: "管理" };
 	var NSMAX_LEVEL_SELECTORS = [".role-tag", ".nspp-level", ".user-badge", ".badge", ".author-info > span", ".nsk-content-meta-info > span", ".nsmax-account-rank", ".nsmax-person-level", ".nsmax-space-vip"];
 	function nsmaxMarkLevels() {
 		const mark = (el) => {
@@ -5091,10 +5093,37 @@ function nsmaxTagStructure() {
 	}
 	// 关注 / 粉丝页第一帧：数据是站点前端画的（先是一张转圈 gif + 英文 Loading，整块换掉）。
 	// 照列表骨架放 4 行占位（头像圆 + 两行灰条），比一张大空卡片中间一个小转圈好看，数据到了自然消失
-	function nsmaxFansSkeleton() {
-		const mount = document.querySelector("#nsk-frame #fans-mount");
+	// 2026-11-21 在用户 Chrome 里逐帧记录：站点先把 #fans-mount（连骨架）换成空的列表（标签栏 + 空的 .user-card-wrapper-container），
+	// 约 0.3 秒后卡片才进来，中间一段主栏只剩标签栏。空档里在空列表后面接着放骨架（.nsmax-fans-hold），卡片一来同一轮撤掉；
+	// 真的没有人（列表一直空着）时最多留 2.5 秒
+	var nsmaxFansHoldSince = new WeakMap();
+	function nsmaxFansHold() {
+		if (location.pathname !== "/fans") return;
+		const box = document.querySelector("#nsk-frame .member-list > .user-card-wrapper-container");
+		const hold = document.querySelector("#nsk-frame .member-list > .nsmax-fans-hold");
+		if (!box || box.childElementCount) {
+			hold?.remove();
+			if (box) nsmaxFansHoldSince.delete(box);
+			return;
+		}
+		if (!nsmaxFansHoldSince.has(box)) {
+			nsmaxFansHoldSince.set(box, Date.now());
+			setTimeout(() => { if (!box.childElementCount) box.parentElement?.querySelector(":scope > .nsmax-fans-hold")?.remove(); }, 2500);
+		} else if (Date.now() - nsmaxFansHoldSince.get(box) >= 2500) {
+			hold?.remove();
+			return;
+		}
+		if (hold) return;
+		const el = document.createElement("div");
+		el.className = "nsmax-fans-hold";
+		el.setAttribute("aria-hidden", "true");
+		box.after(el);
+		nsmaxFansSkeleton(el);
+	}
+	function nsmaxFansSkeleton(target) {
+		const mount = target || document.querySelector("#nsk-frame #fans-mount");
 		if (!mount || mount.querySelector(":scope > .nsmax-fans-skeleton")) return;
-		if (!mount.querySelector(":scope > .loading-img, :scope > span")) return;
+		if (!target && !mount.querySelector(":scope > .loading-img, :scope > span")) return;
 		const list = document.createElement("div");
 		list.className = "nsmax-fans-skeleton";
 		for (let i = 0; i < 6; i++) {
@@ -5117,8 +5146,23 @@ function nsmaxTagStructure() {
 	// 个人主页第一帧（2026-11-01 反馈：打开别人的主页先闪一下 loading 再出内容）：站点只给 #user-space-mount（一张转圈 gif + 英文 Loading），
 	// 拿到资料后整块换成 .nsk-container。照换上来以后的样子放骨架——资料卡（头像、名字、九格统计、等级条）和下面的标签 + 列表，
 	// 同样的卡片、同样的高度，内容到了直接接上，不再是左上角一个小图加一行 Loading
-	function nsmaxSpaceSkeleton() {
-		const mount = document.querySelector("#nsk-frame #user-space-mount");
+	// 2026-11-21（Yiheng：从首页点「我的收藏 / 我的回帖 / 我的主题」进去闪一下）：在用户 Chrome 里逐帧记录，站点先把 #user-space-mount
+	// （连同骨架）整块拿掉，过了约 0.5 秒才放上 .nsk-container，中间主栏是空的——第一帧往往正好画在这段空白里，
+	// 看到的是「空白 → 整页内容一下子出来」。这段空档里在 #nsk-frame 里放一个同样的骨架（.nsmax-space-hold），内容一到就在同一轮里撤掉
+	function nsmaxSpaceHold() {
+		const frame = document.querySelector("#nsk-frame");
+		if (!frame || !/^\/space\/\d+/.test(location.pathname)) return;
+		const hold = frame.querySelector(":scope > .nsmax-space-hold");
+		const content = frame.querySelector(":scope > .nsk-container, :scope > #user-space-mount");
+		if (content) { hold?.remove(); return; }
+		if (hold || document.documentElement.getAttribute("data-nsmax-page") !== "space") return;
+		const el = document.createElement("div");
+		el.className = "nsmax-space-hold";
+		frame.prepend(el);
+		nsmaxSpaceSkeleton(el);
+	}
+	function nsmaxSpaceSkeleton(target) {
+		const mount = target || document.querySelector("#nsk-frame #user-space-mount");
 		if (!mount || mount.querySelector(":scope > .nsmax-space-skeleton, .head-container")) return;
 		const line = (className = "") => {
 			const el = document.createElement("span");
@@ -5220,10 +5264,9 @@ function nsmaxTagStructure() {
 			const signature = JSON.stringify(stats) + "|" + (card.querySelector(".user-head .menu")?.textContent || "");
 			let row = card.querySelector(":scope > .nsmax-member");
 			if (row && row.getAttribute("data-nsmax-sig") === signature) {
-				// 按钮可能被原站重新渲染：不在我们这块里的就挪进来
-				const buttons = card.querySelector(":scope > .usercard-button-group");
+				// 原站重新渲染了按钮（点了关注 / 取关）：照着改我们这排
 				const slot = row.querySelector(".nsmax-member-actions");
-				if (buttons && slot) for (const btn of buttons.querySelectorAll(":scope > .btn")) slot.append(btn);
+				if (slot) nsmaxSyncMemberActions(card, slot);
 				continue;
 			}
 			row?.remove();
@@ -5267,15 +5310,39 @@ function nsmaxTagStructure() {
 			body.append(line);
 			const actions = document.createElement("div");
 			actions.className = "nsmax-member-actions";
-			const buttons = card.querySelector(":scope > .usercard-button-group");
-			// 顺序：关注 / 取关、私信、转账（关注状态最常用放最前）
-			const btns = buttons ? Array.from(buttons.querySelectorAll(":scope > .btn")) : [];
-			const rank = (btn) => /关注|取关/.test(btn.textContent) ? 0 : /私信/.test(btn.textContent) ? 1 : 2;
-			for (const btn of btns.sort((a, b) => rank(a) - rank(b))) actions.append(btn);
+			nsmaxSyncMemberActions(card, actions);
 			row.append(avatarLink, body, actions);
 			card.append(row);
 			card.setAttribute("data-nsmax-fan-rebuilt", "true");
 		}
+	}
+	// 成员卡片的按钮（关注 / 取关、私信、转账）：以前把站点（Vue）的按钮节点直接挪进我们这排。点了关注以后站点重画按钮、粉丝数也变了，
+	// 我们整排重建时连同挪进来的按钮一起删掉，新排从已经空了的原按钮组里什么也拿不到——按钮全没了；站点往原位置插新按钮、
+	// 我们又挪走，来回打架，按钮一闪一闪（2026-11-21 Yiheng：「关注完其他按钮都消失了」「那几个按钮一直在跳动」）。
+	// 现在站点的按钮原地不动（藏着），我们这排放自己的按钮，字跟着原按钮，点的时候转给对应的原按钮
+	function nsmaxSyncMemberActions(card, slot) {
+		const group = card.querySelector(":scope > .usercard-button-group");
+		// 顺序：关注 / 取关、私信、转账（关注状态最常用放最前）
+		const rank = (label) => /关注|取关/.test(label) ? 0 : /私信/.test(label) ? 1 : 2;
+		const originals = (group ? Array.from(group.querySelectorAll(":scope > .btn")) : []).map((btn) => ({ btn, label: btn.textContent.trim() })).filter((item) => item.label).sort((a, b) => rank(a.label) - rank(b.label));
+		const current = Array.from(slot.children, (el) => el.textContent);
+		if (current.length === originals.length && current.every((text, i) => text === originals[i].label)) return;
+		slot.replaceChildren(...originals.map(({ label }, index) => {
+			const proxy = document.createElement("button");
+			proxy.type = "button";
+			proxy.className = "btn";
+			proxy.textContent = label;
+			if (label === "取关") proxy.setAttribute("data-nsmax-unfollow", "");
+			if (label === "关注") proxy.setAttribute("data-nsmax-follow", "");
+			proxy.addEventListener("click", (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				// 站点可能已经换了按钮节点：按字找现在的那个，找不到再按位置
+				const live = Array.from(card.querySelectorAll(":scope > .usercard-button-group > .btn"));
+				(live.find((btn) => btn.textContent.trim() === proxy.textContent) || live.sort((a, b) => rank(a.textContent.trim()) - rank(b.textContent.trim()))[index])?.click();
+			});
+			return proxy;
+		}));
 	}
 	function nsmaxCleanNotifications() {
 		if (!/^\/notifications?(?:\/|$)/.test(location.pathname)) return;
@@ -5625,6 +5692,10 @@ function nsmaxTagStructure() {
 		// 按钮自己变了（点关注 / 取关后站点改字、重新写行内底色）也要再整理一次
 		const inButton = (record) => { const el = record.target instanceof Element ? record.target : record.target.parentElement; return !!el?.closest(":is(.nsmax-member-actions, .usercard-button-group) > .btn"); };
 		const observer = new MutationObserver((records) => {
+			if (records.some((record) => record.type === "childList")) {
+				try { nsmaxFansHold(); } catch {}
+				observer.takeRecords();
+			}
 			if (!records.some((record) => Array.from(record.addedNodes).some(relevant) || inButton(record))) return;
 			try { nsmaxPrepareFans(); } catch {}
 		});
@@ -5651,6 +5722,10 @@ function nsmaxTagStructure() {
 		}
 		const relevant = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container, .card-block, .readme, .selector, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager") || !!node.querySelector(".head-container, .card-block, .readme, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager"));
 		const observer = new MutationObserver((records) => {
+			if (records.some((record) => record.target.id === "nsk-frame")) {
+				try { nsmaxSpaceHold(); } catch {}
+				observer.takeRecords();
+			}
 			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
 			try {
 				nsmaxPrepareSpace();
@@ -7578,7 +7653,10 @@ function nsmaxTagStructure() {
 				// 管理员没有对应头衔时补「管理」。最多 4 个，违规类红色、管理类黄色
 				const rawRoles = data.roles;
 				const roleNames = (Array.isArray(rawRoles) ? rawRoles : typeof rawRoles === "string" ? rawRoles.split(/[,，|\s]+/) : rawRoles && typeof rawRoles === "object" ? Object.values(rawRoles) : [])
-					.map((role) => typeof role === "string" ? role : role?.name || role?.title || role?.role_name || role?.label || "")
+					// 接口的 roles 是 {name: "banned", display_text: "违规禁止"}：先用中文显示名；只有英文名时按 NSMAX_ROLE_NAMES 翻成中文，
+					// 和页面上同一位用户名字后面的中文头衔合并（2026-11-21 以前同一个头衔中英文各出一个：banned + 违规禁止、fraud + 骗子）
+					.map((role) => typeof role === "string" ? role : role?.display_text || role?.displayText || role?.title || role?.label || role?.name || role?.role_name || "")
+					.map((text) => NSMAX_ROLE_NAMES[String(text).trim().toLowerCase()] || text)
 					.concat(Array.from(owner?.querySelectorAll(".author-info > :is(.role-tag, .user-badge, .nsk-badge):not([data-nsmax-level])") || [], (tag) => tag.textContent))
 					.map((text) => String(text).trim())
 					.filter((text) => text && text.length <= 8 && !/^\d+$/.test(text) && !/^(楼主|Lv\.?\s*\d+)$/i.test(text));

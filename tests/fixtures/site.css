@@ -65,6 +65,8 @@ header div.color-theme-switcher{padding:0 5px;color:var(--link-hover-color);posi
 .nsk-pager .pager-group,.nsk-pager .pager-more{display:inline-flex;gap:4px}
 /* 帖子页（真实结构：.nsk-post 里是标题与主楼，回复在 .comment-container） */
 .nsk-post .post-title h1{font-size:20px;margin:0}
+/* 真站 style-*.css：大标题里的每个子元素按 x 高居中（2026-11-21 抄进来；帖子页「已回复」比字高 2.6px 就是它撑高了行框） */
+.nsk-post .post-title h1>*{vertical-align:middle}
 .nsk-content-meta-info{display:flex;align-items:flex-start;gap:10px;font-size:12px}
 .nsk-content-meta-info .avatar-wrapper img{width:40px;height:40px;border-radius:5px}
 .content-info{color:var(--text-color-secondary);display:flex;gap:8px}
