@@ -9279,6 +9279,45 @@ html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row[data-unread]:is(
 html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row:hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
   background: var(--panel-hover) !important;
 }
+/* 第一次加载时的骨架行（见 createNotificationInbox 的 render）：24px 头像 + 名字一行（25.5px）+ 所在帖子一行（20px），和真行同高；
+   不响应悬停。状态字「正在加载…」这时只留给读屏 */
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-row.nsmax-notice-skel:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  background: transparent !important;
+  pointer-events: none !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-skel-avatar:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  flex: none !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin: 2px 0 0 !important;
+  border-radius: var(--r-sm) !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-skel-body:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  justify-content: space-around !important;
+  min-width: 0 !important;
+  height: 48.5px !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-skel-title:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: 13px !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-skel-where:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  width: 30% !important;
+  height: 10px !important;
+}
+html[data-nsmax-theme] .nspp-notice-workspace .nspp-messages-list-status[data-nsmax-skeleton]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
 /* 头像：sb.sb .post-avatar 24px、上移 2px，图片小圆角、次底色 */
 html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-avatar:is(#nsmax-lv, *) {
   flex: none !important;
@@ -11598,11 +11637,14 @@ html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
 }
+/* 2026-11-21 Yiheng 截图：「xjetry 用户」里 j、y 的下半截看不到——关键词继承了胶囊的 line-height: 1（行框只有 13px），
+   又为了省略号 overflow: hidden，字母的下伸部分被裁掉。关键词自己用 1.4 的行高（胶囊高度固定 28px，不会变高） */
 html[data-nsmax-theme] .search-overlay .history-keyword:is(#nsmax-lv, *):is(#nsmax-b, *) {
   min-width: 0 !important;
   overflow: hidden !important;
   color: var(--text) !important;
   font-size: 13px !important;
+  line-height: 1.4 !important;
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
 }
@@ -13086,6 +13128,17 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-body > .nsma
 }
 html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-fans-skeleton-short:is(#nsmax-lv, *) {
   width: 38% !important;
+}
+/* 站点换上空列表、卡片还没进来的空档里接着放的骨架（见 nsmaxFansHold）：和换掉之前的骨架卡一样的面板 */
+html[data-nsmax-theme][data-nsmax-page="fans"] .member-list > .nsmax-fans-hold:is(#nsmax-lv, *) {
+  display: flex !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: min(60vh, 440px) !important;
+  padding: 20px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
 }
 /* 个人主页第一帧：站点的 #user-space-mount 里只有转圈 gif + 英文 Loading（拿到资料后整块换掉）。
    照换上来以后的资料卡和标签列表放骨架（见 nsmaxSpaceSkeleton）：卡片、内边距、九格统计和真页面一样，内容到了不跳 */
@@ -15392,7 +15445,7 @@ html[data-nsmax-theme] #nsk-body-left .comment-container > [data-nsmax-my-replie
 /* 71c. 个人主页加右栏（2026-10-24，照 sb.sb /u/…/ 的 .forum-layout：主栏 + 260px 右栏——资料卡、今日热门、最近浏览）。
    和签到、管理记录一样由 nsmaxPrepareSidePage 补右栏、整块放进 1600px 版心；站点的个人主页挂在 #user-space-mount
    （拿到资料后换成 .nsk-container），放进左边一栏，自己不再留版心和内边距（外面的版心已经留了） */
-html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-container, #user-space-mount):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+html[data-nsmax-theme] section#nsk-frame[data-nsmax-side-page] > :is(.nsk-container, #user-space-mount, .nsmax-space-hold):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   grid-column: 1 !important;
   grid-row: 1 !important;
   box-sizing: border-box !important;
@@ -16724,6 +16777,11 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
     margin-bottom: 0 !important;
     vertical-align: top !important;
   }
+  /* 2026-11-21 Yiheng 截图：帖子页「已回复」还是比标题字高。上面按 30.45px 行框算的正中，可标题链接本身还是 vertical-align: middle，
+     把字往下推、行框撑到 32.75px（真站微软雅黑实测：小标比字的正中高 2.6px）。和列表一样，链接改回按基线排（规则在下面，手机同样撑高 1.5px 行框，一起改） */
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > a.post-title-link:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  vertical-align: baseline !important;
 }
 /* 通知里「未读」小标：这一行按基线排，小标却单独按行框居中，比后面 12.5px 的「@了你」高 2px。也按基线排 */
 html[data-nsmax-theme] .nspp-notice-workspace .nsmax-notice-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
