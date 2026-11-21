@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.67
+// @version      1.9.69
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -915,7 +915,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.67";
+	var NSMAX_VERSION = "1.9.69";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -15290,6 +15290,8 @@ var nsmaxRedirecting = false;
 			// 2026-11-20：打开时遮罩和按钮淡入（大图自己从缩略图放大出来，见 openImagePreview）；页面右侧留着滚动条位（scrollbar-gutter: stable）时，那一条在顶层之外、遮罩盖不到，看图期间把根元素的底色压暗，不再留一条亮边；
 			// 「适应窗口」换成四角取景框图标（原来的圆箭头像刷新 / 旋转）；比例在加载时空着也占住宽度，工具栏不跳
 			"@keyframes nsmax-vw-in{from{opacity:0}}",
+			// 主题给所有 dialog[open] 的进场动画（整层淡入 + 下移 4px）不套在看图层上：它让飞出来的大图前 0.16 秒是半透明的、还整体挪一下（主题那条特异度是 (0,6,2) !important，这里要更高）
+			"html:root:root:root:root dialog.nspp-image-preview.nspp-image-preview.nspp-image-preview[open]{animation:none!important;transform:none!important}",
 			"html.nsmax-viewing{background-color:rgb(23 24 27)!important}","html.nsmax-viewing[data-nsmax-dark]{background-color:rgb(10 11 14)!important}",
 			"html .nspp-image-preview[open]::backdrop{animation:nsmax-vw-in .22s ease-out}",
 			"html .nspp-image-preview .viewer-container>:not(.viewer-canvas){animation:nsmax-vw-in .22s ease-out}",
@@ -15318,10 +15320,29 @@ var nsmaxRedirecting = false;
 		let closed = false;
 		let leaving = false;
 		let anim = null;
+		// 2026-11-21（用户：点一下收回去时屏幕闪几下）：像 medium-zoom 那样，飞出去的大图和帖子里那张图同时只露一张——
+		// 打开、关闭的过程中把帖子里那张藏起来（visibility，不影响排版），缩回去落到原位的同一帧再露出来、关掉看图层
+		let hiddenThumb = null;
+		let hiddenThumbStyle = "";
+		const showThumb = () => {
+			if (!hiddenThumb) return;
+			if (hiddenThumbStyle) hiddenThumb.style.visibility = hiddenThumbStyle;
+			else hiddenThumb.style.removeProperty("visibility");
+			hiddenThumb = null;
+		};
+		const hideThumb = (el) => {
+			if (el === hiddenThumb) return;
+			showThumb();
+			if (!el) return;
+			hiddenThumb = el;
+			hiddenThumbStyle = el.style.visibility;
+			el.style.visibility = "hidden";
+		};
 		const close = () => {
 			if (closed) return;
 			closed = true;
 			anim?.cancel();
+			showThumb();
 			viewer?.destroy();
 			dialog.close();
 			dialog.remove();
@@ -15346,6 +15367,7 @@ var nsmaxRedirecting = false;
 		// - 图片铺满顶栏和底栏之间的区域，左右给翻页按钮留位
 		const motion = !touch && !matchMedia("(prefers-reduced-motion: reduce)").matches;
 		const EASE = "cubic-bezier(.2,.8,.2,1)";
+		const OUT = "cubic-bezier(.4,0,.2,1)";
 		const insets = touch ? null : { top: 72, side: multiple ? 88 : 24, bottom: 12 };
 		let zoomLabel = null;
 		let openLink = null;
@@ -15367,12 +15389,16 @@ var nsmaxRedirecting = false;
 			return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height };
 		};
 		// 帖子里那张图在看图层里的位置；不在屏幕里（滚走了、被折叠）就返回 null
+		// 取的是图片内容框（去掉边框和内边距），缩回去落地时和帖子里那张严丝合缝，不会差一两像素跳一下
 		const thumbBox = (el) => {
 			if (!el || !el.isConnected) return null;
 			const r = el.getBoundingClientRect();
 			if (r.width < 8 || r.height < 8 || r.bottom <= 0 || r.right <= 0 || r.top >= innerHeight || r.left >= innerWidth) return null;
-			const c = containerRect();
-			return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height };
+			const c = containerRect(), st = getComputedStyle(el);
+			const left = (parseFloat(st.borderLeftWidth) || 0) + (parseFloat(st.paddingLeft) || 0), top = (parseFloat(st.borderTopWidth) || 0) + (parseFloat(st.paddingTop) || 0);
+			const w = r.width - left - (parseFloat(st.borderRightWidth) || 0) - (parseFloat(st.paddingRight) || 0);
+			const h = r.height - top - (parseFloat(st.borderBottomWidth) || 0) - (parseFloat(st.paddingBottom) || 0);
+			return w > 4 && h > 4 ? { x: r.left + left - c.left, y: r.top + top - c.top, w, h } : null;
 		};
 		const flipFrames = (from, to) => [
 			{ transformOrigin: "0 0", transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) scale(${from.w / to.w}, ${from.h / to.h})` },
@@ -15411,7 +15437,7 @@ var nsmaxRedirecting = false;
 		const animateOut = () => {
 			if (closed || leaving) return;
 			leaving = true;
-			dialog.style.pointerEvents = "none";
+			// 关闭动画期间看图层不再响应点击、滚轮（以前是 pointer-events:none，鼠标会穿到下面的帖子上触发悬停效果）
 			if (!motion) return close();
 			anim?.cancel();
 			anim = null;
@@ -15422,20 +15448,31 @@ var nsmaxRedirecting = false;
 				// 放大到比窗口还大时不做缩回动画（整张大图要先栅格化成一层，慢机器上关闭会卡一下），直接藏起来，只淡出遮罩
 				if (img && box && (box.w > viewer.viewerData.width * 1.2 || box.h > viewer.viewerData.height * 1.2)) img.style.visibility = "hidden";
 				else if (img && box) {
-					const thumb = thumbBox(viewer.images[viewer.index]);
-					runs.push(thumb ? img.animate(flipFrames(thumb, box).reverse(), { duration: 240, easing: EASE, fill: "forwards" }) : img.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.96)" }], { duration: 180, easing: "ease-in", fill: "forwards" }));
+					const target = viewer.images[viewer.index];
+					const thumb = thumbBox(target);
+					if (thumb) {
+						hideThumb(target);
+						runs.push(img.animate(flipFrames(thumb, box).reverse(), { duration: 260, easing: OUT, fill: "forwards" }));
+					} else runs.push(img.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.96)" }], { duration: 200, easing: OUT, fill: "forwards" }));
 				}
-				dialog.querySelectorAll(".viewer-container > :not(.viewer-canvas)").forEach((el) => runs.push(el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" })));
-				runs.push(dialog.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: "ease-in", fill: "forwards", pseudoElement: "::backdrop" }));
+				dialog.querySelectorAll(".viewer-container > :not(.viewer-canvas)").forEach((el) => runs.push(el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: "forwards" })));
+				// 遮罩和大图同一条曲线、同样长：以前遮罩是 ease-in（前面一直黑、最后几十毫秒一下变亮），看上去像闪了一下
+				runs.push(dialog.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: OUT, fill: "forwards", pseudoElement: "::backdrop" }));
 			} catch {}
 			Promise.all(runs.map((run) => run.finished.catch(() => {}))).then(close);
-			setTimeout(close, 450);
+			// 兜底只防动画卡死：以前 0.45 秒就强关，页面忙、动画晚几帧才开始时会在半路一下子没了（大图和遮罩瞬间消失），像闪了一下
+			setTimeout(close, 1200);
 		};
 		dialog.addEventListener("cancel", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
 			animateOut();
 		});
+		for (const type of ["pointerdown", "pointerup", "mousedown", "click", "dblclick", "wheel"]) dialog.addEventListener(type, (event) => {
+			if (!leaving) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+		}, { capture: true, passive: false });
 		viewer = new (nsmaxViewer())(content, {
 			container: dialog,
 			filter: viewable,
@@ -15502,8 +15539,13 @@ var nsmaxRedirecting = false;
 				if (!motion || !img || !box) return;
 				try {
 					if (first) {
-						const thumb = thumbBox(event.detail?.originalImage || image);
-						anim = thumb ? img.animate(flipFrames(thumb, box), { duration: 280, easing: EASE }) : img.animate([{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: EASE });
+						const original = event.detail?.originalImage || image;
+						const thumb = thumbBox(original);
+						if (thumb) {
+							hideThumb(original);
+							anim = img.animate(flipFrames(thumb, box), { duration: 280, easing: EASE });
+							anim.finished.then(() => { if (!leaving) showThumb(); }, () => {});
+						} else anim = img.animate([{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: EASE });
 					} else anim = img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: "ease-out" });
 				} catch {}
 			},
