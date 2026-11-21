@@ -17450,3 +17450,27 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
     animation-timing-function: steps(1, end) !important;
   }
 }
+/* 个人主页名字旁的「管理」等头衔：和旁边 18px 的等级小标一样高（以前 22px 浅色描边胶囊，比旁边高一截），
+   管理头衔和帖子页作者栏一样用红底白字（以前两处一红一灰，看着像两种身份） */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container .nsmax-space-title-row .role-tag:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    display: inline-flex !important;
+    flex: none !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    height: 18px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    border-radius: var(--r-pill) !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    line-height: 16px !important;
+    vertical-align: middle !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container .nsmax-space-title-row .role-tag.role-admin:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border: 0 !important;
+    background: #e5484d !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+  }
+}

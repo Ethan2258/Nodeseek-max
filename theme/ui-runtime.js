@@ -6742,7 +6742,8 @@ function nsmaxTagStructure() {
 	function nsmaxRecentRecords(account) {
 		try {
 			const value = JSON.parse(localStorage.getItem("nsmax:recent:" + account) || "[]");
-			return Array.isArray(value) ? value.filter((item) => typeof item?.title === "string" && /^\/post-\d+-\d+$/.test(item.path)).slice(0, 10).map(({ path, title }) => ({ path, title })) : [];
+			// v1.9.67 及以前记下的标题可能带着「已回复 / 已参与」小标的字（见 nsmaxRecentWithCurrent），读出来时去掉
+			return Array.isArray(value) ? value.filter((item) => typeof item?.title === "string" && /^\/post-\d+-\d+$/.test(item.path)).slice(0, 10).map(({ path, title }) => ({ path, title: title.replace(/^(?:已回复|已参与)+(?=\S)/, "") })) : [];
 		} catch {
 			return [];
 		}
@@ -6750,7 +6751,11 @@ function nsmaxTagStructure() {
 	// 帖子页：当前帖子排到最前（没变时原样返回同一个数组）
 	function nsmaxRecentWithCurrent(records) {
 		const match = location.pathname.match(/^\/post-(\d+)(?:-\d+)?$/);
-		const title = document.querySelector(".nsk-post .post-title-link,.nsk-post h1")?.textContent.trim();
+		// 只取标题链接的字：h1 里还有脚本加的「已回复 / 已参与」小标，整段 h1 的 textContent 会把它们拼进标题
+		// （以前最近浏览里出现「已回复iLatency公测…」）
+		const link = document.querySelector(".nsk-post .post-title-link");
+		const heading = link ? null : document.querySelector(".nsk-post h1");
+		const title = (link ? link.textContent : Array.from(heading?.childNodes || []).filter((node) => !(node.nodeType === 1 && /\bnsmax-/.test(node.className))).map((node) => node.textContent).join("")).trim();
 		if (!match || !title) return records;
 		const path = "/post-" + match[1] + "-1";
 		return [{ path, title: title.slice(0, 200) }, ...records.filter((item) => item.path !== path)].slice(0, 10);
