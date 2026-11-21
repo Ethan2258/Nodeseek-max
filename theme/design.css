@@ -7054,6 +7054,76 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > .nspp-m
   line-height: 1.6 !important;
   white-space: nowrap !important;
 }
+/* 系统消息的种类小标（2026-11-21 Yiheng：一整列同样的灰字，看不出哪条是新帖、哪条是评论被点赞/投喂鸡腿）。
+   左边一列原来是每条都一样的铃铛，换成种类小标（样子照活跃度标签：18px 胶囊、11px、各种类一种浅底色）；
+   正文里用户名加粗、「新的帖子」「评论」这类链接用小标同一种颜色，浅色模式下链接不再和正文一个颜色 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-template-columns: 36px minmax(0, 1fr) auto !important;
+  column-gap: 12px !important;
+}
+html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-message.is-system[data-nsmax-kind], .nspp-messages-system-tag):is([data-nsmax-kind=post]):is(#nsmax-lv, *) {
+  --nsmax-kind-bg: var(--info-soft); --nsmax-kind-line: color-mix(in srgb, var(--info-soft-text) 28%, transparent); --nsmax-kind-text: var(--info-soft-text); --nsmax-kind-link: var(--info-soft-text);
+}
+html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-message.is-system[data-nsmax-kind], .nspp-messages-system-tag):is([data-nsmax-kind=coin], [data-nsmax-kind=lucky]):is(#nsmax-lv, *) {
+  --nsmax-kind-bg: var(--warning-soft); --nsmax-kind-line: var(--warning-border); --nsmax-kind-text: var(--warning-soft-text); --nsmax-kind-link: var(--warning-soft-text);
+}
+html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-message.is-system[data-nsmax-kind], .nspp-messages-system-tag):is([data-nsmax-kind=like], [data-nsmax-kind=admin]):is(#nsmax-lv, *) {
+  --nsmax-kind-bg: var(--danger-soft); --nsmax-kind-line: var(--danger-border); --nsmax-kind-text: var(--danger-soft-text); --nsmax-kind-link: var(--danger);
+}
+html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-message.is-system[data-nsmax-kind], .nspp-messages-system-tag):is([data-nsmax-kind=reply], [data-nsmax-kind=follow]):is(#nsmax-lv, *) {
+  --nsmax-kind-bg: var(--success-soft); --nsmax-kind-line: color-mix(in srgb, var(--success-soft-text) 28%, transparent); --nsmax-kind-text: var(--success-soft-text); --nsmax-kind-link: var(--success-soft-text);
+}
+html[data-nsmax-theme] .nspp-messages :is(.nspp-messages-message.is-system[data-nsmax-kind], .nspp-messages-system-tag):is([data-nsmax-kind=at]):is(#nsmax-lv, *) {
+  --nsmax-kind-bg: var(--accent-teal-soft); --nsmax-kind-line: color-mix(in srgb, var(--accent-teal-text) 28%, transparent); --nsmax-kind-text: var(--accent-teal-text); --nsmax-kind-link: var(--accent-teal-text);
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-system-tag:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  margin: 0 !important;
+  padding: 0 6px !important;
+  border: 1px solid var(--nsmax-kind-line, var(--line)) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--nsmax-kind-bg, var(--panel-alt)) !important;
+  color: var(--nsmax-kind-text, var(--text-muted)) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 16px !important;
+  white-space: nowrap !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system > .nspp-messages-system-tag:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  grid-column: 1 !important;
+  justify-self: stretch !important;
+  padding: 0 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-user:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--text) !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-target:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  color: var(--nsmax-kind-link, var(--text)) !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a:is(.nspp-messages-system-user, .nspp-messages-system-target):hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+/* 左边会话列表里「系统消息」那一行的摘要前也带同一个小标 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-snippet > .nspp-messages-system-tag.is-inline:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  height: 16px !important;
+  margin: 0 6px 0 0 !important;
+  padding: 0 5px !important;
+  font-size: 11px !important;
+  line-height: 14px !important;
+  vertical-align: top !important;
+  margin-top: calc((1.4em - 16px) / 2) !important;
+}
 /* ---------- 34. 回复框、发帖框的光标位置照 sb.sb（2026-10-14） ----------
    sb.sb 的输入框是一个 textarea，内边距 7px 10px，文字离左边框 11px、上边框 8px。这里外框已经是 7px 10px，
    里面的 CodeMirror 行区（10px 12px 14px）、每一行（左右 4px）又各加了一层，光标离左边 27px、离上边 18px，看着又低又靠里。
