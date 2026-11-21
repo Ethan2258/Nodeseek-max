@@ -765,7 +765,7 @@ test("真实预览容器：CodeMirror 外层收起，图片与预览顶部无空
 });
 
 test("最近浏览：本地去重、十条上限、安全标题、位于热榜之后，无额外请求",async()=>{
-	const seed=Array.from({length:10},(_,i)=>({path:'/post-'+(9000+i)+'-1',title:'以前浏览 '+i}));
+	const seed=Array.from({length:10},(_,i)=>({path:'/post-'+(9000+i)+'-1',title:(i===0?'已回复':'')+'以前浏览 '+i}));
 	const {context,page,errors,calls}=await open(browser,'https://www.nodeseek.com/post-1000-1',{html:postPage(),init:`if(window.top===window){localStorage.setItem('nsmax:recent:1',${JSON.stringify(JSON.stringify(seed))});localStorage.setItem('nsmax:post-layout','simple');}`});
 	try{
 		await page.waitForSelector('.nsmax-recent-panel a');
@@ -775,6 +775,10 @@ test("最近浏览：本地去重、十条上限、安全标题、位于热榜�
 		const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('nsmax:recent:1')));
 		assert.equal(saved.length,10);
 		assert.equal(saved.filter(r=>r.path==='/post-1000-1').length,1);
+		// 标题只取标题链接的字，不带「已回复」等小标；以前存进去的带小标标题读出来时去掉
+		assert.equal(saved[0].title,await page.locator('.nsk-post .post-title-link').first().textContent().then(t=>t.trim()));
+		assert.equal(saved[1].title,'以前浏览 0');
+		assert.equal(await page.locator('.nsmax-recent-panel a[href="/post-9000-1"]').textContent(),'以前浏览 0');
 		assert.equal(Object.keys(calls).some(path=>path.includes('/getInfo/')),false);
 		assert.deepEqual(errors,[]);
 	}finally{await context.close();}

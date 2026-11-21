@@ -17450,3 +17450,92 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
     animation-timing-function: steps(1, end) !important;
   }
 }
+/* 个人主页名字旁的「管理」等头衔：和旁边 18px 的等级小标一样高（以前 22px 浅色描边胶囊，比旁边高一截），
+   管理头衔和帖子页作者栏一样用红底白字（以前两处一红一灰，看着像两种身份） */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container .nsmax-space-title-row .role-tag:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    display: inline-flex !important;
+    flex: none !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    height: 18px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    border-radius: var(--r-pill) !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    line-height: 16px !important;
+    vertical-align: middle !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .head-container .nsmax-space-title-row .role-tag.role-admin:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border: 0 !important;
+    background: #e5484d !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+  }
+}
+
+/* ---------- 电脑端细调第十一轮（2026-11-21：逐页截图 1440 / 2048、浅色深色，按 YaHei UI 字体量过） ----------
+   1. 消息中心（站点原生的 @我 / 回复主题 / 私信页）离顶栏 24px，别的页面都是 20px：从首页点进「我的通知」，标签条往下跳 4px → 20px
+   2. 「加载更多」「加载更多会话」：高度早就是 28px 一档，字还是 12.5px，比同一档的「刷新」「全部已读」大半号 → 12px
+   3. 站点设置「设置头像」32px 高、12.5px 字，不在任何一档 → 卡片里的小胶囊 28px / 12px
+   4. 个人主页回帖列表（.comments-list）：没有边框和下圆角，像飘在标签条下面的一串字；左边 16px，比上面「主题 / 回帖」标签（18px）
+      往左 2px；标题深色下是站点的黄色链接色；摘要 13.5px（电脑端不用的字号）→ 和主题列表一样：细线框下圆角、左右 18px、
+      标题正文色、摘要 13px
+   5. 我的关注 / 我的粉丝：鼠标移到卡片上整张卡片往上浮 2px，鼠标在卡片里的按钮间移动时按钮跟着跳；全站别的卡片都不浮 → 不动，只换边框色
+   6. 私信对话头右边的「用户主页」是正文色，比对方名字还显眼 → 和旁边的次要文字一样弱化，悬停变正文色
+   7. 右栏「最近浏览」的「清空」：字比左边标题高 1.5px，右边离卡片内容边线差 5px（上面热门的数字贴着边线）→ 同一条中线，字贴边线 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="notification"] .nsk-notification:not(#nsk-body-left > .nsk-notification):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-top: 20px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 12px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #user-setting-panel .selector-right-side .set-avatar > a.btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+    line-height: 26px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector .comments-list:not(:empty):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 0 0 var(--r) var(--r) !important;
+    overflow: hidden !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector .comments-list > *:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    padding: 11px 18px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector .comments-list > :last-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-bottom: 0 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector .comments-list > * > a:first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--text) !important;
+    text-decoration: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector .comments-list > * > a:first-child:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    text-decoration: underline !important;
+    text-decoration-thickness: 1px !important;
+    text-underline-offset: 3px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector .comments-list > * > p:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] .user-card-wrapper > .user-card:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    transform: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-chat .nspp-messages-profile:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--text-subtle) !important;
+    text-decoration: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-chat .nspp-messages-profile:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--text) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-recent-panel > .nsmax-recent-clear:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    top: 13px !important;
+    right: 6px !important;
+  }
+}

@@ -484,7 +484,13 @@ const wideHits = (selector) => {
 	return hits;
 };
 const hasTouchMarker = (selector) => wideHits(selectorParser().astSync(selector).nodes[0]).has("touch");
+// 悬停预览卡片的正文（.nspp-preview-content，只在 dialog.nspp-post-preview 里）：正文排版规则大多写成
+// :is(帖子正文, 编辑器预览, 预览正文) X，构建拆开 :is() 以后和帖子正文同在一条规则里，整条留在 base，每个页面首帧都要解析，
+// 其中十几条（.nspp-preview-content X > :last-child 之类）还进了浏览器的「通配」桶，每次整页样式重算都对每个元素试一遍。
+// 2026-11-21 起把这些选择器单独拆进 overlay 段（预览打开前一定先补 overlay，见 nsmaxEnsureOverlayCss）。手机布局（[data-nsmax-touch]）的不动
+const previewContentMarker = /\.nspp-preview-content(?![\w-])/;
 const wideChunkOf = (selector) => {
+	if (!pageScopeOf(selector).size && topLevelMatch(withoutNot(selector), previewContentMarker) && !hasTouchMarker(selector)) return "overlay";
 	if (overlaySelector.test(withoutNot(selector)) || pageScopeOf(selector).size) return "base";
 	const hits = wideHits(selectorParser().astSync(selector).nodes[0]);
 	if (hits.has("touch")) {

@@ -270,8 +270,11 @@ html[data-nsmax-theme][data-nsmax-page=setting] #user-setting-panel td :is(butto
 html[data-nsmax-theme] #user-setting-panel .selector-right-side td button:hover,
 html[data-nsmax-theme][data-nsmax-page=setting] #user-setting-panel td :is(button.btn,.pure-button,.btn):hover {background:var(--danger,#ef4444)!important;color:#fff!important;border-color:var(--danger,#ef4444)!important;transform:none!important;opacity:1!important;}
 @media(max-width:700px){html[data-nsmax-theme][data-nsmax-page=setting] #user-setting-panel .selector{display:block!important;}html[data-nsmax-theme][data-nsmax-page=setting] #user-setting-panel .selector-left-side{display:flex!important;gap:4px!important;overflow:auto!important;border-right:0!important;border-bottom:1px solid var(--line-soft)!important;}html[data-nsmax-theme][data-nsmax-page=setting] #user-setting-panel .selector-left-side .selector-item-wrapper{flex-direction:row!important;}html[data-nsmax-theme][data-nsmax-page=setting] #user-setting-panel .selector-left-side .select-item{white-space:nowrap!important;flex:none!important;}}
-/* Use the supplied SB suite's actual timing and curves, without animating layout. */
-html[data-nsmax-theme][data-nsmax-motion] :is(button,a,.btn,.nsk-pager a,.comment-menu .menu-item,.post-list-item,.content-item) {transition:background-color 120ms ease,color 120ms ease,border-color 150ms ease,opacity 120ms ease!important;}
+/* Use the supplied SB suite's actual timing and curves, without animating layout.
+   列表行、楼层整块的悬停浅底不做过渡（sb.sb 也没有，见 design.css「悬停」）：滚轮滚动时防悬停遮罩一出一收，
+   鼠标下那一整块楼层的底色要来回渐变 120ms，每一帧都重画一大片，长帖滚起来发涩（2026-11-21） */
+html[data-nsmax-theme][data-nsmax-motion] :is(button,a,.btn,.nsk-pager a,.comment-menu .menu-item) {transition:background-color 120ms ease,color 120ms ease,border-color 150ms ease,opacity 120ms ease!important;}
+html[data-nsmax-theme][data-nsmax-motion] #nsk-body-left :is(ul.post-list > li.post-list-item, ul.comments > li.content-item, .nsk-post > .content-item) {transition:none!important;}
 html[data-nsmax-theme][data-nsmax-motion] :is(.nsmax-pop,.nspp-post-preview,.hover-user-card) {animation:nsmax-sb-enter 120ms var(--ease-out) both!important;}
 html[data-nsmax-theme][data-nsmax-motion] dialog[open] {animation:nsmax-sb-enter 160ms var(--ease-out) both!important;}
 @keyframes nsmax-sb-enter {from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
