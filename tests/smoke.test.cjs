@@ -1236,9 +1236,10 @@ test('用户最新需求还原：每日签到胶囊UI与排行榜前三高亮、
 		const rank1 = pageBoard.locator('.nsmax-board-row[data-rank="1"] .nsmax-board-rank');
 		const rank2 = pageBoard.locator('.nsmax-board-row[data-rank="2"] .nsmax-board-rank');
 		const rank3 = pageBoard.locator('.nsmax-board-row[data-rank="3"] .nsmax-board-rank');
-		assert.equal(await rank1.evaluate(el => getComputedStyle(el).color), 'rgb(239, 68, 68)');
-		assert.equal(await rank2.evaluate(el => getComputedStyle(el).color), 'rgb(249, 115, 22)');
-		assert.equal(await rank3.evaluate(el => getComputedStyle(el).color), 'rgb(234, 179, 8)');
+		// 2026-11-22 第十三轮：浅色下前三名的红 / 橙 / 黄字加深（原来的亮色在浅底上对比度 3.2 / 2.5 / 1.8，看不清），深色下照旧
+		assert.equal(await rank1.evaluate(el => getComputedStyle(el).color), 'rgb(185, 28, 28)');
+		assert.equal(await rank2.evaluate(el => getComputedStyle(el).color), 'rgb(194, 65, 12)');
+		assert.equal(await rank3.evaluate(el => getComputedStyle(el).color), 'rgb(133, 77, 14)');
 		assert.deepEqual(errorsBoard, []);
 	} finally { await ctxBoard.close(); }
 

@@ -17987,3 +17987,69 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
     min-width: 0 !important;
   }
 }
+
+/* ---------- 2026-11-22 第十三轮：电脑端逐页走查（按微软雅黑 UI 度量，1440 / 1100px、浅色深色），同类问题一起修 ----------
+   1. 内容少的页面（账簿、等级进度、查找用户、邀请、商家合作、友情链接、窄窗口的关注 / 粉丝页……），页脚下面露出一截灰色画布，
+      页脚像飘在半空。页脚往下延伸到窗口底：用页脚同色的投影铺在它下面（投影不算进可滚动范围，长页面滚到底也不会多出空白），
+      滚动条槽照旧是画布色；
+   2. 资料卡「关注 / 私信 / 主页（/ TG）」32.75px 高、13px 字，和关注 / 粉丝页卡片上同样三个按钮（28px、12px）不是一档。
+      改成卡片内胶囊那一档：28px、12px。「关注」等关注状态读回来之前是不能点的，以前是整块打六折透明（深色下一块灰泥），
+      现在和别的主按钮不能点时一样：次底色、细线框、弱字；
+   3. 悬停预览卡片：正文第一块是标题（h2 之类）时上面多出 24px 空白（只去掉了直接子元素的上边距，卡片里正文外面还包着一层 article）；
+   4. 登录页（含邮箱 / 短信登录）卡片离顶栏 48px，注册页 28px，别的页面都是 20px：统一成 20px；
+   5. 注册页「邮箱验证 / 手机号验证」单选 13.5px（不在电脑端字号档里），旁边「同意服务条款」13px：统一 13px；
+   6. 管理记录表格：编号、时间是普通字体、正文色，账簿表格里的数字和时间都是等宽数字、时间弱化色。照账簿排；
+   7. 签到排行榜（.board-container）前三名红 / 橙 / 黄字配同色浅底，浅色下黄字「3」对比度只有 1.8:1、橙字 2.5:1、红字 3.2:1，
+      12px 小字看不清。颜色不变、浅色下字加深到 4.5:1 以上；深色下橙、黄本来就清楚，红字 4.3:1 提亮一点。 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]):not([data-nsmax-page="setting"]):not([data-nsmax-page="notification"]) body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-shadow: 0 100vh 0 100vh var(--panel) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-person-pop .nsmax-person-actions > :is(a, button):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 28px !important;
+    padding-block: 0 !important;
+    font-size: 12px !important;
+    line-height: 26px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-person-pop .nsmax-person-actions > .nsmax-person-follow:disabled:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    opacity: 1 !important;
+    border-color: var(--line) !important;
+    background: var(--panel-alt) !important;
+    color: var(--text-disabled) !important;
+    cursor: not-allowed !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] #nsk-body [data-nsmax-auth-card]:is(#nsmax-a, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-top: 0 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] #nsk-frame-block[data-nsmax-auth-card]:is(#nsmax-a, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    margin-top: 20px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] [data-nsmax-auth-app] .pure-radio:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="auth"] [data-nsmax-auth-app] .pure-radio > span:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-size: 13px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .ruling-log table td:is(:first-child, :last-child):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .ruling-log table td:first-child a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    font-family: var(--font-mono) !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .ruling-log table td:last-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--text-muted) !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]):not([data-nsmax-dark]) .nsmax-board-row[data-rank="1"] .nsmax-board-rank:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: #b91c1c !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-dark] .nsmax-board-row[data-rank="1"] .nsmax-board-rank:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: #f87171 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]):not([data-nsmax-dark]) .nsmax-board-row[data-rank="2"] .nsmax-board-rank:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: #c2410c !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]):not([data-nsmax-dark]) .nsmax-board-row[data-rank="3"] .nsmax-board-rank:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: #854d0e !important;
+  }
+}
+/* 正文标题的 1.5em 上边距那条规则带着 #nsk-body-left，特异度高一截：这里多垫两层 */
+html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+  margin-top: 0 !important;
+}
