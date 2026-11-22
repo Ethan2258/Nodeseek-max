@@ -4105,7 +4105,7 @@ function nsmaxTagStructure() {
 			if (hit) open(hit);
 		}, options);
 		document.addEventListener("focusout", (event) => { if (target(event.target)) hide(); }, options);
-		document.addEventListener("keydown", (event) => { if (event.key === "Escape") hide(); }, options);
+		document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) hide(); }, options);
 		window.addEventListener("scroll", () => { if (current || card && !card.hidden) hide(); }, { passive: true, signal: ctx.signal });
 		ctx.signal.addEventListener("abort", () => card?.remove(), { once: true });
 	}
@@ -6037,7 +6037,7 @@ function nsmaxTagStructure() {
 				settings.addEventListener("click", () => { closeMenu(); document.querySelector('[aria-label="NodeSeek Max 设置"]')?.click(); }, { signal: ctx.signal }); tools.append(settings); panel.append(tools);
 				panel.addEventListener("keydown", event => {
 					if (nsmaxLayers.some(layer => layer.open)) return;
-					if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeMenu(); }
+					if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) { event.preventDefault(); event.stopPropagation(); closeMenu(); }
 					if (event.key !== "Tab") return;
 					const focusable = [...panel.querySelectorAll('a[href],button:not(:disabled),input,select,textarea,[tabindex="0"]')].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
 					const first = focusable[0], last = focusable.at(-1);
@@ -6092,7 +6092,7 @@ function nsmaxTagStructure() {
 		const observe = () => { observer.disconnect(); if (media.matches) observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] }); };
 		observe();
 		media.addEventListener("change", () => { observe(); sync(); nsmaxPlaceHeaderButtons(GM_getValue$1(SETTINGS_KEY,{})?.["content-filter"]?.enabled !== false); }, { signal: ctx.signal });
-		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
+		document.addEventListener("keydown", event => { if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) closeSearch(true); }, { signal: ctx.signal });
 		// iOS Safari 要文档上挂着 touchstart 才会触发 :active，否则手机按下反馈不生效
 		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
@@ -7821,7 +7821,8 @@ function nsmaxTagStructure() {
 		};
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
-		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });
+		// 输入法候选词开着时的 Esc（资料卡里写备注时）只收起候选词，不关卡片
+		document.addEventListener("keydown",event => { if (event.key==="Escape" && !event.isComposing && event.keyCode !== 229) hide(); }, { signal:ctx.signal });
 		// 往返缓存会连同 DOM 和计时器一起保留；离开时收起卡片、取消尚未完成的弹出，返回后保留原页但不留浮层。
 		window.addEventListener("pagehide",hide,{signal:ctx.signal});
 		window.addEventListener("scroll",hide,{passive:true,signal:ctx.signal}); window.addEventListener("resize",place,{passive:true,signal:ctx.signal});

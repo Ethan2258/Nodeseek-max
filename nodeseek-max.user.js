@@ -1193,6 +1193,7 @@ var nsmaxRedirecting = false;
 	var nsmaxStorageInitError = "";
 	var nsmaxFlushStorage = async () => {};
 	var nsmaxPatchStorage = null;
+	var nsmaxEditStorage = null;
 	var nsmaxModernGM = typeof GM !== "undefined" ? GM : null;
 	var nsmaxManagerName = String(nsmaxModernGM?.info?.scriptHandler || (typeof GM_info !== "undefined" ? GM_info?.scriptHandler : "") || "");
 	function nsmaxInstallStorageQueue(read, writeValue, allWrites = false) {
@@ -1200,20 +1201,21 @@ var nsmaxRedirecting = false;
 		// 同步管理器仍直接读原存储；只有正在保存或等待重试的键才需要乐观视图。
 		_GM_getValue = (key, fallback) => allWrites || pending.has(key) || failed.has(key) ? memory.has(key) ? structuredClone(memory.get(key)) : fallback : syncGet(key, fallback);
 		const enqueueWrite = (key, operation) => {
-			if (!operation.retry) memory.set(key, operation.patch ? mergeSettings(_GM_getValue(key, {}), operation.patch) : structuredClone(operation.value));
+			if (!operation.retry) memory.set(key, operation.edit ? operation.edit(_GM_getValue(key, {})) : operation.patch ? mergeSettings(_GM_getValue(key, {}), operation.patch) : structuredClone(operation.value));
 			const write = (pending.get(key) || Promise.resolve()).then(async () => {
 				const operations = [...(failed.get(key) || []), ...(operation.retry ? [] : [operation])];
 				try {
 					const commit = async () => {
-						const patches = operations.some(item => item.patch);
+						const patches = operations.some(item => item.patch || item.edit);
 						const previous = patches ? await read(key, {}) : undefined;
 						let next = previous;
-						for (const item of operations) next = item.patch ? mergeSettings(next, item.patch) : structuredClone(item.value);
+						// edit：在刚读回来的值上改（见 nsmaxEditSetting），别的标签页先写进去的也在里面
+						for (const item of operations) next = item.edit ? item.edit(next) : item.patch ? mergeSettings(next, item.patch) : structuredClone(item.value);
 						if (!patches || JSON.stringify(previous) !== JSON.stringify(next)) await writeValue(key, next);
 						if (pending.get(key) === write) memory.set(key, structuredClone(next));
 					};
 					// 不同标签页的同步 GM 也可能同时读到旧值；全部设置 patch 在同源锁内重新读取、合并并等待写入。
-					if (operations.some(item => item.patch) && navigator.locks?.request) await navigator.locks.request(`nsmax:settings:${key}`, commit);
+					if (operations.some(item => item.patch || item.edit) && navigator.locks?.request) await navigator.locks.request(`nsmax:settings:${key}`, commit);
 					else await commit();
 					failed.delete(key);
 				} catch { failed.set(key, operations); }
@@ -1223,6 +1225,7 @@ var nsmaxRedirecting = false;
 		};
 		if (allWrites) _GM_setValue = (key, value) => enqueueWrite(key, { value: structuredClone(value) });
 		nsmaxPatchStorage = (key, patch) => enqueueWrite(key, { patch: structuredClone(patch) });
+		nsmaxEditStorage = (key, edit) => enqueueWrite(key, { edit });
 		nsmaxFlushStorage = async (retry = false) => {
 			let timeout;
 			const flush = async () => {
@@ -1379,16 +1382,33 @@ var nsmaxRedirecting = false;
 		GM_setValue$1(key, gm);
 		return { key, gm, local: merged };
 	}
+	// 各功能状态在这一页里的缓存：别的标签页改了 localStorage（storage 事件）就作废，下次读时重读（2026-11-22）。
+	// 以前一页打开后一直用自己那份：别的标签页签过到、查过未读数，这一页还按旧的来（签到按钮不藏、再签一次，未读数停在旧数）
+	var nsmaxFeatureStores = new Map();
+	var nsmaxFeatureStoresWatched = false;
 	function nsmaxFeatureStore(id) {
 		let state;
 		const load = () => state ||= nsmaxReadFeatureState(id);
+		const key = `nspp:state:${location.hostname}:${id}`;
+		nsmaxFeatureStores.set(key, () => { state = void 0; });
+		if (!nsmaxFeatureStoresWatched) {
+			nsmaxFeatureStoresWatched = true;
+			try {
+				window.addEventListener("storage", (event) => {
+					if (event.storageArea && event.storageArea !== localStorage) return;
+					if (event.key === null) for (const reset of nsmaxFeatureStores.values()) reset();
+					else nsmaxFeatureStores.get(event.key)?.();
+				});
+			} catch {}
+		}
 		return {
 			get(name) {
 				const { gm, local } = load();
 				return !nsmaxStateDurable(id, name) && Object.hasOwn(local, name) ? local[name] : gm[name];
 			},
 			set(name, value) {
-				const current = load();
+				// 写之前按存储里现在的样子重读：别的标签页刚写的（storage 事件可能还没到）不被这一页的旧缓存整份盖掉
+				const current = state = nsmaxReadFeatureState(id);
 				// 值没变不写。传回来的是读出来的同一个对象时照写：可能是原地改过的
 				const stored = nsmaxStateDurable(id, name) || !Object.hasOwn(current.local, name) && Object.hasOwn(current.gm, name) ? current.gm : current.local;
 				const previous = stored[name];
@@ -1756,6 +1776,34 @@ var nsmaxRedirecting = false;
 		}
 		if (typeof nsmaxTriggerFlush === "function") nsmaxTriggerFlush();
 	}
+	// 一项文字设置在「现在存着的值」上改（2026-11-22）：备注、屏蔽词、屏蔽用户名单以前拿这一页打开时读到的整段文字改一行、
+	// 再整段写回去，两个标签页各改一次，后写的那页把先写的冲掉（加的备注、屏蔽词不见了）。现在 edit 收到的是存储里最新的值，
+	// 写入时在同源锁里重新读一遍再改（见 nsmaxInstallStorageQueue），返回这一页先用上的新值
+	function nsmaxEditSetting(feature, key, edit) {
+		if (!hasStorage()) throw new Error("油猴存储未就绪，请重新安装脚本后刷新");
+		let value;
+		const apply = (stored) => {
+			const current = normalizeSettings([feature], { [feature.id]: validObject(stored) ? stored[feature.id] : void 0 })[feature.id];
+			value = normalizeSettings([feature], { [feature.id]: { ...current, [key]: edit(current[key]) } })[feature.id][key];
+			if (nsmaxActiveSettings?.[feature.id]) nsmaxActiveSettings[feature.id][key] = value;
+			return mergeSettings(stored, { [feature.id]: { [key]: value } });
+		};
+		if (nsmaxEditStorage) nsmaxEditStorage(SETTINGS_KEY, apply);
+		else {
+			const previous = GM_getValue$1(SETTINGS_KEY, {});
+			const next = apply(previous);
+			if (JSON.stringify(previous) !== JSON.stringify(next)) GM_setValue$1(SETTINGS_KEY, next);
+		}
+		if (typeof nsmaxTriggerFlush === "function") nsmaxTriggerFlush();
+		return value;
+	}
+	// 名单类设置：这一页看到的是 before，改成了 after；把增删的那几行套到存储里现在的名单上（别的标签页加的行留着）
+	function nsmaxApplyLineEdits(stored, before, after) {
+		const removed = new Set(before.filter((line) => !after.includes(line)));
+		const result = stored.filter((line) => !removed.has(line));
+		for (const line of after) if (!before.includes(line) && !result.includes(line)) result.push(line);
+		return result;
+	}
 	function clearCaches() {
 		if (!hasStorage()) throw new Error("油猴存储未就绪，请重新安装脚本后刷新");
 		for (const [id, matches] of [
@@ -1964,6 +2012,11 @@ var nsmaxRedirecting = false;
 							saveSettings(features, settings, { [feature.id]: [key] });
 						} else state.set(key, value);
 					},
+					// 在存储里最新的值上改一项设置（名单、备注这类整段文字），见 nsmaxEditSetting
+					edit: (key, edit) => {
+						if (!Object.hasOwn(feature.defaults, key)) return state.set(key, edit(state.get(key)));
+						settings[feature.id][key] = nsmaxEditSetting(feature, key, edit);
+					},
 					watch: (callback) => {
 						callbacks.add(callback);
 						run(callback);
@@ -2164,7 +2217,8 @@ var nsmaxRedirecting = false;
 		}
 	}
 	function nsmaxLayerKey(event) {
-		if (event.key !== "Escape" || event.defaultPrevented) return;
+		// 输入法候选词开着时的 Esc 是收起候选词，不关弹层（中文输入时常按）
+		if (event.key !== "Escape" || event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
 		while (nsmaxLayers.length && !nsmaxLayers[nsmaxLayers.length - 1].open) nsmaxLayers.pop();
 		const top = nsmaxLayers[nsmaxLayers.length - 1];
 		if (!top) return;
@@ -3108,7 +3162,7 @@ var nsmaxRedirecting = false;
 		});
 		// 搜索框里有字时按 Esc 先清空搜索、回到原来的分类，再按一次才关掉设置（以前一按就整个关掉，搜到一半没法退回）
 		search.addEventListener("keydown", (event) => {
-			if (event.key !== "Escape" || !search.value) return;
+			if (event.key !== "Escape" || event.isComposing || event.keyCode === 229 || !search.value) return;
 			event.preventDefault();
 			event.stopPropagation();
 			clearTimeout(searchTimer);
@@ -6050,7 +6104,8 @@ var nsmaxRedirecting = false;
 				nsmaxContentFilter = {
 					keywords: () => keywordLines(ctx.get("keywords")),
 					setKeywords(list) {
-						ctx.set("keywords", list.join("\n"));
+						const before = keywordLines(ctx.get("keywords"));
+						ctx.edit("keywords", (text) => nsmaxApplyLineEdits(keywordLines(text), before, list).join("\n"));
 						matchers = compileKeywordMatchers(ctx.get("keywords"));
 						rerun();
 					},
@@ -6058,7 +6113,8 @@ var nsmaxRedirecting = false;
 					users: () => users.slice(),
 					blocksUser: blockedUser,
 					setUsers(list) {
-						ctx.set("users", [...new Set(list.filter(Boolean))].join("\n"));
+						const before = filterLines(ctx.get("users"));
+						ctx.edit("users", (text) => [...new Set(nsmaxApplyLineEdits(filterLines(text), before, list.filter(Boolean)))].join("\n"));
 						users = filterLines(ctx.get("users"));
 						rerun();
 					},
@@ -6141,13 +6197,16 @@ var nsmaxRedirecting = false;
 						name = String(name || "").trim();
 						note = String(note || "").replace(/\s+/g, " ").trim();
 						if (!name || name.includes("=")) return false;
-						const lines = String(ctx.get("notes") || "").split("\n").filter((line) => {
-							const index = line.indexOf("=");
-							return !(index > 0 && line.slice(0, index).trim() === name);
+						// 在存储里最新的那份上改（别的标签页刚写的备注不被冲掉）
+						ctx.edit("notes", (text) => {
+							const lines = String(text || "").split("\n").filter((line) => {
+								const index = line.indexOf("=");
+								return !(index > 0 && line.slice(0, index).trim() === name);
+							});
+							while (lines.length && !lines.at(-1).trim()) lines.pop();
+							if (note) lines.push(`${name}=${note}`);
+							return lines.join("\n");
 						});
-						while (lines.length && !lines.at(-1).trim()) lines.pop();
-						if (note) lines.push(`${name}=${note}`);
-						ctx.set("notes", lines.join("\n"));
 						notes = parse(ctx.get("notes"));
 						clear();
 						process();
@@ -15971,7 +16030,7 @@ var nsmaxRedirecting = false;
 			view.hidden = true;
 		};
 		document.addEventListener("keydown", event => {
-			if (event.key === "Escape" && !view.hidden && !closeImage) { event.preventDefault(); hide(); }
+			if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229 && !view.hidden && !closeImage) { event.preventDefault(); hide(); }
 		}, { signal:ctx.signal });
 		const scheduleClose = () => {
 			if (mobile() || closeImage) return;
@@ -21140,7 +21199,7 @@ var nsmaxRedirecting = false;
 			signal
 		});
 		document.addEventListener("keydown", (event) => {
-			if (!pop) return;
+			if (!pop || event.isComposing || event.keyCode === 229) return;
 			if (event.key === "Escape") {
 				event.preventDefault();
 				close(true);
@@ -28319,7 +28378,7 @@ function nsmaxTagStructure() {
 			if (hit) open(hit);
 		}, options);
 		document.addEventListener("focusout", (event) => { if (target(event.target)) hide(); }, options);
-		document.addEventListener("keydown", (event) => { if (event.key === "Escape") hide(); }, options);
+		document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) hide(); }, options);
 		window.addEventListener("scroll", () => { if (current || card && !card.hidden) hide(); }, { passive: true, signal: ctx.signal });
 		ctx.signal.addEventListener("abort", () => card?.remove(), { once: true });
 	}
@@ -30251,7 +30310,7 @@ function nsmaxTagStructure() {
 				settings.addEventListener("click", () => { closeMenu(); document.querySelector('[aria-label="NodeSeek Max 设置"]')?.click(); }, { signal: ctx.signal }); tools.append(settings); panel.append(tools);
 				panel.addEventListener("keydown", event => {
 					if (nsmaxLayers.some(layer => layer.open)) return;
-					if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeMenu(); }
+					if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) { event.preventDefault(); event.stopPropagation(); closeMenu(); }
 					if (event.key !== "Tab") return;
 					const focusable = [...panel.querySelectorAll('a[href],button:not(:disabled),input,select,textarea,[tabindex="0"]')].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
 					const first = focusable[0], last = focusable.at(-1);
@@ -30306,7 +30365,7 @@ function nsmaxTagStructure() {
 		const observe = () => { observer.disconnect(); if (media.matches) observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] }); };
 		observe();
 		media.addEventListener("change", () => { observe(); sync(); nsmaxPlaceHeaderButtons(GM_getValue$1(SETTINGS_KEY,{})?.["content-filter"]?.enabled !== false); }, { signal: ctx.signal });
-		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
+		document.addEventListener("keydown", event => { if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) closeSearch(true); }, { signal: ctx.signal });
 		// iOS Safari 要文档上挂着 touchstart 才会触发 :active，否则手机按下反馈不生效
 		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
@@ -32035,7 +32094,8 @@ function nsmaxTagStructure() {
 		};
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
-		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });
+		// 输入法候选词开着时的 Esc（资料卡里写备注时）只收起候选词，不关卡片
+		document.addEventListener("keydown",event => { if (event.key==="Escape" && !event.isComposing && event.keyCode !== 229) hide(); }, { signal:ctx.signal });
 		// 往返缓存会连同 DOM 和计时器一起保留；离开时收起卡片、取消尚未完成的弹出，返回后保留原页但不留浮层。
 		window.addEventListener("pagehide",hide,{signal:ctx.signal});
 		window.addEventListener("scroll",hide,{passive:true,signal:ctx.signal}); window.addEventListener("resize",place,{passive:true,signal:ctx.signal});
