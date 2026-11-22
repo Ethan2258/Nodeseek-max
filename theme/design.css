@@ -11336,6 +11336,12 @@ html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > 
    - 搜索条和顶栏搜索框是同一个样子：一个 44px 的框（次底色细线框，聚焦时换成面板底 + 品牌色边框），左边放大镜，
      「搜索」按钮收进框里右边（墨色小胶囊，只写字——以前框里一个放大镜、按钮里又一个放大镜）；
    - 下面一排版块小标签（26px、12.5px，放不下时横着滑），最后「搜索历史」（12.5px 淡字 +「清空」，下面一排 28px 小胶囊）；
+   - 2026-11-22 Yiheng 截图「这个画不出来，而且只有一半……感觉这个整个页面都不好」：登录后版块有 11 个（多了内版），600px 卡片一排放不下，
+     最后的「内版」（还正是选中的那个）被右沿切掉一半，横着滑又没有任何提示；版块是 span，点两下字被选中，显示成亮黄底（看着像「曝光」被高亮）。
+     电脑端整个重排（手机触屏的抽屉在 mobile.css，不动）：卡片 640px；搜索框 40px（桌面主控件档）、卡片圆角，「搜索」换成框里右边的实心墨色按钮
+     （32px，四周留 3px，圆角 = 外框圆角 − 4px，同心）；版块上面一行「版块」小标题，标签换行排开、一个都不藏（28px / 12px，桌面卡片内胶囊档，左右 10px：现在 11 个正好一排，以后再多也是换行，不会藏）；
+     搜索历史的范围是「全部」时不再写（几乎每条都是「全部」，一排小灰块全是噪音），别的范围写成关键词后面的淡色小字；
+     所有可点的标签、历史、清空都不让选中文字；
    - 手机（≤640px）：站点把卡片撑成满屏白板，下面一大片空白、左右还露出两条遮罩。改成顶部抽屉：贴着屏幕顶、宽度占满、
      高度跟内容走，下面是遮罩，点遮罩关闭 */
 html[data-nsmax-theme] .search-overlay:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -11347,7 +11353,7 @@ html[data-nsmax-theme] .search-overlay:is(#nsmax-lv, *):is(#nsmax-b, *) {
 }
 html[data-nsmax-theme] .search-overlay .glass-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: border-box !important;
-  width: 600px !important;
+  width: 640px !important;
   max-width: 100% !important;
   height: auto !important;
   max-height: calc(100dvh - 12vh - 16px) !important;
@@ -11367,7 +11373,7 @@ html[data-nsmax-theme] .search-overlay .glass-tabs:is(#nsmax-lv, *):is(#nsmax-b,
   gap: 20px !important;
   height: 46px !important;
   margin: 0 !important;
-  padding: 0 8px 0 18px !important;
+  padding: 0 10px 0 20px !important;
   border: 0 !important;
   border-bottom: 1px solid var(--line-soft) !important;
   background: transparent !important;
@@ -11388,6 +11394,8 @@ html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):i
   font-size: 14px !important;
   font-weight: 400 !important;
   line-height: 1 !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
@@ -11422,8 +11430,8 @@ html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b
   align-items: center !important;
   justify-content: center !important;
   flex: none !important;
-  width: 30px !important;
-  height: 30px !important;
+  width: 28px !important;
+  height: 28px !important;
   margin: 0 0 0 auto !important;
   padding: 0 !important;
   border: 0 !important;
@@ -11444,31 +11452,32 @@ html[data-nsmax-theme] .search-overlay .glass-close svg:is(#nsmax-lv, *):is(#nsm
 html[data-nsmax-theme] .search-overlay .glass-content:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: flex !important;
   flex-direction: column !important;
-  gap: 14px !important;
+  gap: 16px !important;
   margin: 0 !important;
-  padding: 16px 18px 18px !important;
+  padding: 20px 20px 20px !important;
   background: transparent !important;
 }
-/* 搜索条就是一个框：左边放大镜 + 输入，右边「搜索」贴着框的右沿（左细线分隔、透明底、没有自己的圆角，
-   靠 overflow:hidden 裁掉右边两个角）——以前按钮是个独立小胶囊，和外框的圆角对不上（2026-10-21） */
+/* 搜索条就是一个框：左边放大镜 + 输入，右边「搜索」在框里。2026-10-21 起是贴着右沿的一段（左细线、透明底），淡得像没有按钮；
+   2026-11-22 改成框里的实心墨色按钮，四周留 3px，圆角比外框小 4px（同心，不会再出现「独立小胶囊和外框圆角对不上」） */
 html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *) {
   order: 1 !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
   gap: 0 !important;
-  height: 44px !important;
+  height: 40px !important;
   margin: 0 !important;
-  padding: 0 0 0 12px !important;
+  padding: 0 3px 0 13px !important;
   overflow: hidden !important;
   border: 1px solid var(--line) !important;
-  border-radius: var(--r-input) !important;
+  border-radius: var(--r) !important;
   background: var(--panel-alt) !important;
-  transition: border-color 0.15s ease, background-color 0.15s ease !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *):focus-within {
   border-color: var(--brand-border) !important;
   background: var(--panel) !important;
+  box-shadow: 0 0 0 3px var(--field-ring) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
   content: "" !important;
@@ -11504,26 +11513,30 @@ html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#ns
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  align-self: stretch !important;
+  align-self: center !important;
   box-sizing: border-box !important;
-  height: auto !important;
+  height: 32px !important;
+  min-width: 60px !important;
   margin: 0 !important;
   padding: 0 16px !important;
   border: 0 !important;
-  border-left: 1px solid var(--line-soft) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  border-radius: max(0px, calc(var(--r) - 4px)) !important;
+  background: var(--action) !important;
   box-shadow: none !important;
-  color: var(--text-muted) !important;
+  color: var(--action-text) !important;
   font-family: var(--font-sans) !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   font-weight: 500 !important;
-  line-height: 1 !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   cursor: pointer !important;
+  transition: background-color 0.15s ease !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
-  background: var(--panel-hover) !important;
-  color: var(--text) !important;
+  background: var(--action-hover) !important;
+  color: var(--action-text) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn > svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
@@ -11534,22 +11547,29 @@ html[data-nsmax-theme] .search-overlay .glass-search-btn > span:is(#nsmax-lv, *)
 html[data-nsmax-theme] .search-overlay .sub-nav:is(#nsmax-lv, *):is(#nsmax-b, *) {
   order: 2 !important;
   display: flex !important;
-  flex-wrap: nowrap !important;
-  gap: 6px !important;
+  flex-wrap: wrap !important;
+  gap: 8px 6px !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow-x: auto !important;
-  scrollbar-width: none !important;
+  overflow: visible !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
 }
-html[data-nsmax-theme] .search-overlay .sub-nav:is(#nsmax-lv, *):is(#nsmax-b, *)::-webkit-scrollbar {
-  display: none !important;
+/* 「版块」小标题：和下面的「搜索历史」同一个样子，占满一行，标签从下一行开始排 */
+html[data-nsmax-theme] .search-overlay .sub-nav:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "版块" !important;
+  flex: 0 0 100% !important;
+  margin: 0 0 2px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
 }
 html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *) {
   flex: none !important;
   box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;
-  height: 26px !important;
+  height: 28px !important;
   margin: 0 !important;
   padding: 0 10px !important;
   border: 1px solid var(--line) !important;
@@ -11557,15 +11577,18 @@ html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(
   background: var(--panel) !important;
   box-shadow: none !important;
   color: var(--text-muted) !important;
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   font-weight: 400 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   cursor: pointer !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease !important;
 }
 html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   border-color: var(--line-strong) !important;
-  background: var(--panel) !important;
+  background: var(--panel-hover) !important;
   color: var(--text) !important;
 }
 html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill.active:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -11577,7 +11600,7 @@ html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill.active:is(#nsmax-lv,
 html[data-nsmax-theme] .search-overlay .search-history:is(#nsmax-lv, *):is(#nsmax-b, *) {
   order: 3 !important;
   margin: 0 !important;
-  padding: 14px 0 0 !important;
+  padding: 16px 0 0 !important;
   border: 0 !important;
   border-top: 1px solid var(--line-soft) !important;
   background: transparent !important;
@@ -11586,13 +11609,14 @@ html[data-nsmax-theme] .search-overlay .history-header:is(#nsmax-lv, *):is(#nsma
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  margin: 0 0 9px !important;
+  margin: 0 0 10px !important;
   padding: 0 !important;
 }
 html[data-nsmax-theme] .search-overlay .history-header > span:is(#nsmax-lv, *):is(#nsmax-b, *) {
   color: var(--text-subtle) !important;
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   font-weight: 400 !important;
+  line-height: 18px !important;
 }
 html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
   height: auto !important;
@@ -11602,7 +11626,10 @@ html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#n
   background: none !important;
   box-shadow: none !important;
   color: var(--text-subtle) !important;
-  font-size: 12.5px !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
@@ -11623,7 +11650,7 @@ html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-
   max-width: 100% !important;
   height: 28px !important;
   margin: 0 !important;
-  padding: 0 5px 0 11px !important;
+  padding: 0 12px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
@@ -11631,7 +11658,10 @@ html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-
   color: var(--text) !important;
   font-size: 13px !important;
   line-height: 1 !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   cursor: pointer !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
 }
 html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   border-color: var(--line-strong) !important;
@@ -11648,17 +11678,21 @@ html[data-nsmax-theme] .search-overlay .history-keyword:is(#nsmax-lv, *):is(#nsm
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
 }
+/* 范围：关键词后面的淡色小字（以前是一个浅灰小块）；范围是「全部」的不写（nsmaxCleanSearchOverlay 标 data-nsmax-scope-all） */
 html[data-nsmax-theme] .search-overlay .history-scope-tag:is(#nsmax-lv, *):is(#nsmax-b, *) {
   flex: none !important;
   margin: 0 !important;
-  padding: 0 6px !important;
+  padding: 0 !important;
   border: 0 !important;
-  border-radius: var(--r-pill) !important;
-  background: var(--panel-alt) !important;
+  border-radius: 0 !important;
+  background: none !important;
   color: var(--text-subtle) !important;
-  font-size: 11px !important;
-  line-height: 18px !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
   opacity: 1 !important;
+}
+html[data-nsmax-theme] .search-overlay .history-scope-tag[data-nsmax-scope-all]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
 }
 @media (max-width: 640px) {
   html[data-nsmax-theme] .search-overlay:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
@@ -16716,19 +16750,6 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list .post-title mark.nsmax-search
 html[data-nsmax-theme][data-nsmax-dark] #nsk-body-left ul.post-list .post-title mark.nsmax-search-hit:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
   background: rgb(255 208 47 / .18) !important;
 }
-html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-  box-sizing: border-box !important;
-  height: 28px !important;
-  padding: 0 11px !important;
-  font-size: 12px !important;
-}
-html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-  width: 28px !important;
-  height: 28px !important;
-}
-html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-  height: 40px !important;
-}
 /* ---------- 列表标题的等级锁（2026-11-10 Yiheng 截图：「这个等级限制的位置不太对，图标设计得不好看」） ----------
    以前跟在标题后面，长标题一折行就单独掉到下一行开头，看着像浮在「内版 · 浏览数」上面；图标是站点的空心细线锁，后面一个光秃秃的「1」。
    现在和置顶一样放在标题前面（nsmaxPrepare 挪的），写成「Lv1」：18px 浅红胶囊，实心小锁 10px（CSS 画，站点的图标藏掉），
@@ -17734,5 +17755,89 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
   /* Lv5 橙色等级标：字是 72% 橙 + 28% 墨，浅色底上只有 3.9:1（别的等级都在 4.7 以上），橙色少掺一点 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) [data-nsmax-level="5"]:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-c, *) {
     color: color-mix(in srgb, var(--lv) 60%, var(--text-strong)) !important;
+  }
+}
+
+/* ---------- 2026-11-22 点一下就选中字、字被裁：…（胶囊 / 按钮里的字） ----------
+   Yiheng 截图：搜索浮层的版块胶囊「曝光」字上一块亮黄——胶囊是 <span>，双击 / 拖一下就选中了字，套上主题的黄色 ::selection。
+   真 <button>、带 href 的链接在 Chrome 里双击不会选中字；没有 href 的 <a>、<div>、<span>、<label> 当按钮用时会。逐页双击走查（1440 / 820，浅色）出来的：
+   - 帖子页：楼层操作条「点赞数 / 回复 / 引用…」（.comment-menu > .menu-item，div）、楼主行「引用 / 回复 / 举报」（a，没有 href）
+   - 列表页：排序「新评论 / 新帖子」（a，没有 href）
+   - 消息中心：左边会话列表的一行（div，点了打开会话；名字在右边会话标题里照样能选）
+   - 个人设置：「设置头像」（a.btn）
+   - 关键词屏蔽弹窗「也匹配评论内容」、抽奖页「楼层去重」这类复选框文字（label，点字就是点复选框，双击 = 勾两下 + 选中字）
+   搜索浮层自己的胶囊 / 历史在搜索浮层那一段里改，这里不碰 .search-overlay。正文、标题、用户名、投票选项这些可能要复制的字不动。
+   user-select 不继承，但子元素的 auto 在 none 的父元素里算成 none，所以只写在可点的那一层上；不加后代 ::selection（见第 1 节的性能说明） */
+html[data-nsmax-theme] #nsk-body-left .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+html[data-nsmax-theme] .nsk-post .nsmax-op-actions > .nsmax-op-action:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] .nspp-messages-conversations > .nspp-messages-peer:not(.nsmax-notice-row):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .set-avatar > a.btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] .nsmax-pop .nsmax-pop-foot > label:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .pure-checkbox:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+/* 发帖页卡片标题「内容」：脚本按字认编辑器的「内容 / 预览」标签，标题也叫「内容」，被当成标签挂上了手形光标（点了没反应）。
+   它只是标题：光标回到默认（字照样能选） */
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  cursor: default !important;
+}
+@media (min-width: 1001px) {
+  /* 页脚链接列：1001–1040px 时品牌块那一列占满 340px（字只用了 292px），五列链接平分剩下的、每列 99–103px，
+     「Premium Providers」要 106px，被省略成「Premium Provid…」。链接列最窄按自己最长的链接算（链接不折行），别的列照样平分 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) body > footer .contain:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    grid-template-columns: minmax(240px, 340px) repeat(5, minmax(min-content, 1fr)) !important;
+  }
+}
+/* ---------- 2026-11-22 横排放不下：电脑端 801–1440px 逐页量过一遍（被截断的胶囊 / 标签排） ---------- */
+/* 走查办法：每个电脑端页面和脚本自己造的浮层（设置面板各页、资料卡、预览卡片、编辑器、≡ 菜单）在 801 / 820 / 860 / 900 / 960 /
+   1024 / 1100 / 1200 / 1280 / 1366 / 1440px、浅色深色各量一遍：横向放不下又藏着滚动的容器、露半个的胶囊 / 按钮 / 标签、被裁掉的字。
+   顶栏版块（13476 行那条：放不下的整个排到看不见的第二行，亮出 ≡）带上 11 个版块和内版再量一遍，仍然没有露半个的；
+   搜索浮层的版块胶囊另外重做，这里不碰 */
+@media (min-width: 801px) {
+  /* 通知页标题栏：三个标签 + 筛选框 + 刷新 + 全部已读要 604px，930px 以下标签栏被挤成 90–190px，藏进看不见的横向滚动，
+     「回复主题」只露半个、「私信」整个看不到。标签不再被压缩：先让筛选框跟着窗口变窄（最窄 112px），还放不下（845px 以下）
+     就把筛选框和按钮整排换到第二行靠右，标签一个不少地留在第一行 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages > .nspp-messages-top:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex-wrap: wrap !important;
+    row-gap: 0 !important;
+  }
+  /* 一行时多出来的地方几乎全给标签栏（9999 : 1，按钮那一块只分到零点几 px）；换到第二行时按钮那一块独占一行、撑满，筛选框跟着变宽 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nsmax-message-tabs:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 9999 0 auto !important;
+  }
+  /* 换到第二行时上下各 10px（28px 的按钮排成 48px 一行）；一行放得下时这一块 48px，不比标签（49px）高，标题栏高度不变 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nspp-messages-top-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 1 1 auto !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+    padding-block: 10px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nspp-messages-top-actions > .nsmax-notice-tools:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 1 1 auto !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+  }
+  /* 筛选框 200px → 随窗口在 112–200px 之间（标签 222 + 按钮 140 + 间距边距，再给 Windows 滚动条和两位数未读留 37px） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top .nsmax-notice-tools > input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 1 1 auto !important;
+    width: clamp(112px, calc(100vw - 770px), 200px) !important;
+    min-width: 0 !important;
   }
 }

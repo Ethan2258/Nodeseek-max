@@ -3852,10 +3852,12 @@ test("2026-10-17 第四批：我的关注「取关」不再是灰底；帖子预
 			const card = document.querySelector(".search-overlay .glass-card").getBoundingClientRect();
 			const input = document.querySelector(".search-overlay .glass-input-group input").getBoundingClientRect();
 			const pills = Array.from(document.querySelectorAll(".search-overlay .sub-pill"), (p) => Math.round(p.getBoundingClientRect().top));
-			return { width: Math.round(card.width), input: Math.round(input.height), inputFirst: input.top < pills[0], oneRow: new Set(pills).size === 1 };
+			const nav = document.querySelector(".search-overlay .sub-nav");
+			return { width: Math.round(card.width), input: Math.round(input.height), inputFirst: input.top < pills[0], wrapped: new Set(pills).size === 2 && nav.scrollWidth <= nav.clientWidth };
 		});
-		// 2026-10-19 第十三批改成 600px 卡片、44px 一体搜索框；2026-11-10 搜索框和主按钮同一档 40px（输入框在框里，高 38px）
-		assert.deepEqual(overlay, { width: 600, input: 38, inputFirst: true, oneRow: true });
+		// 2026-10-19 第十三批改成 600px 卡片、44px 一体搜索框；2026-11-10 搜索框和主按钮同一档 40px（输入框在框里，高 38px）；
+		// 2026-11-22 卡片 640px，版块放不下就换行（以前一排横着滑，最后一个被右沿切掉一半）：这里 13 个排成两排
+		assert.deepEqual(overlay, { width: 640, input: 38, inputFirst: true, wrapped: true });
 		assert.deepEqual(list.errors, []);
 	} finally { await list.context.close(); }
 });
@@ -5571,15 +5573,13 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 					buttonIcon: !!button.querySelector("svg")?.getClientRects().length,
 					buttonText: getComputedStyle(button.querySelector("span")).display !== "none" ? button.textContent.trim() : "",
 					magnifier: getComputedStyle(group, "::before").content !== "none",
-					// 「搜索」是框里贴着右沿的一段：外框才有圆角（8px），按钮自己没有圆角、被框裁掉右边两个角；
-					// 以前按钮是独立的小胶囊（9999px），和外框的圆角对不上
+					// 2026-11-22：「搜索」是框里右边的实心按钮，四周留 3px，圆角比外框小 4px（同心）
 					groupRadius: groupStyle.borderRadius,
 					groupOverflow: groupStyle.overflow,
 					buttonRadius: buttonStyle.borderRadius,
-					buttonFlushRight: Math.abs(g.right - b.right) <= 1.5,
-					buttonFullHeight: Math.abs(g.height - b.height) <= 2.5,
-					buttonDivider: buttonStyle.borderLeftWidth,
-					buttonBackground: buttonStyle.backgroundColor,
+					buttonInset: [Math.round(g.right - b.right - 1), Math.round(b.top - g.top - 1), Math.round(g.bottom - b.bottom - 1)],
+					buttonHeight: Math.round(b.height),
+					buttonSolid: buttonStyle.backgroundColor !== "rgba(0, 0, 0, 0)",
 					card: [Math.round(c.left), Math.round(c.top), Math.round(c.width), Math.round(c.height)],
 					overflow: document.documentElement.scrollWidth - Math.round(document.documentElement.getBoundingClientRect().width),
 					viewportWidth: Math.round(document.documentElement.getBoundingClientRect().width)
@@ -5594,21 +5594,21 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 			assert.equal(state.buttonIcon, false, "按钮里不再有放大镜");
 			assert.equal(state.buttonText, "搜索");
 			assert.equal(state.magnifier, true, "框里左边一个放大镜");
-			// 框和按钮的圆角是同一个：框 8px 圆角 + overflow:hidden，按钮自己没有圆角、贴着右沿，
-			// 右边两个角由框裁出来（以前按钮是 9999px 小胶囊，和框的圆角对不上）
-			assert.equal(state.groupRadius, "8px");
+			// 外框和按钮同心：框 12px 圆角，按钮四周留 3px、圆角 8px（2026-11-22 以前是贴着右沿的透明一段，淡得像没有按钮）
+			if (width >= 700) {
+				assert.equal(state.groupRadius, "12px");
+				assert.equal(state.buttonRadius, "8px");
+				assert.deepEqual(state.buttonInset, [3, 3, 3], "「搜索」四周留 3px");
+				assert.equal(state.buttonHeight, 32);
+				assert.equal(state.buttonSolid, true, "「搜索」是实心按钮");
+			}
 			assert.equal(state.groupOverflow, "hidden");
-			assert.equal(state.buttonRadius, "0px");
-			assert.equal(state.buttonFlushRight, true, "「搜索」贴着框的右沿");
-			assert.equal(state.buttonFullHeight, true, "「搜索」和框一样高（右边两个角被裁成框的圆角）");
-			assert.equal(state.buttonDivider, "1px", "和输入之间一条细线");
-			assert.equal(state.buttonBackground, "rgba(0, 0, 0, 0)", "按钮是透明的，不再是独立实底胶囊");
 			if (width < 700) {
 				assert.deepEqual(state.card.slice(0, 3), [0, 0, width], "手机：贴着屏幕顶、宽度占满");
 				assert.ok(state.card[3] < 400, `手机：高度跟内容走（${state.card[3]}）`);
 			} else {
-				assert.equal(state.card[2], 600);
-				assert.ok(Math.abs(state.card[0] - (state.viewportWidth - 600) / 2) <= 1, `居中（${state.card[0]}）`);
+				assert.equal(state.card[2], 640);
+				assert.ok(Math.abs(state.card[0] - (state.viewportWidth - 640) / 2) <= 1, `居中（${state.card[0]}）`);
 			}
 			assert.ok(state.overflow <= 0);
 			await page.locator(".search-overlay .glass-input-group input").focus();
@@ -5622,6 +5622,45 @@ test("第十三批（2026-10-19）：搜索面板照 sb.sb 搜索条重做——
 				return getComputedStyle(document.querySelector(".search-overlay .glass-input-group")).borderTopColor === brand;
 			});
 			assert.equal(focus, true, "聚焦时框换成品牌色边框");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+});
+
+test("2026-11-22 搜索面板重做（Yiheng 截图：「内版」被切掉一半、「曝光」被选成黄底）：版块全部看得见（放得下一排、放不下换行），标签和历史不让选中文字，范围「全部」不写", async () => {
+	// 登录后真站有 11 个版块（多了内版），以前 600px 卡片里横着滑，最后一个被右沿切掉一半
+	const boards = (names, active) => (html) => html.replace(/<div data-v-9b37650a="" class="sub-nav">[\s\S]*?<\/div>/, `<div data-v-9b37650a="" class="sub-nav">${names.map((name) => `<span data-v-9b37650a="" class="sub-pill${name === active ? " active" : ""}">\n          ${name}\n        </span>`).join("")}</div>`);
+	const real = ["全部", "日常", "技术", "情报", "测评", "交易", "拼车", "Dev", "贴图", "曝光", "内版"];
+	const many = [...real, "工具", "求助", "福利", "推广", "公告"];
+	for (const [width, names, rows] of [[801, real, 1], [1024, real, 1], [1280, real, 1], [1280, many, 2], [801, many, 2]]) {
+		const html = boards(names, "内版")(searchOverlayPage({ history: [["学生", "全部"], ["xjetry", "用户"], ["xjetry", "全部"]] }));
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, viewport: { width, height: 760 } });
+		try {
+			await page.waitForSelector(".search-overlay .glass-card");
+			await wait(page, 400);
+			const state = await page.evaluate(() => {
+				const nav = document.querySelector(".search-overlay .sub-nav");
+				const content = document.querySelector(".search-overlay .glass-content").getBoundingClientRect();
+				const pills = [...nav.children];
+				const inside = pills.every((pill) => { const r = pill.getBoundingClientRect(); return r.left >= content.left - 0.5 && r.right <= content.right + 0.5 && r.width > 0; });
+				return {
+					inside,
+					scroll: nav.scrollWidth - nav.clientWidth,
+					rows: new Set(pills.map((pill) => Math.round(pill.getBoundingClientRect().top))).size,
+					height: Math.round(pills[0].getBoundingClientRect().height),
+					select: [...new Set([...pills, ...document.querySelectorAll(".search-overlay :is(.history-item, .clear-history-btn, .tab-btn, .glass-search-btn)")].map((el) => getComputedStyle(el).userSelect))],
+					scopes: [...document.querySelectorAll(".search-overlay .history-item")].map((item) => [...item.children].filter((el) => el.getClientRects().length).map((el) => el.textContent.trim()).join(" "))
+				};
+			});
+			assert.equal(state.inside, true, `${width}px ${names.length} 个版块：每个都在卡片里，没有被切掉的`);
+			assert.ok(state.scroll <= 0, `不再横着滑（${state.scroll}）`);
+			assert.equal(state.rows, rows, `${width}px ${names.length} 个版块排成 ${rows} 排`);
+			assert.equal(state.height, 28, "桌面卡片内胶囊 28px");
+			assert.deepEqual(state.select, ["none"], "点标签、历史、清空、页签都不会选中文字（以前点两下字变成亮黄底）");
+			assert.deepEqual(state.scopes, ["学生", "xjetry 用户", "xjetry"], "范围「全部」不写，别的范围写在关键词后面");
+			// Vue 按位置复用历史节点、只改文字：范围从「全部」变成「技术」也要跟着显示出来
+			await page.evaluate(() => { document.querySelector(".search-overlay .history-scope-tag").firstChild.data = "技术"; });
+			await page.waitForFunction(() => !document.querySelector(".search-overlay .history-scope-tag").hasAttribute("data-nsmax-scope-all"));
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	}
