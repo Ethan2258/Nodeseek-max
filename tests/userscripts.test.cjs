@@ -162,3 +162,27 @@ test("2026-11-07 Userscripts 设置一直读不回来时最多盖 1.5 秒",async
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
+// 2026-11-22：隔离世界里给回复框换的 scrollIntoView 页面看不到，站点 reply() 不带参数调的那一下照样整页滑一截；现在经页面桥在页面那边接住
+test("油猴 @sandbox DOM：站点在页面里调回复框的 scrollIntoView()，回复框整个看得见时不再滚",async()=>{
+ const {context,page,errors}=await open(chromium,"https://www.nodeseek.com/post-1000-1",{html:P.postPage(),script:false,viewport:{width:1440,height:900}});
+ try {
+  const client=await context.newCDPSession(page);const tree=await client.send("Page.getFrameTree");const world=await client.send("Page.createIsolatedWorld",{frameId:tree.frameTree.frame.id,worldName:"tampermonkey-dom-scroll"});
+  const shim=`window.GM_info={scriptHandler:"Tampermonkey",sandboxMode:"dom",version:"5.6"};window.GM={info:GM_info};window.unsafeWindow=window;const store=new Map([[${JSON.stringify(KEY)},{"attendance":{enabled:false}}]]);window.GM_getValue=(k,f)=>store.has(k)?structuredClone(store.get(k)):f;window.GM_setValue=(k,v)=>{store.set(k,structuredClone(v));};window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;(document.head||document.documentElement).append(s);return s;};window.GM_registerMenuCommand=()=>0;window.GM_xmlhttpRequest=d=>{setTimeout(()=>d.onload?.({status:200,responseText:"// @version 1.0.0"}),20);return{abort(){}};};`;
+  const source=fs.readFileSync(process.env.NSMAX_SCRIPT_PATH||path.join(ROOT,"nodeseek-max.user.js"),"utf8");
+  const result=await client.send("Runtime.evaluate",{contextId:world.executionContextId,expression:shim+"\n"+source});assert.equal(result.exceptionDetails,undefined);
+  await ready(page);
+  await page.waitForSelector(".nsmax-editor-controls");await page.waitForTimeout(300);
+  // 页面世界：记下浏览器原生 scrollIntoView 被调了几次（站点 reply() 的那一下）
+  const calls=await page.evaluate(async()=>{
+   const md=document.querySelector("#nsk-body-left .md-editor");
+   md.scrollIntoView({block:"center",behavior:"instant"});await new Promise(r=>setTimeout(r,100));
+   const native=Element.prototype.scrollIntoView;let count=0;Element.prototype.scrollIntoView=function(...args){count++;return native.apply(this,args);};
+   const before=scrollY;md.scrollIntoView();await new Promise(r=>setTimeout(r,300));
+   Element.prototype.scrollIntoView=native;
+   return {count,moved:Math.abs(scrollY-before)};
+  });
+  assert.deepEqual(calls,{count:0,moved:0},"整个看得见：不滚");
+  assert.deepEqual(errors,[]);await client.detach();
+ } finally {await context.close();}
+});

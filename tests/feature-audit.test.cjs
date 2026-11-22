@@ -156,3 +156,18 @@ test("输入法候选词还开着时按 Esc：关键词弹窗、资料卡备注�
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+test("资料卡缓存：过期的那些写新的时顺手清掉，不在会话存储里越攒越多", async () => {
+	const init = `if (window.top === window && !sessionStorage.getItem("nsmax:test-seeded")) { sessionStorage.setItem("nsmax:test-seeded", "1"); for (let i = 0; i < 300; i++) sessionStorage.setItem("nsmax:person:" + (90000 + i), JSON.stringify({ at: Date.now() - 36e5, data: { member_name: "old" + i } })); sessionStorage.setItem("nsmax:person:777", JSON.stringify({ at: Date.now() - 1000, data: { member_name: "fresh" } })); }`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: listPage(), init, viewport: { width: 1440, height: 900 } });
+	try {
+		await ready(page);
+		await page.locator("ul.post-list>li .info-author a").first().hover();
+		await page.waitForSelector(".nsmax-person-pop dd");
+		await page.waitForFunction(() => Object.keys(sessionStorage).filter((key) => key.startsWith("nsmax:person:")).length < 10);
+		const keys = await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("nsmax:person:")));
+		assert.ok(keys.includes("nsmax:person:777"), "没过期的留着");
+		assert.equal(keys.some((key) => /:9\d{4}$/.test(key)), false, "过期的清掉");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
