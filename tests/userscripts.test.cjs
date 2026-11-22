@@ -81,6 +81,29 @@ test("Userscripts 隔离世界：原生 CodeMirror 可通过工具栏编辑，GM
  } finally {await context.close();}
 });
 
+test("油猴 @sandbox DOM（Chrome 160 起）：隔离世界里经页面桥读到 __config__，清空草稿走站点确认框",async()=>{
+ const {context,page,errors}=await open(chromium,"https://www.nodeseek.com/post-1000-1",{html:P.postPage(),script:false,viewport:{width:1440,height:900}});
+ try {
+  await page.evaluate(()=>{window.mscConfirm=options=>{window.__mscConfirm={title:options.title,okText:options.okText};setTimeout(()=>options.onOk(),0);};});
+  const dialogs=[];page.on("dialog",dialog=>{dialogs.push(dialog.message());void dialog.dismiss();});
+  const client=await context.newCDPSession(page);const tree=await client.send("Page.getFrameTree");const world=await client.send("Page.createIsolatedWorld",{frameId:tree.frameTree.frame.id,worldName:"tampermonkey-dom"});
+  const shim=`window.GM_info={scriptHandler:"Tampermonkey",sandboxMode:"dom",version:"5.6"};window.GM={info:GM_info};window.unsafeWindow=window;const store=new Map();window.GM_getValue=(k,f)=>store.has(k)?structuredClone(store.get(k)):f;window.GM_setValue=(k,v)=>{store.set(k,structuredClone(v));};window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;(document.head||document.documentElement).append(s);return s;};window.GM_registerMenuCommand=()=>0;window.GM_xmlhttpRequest=d=>{setTimeout(()=>d.onload?.({status:200,responseText:"// @version 1.0.0"}),20);return{abort(){}};};`;
+  const source=fs.readFileSync(process.env.NSMAX_SCRIPT_PATH||path.join(ROOT,"nodeseek-max.user.js"),"utf8");
+  assert.match(source,/^\/\/ @sandbox\s+DOM$/m,"头部声明 @sandbox DOM，油猴不走 Chrome 160 上坏掉的页面环境注入");
+  const result=await client.send("Runtime.evaluate",{contextId:world.executionContextId,expression:shim+"\n"+source});assert.equal(result.exceptionDetails,undefined);
+  await page.waitForSelector(".nsmax-floor-actions .menu-item[data-nsmax-action=reply]");
+  const config=await client.send("Runtime.evaluate",{contextId:world.executionContextId,expression:'({own:typeof window.__config__,bridge:!!document.querySelector("script[id^=nsmax-us-][data-ready=\'1\']")})',returnByValue:true});
+  assert.deepEqual(config.result.value,{own:"undefined",bridge:true},"隔离世界自己看不到 __config__，页面桥已就绪");
+  const input=page.locator(".md-editor textarea").first();await input.fill("写了一半的回复");
+  await page.locator(".nsmax-draft-clear").click();
+  await page.waitForFunction(()=>document.querySelector(".nsmax-toast")?.textContent==="已清空草稿");
+  assert.deepEqual(await page.evaluate(()=>window.__mscConfirm),{title:"确定清空草稿？",okText:"清空草稿"});
+  assert.deepEqual(dialogs,[],"不退回浏览器自带确认框");assert.equal(await input.inputValue(),"");
+  assert.equal(await page.evaluate(()=>typeof window.GM_info),"undefined","GM API 没有暴露给页面");
+  assert.deepEqual(errors,[]);await client.detach();
+ } finally {await context.close();}
+});
+
 test("Userscripts：页面禁止桥接时保留可用的原生编辑器与设置",async()=>{
  const {context,page,errors}=await open(chromium,"https://www.nodeseek.com/post-1000-1",{html:P.postPage(),script:false});
  try {

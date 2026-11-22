@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.74
+// @version      1.9.75
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -104,6 +104,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @run-at       document-start
+// @sandbox      DOM
 // @noframes
 // @compatible   chrome Latest
 // @compatible   firefox Latest
@@ -915,7 +916,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.74";
+	var NSMAX_VERSION = "1.9.75";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -1291,10 +1292,21 @@ var nsmaxRedirecting = false;
 	var getter = () => typeof _GM_getValue === "function" ? _GM_getValue : _monkeyWindow.GM_getValue;
 	var setter = () => typeof _GM_setValue === "function" ? _GM_setValue : _monkeyWindow.GM_setValue;
 	var unsafeWindow$1 = _unsafeWindow || _monkeyWindow.unsafeWindow || window;
-	var nsmaxUserscriptsBridge = nsmaxManagerName === "Userscripts" && !_unsafeWindow ? nsmaxCreateUserscriptsBridge() : null;
+	// 脚本跑在隔离世界里、读不到页面的 __config__ / CodeMirror / mscConfirm 时，走页面桥：
+	// Safari Userscripts 本来就这样；油猴从 1.9.75 起用 @sandbox DOM（Chrome 160 起页面环境注入坏了，
+	// 见 Tampermonkey/tampermonkey#2954），Violentmonkey 选了「注入到内容脚本」时也一样。
+	var nsmaxIsolatedWorld = (() => {
+		if (!_unsafeWindow) return true;
+		try {
+			const info = nsmaxModernGM?.info || (typeof GM_info !== "undefined" ? GM_info : null);
+			return String(info?.sandboxMode || "").toLowerCase() === "dom" || String(info?.injectInto || "").toLowerCase() === "content";
+		} catch { return false; }
+	})();
+	var nsmaxUserscriptsBridge = nsmaxIsolatedWorld ? nsmaxCreateUserscriptsBridge() : null;
 	if (nsmaxUserscriptsBridge) unsafeWindow$1 = new Proxy(unsafeWindow$1, { get(target, key) {
 		const value = Reflect.get(target, key, target);
 		if (key === "__config__") return value || nsmaxUserscriptsBridge.config();
+		if (key === "mscConfirm" && typeof value !== "function") return nsmaxUserscriptsBridge.confirm;
 		return typeof value === "function" ? value.bind(target) : value;
 	} });
 	function hasStorage() {
@@ -30008,8 +30020,21 @@ function nsmaxTagStructure() {
 	}
 	// Userscripts 的 content world 不能直接读页面 expando。桥只访问论坛配置和编辑器；不暴露任何 GM API 或存储。
 	function nsmaxCreateUserscriptsBridge() {
-		const token = "nsmax-us-" + Math.random().toString(36).slice(2), requestEvent = token + "-request", changeEvent = token + "-change";
+		const token = "nsmax-us-" + Math.random().toString(36).slice(2), requestEvent = token + "-request", changeEvent = token + "-change", confirmEvent = token + "-confirm";
 		let node = null, config = null, configAt = 0, parsedText = "", parsedConfig = null, sequence = 0;
+		// 站点自己的确认框（mscConfirm）在页面里：选项传过去，点了哪个按钮再用事件传回来
+		const confirms = new Map();
+		const confirm = (options = {}) => {
+			const id = token + "-c" + (++sequence), plain = {};
+			for (const [name, value] of Object.entries(options)) if (typeof value !== "function") plain[name] = value;
+			confirms.set(id, options);
+			let shown = false;
+			try { shown = !!call({ op: "confirm", id, options: plain }); } catch {}
+			if (shown) return;
+			confirms.delete(id);
+			if (window.confirm([options.title, options.subtitle].filter(Boolean).join("\n"))) options.onOk?.();
+			else options.onCancel?.();
+		};
 		const methods = new Set(["getValue","setValue","getSelection","getCursor","setCursor","setSelection","replaceSelection","replaceRange","lineCount","getLine","getRange","indexFromPos","posFromIndex","getOption","setOption","refresh","focus","somethingSelected","getScrollInfo"]);
 		const call = payload => {
 			if (!node?.isConnected || node.getAttribute("data-ready") !== "1") return undefined;
@@ -30042,7 +30067,8 @@ function nsmaxTagStructure() {
 		whenRoot(root=>{
 			node=document.createElement("script");node.id=token;
 			const nonce=document.querySelector("script[nonce]")?.nonce;if(nonce)node.nonce=nonce;
-			try { node.textContent="("+function(node,requestEvent,changeEvent){
+			node.addEventListener(confirmEvent,event=>{try{const data=JSON.parse(event.detail),options=confirms.get(data.id);if(!options)return;confirms.delete(data.id);(data.type==="ok"?options.onOk:options.onCancel)?.();}catch{}});
+			try { node.textContent="("+function(node,requestEvent,changeEvent,confirmEvent){
 				const methods=new Set(["getValue","setValue","getSelection","getCursor","setCursor","setSelection","replaceSelection","replaceRange","lineCount","getLine","getRange","indexFromPos","posFromIndex","getOption","setOption","refresh","focus","somethingSelected","getScrollInfo"]);
 				const bound=new WeakSet();
 				const config=()=>typeof __config__!=="undefined"?__config__:window.__config__;
@@ -30050,6 +30076,11 @@ function nsmaxTagStructure() {
 					const p=JSON.parse(node.getAttribute("data-request")||"{}"),element=[...document.querySelectorAll(".CodeMirror")].find(e=>e.getAttribute("data-nsmax-cm-id")===p.id),cm=element?.CodeMirror;
 					let value;
 					if(p.op==="config")value=config();
+					else if(p.op==="confirm"){
+						value=typeof window.mscConfirm==="function";
+						const reply=type=>()=>node.dispatchEvent(new CustomEvent(confirmEvent,{detail:JSON.stringify({id:p.id,type})}));
+						if(value)window.mscConfirm({...p.options,onOk:reply("ok"),onCancel:reply("cancel")});
+					}
 					else if(p.op==="probe"){
 						value=!!cm;
 						if(cm&&typeof cm.on==="function"&&!bound.has(cm)){bound.add(cm);for(const type of ["change","focus","blur","cursorActivity"])cm.on(type,(_,change)=>element.dispatchEvent(new CustomEvent(changeEvent,{detail:JSON.stringify({type,change:change?{from:change.from,to:change.to,text:change.text,removed:change.removed,origin:change.origin}:undefined})})));}
@@ -30057,13 +30088,13 @@ function nsmaxTagStructure() {
 					node.setAttribute("data-result",JSON.stringify({ok:true,value}));
 				}catch(error){node.setAttribute("data-result",JSON.stringify({ok:false,error:String(error?.message||error)}));}});
 				node.setAttribute("data-ready","1");
-			}.toString()+")(document.currentScript,"+JSON.stringify(requestEvent)+","+JSON.stringify(changeEvent)+");";
+			}.toString()+")(document.currentScript,"+JSON.stringify(requestEvent)+","+JSON.stringify(changeEvent)+","+JSON.stringify(confirmEvent)+");";
 			(document.head||root).append(node); } catch {}
 			bindEditors();
 			new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.(".CodeMirror")||n.querySelector?.(".CodeMirror")))||r.target.closest?.(".CodeMirror")&&!r.target.closest(".CodeMirror").CodeMirror))bindEditors();}).observe(root,{childList:true,subtree:true});
 		});
 		document.addEventListener("DOMContentLoaded",bindEditors,{once:true});window.addEventListener("load",bindEditors,{once:true});
-		return {get available(){return node?.getAttribute("data-ready")==="1";},config(){
+		return {get available(){return node?.getAttribute("data-ready")==="1";},get confirm(){return this.available?confirm:undefined;},config(){
 			if(config&&performance.now()-configAt<1000)return config;
 			try{const value=call({op:"config"});if(value&&typeof value==="object"){config=value;configAt=performance.now();return config;}}catch{}
 			const text=document.getElementById("temp-script")?.textContent?.trim();if(!text)return config;
