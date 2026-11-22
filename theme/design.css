@@ -17667,3 +17667,57 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
     right: 6px !important;
   }
 }
+
+/* ---------- 电脑端：链接认得出、字够清楚、焦点看得见（2026-11-22 走查：浅色主题系统消息里的链接和正文一个颜色，看不出能点） ----------
+   浅色 --link 是墨色（sb.sb 原值），和正文同色——帖子正文、签名靠「2px 黄色下划线」区分。消息气泡、个人介绍里的链接以前没套这一条：
+   - 私信气泡（别人发的）：照正文链接（链接色 + 2px 黄色下划线，偏移 3px），悬停下划线淡出；自己发的气泡原来就是同色下划线
+   - 系统消息里「新的帖子」「评论」这类要点链接：仍用小标颜色，下面加一道同色半透明下划线（「通知」类没有小标色，用黄色下划线）；
+     用户名靠加粗区分，不加下划线（v1.9.73 的设计）
+   - 个人主页「介绍」里的链接：以前是站点自己的 #0dbc79 绿（白底上 2.5:1），改成正文链接
+   - 输入框占位字：没单独设过的用了浏览器默认 #757575（深色底上 3.7:1），统一成 --text-subtle（和顶栏搜索、登录页一样）
+   - 消息中心搜索框、查找用户输入框：聚焦时边框不变或几乎不变，改成和发帖标题框一样的 --field-focus 黄边 + 浅黄光圈；私信输入框黄边 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message:not(.is-mine) .nspp-messages-bubble a:not(.nspp-messages-system-user, .nspp-messages-system-target):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector > .readme a:not([data-nsmax-imglink]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--link) !important;
+    text-decoration: underline !important;
+    text-decoration-color: var(--link-line) !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 3px !important;
+    text-decoration-skip-ink: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message:not(.is-mine) .nspp-messages-bubble a:not(.nspp-messages-system-user, .nspp-messages-system-target):hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector > .readme a:not([data-nsmax-imglink]):hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    color: var(--link-hover) !important;
+    text-decoration-color: transparent !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    --nsmax-kind-deco: color-mix(in srgb, var(--nsmax-kind-link) 50%, transparent);
+    text-decoration: underline !important;
+    text-decoration-color: var(--nsmax-kind-deco, var(--link-line)) !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 3px !important;
+    text-decoration-skip-ink: none !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-target:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    text-decoration-color: currentColor !important;
+  }
+  /* 权重压到最低（:where），各处单独设过的占位字颜色照旧（比如回复框是 --text-muted） */
+  :where(html[data-nsmax-theme]:not([data-nsmax-touch])) :is(input, textarea)::placeholder {
+    color: var(--text-subtle) !important;
+    opacity: 1 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-search input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+    border-color: var(--field-focus) !important;
+    outline: 3px solid var(--field-ring) !important;
+    outline-offset: 0 !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-composer:focus-within :is(.nspp-message-editor, .nspp-messages-compose-actions):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    border-color: var(--field-focus) !important;
+  }
+  /* Lv5 橙色等级标：字是 72% 橙 + 28% 墨，浅色底上只有 3.9:1（别的等级都在 4.7 以上），橙色少掺一点 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) [data-nsmax-level="5"]:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-c, *) {
+    color: color-mix(in srgb, var(--lv) 60%, var(--text-strong)) !important;
+  }
+}
