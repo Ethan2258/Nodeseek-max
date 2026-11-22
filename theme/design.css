@@ -4642,6 +4642,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input input {
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .title-input input:focus {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
 }
 /* 发帖页的编辑器不再是单独一张卡片（已在表单卡片里）：去掉外框、标题栏去掉分隔线 */
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > #editor-body {
@@ -4739,6 +4740,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select select 
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select select:focus {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
 }
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > :is(button.submit, .submit.btn) {
   order: -1 !important;
@@ -6058,6 +6060,13 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble {
   font-size: 14px !important;
   line-height: 1.55 !important;
 }
+/* 气泡挨着头像的那个角收小（4px），看得出是谁说的；系统消息不是气泡，不收 */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message:not(.is-mine, .is-system) .nspp-messages-bubble {
+  border-bottom-left-radius: var(--r-xs) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-mine .nspp-messages-bubble {
+  border-bottom-right-radius: var(--r-xs) !important;
+}
 html[data-nsmax-theme] .nspp-messages .nspp-messages-bubble.is-markdown {
   white-space: normal !important;
 }
@@ -6091,18 +6100,29 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-stamp::after {
   height: 1px !important;
   background: var(--line-soft) !important;
 }
-/* 输入区：一整块圆角输入盒，上半是文本框、下半是工具行 */
+/* 输入区：一整块圆角输入盒，上半是文本框、下半是工具行。
+   2026-11-22（用户：「私信这个地方的 ui 也不搭配」）：以前框线是上下两半（.nspp-message-editor 上半、工具行下半）各画一截拼起来的，
+   聚焦时两半颜色、圆角对不齐，深色下看着像黄框里又套了一条白线，外面还压着聊天卡片的边。现在框线只画在 .nspp-messages-composer 一个元素上，
+   里面两半都不画线、不铺底；样子和帖子页回复框一致：细线框、输入框圆角、面板底色，聚焦是黄框 + 3px 浅黄光圈（和私信搜索框同一套） */
 html[data-nsmax-theme] .nspp-messages .nspp-messages-composer {
-  padding: 10px 22px 16px !important;
-  border-top: 0 !important;
+  margin: 4px 22px 16px !important;
+  padding: 0 !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
   background: var(--panel) !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-composer:focus-within {
+  border-color: var(--field-focus) !important;
+  box-shadow: 0 0 0 3px var(--field-ring) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-message-editor {
   padding: 10px 12px 0 !important;
-  border: 1px solid var(--line) !important;
-  border-bottom: 0 !important;
-  border-radius: var(--r) var(--r) 0 0 !important;
-  background: var(--panel-alt) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-composer textarea {
   min-height: 48px !important;
@@ -6120,13 +6140,9 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-composer textarea {
 html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions {
   gap: 4px !important;
   padding: 4px 8px 8px !important;
-  border: 1px solid var(--line) !important;
-  border-top: 0 !important;
-  border-radius: 0 0 var(--r) var(--r) !important;
-  background: var(--panel-alt) !important;
-}
-html[data-nsmax-theme] .nspp-messages .nspp-messages-composer:focus-within :is(.nspp-message-editor, .nspp-messages-compose-actions) {
-  border-color: var(--line-strong) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-message-editor-toolbar {
   display: flex !important;
@@ -6161,7 +6177,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-compose-actions > small {
   font-size: 12px !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-send {
-  height: 32px !important;
+  height: 28px !important;
   padding: 0 14px !important;
   border: 0 !important;
   border-radius: var(--r-pill) !important;
@@ -6169,9 +6185,16 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-send {
   color: var(--action-text) !important;
   font-size: 13px !important;
   font-weight: 600 !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
 }
+/* 没写字时「发送」不能点：以前是墨色按钮打五折透明，深色下成了一块灰泥（浅底 + 深字 50%）。现在换成弱底弱字，一眼看得出「还不能点」，
+   写了字才变成墨色实底（深色下浅色）。和「签到」等主按钮不能点时同一个样子（见文件末尾 2026-11-22 那一段） */
 html[data-nsmax-theme] .nspp-messages .nspp-messages-send:disabled {
-  opacity: 0.5 !important;
+  opacity: 1 !important;
+  box-shadow: inset 0 0 0 1px var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-disabled) !important;
+  cursor: not-allowed !important;
 }
 
 /* 圆角统一：消息中心也只用全站这一套（卡片 12px、输入框 8px、小部件 6px、按钮胶囊）。sb.sb 私信页自己用了 16 / 11 / 10 / 9px 几种，
@@ -8509,6 +8532,7 @@ html[data-nsmax-theme] .md-editor[data-nsmax-editor-mode] > .title-input input:i
 html[data-nsmax-theme] .md-editor[data-nsmax-editor-mode] > .title-input input:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
 }
 html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select:is(#nsmax-lv, *):is(#nsmax-b, *) {
   flex-wrap: wrap !important;
@@ -8568,6 +8592,7 @@ html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[
 html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select:is(#nsmax-lv, *):is(#nsmax-b, *):focus {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
 }
 html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select option:is(#nsmax-lv, *):is(#nsmax-b, *) {
   background: var(--panel) !important;
@@ -8876,6 +8901,7 @@ html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form input.mx-in
 html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form :is(input[type="number"], input.mx-input, textarea):is(#nsmax-lv, *):is(#nsmax-b, *):focus {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
 }
 html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel > form :is(input[type="number"], input.mx-input):is(#nsmax-lv, *):is(#nsmax-b, *):disabled {
   background: var(--panel-alt) !important;
@@ -14936,7 +14962,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] #nsk-frame .nsmax-member-actions 
 /* 回复框照 sb.sb .reply-panel 再量一遍（2026-10-24，用户：比例、圆角、拖动角、选中颜色、光标都和 sb.sb 不一样）：
    - 间距：工具按钮下面 8px 是输入框（sb.sb .grid 里按钮、输入框之间 8px）；输入框下面 22px 是发送按钮（sb.sb .grid 外边距 14px，
      加上 textarea 是行内块、底下多出约 8px 行高）；按钮下面 16px（sb.sb .reply-panel form 14px 16px 16px）。以前三处都是 14px；
-   - 外框常态 8px、聚焦 6px；内部选区绘制层独立使用直角；
+   - 外框常态、聚焦都是 8px（2026-11-22 起；以前照 sb.sb 聚焦缩成 6px，一点进去四个角跳一下，和别的输入框也不一样）；内部选区绘制层独立使用直角；
    - 右下角拖动角画成原生 textarea 的样子：两道短斜线贴着右下角、次级文字色、不透明（以前两道长斜纹、半透明，看着发虚）；
    - Markdown 编辑器（CodeMirror）里选中的底色用 --selection-editor（浅色亮黄、深色暗金，sb.sb .CodeMirror-selected），
      以前是 --selection：深色下亮黄底配浅色字，选中的字看不清；
@@ -14954,7 +14980,7 @@ html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .submit-row:is(#nsma
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane]:focus-within:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  border-radius: var(--r-sm) !important;
+  border-radius: var(--r-input) !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > .nsmax-editor-resize:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   right: 2px !important;
@@ -16442,7 +16468,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-peer[data-unread] .nspp-messages-snippet:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     padding-right: 16px !important;
   }
-  /* 「加载更多」「加载更多会话」30px → 28px，和旁边的小胶囊一档；私信「发送」32px → 34px，和输入框所在的一档 */
+  /* 「加载更多」「加载更多会话」30px → 28px，和旁边的小胶囊一档；私信「发送」放在输入盒里，和旁边「附件」「预览」同一档 28px（2026-11-22，以前 34px 把工具行撑高） */
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-more:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     box-sizing: border-box !important;
     height: 28px !important;
@@ -16451,7 +16477,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
   }
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-compose-actions > .nspp-messages-send:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     box-sizing: border-box !important;
-    height: 34px !important;
+    height: 28px !important;
     min-height: 0 !important;
     padding-block: 0 !important;
   }
@@ -17749,12 +17775,132 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
     outline: 3px solid var(--field-ring) !important;
     outline-offset: 0 !important;
   }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-composer:focus-within :is(.nspp-message-editor, .nspp-messages-compose-actions):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    border-color: var(--field-focus) !important;
-  }
   /* Lv5 橙色等级标：字是 72% 橙 + 28% 墨，浅色底上只有 3.9:1（别的等级都在 4.7 以上），橙色少掺一点 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) [data-nsmax-level="5"]:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-c, *) {
     color: color-mix(in srgb, var(--lv) 60%, var(--text-strong)) !important;
+  }
+}
+
+/* ---------- 2026-11-22 私信页重做时一并扫的同类问题（用户：「私信这个地方的 ui 也不搭配」；长期规则：同类问题一起修） ----------
+   1. 主按钮不能点时，一律照「签到」按钮那样：次底色 + 细线框 + 弱字、不透明。以前好几处是整块打五折透明，深色下浅色按钮 + 深色字
+      一透明就成了一块灰泥（私信「发送」、抽奖弹窗「发布抽奖帖」、设置面板「刷新应用设置」、登录页「发送验证码」、版块签到条），
+      回复框「回复楼主」、发帖页「发布帖子」、设置页「确定」、投票按钮干脆没有不能点的样子；
+   2. 输入框聚焦光圈贴着黄框画（outline-offset 0），不再隔开 2px 露出一道缝；
+   3. 私信 / 消息中心搜索框和回复框同一套：line-strong 细线、面板底色、输入框圆角；
+   4. 更新提示等确认弹窗的按钮换成全站的墨色胶囊（以前是 GitHub 那套 6px 圆角蓝按钮、红按钮）；
+   5. 投票、抽奖按钮圆角和别的按钮一样是胶囊；「查看投票人」悬停不再变成墨底灰字；
+   6. 回复框「取消回复」「清空草稿」和旁边 40px 的「回复楼主」一样高；回复框按钮、「一键抽奖」鼠标是手形。 */
+html[data-nsmax-theme] :is(.md-editor :is(button.submit, .submit.btn, button[type="submit"]), .nsmax-dialog .nsmax-dialog-button.primary, #nsk-body-left .vote-panel .op-buttons :is(button, .pure-button, input[type="submit"]), #user-setting-panel :is(button, .btn), [data-nsmax-auth-app] :is(button, input[type="button"]), .nsmax-board-banner-actions > .nsmax-board-btn, .nspp-confirm-dialog button, .nsmax-lottery-actions > button, [data-nsmax-page="lucky"] .sample-panel > form .pure-button):disabled:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+  opacity: 1 !important;
+  border-color: var(--line) !important;
+  background: var(--panel-alt) !important;
+  color: var(--text-disabled) !important;
+  filter: none !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+}
+html[data-nsmax-theme] .md-editor :is(.topic-select, .submit-row) > :is(button.submit, .submit.btn, button[type="submit"]):not(:disabled):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger:not(:disabled):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  cursor: pointer !important;
+}
+/* 私信 / 消息中心搜索框：和回复框同一套输入框样子（查找用户的输入框照旧跟顶栏搜索框一个样子，2026-11-09 定的） */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
+}
+/* 确认弹窗（检查更新、删除确认等，NodeSeek++ 自带的 .nspp-confirm-dialog） */
+html[data-nsmax-theme] .nspp-confirm-dialog:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog p:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  opacity: 1 !important;
+  color: var(--text-muted) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog form > :is(button, a):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog form > :is(button, a):hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog form > .nspp-confirm-primary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--action-border) !important;
+  background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog form > .nspp-confirm-primary:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog form > .nspp-confirm-danger:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--danger) !important;
+  background: var(--danger) !important;
+  color: var(--on-danger, #fff) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog form > .nspp-confirm-danger:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  filter: brightness(1.08) !important;
+  color: var(--on-danger, #fff) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog :focus-visible:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px !important;
+}
+/* 投票、抽奖按钮：胶囊、13px */
+html[data-nsmax-theme] #nsk-body-left .vote-panel .op-buttons :is(button, .pure-button, input[type="submit"]):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-actions > :is(a, button):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-radius: var(--r-pill) !important;
+  font-size: 13px !important;
+}
+html[data-nsmax-theme] #nsk-body-left .vote-panel .op-buttons button.nsmax-poll-voters-toggle:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text) !important;
+}
+/* 版块签到条「试试手气」「鸡腿 x 5」：28px 一档用 12px 字；悬停照别的按钮换底色，不再提亮 + 上浮 */
+html[data-nsmax-theme] .nsmax-board-banner-actions > .nsmax-board-btn:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  font-size: 12px !important;
+}
+html[data-nsmax-theme] .nsmax-board-banner-actions > .nsmax-board-btn:hover:not(:disabled):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  filter: none !important;
+  transform: none !important;
+  background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .nsmax-board-banner-actions > .nsmax-board-btn.nsmax-board-btn-random:hover:not(:disabled):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
+}
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .md-editor :is(.topic-select, .submit-row) > :is(.nsmax-reply-cancel, .nsmax-draft-clear):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    box-sizing: border-box !important;
+    height: 40px !important;
+    padding-block: 0 !important;
+    line-height: 38px !important;
+  }
+  /* 抽奖弹窗按钮 32px → 34px，和页面级按钮一档 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-dialog .nsmax-dialog-button:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    height: 34px !important;
+    min-height: 34px !important;
   }
 }
 

@@ -28,6 +28,8 @@
 :focus-visible{outline:2px solid var(--s-brand);outline-offset:2px}
 button{font:inherit;color:inherit;cursor:pointer}
 button:disabled{opacity:.6;cursor:default}
+/* 主按钮不能点：次底色 + 细线框 + 弱字、不透明（打五折透明在深色下是一块灰泥，2026-11-22） */
+button.primary:disabled{opacity:1;border-color:var(--s-line);background:var(--s-panel-alt);color:var(--s-subtle);cursor:not-allowed}
 /* 弹窗：sb.sb .modal-panel——细线框、卡片圆角、面板底、中号阴影；遮罩 --backdrop，不模糊；出现时 0.97 → 1 */
 dialog{position:fixed;inset:0;width:min(720px,calc(100vw - 32px));height:min(720px,calc(100dvh - 48px));max-width:none;max-height:none;margin:auto;padding:0;border:1px solid var(--s-line);border-radius:var(--s-r);background:var(--s-panel);color:var(--s-text);box-shadow:var(--s-shadow);font:14px/1.6 var(--s-font);overflow:hidden}
 dialog[open]{display:flex;flex-direction:column;animation:nspp-panel-in 180ms var(--s-ease)}
@@ -108,8 +110,8 @@ mark{padding:0;border-radius:2px;background:var(--s-warning-soft);color:inherit;
 .foot-tools{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto}
 button.alt{padding:6px 14px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);background:var(--s-panel);color:var(--s-text);font-size:13px;font-weight:500;line-height:20px;white-space:nowrap}
 button.alt:hover{background:var(--s-panel-hover)}
-button.primary{padding:6px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:14px;font-weight:500;line-height:20px;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}
-button.primary:hover{border-color:var(--s-action-hover);background:var(--s-action-hover)}
+button.primary{padding:6px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:13px;font-weight:500;line-height:20px;white-space:nowrap;transition:background-color .12s ease,border-color .12s ease,transform 100ms var(--s-ease)}
+button.primary:hover:not(:disabled){border-color:var(--s-action-hover);background:var(--s-action-hover)}
 button:not(:disabled):active{transform:translateY(1px)}
 /* 关于：标题 + 版本、说明、链接、功能列表、检查更新 */
 .about-content{padding:18px 0;font-size:13px;line-height:1.7}

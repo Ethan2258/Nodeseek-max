@@ -208,6 +208,8 @@ html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=new] .md-editor>#editor
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=new] .md-editor .nsmax-editor-head{padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=new] .md-editor:not(.nsmax-compact-reply,[data-nsmax-native-editor])>#editor-body{height:calc(var(--nsmax-editor-height,150px) + 78.3px)!important;padding:78.3px 0 0!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-send{height:44px!important;min-height:44px!important;padding:0 16px!important;border-radius:var(--r-pill)!important;background:var(--action)!important;color:var(--action-text)!important;font-size:14px!important}
+/* 没写字时「发送」不能点：弱底弱字，和电脑端一样（2026-11-22） */
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-send:disabled{opacity:1!important;box-shadow:inset 0 0 0 1px var(--line)!important;background:var(--panel-alt)!important;color:var(--text-disabled)!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-nav button{min-height:44px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-pop{max-width:calc(100vw - 24px)!important;border-radius:var(--r)!important;box-shadow:var(--shadow-base)!important}
 html[data-nsmax-theme][data-nsmax-touch] body>footer{box-sizing:border-box!important;width:100%!important;padding:20px 12px!important}
