@@ -3012,6 +3012,11 @@
 		if (nsmaxComposer?.host.isConnected || !/^\/post-\d+/.test(location.pathname)) return nsmaxComposer;
 		const md = document.querySelector("#nsk-body-left .md-editor");
 		if (!md) return null;
+		// 站点把编辑器整块换掉了（重新挂载）：上一个回复框的监听、「家」的位置标记一起撤掉。以前旧的点击监听还在，
+		// 点楼层「回复」时把已经被换下来的旧编辑器也塞回那一层，页面上出现两个回复框（2026-11-22）
+		nsmaxComposer?.dispose();
+		const lifetime = new AbortController();
+		ctx = { ...ctx, signal: nsmaxSignalAny([ctx.signal, lifetime.signal]) };
 		const host = md.closest("#editor") || md;
 		const home = document.createComment("nsmax-editor-home");
 		host.before(home);
@@ -3128,11 +3133,11 @@
 			}
 			leave();
 		}, { signal: ctx.signal });
-		nsmaxComposer = { host, md, moveTo, restore };
+		const composer = nsmaxComposer = { host, md, moveTo, restore, dispose: () => lifetime.abort() };
 		ctx.signal.addEventListener("abort", () => {
-			restore(false);
+			if (host.isConnected) restore(false);
 			home.remove();
-			nsmaxComposer = null;
+			if (nsmaxComposer === composer) nsmaxComposer = null;
 		}, { once: true });
 		return nsmaxComposer;
 	}

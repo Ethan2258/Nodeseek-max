@@ -7981,3 +7981,33 @@ test("2026-11-08：查找用户（/member?q=）按关注页的成员卡片排：
 		} finally { await context.close(); }
 	}
 });
+
+test("回复框被站点整块换掉以后（2026-11-22）：点「回复」只挪新的那个，旧的不会被塞回楼层里", async () => {
+	const html = floorPost();
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector(".md-editor .nsmax-editor-head");
+		await wait(page, 300);
+		// 站点重新挂载编辑器：拿夹具里原样（脚本还没动过的）编辑器替换掉现在这个
+		await page.evaluate((source) => {
+			const parsed = new DOMParser().parseFromString(source, "text/html");
+			const clean = parsed.querySelector("#nsk-body-left .md-editor");
+			const md = document.querySelector("#nsk-body-left .md-editor");
+			const host = md.closest("#editor") || md;
+			host.replaceWith(document.importNode(clean.closest("#editor") || clean, true));
+		}, html);
+		await page.waitForFunction(() => document.querySelectorAll("#nsk-body-left .md-editor .nsmax-editor-head").length === 1);
+		await wait(page, 300);
+		await page.locator("li[id='3'] .menu-item[title='回复']").click();
+		await wait(page, 200);
+		const state = await page.evaluate(() => ({
+			editors: document.querySelectorAll(".md-editor").length,
+			inFloor: document.querySelectorAll("ul.comments > li.content-item .md-editor").length,
+			homes: Array.from(document.querySelector("#nsk-body-left").querySelectorAll("*")).reduce((n, el) => n + Array.from(el.childNodes).filter((node) => node.nodeType === 8 && node.data === "nsmax-editor-home").length, 0)
+		}));
+		assert.deepEqual(state, { editors: 1, inFloor: 1, homes: 1 });
+		await page.locator(".nsmax-reply-cancel").click();
+		assert.equal(await page.evaluate(() => document.querySelectorAll("ul.comments > li.content-item .md-editor").length), 0, "取消后放回底部");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
