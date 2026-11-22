@@ -1585,6 +1585,53 @@ html[data-nsmax-theme]:is(#x,#y,#z,*):is(#x,#y,#z,*):is(#x,#y,#z,*), html[data-n
     }finally{await context.close();}}
   }
  });
+ test(`${engine} 电脑端横排放不下（2026-11-22）：窄屏通知标题栏的标签不被挤进看不见的横向滚动，筛选框和按钮换到第二行；页脚链接不被省略`,async()=>{
+  // 页面里量：横向放不下又藏着的容器（里面有链接 / 按钮），露半个的胶囊 / 按钮 / 标签，被省略的页脚链接
+  const clipped=()=>{
+   const out=[],shown=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&e.checkVisibility();};
+   const all=[...document.querySelectorAll("body *")].filter(e=>!e.closest(".search-overlay,script,style,svg,template")&&shown(e));
+   for(const e of all){
+    const cs=getComputedStyle(e);
+    if(/auto|scroll|hidden|clip/.test(cs.overflowX)&&e.scrollWidth>e.clientWidth+1&&e.querySelector("a,button,[role=tab]")&&e.getBoundingClientRect().height<120)out.push(`放不下：${e.className} ${e.scrollWidth}/${e.clientWidth}`);
+    if(!e.matches("a,button,[role=tab]"))continue;
+    const r=e.getBoundingClientRect();
+    for(let a=e.parentElement;a&&a!==document.body;a=a.parentElement){
+     if(getComputedStyle(a).overflowX==="visible")continue;
+     const b=a.getBoundingClientRect(),left=b.left+a.clientLeft,right=left+a.clientWidth;
+     if((left-r.left>1&&r.right>left+1)||(r.right-right>1&&r.left<right-1))out.push(`露半个：「${e.textContent.trim().slice(0,10)}」在 ${a.className} 边上`);
+     break;
+    }
+   }
+   for(const a of document.querySelectorAll("body > footer .contain > .col a"))if(shown(a)&&a.scrollWidth>a.clientWidth+0.5)out.push(`页脚省略：${a.textContent.trim()}`);
+   return out;
+  };
+  for(const width of [801,860,900,1024,1100]){
+   for(const [url,html] of [["/notification#/atMe",P.notificationPage({})],["/",P.listPage()]]){
+    const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,viewport:{width,height:900},html});
+    try{
+     await ready(page);
+     if(url!=="/")await page.waitForFunction(()=>[...document.querySelectorAll(".nsmax-message-tabs .nspp-messages-count")].filter(e=>!e.hidden&&e.textContent).length===3);
+     await page.waitForTimeout(300);
+     assert.deepEqual(await page.evaluate(clipped),[],`${width}px ${url}`);
+     assert.deepEqual(errors,[]);
+    }finally{await context.close();}
+   }
+  }
+  // 通知标题栏（三个标签都带未读数）：801px 一行放不下时两行、筛选框换到第二行撑满；1024px 还是一行、高度和以前一样（标签 49px + 上下 1px 边）
+  for(const [width,rows] of [[801,2],[1024,1]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification#/atMe",{...desk,viewport:{width,height:900},html:P.notificationPage({})});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nspp-messages-top .nsmax-notice-tools > input");
+    await page.waitForFunction(()=>[...document.querySelectorAll(".nsmax-message-tabs .nspp-messages-count")].filter(e=>!e.hidden&&e.textContent).length===3);
+    const r=await page.evaluate(()=>{const top=document.querySelector(".nspp-messages-top"),tabs=top.querySelector(".nsmax-message-tabs"),input=top.querySelector(".nsmax-notice-tools > input"),t=tabs.getBoundingClientRect(),i=input.getBoundingClientRect();return{height:top.offsetHeight,tabs:[tabs.scrollWidth,tabs.clientWidth],below:i.top>=t.bottom-1,input:i.width};});
+    assert.equal(r.tabs[0],r.tabs[1],`${width}px 标签栏不横向滚动 ${r.tabs}`);
+    if(rows===2){assert.ok(r.below&&r.input>200,`801px 筛选框在第二行、撑开 ${JSON.stringify(r)}`);assert.ok(near(r.height,99,2),`两行高 ${r.height}`);}
+    else{assert.ok(!r.below&&near(r.input,200,0.5),`1024px 一行、筛选框 200px ${JSON.stringify(r)}`);assert.equal(r.height,51);}
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }
 // 在 Node 这边把 rgb() 字符串换成「r,g,b」（和页面里 __rgb 的输出一样）
 function __rgbNode(s){const m=s.match(/[\d.]+/g)||[];return m.slice(0,3).map(Number).join(",");}

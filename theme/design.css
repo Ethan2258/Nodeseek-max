@@ -17803,5 +17803,41 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
      「Premium Providers」要 106px，被省略成「Premium Provid…」。链接列最窄按自己最长的链接算（链接不折行），别的列照样平分 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) body > footer .contain:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     grid-template-columns: minmax(240px, 340px) repeat(5, minmax(min-content, 1fr)) !important;
+/* ---------- 2026-11-22 横排放不下：电脑端 801–1440px 逐页量过一遍（被截断的胶囊 / 标签排） ---------- */
+/* 走查办法：每个电脑端页面和脚本自己造的浮层（设置面板各页、资料卡、预览卡片、编辑器、≡ 菜单）在 801 / 820 / 860 / 900 / 960 /
+   1024 / 1100 / 1200 / 1280 / 1366 / 1440px、浅色深色各量一遍：横向放不下又藏着滚动的容器、露半个的胶囊 / 按钮 / 标签、被裁掉的字。
+   顶栏版块（13476 行那条：放不下的整个排到看不见的第二行，亮出 ≡）带上 11 个版块和内版再量一遍，仍然没有露半个的；
+   搜索浮层的版块胶囊另外重做，这里不碰 */
+@media (min-width: 801px) {
+  /* 通知页标题栏：三个标签 + 筛选框 + 刷新 + 全部已读要 604px，930px 以下标签栏被挤成 90–190px，藏进看不见的横向滚动，
+     「回复主题」只露半个、「私信」整个看不到。标签不再被压缩：先让筛选框跟着窗口变窄（最窄 112px），还放不下（845px 以下）
+     就把筛选框和按钮整排换到第二行靠右，标签一个不少地留在第一行 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages > .nspp-messages-top:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex-wrap: wrap !important;
+    row-gap: 0 !important;
+  }
+  /* 一行时多出来的地方几乎全给标签栏（9999 : 1，按钮那一块只分到零点几 px）；换到第二行时按钮那一块独占一行、撑满，筛选框跟着变宽 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nsmax-message-tabs:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 9999 0 auto !important;
+  }
+  /* 换到第二行时上下各 10px（28px 的按钮排成 48px 一行）；一行放得下时这一块 48px，不比标签（49px）高，标题栏高度不变 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nspp-messages-top-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 1 1 auto !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+    padding-block: 10px !important;
+  }
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top > .nspp-messages-top-actions > .nsmax-notice-tools:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 1 1 auto !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+  }
+  /* 筛选框 200px → 随窗口在 112–200px 之间（标签 222 + 按钮 140 + 间距边距，再给 Windows 滚动条和两位数未读留 37px） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages-top .nsmax-notice-tools > input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 1 1 auto !important;
+    width: clamp(112px, calc(100vw - 770px), 200px) !important;
+    min-width: 0 !important;
+  }
+}
   }
 }
