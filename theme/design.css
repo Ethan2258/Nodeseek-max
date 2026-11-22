@@ -17786,7 +17786,7 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
       一透明就成了一块灰泥（私信「发送」、抽奖弹窗「发布抽奖帖」、设置面板「刷新应用设置」、登录页「发送验证码」、版块签到条），
       回复框「回复楼主」、发帖页「发布帖子」、设置页「确定」、投票按钮干脆没有不能点的样子；
    2. 输入框聚焦光圈贴着黄框画（outline-offset 0），不再隔开 2px 露出一道缝；
-   3. 私信 / 消息中心搜索框、查找用户输入框和回复框同一套：line-strong 细线、面板底色、输入框圆角；
+   3. 私信 / 消息中心搜索框和回复框同一套：line-strong 细线、面板底色、输入框圆角；
    4. 更新提示等确认弹窗的按钮换成全站的墨色胶囊（以前是 GitHub 那套 6px 圆角蓝按钮、红按钮）；
    5. 投票、抽奖按钮圆角和别的按钮一样是胶囊；「查看投票人」悬停不再变成墨底灰字；
    6. 回复框「取消回复」「清空草稿」和旁边 40px 的「回复楼主」一样高；回复框按钮、「一键抽奖」鼠标是手形。 */
@@ -17803,15 +17803,13 @@ html[data-nsmax-theme] .md-editor :is(.topic-select, .submit-row) > :is(button.s
 html[data-nsmax-theme] .md-editor .nsmax-lucky-trigger:not(:disabled):is(#nsmax-lv, *):is(#nsmax-b, *) {
   cursor: pointer !important;
 }
-/* 搜索框、查找用户：和回复框同一套输入框样子 */
-html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *),
-html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+/* 私信 / 消息中心搜索框：和回复框同一套输入框样子（查找用户的输入框照旧跟顶栏搜索框一个样子，2026-11-09 定的） */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   border: 1px solid var(--line-strong) !important;
   border-radius: var(--r-input) !important;
   background: var(--panel) !important;
 }
-html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *),
-html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
   outline-offset: 0 !important;
