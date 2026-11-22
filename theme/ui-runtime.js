@@ -2111,7 +2111,7 @@
 
 			const doCheckin = async (random) => {
 				const btns = banner.querySelectorAll("button");
-				btns.forEach(b => { b.disabled = true; b.style.opacity = "0.6"; });
+				btns.forEach(b => { b.disabled = true; });
 				try {
 					const res = await fetch(`/api/attendance?random=${random}`, { method: "POST" });
 					const data = await res.json();

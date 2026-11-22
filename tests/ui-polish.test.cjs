@@ -1538,6 +1538,46 @@ for(const engine of engines){
     }finally{await context.close();}}
   }
  });
+ test(`${engine} 私信输入区重做（2026-11-22「私信这个地方的 ui 也不搭配」）：框线只画在一个元素上、聚焦黄框 + 光圈；没写字时「发送」是弱底弱字不透明；别处主按钮不能点时同一个样子`,async()=>{
+  if(engine!=="chromium")return;
+  for(const dark of [false,true]){
+   const theme={...desk,viewport:{width:1440,height:900},colorScheme:dark?"dark":"light"};
+   {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification#/message?mode=talk&to=7",{...theme,html:P.nativeTalkPage({dark})});
+    try{
+     await ready(page);
+     await page.waitForSelector(".nspp-messages-composer textarea:visible");
+     const read=()=>page.evaluate(()=>{const cs=s=>getComputedStyle(document.querySelector(s));const c=cs(".nspp-messages-composer"),e=cs(".nspp-message-editor"),a=cs(".nspp-messages-compose-actions"),t=cs(".nspp-messages-composer textarea"),b=cs(".nspp-messages-send"),root=getComputedStyle(document.documentElement);
+      return {box:[c.borderTopWidth,c.borderRightWidth,c.borderBottomWidth,c.borderLeftWidth],boxColor:c.borderTopColor,boxRight:c.borderRightColor,boxBottom:c.borderBottomColor,shadow:c.boxShadow,inner:[e.borderTopWidth,e.borderRightWidth,e.borderLeftWidth,a.borderRightWidth,a.borderBottomWidth,a.borderLeftWidth,t.borderTopWidth,t.borderRightWidth],innerBg:[e.backgroundColor,a.backgroundColor],send:{h:b.height,opacity:b.opacity,bg:b.backgroundColor,color:b.color,disabled:document.querySelector(".nspp-messages-send").disabled},tool:document.querySelector(".nspp-message-editor-toolbar > button").getBoundingClientRect().height,lineStrong:root.getPropertyValue("--line-strong").trim(),action:root.getPropertyValue("--action").trim()};});
+     const idle=await read();
+     assert.deepEqual(idle.box,["1px","1px","1px","1px"],"输入盒一圈 1px 线");
+     assert.ok(idle.inner.every(w=>w==="0px"),`里面的上下两半和文本框都不画线：${idle.inner}`);
+     assert.deepEqual(idle.innerBg,["rgba(0, 0, 0, 0)","rgba(0, 0, 0, 0)"],"里面不再铺一层底色");
+     assert.equal(idle.send.disabled,true);
+     assert.equal(idle.send.opacity,"1","不能点的「发送」不靠透明度");
+     assert.equal(idle.send.h,"28px");assert.equal(idle.tool,28,"「发送」和「附件」「预览」同一档");
+     await page.locator(".nspp-messages-composer textarea").fill("你好");
+     await page.waitForTimeout(250);
+     const focus=await read();
+     assert.equal(focus.boxColor,focus.boxRight);assert.equal(focus.boxColor,focus.boxBottom,"聚焦时四条边同一个颜色（以前上下两半各一截，对不齐）");
+     assert.notEqual(focus.boxColor,idle.boxColor,"聚焦框线变色");
+     assert.ok(/ 0px 0px 0px 3px/.test(focus.shadow),`聚焦有 3px 光圈：${focus.shadow}`);
+     assert.equal(focus.send.disabled,false);
+     assert.notEqual(focus.send.bg,idle.send.bg,"写了字「发送」变成墨色实底");
+     assert.deepEqual(errors,[]);
+    }finally{await context.close();}}
+   {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...theme,html:P.postPage({dark,editorMode:"real"})});
+    try{
+     await ready(page);
+     const btn=page.locator(".md-editor .topic-select > button.submit");
+     await btn.waitFor();
+     const s=await btn.evaluate(b=>{b.style.setProperty("transition","none","important");const before=getComputedStyle(b).backgroundColor,cursor=getComputedStyle(b).cursor;b.disabled=true;const c=getComputedStyle(b);const r={before,cursor,after:c.backgroundColor,opacity:c.opacity,cursorOff:c.cursor};b.disabled=false;return r;});
+     assert.equal(s.cursor,"pointer","回复按钮是手形");
+     assert.notEqual(s.after,s.before,"「回复楼主」不能点时换成次底色");
+     assert.equal(s.opacity,"1");assert.equal(s.cursorOff,"not-allowed");
+     assert.deepEqual(errors,[]);
+    }finally{await context.close();}}
+  }
+ });
 }
 // 在 Node 这边把 rgb() 字符串换成「r,g,b」（和页面里 __rgb 的输出一样）
 function __rgbNode(s){const m=s.match(/[\d.]+/g)||[];return m.slice(0,3).map(Number).join(",");}
