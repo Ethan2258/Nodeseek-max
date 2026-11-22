@@ -16481,13 +16481,14 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-f
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-pop .nsmax-pop-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     min-height: 34px !important;
   }
-  /* 帖子标题里的「已回复」「已参与」这类小标：列表里 18px，帖子标题里却是 26px、13px 字，和别处不是一套。统一 18px、11px */
+  /* 帖子标题里的「已回复」「已参与」这类小标：列表里 18px，帖子标题里却是 26px、13px 字，和别处不是一套。统一 18px、11px。
+     小标带 1px 描边、border-box 18px 高，里面只剩 16px：行高写 18px 时字比小标正中低 1px（雅黑 UI 实测 1.1px），行高跟着内框 16px */
   html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge, .nsmax-replied-badge, .nsmax-joined-badge):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     box-sizing: border-box !important;
     height: 18px !important;
     padding: 0 7px !important;
     font-size: 11px !important;
-    line-height: 18px !important;
+    line-height: 16px !important;
   }
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-my-replies > .nsmax-my-replies-label:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     box-sizing: border-box !important;
@@ -17665,6 +17666,20 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
   html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-recent-panel > .nsmax-recent-clear:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     top: 13px !important;
     right: 6px !important;
+  }
+  /* 2026-11-22 字被裁、小标不居中的同类问题（按 Windows 微软雅黑 UI 的字体度量逐页量过）：
+     1. 资料卡底栏「备注」：按钮 line-height: 1，备注字为了省略号 overflow: hidden，行框只有 12.5px，
+        写了备注（比如「jy 卖家」）j、y 的下半截和汉字最下面一笔被裁掉 1px。字自己用 1.4 的行高（按钮固定 28px 高，不变高） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nsmax-person-pop .nsmax-person-note > span:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    line-height: 1.4 !important;
+  }
+  /* 2. 通知里「未读」：11px 字 + 1.6 行高 + 上下 1px，19.6px 高，按基线排时小标比后面「@了你」的字心低 1.2px，也不在 18px 那一档。
+        改成 18px 高、行高 18px：基线不动，小标正中 = 基线上 4px，「@了你」字心在基线上 4.4px，差 0.4px */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-notice-workspace .nsmax-notice-unread:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    height: 18px !important;
+    padding: 0 6px !important;
+    line-height: 18px !important;
   }
 }
 
