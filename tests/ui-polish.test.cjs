@@ -1672,6 +1672,101 @@ html[data-nsmax-theme]:is(#x,#y,#z,*):is(#x,#y,#z,*):is(#x,#y,#z,*), html[data-n
    }finally{await context.close();}
   }
  });
+ test(`${engine} 电脑端第十三轮：短页面页脚铺到窗口底、资料卡按钮 28px、预览卡片正文顶上不空一截、登录 / 注册卡片离顶栏 20px、管理记录数字等宽、签到排行前三看得清`,async()=>{
+  // 2026-11-22 第十三轮逐页走查（1440 / 1100px、浅色深色、微软雅黑 UI 度量）找到的几类问题，每类在所有同类页面上量
+  if(engine!=="chromium")return;
+  const lum=(c)=>{const f=(v)=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};const [r,g,b]=c.match(/[\d.]+/g).map(Number);return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);};
+  const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);};
+  // 1. 内容少的页面：页脚下面以前露出一截灰色画布。页脚同色的投影铺到窗口底，可滚动高度不变（不多出空白）
+  for(const [url,html,dark] of [["/credit",P.creditPage(),false],["/credit",P.creditPage({dark:true}),true],["/member?q=abc",P.findUserPage(),false],["/invite",P.invitePage(),true]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,viewport:{width:1440,height:1000},html,colorScheme:dark?"dark":"light"});
+   try{
+    await ready(page);
+    await page.waitForTimeout(300);
+    const r=await page.evaluate(()=>{const f=document.querySelector("body > footer"),cs=getComputedStyle(f),b=f.getBoundingClientRect();const m=cs.boxShadow.match(/^(rgba?\([^)]*\)) (-?[\d.]+)px (-?[\d.]+)px (-?[\d.]+)px (-?[\d.]+)px$/);
+     return{bottom:b.bottom,top:b.top,vh:innerHeight,bg:cs.backgroundColor,shadow:m&&{color:m[1],y:+m[3],spread:+m[5]},scroll:document.documentElement.scrollHeight};});
+    assert.ok(r.bottom<r.vh,`${url} 是短页面 ${JSON.stringify(r)}`);
+    assert.ok(r.shadow,`${url} 页脚下面有延伸 ${JSON.stringify(r)}`);
+    assert.equal(r.shadow.color,r.bg,`${url} 延伸部分和页脚同色`);
+    assert.ok(r.shadow.y-r.shadow.spread<=0&&r.bottom+r.shadow.y+r.shadow.spread>=r.vh,`${url} 从页脚铺到窗口底 ${JSON.stringify(r)}`);
+    assert.ok(r.scroll<=r.vh,`${url} 不多出可滚动的空白 ${r.scroll}`);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html:P.postPage()});
+  try{
+   await ready(page);
+   await page.waitForTimeout(300);
+   const r=await page.evaluate(()=>({scroll:document.documentElement.scrollHeight,footer:document.querySelector("body > footer").getBoundingClientRect().bottom+scrollY}));
+   assert.ok(near(r.scroll,r.footer,1),`长页面滚到底就是页脚底 ${JSON.stringify(r)}`);
+   // 2. 资料卡「关注 / 私信 / 主页」：卡片内胶囊一档 28px / 12px（以前 32.75px / 13px，和关注页卡片上同样的按钮不一样高）
+   await page.locator(".nsmax-author-col .nsmax-author-name").first().hover();
+   await page.waitForSelector(".nsmax-person-pop dd",{timeout:5000});
+   const pop=await page.evaluate(()=>{const items=[...document.querySelectorAll(".nsmax-person-pop .nsmax-person-actions > :is(a, button)")];const f=document.querySelector(".nsmax-person-pop .nsmax-person-follow");
+    f.style.setProperty("transition","none","important");f.disabled=true;const cs=getComputedStyle(f);
+    return{sizes:[...new Set(items.map(e=>Math.round(e.getBoundingClientRect().height*4)/4+"/"+getComputedStyle(e).fontSize))],disabled:{opacity:cs.opacity,bg:cs.backgroundColor,cursor:cs.cursor},panelAlt:getComputedStyle(document.body).getPropertyValue("--panel-alt").trim()};});
+   assert.deepEqual(pop.sizes,["28/12px"],JSON.stringify(pop));
+   // 「关注」状态读回来之前不能点：不再整块打六折透明，和别的主按钮不能点时一样
+   assert.equal(pop.disabled.opacity,"1");
+   assert.equal(pop.disabled.cursor,"not-allowed");
+   assert.notEqual(pop.disabled.bg,"rgb(28, 28, 30)",JSON.stringify(pop.disabled));
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+  // 3. 悬停预览卡片：正文第一块是标题时，以前标题的 1.5em 上边距留在卡片里（正文外面包着 article，只去掉了直接子元素的上边距），顶上空一截
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...desk,html:P.listPage(),pages:{"/post-1000-1":P.postPage()}});
+  try{
+   await ready(page);
+   let shown=false;
+   for(let i=0;i<6&&!shown;i++){await page.mouse.move(5,5);await page.locator(".post-list-item .post-title a").first().hover();shown=await page.waitForSelector("dialog.nspp-post-preview[open] article h2",{timeout:2500}).then(()=>true,()=>false);}
+   assert.ok(shown);
+   const r=await page.evaluate(()=>{const d=document.querySelector("dialog.nspp-post-preview"),c=d.querySelector(".nspp-preview-content"),h=c.querySelector("article > :first-child");return{tag:h.tagName,gap:h.getBoundingClientRect().top-c.getBoundingClientRect().top,pad:parseFloat(getComputedStyle(c).paddingTop)};});
+   assert.equal(r.tag,"H2");
+   assert.ok(near(r.gap,r.pad,0.5),`标题紧挨卡片内边距 ${JSON.stringify(r)}`);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+  // 4. 登录（含邮箱 / 短信登录）、注册：卡片离顶栏都是 20px（以前登录 48px、注册 28px，别的页面都是 20px）；5. 注册页单选 13px
+  for(const [url,html] of [["/signIn.html",P.signInPage()],["/emailSignIn.html",P.emailSignInPage()],["/smsSignIn.html",P.smsSignInPage()],["/register.html",P.registerPage()]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,viewport:{width:1440,height:900},html});
+   try{
+    await ready(page);
+    await page.waitForSelector("[data-nsmax-auth-card]");
+    const r=await page.evaluate(()=>({gap:document.querySelector("[data-nsmax-auth-card]").getBoundingClientRect().top-document.querySelector("body > header").getBoundingClientRect().bottom,radios:[...document.querySelectorAll("[data-nsmax-auth-app] .pure-radio")].filter(e=>e.offsetWidth).map(e=>getComputedStyle(e.querySelector("span")||e).fontSize)}));
+    assert.ok(near(r.gap,20,0.5),`${url} 卡片离顶栏 ${r.gap}`);
+    if(url==="/register.html")assert.deepEqual(r.radios,["13px","13px"]);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 6. 管理记录：编号、时间和账簿表格一样用等宽数字，时间弱化色
+  {const credit=await open(browser,"https://www.nodeseek.com/credit",{...desk,html:P.creditPage()});
+  let ref;
+  try{await ready(credit.page);ref=await credit.page.evaluate(()=>{const td=document.querySelector(".credit-table tbody tr > td:nth-child(4)"),cs=getComputedStyle(td);return{font:cs.fontFamily,color:cs.color};});}finally{await credit.context.close();}
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/ruling",{...desk,html:P.rulingPage()});
+  try{
+   await ready(page);
+   const r=await page.evaluate(()=>{const row=document.querySelector(".ruling-log tbody tr");const f=(e)=>getComputedStyle(e).fontFamily;return{id:f(row.querySelector("td:first-child a")||row.firstElementChild),time:f(row.lastElementChild),timeColor:getComputedStyle(row.lastElementChild).color,name:f(row.children[1])};});
+   assert.equal(r.id,ref.font,"编号等宽");
+   assert.equal(r.time,ref.font,"时间等宽");
+   assert.equal(r.timeColor,ref.color,"时间弱化色和账簿一样");
+   assert.notEqual(r.name,ref.font,"用户名不变");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}}
+  // 7. 签到排行榜前三名：红 / 橙 / 黄字对比度够 4.5:1（以前浅色 3.2 / 2.5 / 1.8、深色红字 4.3）
+  for(const dark of [false,true]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/board",{...desk,html:P.boardPage({dark}),colorScheme:dark?"dark":"light"});
+   try{
+    await ready(page);
+    await page.waitForSelector('.nsmax-board-row[data-rank="3"] .nsmax-board-rank');
+    const ranks=await page.evaluate(()=>[1,2,3].map(n=>{const e=document.querySelector(`.nsmax-board-row[data-rank="${n}"] .nsmax-board-rank`);const c=document.createElement("canvas").getContext("2d");
+     // 胶囊底色是半透明的：叠到卡片底色上再算
+     const bgOf=(el)=>{for(let a=el.parentElement;a;a=a.parentElement){const b=getComputedStyle(a).backgroundColor;if(!/rgba\(0, 0, 0, 0\)|transparent/.test(b)&&!/, 0\.\d+\)$/.test(b))return b;}return getComputedStyle(document.body).backgroundColor;};
+     const base=bgOf(e),own=getComputedStyle(e).backgroundColor;c.fillStyle=base;c.fillRect(0,0,1,1);c.fillStyle=own;c.fillRect(0,0,1,1);const [r,g,b]=c.getImageData(0,0,1,1).data;
+     return{color:getComputedStyle(e).color,bg:`rgb(${r}, ${g}, ${b})`};}));
+    for(const [i,r] of ranks.entries())assert.ok(ratio(r.color,r.bg)>=4.5,`${dark?"深色":"浅色"}第 ${i+1} 名 ${ratio(r.color,r.bg).toFixed(2)} ${JSON.stringify(r)}`);
+    if(dark)assert.deepEqual(ranks.map(r=>r.color),["rgb(248, 113, 113)","rgb(249, 115, 22)","rgb(234, 179, 8)"],"深色橙、黄不动，红提亮一点");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }
 // 在 Node 这边把 rgb() 字符串换成「r,g,b」（和页面里 __rgb 的输出一样）
 function __rgbNode(s){const m=s.match(/[\d.]+/g)||[];return m.slice(0,3).map(Number).join(",");}
