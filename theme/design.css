@@ -17803,6 +17803,8 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
      「Premium Providers」要 106px，被省略成「Premium Provid…」。链接列最窄按自己最长的链接算（链接不折行），别的列照样平分 */
   html[data-nsmax-theme]:not([data-nsmax-touch]) body > footer .contain:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     grid-template-columns: minmax(240px, 340px) repeat(5, minmax(min-content, 1fr)) !important;
+  }
+}
 /* ---------- 2026-11-22 横排放不下：电脑端 801–1440px 逐页量过一遍（被截断的胶囊 / 标签排） ---------- */
 /* 走查办法：每个电脑端页面和脚本自己造的浮层（设置面板各页、资料卡、预览卡片、编辑器、≡ 菜单）在 801 / 820 / 860 / 900 / 960 /
    1024 / 1100 / 1200 / 1280 / 1366 / 1440px、浅色深色各量一遍：横向放不下又藏着滚动的容器、露半个的胶囊 / 按钮 / 标签、被裁掉的字。
@@ -17837,7 +17839,5 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
     flex: 1 1 auto !important;
     width: clamp(112px, calc(100vw - 770px), 200px) !important;
     min-width: 0 !important;
-  }
-}
   }
 }
