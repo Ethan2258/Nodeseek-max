@@ -1472,4 +1472,72 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ test(`${engine} 电脑端对比度走查（2026-11-22）：消息里的链接认得出（下划线）、个人介绍链接不是站点绿、占位字够深、消息搜索框聚焦看得见、Lv5 标够清楚`,async()=>{
+  // 浅色主题 --link 是墨色，和正文同色：正文、签名靠 2px 黄色下划线区分；私信气泡、系统消息、个人介绍以前没有这道线，看不出能点
+  const S="https://www.nodeseek.com",now=Date.now();
+  const msg=(id,sender,content,ago)=>({id,sender_id:sender,receiver_id:1,content,is_markdown:1,viewed:1,created_at:new Date(now-ago).toISOString()});
+  const sys=[msg(91,5230,`你关注的用户[stgunner](${S}/space/1001)发布了一篇[新的帖子](${S}/post-1055945-1)`,5e6),msg(92,5230,`站点维护通知：详见 [公告](${S}/post-1-1)`,4e6)];
+  const list={success:true,msgArray:[{receiver_id:1,sender_id:5230,max_id:92,content:sys[1].content,created_at:sys[1].created_at,viewed:1,sender_name:"系统通知",receiver_name:"tester"}]};
+  // 页面里算对比度：颜色先画到 1×1 画布上取像素（color-mix / color() 都能换成 rgb），往上找第一层不透明底色
+  const lib=()=>{const cv=document.createElement("canvas");cv.width=cv.height=1;const cx=cv.getContext("2d",{willReadFrequently:true});
+   const rgba=s=>{cx.clearRect(0,0,1,1);cx.fillStyle="#000";cx.fillStyle=s;cx.fillRect(0,0,1,1);const d=cx.getImageData(0,0,1,1).data;return[d[0],d[1],d[2],d[3]/255];};
+   const over=(t,b)=>t.map((v,i)=>i<3?v*t[3]+b[i]*(1-t[3]):1);
+   const bg=el=>{const st=[];for(let e=el;e;e=e.parentElement){const c=rgba(getComputedStyle(e).backgroundColor);if(c[3]>0){st.push(c);if(c[3]>.999)break;}}return st.reverse().reduce((b,c)=>over(c,b),[255,255,255,1]);};
+   const lum=c=>{const f=v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4;};return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2]);};
+   window.__contrast=(el,pseudo)=>{const b=bg(el),f=over(rgba(getComputedStyle(el,pseudo).color),b),x=lum(f),y=lum(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
+   window.__deco=el=>{const cs=getComputedStyle(el);return{line:cs.textDecorationLine,alpha:rgba(cs.textDecorationColor)[3],thick:cs.textDecorationThickness};};
+   window.__rgb=s=>rgba(s).slice(0,3).join(",");};
+  for(const dark of [false,true]){
+   const theme={colorScheme:dark?"dark":"light",...desk};
+   {const {context,page,errors}=await open(browser,`${S}/notification#/message?mode=talk&to=5230`,{...theme,html:P.nativeTalkPage({dark}),api:{"/api/notification/message/with/5230":[{status:200,body:{success:true,talkTo:{member_id:5230,member_name:"系统通知"},msgArray:sys}}],"/api/notification/message/list":[{status:200,body:list}]}});
+    try{
+     await ready(page);
+     await page.waitForSelector(".is-system-thread .is-system .nspp-messages-system-target");
+     await page.evaluate(lib);
+     const s=await page.evaluate(()=>{const t=[...document.querySelectorAll(".is-system-thread .nspp-messages-system-target")];const input=document.querySelector(".nspp-messages-sidebar .nspp-messages-search input");
+      return{targets:t.map(a=>({text:a.textContent,...__deco(a)})),neutral:__rgb(getComputedStyle(t[1]).textDecorationColor),linkLine:__rgb(getComputedStyle(document.documentElement).getPropertyValue("--link-line")),placeholder:__contrast(input,"::placeholder")};});
+     for(const t of s.targets)assert.ok(t.line.includes("underline")&&t.alpha>=.4&&t.thick==="2px",`系统消息要点链接有下划线（${dark?"深色":"浅色"}）：${JSON.stringify(t)}`);
+     assert.equal(s.neutral,s.linkLine,"「通知」类没有小标色，链接用正文链接那道黄色下划线");
+     assert.ok(s.placeholder>=4.5,`消息搜索框占位字对比度 ${s.placeholder.toFixed(2)}（以前浏览器默认灰，深色底上 3.7）`);
+     const input=page.locator(".nspp-messages-sidebar .nspp-messages-search input");
+     const idle=await input.evaluate(e=>getComputedStyle(e).borderTopColor);
+     await input.focus();
+     await page.waitForTimeout(200);
+     const f=await input.evaluate(e=>({border:__rgb(getComputedStyle(e).borderTopColor),focus:__rgb(getComputedStyle(document.documentElement).getPropertyValue("--field-focus"))}));
+     assert.notEqual(f.border,__rgbNode(idle),"消息搜索框聚焦后边框要变");
+     assert.equal(f.border,f.focus,"聚焦是发帖标题框那种黄边");
+     assert.deepEqual(errors,[]);
+    }finally{await context.close();}}
+   {const {context,page,errors}=await open(browser,`${S}/notification#/message?mode=talk&to=7`,{...theme,html:P.nativeTalkPage({dark}),api:{"/api/notification/message/with/7":[{status:200,body:{success:true,talkTo:{member_id:7,member_name:"friend"},msgArray:[msg(21,7,`看看 [这个帖子](${S}/post-1-1) 再说`,36e5)]}}]}});
+    try{
+     await ready(page);
+     await page.waitForSelector(".nspp-messages-thread .nspp-messages-bubble a");
+     await page.evaluate(lib);
+     const d=await page.locator(".nspp-messages-thread .nspp-messages-message:not(.is-mine) .nspp-messages-bubble a").first().evaluate(a=>__deco(a));
+     assert.ok(d.line.includes("underline")&&d.alpha>.9&&d.thick==="2px",`别人私信里的链接和正文链接一样有黄色下划线：${JSON.stringify(d)}`);
+     assert.deepEqual(errors,[]);
+    }finally{await context.close();}}
+   {const {context,page,errors}=await open(browser,`${S}/space/10`,{...theme,html:P.spaceGeneralPage(`<p>见 <a href="https://example.com/">我的博客</a> 吧</p>`,{dark})});
+    try{
+     await ready(page);
+     await page.waitForSelector(".selector > .readme a");
+     await page.evaluate(lib);
+     const r=await page.locator(".selector > .readme a").evaluate(a=>({color:__rgb(getComputedStyle(a).color),...__deco(a),contrast:__contrast(a)}));
+     assert.notEqual(r.color,"13,188,121","个人介绍链接不再是站点的 #0dbc79 绿");
+     assert.ok(r.line.includes("underline")&&r.contrast>=4.5,JSON.stringify(r));
+     assert.deepEqual(errors,[]);
+    }finally{await context.close();}}
+   {const {context,page,errors}=await open(browser,`${S}/fans?type=follow`,{...theme,html:P.fansPage({dark})});
+    try{
+     await ready(page);
+     await page.waitForSelector('[data-nsmax-level="5"]');
+     await page.evaluate(lib);
+     const c=await page.locator('[data-nsmax-level="5"]').first().evaluate(e=>__contrast(e));
+     assert.ok(c>=4.5,`Lv5 橙色等级标对比度 ${c.toFixed(2)}（以前浅色 3.9）`);
+     assert.deepEqual(errors,[]);
+    }finally{await context.close();}}
+  }
+ });
 }
+// 在 Node 这边把 rgb() 字符串换成「r,g,b」（和页面里 __rgb 的输出一样）
+function __rgbNode(s){const m=s.match(/[\d.]+/g)||[];return m.slice(0,3).map(Number).join(",");}
