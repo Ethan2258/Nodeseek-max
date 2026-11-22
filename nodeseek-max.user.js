@@ -20532,16 +20532,22 @@ var nsmaxRedirecting = false;
 			});
 			// 上次的榜单存在本地（一天内有效）：刷新页面时侧栏面板和弹窗立刻显示上次的结果，不再先出骨架屏、等网络；
 			// 过期的照常在后台刷新，刷新期间继续显示旧结果。
-			for (const kind of Object.keys(rankings)) {
+			// adopt：别的标签页刚取过、比这一页手上的新，就直接用那份（2026-11-22：以前开着几个标签页，每页各自每半小时取一次日榜）
+			const adopt = (kind) => {
 				const saved = ctx.get(`snapshot:${kind}`);
-				if (saved && Array.isArray(saved.posts) && Number.isFinite(saved.fetched) && Date.now() - saved.fetched < 864e5 && saved.posts.every((post) => Number.isSafeInteger(post?.id) && typeof post.title === "string")) cache.set(kind, saved);
-			}
+				if (!(saved && Array.isArray(saved.posts) && Number.isFinite(saved.fetched) && Date.now() - saved.fetched < 864e5 && saved.posts.every((post) => Number.isSafeInteger(post?.id) && typeof post.title === "string"))) return false;
+				if (saved.fetched <= (cache.get(kind)?.fetched || 0)) return false;
+				cache.set(kind, saved);
+				return true;
+			};
+			for (const kind of Object.keys(rankings)) adopt(kind);
 			const store = {
 				cache,
 				pending,
 				errors,
 				subscribe: (listener) => listeners.add(listener),
 				load(kind, force = false) {
+					if (!force) adopt(kind);
 					const snapshot = cache.get(kind);
 					if (pending.has(kind)) return pending.get(kind);
 					if (!force && snapshot && Date.now() - snapshot.fetched < hotMaxAge(kind)) {
@@ -20566,19 +20572,18 @@ var nsmaxRedirecting = false;
 			};
 			const intervalMs = 30 * 60 * 1000;
 			const canRefresh = () => !nsmaxTouchLayout() || !!document.querySelector('#left-slide-panel[data-nsmax-drawer-view="hot"][aria-modal="true"]');
+			const refreshDaily = (minAge) => {
+				const adopted = adopt("daily");
+				const snapshot = cache.get("daily");
+				if (!snapshot || Date.now() - snapshot.fetched >= minAge) store.load("daily", true);
+				else if (adopted) emit();
+			};
 			const autoRefresh = () => {
-				if (!document.hidden && canRefresh()) {
-					store.load("daily", true);
-				}
+				if (!document.hidden && canRefresh()) refreshDaily(intervalMs - 6e4);
 			};
 			const timerId = setInterval(autoRefresh, intervalMs);
 			document.addEventListener("visibilitychange", () => {
-				if (!document.hidden && canRefresh()) {
-					const snapshot = cache.get("daily");
-					if (!snapshot || Date.now() - snapshot.fetched >= intervalMs) {
-						store.load("daily", true);
-					}
-				}
+				if (!document.hidden && canRefresh()) refreshDaily(intervalMs);
 			}, { signal: ctx.signal });
 			const stopSidebar = ctx.get('sidebar') ? mountHotSidebar(ctx, store) : undefined;
 			return () => { clearInterval(timerId); stopSidebar?.(); listeners.clear(); };
