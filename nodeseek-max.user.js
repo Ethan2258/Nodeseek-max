@@ -26420,6 +26420,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			const last = confirmedLast > 0 ? confirmedLast : Math.max(...pages.map(number).filter(Number.isFinite));
 			let previous;
 			const seenPages = new Set();
+			// 上一轮插的省略号先全部拿掉再按现在的页码重放：账簿、个人主页收藏这些站点（Vue）画的页码，翻页时站点在原处换页码节点，
+			// 旧的「…」留在原位，翻到中间页成了「1 … … 49 50 51 … 100」（2026-11-22 排查）
+			for (const dots of pager.querySelectorAll(".nsmax-pager-ellipsis")) dots.remove();
 			for (const page of pages) {
 				const n = number(page);
 				const keep = n >= 1 && n <= last && !seenPages.has(n) && (n === 1 || n === last || (current <= 2 ? n <= 3 : Math.abs(n - current) <= 1));
@@ -29471,18 +29474,24 @@ function nsmaxTagStructure() {
 				if (slot) nsmaxSyncMemberActions(card, slot);
 				continue;
 			}
-			row?.remove();
-			row = document.createElement("div");
-			row.className = "nsmax-member";
-			row.setAttribute("data-nsmax-sig", signature);
+			// 数字变了（点关注后粉丝数 +1）：只换中间那块字，头像和按钮这排留着原来的节点——整排重建的话，正按着的按钮被换掉、
+			// 键盘焦点掉回页面开头，头像也换成新的 <img>，可能空一帧
 			const head = card.querySelector(":scope > .user-head");
 			const nameLink = head?.querySelector(".Username, a[href*='/space/']:not(:has(img))") || head?.querySelector("a[href*='/space/']");
 			const href = nameLink?.getAttribute("href") || head?.querySelector("a[href]")?.getAttribute("href") || "#";
-			const avatarLink = document.createElement("a");
-			avatarLink.className = "nsmax-member-avatar";
-			avatarLink.href = href;
 			const img = head?.querySelector("img");
-			if (img) { const copy = document.createElement("img"); copy.src = img.src; copy.alt = ""; copy.loading = "lazy"; avatarLink.append(copy); }
+			const oldAvatar = row?.querySelector(":scope > .nsmax-member-avatar");
+			const keep = !!(oldAvatar && row.querySelector(":scope > .nsmax-member-body") && row.querySelector(":scope > .nsmax-member-actions") && oldAvatar.getAttribute("href") === href && (oldAvatar.querySelector("img")?.src || "") === (img?.src || ""));
+			if (!keep) {
+				row?.remove();
+				row = null;
+			}
+			const avatarLink = keep ? oldAvatar : document.createElement("a");
+			if (!keep) {
+				avatarLink.className = "nsmax-member-avatar";
+				avatarLink.href = href;
+				if (img) { const copy = document.createElement("img"); copy.src = img.src; copy.alt = ""; copy.loading = "lazy"; avatarLink.append(copy); }
+			}
 			const body = document.createElement("div");
 			body.className = "nsmax-member-body";
 			const title = document.createElement("div");
@@ -29510,6 +29519,15 @@ function nsmaxTagStructure() {
 			body.append(title);
 			if (bio.textContent) body.append(bio);
 			body.append(line);
+			if (keep) {
+				row.querySelector(":scope > .nsmax-member-body").replaceWith(body);
+				row.setAttribute("data-nsmax-sig", signature);
+				nsmaxSyncMemberActions(card, row.querySelector(":scope > .nsmax-member-actions"));
+				continue;
+			}
+			row = document.createElement("div");
+			row.className = "nsmax-member";
+			row.setAttribute("data-nsmax-sig", signature);
 			const actions = document.createElement("div");
 			actions.className = "nsmax-member-actions";
 			nsmaxSyncMemberActions(card, actions);
@@ -29529,6 +29547,16 @@ function nsmaxTagStructure() {
 		const originals = (group ? Array.from(group.querySelectorAll(":scope > .btn")) : []).map((btn) => ({ btn, label: btn.textContent.trim() })).filter((item) => item.label).sort((a, b) => rank(a.label) - rank(b.label));
 		const current = Array.from(slot.children, (el) => el.textContent);
 		if (current.length === originals.length && current.every((text, i) => text === originals[i].label)) return;
+		// 个数没变（关注 ↔ 取关）：原地改字，不换节点——换掉的话正按着的按钮没了，悬停样式闪一下，用键盘按的焦点也丢了
+		if (current.length === originals.length) {
+			Array.from(slot.children).forEach((proxy, index) => {
+				const label = originals[index].label;
+				nsmaxSetText(proxy, label);
+				proxy.toggleAttribute("data-nsmax-unfollow", label === "取关");
+				proxy.toggleAttribute("data-nsmax-follow", label === "关注");
+			});
+			return;
+		}
 		slot.replaceChildren(...originals.map(({ label }, index) => {
 			const proxy = document.createElement("button");
 			proxy.type = "button";

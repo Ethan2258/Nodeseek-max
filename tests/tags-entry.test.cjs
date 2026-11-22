@@ -179,3 +179,47 @@ test("成员卡片：点关注后站点重画按钮、粉丝数变化，卡片�
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+// 同一类问题的后续（2026-11-22 排查）：点完关注粉丝数一变，脚本整排重建——按着的那个按钮被换成新节点，用键盘按的焦点掉回页面开头、
+// 头像换成新的 <img>。现在只换中间那块字，头像和按钮原地改
+test("成员卡片：用键盘点关注 / 取关，焦点留在按钮上，头像和按钮节点不换", async () => {
+	const init = `document.addEventListener("click", (event) => {
+		const btn = event.target.closest?.(".usercard-button-group > .btn");
+		if (!btn || !/关注|取关/.test(btn.textContent)) return;
+		const card = btn.closest(".user-card");
+		const fans = [...card.querySelectorAll(".user-stat span")].find((s) => /粉丝/.test(s.textContent));
+		const follow = btn.textContent.trim() === "关注";
+		if (fans) fans.textContent = fans.textContent.replace(/\\d+/, (n) => String(Number(n) + (follow ? 1 : -1)));
+		btn.textContent = follow ? "取关" : "关注";
+	}, true);`;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/fans?type=fans", { html: P.fansPage({}), init, viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForFunction(() => document.querySelectorAll(".nsmax-member .nsmax-member-actions > .btn").length >= 15);
+		await page.evaluate(() => {
+			const row = document.querySelector(".nsmax-member");
+			window.__row = { row, img: row.querySelector(".nsmax-member-avatar img"), btn: row.querySelector(".nsmax-member-actions > .btn"), stats: row.querySelector(".nsmax-member-stats").textContent };
+			window.__row.btn.focus();
+		});
+		const first = await page.evaluate(() => window.__row.btn.textContent);
+		for (const [key, label] of [["Enter", first === "关注" ? "取关" : "关注"], ["Space", first]]) {
+			await page.keyboard.press(key);
+			await page.waitForFunction((label) => window.__row.btn.textContent === label, label, { timeout: 3000 });
+			await page.waitForTimeout(200);
+			const state = await page.evaluate(() => {
+				const row = document.querySelector(".nsmax-member");
+				return {
+					sameRow: row === window.__row.row,
+					sameImg: row.querySelector(".nsmax-member-avatar img") === window.__row.img,
+					sameBtn: row.querySelector(".nsmax-member-actions > .btn") === window.__row.btn,
+					focused: document.activeElement === window.__row.btn,
+					count: row.querySelectorAll(".nsmax-member-actions > .btn").length,
+					stats: row.querySelector(".nsmax-member-stats").textContent
+				};
+			});
+			const { stats, ...nodes } = state;
+			assert.deepEqual(nodes, { sameRow: true, sameImg: true, sameBtn: true, focused: true, count: 3 }, `${key}：${JSON.stringify(state)}`);
+			if (key === "Enter") assert.notEqual(stats, await page.evaluate(() => window.__row.stats), "粉丝数跟着更新");
+		}
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});

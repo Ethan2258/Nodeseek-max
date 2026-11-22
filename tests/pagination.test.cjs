@@ -52,4 +52,27 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
    } finally {await context.close();}
   }
  });
+ // 2026-11-22：账簿等站点（Vue）画的页码翻页时在原处换页码节点，上一轮插的「…」以前留在原位，翻到中间页成了「1 … … 49 50 51 … 100」
+ test(`${engine} 站点前端画的页码翻页后：省略号按新页码重放，不留旧的`, async () => {
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/credit#/p-1",{html:P.creditPage(),viewport:{width:1440,height:900}});
+  try {
+   await ready(page);
+   const nav=".credit-table .nsk-pager [role=navigation]";
+   const shown=()=>page.evaluate(sel=>[...document.querySelector(sel).children].filter(el=>el.getClientRects().length&&/pager-pos|nsmax-pager-ellipsis/.test(el.className)).map(el=>el.classList.contains("nsmax-pager-ellipsis")?"…":el.textContent.replace(/\.\./,"").trim()).join(" "),nav);
+   await page.waitForFunction(sel=>document.querySelector(sel+" .nsmax-pager-ellipsis"),nav);
+   assert.equal(await shown(),"1 2 3 … 100");
+   // 模拟站点按页码做 key 重画到第 50 页：2–5 拿掉，48–52 插在「100」前面
+   await page.evaluate(sel=>{
+    const box=document.querySelector(sel),link=n=>Object.assign(document.createElement("a"),{className:"pager-pos",href:`#/p-${n}`,textContent:String(n)});
+    const last=[...box.querySelectorAll(".pager-pos")].find(el=>/100$/.test(el.textContent.trim()));
+    for(const el of [...box.querySelectorAll(".pager-pos")]){const n=Number(el.textContent.trim());if(n>=2&&n<=5)el.remove();}
+    box.querySelector(".pager-cur").replaceWith(link(1));
+    for(let n=48;n<=52;n++)box.insertBefore(n===50?Object.assign(document.createElement("span"),{className:"pager-pos pager-cur",textContent:"50"}):link(n),last);
+   },nav);
+   await page.waitForFunction(sel=>document.querySelector(sel+" .pager-pos[data-nsmax-page-skip]")&&[...document.querySelectorAll(sel+" .pager-pos")].some(el=>el.textContent.trim()==="48"&&el.hasAttribute("data-nsmax-page-skip")),nav);
+   await page.waitForTimeout(200);
+   assert.equal(await shown(),"1 … 49 50 51 … 100");
+   assert.deepEqual(errors,[]);
+  } finally {await context.close();}
+ });
 }
