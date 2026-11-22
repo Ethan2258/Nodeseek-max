@@ -1872,7 +1872,18 @@
 		for (const overlay of document.querySelectorAll(".search-overlay")) {
 			for (const link of overlay.querySelectorAll(".googleSearch, [data-tab=google], [data-type=google]")) link.remove();
 			for (const element of overlay.querySelectorAll(".tab-btn")) if (/谷歌|google/i.test(element.textContent.trim())) element.remove();
+			nsmaxMarkSearchScopes(overlay);
+			// 搜索历史是 Vue 按位置复用的节点：新搜一次，旧节点里的字直接改掉（只有 characterData），页面观察器看不到，这里单独盯着
+			if (!nsmaxWatchedOverlays.has(overlay)) {
+				nsmaxWatchedOverlays.add(overlay);
+				new MutationObserver(() => nsmaxMarkSearchScopes(overlay)).observe(overlay, { childList: true, subtree: true, characterData: true });
+			}
 		}
+	}
+	// 搜索历史的范围小字是「全部」的标出来，主题不写它（几乎每条都是「全部」，见 design.css 搜索面板）
+	const nsmaxWatchedOverlays = new WeakSet();
+	function nsmaxMarkSearchScopes(overlay) {
+		for (const tag of overlay.getElementsByClassName("history-scope-tag")) nsmaxFlag(tag, "data-nsmax-scope-all", tag.textContent.trim() === "全部");
 	}
 	// 解析器已经越过这个元素了没有（它或者它的某层祖先后面已经有兄弟节点，或者页面已经解析完）
 	function nsmaxParsedPast(el) {
