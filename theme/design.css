@@ -17757,3 +17757,51 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
     color: color-mix(in srgb, var(--lv) 60%, var(--text-strong)) !important;
   }
 }
+
+/* ---------- 2026-11-22 点一下就选中字、字被裁：…（胶囊 / 按钮里的字） ----------
+   Yiheng 截图：搜索浮层的版块胶囊「曝光」字上一块亮黄——胶囊是 <span>，双击 / 拖一下就选中了字，套上主题的黄色 ::selection。
+   真 <button>、带 href 的链接在 Chrome 里双击不会选中字；没有 href 的 <a>、<div>、<span>、<label> 当按钮用时会。逐页双击走查（1440 / 820，浅色）出来的：
+   - 帖子页：楼层操作条「点赞数 / 回复 / 引用…」（.comment-menu > .menu-item，div）、楼主行「引用 / 回复 / 举报」（a，没有 href）
+   - 列表页：排序「新评论 / 新帖子」（a，没有 href）
+   - 消息中心：左边会话列表的一行（div，点了打开会话；名字在右边会话标题里照样能选）
+   - 个人设置：「设置头像」（a.btn）
+   - 关键词屏蔽弹窗「也匹配评论内容」、抽奖页「楼层去重」这类复选框文字（label，点字就是点复选框，双击 = 勾两下 + 选中字）
+   搜索浮层自己的胶囊 / 历史在搜索浮层那一段里改，这里不碰 .search-overlay。正文、标题、用户名、投票选项这些可能要复制的字不动。
+   user-select 不继承，但子元素的 auto 在 none 的父元素里算成 none，所以只写在可点的那一层上；不加后代 ::selection（见第 1 节的性能说明） */
+html[data-nsmax-theme] #nsk-body-left .comment-menu > .menu-item:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+html[data-nsmax-theme] .nsk-post .nsmax-op-actions > .nsmax-op-action:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left > .post-list-controler > .sorter > a:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] .nspp-messages-conversations > .nspp-messages-peer:not(.nsmax-notice-row):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] #user-setting-panel .set-avatar > a.btn:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme] .nsmax-pop .nsmax-pop-foot > label:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .pure-checkbox:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+/* 发帖页卡片标题「内容」：脚本按字认编辑器的「内容 / 预览」标签，标题也叫「内容」，被当成标签挂上了手形光标（点了没反应）。
+   它只是标题：光标回到默认（字照样能选） */
+html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  cursor: default !important;
+}
+@media (min-width: 1001px) {
+  /* 页脚链接列：1001–1040px 时品牌块那一列占满 340px（字只用了 292px），五列链接平分剩下的、每列 99–103px，
+     「Premium Providers」要 106px，被省略成「Premium Provid…」。链接列最窄按自己最长的链接算（链接不折行），别的列照样平分 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) body > footer .contain:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    grid-template-columns: minmax(240px, 340px) repeat(5, minmax(min-content, 1fr)) !important;
+  }
+}
