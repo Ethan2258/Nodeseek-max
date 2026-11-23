@@ -2475,7 +2475,7 @@ html[data-nsmax-theme] #nsk-frame :is(.btn, .pure-button):not(.nsmax-header-acti
   background: var(--action-hover) !important;
   color: var(--action-text) !important;
 }
-html[data-nsmax-theme] #nsk-frame :is(input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="number"], input[type="search"], input:not([type]), select, textarea):not(.md-editor *, [class*="nspp-"], [class*="nspp-"] *, #search-site2) {
+html[data-nsmax-theme] #nsk-frame :is(input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="number"], input[type="search"], input:not([type]), select, textarea):not(.md-editor *, [class*="nspp-"], :is(.nspp-messages-container, .nspp-messages, .nspp-messages-workspace, .nspp-notice-workspace, .nspp-messages-search, .nspp-message-editor, .nspp-messages-composer, .nspp-compose, .nspp-upload-status, .nspp-chat-profile, .nspp-user-hover, .nspp-post-preview, .nspp-image-preview, .nspp-profile-dialog) *, #search-site2) {
   padding: 7px 10px !important;
   border: 1px solid var(--line-strong) !important;
   border-radius: var(--r-input) !important;
@@ -2484,7 +2484,7 @@ html[data-nsmax-theme] #nsk-frame :is(input[type="text"], input[type="password"]
   color: var(--text) !important;
   font-size: 14px !important;
 }
-html[data-nsmax-theme] #nsk-frame :is(input, select, textarea):not(.md-editor *, [class*="nspp-"], [class*="nspp-"] *, #search-site2):focus {
+html[data-nsmax-theme] #nsk-frame :is(input, select, textarea):not(.md-editor *, [class*="nspp-"], :is(.nspp-messages-container, .nspp-messages, .nspp-messages-workspace, .nspp-notice-workspace, .nspp-messages-search, .nspp-message-editor, .nspp-messages-composer, .nspp-compose, .nspp-upload-status, .nspp-chat-profile, .nspp-user-hover, .nspp-post-preview, .nspp-image-preview, .nspp-profile-dialog) *, #search-site2):focus {
   border-color: var(--field-focus) !important;
   outline: 3px solid var(--field-ring) !important;
   outline-offset: 0 !important;
