@@ -18053,3 +18053,16 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   margin-top: 0 !important;
 }
+/* ---------- 进页面不跳（2026-11-23，用户：「继续 优化我的浏览感受」） ---------- */
+@media (min-width: 801px) {
+  /* 正文配图没下完时按本机记下的尺寸先占好位置（ui-runtime nsmaxImageSizes）：宽度就是原图宽度（照样被 max-width 收窄），高度按宽高比，
+     下好以后和不占位时一模一样。楼中楼里的小图另有一套宽高（最高 240px），不占 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > article.post-content img.nsmax-post-image[data-nsmax-sized]:is(#nsmax-lv, *) {
+    width: var(--nsmax-img-w) !important;
+    aspect-ratio: auto var(--nsmax-img-ar) !important;
+  }
+  /* 正文里带 id 的锚点（脚注、带编号的标题）和楼层一样，跳过去时停在顶栏下面，不被顶栏盖住 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left article.post-content [id]:is(#nsmax-lv, *) {
+    scroll-margin-top: 72px !important;
+  }
+}
