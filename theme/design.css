@@ -15526,6 +15526,10 @@ html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-car
 html[data-nsmax-theme][data-nsmax-cv]:not([data-nsmax-touch]) #nsk-body-left ul.comments > li.content-item[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: visible !important;
 }
+/* 页脚也一样（2026-11-23）：电脑上空闲时排在最后一批，滚到页底不用在滚动那一帧里现排 */
+html[data-nsmax-theme][data-nsmax-cv]:not([data-nsmax-touch]) body > footer[data-nsmax-cv-done]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  content-visibility: visible !important;
+}
 
 /* ---------- 73. 2026-10-30：首帧只算屏幕上的行 ---------- */
 /* content-visibility:auto 的行要先排一遍才知道哪些在屏幕附近，再回头算样式、排第二遍；而且「附近」是上下各一屏半，手机首帧要多算十几行。
