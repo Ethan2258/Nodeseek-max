@@ -18070,14 +18070,3 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   margin-top: 0 !important;
 }
-/* ---------- 2026-11-23 电脑端阅读舒适度（用户：「继续 优化我的浏览感受」） ----------
-   正文一行的字数：楼层正文按右栏宽排满，1440px 窗口一行 59 个汉字、1767px（用户笔记本）71 个汉字 / 150 个英文字母，
-   读到行尾再找下一行开头要横着扫一大段。段落、标题、列表、引用、分割线最宽 750px（15px 正文一行 50 个汉字左右；标题字大，按 px 写才和正文同一条右边，
-   和 1280px 窗口时一样宽、和 720px 大图差不多齐）；代码块、表格、图片这些「宽内容」照旧用整栏宽（代码少横向滚动、表格少折行）。
-   只管楼层自己的正文（主帖、回复），楼中楼框里本来就窄，不动 */
-@media (min-width: 801px) {
-  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > article.post-content > :is(p, h1, h2, h3, h4, h5, h6, ul, ol, dl, blockquote, hr, details):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    box-sizing: border-box !important;
-    max-width: 750px !important;
-  }
-}

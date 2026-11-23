@@ -203,8 +203,8 @@ test("手机：代码块标题栏 44px，「复制」触控区就是标题栏；
 });
 
 // 2026-11-23 电脑端阅读舒适度：无序列表里套有序列表时数字上不再叠站点的「•」；表格有一格长内容时别的列不被挤成「280Mb / ps」「正 / 常」；
-// 宽窗口下段落最宽 750px（一行 50 个汉字左右），代码块、表格照旧占整栏
-test("2026-11-23 电脑端正文：嵌套有序列表没有多余圆点；表格短格子不从词中间断开；宽窗口段落最宽 750px、代码块占整栏", async () => {
+// 段落照旧占满整列（2026-11-23 Yiheng 选「保持占满整列」，不限 750px）
+test("2026-11-23 电脑端正文：嵌套有序列表没有多余圆点；表格短格子不从词中间断开；段落和代码块都占整栏", async () => {
 	const hash = "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a089f86d081884c7d659a2feaa0c55ad015";
 	const long = "说一下这台机器的情况：香港 CN2 GIA 线路，晚高峰到电信移动联通三网延迟都在 40ms 左右，基本不丢包。".repeat(4);
 	const extra = `<p id="nsmax-long-p">${long}</p><ul><li>一<ol><li id="nsmax-nested-ol">有序</li></ol></li></ul>
@@ -236,7 +236,7 @@ html[data-nsmax-theme]:is(#x,#y,#z,*):is(#x,#y,#z,*):is(#x,#y,#z,*), html[data-n
 			assert.equal(s.bullet, "none", "有序列表的数字上不叠「•」");
 			assert.deepEqual(s.broken, [], `${width}：短格子不从中间断开`);
 			assert.ok(s.tableInside, "表格不超出正文");
-			assert.ok(s.para <= 750.5, `${width}：段落 ${s.para}px`);
+			assert.ok(s.para >= s.article - 1, `${width}：段落占满整列 ${s.para} / ${s.article}`);
 			if (s.article > 760) assert.ok(s.code > 760, `${width}：代码块占整栏（${s.code} / ${s.article}）`);
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
