@@ -13778,8 +13778,18 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   width: 13px !important;
   height: 13px !important;
 }
-/* 列表：sb.sb——方块符号、品牌色（深色下是黄色）。站点自己用 li::before 再画一个「•」，以前和方块叠在一起，看着是个糊掉的粗点 */
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) ul > li::before {
+/* 列表：sb.sb——方块符号、品牌色（深色下是黄色）。站点自己用 li::before 再画一个「•」，以前和方块叠在一起，看着是个糊掉的粗点。
+   站点那条写的是 .post-content ul li::before（不止直接子项）：无序列表里套的有序列表，每个数字上也叠着一个「•」（2026-11-23），一起去掉 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) ul li::before {
+  content: none !important;
+  display: none !important;
+}
+/* 帖子正文以外也带站点 .post-content 的地方（个人主页「介绍」、私信内容）：站点 .post-content ul li 去掉列表符号、用「•」代替，
+   特异度又压过它自己的 .post-content ol li，无序列表里套的有序列表 1. 2. 变成了「•」。这一层还给数字、不画「•」 */
+html[data-nsmax-theme] .post-content ul ol > li:is(#nsmax-lv, *) {
+  list-style: decimal !important;
+}
+html[data-nsmax-theme] .post-content ul ol > li:is(#nsmax-lv, *)::before {
   content: none !important;
   display: none !important;
 }
@@ -16124,13 +16134,20 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   font-size: 14px !important;
   line-height: 1.6 !important;
 }
-/* 宽屏：表格按内容宽（width:auto 的表格最宽到正文宽，列多时照旧在格子里折行）；窄屏（≤1000px）沿用第十一批的横向滑动 */
+/* 宽屏：表格按内容宽、最宽到正文宽，列多时在格子里折行；窄屏（≤1000px）沿用第十一批的横向滑动。
+   2026-11-23：正文的 overflow-wrap: anywhere 让表格按「每格最窄一个字」分宽度，有一格长内容（备注、哈希、网址）时别的列被挤成
+   「280Mb / ps」「32m / s」「正 / 常」竖排。每格至少 4.5em（14px 下 63px：「280Mbps」「上海电信」「晚高峰」放得下一行），
+   长内容照旧在自己那格里折行；列太多、加起来比正文宽时整张表在自己里面左右滑动，不再被正文宽裁掉 */
 @media (min-width: 1001px) {
   html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-    display: table !important;
-    width: auto !important;
+    display: block !important;
+    width: max-content !important;
     max-width: 100% !important;
-    overflow: hidden !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+  html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    min-width: 4.5em !important;
   }
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
@@ -18052,4 +18069,15 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
 /* 正文标题的 1.5em 上边距那条规则带着 #nsk-body-left，特异度高一截：这里多垫两层 */
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   margin-top: 0 !important;
+}
+/* ---------- 2026-11-23 电脑端阅读舒适度（用户：「继续 优化我的浏览感受」） ----------
+   正文一行的字数：楼层正文按右栏宽排满，1440px 窗口一行 59 个汉字、1767px（用户笔记本）71 个汉字 / 150 个英文字母，
+   读到行尾再找下一行开头要横着扫一大段。段落、标题、列表、引用、分割线最宽 750px（15px 正文一行 50 个汉字左右；标题字大，按 px 写才和正文同一条右边，
+   和 1280px 窗口时一样宽、和 720px 大图差不多齐）；代码块、表格、图片这些「宽内容」照旧用整栏宽（代码少横向滚动、表格少折行）。
+   只管楼层自己的正文（主帖、回复），楼中楼框里本来就窄，不动 */
+@media (min-width: 801px) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left :is(.nsk-post > .content-item, ul.comments > li.content-item) > article.post-content > :is(p, h1, h2, h3, h4, h5, h6, ul, ol, dl, blockquote, hr, details):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    box-sizing: border-box !important;
+    max-width: 750px !important;
+  }
 }
