@@ -128,7 +128,7 @@ async function launch() {
 // api：按接口路径给出依次返回的响应 [{ status, headers, body }]，用完后回到默认模拟数据；calls 记录每个接口被请求的次数。
 // injectWhenRoot：等 <html> 元素出现后再执行脚本（Tampermonkey 在 Chrome 上的实际注入时机），默认在文档创建时执行。
 // injectAfterPaint：页面画出第一帧之后才执行脚本（油猴默认的「Content Script API」注入得晚时就是这样）。
-async function open(browser, url, { html, seed, fontFiles, manager, colorScheme = "light", viewport = { width: 1280, height: 900 }, device = {}, pages = {}, script = true, css = "", api = {}, init = "", injectWhenRoot = false, injectAfterPaint = false, beforeNavigate, scriptSource = SCRIPT } = {}) {
+async function open(browser, url, { html, seed, fontFiles, manager, colorScheme = "light", viewport = { width: 1280, height: 900 }, device = {}, pages = {}, script = true, css = "", api = {}, external = {}, init = "", injectWhenRoot = false, injectAfterPaint = false, beforeNavigate, scriptSource = SCRIPT } = {}) {
 	const calls = {};
 	const context = await browser.newContext({ colorScheme, viewport, deviceScaleFactor: 1, ...device });
 	const errors = [];
@@ -159,6 +159,11 @@ async function open(browser, url, { html, seed, fontFiles, manager, colorScheme 
 			if (page) return route.fulfill({ status: 200, contentType: typeof page === "object" ? page.contentType : "text/html; charset=utf-8", body: typeof page === "object" ? page.body : page });
 			if (/^\/avatar\//.test(target.pathname)) return route.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' fill='#9aa5b1'/></svg>" });
 			return route.fulfill({ status: 404, body: "not found" });
+		}
+		// external：别的网站的接口（按主机名给出 JSON，或者一个按网址返回 JSON 的函数；返回 undefined 时照旧拒绝），比如抽奖开奖用的 drand
+		if (external[target.hostname]) {
+			const body = typeof external[target.hostname] === "function" ? await external[target.hostname](target) : external[target.hostname];
+			if (body !== undefined) return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 		}
 		if (["example.com", "example.org", "link.zhihu.com", "c.pc.qq.com"].includes(target.hostname)) return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><title>${target.hostname}</title><p>${target.href}</p>` });
 		return route.abort();

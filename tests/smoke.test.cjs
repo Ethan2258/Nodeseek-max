@@ -3246,35 +3246,35 @@ test("抽奖帖（2026-10-17）：开奖链接换成 sb.sb .lottery-widget 抽�
 			states: Array.from(document.querySelectorAll(".nsmax-lottery"), (card) => card.dataset.state),
 			label: Array.from(document.querySelectorAll(".nsmax-lottery-state"), (el) => el.textContent),
 			clock: Array.from(document.querySelectorAll(".nsmax-lottery")[0].querySelectorAll(".nsmax-lottery-seg"), (seg) => seg.textContent),
-			stat: document.querySelector(".nsmax-lottery-stat").textContent,
-			table: Array.from(document.querySelectorAll(".nsmax-lottery")[0].querySelectorAll(".nsmax-lottery-table td"), (td) => td.textContent),
+			rules: document.querySelector(".nsmax-lottery-rules").textContent,
+			facts: Array.from(document.querySelectorAll(".nsmax-lottery")[0].querySelectorAll(".nsmax-lottery-fact:not([hidden]) > dt"), (dt) => dt.textContent),
 			doneLabel: document.querySelectorAll(".nsmax-lottery-label")[3].textContent,
 			doneClock: getComputedStyle(document.querySelectorAll(".nsmax-lottery-clock")[3]).display,
 			sourceHidden: Array.from(document.querySelectorAll("[data-nsmax-lottery-source]"), (el) => getComputedStyle(el).display),
 			view: { href: document.querySelector(".nsmax-lottery-view").getAttribute("href"), target: document.querySelector(".nsmax-lottery-view").target },
-			soonBg: getComputedStyle(document.querySelectorAll(".nsmax-lottery-countdown")[1]).backgroundColor,
-			imminentBg: getComputedStyle(document.querySelectorAll(".nsmax-lottery-countdown")[2]).backgroundColor,
-			primary: Array.from(document.querySelectorAll(".nsmax-lottery"), (card) => getComputedStyle(card.querySelector(".nsmax-lottery-join")).backgroundColor === "rgb(28, 28, 30)" ? "join" : "view"),
-			doneJoin: getComputedStyle(document.querySelectorAll(".nsmax-lottery-join")[3]).display
+			soonBg: getComputedStyle(document.querySelectorAll(".nsmax-lottery-state")[1]).backgroundColor,
+			imminentBg: getComputedStyle(document.querySelectorAll(".nsmax-lottery-state")[2]).backgroundColor,
+			primary: Array.from(document.querySelectorAll(".nsmax-lottery"), (card) => getComputedStyle(card.querySelector(".nsmax-lottery-join")).backgroundColor === "rgb(28, 28, 30)" && card.querySelector(".nsmax-lottery-join").getBoundingClientRect().height ? "join" : getComputedStyle(card.querySelector(".nsmax-lottery-view")).backgroundColor === "rgb(28, 28, 30)" ? "view" : ""),
+			doneActions: getComputedStyle(document.querySelectorAll(".nsmax-lottery-actions")[3]).display
 		}));
 		assert.equal(state.cards, 4, "每个开奖链接一张卡片");
 		assert.equal(state.nested, 0, "卡片里的「查看开奖」不能再生成卡片");
 		assert.deepEqual(state.states, ["open", "soon", "imminent", "done"]);
 		assert.deepEqual(state.label, ["进行中", "即将开奖", "即将开奖", "已开奖"]);
 		assert.deepEqual(state.clock.map((text) => text.replace(/\d+/, "N")), ["N天", "N时", "N分", "N秒"], "单位照 sb.sb 用中文（2026-10-18）");
-		assert.match(state.clock[1], /^02时$/);
-		assert.match(state.stat, /条回复.*从 2 楼起按楼层抽.*每人最多中一次/);
-		assert.doesNotMatch(state.stat, /#2/, "起始楼层不写 #（用户 2026-10-18）");
-		assert.deepEqual(state.table.slice(1), ["3", "待开奖"], "奖品 / 名额 / 中奖者");
-		assert.match(state.doneLabel, /^已于 \d{4}-\d{2}-\d{2} \d{2}:\d{2} 开奖$/);
+		assert.match(state.clock[1], /^2时$/, "不足一天时「时」是第一个显示的数，不补 0（2026-11-23）");
+		assert.match(state.rules, /^3 个.*从第 2 楼起.*每人限中一次$/);
+		assert.doesNotMatch(state.rules, /#2/, "起始楼层不写 #（用户 2026-10-18）");
+		assert.deepEqual(state.facts, ["奖品", "名额"], "奖品 / 名额（这里取不到楼层名单，「参与」一行收起），开奖前没有「中奖」一行，也不再有「待开奖」");
+		assert.match(state.doneLabel, /^已于 (\d{4}-)?\d{2}-\d{2} \d{2}:\d{2} 开奖$/);
 		assert.equal(state.doneClock, "none", "到了开奖时间倒计时条只留一句「已于 … 开奖」");
 		assert.deepEqual(state.sourceHidden, ["none", "none", "none", "none"], "原来只有一个链接的段落收起");
 		assert.match(state.view.href, /^https:\/\/www\.nodeseek\.com\/lucky\?post=1000&time=\d+/);
 		assert.equal(state.view.target, "_blank");
-		assert.equal(state.soonBg, "rgb(255, 244, 196)", "一小时内：品牌浅底");
-		assert.equal(state.imminentBg, "rgb(251, 212, 212)", "五分钟内：红色浅底");
-		assert.deepEqual(state.primary, ["join", "join", "join", "view"], "没开奖时「回复参与」是主按钮，开奖后换成「查看开奖」");
-		assert.equal(state.doneJoin, "none", "开奖以后「回复参与」收起");
+		assert.equal(state.soonBg, "rgb(255, 244, 196)", "一小时内：状态小标品牌浅底");
+		assert.equal(state.imminentBg, "rgb(251, 212, 212)", "五分钟内：状态小标红色浅底");
+		assert.deepEqual(state.primary, ["join", "join", "join", "view"], "没开奖时「回复参与」是主按钮；开奖后结果算不出来（这里没有楼层数据）时「查看开奖」变成主按钮");
+		assert.equal(state.doneActions, "none", "开奖以后「回复参与」收起");
 		// 倒计时每秒走（只改文字，不整块重建）
 		const seconds = () => page.evaluate(() => document.querySelectorAll(".nsmax-lottery")[0].querySelectorAll(".nsmax-lottery-seg b")[3].textContent);
 		const before = await seconds();
@@ -5729,16 +5729,15 @@ test("第十四批（2026-10-19）：帖子回复总数——多页的帖子以�
 	const read = (page) => page.evaluate(() => ({
 		stat: document.querySelector(".nsk-post .nsmax-post-stats .nsmax-post-stat-item:last-child > span")?.textContent.trim(),
 		heading: document.querySelector(".nsmax-reply-title")?.textContent.trim(),
-		lottery: document.querySelector(".nsmax-lottery [data-nsmax-replies]")?.textContent.trim() ?? null,
 		box: document.querySelector('li[id="1"] .nsmax-fb-count')?.textContent.trim() ?? null
 	}));
 	// 1. 记下过（10 分钟内）：直接用，不去开最后一页
 	const requested = [];
 	const cached = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: multi, viewport: { width: 1280, height: 800 }, init: `if (window.top === window) localStorage.setItem("nsmax:reply-counts", JSON.stringify({ "1000": [699, Date.now()] }));`, beforeNavigate: (page) => page.on("request", (request) => requested.push(new URL(request.url()).pathname)) });
 	try {
-		await cached.page.waitForSelector(".nsmax-lottery [data-nsmax-replies]");
+		await cached.page.waitForSelector(".nsmax-lottery");
 		await wait(cached.page, 600);
-		assert.deepEqual(await read(cached.page), { stat: "699", heading: "699 条回复", lottery: "699 条回复", box: "共 1 条回复" });
+		assert.deepEqual(await read(cached.page), { stat: "699", heading: "699 条回复", box: "共 1 条回复" });
 		assert.ok(!requested.includes("/post-1000-70"), "记下过就不再开最后一页");
 		assert.deepEqual(cached.errors, []);
 	} finally { await cached.context.close(); }
@@ -5747,7 +5746,6 @@ test("第十四批（2026-10-19）：帖子回复总数——多页的帖子以�
 	const fresh = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: multi, viewport: { width: 1280, height: 800 }, pages: { "/post-1000-70": last } });
 	try {
 		await fresh.page.waitForFunction(() => document.querySelector(".nsmax-reply-title")?.textContent.trim() === "699 条回复", null, { timeout: 5e3 });
-		await fresh.page.waitForFunction(() => document.querySelector(".nsmax-lottery [data-nsmax-replies]")?.textContent.trim() === "699 条回复", null, { timeout: 5e3 });
 		assert.equal((await read(fresh.page)).stat, "699");
 		// 记下来，下次直接用（合在一起写，晚 0.3 秒）
 		await fresh.page.waitForFunction(() => { try { return JSON.parse(localStorage.getItem("nsmax:reply-counts") || "{}")["1000"]?.[0] === 699; } catch { return false; } }, null, { timeout: 3e3 });
@@ -5763,7 +5761,6 @@ test("第十四批（2026-10-19）：帖子回复总数——多页的帖子以�
 		const state = await read(blocked.page);
 		assert.equal(state.stat, "691+");
 		assert.ok(!/691/.test(state.heading || ""), `评论区标题不写下限：${state.heading}`);
-		assert.ok(!/691/.test(state.lottery || ""), `抽奖卡片不写下限：${state.lottery}`);
 		assert.equal(failed.length, 1, "失败后不连着重发");
 		assert.deepEqual(blocked.errors, []);
 	} finally { await blocked.context.close(); }
