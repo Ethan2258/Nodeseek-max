@@ -24,7 +24,7 @@ test("纯文字网址、不带 www 的开奖链接也算抽奖帖，主帖里照
 		assert.equal(state.kinds, "lottery");
 		assert.equal(state.cards, 1);
 		assert.match(state.view, /^https:\/\/www\.nodeseek\.com\/lucky\?post=1000&time=\d+&count=2/, "换成当前域名");
-		assert.equal(state.count, "2");
+		assert.equal(state.count, "2 个");
 		assert.equal(state.badge, true);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
@@ -43,33 +43,32 @@ test("评论里没写 post 参数的开奖链接也算；别的帖子的开奖�
 	}
 });
 
-test("已开奖的卡片：中奖者一格是一行「查看名单」，奖品去掉标题里的「抽奖已结束」，「回复参与」收起", async () => {
+test("已开奖的卡片：算不出结果时「中奖」一行指去开奖页，奖品去掉标题里的「抽奖已结束」，「回复参与」收起", async () => {
 	for (const width of [1440, 820]) {
 		const html = P.postPage().replace("出一台香港 CN2 GIA 小鸡，年付 99</a></h1>", "抽奖已结束【出鸡】溢价2000出Isvoro JP BGP1 39.9/月 特价款</a></h1>")
 			.replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=${Date.now() - 864e5}&amp;count=1">开奖</a></p></article>`);
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width, height: 900 } });
 		try {
-			await page.waitForSelector(".nsmax-lottery[data-state=done] a.nsmax-lottery-result");
+			await page.waitForSelector(".nsmax-lottery[data-state=done][data-nsmax-result=failed]");
 			const state = await page.evaluate(() => {
 				const cell = document.querySelector(".nsmax-lottery-winners");
-				const link = cell.querySelector("a");
 				return {
 					prize: document.querySelector(".nsmax-lottery-prize").textContent,
 					winners: cell.textContent,
-					href: cell.querySelector("a").getAttribute("href"),
-					lines: new Set(Array.from(link.getClientRects(), (r) => Math.round(r.top))).size,
-					fits: link.getBoundingClientRect().right <= cell.getBoundingClientRect().right + 0.5,
+					href: document.querySelector(".nsmax-lottery-view").getAttribute("href"),
+					lines: Math.round(cell.getBoundingClientRect().height / parseFloat(getComputedStyle(cell).lineHeight)),
+					fits: cell.scrollWidth <= cell.clientWidth + 1,
 					state: document.querySelector(".nsmax-lottery-state").textContent,
-					join: getComputedStyle(document.querySelector(".nsmax-lottery-join")).display,
+					join: getComputedStyle(document.querySelector(".nsmax-lottery-actions")).display,
 					when: getComputedStyle(document.querySelector(".nsmax-lottery-when")).display,
 					overflow: document.querySelector(".nsmax-lottery").scrollWidth > document.querySelector(".nsmax-lottery").clientWidth + 1
 				};
 			});
 			assert.equal(state.prize, "【出鸡】溢价2000出Isvoro JP BGP1 39.9/月 特价款");
-			assert.equal(state.winners, "查看名单");
+			assert.equal(state.winners, "没能算出来，去开奖页看");
 			assert.match(state.href, /mode=view$/);
 			assert.equal(state.lines, 1, "中奖者一格只占一行：" + JSON.stringify(state));
-			assert.equal(state.fits, true, "「查看名单」不出格：" + JSON.stringify(state));
+			assert.equal(state.fits, true, "不出格：" + JSON.stringify(state));
 			assert.equal(state.state, "已开奖");
 			assert.equal(state.join, "none");
 			assert.equal(state.when, "none", "开奖后右边不再重复写开奖时间");

@@ -1772,7 +1772,10 @@
 		const { stats, result } = viewer;
 		// 参与：开奖前后都是站点名单里起始楼层以后的人数（不去重时多写一句一共几楼）
 		const people = card.querySelector(".nsmax-lottery-people");
-		nsmaxSetText(people, stats ? (stats.people ? `${stats.people} 人` + (rule.duplicate && stats.floors > stats.people ? ` · ${stats.floors} 楼` : "") : "还没有人参与") : card._nsmaxLoaded ? "—" : "统计中…");
+		nsmaxSetText(people, stats ? (stats.people ? `${stats.people} 人` + (rule.duplicate && stats.floors > stats.people ? ` · ${stats.floors} 楼` : "") : "还没有人参与") : "统计中…");
+		// 名单取不到（被限流、站点改版）：这一行收起，不写一个看不懂的「—」
+		const peopleRow = people?.parentElement;
+		if (peopleRow && peopleRow.hidden !== (!stats && !!card._nsmaxLoaded)) peopleRow.hidden = !stats && !!card._nsmaxLoaded;
 		// 中奖：开奖以后才有这一行
 		const winRow = card.querySelector(".nsmax-lottery-fact[data-nsmax-fact='winners']");
 		if (winRow && winRow.hidden !== !done) winRow.hidden = !done;

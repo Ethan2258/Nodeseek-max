@@ -3262,10 +3262,10 @@ test("抽奖帖（2026-10-17）：开奖链接换成 sb.sb .lottery-widget 抽�
 		assert.deepEqual(state.states, ["open", "soon", "imminent", "done"]);
 		assert.deepEqual(state.label, ["进行中", "即将开奖", "即将开奖", "已开奖"]);
 		assert.deepEqual(state.clock.map((text) => text.replace(/\d+/, "N")), ["N天", "N时", "N分", "N秒"], "单位照 sb.sb 用中文（2026-10-18）");
-		assert.match(state.clock[1], /^02时$/);
+		assert.match(state.clock[1], /^2时$/, "不足一天时「时」是第一个显示的数，不补 0（2026-11-23）");
 		assert.match(state.rules, /^3 个.*从第 2 楼起.*每人限中一次$/);
 		assert.doesNotMatch(state.rules, /#2/, "起始楼层不写 #（用户 2026-10-18）");
-		assert.deepEqual(state.facts, ["奖品", "名额", "参与"], "奖品 / 名额 / 参与，开奖前没有「中奖」一行，也不再有「待开奖」");
+		assert.deepEqual(state.facts, ["奖品", "名额"], "奖品 / 名额（这里取不到楼层名单，「参与」一行收起），开奖前没有「中奖」一行，也不再有「待开奖」");
 		assert.match(state.doneLabel, /^已于 (\d{4}-)?\d{2}-\d{2} \d{2}:\d{2} 开奖$/);
 		assert.equal(state.doneClock, "none", "到了开奖时间倒计时条只留一句「已于 … 开奖」");
 		assert.deepEqual(state.sourceHidden, ["none", "none", "none", "none"], "原来只有一个链接的段落收起");
