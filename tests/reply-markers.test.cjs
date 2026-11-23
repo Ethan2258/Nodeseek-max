@@ -89,8 +89,9 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
         row.querySelector("time").dateTime=new Date().toISOString();
         document.querySelector("ul.comments").append(row);
       });
-      await page.waitForSelector(".nsmax-lottery-head .nsmax-joined-badge");
-      await page.locator(".nsmax-lottery-people").getByText("#9 tester", { exact: true }).waitFor();
+      await page.waitForSelector('.nsmax-lottery-me[data-tone="joined"]');
+      assert.match(await page.locator(".nsmax-lottery-me").textContent(), /你已参与 · 第 9 楼/);
+      assert.equal(await page.locator(".nsmax-lottery-actions").evaluate(e => getComputedStyle(e).display), "none", "参与以后不再显示「回复参与」");
       assert.equal(await page.locator(".nsk-post .nsmax-replied-badge").count(), 1);
       assert.equal(await page.locator(".nsk-post .post-title .nsmax-joined-badge").count(), 1);
       const second = await context.newPage();
@@ -126,31 +127,9 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
       const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, seed: seed(state({})) });
       try {
         await ready(page);assert.equal(await page.locator(".nsmax-replied-badge").count(),1);
-        assert.equal(await page.locator(".nsmax-lottery-head .nsmax-joined-badge").count(),before?1:0);
+        assert.equal(await page.locator('.nsmax-lottery-me[data-tone="joined"]').count(),before?1:0);
         assert.deepEqual(errors,[]);
       } finally { await context.close(); }
-    }
-  });
-
-  test(`${engine} 抽奖名单按 UID 去重，保留最早楼层并排除截止后的回复`, async () => {
-    for (const ended of [false,true]) {
-      const time=Date.now()+(ended?-864e5:864e5);
-      const html=P.postPage().replace("<h2>配置说明</h2>",ruleLink(1000,time)+"<h2>配置说明</h2>");
-      const init=`document.addEventListener("DOMContentLoaded",()=>{
-        const rows=[...document.querySelectorAll("ul.comments>li.content-item")];
-        for(let i=0;i<3;i++){const a=rows[i].querySelector(".author-info .author-name");a.href="/space/"+(i===2?12:11);a.textContent=i===1?"renamed":"same";rows[i].querySelector("time").dateTime=new Date(${time}-36e5).toISOString();}
-        const late=rows[2].cloneNode(true);late.id="4";late.querySelector(".author-name").href="/space/13";late.querySelector("time").dateTime=new Date(${time}+36e5).toISOString();document.querySelector("ul.comments").append(late);
-        rows[0].before(rows[1]);
-      });`;
-      const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html,init,seed:seed(state({}))});
-      try{
-        await ready(page);
-        assert.deepEqual(await page.locator(".nsmax-lottery-person").allTextContents(),["#1 same","#3 same"]);
-        const person=page.locator(".nsmax-lottery-person").first();
-        await person.focus();await page.waitForTimeout(650);
-        assert.equal(await person.evaluate(e=>e===document.activeElement),true,"名单没变时不重建或丢失键盘焦点");
-        assert.deepEqual(errors,[]);
-      }finally{await context.close();}
     }
   });
 
@@ -160,8 +139,10 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
     try{
       await ready(page);assert.equal(await page.locator(".comment-container .nsmax-my-replies a").getAttribute("href"),"/post-1000-4#15");
       const card=page.locator(".nsmax-lottery");
-      assert.equal(await card.locator(".nsmax-lottery-person,[data-nsmax-replies],.nsmax-joined-badge").count(),0);
-      await Promise.all([page.waitForURL("**/post-9999-1"),card.getByRole("button",{name:"前往原帖参与",exact:true}).click()]);
+      assert.equal(await card.locator(".nsmax-lottery-me[data-tone]").count(),0);
+      assert.equal(await card.locator(".nsmax-lottery-prize").textContent(),"见原帖","别的帖子的抽奖不拿本帖标题当奖品");
+      assert.equal(await card.getByRole("link",{name:"前往原帖参与",exact:true}).getAttribute("href"),"/post-9999-1","前往原帖是链接，能新标签页打开");
+      await Promise.all([page.waitForURL("**/post-9999-1"),card.getByRole("link",{name:"前往原帖参与",exact:true}).click()]);
       assert.deepEqual(errors,[]);
     }finally{await context.close();}
   });
@@ -174,11 +155,10 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
       await ready(page);
       const card=page.locator(".nsmax-lottery");
       assert.equal(await card.getAttribute("data-nsmax-post"),"1000");
-      assert.equal(await card.locator(".nsmax-joined-badge").count(),1);
+      assert.equal(await card.locator('.nsmax-lottery-me[data-tone="joined"]').count(),1);
+      assert.equal(await card.getByRole("button",{name:"回复参与",exact:true}).count(),0,"已参与时没有「回复参与」");
       const href=new URL(await card.locator(".nsmax-lottery-view").getAttribute("href"));
       assert.equal(href.searchParams.get("post"),"1000");assert.deepEqual(href.searchParams.getAll("mode"),["view"]);
-      await card.getByRole("button",{name:"回复参与",exact:true}).click();
-      await page.waitForFunction(()=>!!document.activeElement.closest(".md-editor"));
       assert.equal(page.url(),"https://www.nodeseek.com/post-1000-1");assert.deepEqual(errors,[]);
     }finally{await context.close();}
   });

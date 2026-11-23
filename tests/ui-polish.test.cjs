@@ -971,7 +971,7 @@ html[data-nsmax-theme]:is(#x,#y,#z,*):is(#x,#y,#z,*):is(#x,#y,#z,*), html[data-n
    ["/friends",P.friendsPage(),[".nsk-friends .friends-container > div > a > p"]],
    ["/space/10#/comments",P.spaceCommentsPage(),[".discussion-wrapper > a:not(.discussion-item) > p"]],
    ["/board",P.boardPage(),[".nsmax-board-banner-actions > .nsmax-board-btn"]],
-   ["/post-1000-1",P.specialPostPage(),[".nsmax-lottery td",".nsmax-lottery-unit",".nsmax-lottery-join",".nsmax-lottery-view",".vote-panel .pure-button",".nsmax-poll-voters-toggle"]],
+   ["/post-1000-1",P.specialPostPage(),[".nsmax-lottery dd",".nsmax-lottery-unit",".nsmax-lottery-join",".vote-panel .pure-button",".nsmax-poll-voters-toggle"]],
   ];
   for(const [url,html,selectors] of pages){
    const {context,page,errors}=await open(browser,"https://www.nodeseek.com"+url,{...desk,html});
