@@ -908,11 +908,13 @@
 	}
 	// 页面在滚动（最近 1.5 秒内滚过）时先不发后台请求：滚动时新露出来的头像、图片正在下，等停下来再说
 	var nsmaxLastScrollAt = 0;
+	function nsmaxTrackScrollTime() {
+		if (nsmaxTrackScrollTime.bound) return;
+		nsmaxTrackScrollTime.bound = true;
+		addEventListener("scroll", () => { nsmaxLastScrollAt = performance.now(); }, { passive: true, capture: true });
+	}
 	function nsmaxScrollQuiet(ms = 1500) {
-		if (!nsmaxScrollQuiet.bound) {
-			nsmaxScrollQuiet.bound = true;
-			addEventListener("scroll", () => { nsmaxLastScrollAt = performance.now(); }, { passive: true, capture: true });
-		}
+		nsmaxTrackScrollTime();
 		return new Promise((resolve) => {
 			const check = () => {
 				const wait = nsmaxLastScrollAt + ms - performance.now();
@@ -3966,8 +3968,11 @@ function nsmaxTagStructure() {
 	// 手机（触屏布局）不变。楼层比列表行重、排出来的高度和预留的 240px 不一样，每排一批后面整页都要挪一次（预绘制、分层按整页算），
 	// 一批至少 4 层：一层一批时 80 层空闲时合计 3.2 秒（4 倍降速），4 层一批 1.3 秒，最长一次 89ms
 	var NSMAX_PRERENDER_FLOORS = "#nsk-body-left ul.comments > li.content-item:not([data-nsmax-cv-done])";
+	// 页脚（第 72 节以后那条 content-visibility:auto）在电脑上也排在最后一批里（2026-11-23）：以前滚到页底附近才现排，
+	// 4 倍降速下列表页滚到底那一帧排版 40–50ms（页脚约 90 个元素，第一次排字）。文档顺序里它在所有行、楼层后面，最后才轮到
+	var NSMAX_PRERENDER_FOOTER = "body > footer:not([data-nsmax-cv-done])";
 	function nsmaxPrerenderTargets() {
-		return document.documentElement.hasAttribute("data-nsmax-touch") ? NSMAX_PRERENDER_ROWS : NSMAX_PRERENDER_ROWS + ", " + NSMAX_PRERENDER_FLOORS;
+		return document.documentElement.hasAttribute("data-nsmax-touch") ? NSMAX_PRERENDER_ROWS : NSMAX_PRERENDER_ROWS + ", " + NSMAX_PRERENDER_FLOORS + ", " + NSMAX_PRERENDER_FOOTER;
 	}
 	function nsmaxPrerenderRows(ctx) {
 		const root = document.documentElement;
@@ -3979,10 +3984,21 @@ function nsmaxTagStructure() {
 		// 现在从 4 行起，上一批那一帧主线程花了 10ms 以上就减半（最少 1 行），不到 4ms 就加倍（最多 16 行）
 		let batch = 4;
 		const least = /^\/post-\d+/.test(location.pathname) ? 4 : 1;
+		nsmaxTrackScrollTime();
 		const step = (deadline) => {
 			if (ctx.signal.aborted || !root.hasAttribute("data-nsmax-cv")) {
 				running = false;
 				return;
+			}
+			// 电脑上正在滚动时先不排（2026-11-23 真站：帖子页往下滚、自动接上下一页的十层时，空闲回调一下给 4–16 层打上标记，
+			// 下一帧当场算样式、排版这么多层，165Hz 下一帧 55–70ms，正好卡在滚动中间）。滚动停下 0.25 秒再接着排；
+			// 滚动中真要露出来的那一两层由 content-visibility:auto 自己按需画，一帧只多一层。手机不变
+			if (!root.hasAttribute("data-nsmax-touch")) {
+				const wait = nsmaxLastScrollAt + 250 - performance.now();
+				if (wait > 0) {
+					setTimeout(() => idle(step), wait);
+					return;
+				}
 			}
 			let done = 0;
 			for (const row of document.querySelectorAll(nsmaxPrerenderTargets())) {
@@ -4095,12 +4111,17 @@ function nsmaxTagStructure() {
 			show(hit.a, data || { no: hit.no, author: "", text: "这一层不存在或已被删除" });
 		};
 		const options = { signal: ctx.signal };
+		// 每次划过都要判断，媒体查询只建一次（以前每个 mouseover 都新建一个）
+		const fine = matchMedia("(hover: hover) and (pointer: fine)");
 		document.addEventListener("mouseover", (event) => {
-			if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+			if (!fine.matches) return;
 			const hit = target(event.target);
 			if (!hit || hit.a === current) return;
 			clearTimeout(timer);
-			timer = setTimeout(() => open(hit), 140);
+			// 鼠标停稳 0.14 秒才弹（一路划过正文里的楼号链接不弹，见 nsmaxPointerRestWait）
+			nsmaxPointerRestWait(0);
+			const rest = () => { const wait = nsmaxPointerRestWait(140); if (wait > 1) timer = setTimeout(rest, wait); else open(hit); };
+			timer = setTimeout(rest, 140);
 		}, options);
 		document.addEventListener("mouseout", (event) => {
 			if (!target(event.target)) return;
@@ -4108,7 +4129,7 @@ function nsmaxTagStructure() {
 			timer = setTimeout(hide, 180);
 		}, options);
 		document.addEventListener("focusin", (event) => {
-			if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+			if (!fine.matches) return;
 			const hit = target(event.target);
 			if (hit) open(hit);
 		}, options);
@@ -7521,6 +7542,24 @@ function nsmaxTagStructure() {
 	// 鼠标上一次真的移动以来页面滚过，就是滚动带过来的。比的是滚动位置，不看事件先后（补发的悬停可能比 scroll 事件还早到）。
 	// 以前一边滚一边弹预览卡、资料卡，还预取滑过的每个链接，滚动时一下一下地卡。鼠标真的动了再算。
 	// 各个悬停功能挂载时先调一次，记下那时的位置（打开页面后鼠标一直没动、只滚了滚轮的也算滚动带过来的）
+	// 鼠标停稳了再算悬停（2026-11-23）：资料卡、悬停预取、楼号预览以前从鼠标划进链接起计时（60–140ms），鼠标一路划过列表，
+	// 每经过一个名字、头像、时间链接都要弹一次卡片（建卡片、整页排版、分层，CPU 4 倍降速下一张 20–40ms）、发一次请求，划过去就收。
+	// 现在计时从鼠标最后一次挪动超过 4px 算起：停在上面照样 60ms 就弹，一路划过去的不弹、不取。只记位置，不读页面
+	var nsmaxPointerMovedAt = -1e9, nsmaxPointerX = -1e4, nsmaxPointerY = -1e4, nsmaxPointerTracked = false;
+	function nsmaxPointerRestWait(ms) {
+		if (!nsmaxPointerTracked) {
+			nsmaxPointerTracked = true;
+			document.addEventListener("pointermove", (e) => {
+				if (e.pointerType === "touch") return;
+				const dx = e.clientX - nsmaxPointerX, dy = e.clientY - nsmaxPointerY;
+				if (dx * dx + dy * dy <= 16) return;
+				nsmaxPointerX = e.clientX;
+				nsmaxPointerY = e.clientY;
+				nsmaxPointerMovedAt = performance.now();
+			}, { capture: true, passive: true });
+		}
+		return nsmaxPointerMovedAt + ms - performance.now();
+	}
 	var nsmaxHoverState = null;
 	// 滚动位置从鼠标事件本身算（pageY − clientY，事件发出时就定了）：以前在每次鼠标移动、划过时读 scrollX / scrollY，
 	// 页面刚改过的话浏览器得当场排一遍版（2026-10-24 量到：切换编辑器后鼠标一动，划过处理里强制排版 440ms，CPU 4 倍降速），
@@ -7855,10 +7894,10 @@ function nsmaxTagStructure() {
 			if (!link || pop?.contains(link) || link.contains(event.relatedTarget)) return;
 			clearTimeout(opening);
 			clearTimeout(closing);
-			// 鼠标一停上去就开始读资料，60ms 后弹卡片（划过去的不弹）
-			const match = link.href.match(/\/space\/(\d+)/);
-			if (match) personInfo(match[1]).catch(() => {});
-			opening=setTimeout(()=>show(link),60);
+			// 鼠标在上面停稳 60ms 弹卡片、读资料（一路划过去的不弹也不读，见 nsmaxPointerRestWait）
+			nsmaxPointerRestWait(0);
+			const rest = () => { const wait = nsmaxPointerRestWait(60); if (wait > 1) opening = setTimeout(rest, wait); else show(link); };
+			opening=setTimeout(rest,60);
 		};
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
