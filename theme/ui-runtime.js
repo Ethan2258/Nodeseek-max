@@ -1241,7 +1241,8 @@
 		}
 		if (anchor && top !== undefined && scrollY > 0) {
 			const moved = anchor.getBoundingClientRect().top - top;
-			if (moved) window.scrollBy(0, moved);
+			// 一步到位（html 上有 scroll-behavior: smooth，不写 behavior 就成了慢慢滑回去，插进来的行先把内容顶下去一截才回来）
+			if (moved) window.scrollBy({ top: moved, behavior: "instant" });
 		}
 		return adding.length;
 	}
@@ -2309,6 +2310,34 @@
 	// 图片先按站点自带的「上下 1rem、左右缩进 2.5%」放着，下好后突然往左上跳一截。表情、和文字在同一行的图片不动；
 	// 下载完发现其实很小（宽高都不超过 96px，多半是小图标）再退回行内。页面解析阶段就会跑一遍（nsmaxEarlyVisuals）
 	var nsmaxClassifiedImages = new WeakSet();
+	// 正文配图的尺寸记在本机（2026-11-23）：图片没下好之前浏览器不知道多高，先按 0 排，下好后整段正文往下一推（测试页一张 1200×800
+	// 的首图推下去 480px，进帖子后第 0.7 秒整屏一跳）。下好过一次就记下宽高（图片地址 → 宽×高，最多 500 张），再看到同一张图
+	// （回到这一帖、翻回这一页、列表悬停预览预热过的首图）时，没下完也先按记下的尺寸占好位置（design.css 末尾「进页面不跳」，data-nsmax-sized）。
+	// 只占正文里单独成块的配图；尺寸和下好后的实际尺寸对不上（图床换了图）就撤掉占位、改记新的
+	var NSMAX_IMAGE_SIZES_KEY = "nsmax:image-sizes";
+	var nsmaxImageSizeStore;
+	var nsmaxImageSizeSaving = 0;
+	function nsmaxImageSizes() {
+		if (nsmaxImageSizeStore) return nsmaxImageSizeStore;
+		nsmaxImageSizeStore = new Map();
+		try {
+			for (const [src, size] of Object.entries(JSON.parse(localStorage.getItem(NSMAX_IMAGE_SIZES_KEY) || "{}"))) if (typeof size === "string" && /^\d+x\d+$/.test(size)) nsmaxImageSizeStore.set(src, size);
+		} catch {}
+		return nsmaxImageSizeStore;
+	}
+	function nsmaxRememberImageSize(src, width, height) {
+		if (!src || !/^https?:/.test(src) || src.length > 400 || !(width > 0) || !(height > 0)) return;
+		const map = nsmaxImageSizes(), size = `${width}x${height}`;
+		if (map.get(src) === size) return;
+		map.delete(src);
+		map.set(src, size);
+		while (map.size > 500) map.delete(map.keys().next().value);
+		if (nsmaxImageSizeSaving) return;
+		nsmaxImageSizeSaving = setTimeout(() => {
+			nsmaxImageSizeSaving = 0;
+			try { localStorage.setItem(NSMAX_IMAGE_SIZES_KEY, JSON.stringify(Object.fromEntries(nsmaxImageSizes()))); } catch {}
+		}, 1500);
+	}
 	function nsmaxClassifyPostImages(parsed) {
 		for (const image of document.querySelectorAll(".nsk-post article.post-content img, ul.comments article.post-content img")) {
 			if (nsmaxClassifiedImages.has(image) || parsed && !parsed(image)) continue;
@@ -2330,8 +2359,25 @@
 				paragraph?.classList.toggle("nsmax-image-paragraph", on);
 			};
 			mark(true);
+			const src = image.src;
+			if (!image.complete && !image.hasAttribute("width") && !image.hasAttribute("height")) {
+				const size = nsmaxImageSizes().get(src)?.split("x");
+				if (size) {
+					image.style.setProperty("--nsmax-img-w", size[0] + "px");
+					image.style.setProperty("--nsmax-img-ar", size[0] + " / " + size[1]);
+					image.setAttribute("data-nsmax-sized", "");
+				}
+			}
 			const check = () => {
-				if (image.naturalWidth && image.naturalWidth <= 96 && image.naturalHeight <= 96) mark(false);
+				const width = image.naturalWidth, height = image.naturalHeight;
+				if (width && width <= 96 && height <= 96) mark(false);
+				if (!width || !height) return;
+				if (image.hasAttribute("data-nsmax-sized") && image.style.getPropertyValue("--nsmax-img-ar") !== width + " / " + height) {
+					image.removeAttribute("data-nsmax-sized");
+					image.style.removeProperty("--nsmax-img-w");
+					image.style.removeProperty("--nsmax-img-ar");
+				}
+				if (image.src === src) nsmaxRememberImageSize(src, width, height);
 			};
 			if (image.complete) check();
 			else image.addEventListener("load", check, { once: true });
@@ -2463,6 +2509,8 @@
 		const image = new Image();
 		image.decoding = "async";
 		image.fetchPriority = priority;
+		// 预热下好的图记下尺寸：点进帖子时还没从缓存里解出来，也先按这个占好位置（见 nsmaxImageSizes）
+		image.addEventListener("load", () => nsmaxRememberImageSize(url.href, image.naturalWidth, image.naturalHeight), { once: true });
 		image.src = url.href;
 		nsmaxWarmImages.push(image);
 		if (nsmaxWarmImages.length > 40) nsmaxWarmImages.shift();
@@ -2685,7 +2733,7 @@
 			nsmaxFoldFloorBox(box);
 			// 收起时框底留在鼠标下面（框上面的几条收掉了，页面跟着往回滚同样的距离），不会一下跳到别的楼层
 			const shift = foot.getBoundingClientRect().top - before;
-			if (!open && shift) window.scrollBy(0, shift);
+			if (!open && shift) window.scrollBy({ top: shift, behavior: "instant" });
 		});
 		foot.append(count, more, say);
 		box.append(replies, foot);
@@ -2711,7 +2759,7 @@
 				if (!owner) return;
 				const folded = row.hasAttribute("data-nsmax-fb-fold");
 				nsmaxFoldFloorBox(owner);
-				if (folded) row.scrollIntoView({ block: "start" });
+				if (folded) row.scrollIntoView({ block: "start", behavior: "instant" });
 			});
 		}
 		const rows = [];
@@ -3159,10 +3207,11 @@
 	function nsmaxFocusReplyBox(smooth = true) {
 		const md = document.querySelector("#nsk-body-left .md-editor");
 		if (!md) {
-			window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+			window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth ? "smooth" : "instant" });
 			return;
 		}
-		md.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
+		// 不要动画时写 instant：auto 是「照 CSS」，主题给 html 设了 smooth，结果还是慢慢滑
+		md.scrollIntoView({ behavior: smooth ? "smooth" : "instant", block: "center" });
 		const cm = md.querySelector(".CodeMirror")?.CodeMirror;
 		const input = md.querySelector("textarea:not(.CodeMirror textarea)");
 		setTimeout(() => {
@@ -7564,31 +7613,32 @@ function nsmaxTagStructure() {
 	// 滚动位置从鼠标事件本身算（pageY − clientY，事件发出时就定了）：以前在每次鼠标移动、划过时读 scrollX / scrollY，
 	// 页面刚改过的话浏览器得当场排一遍版（2026-10-24 量到：切换编辑器后鼠标一动，划过处理里强制排版 440ms，CPU 4 倍降速），
 	// 页面加载、整理期间鼠标一动就一帧排好几次版。只在第一次调用（模块启动）时读一次
-	// 模块启动时（没有事件）不当场读 scrollX / scrollY：那时页面刚被各模块改过，读一下就要先把整页样式算一遍（手机首帧后约 5ms，4 倍降速）。
-	// 等下一帧画完再读，那时样式和排版都是现成的；这之前就来了悬停事件的话再当场读
+	// 模块启动时（没有事件）不读 scrollX / scrollY：读它要先把整页样式和排版算完，那时后面的模块还在一个个挂上来、页面一直在变，
+	// 以前等「下一帧画完」再读，等到时又已经改过了，帖子页（30 层）4 倍降速下这一读强制排版 40ms 多（2026-11-23 量的，进页面后头
+	// 3 秒里最长的一块）。现在根本不读：鼠标真的动之前，只记「从那时起页面滚过没有」（scroll 事件），滚过就是滚动带过来的
 	function nsmaxHoverFromScroll(event) {
-		const offset = (e) => e ? [e.pageX - e.clientX, e.pageY - e.clientY] : [scrollX, scrollY];
+		const offset = (e) => [e.pageX - e.clientX, e.pageY - e.clientY];
 		if (!nsmaxHoverState) {
-			const state = nsmaxHoverState = { x: 0, y: 0, pending: !event };
+			const state = nsmaxHoverState = { x: 0, y: 0, known: !!event, scrolled: false };
 			if (event) [state.x, state.y] = offset(event);
-			else requestAnimationFrame(() => setTimeout(() => {
-				if (!state.pending) return;
-				state.pending = false;
-				[state.x, state.y] = offset();
-			}, 0));
+			else window.addEventListener("scroll", () => { if (!state.known) state.scrolled = true; }, { passive: true });
 			document.addEventListener("pointermove", (e) => {
 				if (!e.movementX && !e.movementY) return;
-				state.pending = false;
+				state.known = true;
 				[state.x, state.y] = offset(e);
 			}, { capture: true, passive: true });
 		}
 		if (!event) return false;
-		if (nsmaxHoverState.pending) {
-			nsmaxHoverState.pending = false;
-			[nsmaxHoverState.x, nsmaxHoverState.y] = offset();
+		const state = nsmaxHoverState;
+		if (!state.known) {
+			// 鼠标还没真动过：这次悬停在页面滚过之后来的，就是滚动带过来的；以后按这次的位置比
+			const scrolled = state.scrolled;
+			state.known = true;
+			[state.x, state.y] = offset(event);
+			return scrolled;
 		}
 		const [x, y] = offset(event);
-		return Math.abs(y - nsmaxHoverState.y) > 1 || Math.abs(x - nsmaxHoverState.x) > 1;
+		return Math.abs(y - state.y) > 1 || Math.abs(x - state.x) > 1;
 	}
 	var personHoverFeature = { id: "sb-person-hover", defaults: { enabled: true }, mount(ctx) {
 		const cache = new Map(); let pop, anchor, opening, closing, serial = 0;
