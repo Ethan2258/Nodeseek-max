@@ -13778,8 +13778,18 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   width: 13px !important;
   height: 13px !important;
 }
-/* 列表：sb.sb——方块符号、品牌色（深色下是黄色）。站点自己用 li::before 再画一个「•」，以前和方块叠在一起，看着是个糊掉的粗点 */
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) ul > li::before {
+/* 列表：sb.sb——方块符号、品牌色（深色下是黄色）。站点自己用 li::before 再画一个「•」，以前和方块叠在一起，看着是个糊掉的粗点。
+   站点那条写的是 .post-content ul li::before（不止直接子项）：无序列表里套的有序列表，每个数字上也叠着一个「•」（2026-11-23），一起去掉 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) ul li::before {
+  content: none !important;
+  display: none !important;
+}
+/* 帖子正文以外也带站点 .post-content 的地方（个人主页「介绍」、私信内容）：站点 .post-content ul li 去掉列表符号、用「•」代替，
+   特异度又压过它自己的 .post-content ol li，无序列表里套的有序列表 1. 2. 变成了「•」。这一层还给数字、不画「•」 */
+html[data-nsmax-theme] .post-content ul ol > li:is(#nsmax-lv, *) {
+  list-style: decimal !important;
+}
+html[data-nsmax-theme] .post-content ul ol > li:is(#nsmax-lv, *)::before {
   content: none !important;
   display: none !important;
 }
@@ -16124,13 +16134,20 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   font-size: 14px !important;
   line-height: 1.6 !important;
 }
-/* 宽屏：表格按内容宽（width:auto 的表格最宽到正文宽，列多时照旧在格子里折行）；窄屏（≤1000px）沿用第十一批的横向滑动 */
+/* 宽屏：表格按内容宽、最宽到正文宽，列多时在格子里折行；窄屏（≤1000px）沿用第十一批的横向滑动。
+   2026-11-23：正文的 overflow-wrap: anywhere 让表格按「每格最窄一个字」分宽度，有一格长内容（备注、哈希、网址）时别的列被挤成
+   「280Mb / ps」「32m / s」「正 / 常」竖排。每格至少 4.5em（14px 下 63px：「280Mbps」「上海电信」「晚高峰」放得下一行），
+   长内容照旧在自己那格里折行；列太多、加起来比正文宽时整张表在自己里面左右滑动，不再被正文宽裁掉 */
 @media (min-width: 1001px) {
   html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-    display: table !important;
-    width: auto !important;
+    display: block !important;
+    width: max-content !important;
     max-width: 100% !important;
-    overflow: hidden !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+  html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    min-width: 4.5em !important;
   }
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) table:not(.nsmax-lottery-table) :is(th, td):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
