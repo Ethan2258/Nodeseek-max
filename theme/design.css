@@ -18053,3 +18053,33 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-content article > :first-child:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   margin-top: 0 !important;
 }
+/* 2026-11-23 Yiheng：「精华帖子左上角这个三角形太突兀」。站点给推荐阅读（/award）的帖子在 .nsk-post-wrapper 前面放一个 45px 黄色渐变三角
+   （.award-corner > .corner-triangle，绝对定位到外层容器，套了主题以后还歪到卡片外面）。三角不要了，改成标题前一枚 18px 的「精华」小标：
+   和标题后面的已回复 / 抽奖同一套尺寸，用柔和的黄（--mark-soft），和顶栏「精华」入口一个颜色系 */
+html[data-nsmax-theme] .nsk-post-wrapper > .award-corner:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > .award-corner ~ .nsk-post > .post-title h1:is(#nsmax-lv, *)::before {
+  content: "精华" !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+  height: 18px !important;
+  margin: 0 6px 0 0 !important;
+  padding: 0 7px !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--mark-soft) !important;
+  color: var(--mark-soft-text) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 16px !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+@media (min-width: 801px) {
+  /* 和帖子页标题后面的小标一样：顶对齐再推到 21px × 1.45 行框的正中（见「帖子页大标题后面的抽奖 / 投票……」） */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsk-post-wrapper > .award-corner ~ .nsk-post > .post-title h1:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+    margin-top: calc((21px * 1.45 - 18px) / 2) !important;
+    vertical-align: top !important;
+  }
+}
