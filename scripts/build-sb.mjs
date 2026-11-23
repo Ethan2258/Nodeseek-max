@@ -381,6 +381,14 @@ ast.walkRules(rule => {
   if (rule.selector.includes(":has(")) leftoverHas.push(...rule.selectors.filter(selector => selector.includes(":has(")));
 });
 if (leftoverHas.length) throw new Error("主题里不能再有 :has()（会让 NodeSeek 的终端渲染卡死整页），请在 nsmaxTagStructure() 里打属性，或加进 hasRewrites：\n" + leftoverHas.join("\n"));
+// 2026-11-22：[class*=…] 后面再接组合符（[class*=nspp-] *、[class^=x] > y……）时，页面上任何元素的 class 一变，浏览器都要把它整棵子树的样式重算一遍
+// （body 上加减一个类：80 层的帖子 4 倍降速下约 200ms，看大图打开一次要两遍）。按 class 前缀找祖先，改成写具体的类名（见 nsmaxNsppHosts）
+const classAncestors = [];
+ast.walkRules(rule => {
+  if (rule.parent.type === "atrule" && /keyframes$/.test(rule.parent.name)) return;
+  for (const selector of rule.selectors) if (/\[class[~|^$*]?=[^\]]*\]\s*[\s>+~]/.test(selector)) classAncestors.push(selector);
+});
+if (classAncestors.length) throw new Error("主题里不能把 [class*=…] 写在祖先 / 兄弟位置（任何 class 变动都会整棵子树重算样式），请改成具体的类名：\n" + classAncestors.join("\n"));
 // 按页面分块（2026-10-22）：整份主题 CSS 有 860KB+，但每个页面只用得到一部分。构建时把规则按「只在某个页面用得到」
 // 拆成有序段：[base 段, 页面专属段, base 段, ……]。运行时按当前页面把需要的段拼起来再注入，规则顺序和整份 CSS 一致
 // （层叠结果不变），别的页面的规则完全不参与解析：列表页 / 帖子页 / 通知页这类常用页面少解析 25%–50% 的 CSS。

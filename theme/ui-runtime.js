@@ -3012,6 +3012,11 @@
 		if (nsmaxComposer?.host.isConnected || !/^\/post-\d+/.test(location.pathname)) return nsmaxComposer;
 		const md = document.querySelector("#nsk-body-left .md-editor");
 		if (!md) return null;
+		// 站点把编辑器整块换掉了（重新挂载）：上一个回复框的监听、「家」的位置标记一起撤掉。以前旧的点击监听还在，
+		// 点楼层「回复」时把已经被换下来的旧编辑器也塞回那一层，页面上出现两个回复框（2026-11-22）
+		nsmaxComposer?.dispose();
+		const lifetime = new AbortController();
+		ctx = { ...ctx, signal: nsmaxSignalAny([ctx.signal, lifetime.signal]) };
 		const host = md.closest("#editor") || md;
 		const home = document.createComment("nsmax-editor-home");
 		host.before(home);
@@ -3027,6 +3032,9 @@
 			if (rect.top >= top && rect.bottom <= bottom) return;
 			Element.prototype.scrollIntoView.call(this, { block: rect.height > bottom - top ? "start" : "nearest", behavior: nsmaxTouchLayout() ? "auto" : "smooth" });
 		};
+		// 隔离世界（油猴 @sandbox DOM、Userscripts）里上面这一句只管得到脚本自己的调用：站点的 reply() 在页面里调，看到的还是原来的方法，
+		// 回复框明明在眼前也整页往下滑一截。经页面桥在页面那边也换上（2026-11-22）
+		if (nsmaxUserscriptsBridge) nsmaxUserscriptsBridge.calmScroll(md, () => md.scrollIntoView());
 		const floating = window.matchMedia("(max-width: 700px), (hover: none)");
 		let cancel = null;
 		const ensureCancel = () => {
@@ -3125,11 +3133,11 @@
 			}
 			leave();
 		}, { signal: ctx.signal });
-		nsmaxComposer = { host, md, moveTo, restore };
+		const composer = nsmaxComposer = { host, md, moveTo, restore, dispose: () => lifetime.abort() };
 		ctx.signal.addEventListener("abort", () => {
-			restore(false);
+			if (host.isConnected) restore(false);
 			home.remove();
-			nsmaxComposer = null;
+			if (nsmaxComposer === composer) nsmaxComposer = null;
 		}, { once: true });
 		return nsmaxComposer;
 	}
@@ -4105,7 +4113,7 @@ function nsmaxTagStructure() {
 			if (hit) open(hit);
 		}, options);
 		document.addEventListener("focusout", (event) => { if (target(event.target)) hide(); }, options);
-		document.addEventListener("keydown", (event) => { if (event.key === "Escape") hide(); }, options);
+		document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) hide(); }, options);
 		window.addEventListener("scroll", () => { if (current || card && !card.hidden) hide(); }, { passive: true, signal: ctx.signal });
 		ctx.signal.addEventListener("abort", () => card?.remove(), { once: true });
 	}
@@ -5817,7 +5825,7 @@ function nsmaxTagStructure() {
 	}
 	// Userscripts 的 content world 不能直接读页面 expando。桥只访问论坛配置和编辑器；不暴露任何 GM API 或存储。
 	function nsmaxCreateUserscriptsBridge() {
-		const token = "nsmax-us-" + Math.random().toString(36).slice(2), requestEvent = token + "-request", changeEvent = token + "-change", confirmEvent = token + "-confirm";
+		const token = "nsmax-us-" + Math.random().toString(36).slice(2), requestEvent = token + "-request", changeEvent = token + "-change", confirmEvent = token + "-confirm", scrollEvent = token + "-scroll";
 		let node = null, config = null, configAt = 0, parsedText = "", parsedConfig = null, sequence = 0;
 		// 站点自己的确认框（mscConfirm）在页面里：选项传过去，点了哪个按钮再用事件传回来
 		const confirms = new Map();
@@ -5865,7 +5873,7 @@ function nsmaxTagStructure() {
 			node=document.createElement("script");node.id=token;
 			const nonce=document.querySelector("script[nonce]")?.nonce;if(nonce)node.nonce=nonce;
 			node.addEventListener(confirmEvent,event=>{try{const data=JSON.parse(event.detail),options=confirms.get(data.id);if(!options)return;confirms.delete(data.id);(data.type==="ok"?options.onOk:options.onCancel)?.();}catch{}});
-			try { node.textContent="("+function(node,requestEvent,changeEvent,confirmEvent){
+			try { node.textContent="("+function(node,requestEvent,changeEvent,confirmEvent,scrollEvent){
 				const methods=new Set(["getValue","setValue","getSelection","getCursor","setCursor","setSelection","replaceSelection","replaceRange","lineCount","getLine","getRange","indexFromPos","posFromIndex","getOption","setOption","refresh","focus","somethingSelected","getScrollInfo"]);
 				const bound=new WeakSet();
 				const config=()=>typeof __config__!=="undefined"?__config__:window.__config__;
@@ -5878,6 +5886,11 @@ function nsmaxTagStructure() {
 						const reply=type=>()=>node.dispatchEvent(new CustomEvent(confirmEvent,{detail:JSON.stringify({id:p.id,type})}));
 						if(value)window.mscConfirm({...p.options,onOk:reply("ok"),onCancel:reply("cancel")});
 					}
+					// 站点在页面里调元素的 scrollIntoView()：隔离世界里给元素换的方法页面看不到，这里在页面那边接住、交回脚本处理（见 calmScroll）
+					else if(p.op==="calm-scroll"){
+						const target=document.querySelector("[data-nsmax-calm-scroll=\""+p.id+"\"]");value=!!target;
+						if(target&&!Object.prototype.hasOwnProperty.call(target,"scrollIntoView")){const base=Element.prototype.scrollIntoView;target.scrollIntoView=function(...args){if(args.length||this.dispatchEvent(new CustomEvent(scrollEvent,{cancelable:true})))return base.apply(this,args);};}
+					}
 					else if(p.op==="probe"){
 						value=!!cm;
 						if(cm&&typeof cm.on==="function"&&!bound.has(cm)){bound.add(cm);for(const type of ["change","focus","blur","cursorActivity"])cm.on(type,(_,change)=>element.dispatchEvent(new CustomEvent(changeEvent,{detail:JSON.stringify({type,change:change?{from:change.from,to:change.to,text:change.text,removed:change.removed,origin:change.origin}:undefined})})));}
@@ -5885,13 +5898,20 @@ function nsmaxTagStructure() {
 					node.setAttribute("data-result",JSON.stringify({ok:true,value}));
 				}catch(error){node.setAttribute("data-result",JSON.stringify({ok:false,error:String(error?.message||error)}));}});
 				node.setAttribute("data-ready","1");
-			}.toString()+")(document.currentScript,"+JSON.stringify(requestEvent)+","+JSON.stringify(changeEvent)+","+JSON.stringify(confirmEvent)+");";
+			}.toString()+")(document.currentScript,"+JSON.stringify(requestEvent)+","+JSON.stringify(changeEvent)+","+JSON.stringify(confirmEvent)+","+JSON.stringify(scrollEvent)+");";
 			(document.head||root).append(node); } catch {}
 			bindEditors();
 			new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.(".CodeMirror")||n.querySelector?.(".CodeMirror")))||r.target.closest?.(".CodeMirror")&&!r.target.closest(".CodeMirror").CodeMirror))bindEditors();}).observe(root,{childList:true,subtree:true});
 		});
 		document.addEventListener("DOMContentLoaded",bindEditors,{once:true});window.addEventListener("load",bindEditors,{once:true});
-		return {get available(){return node?.getAttribute("data-ready")==="1";},get confirm(){return this.available?confirm:undefined;},config(){
+		return {get available(){return node?.getAttribute("data-ready")==="1";},get confirm(){return this.available?confirm:undefined;},
+		// 站点（页面世界）对 element 调不带参数的 scrollIntoView() 时改由 handler 处理；页面桥不可用时返回 false，站点照原样滚
+		calmScroll(element,handler){
+			let id=element.getAttribute("data-nsmax-calm-scroll");
+			if(!id){id=token+"-s"+(++sequence);element.setAttribute("data-nsmax-calm-scroll",id);element.addEventListener(scrollEvent,event=>{event.preventDefault();handler();});}
+			try{return !!call({op:"calm-scroll",id});}catch{return false;}
+		},
+		config(){
 			if(config&&performance.now()-configAt<1000)return config;
 			try{const value=call({op:"config"});if(value&&typeof value==="object"){config=value;configAt=performance.now();return config;}}catch{}
 			const text=document.getElementById("temp-script")?.textContent?.trim();if(!text)return config;
@@ -6037,7 +6057,7 @@ function nsmaxTagStructure() {
 				settings.addEventListener("click", () => { closeMenu(); document.querySelector('[aria-label="NodeSeek Max 设置"]')?.click(); }, { signal: ctx.signal }); tools.append(settings); panel.append(tools);
 				panel.addEventListener("keydown", event => {
 					if (nsmaxLayers.some(layer => layer.open)) return;
-					if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeMenu(); }
+					if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) { event.preventDefault(); event.stopPropagation(); closeMenu(); }
 					if (event.key !== "Tab") return;
 					const focusable = [...panel.querySelectorAll('a[href],button:not(:disabled),input,select,textarea,[tabindex="0"]')].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
 					const first = focusable[0], last = focusable.at(-1);
@@ -6092,7 +6112,7 @@ function nsmaxTagStructure() {
 		const observe = () => { observer.disconnect(); if (media.matches) observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] }); };
 		observe();
 		media.addEventListener("change", () => { observe(); sync(); nsmaxPlaceHeaderButtons(GM_getValue$1(SETTINGS_KEY,{})?.["content-filter"]?.enabled !== false); }, { signal: ctx.signal });
-		document.addEventListener("keydown", event => { if (event.key === "Escape") closeSearch(true); }, { signal: ctx.signal });
+		document.addEventListener("keydown", event => { if (event.key === "Escape" && !event.isComposing && event.keyCode !== 229) closeSearch(true); }, { signal: ctx.signal });
 		// iOS Safari 要文档上挂着 touchstart 才会触发 :active，否则手机按下反馈不生效
 		document.addEventListener("touchstart", () => {}, { passive: true, signal: ctx.signal });
 		document.addEventListener("pointerdown", event => { if (root.hasAttribute("data-nsmax-search-open") && !event.target.closest("form.search-box,form.search-form")) closeSearch(); }, { passive: true, signal: ctx.signal });
@@ -7311,7 +7331,28 @@ function nsmaxTagStructure() {
 		} catch {}
 		return null;
 	}
+	// 过期的资料卡缓存以前一直留在 sessionStorage 里（一个人一条、只读不删）：同一个标签页里逛久了能攒几百条，
+	// 挤占站点自己的会话存储。每页第一次写的时候顺手清掉过期的，最多留 200 条（2026-11-22）
+	var nsmaxPersonSwept = false;
+	function nsmaxPersonSweep() {
+		if (nsmaxPersonSwept) return;
+		nsmaxPersonSwept = true;
+		try {
+			const entries = [];
+			for (let i = 0; i < sessionStorage.length; i++) {
+				const key = sessionStorage.key(i);
+				if (!key?.startsWith(NSMAX_PERSON_CACHE)) continue;
+				let at = 0;
+				try { at = Number(JSON.parse(sessionStorage.getItem(key) || "null")?.at) || 0; } catch {}
+				entries.push([key, at]);
+			}
+			const now = Date.now();
+			entries.sort((a, b) => b[1] - a[1]);
+			entries.forEach(([key, at], index) => { if (index >= 200 || now - at >= 6e5) sessionStorage.removeItem(key); });
+		} catch {}
+	}
 	function nsmaxPersonStore(id, data) {
+		nsmaxPersonSweep();
 		try { sessionStorage.setItem(NSMAX_PERSON_CACHE + id, JSON.stringify({ at: Date.now(), data })); } catch {}
 	}
 	function nsmaxPersonForget(id) {
@@ -7821,7 +7862,8 @@ function nsmaxTagStructure() {
 		};
 		document.addEventListener("pointerout",event => { const link=matches(event.target); if (link && !link.contains(event.relatedTarget) && !pop?.contains(event.relatedTarget)) closeSoon(); }, { signal:ctx.signal });
 		document.addEventListener("click",event => { if (pop && !pop.contains(event.target)) hide(); }, { signal:ctx.signal });
-		document.addEventListener("keydown",event => { if (event.key==="Escape") hide(); }, { signal:ctx.signal });
+		// 输入法候选词开着时的 Esc（资料卡里写备注时）只收起候选词，不关卡片
+		document.addEventListener("keydown",event => { if (event.key==="Escape" && !event.isComposing && event.keyCode !== 229) hide(); }, { signal:ctx.signal });
 		// 往返缓存会连同 DOM 和计时器一起保留；离开时收起卡片、取消尚未完成的弹出，返回后保留原页但不留浮层。
 		window.addEventListener("pagehide",hide,{signal:ctx.signal});
 		window.addEventListener("scroll",hide,{passive:true,signal:ctx.signal}); window.addEventListener("resize",place,{passive:true,signal:ctx.signal});
