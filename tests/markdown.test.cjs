@@ -201,3 +201,54 @@ test("手机：代码块标题栏 44px，「复制」触控区就是标题栏；
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+// 2026-11-23 电脑端阅读舒适度：无序列表里套有序列表时数字上不再叠站点的「•」；表格有一格长内容时别的列不被挤成「280Mb / ps」「正 / 常」；
+// 段落照旧占满整列（2026-11-23 Yiheng 选「保持占满整列」，不限 750px）
+test("2026-11-23 电脑端正文：嵌套有序列表没有多余圆点；表格短格子不从词中间断开；段落和代码块都占整栏", async () => {
+	const hash = "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a089f86d081884c7d659a2feaa0c55ad015";
+	const long = "说一下这台机器的情况：香港 CN2 GIA 线路，晚高峰到电信移动联通三网延迟都在 40ms 左右，基本不丢包。".repeat(4);
+	const extra = `<p id="nsmax-long-p">${long}</p><ul><li>一<ol><li id="nsmax-nested-ol">有序</li></ol></li></ul>
+<table id="nsmax-wide-table"><thead><tr>${["地区", "线路", "延迟", "丢包", "上行", "下行", "晚高峰", "备注"].map((t) => `<th>${t}</th>`).join("")}</tr></thead><tbody><tr>${["上海电信", "CN2 GIA", "32ms", "0%", "280Mbps", "300Mbps", "正常", hash].map((t) => `<td>${t}</td>`).join("")}</tr></tbody></table>`;
+	const page1 = (options) => P.postPage(options).replace("</article>", extra + "</article>");
+	// 按 Windows 微软雅黑 UI 的度量量（同 glyph-align.test.cjs）：测试机默认的西文字体比雅黑宽一截
+	const css = `@font-face{font-family:"FakeUI";src:local("WenQuanYi Zen Hei");ascent-override:101.56%;descent-override:25.44%}
+html[data-nsmax-theme]:is(#x,#y,#z,*):is(#x,#y,#z,*):is(#x,#y,#z,*), html[data-nsmax-theme]:is(#x,#y,#z,*):is(#x,#y,#z,*) body:is(#x,#y,#z,*) { --font-sans: "FakeUI", sans-serif !important; }`;
+	for (const width of [1280, 1767]) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: page1({ dark: true }), css, colorScheme: "dark", viewport: { width, height: 1000 } });
+		try {
+			await ready(page);
+			await page.evaluate(() => document.fonts.load('14px "FakeUI"', "国"));
+			await page.waitForTimeout(300);
+			const s = await page.evaluate(() => {
+				const art = document.querySelector(".nsk-post article.post-content");
+				const lines = (el) => { const r = document.createRange(); r.selectNodeContents(el); return new Set([...r.getClientRects()].filter((x) => x.width > 1).map((x) => Math.round(x.top))).size; };
+				const table = document.getElementById("nsmax-wide-table");
+				const cells = [...table.querySelectorAll("tbody td, thead th")].slice(0, 15).filter((c) => c.textContent.length < 12);
+				return {
+					bullet: getComputedStyle(document.getElementById("nsmax-nested-ol"), "::before").content,
+					broken: cells.filter((c) => lines(c) > 1 && !/\s/.test(c.textContent.trim())).map((c) => c.textContent),
+					tableInside: table.getBoundingClientRect().right <= art.getBoundingClientRect().right + 1,
+					article: art.getBoundingClientRect().width,
+					para: document.getElementById("nsmax-long-p").getBoundingClientRect().width,
+					code: art.querySelector(".nsmax-code, pre").getBoundingClientRect().width
+				};
+			});
+			assert.equal(s.bullet, "none", "有序列表的数字上不叠「•」");
+			assert.deepEqual(s.broken, [], `${width}：短格子不从中间断开`);
+			assert.ok(s.tableInside, "表格不超出正文");
+			assert.ok(s.para >= s.article - 1, `${width}：段落占满整列 ${s.para} / ${s.article}`);
+			if (s.article > 760) assert.ok(s.code > 760, `${width}：代码块占整栏（${s.code} / ${s.article}）`);
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	// 个人主页「介绍」也带站点 .post-content：无序列表里的有序列表照样是 1. 2.，不是「•」
+	const readme = "<ul><li>常用系统<ol><li id=\"nsmax-readme-ol\">第一步</li></ol></li></ul>";
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/space/10#/general", { html: P.spaceGeneralPage(readme), viewport: { width: 1440, height: 900 } });
+	try {
+		await page.waitForSelector("#nsmax-readme-ol");
+		await ready(page);
+		const li = await page.evaluate(() => { const el = document.getElementById("nsmax-readme-ol"); return [getComputedStyle(el).listStyleType, getComputedStyle(el, "::before").content]; });
+		assert.deepEqual(li, ["decimal", "none"], "介绍里嵌套的有序列表");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
