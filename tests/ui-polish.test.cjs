@@ -1769,4 +1769,25 @@ html[data-nsmax-theme]:is(#x,#y,#z,*):is(#x,#y,#z,*):is(#x,#y,#z,*), html[data-n
  });
 }
 // 在 Node 这边把 rgb() 字符串换成「r,g,b」（和页面里 __rgb 的输出一样）
-function __rgbNode(s){const m=s.match(/[\d.]+/g)||[];return m.slice(0,3).map(Number).join(",");}
+function __rgbNode(s){const m=s.match(/[\d.]+/g)||[];return m.slice(0,3).map(Number).join(",");
+ test(`${engine} 精华帖：不画站点左上角的黄色三角，标题前一枚 18px「精华」小标，和标题同一条中线`,async()=>{
+  // 2026-11-23 Yiheng：「精华帖子左上角这个三角形太突兀，不好看」
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...desk,html:P.postPage({award:true})});
+  try{
+   await ready(page);
+   const s=await page.evaluate(()=>{
+    const corner=document.querySelector(".award-corner"),h1=document.querySelector(".nsk-post .post-title h1"),cs=getComputedStyle(h1,"::before");
+    const link=h1.querySelector("a"),r=document.createRange();r.selectNodeContents(link);const t=r.getBoundingClientRect();
+    const hr=h1.getBoundingClientRect(),top=hr.top+parseFloat(cs.marginTop),badgeMid=top+parseFloat(cs.height)/2;
+    return{cornerShown:!!corner.getClientRects().length,content:cs.content,height:cs.height,textMid:(t.top+t.bottom)/2,badgeMid,linkLeft:t.left,h1Left:hr.left};
+   });
+   assert.equal(s.cornerShown,false,JSON.stringify(s));
+   assert.equal(s.content,'"精华"',JSON.stringify(s));
+   assert.equal(s.height,"18px",JSON.stringify(s));
+   assert.ok(s.linkLeft>s.h1Left+30,JSON.stringify(s));
+   assert.ok(Math.abs(s.textMid-s.badgeMid)<=2.5,JSON.stringify(s));
+   if(process.env.NSMAX_SHOT) await page.screenshot({path:process.env.NSMAX_SHOT,clip:{x:0,y:0,width:1280,height:260}});
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+}

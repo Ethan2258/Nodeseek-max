@@ -226,3 +226,71 @@ test("主题分段：手机、深色下也和整份注入逐元素一致，手�
   }
  }finally{await browser.close();}
 });
+// 跳楼层（2026-11-23）：主题给 html 设了 scroll-behavior: smooth，带 #楼号 打开帖子、点本页 #楼号 时浏览器也慢慢滑，路上的楼层和图片一层层
+// 变高，动画停在出发时算好的位置，要找的那一层不在屏幕里（测试页落点差 1600 多像素）。现在一步到位，上面的图片晚到也钉在顶栏下面。
+// 正文配图下好过一次就记下尺寸，再打开时没下完也占好位置（不再整段往下推）
+{
+ const IMG=(w,h)=>`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><rect width='${w}' height='${h}' fill='#c9a'/></svg>`;
+ const longPost=()=>{
+  let html=P.postPage();
+  const base=html.match(/<li class="content-item" id="1">[\s\S]*?<\/li>/)[0];
+  const body=i=>`<p>第 ${i} 楼。${"这是一行很长的回复文字用来撑开楼层。".repeat(3)}</p>${i%3===0?`<p><img src="https://img.test/${i}.svg?w=800&h=450" alt="图${i}"></p>`:""}`;
+  const items=Array.from({length:30},(_,k)=>{const f=k+1;return base.replace(/id="1"/,`id="${f}"`).replace(/href="#1"/,`href="#${f}"`).replace(/>#1</,`>#${f}<`).replace(/<article class="post-content">[\s\S]*?<\/article>/,`<article class="post-content">${body(f)}</article>`);}).join("");
+  return html.replace(/<ul class="comments">[\s\S]*?<\/ul>/,`<ul class="comments">${items}</ul>`).replace(/<article class="post-content">/,`<article class="post-content"><p><img src="https://img.test/100.svg?w=1200&h=800" alt="首图"></p><p><a id="jump25" href="#25">#25</a></p>`);
+ };
+ // 图片晚到：每张 600ms 起、按编号错开
+ const slowImages=async(page)=>page.context().route("https://img.test/**",async(route)=>{const url=new URL(route.request().url());await new Promise(r=>setTimeout(r,600+Number(url.pathname.replace(/\D/g,""))%7*250));route.fulfill({status:200,contentType:"image/svg+xml",body:IMG(url.searchParams.get("w"),url.searchParams.get("h"))});});
+ // noAnchor：关掉浏览器自带的滚动锚定（Safari 没有这个功能），看脚本自己能不能钉住
+ const noAnchor=`(()=>{const add=()=>document.documentElement.appendChild(Object.assign(document.createElement("style"),{textContent:"*{overflow-anchor:none!important}"}));if(document.documentElement)add();else new MutationObserver((r,o)=>{if(document.documentElement){o.disconnect();add();}}).observe(document,{childList:true});})();`;
+ const top=(page,id)=>page.evaluate(id=>Math.round(document.getElementById(id).getBoundingClientRect().top),id);
+ for(const anchor of [true,false]) test(`带 #楼号 打开帖子一步到位、停在顶栏下面，上面的图片晚到也不挪走${anchor?"":"（没有滚动锚定）"}`,async()=>{
+  const browser=await launch();
+  try{
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1#20",{html:longPost(),seed,viewport:{width:1440,height:900},init:anchor?"":noAnchor,beforeNavigate:slowImages});
+   try{
+    await page.waitForFunction(()=>document.getElementById("20"));
+    await page.waitForFunction(()=>performance.getEntriesByName("first-contentful-paint").length);
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    assert.ok(Math.abs(await top(page,"20")-72)<=2,`第一帧就在目标上：${await top(page,"20")}`);
+    await page.waitForLoadState("load");
+    await page.waitForTimeout(600);
+    assert.ok(Math.abs(await top(page,"20")-72)<=2,`图片都下好以后还在：${await top(page,"20")}`);
+    assert.equal(await page.evaluate(()=>document.documentElement.style.getPropertyValue("scroll-behavior")),"","加载完撤掉临时的 scroll-behavior");
+    // 点本页的 #25：一步到位；落地后上面（第 10 层）又冒出一张晚到的图，照样钉住
+    await page.evaluate(()=>window.scrollTo({top:0,behavior:"instant"}));
+    await page.locator("#jump25").click();
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    assert.ok(Math.abs(await top(page,"25")-72)<=2,`点了马上到：${await top(page,"25")}`);
+    await page.evaluate(()=>{const p=document.createElement("p");p.innerHTML=`<img src="https://img.test/200.svg?w=800&h=600" alt="晚到">`;document.getElementById("10").querySelector("article.post-content").append(p);});
+    await page.waitForTimeout(2500);
+    assert.ok(await page.evaluate(()=>document.querySelector("img[alt='晚到']").complete),"晚到的图下好了");
+    assert.ok(Math.abs(await top(page,"25")-72)<=2,`图片下好以后还在：${await top(page,"25")}`);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }finally{await browser.close();}
+ });
+ test("正文配图下好过一次就记下尺寸：再打开时没下完也占好位置，正文不被往下推",async()=>{
+  const browser=await launch();
+  try{
+   const init=`window.__shift=0;new PerformanceObserver(l=>{for(const e of l.getEntries())if(!e.hadRecentInput)window.__shift+=e.value}).observe({type:"layout-shift",buffered:true});`;
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html:longPost(),seed,viewport:{width:1440,height:900},init,beforeNavigate:slowImages});
+   try{
+    await page.waitForLoadState("load");
+    await page.waitForTimeout(2000);
+    assert.ok(await page.evaluate(()=>window.__shift)>0.05,"第一次打开：图片没记过，下好时正文被推下去");
+    assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem("nsmax:image-sizes")||"{}")["https://img.test/100.svg?w=1200&h=800"]==="1200x800"),"记下了首图尺寸");
+    await page.goto("https://www.nodeseek.com/post-1000-1",{waitUntil:"domcontentloaded"});
+    await page.waitForFunction(()=>performance.getEntriesByName("first-contentful-paint").length);
+    const box=await page.evaluate(()=>{const img=document.querySelector(".nsk-post article.post-content img");return{complete:img.complete,width:Math.round(img.getBoundingClientRect().width),height:Math.round(img.getBoundingClientRect().height)};});
+    assert.equal(box.complete,false,"图片还没下完");
+    assert.ok(box.height>300&&Math.abs(box.width/box.height-1.5)<0.02,`没下完就按 3:2 占好：${JSON.stringify(box)}`);
+    await page.waitForLoadState("load");
+    await page.waitForTimeout(800);
+    const after=await page.evaluate(()=>{const img=document.querySelector(".nsk-post article.post-content img");return{width:Math.round(img.getBoundingClientRect().width),height:Math.round(img.getBoundingClientRect().height),shift:window.__shift};});
+    assert.deepEqual([after.width,after.height],[box.width,box.height],"下好以后尺寸不变");
+    assert.ok(after.shift<0.01,`第二次打开不跳：${after.shift}`);
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }finally{await browser.close();}
+ });
+}

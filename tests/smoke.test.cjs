@@ -5084,8 +5084,10 @@ test("第十一批（2026-10-19）：正文里列多的表格在窄屏（≤1000
 				assert.equal(state.scrolls, true, `${width}：表格里能左右滑动`);
 				assert.ok(state.thLines <= 2, `${width}：表头不折行（${state.thLines}）`);
 			} else {
-				assert.equal(state.display, "table");
+				// 2026-11-23：宽屏也是块级、按内容宽（每格至少 4.5em，见 markdown.test.cjs），十二列放不下时在表格里左右滑动
+				assert.equal(state.display, "block");
 				assert.equal(state.full, true, "宽屏表格占满正文");
+				assert.equal(state.scrolls, true, `${width}：放不下的列在表格里左右滑动`);
 			}
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
