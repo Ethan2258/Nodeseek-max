@@ -9039,6 +9039,19 @@ html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board:is(#nsmax-l
   background: var(--panel) !important;
   box-shadow: none !important;
 }
+html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board > .head-info:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: block !important;
+  margin: 0 0 14px !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--brand-border) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--brand-soft) !important;
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
 html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board > .head-info a:is(#nsmax-lv, *):is(#nsmax-b, *) {
   color: var(--link) !important;
 }
@@ -9051,7 +9064,7 @@ html[data-nsmax-theme][data-nsmax-page="lucky"] .sample-panel .board .rank-row .
   margin: 0 !important;
   overflow: hidden !important;
   color: var(--text-subtle) !important;
-  font-size: 12.5px !important;
+  font-size: 13px !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
@@ -10010,32 +10023,41 @@ html[data-nsmax-theme] #nsk-body-left .vote-panel .op-buttons [hidden]:is(#nsmax
 html[data-nsmax-theme] #nsk-body-left .vote-panel form > div[style*="text-align"]:is(#nsmax-lv, *) {
   display: none !important;
 }
-/* 抽奖卡片（2026-11-23 重做）：次底色细线框、16px 内边距，所有内容一条左边线。
-   标题栏 24px 高（图标、15px「抽奖」、右边 18px 状态小标）；倒计时一行不再套框（数字 20px/600 等宽数字、单位 12px）；
-   细线隔开的「名目 + 内容」几行（名目 12px 弱化字、内容 13px，奖品加粗）；底栏 34px 一档：按钮或「你的情况」一句话，右边弱化的「开奖页」。
-   一张卡片里只用 20 / 15 / 13 / 12 四种字号 */
+/* 抽奖卡片（2026-11-24 优化）：次底色细线框、12px 16px 内边距，顶部按状态紧凑排版（已开奖合并单行，进行中带柔和倒计时条），
+   中间名目+内容（奖品 14px 加粗、参与附中奖率、中奖胶囊实底高辨识且 >12 人可折叠），
+   底栏移除固定 34px 死高，已开奖未参与时左侧展示公开随机数核验标记、右侧支持一键复制 @名单与查看开奖。 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery:is(#nsmax-lv, *) {
   box-sizing: border-box !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  margin: 16px 0 !important;
-  padding: 14px 16px !important;
+  margin: 14px 0 !important;
+  padding: 12px 16px !important;
   border: 1px solid var(--line) !important;
-  border-radius: var(--r-input) !important;
+  border-radius: var(--r) !important;
   background: var(--panel-alt) !important;
   color: var(--text) !important;
   font-size: 13px !important;
   line-height: 1.6 !important;
 }
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="imminent"]:is(#nsmax-lv, *) {
+  border-color: var(--danger-border) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-nsmax-won]:is(#nsmax-lv, *) {
+  border-color: color-mix(in srgb, var(--success) 42%, var(--line)) !important;
+}
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery [hidden]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   display: none !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-top:is(#nsmax-lv, *) {
+  display: block !important;
+  margin: 0 !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-head:is(#nsmax-lv, *) {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  height: 24px !important;
-  margin: 0 0 10px !important;
+  min-height: 24px !important;
+  margin: 0 0 8px !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-head > strong:is(#nsmax-lv, *) {
   color: var(--text-strong) !important;
@@ -10078,24 +10100,70 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-state:is(#nsmax-lv, *) {
   border-color: var(--line) !important;
-  background: transparent !important;
+  background: var(--panel) !important;
   color: var(--text-muted) !important;
 }
-/* 倒计时：「距开奖 2 天 03 时 15 分 08 秒」，右边开奖时间；不足一天不写天、不足一小时不写时 */
+/* 倒计时：进行中带克制的面板底微条，突出实时倒计时与开奖时刻；已开奖时与标题合并为单行 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-countdown:is(#nsmax-lv, *) {
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: baseline !important;
   gap: 2px 10px !important;
-  margin: 0 0 12px !important;
+  margin: 0 0 10px !important;
+  padding: 6px 10px !important;
+  border: 1px solid var(--line-soft) !important;
+  border-radius: var(--r-input) !important;
+  background: var(--panel) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="soon"] .nsmax-lottery-countdown:is(#nsmax-lv, *) {
+  border-color: var(--brand-border) !important;
+  background: var(--brand-soft) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="imminent"] .nsmax-lottery-countdown:is(#nsmax-lv, *) {
+  border-color: var(--danger-border) !important;
+  background: var(--danger-soft) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="unset"] .nsmax-lottery-countdown:is(#nsmax-lv, *) {
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-top:is(#nsmax-lv, *) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px 8px !important;
+  min-height: 24px !important;
+  margin: 0 0 10px !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] :is(.nsmax-lottery-head, .nsmax-lottery-countdown):is(#nsmax-lv, *):is(#nsmax-b, *) {
+  display: contents !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-icon:is(#nsmax-lv, *) {
+  order: 1 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-title:is(#nsmax-lv, *) {
+  order: 2 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-label:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: 3 !important;
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  line-height: 20px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-label:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
+  content: "·" !important;
+  margin-right: 8px !important;
+  color: var(--text-subtle) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-state:is(#nsmax-lv, *) {
+  order: 4 !important;
+}
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-label:is(#nsmax-lv, *) {
   flex: none !important;
   color: var(--text-muted) !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-clock:is(#nsmax-lv, *) {
   display: flex !important;
@@ -10140,15 +10208,12 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-seg[hidden]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
 }
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-label:is(#nsmax-lv, *) {
-  color: var(--text) !important;
-}
-/* 名目 + 内容：上下各一道细线 */
+/* 名目 + 内容：上下各一道细线，收紧内边距让整卡更有紧凑度 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) dl.nsmax-lottery-facts:is(#nsmax-lv, *) {
   display: grid !important;
-  gap: 6px !important;
+  gap: 7px !important;
   margin: 0 !important;
-  padding: 12px 0 !important;
+  padding: 10px 0 !important;
   border: 0 !important;
   border-top: 1px solid var(--line-soft) !important;
   border-bottom: 1px solid var(--line-soft) !important;
@@ -10157,7 +10222,7 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   display: grid !important;
   grid-template-columns: 3em minmax(0, 1fr) !important;
   align-items: baseline !important;
-  gap: 12px !important;
+  gap: 10px !important;
   margin: 0 !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-fact > dt:is(#nsmax-lv, *) {
@@ -10177,7 +10242,9 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-fact > dd.nsmax-lottery-prize:is(#nsmax-lv, *):is(#nsmax-b, *) {
   color: var(--text-strong) !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
+  line-height: 1.5 !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-rules > span + span:is(#nsmax-lv, *)::before {
   content: "·" !important;
@@ -10189,7 +10256,16 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   font-weight: 600 !important;
   font-variant-numeric: tabular-nums !important;
 }
-/* 中奖：28px 细线小胶囊（#楼号 名字），自己那一个绿色 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) dd.nsmax-lottery-people:is(#nsmax-lv, *) {
+  font-variant-numeric: tabular-nums !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) dd.nsmax-lottery-people[data-nsmax-odds]:is(#nsmax-lv, *):is(#nsmax-b, *)::after {
+  content: " · " attr(data-nsmax-odds) !important;
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+/* 中奖：28px 实底高辨识小胶囊（#楼号暖金色加粗 + 名字深色），自己中奖绿色高亮，超 12 人支持折叠展开 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-fact[data-nsmax-fact="winners"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   align-items: center !important;
 }
@@ -10207,40 +10283,67 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   gap: 5px !important;
   height: 28px !important;
   padding: 0 10px !important;
-  border: 1px solid var(--line) !important;
+  border: 1px solid var(--line-strong) !important;
   border-radius: var(--r-pill) !important;
-  background: transparent !important;
-  color: var(--text) !important;
+  background: var(--panel) !important;
+  color: var(--text-strong) !important;
   font-size: 12px !important;
   font-weight: 500 !important;
   line-height: 26px !important;
   text-decoration: none !important;
+  transition: border-color .12s ease, background-color .12s ease !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) a.nsmax-lottery-winner:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
-  border-color: var(--line-strong) !important;
-  background: var(--panel-hover) !important;
+  border-color: var(--brand-border) !important;
+  background: var(--brand-soft) !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-floor:is(#nsmax-lv, *) {
-  color: var(--text-muted) !important;
-  font-weight: 400 !important;
+  color: var(--mark-soft-text) !important;
+  font-weight: 600 !important;
   font-variant-numeric: tabular-nums !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) a.nsmax-lottery-winner[data-nsmax-me]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  border-color: transparent !important;
+  border-color: color-mix(in srgb, var(--success) 45%, transparent) !important;
   background: var(--success-soft) !important;
   color: var(--success-soft-text) !important;
+  font-weight: 600 !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) a.nsmax-lottery-winner[data-nsmax-me] .nsmax-lottery-floor:is(#nsmax-lv, *):is(#nsmax-b, *) {
   color: inherit !important;
 }
-/* 底栏：左边按钮或「你已参与 · 第 N 楼」，右边弱化的「开奖页」 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) button.nsmax-lottery-winners-toggle:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 28px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 1px dashed var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 26px !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) button.nsmax-lottery-winners-toggle:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-style: solid !important;
+  background: var(--panel-hover) !important;
+  color: var(--text-strong) !important;
+}
+/* 底栏：不强行撑 34px 死高；按钮时自然 34px，纯文字/核验态紧凑单行（~20px），左右视觉平衡零空洞 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-foot:is(#nsmax-lv, *) {
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
   gap: 8px 12px !important;
-  min-height: 34px !important;
-  margin: 12px 0 0 !important;
+  min-height: 0 !important;
+  margin: 10px 0 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-nsmax-foot="verify"] .nsmax-lottery-foot:is(#nsmax-lv, *) {
+  margin-top: 8px !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-actions:is(#nsmax-lv, *) {
   display: flex !important;
@@ -10278,9 +10381,10 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   flex-wrap: wrap !important;
   align-items: center !important;
   gap: 0 4px !important;
-  min-height: 34px !important;
+  min-height: 20px !important;
   color: var(--text-muted) !important;
   font-size: 13px !important;
+  line-height: 1.5 !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-me[data-tone]:is(#nsmax-lv, *) {
   color: var(--text-strong) !important;
@@ -10309,19 +10413,99 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-me > a:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   text-decoration-color: currentColor !important;
 }
-/* 「开奖页 / 查看开奖」：和旁边说明字一样的弱化色、不加粗，悬停才显出是链接（2026-11-14 用户嫌预览卡「打开原帖」太明显，同一个做法） */
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) a.nsmax-lottery-view:is(#nsmax-lv, *) {
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-verify:is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  color: var(--text-subtle) !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-verify-icon:is(#nsmax-lv, *) {
+  flex: none !important;
+  width: 13px !important;
+  height: 13px !important;
+  background: currentColor !important;
+  opacity: .85 !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E") center / contain no-repeat !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-foot-links:is(#nsmax-lv, *) {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px 12px !important;
   margin-left: auto !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-nsmax-foot="failed-solo"] .nsmax-lottery-foot-links:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin-left: 0 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-nsmax-foot="failed-solo"] a.nsmax-lottery-view:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  order: -1 !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) button.nsmax-lottery-retry-card:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 32px !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) button.nsmax-lottery-retry-card:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  background: var(--panel-hover) !important;
+  color: var(--text-strong) !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) button.nsmax-lottery-copy:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text-subtle) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) button.nsmax-lottery-copy:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--text) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+/* 「开奖页 / 查看开奖」：弱化小字外链提示，悬停显出下划线；算不出结果时升级为主按钮 */
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) a.nsmax-lottery-view:is(#nsmax-lv, *) {
+  margin-left: 0 !important;
   color: var(--text-subtle) !important;
   font-size: 12px !important;
   font-weight: 400 !important;
+  line-height: 1.5 !important;
   text-decoration: none !important;
   white-space: nowrap !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery:not([data-nsmax-result="failed"]) a.nsmax-lottery-view:is(#nsmax-lv, *)::after {
+  content: " ↗" !important;
+  font-size: 11px !important;
+  opacity: .7 !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) a.nsmax-lottery-view:is(#nsmax-lv, *):hover {
   color: var(--text) !important;
   text-decoration: underline !important;
   text-underline-offset: 3px !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-nsmax-result="failed"] a.nsmax-lottery-view:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  color: var(--action-text) !important;
+  text-decoration: none !important;
 }
 /* 原来只有一个开奖链接的那一段收起（卡片里有「开奖页」） */
 html[data-nsmax-theme] #nsk-body-left article.post-content [data-nsmax-lottery-source]:is(#nsmax-lv, *) {
@@ -11892,9 +12076,38 @@ html[data-nsmax-theme] #nsk-body-left .content-item .author-info > .nsmax-pin-ta
   font-weight: 500 !important;
   line-height: 1.6 !important;
 }
-/* 「抽奖」页（站内搜索「抽奖」当分类用）：只显示确认有开奖链接的帖子；下面一行状态（正在识别 / 这一页没有抽奖帖） */
-html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:not([data-nsmax-lottery="yes"]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+/* 「抽奖」页（站内搜索「抽奖」当分类用）：只显示确认有开奖链接的帖子；开启「只看进行中」时隐藏已结束旧帖；下面一行状态 */
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:not([data-nsmax-lottery="yes"]):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-lottery-view][data-nsmax-lottery-active] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item[data-nsmax-lottery-ended]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
+}
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left > .post-list-controler > .nsmax-lottery-active-only:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 28px !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-pill) !important;
+  background: var(--panel) !important;
+  color: var(--text-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 26px !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left > .post-list-controler > .nsmax-lottery-active-only:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
+  border-color: var(--line-strong) !important;
+  background: var(--panel-hover) !important;
+  color: var(--text-strong) !important;
+}
+html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left > .post-list-controler > .nsmax-lottery-active-only[data-nsmax-on]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  border-color: var(--brand-border) !important;
+  background: var(--brand-soft) !important;
+  color: var(--text-strong) !important;
 }
 /* 抽奖页是分类，不是搜索结果：搜索页上面那行「搜索 抽奖」不要 */
 html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left > .nsmax-search-summary:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -11934,13 +12147,15 @@ html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsk-pager [data-
 }
 /* 没能识别的几篇：一行字后面一个 sb.sb 细线小胶囊「重试」 */
 html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsmax-lottery-retry:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  box-sizing: border-box !important;
+  height: 28px !important;
   margin: 0 !important;
-  padding: 3px 12px !important;
+  padding: 0 12px !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
   color: var(--text) !important;
-  font: 500 12.5px/1.6 var(--font-sans) !important;
+  font: 500 12px/26px var(--font-sans) !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsmax-lottery-retry:hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -12534,8 +12749,8 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nsma
   margin: 20px 0 0 !important;
 }
 /* 签到页照 sb.sb /checkin/：最上面「每日签到」卡（大字连续签到天数 + 签到按钮，四格统计，本月日历），下面排行榜。
-   站点自己那一行（今日签到获得鸡腿 N 个…… / 今日还未签到 + 两个按钮）的文字和按钮都进了卡片，原来那一行收起 */
-html[data-nsmax-theme] .board > .head-info:is(#nsmax-lv, *):is(#nsmax-b, *) {
+   站点自己那一行（今日签到获得鸡腿 N 个…… / 今日还未签到 + 两个按钮）的文字和按钮都进了卡片，原来那一行收起；限定在 board 页，不影响 /lucky 页中奖横幅 */
+html[data-nsmax-theme][data-nsmax-page="board"] .board > .head-info:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
 }
 html[data-nsmax-theme] .board > .nsmax-checkin:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -12758,11 +12973,11 @@ html[data-nsmax-theme][data-nsmax-page="board"] .board .rank-row .coins:is(#nsma
   font-family: var(--font-sans) !important;
   font-weight: 500 !important;
 }
-/* 一键抽奖弹窗：sb.sb 表单（字段小标题 13.5px/500、40px 输入框、两项并排），下面是发出去以后抽奖卡片的预览 */
+/* 一键抽奖弹窗：sb.sb 表单（字段小标题 13px/500、40px 输入框、两项并排），下面是发出去以后抽奖卡片的预览 */
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-intro:is(#nsmax-lv, *):is(#nsmax-b, *) {
   margin: 0 0 14px !important;
   color: var(--text-muted) !important;
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   line-height: 1.6 !important;
 }
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-field:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -12775,7 +12990,7 @@ html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-field:is(#nsmax-lv, *):i
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-label:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: block !important;
   color: var(--text) !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   font-weight: 500 !important;
   line-height: 1.5 !important;
 }
@@ -12787,7 +13002,7 @@ html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-hint:is(#nsmax-lv, *):is
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-input:is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: border-box !important;
   width: 100% !important;
-  height: 38px !important;
+  height: 40px !important;
   margin: 0 !important;
   padding: 0 12px !important;
   border: 1px solid var(--line-strong) !important;
@@ -12828,7 +13043,7 @@ html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-chip:is(#nsmax-lv, *):is
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
   color: var(--text-muted) !important;
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   line-height: 1.6 !important;
   cursor: pointer !important;
 }
@@ -12837,13 +13052,19 @@ html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-chip:is(#nsmax-lv, *):is
   background: var(--panel-hover) !important;
   color: var(--text) !important;
 }
+html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-chip[data-active]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  border-color: var(--brand-border) !important;
+  background: var(--brand-soft) !important;
+  color: var(--text-strong) !important;
+  font-weight: 500 !important;
+}
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-check:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
   margin: 0 0 12px !important;
   color: var(--text) !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme] .nsmax-lucky-dialog .nsmax-lucky-check > input:is(#nsmax-lv, *):is(#nsmax-b, *) {
