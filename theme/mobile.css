@@ -61,6 +61,7 @@ html[data-nsmax-theme][data-nsmax-touch] body>header>ul.mobile-nav>li>a:is([aria
 html[data-nsmax-theme][data-nsmax-touch] section#nsk-frame{box-sizing:border-box!important;width:100%!important;max-width:none!important;margin:0!important;padding:10px max(12px,env(safe-area-inset-right)) 24px max(12px,env(safe-area-inset-left))!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left{box-sizing:border-box!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important}
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-lottery-view][data-nsmax-lottery-pending] #nsk-body-left{min-height:max(420px,calc(100vh - 160px))!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler{gap:10px!important;min-height:44px!important;height:auto!important;margin:0!important;padding:0 12px!important;border-radius:var(--r) var(--r) 0 0!important;box-shadow:none!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler .sorter{gap:14px!important;min-width:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .post-list-controler .nsmax-kind-tabs{display:flex!important;align-items:center!important;flex:none!important;gap:14px!important;margin:0!important;padding:0!important;border:0!important}
@@ -88,6 +89,7 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-mobile-filter::after{content:"éš
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.nsmax-crumb{padding:9px 18px!important;font-size:13px!important;border-radius:var(--r) var(--r) 0 0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important;padding:14px 12px 12px!important;border-radius:0!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title h1{font-size:19px!important;line-height:1.45!important;font-weight:600!important;letter-spacing:0!important}
+html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title h1>span[data-nsmax-lock][data-nsmax-lock-level]{margin-top:calc((19px * 1.45 - 18px) / 2)!important;vertical-align:top!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.post-title>.nsmax-post-stats{margin:0!important;padding:0!important;font-size:12px!important;line-height:21px!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left ul.comments>li.content-item{border-radius:var(--r)!important;box-shadow:none!important}
 html[data-nsmax-theme][data-nsmax-touch] #nsk-body-left .nsk-post>.content-item{border-radius:0 0 var(--r) var(--r)!important;box-shadow:none!important}

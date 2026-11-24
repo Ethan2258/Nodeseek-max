@@ -10276,6 +10276,10 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   min-height: 28px !important;
   align-items: center !important;
 }
+html[data-nsmax-theme]:not([data-nsmax-touch]) :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-winners[data-nsmax-win-rows="2"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-height: 62px !important;
+  align-content: center !important;
+}
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) a.nsmax-lottery-winner:is(#nsmax-lv, *):is(#nsmax-b, *) {
   box-sizing: border-box !important;
   display: inline-flex !important;
@@ -10333,7 +10337,7 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   background: var(--panel-hover) !important;
   color: var(--text-strong) !important;
 }
-/* 底栏：不强行撑 34px 死高；按钮时自然 34px，纯文字/核验态紧凑单行（~20px），左右视觉平衡零空洞 */
+/* 底栏：进行中固定 34px 防止「回复参与」切为「你已参与」时缩 14px；已开奖保持 20px 紧凑单行，核验/提示/链接统一行高零跳动 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-foot:is(#nsmax-lv, *) {
   display: flex !important;
   flex-wrap: wrap !important;
@@ -10342,8 +10346,11 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   min-height: 0 !important;
   margin: 10px 0 0 !important;
 }
-html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-nsmax-foot="verify"] .nsmax-lottery-foot:is(#nsmax-lv, *) {
-  margin-top: 8px !important;
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery:not([data-state="done"]) .nsmax-lottery-foot:is(#nsmax-lv, *) {
+  min-height: 34px !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-state="done"] .nsmax-lottery-foot:is(#nsmax-lv, *) {
+  min-height: 22px !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-actions:is(#nsmax-lv, *) {
   display: flex !important;
@@ -10376,15 +10383,22 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) :is(.nsmax-lottery-actions > :is(a, button), .nsmax-lottery[data-nsmax-result="failed"] .nsmax-lottery-view):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--action-hover) !important;
 }
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery[data-nsmax-result="failed"] a.nsmax-lottery-view:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  line-height: 20px !important;
+}
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-me:is(#nsmax-lv, *) {
   display: inline-flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
   gap: 0 4px !important;
-  min-height: 20px !important;
+  min-height: 22px !important;
   color: var(--text-muted) !important;
   font-size: 13px !important;
-  line-height: 1.5 !important;
+  line-height: 22px !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-me[data-tone]:is(#nsmax-lv, *) {
   color: var(--text-strong) !important;
@@ -10417,9 +10431,10 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   display: inline-flex !important;
   align-items: center !important;
   gap: 5px !important;
+  min-height: 22px !important;
   color: var(--text-subtle) !important;
   font-size: 12px !important;
-  line-height: 1.5 !important;
+  line-height: 22px !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-verify-icon:is(#nsmax-lv, *) {
   flex: none !important;
@@ -10448,17 +10463,18 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  height: 34px !important;
+  height: 22px !important;
+  min-height: 22px !important;
   margin: 0 !important;
-  padding: 0 14px !important;
+  padding: 0 10px !important;
   border: 1px solid var(--line-strong) !important;
   border-radius: var(--r-pill) !important;
   background: var(--panel) !important;
   color: var(--text) !important;
   font-family: var(--font-sans) !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 500 !important;
-  line-height: 32px !important;
+  line-height: 20px !important;
   cursor: pointer !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) button.nsmax-lottery-retry-card:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
@@ -10474,7 +10490,7 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   font-family: var(--font-sans) !important;
   font-size: 12px !important;
   font-weight: 400 !important;
-  line-height: 1.5 !important;
+  line-height: 22px !important;
   white-space: nowrap !important;
   cursor: pointer !important;
 }
@@ -10489,7 +10505,7 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   color: var(--text-subtle) !important;
   font-size: 12px !important;
   font-weight: 400 !important;
-  line-height: 1.5 !important;
+  line-height: 22px !important;
   text-decoration: none !important;
   white-space: nowrap !important;
 }
@@ -12144,6 +12160,10 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-lottery-status[data-nsmax-busy]:is(
 html[data-nsmax-theme][data-nsmax-lottery-view][data-nsmax-lottery-pending] #nsk-body-left :is(.nsk-pager, [data-nsmax-pagerbox]):is(#nsmax-lv, *):is(#nsmax-b, *),
 html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsk-pager [data-nsmax-lottery-far]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
+}
+/* 抽奖分类识别中预留主栏高度，防止页脚先缩上来再被陆续露出的抽奖帖整页往下顶（2026-11-24） */
+html[data-nsmax-theme][data-nsmax-lottery-view][data-nsmax-lottery-pending] #nsk-body-left:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  min-height: max(560px, calc(100vh - 180px)) !important;
 }
 /* 没能识别的几篇：一行字后面一个 sb.sb 细线小胶囊「重试」 */
 html[data-nsmax-theme][data-nsmax-lottery-view] #nsk-body-left .nsmax-lottery-retry:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -17063,6 +17083,45 @@ html[data-nsmax-theme][data-nsmax-page="space"] :is(.discussion-wrapper > div.di
   font: 500 11px/1 var(--font-mono, ui-monospace, monospace) !important;
   letter-spacing: 0 !important;
 }
+/* 帖子详情页大标题里的等级锁（2026-11-24）：与首页列表、个人主页统一为标题前 18px 浅红「🔒 LvN」胶囊（原站把数字包在带行内 font-size 的内层 span 里，需连同原生 svg 一起隐藏） */
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  gap: 3px !important;
+  height: 18px !important;
+  min-height: 0 !important;
+  margin: 0 6px 0 0 !important;
+  padding: 0 7px 0 6px !important;
+  border: 0 !important;
+  border-radius: var(--r-pill) !important;
+  background: color-mix(in srgb, var(--danger) 9%, transparent) !important;
+  box-shadow: none !important;
+  color: var(--danger) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0 !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) > :is(svg, span) {
+  display: none !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::before {
+  content: "" !important;
+  flex: none !important;
+  width: 10px !important;
+  height: 10px !important;
+  background: currentColor !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.5 5V3.75a2.5 2.5 0 0 1 5 0V5' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Crect x='2' y='5' width='8' height='6' rx='1.6' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.5 5V3.75a2.5 2.5 0 0 1 5 0V5' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Crect x='2' y='5' width='8' height='6' rx='1.6' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat !important;
+}
+html[data-nsmax-theme] #nsk-body-left .nsk-post > .post-title h1 > span[data-nsmax-lock][data-nsmax-lock-level]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
+  content: "Lv" attr(data-nsmax-lock-level) !important;
+  font: 500 11px/1 var(--font-mono, ui-monospace, monospace) !important;
+  letter-spacing: 0 !important;
+}
 /* ---------- 标签和旁边的字对不齐（2026-11-11 Yiheng 截图：「感觉这个不在中间，就是前面那个限制标签。你这种各种各样的标签都给我动好了呀，每回都会有点怪怪的」） ----------
    原因在标题链接上的 vertical-align: middle：它把链接这一行的中线对到「基线 + 半个 x 高」，等于把标题字往下推 (升部 − 降部)/2 − x 高/2。
    这个量跟字体走：测试机的文泉驿只有 0.6px，看不出来；Windows 的微软雅黑 UI（升部 2080、降部 521、x 高 1106 / 2048）在 17px 标题上是 1.9px，
@@ -17072,9 +17131,9 @@ html[data-nsmax-theme] #nsk-body-left ul.post-list > li.post-list-item .post-tit
   vertical-align: baseline !important;
 }
 @media (min-width: 801px) {
-  /* 帖子页大标题后面的「抽奖 / 投票 / 已结束 / 已回复 / 已参与」：vertical-align: middle 是按 x 高度对的，中文标题下比字低 1.7px。
+  /* 帖子页大标题后面的「抽奖 / 投票 / 已结束 / 已回复 / 已参与」与前面的等级锁：vertical-align: middle 是按 x 高度对的，中文标题下比字低 1.7px。
      和列表一样顶对齐再推到这一行正中（标题 21px × 1.45 = 30.45px 行高，小标 18px） */
-  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge, .nsmax-replied-badge, .nsmax-joined-badge):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsk-post > .post-title h1 > :is(.nsmax-prize-badge, .nsmax-poll-badge, .nsmax-ended-badge, .nsmax-replied-badge, .nsmax-joined-badge, span[data-nsmax-lock][data-nsmax-lock-level]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     margin-top: calc((21px * 1.45 - 18px) / 2) !important;
     margin-bottom: 0 !important;
     vertical-align: top !important;

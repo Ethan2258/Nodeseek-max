@@ -304,4 +304,199 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 			} finally { await context.close(); }
 		}
 	});
+
+	test(`${engine} v1.9.83 抽奖帖子页进入零伸缩：进行中/已开奖/多中奖/名单失败/纯文本与贴图评论首帧即就位，异步数据到达前后卡片与评论区零跳动`, async () => {
+		const measureInit = `(() => {
+			window.__frames = [];
+			const capture = () => {
+				const card = document.querySelector(".nsk-post .nsmax-lottery");
+				const cc = document.querySelector(".comment-container");
+				const foot = card?.querySelector(".nsmax-lottery-foot");
+				window.__frames.push({
+					cardH: card ? Math.round(card.getBoundingClientRect().height) : null,
+					ccTop: cc ? Math.round(cc.getBoundingClientRect().top) : null,
+					footH: foot ? Math.round(foot.getBoundingClientRect().height) : null,
+					state: card?.dataset?.state || null,
+					footMode: card?.dataset?.nsmaxFoot || null
+				});
+			};
+			requestAnimationFrame(() => { capture(); requestAnimationFrame(capture); });
+		})();`;
+		const snap = (page) => page.evaluate(() => {
+			const card = document.querySelector(".nsk-post .nsmax-lottery");
+			const cc = document.querySelector(".comment-container");
+			const foot = card?.querySelector(".nsmax-lottery-foot");
+			return {
+				cardH: card ? Math.round(card.getBoundingClientRect().height) : null,
+				ccTop: cc ? Math.round(cc.getBoundingClientRect().top) : null,
+				footH: foot ? Math.round(foot.getBoundingClientRect().height) : null,
+				topH: card ? Math.round(card.querySelector(".nsmax-lottery-top").getBoundingClientRect().height) : null,
+				result: card?.dataset?.nsmaxResult || ""
+			};
+		});
+		const future = Date.now() + 864e5;
+		const past = Date.now() - 36e5;
+
+		// 1) 进行中：延迟 返回「已参与」与「楼主」后，卡片与评论区零缩水
+		for (const [label, data] of [["已参与", floors({ me: 37 })], ["楼主", floors({ op: 1 })]]) {
+			const html = withLink(P.postPage(), `<p><a href="${link(future)}">开奖</a></p>`);
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+				html, viewport: { width: 1440, height: 900 }, init: measureInit,
+				api: { "/api/content/floor-data": [{ delay: 250, status: 200, body: { success: true, data } }] }
+			});
+			try {
+				await page.waitForFunction(() => (window.__frames || []).length >= 2);
+				const before = await page.evaluate(() => window.__frames[0]);
+				await settle(page);
+				await page.waitForTimeout(60);
+				const after = await snap(page);
+				assert.ok(before.cardH > 0, `${label} 首帧已有抽奖卡片：${JSON.stringify(before)}`);
+				assert.ok(Math.abs(after.cardH - before.cardH) <= 1, `${label} 卡片高度不变：before=${before.cardH} after=${after.cardH}`);
+				assert.ok(Math.abs(after.ccTop - before.ccTop) <= 1, `${label} 评论区位置不变：before=${before.ccTop} after=${after.ccTop}`);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+
+		// 2) 未缓存已开奖（3 人 / 12 人 / 名单接口失败）：首帧到底栏落定与名单返回零伸缩，同时 3 人卡保持紧凑指标
+		const post12Comments = (() => {
+			let html = P.postPage();
+			const base = html.match(/<li class="content-item" id="1">[\s\S]*?<\/li>/)[0];
+			const items = Array.from({ length: 12 }, (_, k) => {
+				const f = k + 1;
+				return base.replace(/id="1"/, `id="${f}"`).replace(/href="#1"/, `href="#${f}"`).replace(/>#1</, `>#${f}<`);
+			}).join("");
+			return withLink(html.replace(/<ul class="comments">[\s\S]*?<\/ul>/, `<ul class="comments">${items}</ul>`), `<p><a href="${link(past, { count: 12 })}">开奖</a></p>`);
+		})();
+		const endedCases = [
+			["已开奖 3 人", withLink(P.postPage(), `<p><a href="${link(past, { count: 3 })}">开奖</a></p>`), { "/api/content/floor-data": [{ delay: 250, status: 200, body: { success: true, data: floors() } }] }, { "api.drand.sh": () => ({ round: 1, randomness: RAND }) }, true],
+			["已开奖 12 人两行", post12Comments, { "/api/content/floor-data": [{ delay: 250, status: 200, body: { success: true, data: floors() } }] }, { "api.drand.sh": () => ({ round: 1, randomness: RAND }) }, false],
+			["drand 核验失败", withLink(P.postPage(), `<p><a href="${link(past, { count: 3 })}">开奖</a></p>`), { "/api/content/floor-data": [{ delay: 250, status: 200, body: { success: true, data: floors() } }] }, {}, false]
+		];
+		for (const [label, html, api, external, checkCompact] of endedCases) {
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+				html, viewport: { width: 1440, height: 900 }, init: measureInit, api, external
+			});
+			try {
+				await page.waitForFunction(() => (window.__frames || []).length >= 2);
+				const before = await page.evaluate(() => window.__frames[0]);
+				await page.waitForFunction(() => {
+					const r = document.querySelector(".nsk-post .nsmax-lottery")?.dataset?.nsmaxResult;
+					return r === "ok" || r === "failed";
+				}, null, { timeout: 8e3 });
+				await page.waitForTimeout(60);
+				const after = await snap(page);
+				assert.ok(Math.abs(after.cardH - before.cardH) <= 1, `${label} 卡片高度不变：before=${JSON.stringify(before)} after=${JSON.stringify(after)}`);
+				assert.ok(Math.abs(after.ccTop - before.ccTop) <= 1, `${label} 评论区位置不变：before=${before.ccTop} after=${after.ccTop}`);
+				if (checkCompact) {
+					assert.ok(after.topH <= 28 && after.footH <= 24 && after.cardH <= 235, `${label} 仍保持紧凑高度：${JSON.stringify(after)}`);
+				}
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+
+		// 3) 主帖纯文本 /lucky? 与楼主评论区纯文本 /lucky?：首帧第 1 次 rAF 卡片已在场
+		for (const [label, html, sel] of [
+			["主帖纯文本", P.postPage().replace("<h2>配置说明</h2>", `<p>开奖：https://www.nodeseek.com/lucky?post=1000&amp;time=${future}&amp;count=2</p><h2>配置说明</h2>`), ".nsk-post .nsmax-lottery"],
+			["楼主评论纯文本", P.postPage().replace('<a href="/space/11" class="author-name">buyer</a>', '<a href="/space/10" class="author-name">seller</a><span class="is-poster role-tag nsk-badge">楼主</span>').replace("收了，私信你", `开奖：https://nodeseek.com/lucky?post=1000&amp;time=${future}&amp;count=2`), "ul.comments > li[id='1'] .nsmax-lottery"]
+		]) {
+			const plainInit = `(() => {
+				window.__f1 = null;
+				requestAnimationFrame(() => {
+					const c = document.querySelector(${JSON.stringify(sel)});
+					const cc = document.querySelector(".comment-container");
+					window.__f1 = { hasCard: !!c, cardH: c ? Math.round(c.getBoundingClientRect().height) : 0, ccTop: cc ? Math.round(cc.getBoundingClientRect().top) : 0 };
+				});
+			})();`;
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+				html, viewport: { width: 1440, height: 900 }, init: plainInit, api: floorApi(floors())
+			});
+			try {
+				await page.waitForFunction(() => !!window.__f1);
+				await page.waitForFunction((s) => { const p = document.querySelector(s + " .nsmax-lottery-people"); return p && (p.parentElement.hidden || !/统计中/.test(p.textContent)); }, sel, { timeout: 8e3 });
+				await page.waitForTimeout(60);
+				const check = await page.evaluate((s) => {
+					const c = document.querySelector(s);
+					const cc = document.querySelector(".comment-container");
+					return { f1: window.__f1, cardH: c ? Math.round(c.getBoundingClientRect().height) : 0, ccTop: cc ? Math.round(cc.getBoundingClientRect().top) : 0 };
+				}, sel);
+				assert.equal(check.f1.hasCard, true, `${label} 首帧已有卡片`);
+				assert.ok(Math.abs(check.cardH - check.f1.cardH) <= 1 && Math.abs(check.ccTop - check.f1.ccTop) <= 1, `${label} 后续零跳动：${JSON.stringify(check)}`);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+	});
+
+	test(`${engine} v1.9.83 「抽奖」分类页首屏同步就位，不先塌缩再撑开；无缓存识别中预留主栏高度防页脚上浮`, async () => {
+		const future = Date.now() + 864e5;
+		const past = Date.now() - 864e5;
+		const trackInit = (seedBody) => `(() => {
+			if (window.top === window) { ${seedBody} }
+			window.__catFrames = [];
+			const snap = () => {
+				const left = document.getElementById("nsk-body-left");
+				const ft = document.querySelector("body > footer");
+				const row0 = document.querySelector("#nsk-body-left ul.post-list > li.post-list-item[data-nsmax-lottery='yes'] .post-info");
+				window.__catFrames.push({
+					cvHold: document.documentElement.hasAttribute("data-nsmax-cv-hold"),
+					pending: document.documentElement.hasAttribute("data-nsmax-lottery-pending"),
+					active: document.documentElement.hasAttribute("data-nsmax-lottery-active"),
+					merged: document.querySelectorAll("li[data-nsmax-lottery-merged][data-nsmax-lottery='yes']").length,
+					shown: document.querySelectorAll("li.post-list-item[data-nsmax-lottery='yes']").length,
+					leftH: left ? Math.round(left.getBoundingClientRect().height) : 0,
+					ftTop: ft ? Math.round(ft.getBoundingClientRect().top) : 0,
+					rowLeft: row0 ? Math.round(row0.getBoundingClientRect().left) : 0
+				});
+			};
+			requestAnimationFrame(() => { snap(); setTimeout(() => requestAnimationFrame(snap), 180); });
+		})();`;
+
+		// 1) 50 条含缓存 + 并入非「抽奖」标题行 + 只看进行中：首帧无 data-nsmax-cv-hold，首帧即显示并入行与「只看进行中」且零横向/纵向跳动
+		const sp = {}, ch = {}, times = {};
+		for (let i = 0; i < 50; i++) {
+			const id = String(1000 + i);
+			ch[id] = Date.now();
+			if (i % 3 === 0) {
+				sp[id] = "lottery";
+				times[id] = i % 2 === 0 ? future : past;
+			}
+		}
+		sp["1099"] = "lottery";
+		times["1099"] = future;
+		const rows = { "1099": { t: "无抽奖二字福利贴", u: "10", n: "alice", v: "123", r: "12", td: "2026-11-24T10:00:00Z", tt: "2026-11-24 18:00", c: "/categories/trade", cn: "交易" } };
+		const seedCached = `localStorage.setItem("nsmax:special-posts",${JSON.stringify(JSON.stringify(sp))});localStorage.setItem("nsmax:special-checked",${JSON.stringify(JSON.stringify(ch))});localStorage.setItem("nsmax:lottery-times",${JSON.stringify(JSON.stringify(times))});localStorage.setItem("nsmax:lottery-rows",${JSON.stringify(JSON.stringify(rows))});localStorage.setItem("nsmax:lottery-index-at",String(Date.now()));sessionStorage.setItem("nsmax:lottery-active-only","1");`;
+		{
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
+				html: P.searchPage({ count: 50 }), viewport: { width: 1440, height: 900 }, init: trackInit(seedCached)
+			});
+			try {
+				await page.waitForFunction(() => (window.__catFrames || []).length >= 2);
+				const [f1, f2] = await page.evaluate(() => window.__catFrames);
+				assert.equal(f1.cvHold, false, "抽奖分类页首帧不启用列表分档遮挡");
+				assert.equal(f1.pending, false);
+				assert.equal(f1.active, true, "首帧即启用「只看进行中」");
+				assert.equal(f1.merged, 1, "首帧即并入本机记住的无「抽奖」标题贴");
+				assert.ok(f1.shown >= 8, JSON.stringify(f1));
+				assert.equal(f2.rowLeft, f1.rowLeft, "行信息首帧与后续零横向位移");
+				assert.ok(Math.abs(f2.leftH - f1.leftH) <= 2 && Math.abs(f2.ftTop - f1.ftTop) <= 2, `首帧与后续高度零伸缩：${JSON.stringify({ f1, f2 })}`);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+
+		// 2) 第一行待识别（shown === 0）：首帧已带 data-nsmax-lottery-pending 且主栏保留至少 560px 高度，防止页脚缩上来
+		{
+			const seedEmpty = `localStorage.setItem("nsmax:special-posts","{}");localStorage.setItem("nsmax:special-checked","{}");`;
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
+				html: P.searchPage({ count: 10 }), viewport: { width: 1440, height: 900 }, init: trackInit(seedEmpty),
+				beforeNavigate: async (p) => { await p.route("**/post-1000-1", async (r) => { await new Promise((done) => setTimeout(done, 600)); try { await r.fulfill({ status: 404, body: "" }); } catch {} }); }
+			});
+			try {
+				await page.waitForFunction(() => (window.__catFrames || []).length >= 1);
+				const f1 = await page.evaluate(() => window.__catFrames[0]);
+				assert.equal(f1.pending, true, "首帧已标 data-nsmax-lottery-pending");
+				assert.ok(f1.leftH >= 560, `待识别期间主栏保留最小高度防页脚上浮：${JSON.stringify(f1)}`);
+				assert.ok(f1.ftTop >= 600, `页脚不被拉到视口中间：${JSON.stringify(f1)}`);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+	});
 }

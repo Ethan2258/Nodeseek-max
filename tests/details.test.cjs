@@ -139,4 +139,48 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} v1.9.83 帖子详情页等级限制标签与首页一致：移至标题前方渲染为 18px 浅红「Lv4」胶囊并对齐标题中线`,async()=>{
+  const lock=` <span style="margin-left:5px;color: rgb(255 152 152);"><svg class="iconpark-icon" style="width: 14px;height: 14px;vertical-align: baseline;"><use href="#lock"></use></svg> <span style="font-size: 14px;font-family: sans-serif;">\n                            4\n                        </span></span>`;
+  for(const options of [{viewport:{width:1440,height:900},seed},{...phone(),mobile:true}]){
+   const html=P.postPage({mobile:!!options.mobile}).replace(/(class="post-title-link[^"]*">[^<]*<\/a>)/,`$1${lock}`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html,...options});
+   try{
+    await ready(page);
+    await page.waitForSelector(".nsk-post > .post-title h1 > span[data-nsmax-lock][data-nsmax-lock-level='4']");
+    const state=await page.evaluate(()=>{
+     const h1=document.querySelector(".nsk-post > .post-title h1");
+     const badge=h1.querySelector("span[data-nsmax-lock]");
+     const link=h1.querySelector("a.post-title-link");
+     const svg=badge.querySelector("svg");
+     const inner=badge.querySelector("span");
+     const cs=getComputedStyle(badge);
+     const br=badge.getBoundingClientRect();
+     const lr=link.getClientRects()[0];
+     return {
+      isFirst:h1.firstElementChild===badge,
+      beforeLink:badge.nextElementSibling===link,
+      level:badge.getAttribute("data-nsmax-lock-level"),
+      title:badge.title,
+      svgDisplay:getComputedStyle(svg).display,
+      innerDisplay:inner?getComputedStyle(inner).display:null,
+      afterContent:getComputedStyle(badge,"::after").content,
+      height:Math.round(br.height),
+      radius:parseFloat(cs.borderTopLeftRadius),
+      centerDiff:Math.abs((br.top+br.bottom)/2-(lr.top+lr.bottom)/2)
+     };
+    });
+    assert.equal(state.isFirst,true,JSON.stringify(state));
+    assert.equal(state.beforeLink,true,JSON.stringify(state));
+    assert.equal(state.level,"4");
+    assert.equal(state.title,"等级 Lv4 及以上才能看");
+    assert.equal(state.svgDisplay,"none");
+    assert.equal(state.innerDisplay,"none");
+    assert.match(state.afterContent,/^(?:"Lv4"|"Lv"\s*"4")$/);
+    assert.equal(state.height,18,JSON.stringify(state));
+    assert.ok(state.radius>=9,JSON.stringify(state));
+    assert.ok(state.centerDiff<=4,JSON.stringify(state));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }
