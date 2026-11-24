@@ -343,6 +343,8 @@ html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-dialog-button.prim
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog .nsmax-lucky-presets{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px 8px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-lucky-chip{padding:0 12px!important;line-height:20px!important;font-size:13px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-lucky-chip::before{inset:8px 0!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-lucky-chip[data-active]{border:0!important;background:transparent!important;color:var(--text-strong)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nsmax-dialog .nsmax-lucky-chip[data-active]::before{border-color:var(--brand-border)!important;background:var(--brand-soft)!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog :is(input,select).nsmax-lucky-input:not([type=checkbox]){min-height:44px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nsmax-lucky-dialog .nsmax-lucky-check{min-height:44px!important;align-items:center!important}
 /* 提示跟随实际可视区域，键盘与视口平移后也留在可见区域内。 */

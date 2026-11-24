@@ -144,4 +144,164 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 			assert.deepEqual(errors, []);
 		} finally { await context.close(); }
 	});
+
+	test(`${engine} v1.9.81 抽奖卡片紧凑布局：已开奖未参与不再底部空一大截，顶部合流单行，附中奖率、实底中奖胶囊、公开随机数核验与一键复制 @名单`, async () => {
+		const html = withLink(P.postPage({ dark: true }), `<p>奖品：3个优惠码。euk 2C2G50G 独立高防IPv4 半价15r/month</p><p><a href="${link(Date.now() - 36e5)}">开奖</a></p>`);
+		const customFloors = UIDS.map((uid, i) => ({ member_id: uid, member_name: i === 2 ? "children009" : i === 7 ? "忍者猫小七" : i === 25 ? "iDaNaNaN" : "m" + i, floor_id: i }));
+		const init = `window.__copied = ""; Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: (t) => { window.__copied = t; return Promise.resolve(); } } });`;
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+			html, viewport: { width: 1440, height: 900 }, colorScheme: "dark", init,
+			api: floorApi(customFloors),
+			external: { "api.drand.sh": () => ({ round: 1, randomness: RAND }) }
+		});
+		try {
+			await page.waitForSelector(".nsk-post .nsmax-lottery-winner");
+			const state = await page.evaluate(() => {
+				const card = document.querySelector(".nsk-post .nsmax-lottery");
+				const top = card.querySelector(".nsmax-lottery-top");
+				const foot = card.querySelector(".nsmax-lottery-foot");
+				const verify = card.querySelector(".nsmax-lottery-verify");
+				const winner = card.querySelector(".nsmax-lottery-winner");
+				const people = card.querySelector(".nsmax-lottery-people");
+				return {
+					cardH: Math.round(card.getBoundingClientRect().height),
+					topH: Math.round(top.getBoundingClientRect().height),
+					footH: Math.round(foot.getBoundingClientRect().height),
+					footMode: card.dataset.nsmaxFoot,
+					verifyVisible: !verify.hidden && verify.getBoundingClientRect().height > 0,
+					verifyTitle: verify.title,
+					odds: people.dataset.nsmaxOdds,
+					winnerBg: getComputedStyle(winner).backgroundColor,
+					overflow: card.scrollWidth > card.clientWidth + 1
+				};
+			});
+			assert.equal(state.footMode, "verify");
+			assert.ok(state.topH <= 28, "已开奖顶部合并为单行：" + JSON.stringify(state));
+			assert.ok(state.footH <= 24, "无按钮底栏紧凑不撑死高：" + JSON.stringify(state));
+			assert.ok(state.cardH <= 235, "整张卡片紧凑无底部大片留白：" + JSON.stringify(state));
+			assert.equal(state.verifyVisible, true);
+			assert.match(state.verifyTitle, /drand 第 \d+ 轮/);
+			assert.equal(state.odds, "中奖率 5.9%");
+			assert.notEqual(state.winnerBg, "rgba(0, 0, 0, 0)", "中奖胶囊使用实底而不是透明底");
+			assert.equal(state.overflow, false);
+			await page.locator(".nsk-post .nsmax-lottery-copy").click();
+			assert.equal(await page.evaluate(() => window.__copied), "@children009 @忍者猫小七 @iDaNaNaN");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	});
+
+	test(`${engine} v1.9.81 多中奖者折叠展开、drand 备用节点容错、失败后卡片内重新核对与切号补查参与状态`, async () => {
+		const past = Date.now() - 36e5;
+		// 1) count=15：超过 12 人自动折叠，主节点失败时自动回退到 drand.cloudflare.com
+		const html15 = withLink(P.postPage(), `<p><a href="${link(past, { count: 15 })}">开奖</a></p>`);
+		{
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+				html: html15, viewport: { width: 1440, height: 900 },
+				api: floorApi(floors({ me: 52 })),
+				external: { "drand.cloudflare.com": () => ({ round: 1, randomness: RAND }) }
+			});
+			try {
+				await page.waitForSelector(".nsk-post .nsmax-lottery-winners-toggle");
+				assert.equal(await page.locator(".nsk-post .nsmax-lottery-winner").count(), 12);
+				assert.equal(await page.locator(".nsk-post .nsmax-lottery-winners-toggle").textContent(), "展开全部 15 位");
+				await page.locator(".nsk-post .nsmax-lottery-winners-toggle").click();
+				assert.equal(await page.locator(".nsk-post .nsmax-lottery-winner").count(), 15);
+				assert.equal(await page.locator(".nsk-post .nsmax-lottery-winners-toggle").textContent(), "收起");
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+		// 2) 首次失败后点「重新核对」直接成功，无需刷新页面
+		const html3 = withLink(P.postPage(), `<p><a href="${link(past)}">开奖</a></p>`);
+		{
+			let allow = false;
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+				html: html3, viewport: { width: 1440, height: 900 },
+				api: floorApi(floors({ me: 7 })),
+				external: { "api.drand.sh": () => allow ? { round: 1, randomness: RAND } : undefined }
+			});
+			try {
+				await page.waitForSelector(".nsk-post .nsmax-lottery[data-nsmax-result=failed] .nsmax-lottery-retry-card");
+				allow = true;
+				await page.locator(".nsk-post .nsmax-lottery-retry-card").click();
+				await page.waitForSelector(".nsk-post .nsmax-lottery-winner");
+				assert.equal(await page.locator(".nsk-post .nsmax-lottery[data-nsmax-won]").count(), 1);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+		// 3) 访客先缓存开奖结果，登录后再打开：立即出中奖名单、不重查 drand、补查楼层显示个人未中状态
+		{
+			let drand = 0;
+			const key = `1000:${past}:3:1:0`;
+			const seeded = { [key]: { w: [{ floor: 2, uid: "35076", name: "m2" }, { floor: 7, uid: "70298", name: "m7" }, { floor: 25, uid: "56326", name: "m25" }], s: { people: 51, floors: 52, mine: [], op: "62552" }, u: "", r: 1 } };
+			const init = `if (window.top === window) localStorage.setItem("nsmax:lottery-results", ${JSON.stringify(JSON.stringify(seeded))});`;
+			const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
+				html: html3, viewport: { width: 1440, height: 900 }, init,
+				api: floorApi(floors({ me: 9 })),
+				external: { "api.drand.sh": () => { drand++; return { round: 1, randomness: RAND }; } }
+			});
+			try {
+				await page.waitForFunction(() => /这次没中，谢谢参与 · 第 9 楼/.test(document.querySelector(".nsk-post .nsmax-lottery-me")?.textContent || ""), null, { timeout: 8e3 });
+				assert.equal(drand, 0, "切号补查参与状态时不重复请求 drand");
+				assert.equal(calls["/api/content/floor-data"], 1);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+	});
+
+	test(`${engine} v1.9.81 一键抽奖「填入正文」与占位符回填、抽奖分类「只看进行中」及 /lucky 中奖横幅可见`, async () => {
+		// 1) 一键抽奖「填入正文」：不自动提交，保留 pending，改标题后也能按占位符自动补全链接
+		{
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/new-discussion", { html: P.newPostPage(), viewport: { width: 1440, height: 900 } });
+			try {
+				await page.locator(".nsmax-lucky-trigger").click();
+				const dialog = page.getByRole("dialog", { name: "一键抽奖", exact: true });
+				await dialog.getByRole("textbox", { name: "奖品", exact: true }).fill("88 鸡腿");
+				await dialog.getByRole("button", { name: "48 小时后", exact: true }).click();
+				assert.equal(await dialog.getByRole("button", { name: "48 小时后", exact: true }).getAttribute("aria-pressed"), "true");
+				await dialog.getByRole("button", { name: "填入正文", exact: true }).click();
+				await page.waitForFunction(() => !document.querySelector("dialog.nsmax-lucky-dialog"));
+				const state = await page.evaluate(() => ({
+					title: document.querySelector("#mde-title")?.value,
+					body: document.querySelector(".md-editor textarea")?.value,
+					pending: JSON.parse(localStorage.getItem("nsmax:lucky:pending") || "null")
+				}));
+				assert.equal(state.title, "【抽奖】88 鸡腿");
+				assert.match(state.body, /- \*\*开奖链接\*\*：发布后自动生成/);
+				assert.equal(state.pending?.title, "【抽奖】88 鸡腿");
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+		// 2) 抽奖分类「只看进行中」筛选 + 悬停开奖时间提示
+		{
+			const future = Date.now() + 864e5, past = Date.now() - 864e5;
+			const init = `if (window.top === window) { localStorage.setItem("nsmax:special-posts", JSON.stringify({ "1000": "lottery", "1001": "lottery" })); localStorage.setItem("nsmax:special-checked", JSON.stringify({ "1000": 1, "1001": 1, "1002": 1 })); localStorage.setItem("nsmax:lottery-times", JSON.stringify({ "1000": ${future}, "1001": ${past} })); }`;
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", { html: P.searchPage({ count: 3 }), viewport: { width: 1440, height: 900 }, init });
+			try {
+				await page.waitForSelector(".nsmax-lottery-active-only");
+				const visible = () => page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.querySelector(".post-title a").getAttribute("href")));
+				assert.deepEqual(await visible(), ["/post-1000-1", "/post-1001-1"]);
+				assert.match(await page.locator(".post-list-item:first-child .nsmax-prize-badge").getAttribute("title") || "", /距开奖约/);
+				await page.locator(".nsmax-lottery-active-only").click();
+				assert.deepEqual(await visible(), ["/post-1000-1"], "开启「只看进行中」后隐藏已开奖旧帖");
+				await page.locator(".nsmax-lottery-active-only").click();
+				assert.deepEqual(await visible(), ["/post-1000-1", "/post-1001-1"]);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+		// 3) /lucky 查看页 .board > .head-info 中奖结果横幅不再被签到页规则误藏
+		{
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/lucky?post=1000&mode=view", { html: P.luckyPage({ view: true, dark: true }), viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
+			try {
+				await page.waitForSelector(".sample-panel .board > .head-info");
+				const info = await page.evaluate(() => {
+					const el = document.querySelector(".sample-panel .board > .head-info");
+					return { display: getComputedStyle(el).display, h: el.getBoundingClientRect().height, text: el.textContent.trim() };
+				});
+				assert.notEqual(info.display, "none", "/lucky 页中奖提示横幅必须可见");
+				assert.ok(info.h > 24, JSON.stringify(info));
+				assert.equal(info.text, "你没有中奖");
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+	});
 }
