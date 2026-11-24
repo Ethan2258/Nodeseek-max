@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.81
+// @version      1.9.82
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -916,7 +916,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.81";
+	var NSMAX_VERSION = "1.9.82";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -25152,12 +25152,10 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		} else if (!on && badge) badge.remove();
 		return on ? badge : null;
 	}
-	// 抽奖帖怎么认（2026-10-18 起只认抽奖、只看正文；投票帖不再挂小标）：
-	// 1. 打开过的帖子：主帖正文里有开奖链接（/lucky?…）才算是；
-	// 2. 列表里标题像的（抽奖 / 开奖 / 抽 N 个 / giveaway……）：在后台打开它的第一页看一眼主帖正文，页面在后台时不查；
-	//    查过的记在本机（是、不是都记）。没查过的不挂小标（以前先按标题里的「抽奖」猜，只是标题里有这个词的也挂上了）。
-	//    2026-10-19 加速：以前一篇一篇来、间隔 0.8 秒、每次打开页面最多查 6 篇，还把整页（几十层回复）下完才看；
-	//    现在三篇一起查、间隔 0.15 秒、一次最多 30 篇，读到主帖正文结束（第一个 </article>）就停。
+	// 抽奖帖怎么认（只要帖子主帖或指向本帖的评论里有 /lucky?… 开奖链接，就是抽奖帖，不看标题是否含「抽奖」）：
+	// 1. 打开过的帖子 / 悬停预览：主帖或本帖评论里有开奖链接（/lucky?…，含纯文字与 /jump 包装）就算；
+	// 2. 普通列表页：页面加载完、不滚动时在后台低优先级依次检查未查过的帖子（标题带抽奖/送东西特征的优先），单次请求同时读取主帖与首屏评论；
+	//    查过的记在本机（nsmax:special-checked，是、不是都记）。被限流（429/503）时整机停 10 分钟；
 	// 3. 已结束：到了开奖时间，或者楼主自己标了结束——标题里写了「已结束 / 已开奖 / 【结束】」这类，或者主帖正文里写了
 	//    「已结束 / 已开奖 / 恭喜……中奖」这类（查帖、打开帖子时看；还没结束的抽奖帖过 30 分钟以上再查一次，楼主后来改的也能跟上）
 	var NSMAX_SPECIAL_CHECKED_KEY = "nsmax:special-checked";
@@ -25189,9 +25187,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		while (walker.nextNode()) text += walker.currentNode.data;
 		return NSMAX_LOTTERY_ENDED_TEXT.test(text.replace(/\s+/g, ""));
 	}
-	var NSMAX_LOTTERY_HINT = /抽奖|开奖|抽\s*[一二两三四五六七八九十\d]+\s*(?:个|份|位|名|台|只|张|人)|lucky\s*draw|giveaway/i;
-	// 主帖写得像在送东西、抽东西（标题里不写「抽奖」的也算）：主帖里没有开奖链接时，再看第一页评论里有没有（见 nsmaxCheckSpecialPost）。
-	// 只认抽奖才会说的话（「楼层」「评论区」「福利」这类平常帖子里也常见，不算）
+	// 仅用于后台检查排队优先级：标题像抽奖 / T楼 / 送福利的先查，其余帖子随后逐篇检查，绝不用标题排除非「抽奖」标题的帖子
+	var NSMAX_LOTTERY_HINT = /抽奖|开奖|中奖|[Tt]\s*楼|踩楼|\broll\b|福利|回馈|白送|免费送|(?:抽|送|送出)\s*[一二两三四五六七八九十百千万\d]+\s*(?:个|份|位|名|台|只|张|人|枚|鸡腿|码|刀|[Uu]|元)|lucky\s*draw|giveaway/i;
+	// 主帖写得像在送东西、抽东西
 	var NSMAX_GIVEAWAY_HINT = /抽奖|开奖|中奖|(?:抽|送|送出)\s*[一二两三四五六七八九十\d]+\s*(?:个|份|位|名|台|只|张|人|枚|块|月|年)|随机(?:抽|送)|幸运(?:儿|观众|楼|用户)|按楼层|楼层抽|抽楼|白送|免费送|giveaway|lucky\s*draw/i;
 	var nsmaxSpecialCheckedMap;
 	function nsmaxSpecialChecked() {
@@ -25211,36 +25209,43 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		while (map.size > 5000) map.delete(map.keys().next().value);
 		try { localStorage.setItem(NSMAX_SPECIAL_CHECKED_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
-	// 开奖链接怎么认（2026-11-01 用户：「只要里面有开奖链接，就判定为抽奖帖子」）：本站的 /lucky?…——站点渲染出来的链接、
-	// 写成 nodeseek.com / www.nodeseek.com 完整网址的（以前只认和当前页面同一个域名的，www 和不带 www 混着写的卡片出不来）、
-	// 没被渲染成链接的纯文字网址都算；参数不全（没写开奖时间）的也算抽奖帖，只是画不出倒计时卡片
+	// 开奖链接怎么认（只要里面有开奖链接，就判定为抽奖帖子）：本站的 /lucky?…（含 /lucky/?…、/jump?to= 跳转包装）——
+	// 站点渲染出来的链接、写成 nodeseek.com / www.nodeseek.com 完整网址的、没被渲染成链接的纯文字网址都算；
+	// 参数不全（没写开奖时间）的也算抽奖帖，只是画不出倒计时卡片
 	// 不用后行断言 (?<!…)：Safari 16.4 以前不认，整个脚本会因为这一行解析失败、什么都不运行（2026-11-07）。
 	// 改成把前面那个字符一起匹配进第 1 组，用的时候切掉
-	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?(?:nodeseek|deepflood)\.com|(^|[^\w.:\/-]))\/lucky\?[^\s<>"'）)\]]+/gi;
+	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?(?:nodeseek|deepflood)\.com|(^|[^\w.:\/-]))\/lucky\/?\?[^\s<>"'`）)\]]+/gi;
 	function nsmaxLuckyUrl(href) {
 		let url;
 		try { url = new URL(href, location.href); } catch { return null; }
+		if (url.origin === location.origin && url.pathname === "/jump") {
+			const to = url.searchParams.get("to");
+			if (!to) return null;
+			try { url = new URL(to, location.href); } catch { return null; }
+		}
 		if (!/^https?:$/.test(url.protocol)) return null;
-		if (url.pathname !== "/lucky" || !url.search) return null;
-		if (url.origin === location.origin) return url;
+		if (url.pathname.replace(/\/+$/, "") !== "/lucky" || !url.search) return null;
+		if (url.origin === location.origin && url.pathname === "/lucky") return url;
 		const family = location.hostname.replace(/^www\./, "");
 		if (!/^(?:nodeseek|deepflood)\.com$/.test(family) || url.hostname.replace(/^www\./, "") !== family) return null;
-		return new URL(url.pathname + url.search + url.hash, location.origin);
+		return new URL("/lucky" + url.search + url.hash, location.origin);
 	}
-	// 一段内容里所有开奖链接（链接 + 纯文字网址），卡片自己的「查看开奖」不算
-	function nsmaxLuckyUrlsIn(root) {
+	// 一段内容里所有开奖链接（链接 + 纯文字网址，含 /jump?to= 包装），卡片自己的「查看开奖」不算
+	function nsmaxLuckyUrlsIn(root, { noQuote = false } = {}) {
 		const urls = [];
-		for (const link of root.querySelectorAll('a[href*="/lucky"]')) {
-			if (link.closest(".nsmax-lottery")) continue;
-			const url = nsmaxLuckyUrl(link.getAttribute("href") || "");
+		for (const link of root.querySelectorAll("a[href]")) {
+			if (link.closest(".nsmax-lottery") || noQuote && link.closest("blockquote")) continue;
+			const raw = link.getAttribute("href") || "";
+			if (!/lucky/i.test(raw)) continue;
+			const url = nsmaxLuckyUrl(raw);
 			if (url) urls.push(url);
 		}
 		const text = root.textContent || "";
-		if (text.includes("/lucky?")) {
+		if (/\/lucky\/?\?/i.test(text)) {
 			// textContent 会把相邻段落拼起来，令 time=123 后面粘上下一段正文。
 			// 逐个文本节点读取，不触发布局，也不把生成卡片里的文字当作新链接。
 			const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-				acceptNode: node => node.parentElement?.closest(".nsmax-lottery, a[href]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+				acceptNode: node => node.parentElement?.closest(noQuote ? ".nsmax-lottery, blockquote, a[href]" : ".nsmax-lottery, a[href]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
 			});
 			while (walker.nextNode()) for (const match of walker.currentNode.data.matchAll(NSMAX_LUCKY_TEXT)) {
 				const url = nsmaxLuckyUrl(match[1] ? match[0].slice(match[1].length) : match[0]);
@@ -25279,10 +25284,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	}
 	var nsmaxSpecialQueue = [];
 	var nsmaxSpecialBusy = false;
-	// 2026-10-24：一页最多查 12 篇（以前 30 篇，v1.8.37 还给标题不像抽奖的另加 60 篇，十秒里取二十多篇，站点开始限流，
-	// 页面、图片跟着变慢）。标题不像抽奖的不在列表页后台查：点开它时按内容认（见 nsmaxPrizeBadges），
-	// 点开过就按开奖链接认出来
-	var nsmaxSpecialBudget = 12;
+	// 2026-11-24：不再限定「标题像抽奖才查」——普通列表页一页最多查 50 篇，疑似抽奖 / 送福利的标题优先查，其余未查过的帖子在空闲时依次核对；
+	// 统一走后台低优先级队列（同时最多 1 个、前后隔 600ms，页面加载完等 3 秒再开始、滚动或切后台暂停、429/503 整机停 10 分钟），查过即记在本机。
+	var nsmaxSpecialBudget = 50;
 	var nsmaxSpecialRecheckBudget = 4;
 	var nsmaxSpecialStaleBudget = 4;
 	var nsmaxSpecialQueued = new Set();
@@ -25294,48 +25298,62 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const links = document.querySelectorAll(".post-list-item .post-title > a[href*='/post-']");
 		if (!links.length) return;
 		const known = nsmaxSpecialPostMap(), checked = nsmaxSpecialChecked(), times = nsmaxLotteryTimes(), ended = nsmaxLotteryEnded(), rows = nsmaxLotteryRows();
+		const likelyNew = [], recheckActive = [], recheckStale = [], restNew = [];
 		for (const link of links) {
 			const id = (link.getAttribute("href") || "").match(/\/post-(\d+)/)?.[1];
 			if (!id || nsmaxSpecialQueued.has(id)) continue;
+			const titleText = link.textContent || "";
 			const lottery = (known.get(id) || "").split(",").includes("lottery");
 			if (lottery) {
 				// 早就认出来、但还没记下列表上样子的抽奖帖：顺手记下（「抽奖」分类里没有它时并进去）
 				if (!rows.has(id)) nsmaxRememberLotteryRow(link.closest("li.post-list-item"));
 				// 认出来、还没结束、标题里也没写结束的抽奖帖：30 分钟以上没查过就再查一次（楼主可能在正文里改成了已结束）
 				const time = times.get(id) || 0;
-				const over = ended.has(id) || (time && time <= Date.now()) || NSMAX_LOTTERY_ENDED_TITLE.test(link.textContent || "");
+				const over = ended.has(id) || (time && time <= Date.now()) || NSMAX_LOTTERY_ENDED_TITLE.test(titleText);
 				if (over || nsmaxSpecialRecheckBudget <= 0 || Date.now() - (checked.get(id) || 0) < 30 * 60e3) continue;
 				nsmaxSpecialRecheckBudget--;
+				recheckActive.push(id);
 			} else {
 				// 这次打开页面已经查过没查成的（删帖、要登录、站点限流……）不再反复查，下次打开页面再说
-				if (known.has(id) || nsmaxSpecialFailed.has(id) || !NSMAX_LOTTERY_HINT.test(link.textContent || "")) continue;
+				if (known.has(id) || nsmaxSpecialFailed.has(id)) continue;
+				const hint = NSMAX_LOTTERY_HINT.test(titleText) || NSMAX_GIVEAWAY_HINT.test(titleText);
 				if (checked.has(id)) {
-					// 查过不是、但标题像抽奖的：30 分钟以上没查过就再查一次（2026-11-01：楼主常常先发帖、过几分钟再编辑补上开奖链接，
-					// 以前刚发出来时查过一次「不是」就再也不认了）。一页最多 4 篇
-					if (nsmaxSpecialStaleBudget <= 0 || Date.now() - checked.get(id) < 30 * 60e3) continue;
+					// 查过不是、但标题像抽奖/福利的：30 分钟以上没查过就再查一次（楼主常先发帖、过几分钟再编辑补上开奖链接）。一页最多 4 篇
+					if (!hint || nsmaxSpecialStaleBudget <= 0 || Date.now() - checked.get(id) < 30 * 60e3) continue;
 					nsmaxSpecialStaleBudget--;
-				} else {
+					recheckStale.push(id);
+				} else if (hint) {
 					if (nsmaxSpecialBudget <= 0) continue;
 					nsmaxSpecialBudget--;
+					likelyNew.push(id);
+				} else {
+					restNew.push(id);
 				}
 			}
+		}
+		const queued = [...likelyNew, ...recheckActive, ...recheckStale];
+		for (const id of restNew) {
+			if (nsmaxSpecialBudget <= 0) break;
+			nsmaxSpecialBudget--;
+			queued.push(id);
+		}
+		for (const id of queued) {
 			nsmaxSpecialQueued.add(id);
 			nsmaxSpecialQueue.push(id);
 		}
 		nsmaxRunSpecialQueue(ctx);
 	}
 	// 查一篇：打开它的第一页。打不开（删帖、要登录、站点验证、网络出错）：这次当作不是，不记下来，下次再查。
-	// 1. 主帖正文里有开奖链接 → 抽奖帖（只读到主帖正文结束，和帖子预览共用同一份：识别过的帖子悬停预览时不用再取，反过来也一样）；
-	// 2. 主帖里没有，但写得像在送东西、抽东西（NSMAX_GIVEAWAY_HINT，标题、正文都看）→ 再把第一页读完，评论里有指向这一篇的开奖链接
-	//    也算（2026-10-23：有的楼主把开奖链接贴在评论里，标题里也不写「抽奖」）。
-	// row：这一篇在列表里的那一行（后台读来的列表页里的），认出来是抽奖帖时记下它的样子；不给就在当前页面里找
+	// 单次请求直读到右栏 / 页脚前，同时拿到主帖正文与第一页评论；只要主帖或评论里有指向本帖的 /lucky?… 开奖链接，无论标题是否含「抽奖」都认定为抽奖帖；
+	// 如果缓存里只有悬停预览读到 </article> 的半页且主帖无开奖链接，再补读完整第一页检查评论。
+	// row：这一篇在列表里的那一行（后台读来的列表页里的），认出来是抽奖帖时记下它的样子；不给就在当前页面里找，没有列表行则从帖子页提取
 	var nsmaxSpecialFailed = new Set();
 	async function nsmaxCheckSpecialPost(ctx, id, row) {
 		const url = `${location.origin}/post-${id}-1`;
-		let op = null, title = "";
+		let doc = null, op = null, title = "";
 		try {
-			const html = await nsmaxPostHtml(ctx.request, url, "low", { until: "</article>", signal: ctx.signal });
-			const doc = new DOMParser().parseFromString(html, "text/html");
+			const html = await nsmaxPostHtml(ctx.request, url, "low", { until: /<div id="nsk-right-panel-container"|<\/section>|<footer\b/, signal: ctx.signal });
+			doc = new DOMParser().parseFromString(html, "text/html");
 			op = doc.querySelector(".nsk-post article.post-content, .nsk-post .post-content");
 			title = doc.querySelector(".nsk-post .post-title")?.textContent || "";
 		} catch {}
@@ -25344,19 +25362,24 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			return;
 		}
 		let comments = null;
-		if (!nsmaxSpecialKindsOf(op).includes("lottery") && (NSMAX_LOTTERY_HINT.test(title) || NSMAX_GIVEAWAY_HINT.test(title + "\n" + (op.textContent || "")))) {
-			try {
-				const page = new DOMParser().parseFromString(await ctx.request(url, { responseType: "text", signal: ctx.signal, priority: "low" }), "text/html");
-				comments = nsmaxCommentLuckyParams(page, id);
-			} catch {
-				nsmaxSpecialFailed.add(id);
-				return;
+		if (!nsmaxSpecialKindsOf(op).includes("lottery")) {
+			if (doc.querySelector("ul.comments, .comment-container, .md-editor, footer")) {
+				comments = nsmaxCommentLuckyParams(doc, id);
+			} else {
+				try {
+					const page = new DOMParser().parseFromString(await ctx.request(url, { responseType: "text", signal: ctx.signal, priority: "low" }), "text/html");
+					doc = page;
+					comments = nsmaxCommentLuckyParams(page, id);
+				} catch {
+					nsmaxSpecialFailed.add(id);
+					return;
+				}
 			}
 		}
-		nsmaxLearnSpecialPost(id, op, title, comments, row);
+		nsmaxLearnSpecialPost(id, op, title, comments, row, doc);
 	}
 	// 读到一篇帖子第一页的主帖以后记下它是不是抽奖帖（后台查帖、悬停预览都走这里）。comments：评论里指向这一篇的开奖链接
-	function nsmaxLearnSpecialPost(id, op, title, comments = null, row = null) {
+	function nsmaxLearnSpecialPost(id, op, title, comments = null, row = null, doc = null) {
 		const kinds = nsmaxSpecialKindsOf(op);
 		let time = nsmaxLotteryTimeOf(op, id);
 		if (!kinds.includes("lottery") && comments) {
@@ -25367,18 +25390,23 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		nsmaxRememberLotteryTime(id, time);
 		if (kinds.includes("lottery")) {
 			nsmaxRememberLotteryEnded(id, NSMAX_LOTTERY_ENDED_TITLE.test(title) || nsmaxLotteryEndedIn(op));
-			nsmaxRememberLotteryRow(row || nsmaxListRowOf(id));
+			const listRow = row || nsmaxListRowOf(id);
+			if (listRow) nsmaxRememberLotteryRow(listRow);
+			else if (doc) nsmaxRememberLotteryFromPost(id, doc);
 		}
 		nsmaxMarkSpecialChecked(id);
 		return kinds.includes("lottery");
 	}
 	// 悬停预览读到的帖子（第一页、主帖正文已经完整）：顺手认一下是不是抽奖帖，列表里马上挂上「抽奖」，以后也不用再去后台查。
-	// 主帖里没有开奖链接时不算「查过」（评论没读，留给后台按评论再认）
+	// 主帖里没有开奖链接且响应未包含评论区时不记为「已查过」（留给后台再核对评论）
 	function nsmaxLearnSpecialFromPreview(href, doc) {
 		const id = String(href).match(/\/post-(\d+)-1(?:[?#]|$)/)?.[1];
 		const op = id && doc.querySelector(".nsk-post article.post-content, .nsk-post .post-content");
-		if (!op || !nsmaxSpecialKindsOf(op).includes("lottery")) return;
-		nsmaxLearnSpecialPost(id, op, doc.querySelector(".nsk-post .post-title")?.textContent || "");
+		if (!op) return;
+		const kinds = nsmaxSpecialKindsOf(op);
+		const comments = !kinds.includes("lottery") && doc.querySelector("ul.comments") ? nsmaxCommentLuckyParams(doc, id) : null;
+		if (!kinds.includes("lottery") && !comments) return;
+		nsmaxLearnSpecialPost(id, op, doc.querySelector(".nsk-post .post-title")?.textContent || "", comments, null, doc);
 		nsmaxLotteryRefresh();
 	}
 	// 页面在滚动（最近 1.5 秒内滚过）时先不发后台请求：滚动时新露出来的头像、图片正在下，等停下来再说
@@ -25509,6 +25537,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	}
 	var nsmaxLotteryFailedIds = [];
 	var nsmaxLotteryCtx = null;
+	var nsmaxLotteryCrawling = false;
 	function nsmaxFilterLotteryRows() {
 		const known = nsmaxSpecialPostMap(), checked = nsmaxSpecialChecked(), activeOnly = nsmaxLotteryActiveOnly();
 		let blocked = false, shown = 0, visibleActive = 0, pending = 0, total = 0;
@@ -25542,8 +25571,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			// 没查成的（网络出错、站点限流）：说一声，给一个「重试」，不再一声不响地当成「不是」。
 			// 站点限流过（后台暂停 10 分钟，见 NSMAX_BG_PAUSE_KEY）：还没查的先停着，「重试」马上接着查
 			const paused = (pending > 0 || failed.length > 0) && nsmaxBackgroundPaused();
+			const crawling = nsmaxLotteryCrawling && !paused && !pending && !failed.length && !shown;
 			const filteredEmpty = activeOnly && !pending && !failed.length && shown > 0 && visibleActive === 0;
-			const text = paused ? "站点限流，识别先停一会儿" : pending ? `正在识别抽奖帖 ${total - pending} / ${total}` : failed.length ? `有 ${failed.length} 篇没能识别（网络或站点限流）` : filteredEmpty ? "这一页没有进行中的抽奖帖" : shown ? "" : "这一页没有抽奖帖";
+			const text = paused ? "站点限流，识别先停一会儿" : pending ? `正在识别抽奖帖 ${total - pending} / ${total}` : failed.length ? `有 ${failed.length} 篇没能识别（网络或站点限流）` : crawling ? "正在从最新帖子中识别抽奖帖…" : filteredEmpty ? "这一页没有进行中的抽奖帖" : shown ? "" : "这一页没有抽奖帖";
 			if (status.dataset.nsmaxText !== text) {
 				status.dataset.nsmaxText = text;
 				const parts = [text];
@@ -25572,8 +25602,8 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				}
 				status.replaceChildren(...parts);
 			}
-			nsmaxFlag(status, "data-nsmax-busy", pending > 0 && !paused);
-			nsmaxFlag(status, "hidden", !pending && !failed.length && !filteredEmpty && shown > 0);
+			nsmaxFlag(status, "data-nsmax-busy", (pending > 0 || crawling) && !paused);
+			nsmaxFlag(status, "hidden", !pending && !failed.length && !crawling && !filteredEmpty && shown > 0);
 		}
 		return pending;
 	}
@@ -25615,6 +25645,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		if (nsmaxLotteryViewBusy) return;
 		if (!pending) {
 			nsmaxLotteryRecheckStale(ctx);
+			nsmaxLotteryCrawlLater(ctx);
 			return;
 		}
 		nsmaxLotteryViewBusy = true;
@@ -25645,6 +25676,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const next = document.querySelector("#nsk-body-left .nsk-pager a.pager-next[href]");
 		if (next && !ctx.signal.aborted && !nsmaxBackgroundPaused()) nsmaxWhenIdle("lottery-next", () => nsmaxPrefetchLotteryPage(ctx, next.getAttribute("href")));
 		nsmaxLotteryRecheckStale(ctx);
+		nsmaxLotteryCrawlLater(ctx);
 	}
 	// 「抽奖」页上查过不是、但 30 分钟以上没再查过的（2026-11-01：楼主常常先发帖、过几分钟才编辑补上开奖链接，刚发出来时查过一次「不是」
 	// 就一直藏着）：在后台再查一遍，一次打开页面最多 6 篇、从上往下。已经显示的行不等它们；认出来就按顺序接上
@@ -25665,6 +25697,25 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	// 抽奖页查完当前页后，把下一页里没查过的帖子在后台低优先级查掉，翻到下一页时大多已经有结论，直接显示。一次最多查 25 篇。
 	// 站内搜索要登录，没登录不查；省流量模式、2G 网络下不查；页面切到后台、站点限流过（后台暂停中）就停。
 	// 2026-10-24：别的页面上不再每 30 分钟在后台查一遍「抽奖」搜索第一页和「新帖子」列表（一次几十篇，站点开始限流）
+	var NSMAX_LOTTERY_INDEX_KEY = "nsmax:lottery-index-at";
+	function nsmaxLotteryIndexReady(commit = false) {
+		if (!unsafeWindow$1.__config__?.user) return false;
+		try {
+			if (Date.now() - (Number(localStorage.getItem(NSMAX_LOTTERY_INDEX_KEY)) || 0) < 10 * 60e3) return false;
+			if (commit) localStorage.setItem(NSMAX_LOTTERY_INDEX_KEY, String(Date.now()));
+			return true;
+		} catch {
+			return false;
+		}
+	}
+	function nsmaxLotteryCrawlLater(ctx) {
+		if (document.readyState === "loading" || nsmaxLotteryCrawling || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
+		if (navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "")) return;
+		const current = document.querySelector("#nsk-body-left .nsk-pager :is(.pager-cur, [data-nsmax-pg-cur])");
+		if (current && current.textContent.trim() !== "1") return;
+		if (!nsmaxLotteryIndexReady(false)) return;
+		nsmaxWhenIdle("lottery-crawl", () => nsmaxCrawlNewPosts(ctx));
+	}
 	async function nsmaxPrefetchLotteryPage(ctx, url) {
 		if (!unsafeWindow$1.__config__?.user || navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "") || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
 		let html = "";
@@ -25678,8 +25729,63 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const ids = [...new Set(Array.from(doc.querySelectorAll("ul.post-list > li.post-list-item .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]))].filter((id) => id && !checked.has(id) && !known.has(id)).slice(0, 25);
 		while (ids.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) await nsmaxCheckSpecialPost(ctx, ids.shift());
 	}
-	// 2026-11-09 去掉了「抽奖」页上在后台读「新帖子」列表、一篇篇查标题没写「抽奖」的帖子（一次 20 篇，容易被限流）。
-	// 这类抽奖帖点开过就会按开奖链接认出来，并进「抽奖」页（见 nsmaxPrizeBadges、nsmaxMergeLotteryRows）
+	// 2026-11-24：站内搜索只搜标题，标题不含「抽奖」但含 /lucky?… 开奖链接的抽奖帖搜不到。
+	// 停留在「抽奖」分类第一页时（每 10 分钟最多一次），后台低优先级读一眼「新帖子」列表，按内容核对未查过的帖子并实时并入「抽奖」分类。
+	async function nsmaxCrawlNewPosts(ctx) {
+		if (nsmaxLotteryCrawling || !nsmaxIsLotteryView() || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
+		if (navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "")) return;
+		const current = document.querySelector("#nsk-body-left .nsk-pager :is(.pager-cur, [data-nsmax-pg-cur])");
+		if (current && current.textContent.trim() !== "1") return;
+		if (!nsmaxLotteryIndexReady(true)) return;
+		nsmaxLotteryCrawling = true;
+		nsmaxFilterLotteryRows();
+		try {
+			let html = "";
+			try {
+				html = await ctx.request("/?sortBy=postTime", { responseType: "text", signal: ctx.signal, priority: "low" });
+			} catch {
+				return;
+			}
+			const doc = new DOMParser().parseFromString(html, "text/html");
+			const checked = nsmaxSpecialChecked(), known = nsmaxSpecialPostMap(), rows = nsmaxLotteryRows();
+			const priority = [], rest = [];
+			let remembered = 0;
+			for (const item of doc.querySelectorAll("ul.post-list > li.post-list-item")) {
+				const link = item.querySelector(".post-title a[href*='/post-']");
+				const id = link?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1];
+				if (!id) continue;
+				if ((known.get(id) || "").split(",").includes("lottery")) {
+					if (!rows.has(id)) {
+						nsmaxRememberLotteryRow(item);
+						remembered++;
+					}
+				} else if (!checked.has(id) && !known.has(id) && !nsmaxSpecialFailed.has(id)) {
+					const titleText = link.textContent || "";
+					if (NSMAX_LOTTERY_HINT.test(titleText) || NSMAX_GIVEAWAY_HINT.test(titleText)) priority.push([id, item]);
+					else rest.push([id, item]);
+				}
+			}
+			const applyMerged = () => {
+				if (!nsmaxIsLotteryView() || !nsmaxMergeLotteryRows()) return;
+				nsmaxProcessPostListRows();
+				nsmaxApplyChineseTimes();
+				nsmaxPrizeBadges();
+				const list = document.querySelector("#nsk-body-left ul.post-list:not(.topic-carousel-panel)");
+				if (list) nsmaxBindPreviewScope?.(list);
+				nsmaxFilterLotteryRows();
+			};
+			if (remembered) applyMerged();
+			const todo = [...priority, ...rest].slice(0, 15);
+			while (todo.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) {
+				const [id, item] = todo.shift();
+				await nsmaxCheckSpecialPost(ctx, id, item);
+				applyMerged();
+			}
+		} finally {
+			nsmaxLotteryCrawling = false;
+			if (nsmaxIsLotteryView()) nsmaxFilterLotteryRows();
+		}
+	}
 	// 认出来的抽奖帖在列表上的样子（标题、作者、版块、浏览 / 回复数、最后回复、时间），记在本机，最多 200 篇（编号最大的那些）
 	var NSMAX_LOTTERY_ROWS_KEY = "nsmax:lottery-rows";
 	var nsmaxLotteryRowsMap;
@@ -25713,6 +25819,47 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const map = nsmaxLotteryRows();
 		if (JSON.stringify(map.get(id)) === JSON.stringify(row)) return;
 		map.set(id, row);
+		if (map.size > 200) map.delete([...map.keys()].reduce((a, b) => Number(a) < Number(b) ? a : b));
+		try { localStorage.setItem(NSMAX_LOTTERY_ROWS_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
+	// 直接点开帖子或悬停预览时，若列表尚未记录过该帖，则从帖子详情页补记列表行，确保无「抽奖」标题的帖子也能并入「抽奖」分类
+	function nsmaxRememberLotteryFromPost(id, root = document) {
+		const key = String(id || "");
+		const post = root?.querySelector?.(".nsk-post");
+		if (!key || !post) return;
+		const titleEl = post.querySelector(".post-title a[href*='/post-']");
+		let titleText = (titleEl?.textContent || "").trim();
+		if (!titleText) {
+			const rawTitle = post.querySelector(".post-title h1, .post-title")?.cloneNode(true);
+			rawTitle?.querySelectorAll(".nsmax-prize-badge, .nsmax-ended-badge, .nsmax-joined-badge, .nsmax-replied-badge, .nsmax-poll-badge, [data-nsmax-lock], .nsmax-topic-pages").forEach((el) => el.remove());
+			titleText = (rawTitle?.textContent || "").replace(/\s+/g, " ").trim();
+		}
+		if (!titleText) return;
+		const prev = nsmaxLotteryRows().get(key) || {};
+		const uid = (el) => el?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1] || "";
+		const author = post.querySelector(".nsk-content-meta-info .author-info a.author-name, .author-info a[href*='/space/'], a[href*='/space/']");
+		const stamp = post.querySelector(".date-created time, .nsk-content-meta-info time");
+		const category = post.querySelector(".content-category a[href*='/categories/'], a[href*='/categories/']");
+		const configData = root === document ? unsafeWindow$1.__config__?.postData : null;
+		const floors = Array.from(root.querySelectorAll("ul.comments > li.content-item[id]"), (li) => Number(li.id)).filter((n) => Number.isFinite(n) && n > 0);
+		const replyCount = Number.isFinite(Number(configData?.commentCount)) ? String(configData.commentCount) : floors.length ? String(Math.max(...floors)) : (prev.r || "");
+		const row = {
+			t: titleText,
+			u: uid(author) || prev.u || "",
+			n: author?.textContent.trim() || prev.n || "",
+			v: Number.isFinite(Number(configData?.views)) ? String(configData.views) : (prev.v || ""),
+			r: replyCount,
+			lu: prev.lu || "",
+			ln: prev.ln || "",
+			th: prev.th || "",
+			td: stamp?.getAttribute("datetime") || prev.td || "",
+			tt: stamp?.getAttribute("title") || stamp?.textContent.trim() || prev.tt || "",
+			c: category?.getAttribute("href") || prev.c || "",
+			cn: category?.textContent.trim() || prev.cn || ""
+		};
+		const map = nsmaxLotteryRows();
+		if (JSON.stringify(map.get(key)) === JSON.stringify(row)) return;
+		map.set(key, row);
 		if (map.size > 200) map.delete([...map.keys()].reduce((a, b) => Number(a) < Number(b) ? a : b));
 		try { localStorage.setItem(NSMAX_LOTTERY_ROWS_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
@@ -25832,7 +25979,12 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				nsmaxMarkSpecialChecked(postId);
 				// 只纠正与正文外帖链接时间吻合的旧污染。第一页未见链接不能证明缓存无效，链接可能在后续评论页。
 				if (!time && nsmaxCommentLuckyPage === location.pathname && /^\/post-\d+(?:-1)?$/.test(location.pathname)) nsmaxForgetForeignLotteryTime(postId, op);
-				if (kinds.includes("lottery")) nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title a[href*='/post-']")?.textContent || "") || nsmaxLotteryEndedIn(op));
+				if (kinds.includes("lottery")) {
+					nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title a[href*='/post-']")?.textContent || "") || nsmaxLotteryEndedIn(op));
+					const row = nsmaxListRowOf(postId);
+					if (row) nsmaxRememberLotteryRow(row);
+					else nsmaxRememberLotteryFromPost(postId, document);
+				}
 			}
 		}
 		const known = nsmaxSpecialPostMap();
@@ -26662,10 +26814,12 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		return card;
 	}
 	function nsmaxPrepareLottery() {
-		for (const link of document.querySelectorAll('article.post-content a[href*="/lucky?"]:not([data-nsmax-lottery])')) {
+		for (const link of document.querySelectorAll("article.post-content a[href]:not([data-nsmax-lottery])")) {
 			// 卡片自己的「查看开奖」也是开奖链接：不跳过的话下一轮扫描又按它生成一张卡片，一层套一层
 			if (link.closest(".nsmax-lottery")) continue;
-			const params = nsmaxLuckyParams(link.href);
+			const raw = link.getAttribute("href") || "";
+			if (!/lucky/i.test(raw)) continue;
+			const params = nsmaxLuckyParams(raw);
 			if (!params) continue;
 			link.setAttribute("data-nsmax-lottery", "");
 			const article = link.closest("article.post-content") || document;
@@ -26684,15 +26838,27 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			(list?.matches("ul, ol") ? list : block).after(card);
 			nsmaxTrackLottery(card);
 		}
-		// 主帖里开奖链接是纯文字网址（没被渲染成链接）时也画一张卡片，放在主帖正文最后（2026-11-01）
-		const op = document.querySelector(".nsk-post article.post-content");
-		if (op && !op.hasAttribute("data-nsmax-lottery-text") && document.readyState !== "loading" && !op.querySelector(".nsmax-lottery")) {
-			op.setAttribute("data-nsmax-lottery-text", "");
-			const params = nsmaxLuckyUrlsIn(op).map((url) => nsmaxLuckyParams(url.href)).find(Boolean);
-			const card = params && nsmaxLotteryCardFor(params, op);
-			if (card) {
-				op.append(card);
-				nsmaxTrackLottery(card);
+		// 主帖或楼主自己评论里开奖链接是纯文字网址（没被渲染成链接）时也画一张卡片（2026-11-24 扩充楼主评论区）
+		if (document.readyState !== "loading") {
+			const op = document.querySelector(".nsk-post article.post-content");
+			const containers = op ? [op] : [];
+			for (const item of document.querySelectorAll("ul.comments > li.content-item")) {
+				if (!item.querySelector(":scope > .nsk-content-meta-info .author-info > .is-poster")) continue;
+				const body = item.querySelector(":scope > article.post-content");
+				if (body) containers.push(body);
+			}
+			const postId = nsmaxMyRepliesPost();
+			for (const container of containers) {
+				if (container.hasAttribute("data-nsmax-lottery-text")) continue;
+				container.setAttribute("data-nsmax-lottery-text", "");
+				const urls = nsmaxLuckyUrlsIn(container, { noQuote: container !== op });
+				const candidates = urls.map((url) => nsmaxLuckyParams(url.href)).filter(Boolean);
+				const params = candidates.find((p) => !postId || !p.url.searchParams.has("post") || Number(p.url.searchParams.get("post")) === postId) || candidates[0];
+				const card = params && nsmaxLotteryCardFor(params, container);
+				if (card) {
+					container.append(card);
+					nsmaxTrackLottery(card);
+				}
 			}
 		}
 		// 页面后来才有的信息（站点配置、登录提示、锁帖）：重画一遍，只改变了的地方
@@ -26962,7 +27128,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	// 「搜索 关键词 · 版块 · 第几页」，13.5px 次要色、关键词正文色；一条结果都没有时排序、分页、空列表（还有站点自己那句提示）都收起来，
 	// 换成 sb.sb 的 .empty-state 面板：「没有找到相关帖子」+ 一行提示 +「换个关键词」（打开站点自己的搜索框）/「搜索全部版块」（带了版块筛选时）
 	function nsmaxPrepareSearch() {
-		if (location.pathname !== "/search") return;
+		if (location.pathname !== "/search" || nsmaxIsLotteryView()) return;
 		const left = document.querySelector("#nsk-body-left");
 		if (!left) return;
 		const params = new URLSearchParams(location.search);
@@ -31560,13 +31726,8 @@ function nsmaxTagStructure() {
 					const nativeCategory = document.querySelector("#editor select#category");
 					const category = make("select", "nsmax-lucky-input");
 					for (const option of nativeCategory?.options || []) category.append(new Option(option.textContent.trim(), option.value, false, option.value === nativeCategory.value));
-					const titleInput = input("text", "", { maxlength: "120" });
+					const titleInput = input("text", "", { maxlength: "120", placeholder: "可自由填写标题（不限是否含「抽奖」）" });
 					let titleTouched = false;
-					const existingTitle = (titleEl || document.querySelector("#mde-title, .post-title-input, [name=title], input[placeholder*='标题']"))?.value?.trim() || "";
-					if (existingTitle && /抽奖/.test(existingTitle)) {
-						const inferred = nsmaxLotteryPrizeFromTitle(existingTitle);
-						if (inferred) prize.value = inferred.slice(0, 60);
-					}
 					titleInput.addEventListener("input", () => { titleTouched = true; });
 					const row = (...children) => {
 						const box = make("div", "nsmax-lucky-row");

@@ -7314,11 +7314,12 @@ test("2026-10-24 「抽奖」分类识别不再把站点刷到限流：同时只
 	} finally { await context.close(); }
 });
 
-test("2026-10-24 普通页面不再在后台成批取帖子（v1.8.37：标题不像抽奖的每页另查 60 篇，登录后每 30 分钟还要读「抽奖」搜索和「新帖子」列表再查几十篇）：标题不像抽奖的不取，像的等页面加载完再一篇一篇查、一页最多 12 篇", async () => {
-	const titles = Array.from({ length: 20 }, (_, i) => i < 15 ? `抽奖送 VPS 第 ${i + 1} 台` : `普通帖子 ${i + 1}`);
-	const html = listPage({ count: 20 }).replace(/(<div role="heading" aria-level="3" class="post-title"><a href="\/post-(\d+)-1"[^>]*>)[^<]*/g, (match, head, id) => head + titles[Number(id) - 1000]);
+test("2026-11-24 普通页面按内容检查列表每一篇是否含开奖链接（疑似抽奖标题优先、其余帖子随后在后台一篇一篇查，不读搜索/新帖子列表，仍严格隔开请求）", async () => {
+	const titles = Array.from({ length: 12 }, (_, i) => i < 6 ? `抽奖送 VPS 第 ${i + 1} 台` : i === 8 ? "周末随便聊聊" : `普通帖子 ${i + 1}`);
+	const html = listPage({ count: 12 }).replace(/(<div role="heading" aria-level="3" class="post-title"><a href="\/post-(\d+)-1"[^>]*>)[^<]*/g, (match, head, id) => head + titles[Number(id) - 1000]);
+	const lucky = (id) => postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=${id}&amp;time=1893456000000&amp;count=1">开奖</a></p></article>`);
 	const pages = {};
-	for (let i = 0; i < 20; i++) pages[`/post-${1000 + i}-1`] = postPage();
+	for (let i = 0; i < 12; i++) pages[`/post-${1000 + i}-1`] = i === 8 ? lucky(1008) : postPage();
 	const asked = [];
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
 		html, seed: NO_PREVIEW, viewport: { width: 1280, height: 900 }, pages,
@@ -7331,12 +7332,14 @@ test("2026-10-24 普通页面不再在后台成批取帖子（v1.8.37：标题�
 		await page.waitForFunction(() => document.readyState === "complete");
 		const loadedAt = await page.evaluate(() => performance.timeOrigin + performance.getEntriesByType("navigation")[0].loadEventStart);
 		await page.waitForFunction(() => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= 12; } catch { return false; } }, null, { timeout: 25e3 });
-		await page.waitForTimeout(2500);
+		await page.waitForSelector(".post-list-item:nth-child(9) .nsmax-prize-badge", { timeout: 5e3 });
 		const paths = asked.map(([path]) => path);
 		assert.deepEqual(paths.filter((path) => !path.startsWith("/post-")), [], "不读搜索、不读「新帖子」列表");
 		const posts = [...new Set(paths)];
-		assert.equal(posts.length, 12, "标题像抽奖的一页最多查 12 篇：" + posts.join());
-		assert.deepEqual(posts.filter((path) => Number(path.match(/post-(\d+)/)[1]) >= 1015), [], "标题不像抽奖的不取");
+		assert.equal(posts.length, 12, "标题不含抽奖的帖子也会在后台逐篇按内容核对：" + posts.join());
+		assert.deepEqual(posts.slice(0, 6), ["/post-1000-1", "/post-1001-1", "/post-1002-1", "/post-1003-1", "/post-1004-1", "/post-1005-1"], "疑似抽奖标题优先排在前面");
+		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}")["1008"]), "lottery", "普通标题「周末随便聊聊」因含开奖链接照样认成抽奖帖");
+		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")["1008"]?.t), "周末随便聊聊");
 		assert.ok(asked[0][1] >= loadedAt - 50, "页面加载完以后才开始取");
 		const gaps = asked.slice(1).map(([, at], i) => at - asked[i][1]);
 		assert.ok(Math.min(...gaps) >= 500, "一篇一篇来、前后隔开：" + gaps.join());
@@ -7376,14 +7379,19 @@ test("2026-10-24 站点限流（429 / 503）时后台的活马上停下：不重
 	} finally { await context.close(); }
 });
 
-test("按内容认抽奖帖（标题里没写「抽奖」的）：开奖链接在主帖里、或者在评论里（指向这一篇）都算，点开帖子时认出来；2026-11-09 起「抽奖」分类页不再在后台读「新帖子」列表一篇篇查", async () => {
+test("2026-11-24 按内容认抽奖帖（无论标题和正文是否含抽奖字样）：开奖链接在主帖或指向本帖的评论里都算（引用别帖不算），「抽奖」分类页从新帖子中补充识别并并入列表，点开帖子同样认出来", async () => {
 	const link = (id) => `<a href="https://www.nodeseek.com/lucky?post=${id}&amp;time=1893456000000&amp;count=3">https://www.nodeseek.com/lucky?post=${id}</a>`;
 	const pages = {
 		"/": listPage(),
-		// 1000：标题「出一台香港 CN2 GIA 小鸡」，主帖里有开奖链接
+		// 1000：标题「出一台香港 CN2 GIA 小鸡，年付 99」，主帖里有开奖链接
 		"/post-1000-1": postPage().replace("</article>", `<p>回复本帖参与 ${link(1000)}</p></article>`),
-		// 1002：主帖只说「评论区随机送出 3 份」，开奖链接是楼主贴在评论里的
-		"/post-1002-1": postPage().replace('href="/post-1000-1" class="post-title-link', 'href="/post-1002-1" class="post-title-link').replace("这是一段正文", "庆祝脚本上线，评论区随机送出 3 份").replace("收了，私信你", `开奖链接 ${link(1002)}`)
+		"/post-1001-1": postPage(),
+		// 1002：标题和主帖都毫无抽奖关键词，只有评论里贴了指向本帖的开奖链接
+		"/post-1002-1": postPage().replace('href="/post-1000-1" class="post-title-link', 'href="/post-1002-1" class="post-title-link').replace("这是一段正文", "一楼放重要信息").replace("收了，私信你", `开奖链接 ${link(1002)}`),
+		"/post-1003-1": postPage(),
+		// 1004：评论里贴的是别的帖子的开奖链接 -> 不算
+		"/post-1004-1": postPage().replace("收了，私信你", `上次那个 ${link(777)}`),
+		"/post-1005-1": postPage()
 	};
 	const asked = [];
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
@@ -7391,12 +7399,18 @@ test("按内容认抽奖帖（标题里没写「抽奖」的）：开奖链接�
 		beforeNavigate: (p) => p.on("request", (request) => { const url = new URL(request.url()); if (url.pathname === "/" || /^\/post-/.test(url.pathname)) asked.push(url.pathname + url.search); })
 	});
 	try {
-		await page.waitForFunction(() => document.readyState === "complete");
-		await page.waitForTimeout(3000);
-		assert.deepEqual(asked, [], "不读「新帖子」列表、不在后台查帖子");
+		await page.waitForFunction(() => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= 6; } catch { return false; } }, null, { timeout: 25e3 });
+		await page.waitForFunction(() => document.querySelectorAll("li[data-nsmax-lottery-merged][data-nsmax-lottery='yes']").length === 2, null, { timeout: 5e3 });
+		assert.equal(asked[0], "/?sortBy=postTime", "在抽奖页按冷却读新帖子列表补充识别无「抽奖」标题的帖子");
+		const state = await page.evaluate(() => ({
+			merged: Array.from(document.querySelectorAll("li[data-nsmax-lottery-merged][data-nsmax-lottery='yes']"), (li) => [li.querySelector(".post-title a").getAttribute("href"), !!li.querySelector(".nsmax-prize-badge")]),
+			foreign: JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}")["1004"] ?? null
+		}));
+		assert.deepEqual(state.merged, [["/post-1002-1", true], ["/post-1000-1", true]], "1000 和 1002 都按编号并入抽奖分类且挂「抽奖」标");
+		assert.equal(state.foreign, null, "评论里引用别的帖子开奖链接的不算");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
-	// 打开帖子本身：开奖链接在评论里，标题前也挂「抽奖」
+	// 直接打开帖子本身：标题和正文都没有「抽奖」字眼，仅评论里有本帖开奖链接，照样认出来并在标题前挂「抽奖」
 	const post = await open(browser, "https://www.nodeseek.com/post-1002-1", { html: pages["/post-1002-1"], viewport: { width: 1280, height: 800 } });
 	try {
 		await post.page.waitForFunction(() => { try { return JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}")["1002"] === "lottery"; } catch { return false; } }, null, { timeout: 5e3 });
