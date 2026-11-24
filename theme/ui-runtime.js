@@ -1411,9 +1411,9 @@
 	}
 	// 「抽奖」分类第一页：本机认出来、但站内搜索「抽奖」没搜到的抽奖帖（标题里没写「抽奖」的）按编号插进列表（不比这一页最旧的
 	// 那篇还旧的才插，更旧的属于后面几页）。插进来的行和别的行一样按顺序显示
-	function nsmaxMergeLotteryRows() {
+	function nsmaxMergeLotteryRows(parsed) {
 		const list = document.querySelector("#nsk-body-left ul.post-list:not(.topic-carousel-panel)");
-		if (!list || document.readyState === "loading") return 0;
+		if (!list || (parsed ? !parsed(list) : document.readyState === "loading")) return 0;
 		const current = document.querySelector("#nsk-body-left .nsk-pager :is(.pager-cur, [data-nsmax-pg-cur])");
 		if (current && current.textContent.trim() !== "1") return 0;
 		const idOf = (item) => Number(item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1] || 0);
@@ -1425,8 +1425,8 @@
 		const known = nsmaxSpecialPostMap();
 		const adding = [...nsmaxLotteryRows()].filter(([id]) => !present.has(Number(id)) && (known.get(id) || "").split(",").includes("lottery") && !(oldest !== Infinity && Number(id) < oldest)).sort((a, b) => Number(b[0]) - Number(a[0]));
 		if (!adding.length) return 0;
-		// 插在屏幕上方会把正在看的内容往下推：记下屏幕里第一行的位置，插完把页面滚回去（Safari 没有浏览器自带的滚动锚定）
-		const anchor = items.find((item) => item.getBoundingClientRect().bottom > 0);
+		// 插在屏幕上方会把正在看的内容往下推：记下屏幕里第一行的位置，插完把页面滚回去（Safari 没有浏览器自带的滚动锚定；顶部首帧不量尺寸以免提前排版）
+		const anchor = scrollY > 0 ? items.find((item) => item.getBoundingClientRect().bottom > 0) : null;
 		const top = anchor?.getBoundingClientRect().top;
 		for (const [id, row] of adding) {
 			let before = null;
@@ -1475,15 +1475,17 @@
 	var nsmaxCommentLuckyPage = "";
 	var nsmaxCommentLucky = "";
 	var nsmaxCommentLuckyTime = 0;
-	function nsmaxPrizeBadges() {
+	function nsmaxPrizeBadges(parsed) {
 		const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
 		const op = postId && document.querySelector(".nsk-post article.post-content");
-		if (op) {
+		if (op && (!parsed || parsed(op))) {
 			const kinds = nsmaxSpecialKindsOf(op);
 			if (!kinds.includes("poll") && document.querySelector("#nsk-body-left .vote-panel[data-nsmax-detached]")) kinds.push("poll");
 			let time = nsmaxLotteryTimeOf(op, postId);
 			// 引用其他帖的链接也会得到抽奖类型，但时间必须来自本帖；完整评论每页只读一次。
-			if (!time && document.readyState !== "loading" && nsmaxCommentLuckyPage !== location.pathname) {
+			const comments = document.querySelector(".comment-container");
+			const commentsReady = !parsed || document.readyState !== "loading" || !!(comments && parsed(comments));
+			if (!time && commentsReady && nsmaxCommentLuckyPage !== location.pathname) {
 				nsmaxCommentLuckyPage = location.pathname;
 				nsmaxCommentLucky = "";
 				nsmaxCommentLuckyTime = 0;
@@ -2046,7 +2048,8 @@
 		const guest = here && (!!document.querySelector("#nsk-body-left .login-notes") || !!config && !config.user) || !uid;
 		const stats = card._nsmaxStats || card._nsmaxResult?.s;
 		const result = card._nsmaxResult && typeof card._nsmaxResult === "object" ? card._nsmaxResult : null;
-		const opUid = String(here && config?.postData?.op?.uid || stats?.op || "");
+		const domOpUid = here ? (document.querySelector(".nsk-post .author-info a[href*='/space/']")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1] || "") : "";
+		const opUid = String(here && config?.postData?.op?.uid || stats?.op || domOpUid || "");
 		const mine = new Set(guest ? [] : (result && result.u !== uid ? [] : stats?.mine || []));
 		const local = Number(card.dataset.nsmaxMine);
 		if (!guest && local > 0) mine.add(local);
@@ -2098,13 +2101,25 @@
 			if (odds) nsmaxSetAttr(people, "data-nsmax-odds", odds);
 			else nsmaxDropAttr(people, "data-nsmax-odds");
 		}
-		// 名单取不到（被限流、站点改版）：这一行收起，不写一个看不懂的「—」
+		// 没有楼层数据时隐藏这一行，与既定行为保持一致
 		const peopleRow = people?.parentElement;
 		if (peopleRow && peopleRow.hidden !== (!stats && !!card._nsmaxLoaded)) peopleRow.hidden = !stats && !!card._nsmaxLoaded;
-		// 中奖：开奖以后才有这一行；超过 12 位中奖者默认折叠并保留自己那一枚
+		// 中奖：开奖以后才有这一行；超过 12 位中奖者默认折叠并保留自己那一枚；多中奖名额加载时预留两行高度以免开奖名单渲染后撑开页面
 		const winRow = card.querySelector(".nsmax-lottery-fact[data-nsmax-fact='winners']");
 		if (winRow && winRow.hidden !== !done) winRow.hidden = !done;
 		const winners = card.querySelector(".nsmax-lottery-winners");
+		if (winners) {
+			let knownReplies = null;
+			if (done && !result && card._nsmaxResult !== "failed" && rule.count >= 8) {
+				const cfg = unsafeWindow$1.__config__?.postData;
+				const domFloors = viewer.here ? document.querySelectorAll("#nsk-body-left ul.comments li.content-item[id]").length : 0;
+				const pages = viewer.here ? Math.max(1, Number(cfg?.postPageCount) || 1) : 1;
+				const cachedReplies = nsmaxReplyCounts().get(String(rule.post))?.[0] || 0;
+				knownReplies = Math.max(cachedReplies, domFloors, pages > 1 ? (pages - 1) * nsmaxCommentsPerPage() + 1 : 0) || null;
+			}
+			const expectTwoRows = done && !result && card._nsmaxResult !== "failed" && rule.count >= 8 && (knownReplies === null || knownReplies >= 8);
+			nsmaxFlag(winners, "data-nsmax-win-rows", expectTwoRows, "2");
+		}
 		const expanded = !!card._nsmaxWinnersExpanded;
 		const winSig = !done ? "" : result ? (expanded ? "1:" : "0:") + JSON.stringify(result.w.map((w) => [w.floor, w.name, w.uid === viewer.uid])) : card._nsmaxResult === "failed" ? "failed" : "loading";
 		if (winners && winners.dataset.nsmaxSig !== winSig) {
@@ -2338,16 +2353,17 @@
 		join.addEventListener("click", () => nsmaxLotteryJoin());
 		return card;
 	}
-	function nsmaxPrepareLottery() {
+	function nsmaxPrepareLottery(parsed) {
 		for (const link of document.querySelectorAll("article.post-content a[href]:not([data-nsmax-lottery])")) {
 			// 卡片自己的「查看开奖」也是开奖链接：不跳过的话下一轮扫描又按它生成一张卡片，一层套一层
 			if (link.closest(".nsmax-lottery")) continue;
+			const article = link.closest("article.post-content");
+			if (parsed && (!article || !parsed(article))) continue;
 			const raw = link.getAttribute("href") || "";
 			if (!/lucky/i.test(raw)) continue;
 			const params = nsmaxLuckyParams(raw);
 			if (!params) continue;
 			link.setAttribute("data-nsmax-lottery", "");
-			const article = link.closest("article.post-content") || document;
 			const reply = !link.closest(".nsk-post") && link.closest("li.content-item");
 			if (reply && (link.closest("blockquote") || !reply.querySelector(":scope > .nsk-content-meta-info .author-info > .is-poster"))) continue;
 			const card = nsmaxLotteryCardFor(params, article);
@@ -2363,27 +2379,25 @@
 			(list?.matches("ul, ol") ? list : block).after(card);
 			nsmaxTrackLottery(card);
 		}
-		// 主帖或楼主自己评论里开奖链接是纯文字网址（没被渲染成链接）时也画一张卡片（2026-11-24 扩充楼主评论区）
-		if (document.readyState !== "loading") {
-			const op = document.querySelector(".nsk-post article.post-content");
-			const containers = op ? [op] : [];
-			for (const item of document.querySelectorAll("ul.comments > li.content-item")) {
-				if (!item.querySelector(":scope > .nsk-content-meta-info .author-info > .is-poster")) continue;
-				const body = item.querySelector(":scope > article.post-content");
-				if (body) containers.push(body);
-			}
-			const postId = nsmaxMyRepliesPost();
-			for (const container of containers) {
-				if (container.hasAttribute("data-nsmax-lottery-text")) continue;
-				container.setAttribute("data-nsmax-lottery-text", "");
-				const urls = nsmaxLuckyUrlsIn(container, { noQuote: container !== op });
-				const candidates = urls.map((url) => nsmaxLuckyParams(url.href)).filter(Boolean);
-				const params = candidates.find((p) => !postId || !p.url.searchParams.has("post") || Number(p.url.searchParams.get("post")) === postId) || candidates[0];
-				const card = params && nsmaxLotteryCardFor(params, container);
-				if (card) {
-					container.append(card);
-					nsmaxTrackLottery(card);
-				}
+		// 主帖或楼主自己评论里开奖链接是纯文字网址（没被渲染成链接）时也画一张卡片（2026-11-24 首帧前按节点解析状态就绪即画）
+		const op = document.querySelector(".nsk-post article.post-content");
+		const containers = op ? [op] : [];
+		for (const item of document.querySelectorAll("ul.comments > li.content-item")) {
+			if (!item.querySelector(":scope > .nsk-content-meta-info .author-info > .is-poster")) continue;
+			const body = item.querySelector(":scope > article.post-content");
+			if (body) containers.push(body);
+		}
+		const postId = nsmaxMyRepliesPost();
+		for (const container of containers) {
+			if (container.hasAttribute("data-nsmax-lottery-text") || parsed && !parsed(container)) continue;
+			container.setAttribute("data-nsmax-lottery-text", "");
+			const urls = nsmaxLuckyUrlsIn(container, { noQuote: container !== op });
+			const candidates = urls.map((url) => nsmaxLuckyParams(url.href)).filter(Boolean);
+			const params = candidates.find((p) => !postId || !p.url.searchParams.has("post") || Number(p.url.searchParams.get("post")) === postId) || candidates[0];
+			const card = params && nsmaxLotteryCardFor(params, container);
+			if (card) {
+				container.append(card);
+				nsmaxTrackLottery(card);
 			}
 		}
 		// 页面后来才有的信息（站点配置、登录提示、锁帖）：重画一遍，只改变了的地方
@@ -2403,6 +2417,21 @@
 	// 让卡片的倒计时每秒走（卡片不在页面上了、开过奖结果也画好了，下一次走的时候自己去掉）
 	function nsmaxTrackLottery(card) {
 		nsmaxLotteryCards.add(card);
+		if (!card.dataset.nsmaxMine && !card.hasAttribute("data-nsmax-preview") && card.dataset.nsmaxPost) {
+			nsmaxLoadEarlyMyReplies();
+			const postId = Number(card.dataset.nsmaxPost);
+			const floors = (nsmaxMyRepliesEarly?.[postId] || []).slice();
+			if (postId === nsmaxMyRepliesPost()) {
+				const uid = nsmaxMyRepliesUid();
+				for (const li of document.querySelectorAll("#nsk-body-left ul.comments li.content-item[id]")) {
+					const floor = Number(li.id);
+					if (floor > 0 && !floors.includes(floor) && li.querySelector(":scope > .nsk-content-meta-info .author-info a[href*='/space/']")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1] === uid) floors.push(floor);
+				}
+				floors.sort((a, b) => a - b);
+			}
+			const joined = nsmaxParticipation(postId, floors, nsmaxMyJoinedEarly || {}, { start: Number(card.dataset.nsmaxStart), time: Number(card.dataset.nsmaxTime) });
+			if (joined.floor > 0) card.dataset.nsmaxMine = String(joined.floor);
+		}
 		nsmaxLotteryTick();
 		nsmaxRenderLottery(card);
 		nsmaxLoadLottery(card);
@@ -4141,6 +4170,21 @@ function nsmaxTagStructure() {
 				if (link.firstElementChild !== span) link.prepend(span);
 			}
 		}
+		// 帖子页主标题里的等级锁（.nsk-post > .post-title h1 > span，内含 svg > use[href="#lock"] + 数字或带行内字号的内层 span）：
+		// 与首页列表、个人主页保持同一套样式：记下等级、挪到标题前面，由 CSS 画成 18px 浅红「🔒 LvN」胶囊（2026-11-24）
+		for (const use of document.querySelectorAll('#nsk-body-left .nsk-post > .post-title h1 > span > svg > use[href="#lock"]')) {
+			const span = use.parentElement?.parentElement;
+			const h1 = span?.parentElement;
+			if (!h1 || h1.tagName !== "H1") continue;
+			const level = (span.textContent || "").trim();
+			if (!level) continue;
+			nsmaxFlag(span, "data-nsmax-lock", true);
+			if (span.getAttribute("data-nsmax-lock-level") !== level) {
+				span.setAttribute("data-nsmax-lock-level", level);
+				span.title = /^\d+$/.test(level) ? `等级 Lv${level} 及以上才能看` : level;
+			}
+			if (h1.firstElementChild !== span) h1.prepend(span);
+		}
 		nsmaxTagImageLinks();
 	nsmaxDecorateSignatures();
 		// 页面骨架：左栏是否为空、是否帖子页；右栏是否为空
@@ -4648,10 +4692,23 @@ function nsmaxTagStructure() {
 		nsmaxTidySidebar();
 		if (/^\/board(?:\/|$)/.test(location.pathname)) nsmaxCheckinPage();
 		if (location.pathname === "/progress") nsmaxProgressPage();
-		// 「抽奖」页：查过的抽奖帖首屏就显示、别的先不显示（没查过的等模块启动后在后台查）
-		if (nsmaxIsLotteryView()) nsmaxFilterLotteryRows();
-		nsmaxEarlyMyReplies(parsed);
-		if (!/^\/post-\d+/.test(location.pathname)) return;
+		// 「抽奖」页：首帧前一次同步并入已记住的抽奖帖、隐藏筛选、页码与状态行，避免先塌缩再整页撑开
+		if (nsmaxIsLotteryView()) {
+			for (const input of document.querySelectorAll("header input[name=q], #search-site2")) if (input.value.trim() === NSMAX_LOTTERY_QUERY) input.value = "";
+			nsmaxSyncLotteryActiveFilter();
+			if (nsmaxMergeLotteryRows(parsed)) {
+				nsmaxApplySbSuiteAliases();
+				nsmaxProcessPostListRows();
+				nsmaxApplyChineseTimes(parsed);
+				nsmaxPrizeBadges(parsed);
+			}
+			nsmaxMarkLotteryPager();
+			nsmaxFilterLotteryRows();
+		}
+		if (!/^\/post-\d+/.test(location.pathname)) {
+			nsmaxEarlyMyReplies(parsed);
+			return;
+		}
 		nsmaxGroupFloorActions(parsed);
 		nsmaxGroupNestedReplies(parsed);
 		nsmaxDecorateFloorBoxes();
@@ -4663,14 +4720,14 @@ function nsmaxTagStructure() {
 		nsmaxReserveMoreRow(parsed);
 		nsmaxWatchPollMount();
 		nsmaxPreparePolls(document);
+		nsmaxPrepareLottery(parsed);
 		// 统计（浏览数、回复数）要等评论区解析完才准，不然先显示一个偏小的回复数再变
 		const comments = document.querySelector(".comment-container");
 		if (!parsed || document.readyState !== "loading" || comments && parsed(comments)) {
 			nsmaxDecoratePostDetail();
-			// 抽奖帖：开奖链接换成的抽奖卡片在第一帧就放好（参与人要等评论区解析完才全，和统计同一时机）。
-			// 2026-10-23：以前等模块启动才插进正文，第一帧画出来之后整篇正文被往下推三百多像素
-			nsmaxPrepareLottery();
+			nsmaxPrizeBadges(parsed);
 		}
+		nsmaxEarlyMyReplies(parsed);
 	}
 	// 列表行在空闲时排好（2026-10-25，样式见主题第 72 节）：首屏照旧用 content-visibility:auto 先不排屏幕外的行
 	// （CPU 4 倍降速下首帧早 0.6 秒多）；页面整理完 1.5 秒后，每次浏览器空闲排 8 行（打上 data-nsmax-cv-done，改成 visible），
@@ -7933,20 +7990,22 @@ function nsmaxTagStructure() {
 	// 记录只读一次（几千篇帖子的记录，每解析一段就读一遍太费）
 	var nsmaxMyRepliesEarly;
 	var nsmaxMyJoinedEarly;
+	function nsmaxLoadEarlyMyReplies() {
+		if (nsmaxMyRepliesEarly !== undefined) return;
+		nsmaxMyRepliesEarly = null;
+		try {
+			const uid = nsmaxMyRepliesUid();
+			if (uid && typeof myRepliesFeature === "object" && featureEnabled(myRepliesFeature).enabled) {
+				const state = featureState("sb-my-replies");
+				const posts = state["posts:" + uid];
+				if (posts && typeof posts === "object" && !Array.isArray(posts)) nsmaxMyRepliesEarly = posts;
+				const joined = state["joined:" + uid];
+				nsmaxMyJoinedEarly = joined && typeof joined === "object" && !Array.isArray(joined) ? joined : {};
+			}
+		} catch {}
+	}
 	function nsmaxEarlyMyReplies(parsed) {
-		if (nsmaxMyRepliesEarly === undefined) {
-			nsmaxMyRepliesEarly = null;
-			try {
-				const uid = nsmaxMyRepliesUid();
-				if (uid && typeof myRepliesFeature === "object" && featureEnabled(myRepliesFeature).enabled) {
-					const state = featureState("sb-my-replies");
-					const posts = state["posts:" + uid];
-					if (posts && typeof posts === "object" && !Array.isArray(posts)) nsmaxMyRepliesEarly = posts;
-					const joined = state["joined:" + uid];
-					nsmaxMyJoinedEarly = joined && typeof joined === "object" && !Array.isArray(joined) ? joined : {};
-				}
-			} catch {}
-		}
+		nsmaxLoadEarlyMyReplies();
 		if (nsmaxMyRepliesEarly) nsmaxMyRepliesRender(nsmaxMyRepliesEarly, parsed, nsmaxMyJoinedEarly);
 	}
 	var myRepliesFeature = {
