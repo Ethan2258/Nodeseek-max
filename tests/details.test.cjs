@@ -192,7 +192,7 @@ for(const engine of engines){
     const info=sel=>{const el=document.querySelector(sel);if(!el)return null;const cs=getComputedStyle(el);return {prop:cs.transitionProperty,dur:cs.transitionDuration,anim:cs.animationName};};
     const vt=[...document.querySelectorAll("style")].map(n=>n.textContent).join("\n");
     return {
-     nav:info("#nsk-head ul.nav-menu > li > a"),
+     nav:info('#nsk-head ul.nav-menu > li > a:not([aria-current="page"]):not([data-nsmax-header-cat-on])'),
      action:info("#nsk-head .color-theme-switcher"),
      search:info("#nsk-head form.search-box"),
      sorter:info("#nsk-body-left > .post-list-controler > .sorter > a"),
@@ -216,7 +216,7 @@ for(const engine of engines){
    assert.equal(appendAnim,"nsmax-append-in");
    await list.page.emulateMedia({reducedMotion:"reduce"});
    const reduced=await list.page.evaluate(()=>({
-    navDur:getComputedStyle(document.querySelector("#nsk-head ul.nav-menu > li > a")).transitionDuration,
+    navDur:getComputedStyle(document.querySelector('#nsk-head ul.nav-menu > li > a:not([aria-current="page"]):not([data-nsmax-header-cat-on])')).transitionDuration,
     popAnim:getComputedStyle(document.querySelector(".nsmax-person-pop")).animationName,
     appendAnim:getComputedStyle(document.querySelector("#nsk-body-left ul.post-list > li.post-list-item[data-nsmax-append-in]")).animationName
    }));

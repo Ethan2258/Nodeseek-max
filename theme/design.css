@@ -430,6 +430,7 @@ html[data-nsmax-theme] :is(code, kbd, samp, pre) {
     background: var(--action) !important;
     color: var(--action-text) !important;
     font-weight: 500 !important;
+    transition: none !important;
   }
   html[data-nsmax-theme] #nsk-head :is(ul.nav-menu > li > a, [data-nsmax-header-cat] > a)::after,
   html[data-nsmax-theme] #nsk-head :is(ul.nav-menu > li > a, [data-nsmax-header-cat] > a)::before {
