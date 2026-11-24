@@ -103,3 +103,71 @@ test("悬停预览读到开奖链接：列表里马上挂上「抽奖」", async
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+test("v1.9.82 列表标题完全不含抽奖关键词（含 /jump 包装、仅评论区有开奖链接）仍自动识别并记入抽奖列表", async () => {
+	const titles = ["今天天气真不错", "Lv6 纪念随便聊聊", "随手记一下日常"];
+	const html = P.listPage({ count: 3 }).replace(/(<div role="heading" aria-level="3" class="post-title"><a href="\/post-(\d+)-1"[^>]*>)[^<]*/g, (m, head, id) => head + titles[Number(id) - 1000]);
+	const future = Date.now() + 2 * 864e5;
+	const pages = {
+		"/post-1000-1": P.postPage().replace("</article>", `<p><a href="/jump?to=${encodeURIComponent(`https://nodeseek.com/lucky?post=1000&time=${future}&count=1`)}">跳转开奖</a></p></article>`),
+		"/post-1001-1": P.postPage().replace("这是一段正文", "如题，一楼见").replace("收了，私信你", `https://www.nodeseek.com/lucky?post=1001&amp;time=${future}&amp;count=2`),
+		"/post-1002-1": P.postPage()
+	};
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html, viewport: { width: 1280, height: 900 }, pages });
+	try {
+		await page.waitForFunction(() => { try { const c = JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}"); return "1000" in c && "1001" in c && "1002" in c; } catch { return false; } }, null, { timeout: 20e3 });
+		await wait(page, 200);
+		const state = await page.evaluate(() => ({
+			badges: Array.from(document.querySelectorAll("ul.post-list > li.post-list-item .post-title"), (t) => [t.querySelector("a").textContent.trim(), !!t.querySelector(".nsmax-prize-badge")]),
+			posts: JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}"),
+			rows: Object.fromEntries(Object.entries(JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")).map(([k, v]) => [k, v.t]))
+		}));
+		assert.deepEqual(state.badges, [["今天天气真不错", true], ["Lv6 纪念随便聊聊", true], ["随手记一下日常", false]]);
+		assert.equal(state.posts["1000"], "lottery");
+		assert.equal(state.posts["1001"], "lottery");
+		assert.equal(state.rows["1000"], "今天天气真不错");
+		assert.equal(state.rows["1001"], "Lv6 纪念随便聊聊");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.9.82 直接打开无「抽奖」标题的帖子详情页会补记列表行，进入「抽奖」分类即可展示且不被搜索空状态误隐藏", async () => {
+	const future = Date.now() + 2 * 864e5;
+	const postHtml = P.postPage()
+		.replace(/href="\/post-1000-1" class="post-title-link[^"]*">[^<]*/g, 'href="/post-1088-1" class="post-title-link nspp-read">回馈坛友随便写两句')
+		.replace("</article>", `<p>规则看一楼：<a href="https://www.nodeseek.com/lucky?post=1088&amp;time=${future}&amp;count=2">开奖链接</a></p></article>`);
+	const pages = { "/search": P.searchPage({ count: 0 }) };
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1088-1", { html: postHtml, viewport: { width: 1280, height: 900 }, pages });
+	try {
+		await page.waitForFunction(() => { try { return !!JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")["1088"]; } catch { return false; } }, null, { timeout: 5e3 });
+		await page.evaluate(() => localStorage.setItem("nsmax:lottery-index-at", String(Date.now())));
+		await page.goto("https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", { waitUntil: "domcontentloaded" });
+		await page.waitForSelector("li[data-nsmax-lottery-merged][data-nsmax-lottery='yes'] .nsmax-prize-badge", { timeout: 5e3 });
+		const merged = await page.evaluate(() => {
+			const li = document.querySelector("li[data-nsmax-lottery-merged][data-nsmax-lottery='yes']");
+			return li && {
+				visible: li.getClientRects().length > 0,
+				title: li.querySelector(".post-title a")?.textContent.trim(),
+				href: li.querySelector(".post-title a")?.getAttribute("href"),
+				category: li.querySelector(".nsmax-inline-category")?.textContent.trim(),
+				emptyPanel: !!document.querySelector(".nsmax-search-empty")
+			};
+		});
+		assert.deepEqual(merged, { visible: true, title: "回馈坛友随便写两句", href: "/post-1088-1", category: "交易", emptyPanel: false });
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("v1.9.82 楼主自己在评论区（.is-poster）贴出的纯文本开奖链接（含 /lucky/?…）也能画成抽奖卡片", async () => {
+	const future = Date.now() + 2 * 864e5;
+	const html = P.postPage()
+		.replace('<a href="/space/11" class="author-name">buyer</a>', '<a href="/space/10" class="author-name">seller</a><span class="is-poster role-tag nsk-badge">楼主</span>')
+		.replace("收了，私信你", `补一个开奖地址：https://nodeseek.com/lucky/?post=1000&amp;time=${future}&amp;count=2`);
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
+	try {
+		await page.waitForSelector("ul.comments > li[id='1'] .nsmax-lottery", { timeout: 5e3 });
+		assert.equal(await page.locator("ul.comments > li[id='1'] .nsmax-lottery-count").textContent(), "2 个");
+		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}")["1000"]), "lottery");
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
