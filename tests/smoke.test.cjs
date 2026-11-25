@@ -16,8 +16,8 @@ test("编辑输入区：回复框保留圆角，内部文字选区保持直角�
 			const input=page.locator(".nsmax-editor-surface textarea:not(.CodeMirror textarea)");
 			await input.fill("刚刚\n之前冲过一波，你参考下。\nhostsailor\nV.PS\nhostdzire");
 			const read=()=>input.evaluate(e=>{const frame=e.closest("[data-nsmax-editor-pane]")||e,style=getComputedStyle(frame),inner=getComputedStyle(e),box=frame.getBoundingClientRect();return{corners:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],innerCorners:[inner.borderTopLeftRadius,inner.borderTopRightRadius,inner.borderBottomLeftRadius,inner.borderBottomRightRadius],width:box.width,height:box.height,padding:[parseFloat(style.paddingTop),parseFloat(style.paddingLeft)],color:style.borderColor};});
-			await input.evaluate(e=>e.blur());const before=await read();
-			await input.focus();await input.evaluate(e=>e.setSelectionRange(0,e.value.length));const focused=await read();
+			await input.evaluate(e=>e.blur());await wait(page,220);const before=await read();
+			await input.focus();await input.evaluate(e=>e.setSelectionRange(0,e.value.length));await wait(page,220);const focused=await read();
 			assert.deepEqual(before.corners,["8px","8px","8px","8px"]);assert.deepEqual(focused.corners,["8px","8px","8px","8px"],"聚焦不改圆角（2026-11-22）");
 			assert.deepEqual(focused.innerCorners,["0px","0px","0px","0px"]);
 			assert.equal(await input.evaluate(e=>e.closest("[data-nsmax-editor-pane]")===e||getComputedStyle(e).outlineWidth==="0px"),true,"聚焦提示只画在输入区外框，不在内层再画一圈");
