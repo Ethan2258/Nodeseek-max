@@ -237,4 +237,120 @@ for(const engine of engines){
    assert.deepEqual(post.errors,[]);
   }finally{await post.context.close();}
  });
+ test(`${engine} v1.9.85 全站细节巡检：手机标题徽章齐平、窄屏通知零跳动、表单与搜索浮层过渡统一、未定义变量修复、设置页标签不下沉且抽奖无障碍与减弱动态生效`,async()=>{
+  // 1. 手机端 390px 帖子标题里的「精华」「Lv4」「已回复」统一 18px 顶对齐到首行中线，.nsmax-tg 基础底色生效
+  const lock=` <span style="margin-left:5px;color: rgb(255 152 152);"><svg class="iconpark-icon" style="width: 14px;height: 14px;vertical-align: baseline;"><use href="#lock"></use></svg> <span style="font-size: 14px;font-family: sans-serif;">4</span></span>`;
+  const mobileHtml=P.postPage({mobile:true,award:true})
+   .replace(/(class="post-title-link[^"]*">[^<]*<\/a>)/,`$1${lock}`);
+  const repliedSeed={...seed,"nspp:state:www.nodeseek.com:sb-my-replies":{"posts:1":{1000:[3]},"joined:1":{},"posts:1:synced":Date.now(),"posts:1:done":true}};
+  const mob=await open(browser,"https://www.nodeseek.com/post-1000-1",{...phone(390),seed:repliedSeed,html:mobileHtml});
+  try{
+   await ready(mob.page);
+   await mob.page.waitForSelector(".nsk-post > .post-title h1 > span[data-nsmax-lock][data-nsmax-lock-level='4']");
+   await mob.page.waitForSelector(".nsk-post > .post-title h1 > .nsmax-replied-badge");
+   const m=await mob.page.evaluate(()=>{
+    const h1=document.querySelector(".nsk-post > .post-title h1");
+    const lockEl=h1.querySelector("span[data-nsmax-lock]");
+    const repEl=h1.querySelector(".nsmax-replied-badge");
+    const linkEl=h1.querySelector("a.post-title-link");
+    const tg=document.createElement("span");
+    tg.className="nsmax-tg";
+    document.body.append(tg);
+    const tgBg=getComputedStyle(tg).backgroundColor;
+    tg.remove();
+    const lcs=getComputedStyle(lockEl),rcs=getComputedStyle(repEl),bcs=getComputedStyle(h1,"::before");
+    const lr=lockEl.getBoundingClientRect(),rr=repEl.getBoundingClientRect(),tr=linkEl.getClientRects()[0];
+    return {
+     lock:{h:Math.round(lr.height),va:lcs.verticalAlign,mt:parseFloat(lcs.marginTop),mid:(lr.top+lr.bottom)/2},
+     replied:{h:Math.round(rr.height),fs:rcs.fontSize,va:rcs.verticalAlign,mt:parseFloat(rcs.marginTop),mid:(rr.top+rr.bottom)/2},
+     award:{content:bcs.content,h:parseFloat(bcs.height),va:bcs.verticalAlign,mt:parseFloat(bcs.marginTop)},
+     linkMid:(tr.top+tr.bottom)/2,
+     tgBg
+    };
+   });
+   assert.equal(m.lock.h,18,JSON.stringify(m));
+   assert.equal(m.lock.va,"top",JSON.stringify(m));
+   assert.equal(m.replied.h,18,JSON.stringify(m));
+   assert.equal(m.replied.fs,"11px",JSON.stringify(m));
+   assert.equal(m.replied.va,"top",JSON.stringify(m));
+   assert.equal(m.award.h,18,JSON.stringify(m));
+   assert.equal(m.award.va,"top",JSON.stringify(m));
+   assert.ok(Math.abs(m.award.mt-m.lock.mt)<=0.5,JSON.stringify(m));
+   assert.ok(Math.abs(m.replied.mt-m.lock.mt)<=0.5,JSON.stringify(m));
+   assert.ok(Math.abs(m.replied.mid-m.lock.mid)<=1.5,JSON.stringify(m));
+   assert.ok(Math.abs(m.replied.mid-m.linkMid)<=4,JSON.stringify(m));
+   assert.ok(m.tgBg&&m.tgBg!=="rgba(0, 0, 0, 0)"&&m.tgBg!=="transparent",`签名 TG 胶囊底色生效：${m.tgBg}`);
+   assert.deepEqual(mob.errors,[]);
+  }finally{await mob.context.close();}
+  // 2. 窄桌端 820px 通知页：未读数到达时保持两行稳定、不产生整页跳动（CLS < 0.01）
+  const clsInit="window.__shift=0;new PerformanceObserver(l=>{for(const e of l.getEntries())if(!e.hadRecentInput)window.__shift+=e.value}).observe({type:'layout-shift',buffered:true});";
+  const notif=await open(browser,"https://www.nodeseek.com/notification#/atMe",{viewport:{width:820,height:900},seed,init:clsInit,html:P.notificationPage({})});
+  try{
+   await ready(notif.page);
+   await notif.page.waitForSelector(".nspp-messages-top .nsmax-notice-tools > input");
+   await notif.page.waitForFunction(()=>[...document.querySelectorAll(".nsmax-message-tabs .nspp-messages-count")].filter(e=>!e.hidden&&e.textContent).length===3);
+   await notif.page.waitForTimeout(300);
+   const nr=await notif.page.evaluate(()=>{
+    const top=document.querySelector(".nspp-messages-top"),tabs=top.querySelector(".nsmax-message-tabs"),input=top.querySelector(".nsmax-notice-tools > input");
+    const tb=tabs.getBoundingClientRect(),ib=input.getBoundingClientRect(),ics=getComputedStyle(input);
+    return {shift:window.__shift,h:top.offsetHeight,tabs:[tabs.scrollWidth,tabs.clientWidth],below:ib.top>=tb.bottom-1,inputW:ib.width,inputProp:ics.transitionProperty,inputDur:ics.transitionDuration};
+   });
+   assert.equal(nr.tabs[0],nr.tabs[1],JSON.stringify(nr));
+   assert.ok(nr.below&&nr.inputW>200&&Math.abs(nr.h-99)<=2,JSON.stringify(nr));
+   if(engine==="chromium")assert.ok(nr.shift<0.01,`820px 通知页 CLS ${nr.shift}`);
+   assert.ok(nr.inputProp.includes("border-color")&&!nr.inputProp.includes("all")&&nr.inputDur.includes("0.14s"),JSON.stringify(nr));
+   assert.deepEqual(notif.errors,[]);
+  }finally{await notif.context.close();}
+  // 3. 表单聚焦过渡、设置面板标签不下沉、抽奖展开 aria-expanded 与减弱动态下跳过平滑滚动
+  const future=Date.now()+864e5,past=Date.now()-36e5;
+  const lotFloors=Array.from({length:18},(_,i)=>({member_id:100+i,member_name:`u${i}`,floor_id:i}));
+  const lotApi={"/api/content/floor-data":Array.from({length:4},()=>({status:200,body:{success:true,data:lotFloors}}))};
+  const lotPost=P.postPage({editorMode:"edit-discussion"}).replace("<h2>配置说明</h2>",`<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=${future}&amp;count=1&amp;start=1&amp;duplicate=false">开奖</a></p><h2>配置说明</h2>`);
+  const lp=await open(browser,"https://www.nodeseek.com/post-1000-1",{viewport:{width:1440,height:900},seed,html:lotPost,api:lotApi});
+  try{
+   await ready(lp.page);
+   await lp.page.waitForSelector(".nsk-post .nsmax-lottery-join");
+   const ui=await lp.page.evaluate(()=>{
+    const sel=document.querySelector("#rank"),ta=document.querySelector(".md-editor .nsmax-editor-surface > :is(textarea, [data-nsmax-editor-pane])"),own=document.querySelector(".nsmax-owner-only");
+    const info=el=>el&&{prop:getComputedStyle(el).transitionProperty,dur:getComputedStyle(el).transitionDuration};
+    return {sel:info(sel),ta:info(ta),own:info(own)};
+   });
+   for(const [k,v] of [["sel",ui.sel],["ta",ui.ta],["own",ui.own]]){
+    assert.ok(v&&v.prop.includes("border-color")&&!v.prop.includes("all")&&v.dur.includes("0.14s"),`${k}: ${JSON.stringify(v)}`);
+   }
+   // 打开设置面板：确认 .tab 不被通用 :active 规则压低，.link 具备柔和过渡
+   await lp.page.getByRole("button",{name:"NodeSeek Max 设置",exact:true}).click();
+   await lp.page.waitForFunction(()=>!!document.querySelector("#nspp-settings")?.shadowRoot?.querySelector("dialog[open]"));
+   const setInfo=await lp.page.evaluate(()=>{
+    const sr=document.querySelector("#nspp-settings").shadowRoot;
+    const css=[...sr.querySelectorAll("style")].map(s=>s.textContent).join("\n");
+    const link=sr.querySelector(".link");
+    return {hasGlobalBtnActive:/(?:^|[},])button:not\(:disabled\):active/.test(css),linkProp:getComputedStyle(link).transitionProperty,linkDur:getComputedStyle(link).transitionDuration};
+   });
+   assert.equal(setInfo.hasGlobalBtnActive,false,JSON.stringify(setInfo));
+   assert.ok(setInfo.linkProp.includes("color")&&setInfo.linkDur.includes("0.14s"),JSON.stringify(setInfo));
+   await lp.page.locator("#nspp-settings").getByRole("button",{name:"关闭"}).click();
+   // 点击「回复参与」：正常模式下平滑滚，开启 prefers-reduced-motion 后改为 instant
+   await lp.page.evaluate(()=>{window.__scrolls=[];const orig=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(arg){window.__scrolls.push(arg?.behavior??null);return orig.apply(this,arguments);};});
+   await lp.page.locator(".nsk-post .nsmax-lottery-join").click();
+   await lp.page.emulateMedia({reducedMotion:"reduce"});
+   await lp.page.locator(".nsk-post .nsmax-lottery-join").click();
+   assert.deepEqual(await lp.page.evaluate(()=>window.__scrolls),["smooth","instant"]);
+   assert.deepEqual(lp.errors,[]);
+  }finally{await lp.context.close();}
+  // 4. 超过 12 位中奖者的折叠按钮带 aria-expanded 并随展开/收起同步
+  const manyPost=P.postPage().replace("<h2>配置说明</h2>",`<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=${past}&amp;count=15&amp;start=1&amp;duplicate=false">开奖</a></p><h2>配置说明</h2>`);
+  const mp=await open(browser,"https://www.nodeseek.com/post-1000-1",{viewport:{width:1440,height:900},seed,html:manyPost,api:lotApi,external:{"api.drand.sh":()=>({round:1,randomness:"e05ac09719c85bf738fad5bd6ff7b1e4e62046760c56de477cf00adb8a3784d6"})}});
+  try{
+   await ready(mp.page);
+   const btn=mp.page.locator(".nsk-post .nsmax-lottery-winners-toggle");
+   await btn.waitFor({state:"visible",timeout:8000});
+   assert.equal(await btn.getAttribute("aria-expanded"),"false");
+   await btn.click();
+   assert.equal(await btn.getAttribute("aria-expanded"),"true");
+   await btn.click();
+   assert.equal(await btn.getAttribute("aria-expanded"),"false");
+   assert.deepEqual(mp.errors,[]);
+  }finally{await mp.context.close();}
+ });
 }

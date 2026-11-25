@@ -4,6 +4,9 @@
 	function nsmaxSetText(el, text) {
 		if (el && el.textContent !== text) el.textContent = text;
 	}
+	function nsmaxReducedMotion() {
+		return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+	}
 	// 页面类型：主题 CSS 按 html[data-nsmax-page] 分页面排版；搜索、账簿这类结构和列表页相同的页面都算 list
 	function nsmaxPageKind(path = location.pathname) {
 		return /^\/post-\d+/.test(path) ? "post" : /^\/notifications?(?:\/|$)/.test(path) ? "notification" : /^\/space\//.test(path) ? "space" : /^\/setting(?:\/|$)/.test(path) ? "setting" : /^\/(?:new|edit)-discussion(?:\/|$)/.test(path) ? "new" : /^\/board(?:\/|$)/.test(path) ? "board" : /^\/fans(?:\/|$)/.test(path) || nsmaxIsFindUser(path) ? "fans" : /^\/(?:signIn|emailSignIn|smsSignIn|register)\.html$/.test(path) ? "auth" : /^\/lucky(?:\/|$)/.test(path) ? "lucky" : "list";
@@ -2150,6 +2153,7 @@
 					const toggle = document.createElement("button");
 					toggle.type = "button";
 					toggle.className = "nsmax-lottery-winners-toggle";
+					toggle.setAttribute("aria-expanded", String(expanded));
 					toggle.textContent = expanded ? "收起" : `展开全部 ${all.length} 位`;
 					toggle.addEventListener("click", () => {
 						card._nsmaxWinnersExpanded = !card._nsmaxWinnersExpanded;
@@ -2407,12 +2411,13 @@
 	function nsmaxLotteryJoin() {
 		const editor = document.querySelector("#nsk-body-left .md-editor");
 		if (!editor) return;
-		editor.scrollIntoView({ behavior: "smooth", block: "center" });
+		const reduced = nsmaxReducedMotion();
+		editor.scrollIntoView({ behavior: reduced ? "instant" : "smooth", block: "center" });
 		const cm = editor.querySelector(".CodeMirror")?.CodeMirror;
 		setTimeout(() => {
 			if (cm) cm.focus();
 			else editor.querySelector("textarea:not(.CodeMirror textarea)")?.focus({ preventScroll: true });
-		}, 320);
+		}, reduced ? 0 : 320);
 	}
 	// 让卡片的倒计时每秒走（卡片不在页面上了、开过奖结果也画好了，下一次走的时候自己去掉）
 	function nsmaxTrackLottery(card) {
@@ -3775,7 +3780,7 @@
 			const offset = viewport?.offsetTop || 0, bottom = offset + (viewport?.height || innerHeight);
 			const top = offset + (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0);
 			if (rect.top >= top && rect.bottom <= bottom) return;
-			Element.prototype.scrollIntoView.call(this, { block: rect.height > bottom - top ? "start" : "nearest", behavior: nsmaxTouchLayout() ? "auto" : "smooth" });
+			Element.prototype.scrollIntoView.call(this, { block: rect.height > bottom - top ? "start" : "nearest", behavior: nsmaxTouchLayout() || nsmaxReducedMotion() ? "auto" : "smooth" });
 		};
 		// 隔离世界（油猴 @sandbox DOM、Userscripts）里上面这一句只管得到脚本自己的调用：站点的 reply() 在页面里调，看到的还是原来的方法，
 		// 回复框明明在眼前也整页往下滑一截。经页面桥在页面那边也换上（2026-11-22）
@@ -3854,7 +3859,7 @@
 			if (!floor) return;
 			const rect = floor.getBoundingClientRect();
 			const top = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-			if (rect.bottom < top + 40 || rect.top > innerHeight - 40) floor.scrollIntoView({ block: "nearest", behavior: "smooth" });
+			if (rect.bottom < top + 40 || rect.top > innerHeight - 40) floor.scrollIntoView({ block: "nearest", behavior: nsmaxReducedMotion() ? "auto" : "smooth" });
 		};
 		document.addEventListener("click", (event) => {
 			const target = event.target instanceof Element ? event.target : null;
@@ -3900,13 +3905,14 @@
 		return current || Number(location.pathname.match(/^\/post-\d+-(\d+)/)?.[1]) || 1;
 	}
 	function nsmaxFocusReplyBox(smooth = true) {
+		const useSmooth = smooth && !nsmaxReducedMotion();
 		const md = document.querySelector("#nsk-body-left .md-editor");
 		if (!md) {
-			window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth ? "smooth" : "instant" });
+			window.scrollTo({ top: document.documentElement.scrollHeight, behavior: useSmooth ? "smooth" : "instant" });
 			return;
 		}
 		// 不要动画时写 instant：auto 是「照 CSS」，主题给 html 设了 smooth，结果还是慢慢滑
-		md.scrollIntoView({ behavior: smooth ? "smooth" : "instant", block: "center" });
+		md.scrollIntoView({ behavior: useSmooth ? "smooth" : "instant", block: "center" });
 		const cm = md.querySelector(".CodeMirror")?.CodeMirror;
 		const input = md.querySelector("textarea:not(.CodeMirror textarea)");
 		setTimeout(() => {
@@ -3914,7 +3920,7 @@
 				cm.focus();
 				cm.setCursor(cm.lineCount(), 0);
 			} else input?.focus({ preventScroll: true });
-		}, smooth ? 320 : 0);
+		}, useSmooth ? 320 : 0);
 	}
 	function nsmaxGoReplyEnd() {
 		nsmaxComposer?.restore(false);
