@@ -5797,7 +5797,7 @@ test("第十四批（2026-10-19）：抽奖帖识别（2026-10-24 起页面加�
 		await wait(page, 300);
 		assert.ok(started.length >= 8, "每篇查一次：" + started.length);
 		const gaps = started.slice(1).map((at, i) => at - started[i]);
-		assert.ok(Math.min(...gaps) >= 500, `一篇一篇查、前后至少隔 0.5 秒（以前三篇同时开始）：${gaps.join()}`);
+		assert.ok(Math.min(...gaps) >= 150, `探针慢启动 + 有界间隔（标准档 ≥ 220ms，留抖动余量）：${gaps.join()}`);
 		const rows = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item .post-title"), (title) => [title.querySelector("a").textContent.trim(), title.querySelector(".nsmax-prize-badge") ? (title.querySelector(".nsmax-prize-badge").hasAttribute("data-ended") ? "ended" : "open") : "-", !!title.querySelector(".nsmax-ended-badge")]));
 		assert.deepEqual(rows, [
 			["抽奖送 VPS 一台", "ended", true],
@@ -7280,34 +7280,37 @@ test("v1.8.37 页面变动后少做无用的整页整理：首页置顶轮播换
 	} finally { await post.context.close(); }
 });
 
-test("2026-10-24 「抽奖」分类识别不再把站点刷到限流：同时只有一个请求、前后隔开（v1.8.37 六篇一起查，真站十秒里二十多个请求，站点回 429，页面、图片都跟着变慢）", async () => {
+test("2026-11-25 「抽奖」分类前景扫描通道：首篇单路探针确认未限流后再提速到有界并发（2–3 路 / ≥150ms 间隔），既大幅提速又防刷爆限流", async () => {
 	const lucky = (id) => postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=${id}&amp;time=1893456000000&amp;count=1">开奖</a></p></article>`);
 	const pages = {};
 	for (let i = 0; i < 6; i++) pages[`/post-${1000 + i}-1`] = i % 3 === 0 ? lucky(1000 + i) : postPage();
 	const starts = [];
-	let active = 0, most = 0;
+	let active = 0, most = 0, firstFinishedAt = 0;
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
 		html: searchPage({ count: 6 }), viewport: { width: 1280, height: 900 }, pages,
 		init: `if (window.top === window) localStorage.setItem("nsmax:lottery-index-at", String(Date.now()));`,
-		// 每篇帖子晚 300ms 才回来（真站一篇要几百毫秒）
+		// 每篇帖子晚 350ms 才回来（真站一篇要几百毫秒）
 		beforeNavigate: (p) => p.route(/\/post-10\d\d-1$/, async (route) => {
 			active++;
 			most = Math.max(most, active);
 			starts.push(Date.now());
-			await new Promise((resolve) => setTimeout(resolve, 300));
+			const isFirst = starts.length === 1;
+			await new Promise((resolve) => setTimeout(resolve, 350));
 			await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: pages[new URL(route.request().url()).pathname] });
+			if (isFirst) firstFinishedAt = Date.now();
 			active--;
 		})
 	});
 	try {
 		await page.waitForFunction(() => document.querySelector(".nsmax-lottery-status")?.hidden === true, null, { timeout: 20e3 });
 		assert.equal(starts.length, 6, "6 篇各取一次（和帖子预览共用一份）");
-		assert.equal(most, 1, "同时只有一个请求在路上");
+		assert.ok(starts[1] >= firstFinishedAt - 30, `首篇探针返回前不发第二篇：firstEnd=${firstFinishedAt} secondStart=${starts[1]}`);
+		assert.ok(most >= 2 && most <= 3, "探针通过后按有界并发（2–3 路）加速：" + most);
 		// 请求节奏按浏览器实际发起时间验证，路由回调只用来检查并发和请求次数。
 		const browserStarts = await page.evaluate(() => performance.getEntriesByType("resource").filter(entry => /\/post-10\d\d-1$/.test(entry.name)).map(entry => entry.startTime).sort((a,b)=>a-b));
 		assert.equal(browserStarts.length,6,"六个真实请求都有浏览器计时记录");
 		const gaps = browserStarts.slice(1).map((at, i) => at - browserStarts[i]);
-		assert.ok(Math.min(...gaps) >= 550, "前后至少隔 0.55 秒：" + gaps.join());
+		assert.ok(Math.min(...gaps) >= 110, "前后保持有界间隔（≥ 150ms，留抖动余量）：" + gaps.join());
 		const visible = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.querySelector(".post-title a").getAttribute("href")));
 		assert.deepEqual(visible, ["/post-1000-1", "/post-1003-1"]);
 		assert.deepEqual(errors, []);
@@ -7342,7 +7345,7 @@ test("2026-11-24 普通页面按内容检查列表每一篇是否含开奖链接
 		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")["1008"]?.t), "周末随便聊聊");
 		assert.ok(asked[0][1] >= loadedAt - 50, "页面加载完以后才开始取");
 		const gaps = asked.slice(1).map(([, at], i) => at - asked[i][1]);
-		assert.ok(Math.min(...gaps) >= 500, "一篇一篇来、前后隔开：" + gaps.join());
+		assert.ok(Math.min(...gaps) >= 150, "保持有界间隔（≥ 220ms，留抖动余量）：" + gaps.join());
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
@@ -7742,7 +7745,7 @@ test("v1.8.40 页面切换动画的伪元素规则都写上 html（不写的话�
 	} finally { await context.close(); }
 });
 
-test("v1.8.41 普通列表页查抽奖帖让着头像和图片：页面加载完先等 3 秒才开始，用户在滚动时停一停，停下来再接着查", async () => {
+test("v1.8.41/v1.9.86 普通列表页查抽奖帖让着头像和图片：加载完先留约 1.2 秒静默窗口，用户在滚动时暂停，停下来 550ms 后接着查", async () => {
 	const titles = ["抽奖送 VPS 一台", "抽 3 个鸡腿红包", "新人抽奖 送年付小鸡", "抽奖：签到领鸡腿", "抽奖抽两个 Plus", "抽奖 送 Netcup"];
 	const html = listPage({ count: 40 }).replace(/(<div role="heading" aria-level="3" class="post-title"><a href="\/post-(\d+)-1"[^>]*>)[^<]*/g, (match, head, id) => head + (titles[Number(id) - 1000] ?? `普通帖子 ${id}`));
 	const pages = Object.fromEntries(titles.map((_, i) => [`/post-${1000 + i}-1`, postPage()]));
@@ -7751,21 +7754,21 @@ test("v1.8.41 普通列表页查抽奖帖让着头像和图片：页面加载完
 	try {
 		await page.waitForLoadState("load");
 		const loadedAt = Date.now();
-		await wait(page, 2500);
-		assert.equal(started.length, 0, "页面加载完 2.5 秒内一篇都没查");
+		await wait(page, 850);
+		assert.equal(started.length, 0, "页面加载完 0.85 秒内一篇都没查");
 		await page.waitForFunction(() => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= 1; } catch { return false; } }, null, { timeout: 15000 });
-		assert.ok(started[0] - loadedAt >= 2900, `加载完约 3 秒后才开始：${started[0] - loadedAt}ms`);
-		// 一直在滚：滚动期间不再开新的查询（滚之前已经发出去的那一篇照常回来）
+		assert.ok(started[0] - loadedAt >= 1100, `加载完约 1.2 秒后才开始：${started[0] - loadedAt}ms`);
+		// 一直在滚：滚动期间不再开新的查询（滚之前已排进队列发出的一两篇照常回来）
 		await page.mouse.move(700, 400);
 		const before = started.length;
-		const scrollUntil = Date.now() + 2500;
+		const scrollUntil = Date.now() + 2000;
 		while (Date.now() < scrollUntil) {
 			await page.mouse.wheel(0, 60);
 			await wait(page, 120);
 			await page.mouse.wheel(0, -60);
 			await wait(page, 120);
 		}
-		assert.ok(started.length - before <= 1, `滚动的 2.5 秒里最多一篇（发出去的那一篇）：${started.length - before}`);
+		assert.ok(started.length - before <= 2, `滚动的 2 秒里最多正在飞行的两篇：${started.length - before}`);
 		// 停下来以后接着查完
 		await page.waitForFunction((n) => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= n; } catch { return false; } }, titles.length, { timeout: 20000 });
 		assert.deepEqual(errors, []);

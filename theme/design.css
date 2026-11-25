@@ -2660,6 +2660,7 @@ html[data-nsmax-theme] body > footer .contain li {
   height: auto !important;
   min-height: 0 !important;
   list-style: none !important;
+  transition: none !important;
 }
 html[data-nsmax-theme] body > footer :is(a, li) {
   color: var(--text-subtle) !important;
@@ -10347,9 +10348,12 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-sid
   font-size: 12px !important;
   font-weight: 400 !important;
 }
-/* 中奖：28px 实底高辨识小胶囊（#楼号暖金色加粗 + 名字深色），自己中奖绿色高亮，超 12 人支持折叠展开 */
+/* 中奖：28px 实底高辨识小胶囊（#楼号暖金色加粗 + 名字深色），自己中奖绿色高亮，超 12 人支持折叠展开；多行名单时「中奖」标签与首行胶囊中线齐平 */
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-fact[data-nsmax-fact="winners"]:is(#nsmax-lv, *):is(#nsmax-b, *) {
-  align-items: center !important;
+  align-items: start !important;
+}
+html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-fact[data-nsmax-fact="winners"] > dt:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  line-height: 28px !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nsmax-lucky-side) .nsmax-lottery-winners:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: flex !important;
@@ -13099,7 +13103,7 @@ html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-day[data-future]:is(#nsmax-
   html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-top:is(#nsmax-lv, *):is(#nsmax-b, *) {
     flex-direction: column !important;
   }
-  html[data-nsmax-theme] .nsmax-checkin .nsmax-checkin-side:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  html[data-nsmax-theme] .nsmax-checkin :is(.nsmax-checkin-side, .nsmax-checkin-streak):is(#nsmax-lv, *):is(#nsmax-b, *) {
     align-items: center !important;
     text-align: center !important;
   }
@@ -15494,7 +15498,14 @@ html[data-nsmax-theme][data-nsmax-cv][data-nsmax-post-layout="simple"] #nsk-body
    两个大数字（12.5px 弱化字小标题、24px 等宽 600 数字，间距 28px）；升级进度条 12px 高（次底色、内阴影，填充 --brand 到青色渐变），
    上面一行「Lv.5 —— 百分比 —— Lv.6」，下面一行还差多少；细线下面「今日鸡腿」四项，每项一行字 + 7px 细进度条（满了换青色），
    宽屏三列、窄了两列一列（sb.sb .points-daily-list minmax(300px, 1fr)）。站点自己画的那块（橙红标题、黄条）不显示 */
-html[data-nsmax-theme] #nsk-body-left > #progress-mount,
+html[data-nsmax-theme]:not([data-nsmax-progress-ready]) #nsk-body-left > #progress-mount {
+  display: block !important;
+  min-height: 420px !important;
+  max-height: 420px !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+html[data-nsmax-theme][data-nsmax-progress-ready] #nsk-body-left > #progress-mount,
 html[data-nsmax-theme] #nsk-body-left > [data-nsmax-progress-native] {
   display: none !important;
 }
@@ -18191,47 +18202,46 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
    - 个人主页「介绍」里的链接：以前是站点自己的 #0dbc79 绿（白底上 2.5:1），改成正文链接
    - 输入框占位字：没单独设过的用了浏览器默认 #757575（深色底上 3.7:1），统一成 --text-subtle（和顶栏搜索、登录页一样）
    - 消息中心搜索框、查找用户输入框：聚焦时边框不变或几乎不变，改成和发帖标题框一样的 --field-focus 黄边 + 浅黄光圈；私信输入框黄边 */
-@media (min-width: 801px) {
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message:not(.is-mine) .nspp-messages-bubble a:not(.nspp-messages-system-user, .nspp-messages-system-target):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
-  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector > .readme a:not([data-nsmax-imglink]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    color: var(--link) !important;
-    text-decoration: underline !important;
-    text-decoration-color: var(--link-line) !important;
-    text-decoration-thickness: 2px !important;
-    text-underline-offset: 3px !important;
-    text-decoration-skip-ink: none !important;
-  }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message:not(.is-mine) .nspp-messages-bubble a:not(.nspp-messages-system-user, .nspp-messages-system-target):hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
-  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="space"] .selector > .readme a:not([data-nsmax-imglink]):hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    color: var(--link-hover) !important;
-    text-decoration-color: transparent !important;
-  }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    --nsmax-kind-deco: color-mix(in srgb, var(--nsmax-kind-link) 50%, transparent);
-    text-decoration: underline !important;
-    text-decoration-color: var(--nsmax-kind-deco, var(--link-line)) !important;
-    text-decoration-thickness: 2px !important;
-    text-underline-offset: 3px !important;
-    text-decoration-skip-ink: none !important;
-  }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-target:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
-    text-decoration-color: currentColor !important;
-  }
-  /* 权重压到最低（:where），各处单独设过的占位字颜色照旧（比如回复框是 --text-muted） */
-  :where(html[data-nsmax-theme]:not([data-nsmax-touch])) :is(input, textarea)::placeholder {
-    color: var(--text-subtle) !important;
-    opacity: 1 !important;
-  }
-  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages .nspp-messages-search input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
-  html[data-nsmax-theme]:not([data-nsmax-touch])[data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
-    border-color: var(--field-focus) !important;
-    outline: 3px solid var(--field-ring) !important;
-    outline-offset: 0 !important;
-  }
-  /* Lv5 橙色等级标：字是 72% 橙 + 28% 墨，浅色底上只有 3.9:1（别的等级都在 4.7 以上），橙色少掺一点 */
-  html[data-nsmax-theme]:not([data-nsmax-touch]) [data-nsmax-level="5"]:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-c, *) {
-    color: color-mix(in srgb, var(--lv) 60%, var(--text-strong)) !important;
-  }
+/* ---------- 全端（桌面 + 手机）：链接认得出、字够清楚、焦点看得见（2026-11-25 解除桌面端限制，修复手机端个人主页介绍绿字 #0dbc79 2.5:1 对比度泄露） ---------- */
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message:not(.is-mine) .nspp-messages-bubble a:not(.nspp-messages-system-user, .nspp-messages-system-target):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme a:not([data-nsmax-imglink]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  color: var(--link) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--link-line) !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+  text-decoration-skip-ink: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message:not(.is-mine) .nspp-messages-bubble a:not(.nspp-messages-system-user, .nspp-messages-system-target):hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme a:not([data-nsmax-imglink]):hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  color: var(--link-hover) !important;
+  text-decoration-color: transparent !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-target:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  --nsmax-kind-deco: color-mix(in srgb, var(--nsmax-kind-link) 50%, transparent);
+  text-decoration: underline !important;
+  text-decoration-color: var(--nsmax-kind-deco, var(--link-line)) !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+  text-decoration-skip-ink: none !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-message.is-system[data-nsmax-kind] .nspp-messages-bubble a.nspp-messages-system-target:hover:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  text-decoration-color: currentColor !important;
+}
+/* 权重压到最低（:where），各处单独设过的占位字颜色照旧（比如回复框是 --text-muted） */
+:where(html[data-nsmax-theme]) :is(input, textarea)::placeholder {
+  color: var(--text-subtle) !important;
+  opacity: 1 !important;
+}
+html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *),
+html[data-nsmax-theme][data-nsmax-page="fans"] .nsmax-find-user-field > .nsmax-find-user-input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
+  border-color: var(--field-focus) !important;
+  outline: 3px solid var(--field-ring) !important;
+  outline-offset: 0 !important;
+}
+/* Lv5 橙色等级标：字是 72% 橙 + 28% 墨，浅色底上只有 3.9:1（别的等级都在 4.7 以上），橙色少掺一点 */
+html[data-nsmax-theme] [data-nsmax-level="5"]:is(#nsmax-lv, *):is(#nsmax-lv, *):is(#nsmax-c, *) {
+  color: color-mix(in srgb, var(--lv) 60%, var(--text-strong)) !important;
 }
 
 /* ---------- 2026-11-22 私信页重做时一并扫的同类问题（用户：「私信这个地方的 ui 也不搭配」；长期规则：同类问题一起修） ----------

@@ -161,7 +161,7 @@ dialog:focus{outline:none}
 .body{padding:0 16px 8px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .module{padding:18px 0}.module-title{font-size:15px}.lead{font-size:13px}.check{min-height:44px;align-items:center;gap:10px;font-size:14px;line-height:1.6}.check small{margin-left:4px}
 input[type=checkbox]{width:20px;height:20px}.grid input[type=number]{width:100%;max-width:220px}
-input:not([type=checkbox]),select,textarea{font-size:16px;min-height:44px}.label{font-size:14px}.segments button{min-height:44px;min-width:44px;padding:8px 12px;font-size:14px}.segments{gap:8px}.segment-note{font-size:13px}
+input:not([type=checkbox]):not([type=file]),select,textarea{font-size:16px;min-height:44px}.label{font-size:14px}.segments button{min-height:44px;min-width:44px;padding:8px 12px;font-size:14px}.segments{gap:8px}.segment-note{font-size:13px}
 .foot{flex:none;gap:8px;padding:10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));flex-wrap:wrap;background:var(--s-panel)}
 .foot-tools{display:var(--nsmax-overlay-tools,flex);width:100%;margin:0;gap:6px;flex-wrap:nowrap}.foot-tools>button{flex:1 1 0;min-width:0;min-height:44px;padding:6px 3px;font-size:12.5px}
 button.primary{width:100%;min-height:48px;margin:0;font-size:16px}

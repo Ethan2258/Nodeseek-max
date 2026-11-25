@@ -353,4 +353,104 @@ for(const engine of engines){
    assert.deepEqual(mp.errors,[]);
   }finally{await mp.context.close();}
  });
+
+ test(`${engine} v1.9.86 加速与全端细节：缓存抽奖行零阻塞直出、drand 错峰对冲、手机端设置 16px/个人介绍链接/签到居中/抽奖卡片多行顶对齐/非列表隐藏版块条`, async () => {
+  const mobileDev={...devices["iPhone 13"],viewport:{width:390,height:844}};
+  // 1. 「抽奖」分类页：第 1 条待扫描时，下方已缓存的抽奖行立即 0ms 展示，不再队头阻塞
+  {
+   const seedCached=`localStorage.setItem("nsmax:special-posts",JSON.stringify({"1002":"lottery","1004":"lottery"}));localStorage.setItem("nsmax:special-checked",JSON.stringify({"1001":Date.now(),"1002":Date.now(),"1003":Date.now(),"1004":Date.now()}));localStorage.setItem("nsmax:lottery-index-at",String(Date.now()));`;
+   const cat=await open(browser,"https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96",{
+    html:P.searchPage({count:5}),viewport:{width:1280,height:900},seed,init:seedCached,
+    beforeNavigate:async p=>{await p.route("**/post-1000-1",async r=>{await new Promise(done=>setTimeout(done,900));try{await r.fulfill({status:200,contentType:"text/html;charset=utf-8",body:P.postPage()});}catch{}});}
+   });
+   try{
+    await ready(cat.page);
+    const early=await cat.page.evaluate(()=>Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).map(li=>[li.querySelector(".post-title a").getAttribute("href"),li.getAttribute("data-nsmax-lottery"),getComputedStyle(li).display!=="none"]));
+    assert.equal(early[0][1],"wait","首行仍在扫描中");
+    assert.equal(early[2][2],true,"第 3 行已缓存抽奖帖立刻可见，不被首行阻塞");
+    assert.equal(early[4][2],true,"第 5 行已缓存抽奖帖立刻可见，不被首行阻塞");
+    assert.deepEqual(cat.errors,[]);
+   }finally{await cat.context.close();}
+  }
+  // 2. 已开奖卡片：api.drand.sh 慢响应时 450ms 自动错峰对冲 cloudflare 镜像并快速出名单，且多行中奖「中奖」标签与首行胶囊顶对齐
+  {
+   const past=Date.now()-36e5;
+   const lotFloors=Array.from({length:20},(_,i)=>({member_id:100+i,member_name:`win_${i}`,floor_id:i}));
+   const lotApi={"/api/content/floor-data":Array.from({length:4},()=>({status:200,body:{success:true,data:lotFloors}}))};
+   const lotPost=P.postPage({mobile:true}).replace("<h2>配置说明</h2>",`<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=${past}&amp;count=12&amp;start=1&amp;duplicate=false">开奖</a></p><h2>配置说明</h2>`);
+   const t0=Date.now();
+   const lp=await open(browser,"https://www.nodeseek.com/post-1000-1",{
+    html:lotPost,device:mobileDev,manager:{type:"userscripts",delay:10},seed,api:lotApi,
+    external:{
+     "api.drand.sh":async()=>{await new Promise(r=>setTimeout(r,4500));return {round:1,randomness:"e05ac09719c85bf738fad5bd6ff7b1e4e62046760c56de477cf00adb8a3784d6"};},
+     "api2.drand.sh":async()=>{await new Promise(r=>setTimeout(r,4500));return {round:1,randomness:"e05ac09719c85bf738fad5bd6ff7b1e4e62046760c56de477cf00adb8a3784d6"};},
+     "drand.cloudflare.com":()=>({round:1,randomness:"e05ac09719c85bf738fad5bd6ff7b1e4e62046760c56de477cf00adb8a3784d6"})
+    }
+   });
+   try{
+    await lp.page.waitForSelector(".nsk-post .nsmax-lottery-winner",{timeout:3500});
+    assert.ok(Date.now()-t0<3200,`错峰对冲应远快于主节点 4.5s 阻塞：${Date.now()-t0}ms`);
+    const align=await lp.page.evaluate(()=>{
+     const fact=document.querySelector('.nsmax-lottery-fact[data-nsmax-fact="winners"]');
+     const dt=fact.querySelector("dt").getBoundingClientRect();
+     const first=fact.querySelector("a.nsmax-lottery-winner").getBoundingClientRect();
+     const footerLi=document.querySelector("body > footer .contain li");
+     return {dtMid:(dt.top+dt.bottom)/2,firstMid:(first.top+first.bottom)/2,footerTrans:footerLi?getComputedStyle(footerLi).transitionProperty:""};
+    });
+    assert.ok(Math.abs(align.dtMid-align.firstMid)<=3,`「中奖」标签与首行中奖胶囊齐平：${JSON.stringify(align)}`);
+    assert.notEqual(align.footerTrans,"all","页脚 li 不再残留 transition: all");
+    assert.deepEqual(lp.errors,[]);
+   }finally{await lp.context.close();}
+  }
+  // 3. 手机端个人主页介绍链接不再泄露原生亮绿 #0dbc79，设置面板输入框 16px 不触发 iOS 缩放
+  {
+   const sp=await open(browser,"https://www.nodeseek.com/space/10#/general",{
+    html:P.spaceGeneralPage('<p>主页链接：<a href="https://example.com/blog">我的博客</a></p>',{mobile:true}),
+    device:mobileDev,manager:{type:"userscripts",delay:10},seed
+   });
+   try{
+    await ready(sp.page);
+    const linkColor=await sp.page.locator(".selector > .readme a").evaluate(e=>getComputedStyle(e).color);
+    assert.notEqual(linkColor,"rgb(13, 188, 121)","手机端个人介绍链接不再是原生低对比度亮绿");
+    await sp.page.locator("#nsk-head .nsmax-header-action[data-nsmax-own-header='settings']").click();
+    await sp.page.waitForFunction(()=>!!document.querySelector("#nspp-settings")?.shadowRoot?.querySelector("dialog[open]"));
+    const inputSizes=await sp.page.evaluate(()=>{
+     const sr=document.querySelector("#nspp-settings").shadowRoot;
+     return [...sr.querySelectorAll("input:not([type=checkbox]):not([type=file]),select,textarea")].map(el=>parseFloat(getComputedStyle(el).fontSize));
+    });
+    assert.ok(inputSizes.length>0&&inputSizes.every(fs=>fs>=16),`手机设置面板所有输入框字号 ≥ 16px：${JSON.stringify(inputSizes)}`);
+    assert.deepEqual(sp.errors,[]);
+   }finally{await sp.context.close();}
+  }
+  // 4. 手机端 /board 连续签到居中、/lucky 隐藏关键词按钮、/notification 隐藏顶部版块横条
+  {
+   const bd=await open(browser,"https://www.nodeseek.com/board",{html:P.boardRealPage({mobile:true}),device:mobileDev,manager:{type:"userscripts",delay:10},seed});
+   try{
+    await ready(bd.page);
+    const st=await bd.page.locator(".nsmax-checkin-streak").evaluate(e=>({ai:getComputedStyle(e).alignItems,ta:getComputedStyle(e).textAlign}));
+    assert.equal(st.ai,"center",JSON.stringify(st));
+    assert.equal(st.ta,"center",JSON.stringify(st));
+    assert.deepEqual(bd.errors,[]);
+   }finally{await bd.context.close();}
+   const lk=await open(browser,"https://www.nodeseek.com/lucky?mode=view",{html:P.luckyPage({view:true}),device:mobileDev,manager:{type:"userscripts",delay:10},seed});
+   try{
+    await ready(lk.page);
+    const lkState=await lk.page.evaluate(()=>{
+     const kw=document.querySelector('.nsmax-header-action[data-nsmax-own-header="keywords"]');
+     const btn=document.querySelector(".sample-panel > form .pure-button");
+     return {kwHidden:!kw||getComputedStyle(kw).display==="none",btnH:btn?Math.round(btn.getBoundingClientRect().height):0};
+    });
+    assert.equal(lkState.kwHidden,true,JSON.stringify(lkState));
+    assert.ok(lkState.btnH>=44,JSON.stringify(lkState));
+    assert.deepEqual(lk.errors,[]);
+   }finally{await lk.context.close();}
+   const nf=await open(browser,"https://www.nodeseek.com/notification#/atMe",{html:P.notificationPage({mobile:true}),device:mobileDev,manager:{type:"userscripts",delay:10},seed});
+   try{
+    await ready(nf.page);
+    const navHidden=await nf.page.evaluate(()=>{const nav=document.querySelector("body > header > ul.mobile-nav");return !nav||getComputedStyle(nav).display==="none";});
+    assert.equal(navHidden,true,"手机端通知页不再显示列表版块横条");
+    assert.deepEqual(nf.errors,[]);
+   }finally{await nf.context.close();}
+  }
+ });
 }
