@@ -183,4 +183,58 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} v1.9.84 全站克制顺滑动效：高频控件统一微过渡、悬停卡进场与新接续条目渐显、列表行保持零过渡且减弱动态效果下全停`,async()=>{
+  const list=await open(browser,"https://www.nodeseek.com/",{viewport:{width:1440,height:900},seed,html:P.listPage({count:6})});
+  try{
+   await ready(list.page);
+   await list.page.waitForSelector(".nsmax-hot-slider",{state:"attached"});
+   const s=await list.page.evaluate(()=>{
+    const info=sel=>{const el=document.querySelector(sel);if(!el)return null;const cs=getComputedStyle(el);return {prop:cs.transitionProperty,dur:cs.transitionDuration,anim:cs.animationName};};
+    const vt=[...document.querySelectorAll("style")].map(n=>n.textContent).join("\n");
+    return {
+     nav:info('#nsk-head ul.nav-menu > li > a:not([aria-current="page"]):not([data-nsmax-header-cat-on])'),
+     action:info("#nsk-head .color-theme-switcher"),
+     search:info("#nsk-head form.search-box"),
+     sorter:info("#nsk-body-left > .post-list-controler > .sorter > a"),
+     pager:info(".nsk-pager a.pager-pos"),
+     row:info("#nsk-body-left ul.post-list > li.post-list-item"),
+     hotSlider:info(".nsmax-hot-slider"),
+     vtOk:vt.includes("animation-duration:160ms")&&vt.includes("html::view-transition{pointer-events:none}")
+    };
+   });
+   for(const [k,v] of [["nav",s.nav],["action",s.action],["search",s.search],["sorter",s.sorter],["pager",s.pager],["hotSlider",s.hotSlider]]){
+    assert.ok(v&&v.prop!=="none"&&!v.prop.includes("all"),`${k}: ${JSON.stringify(v)}`);
+    assert.ok(v.dur.split(",").some(d=>parseFloat(d)>0&&parseFloat(d)<=0.25),`${k}: ${JSON.stringify(v)}`);
+   }
+   assert.ok(s.row&&(s.row.prop==="none"||s.row.dur==="0s"),`列表整行保持无背景过渡：${JSON.stringify(s.row)}`);
+   assert.equal(s.vtOk,true);
+   await list.page.locator("ul.post-list > li.post-list-item .info-author a").first().hover();
+   await list.page.waitForSelector(".nsmax-person-pop");
+   const popAnim=await list.page.evaluate(()=>getComputedStyle(document.querySelector(".nsmax-person-pop")).animationName);
+   assert.equal(popAnim,"nsmax-sb-enter");
+   const appendAnim=await list.page.evaluate(()=>{const li=document.querySelector("#nsk-body-left ul.post-list > li.post-list-item");li.setAttribute("data-nsmax-append-in","");return getComputedStyle(li).animationName;});
+   assert.equal(appendAnim,"nsmax-append-in");
+   await list.page.emulateMedia({reducedMotion:"reduce"});
+   const reduced=await list.page.evaluate(()=>({
+    navDur:getComputedStyle(document.querySelector('#nsk-head ul.nav-menu > li > a:not([aria-current="page"]):not([data-nsmax-header-cat-on])')).transitionDuration,
+    popAnim:getComputedStyle(document.querySelector(".nsmax-person-pop")).animationName,
+    appendAnim:getComputedStyle(document.querySelector("#nsk-body-left ul.post-list > li.post-list-item[data-nsmax-append-in]")).animationName
+   }));
+   assert.equal(reduced.navDur,"0s",JSON.stringify(reduced));
+   assert.equal(reduced.popAnim,"none",JSON.stringify(reduced));
+   assert.equal(reduced.appendAnim,"none",JSON.stringify(reduced));
+   assert.deepEqual(list.errors,[]);
+  }finally{await list.context.close();}
+  const post=await open(browser,"https://www.nodeseek.com/post-1000-1",{viewport:{width:1440,height:900},seed,html:P.postPage()});
+  try{
+   await ready(post.page);
+   const ps=await post.page.evaluate(()=>({
+    fastNav:getComputedStyle(document.querySelector("#fast-nav-button-group .nav-item-btn")).transitionDuration,
+    commentMenu:getComputedStyle(document.querySelector("ul.comments .menu-item")).transitionDuration
+   }));
+   assert.ok(ps.fastNav.split(",").some(d=>parseFloat(d)>0&&parseFloat(d)<=0.2),JSON.stringify(ps));
+   assert.ok(ps.commentMenu.includes("0.12s"),JSON.stringify(ps));
+   assert.deepEqual(post.errors,[]);
+  }finally{await post.context.close();}
+ });
 }

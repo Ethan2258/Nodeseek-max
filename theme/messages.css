@@ -32,7 +32,7 @@ html[data-nsmax-theme]:root:root:root .nsmax-message-tabs a {
   color: var(--text-muted, rgba(255, 255, 255, 0.7)) !important;
   font: 500 13px/1.4 var(--font-sans, system-ui, sans-serif) !important;
   text-decoration: none !important;
-  transition: all 0.15s ease !important;
+  transition: background-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) !important;
 }
 
 html[data-nsmax-theme]:root:root:root .nsmax-message-tabs a:hover {
@@ -90,13 +90,17 @@ html[data-nsmax-theme] .nspp-messages button {
   white-space: nowrap !important;
   flex: none !important;
   min-width: max-content !important;
-  transition: all 0.15s ease !important;
+  transition: background-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), border-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), transform 100ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) !important;
 }
 
 html[data-nsmax-theme] .nspp-messages button:hover {
   background: var(--panel-hover, rgba(255, 255, 255, 0.06)) !important;
   color: var(--text, #fff) !important;
   border-color: var(--line, rgba(255, 255, 255, 0.15)) !important;
+}
+
+html[data-nsmax-theme] .nspp-messages button:not(:disabled):active {
+  transform: translateY(1px) !important;
 }
 
 html[data-nsmax-theme] .nspp-messages button:disabled {
@@ -228,7 +232,7 @@ html[data-nsmax-theme]:root:root:root .nsmax-notice-nav-item {
   text-decoration: none !important;
   color: var(--text, #fff) !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: background-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), box-shadow 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) !important;
   user-select: none !important;
 }
 
@@ -303,7 +307,7 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-peer {
   color: var(--text, #fff) !important;
   border: 0 !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: background-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), box-shadow 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) !important;
 }
 
 html[data-nsmax-theme]:root:root:root .nspp-messages-peer:hover {
@@ -638,11 +642,22 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-send {
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: background-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), transform 100ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) !important;
 }
 
 html[data-nsmax-theme]:root:root:root .nspp-messages-send:hover {
   background: var(--brand-hover, #2563eb) !important;
+}
+
+html[data-nsmax-theme]:root:root:root .nspp-messages-send:not(:disabled):active {
+  transform: translateY(1px) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-nsmax-theme]:root:root:root :is(.nsmax-message-tabs a, .nspp-messages button, .nsmax-notice-nav-item, .nspp-messages-peer, .nspp-messages-composer textarea, .nspp-messages-send) {
+    transition: none !important;
+    transform: none !important;
+  }
 }
 
 /* 移动端适配 (<=700px) */
