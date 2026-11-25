@@ -1470,7 +1470,7 @@ html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content)
   border-radius: 4px !important;
   background: var(--panel-alt, rgba(255, 255, 255, 0.06)) !important;
   border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.08)) !important;
-  color: var(--brand-text, #93c5fd) !important;
+  color: var(--brand, #93c5fd) !important;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace) !important;
   font-size: 0.88em !important;
 }

@@ -41,8 +41,8 @@ html[data-nsmax-theme]:root:root:root .nsmax-message-tabs a:hover {
 }
 
 html[data-nsmax-theme]:root:root:root .nsmax-message-tabs a[aria-current="page"] {
-  color: #fff !important;
-  background: var(--brand, #3b82f6) !important;
+  color: var(--action-text, #fff) !important;
+  background: var(--action, #1c1c1e) !important;
 }
 
 
@@ -632,8 +632,8 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-send {
   margin-left: auto !important;
   height: 30px !important;
   padding: 0 16px !important;
-  background: var(--brand, #3b82f6) !important;
-  color: #fff !important;
+  background: var(--action, #1c1c1e) !important;
+  color: var(--action-text, #fff) !important;
   border-radius: 999px !important;
   border: 0 !important;
   font-weight: 500 !important;
