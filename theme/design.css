@@ -1331,6 +1331,7 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose {
   line-height: 1.75 !important;
   text-align: center !important;
   text-decoration: none !important;
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose::before,
 html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose::after {
@@ -1340,6 +1341,9 @@ html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose::after {
 html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose:hover {
   background: var(--action-hover) !important;
   color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose:active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] .nsmax-sb-account .nsmax-account-compose .nsmax-compose-text {
   color: inherit !important;
@@ -1388,16 +1392,24 @@ html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .
   font-weight: 400 !important;
   line-height: 1.75 !important;
   text-align: center !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:hover {
   border-color: var(--brand-border) !important;
   background: transparent !important;
   color: var(--link-hover) !important;
 }
-html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:first-child,
-html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:first-child:hover {
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:active {
+  transform: translateY(1px) !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:first-child {
   border-color: var(--action-border) !important;
   background: var(--action) !important;
+  color: var(--action-text) !important;
+}
+html[data-nsmax-theme] #nsk-right-panel-container > .nsk-panel > .small-margin .btn:first-child:hover {
+  border-color: var(--action-hover) !important;
+  background: var(--action-hover) !important;
   color: var(--action-text) !important;
 }
 
@@ -2119,7 +2131,7 @@ html[data-nsmax-theme] #nsk-body-left article.post-content th {
 }
 html[data-nsmax-theme] #nsk-body-left article.post-content tbody tr {
   background: transparent !important;
-  transition: background 0.15s ease !important;
+  transition: background-color 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] #nsk-body-left article.post-content tbody tr:nth-child(even) {
   background: var(--panel-alt) !important;
@@ -2180,7 +2192,7 @@ html[data-nsmax-theme] .nsmax-tg {
   padding: 0 2px 0 7px !important;
   border: 1px solid var(--line-soft) !important;
   border-radius: var(--r-pill) !important;
-  background: var(--surface-muted) !important;
+  background: var(--panel-alt) !important;
   color: var(--text-muted) !important;
   font-size: 12px !important;
   line-height: 1 !important;
@@ -2196,6 +2208,7 @@ html[data-nsmax-theme] .nsmax-tg-open {
   color: var(--text-muted) !important;
   text-decoration: none !important;
   font-weight: 500 !important;
+  transition: color 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .nsmax-tg-open:hover {
   color: var(--brand) !important;
@@ -2211,9 +2224,13 @@ html[data-nsmax-theme] .nsmax-tg-copy {
   font: inherit !important;
   font-size: 11.5px !important;
   cursor: pointer !important;
+  transition: background-color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .nsmax-tg-copy:hover {
   background: var(--brand-soft) !important;
+}
+html[data-nsmax-theme] .nsmax-tg-copy:active {
+  transform: translateY(1px) !important;
 }
 
 /* 主帖操作（点赞 / 加鸡腿 / 反对 / 收藏）：sb.sb .topic-action——72px 宽、8px 4px、图标 17px 在上、名称 12.5px、间距 10px */
@@ -2502,6 +2519,7 @@ html[data-nsmax-theme] #nsk-frame :is(input[type="text"], input[type="password"]
   box-shadow: none !important;
   color: var(--text) !important;
   font-size: 14px !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] #nsk-frame :is(input, select, textarea):not(.md-editor *, [class*="nspp-"], :is(.nspp-messages-container, .nspp-messages, .nspp-messages-workspace, .nspp-notice-workspace, .nspp-messages-search, .nspp-message-editor, .nspp-messages-composer, .nspp-compose, .nspp-upload-status, .nspp-chat-profile, .nspp-user-hover, .nspp-post-preview, .nspp-image-preview, .nspp-profile-dialog) *, #search-site2):focus {
   border-color: var(--field-focus) !important;
@@ -2942,11 +2960,15 @@ html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry {
   font-weight: 400 !important;
   line-height: 1.6 !important;
   text-decoration: none !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry:hover {
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
   color: var(--text) !important;
+}
+html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry:active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry :is(svg, img) {
   width: 14px !important;
@@ -3227,6 +3249,7 @@ html[data-nsmax-theme] .md-editor .nspp-upload-choose {
   font-weight: 500 !important;
   line-height: 1.75 !important;
   cursor: pointer;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button:hover,
 html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn:hover,
@@ -3234,6 +3257,11 @@ html[data-nsmax-theme] .md-editor .nspp-upload-choose:hover {
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
   color: var(--text) !important;
+}
+html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button:not(:disabled):active,
+html[data-nsmax-theme] .md-editor .nsmax-custom-mde-toolbar > .nsmax-mde-btn:not(:disabled):active,
+html[data-nsmax-theme] .md-editor .nspp-upload-choose:not(:disabled):active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-controls > button[aria-pressed="true"] {
   border-color: var(--line-strong) !important;
@@ -3305,6 +3333,7 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pan
   font-size: 14px !important;
   line-height: 1.7 !important;
   outline: 0 !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > textarea:focus,
 html[data-nsmax-theme] .md-editor .nsmax-editor-surface > [data-nsmax-editor-pane]:focus-within {
@@ -4764,6 +4793,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select select 
   font-size: 14px !important;
   line-height: 1.75 !important;
   outline: 0 !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select select:focus {
   border-color: var(--field-focus) !important;
@@ -4790,11 +4820,15 @@ html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nsma
   box-shadow: none !important;
   color: var(--text) !important;
   font: 500 14px/1.75 var(--font-sans) !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nsmax-lucky-trigger:hover {
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
   color: var(--text) !important;
+}
+html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nsmax-lucky-trigger:not(:disabled):active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme][data-nsmax-page="new"] .md-editor > .topic-select > .nsmax-lucky-trigger b {
   font-weight: 500 !important;
@@ -8627,6 +8661,7 @@ html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[
   line-height: 32px !important;
   outline: 0 !important;
   cursor: pointer !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme][data-nsmax-page="post"] .md-editor > .topic-select > div[data-nsmax-topic-field] > select:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   border-color: var(--text-subtle) !important;
@@ -9267,6 +9302,7 @@ html[data-nsmax-theme] .nspp-messages-top .nsmax-notice-tools input:is(#nsmax-lv
   box-shadow: none !important;
   color: var(--text) !important;
   font-size: 13px !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .nspp-messages-top .nsmax-notice-tools input:focus:is(#nsmax-lv, *):is(#nsmax-b, *) {
   border-color: var(--field-focus) !important;
@@ -9633,11 +9669,15 @@ html[data-nsmax-theme] #nsk-body-left .comment-container :is(.nsmax-owner-only, 
   text-decoration: none !important;
   white-space: nowrap !important;
   cursor: pointer !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] #nsk-body-left .comment-container :is(.nsmax-owner-only, .nsmax-jump-reply):is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
   color: var(--text) !important;
+}
+html[data-nsmax-theme] #nsk-body-left .comment-container :is(.nsmax-owner-only, .nsmax-jump-reply):is(#nsmax-lv, *):is(#nsmax-b, *):active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only[aria-pressed="true"]:is(#nsmax-lv, *):is(#nsmax-b, *),
 html[data-nsmax-theme] #nsk-body-left .comment-container .nsmax-owner-only[aria-pressed="true"]:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
@@ -11708,6 +11748,7 @@ html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):i
   -webkit-user-select: none !important;
   user-select: none !important;
   cursor: pointer !important;
+  transition: color 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-tabs > .tab-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   color: var(--text) !important;
@@ -11751,10 +11792,14 @@ html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b
   box-shadow: none !important;
   color: var(--text-subtle) !important;
   cursor: pointer !important;
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--panel-hover) !important;
   color: var(--text) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-close:is(#nsmax-lv, *):is(#nsmax-b, *):active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-close svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
   width: 17px !important;
@@ -11783,7 +11828,7 @@ html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#n
   border: 1px solid var(--line) !important;
   border-radius: var(--r) !important;
   background: var(--panel-alt) !important;
-  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-input-group:is(#nsmax-lv, *):is(#nsmax-b, *):focus-within {
   border-color: var(--brand-border) !important;
@@ -11814,6 +11859,7 @@ html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, 
   font-family: var(--font-sans) !important;
   font-size: 15px !important;
   outline: 0 !important;
+  transition: none !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-input-group > input:is(#nsmax-lv, *):is(#nsmax-b, *)::placeholder {
   color: var(--text-subtle) !important;
@@ -11843,11 +11889,14 @@ html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#ns
   -webkit-user-select: none !important;
   user-select: none !important;
   cursor: pointer !important;
-  transition: background-color 0.15s ease !important;
+  transition: background-color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   background: var(--action-hover) !important;
   color: var(--action-text) !important;
+}
+html[data-nsmax-theme] .search-overlay .glass-search-btn:is(#nsmax-lv, *):is(#nsmax-b, *):active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] .search-overlay .glass-search-btn > svg:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: none !important;
@@ -11895,12 +11944,15 @@ html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(
   -webkit-user-select: none !important;
   user-select: none !important;
   cursor: pointer !important;
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
   color: var(--text) !important;
+}
+html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill:is(#nsmax-lv, *):is(#nsmax-b, *):active {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] .search-overlay .sub-nav > .sub-pill.active:is(#nsmax-lv, *):is(#nsmax-b, *) {
   border-color: var(--action-border) !important;
@@ -11942,6 +11994,7 @@ html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#n
   -webkit-user-select: none !important;
   user-select: none !important;
   cursor: pointer !important;
+  transition: color 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .search-overlay .clear-history-btn:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   color: var(--link-hover) !important;
@@ -11972,11 +12025,14 @@ html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-
   -webkit-user-select: none !important;
   user-select: none !important;
   cursor: pointer !important;
-  transition: border-color 0.15s ease, background-color 0.15s ease !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-b, *):hover {
   border-color: var(--line-strong) !important;
   background: var(--panel-hover) !important;
+}
+html[data-nsmax-theme] .search-overlay .history-item:is(#nsmax-lv, *):is(#nsmax-b, *):active {
+  transform: translateY(1px) !important;
 }
 /* 2026-11-21 Yiheng 截图：「xjetry 用户」里 j、y 的下半截看不到——关键词继承了胶囊的 line-height: 1（行框只有 13px），
    又为了省略号 overflow: hidden，字母的下伸部分被裁掉。关键词自己用 1.4 的行高（胶囊高度固定 28px，不会变高） */
@@ -16077,7 +16133,7 @@ html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-byline > *:is(#nsm
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-byline > * + *:is(#nsmax-lv, *):is(#nsmax-b, *)::before {
   content: "·" !important;
   margin: 0 7px !important;
-  color: var(--text-faint, var(--text-subtle)) !important;
+  color: var(--text-subtle) !important;
 }
 html[data-nsmax-theme] dialog.nspp-post-preview .nspp-preview-author:is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: inline-flex !important;
@@ -18205,6 +18261,7 @@ html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:is(#nsmax-lv, 
   border: 1px solid var(--line-strong) !important;
   border-radius: var(--r-input) !important;
   background: var(--panel) !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .nspp-messages .nspp-messages-search input:focus:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(#nsmax-e, *) {
   border-color: var(--field-focus) !important;
@@ -18235,10 +18292,14 @@ html[data-nsmax-theme] .nspp-confirm-dialog form > :is(button, a):is(#nsmax-lv, 
   font-size: 13px !important;
   font-weight: 500 !important;
   text-decoration: none !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out) !important;
 }
 html[data-nsmax-theme] .nspp-confirm-dialog form > :is(button, a):hover:is(#nsmax-lv, *):is(#nsmax-b, *) {
   background: var(--panel-hover) !important;
   color: var(--text) !important;
+}
+html[data-nsmax-theme] .nspp-confirm-dialog form > :is(button, a):not(:disabled):active:is(#nsmax-lv, *):is(#nsmax-b, *) {
+  transform: translateY(1px) !important;
 }
 html[data-nsmax-theme] .nspp-confirm-dialog form > .nspp-confirm-primary:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   border-color: var(--action-border) !important;
@@ -18383,6 +18444,13 @@ html[data-nsmax-theme] .md-editor .nsmax-editor-head > h2.nsmax-editor-heading:i
     min-width: 0 !important;
   }
 }
+@media (min-width: 801px) and (max-width: 855px) {
+  /* 窄桌端 801–855px 通知视图：未读圆点异步到达后会撑宽标签栏、把工具栏从第一行挤到第二行（整块列表下移 48px，CLS 0.11–0.14）。
+     首帧就固定让工具栏占满第二行，未读数到了也不换列、不跳动 */
+  html[data-nsmax-theme]:not([data-nsmax-touch]) .nspp-messages[data-nsmax-view="notice"] > .nspp-messages-top > .nspp-messages-top-actions:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+    flex: 1 0 100% !important;
+  }
+}
 
 /* ---------- 2026-11-22 第十三轮：电脑端逐页走查（按微软雅黑 UI 度量，1440 / 1100px、浅色深色），同类问题一起修 ----------
    1. 内容少的页面（账簿、等级进度、查找用户、邀请、商家合作、友情链接、窄窗口的关注 / 粉丝页……），页脚下面露出一截灰色画布，
@@ -18509,7 +18577,7 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > .award-corner ~ .nsk-p
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
-html[data-nsmax-theme][data-nsmax-motion] #nsk-body-left :is(ul.post-list > li.post-list-item, ul.comments > li.content-item)[data-nsmax-append-in]:is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme][data-nsmax-motion] #nsk-body-left :is(ul.post-list > li.post-list-item, ul.comments > li.content-item, .nsmax-floor-box > .nsmax-nested-replies > li.content-item)[data-nsmax-append-in]:is(#nsmax-lv, *):is(#nsmax-b, *) {
   animation: nsmax-append-in 170ms var(--ease-out) both !important;
 }
 @media (prefers-reduced-motion: reduce) {

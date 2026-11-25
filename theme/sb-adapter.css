@@ -320,7 +320,7 @@ html[data-nsmax-theme][data-nsmax-page=notification] #nsk-body > #nsk-right-pane
 html[data-nsmax-theme] .post-list-controler {align-items:center!important;}
 html[data-nsmax-theme] .post-list-controler .pager-top,
 html[data-nsmax-theme] .post-top-pager {display:none!important;}
-html[data-nsmax-theme] .nsmax-nq-entry {display:inline-flex;align-self:center;align-items:center;justify-content:center;gap:5px;box-sizing:border-box;width:auto;height:32px;min-height:32px;margin:0 0 0 auto;padding:0 12px;border:1px solid var(--line);border-radius:999px;color:var(--text-muted);font:500 12px/1 var(--font-sans);letter-spacing:0;vertical-align:middle;text-decoration:none!important;transition:all .15s ease;}
+html[data-nsmax-theme] .nsmax-nq-entry {display:inline-flex;align-self:center;align-items:center;justify-content:center;gap:5px;box-sizing:border-box;width:auto;height:32px;min-height:32px;margin:0 0 0 auto;padding:0 12px;border:1px solid var(--line);border-radius:999px;color:var(--text-muted);font:500 12px/1 var(--font-sans);letter-spacing:0;vertical-align:middle;text-decoration:none!important;transition:background-color 140ms var(--ease-out),border-color 140ms var(--ease-out),color 140ms var(--ease-out),transform 100ms var(--ease-out);}
 html[data-nsmax-theme] .nsmax-nq-entry:hover {background:var(--panel-hover);color:var(--text);border-color:var(--line-strong);}
 html[data-nsmax-theme] .nsmax-nq-entry .nsmax-nq-icon {width:14px;height:14px;flex:none;object-fit:contain;border-radius:3px;display:block;}
 html[data-nsmax-theme] .nsmax-pop {position:fixed;inset:auto auto auto auto;z-index:2147483646;margin:0;width:min(340px,calc(100vw - 16px));max-height:calc(100dvh - 80px);overflow:auto;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);box-shadow:var(--shadow-medium);font:13px/1.5 var(--font-sans);}
@@ -831,7 +831,7 @@ html[data-nsmax-theme][data-nsmax-dark] .nsmax-board-banner {background:var(--pa
 html[data-nsmax-theme] .nsmax-board-banner-content {display:flex!important;align-items:center!important;gap:12px!important;flex-wrap:wrap!important;}
 html[data-nsmax-theme] .nsmax-board-banner-text {font:600 15px/1 var(--font-sans)!important;color:var(--text-strong)!important;}
 html[data-nsmax-theme] .nsmax-board-banner-actions {display:inline-flex!important;align-items:center!important;gap:8px!important;}
-html[data-nsmax-theme] .nsmax-board-btn {display:inline-flex!important;align-items:center!important;justify-content:center!important;height:30px!important;padding:0 16px!important;border-radius:999px!important;border:1px solid var(--line)!important;background:var(--panel-alt)!important;color:var(--text)!important;font:500 13px/1 var(--font-sans)!important;cursor:pointer!important;transition:all .15s ease!important;}
+html[data-nsmax-theme] .nsmax-board-btn {display:inline-flex!important;align-items:center!important;justify-content:center!important;height:30px!important;padding:0 16px!important;border-radius:999px!important;border:1px solid var(--line)!important;background:var(--panel-alt)!important;color:var(--text)!important;font:500 13px/1 var(--font-sans)!important;cursor:pointer!important;transition:background-color 140ms var(--ease-out),border-color 140ms var(--ease-out),color 140ms var(--ease-out),transform 100ms var(--ease-out)!important;}
 html[data-nsmax-theme] .nsmax-board-btn-random {background:var(--action)!important;color:var(--action-text)!important;border-color:var(--action)!important;}
 html[data-nsmax-theme] .nsmax-board-btn:hover {filter:brightness(1.08)!important;transform:translateY(-1px)!important;}
 html[data-nsmax-theme] .nsmax-board-sep {font:500 13px/1 var(--font-sans)!important;color:var(--text-subtle)!important;}
@@ -907,7 +907,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] :is(.nsmax-fans-switch, .fans-swi
   font: 500 13.5px var(--font-sans) !important;
   color: var(--text-muted) !important;
   text-decoration: none !important;
-  transition: all .15s ease !important;
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out) !important;
 }
 
 html[data-nsmax-theme][data-nsmax-page="fans"] :is(.nsmax-fans-switch, .fans-switch, .app-switch) > a:hover {
@@ -984,7 +984,7 @@ html[data-nsmax-theme][data-nsmax-page="fans"] .user-card-wrapper > .user-card .
 }
 
 /* Lucky Giveaway Modal & Trigger on /new-discussion */
-html[data-nsmax-theme] .nsmax-lucky-trigger {display:inline-flex!important;align-items:center!important;gap:6px!important;height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel-alt)!important;color:var(--text)!important;font:500 13px/32px var(--font-sans)!important;cursor:pointer!important;transition:all .15s ease!important;}
+html[data-nsmax-theme] .nsmax-lucky-trigger {display:inline-flex!important;align-items:center!important;gap:6px!important;height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--panel-alt)!important;color:var(--text)!important;font:500 13px/32px var(--font-sans)!important;cursor:pointer!important;transition:background-color 140ms var(--ease-out),border-color 140ms var(--ease-out),color 140ms var(--ease-out),transform 100ms var(--ease-out)!important;}
 html[data-nsmax-theme] .nsmax-lucky-trigger:hover {border-color:var(--brand)!important;color:var(--brand)!important;background:var(--panel)!important;}
 
 /* 隐藏浮动快捷按钮与原生页脚，body-left 底部内边距归零杜绝死黑遮罩 */
@@ -1317,7 +1317,7 @@ html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry {
   color: var(--text-muted)!important;
   font: 500 12px/1 var(--font-sans)!important;
   text-decoration: none!important;
-  transition: all .15s ease!important;
+  transition: background-color 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 100ms var(--ease-out)!important;
 }
 html[data-nsmax-theme] .post-list-controler .nsmax-nq-entry:hover {
   background: var(--panel-hover)!important;
@@ -2079,7 +2079,7 @@ html[data-nsmax-theme][data-nsmax-page="new"] :is(.post-title-input, input[type=
   font: 500 15px/46px var(--font-sans) !important;
   background: var(--panel-alt) !important;
   color: var(--text-strong) !important;
-  transition: all 0.15s ease !important;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out) !important;
 }
 
 html[data-nsmax-theme][data-nsmax-page="new"] :is(.post-title-input, input[type="text"].post-title-input, input[type="text"][placeholder*="标题"]):focus {

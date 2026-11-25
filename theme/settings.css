@@ -46,7 +46,7 @@ form{display:flex;flex:1;flex-direction:column;min-height:0;margin:0}
 :host([data-dark]) .mark{filter:invert(1)}
 h2{margin:0;color:var(--s-text-strong);font-size:15px;font-weight:600;line-height:1.4;white-space:nowrap}
 .version{flex:none;padding:0 7px;border:1px solid var(--s-line);border-radius:var(--s-r-pill);color:var(--s-muted);font:400 11px/20px var(--s-mono)}
-.link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap}
+.link{padding:0;border:0;background:none;color:var(--s-brand);font-size:13px;white-space:nowrap;transition:color 140ms var(--s-ease),opacity 140ms var(--s-ease)}
 .link:hover{text-decoration:underline}
 .close{display:grid;place-items:center;flex:none;width:28px;height:28px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:var(--s-subtle);transition:background-color 140ms var(--s-ease),color 140ms var(--s-ease),transform 100ms var(--s-ease)}
 .close:hover{background:var(--s-panel-hover);color:var(--s-text)}
@@ -115,7 +115,7 @@ button.alt{padding:6px 14px;border:1px solid var(--s-line);border-radius:var(--s
 button.alt:hover{background:var(--s-panel-hover)}
 button.primary{padding:6px 16px;border:1px solid var(--s-action-border);border-radius:var(--s-r-pill);background:var(--s-action);color:var(--s-action-text);font-size:13px;font-weight:500;line-height:20px;white-space:nowrap;transition:background-color 140ms var(--s-ease),border-color 140ms var(--s-ease),transform 100ms var(--s-ease)}
 button.primary:hover:not(:disabled){border-color:var(--s-action-hover);background:var(--s-action-hover)}
-button:not(:disabled):active{transform:translateY(1px)}
+:is(.close,.segments button,button.alt,button.primary,.about-content>button):not(:disabled):active{transform:translateY(1px)}
 /* 关于：标题 + 版本、说明、链接、功能列表、检查更新 */
 .about-content{padding:18px 0;font-size:13px;line-height:1.7}
 .about-heading{display:flex;align-items:baseline;gap:8px}
@@ -135,7 +135,7 @@ button:not(:disabled):active{transform:translateY(1px)}
 .toast[data-type=error]{background:var(--s-danger-fill);color:var(--s-on-danger)}
 .toast-icon{display:flex;flex:none}
 .toast-icon svg{display:block;width:16px;height:16px}
-.toast-close{display:grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:inherit;opacity:.7}
+.toast-close{display:grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:var(--s-r-pill);background:none;color:inherit;opacity:.7;transition:opacity 140ms var(--s-ease)}
 .toast-close:hover{opacity:1}
 .toast-close svg{display:block;width:13px;height:13px}
 @media(max-width:640px){
