@@ -169,19 +169,17 @@ html[data-nsmax-theme][data-nsmax-touch] :is(.member-list,.nspp-messages,.nspp-n
 /* 消息中心、关注列表和其他页面同一条边线：以前外面再套 16px / 12px 边距，比列表页窄一圈。 */
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-page=notification] :is(.nsk-notification,.nspp-messages-container){width:100%!important;max-width:none!important;margin:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .member-list.nsk-container{padding:12px 0 24px!important}
-/* 消息标签带未读数时放不下「刷新」「全部已读」：宽屏保持单行齐底，窄屏（≤500px）标签占满第一行并带细线底边（避免选中指示线悬空），刷新/全部已读/加载更多带 40px 点按区与 28px 视觉胶囊 */
+/* 消息标签带未读数时自然折行：放得下时（如私信页单按钮或宽屏）保持单行中线齐平、下划线贴底，放不下时自动换到第二行；按钮采用 32px 布局 + 28px 视觉胶囊 + 44px 触控热区 */
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages>.nspp-messages-top{flex-wrap:wrap!important;row-gap:0!important;padding-bottom:8px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs{flex:1 0 auto!important;min-width:max-content!important;margin-bottom:-8px!important;overflow:visible!important}
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions{margin-top:0!important;margin-left:auto!important;padding:0!important;gap:4px!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions{margin-top:8px!important;margin-left:auto!important;padding:0!important;gap:6px!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs+.nspp-messages-top-actions:only-of-type{padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions button,
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages .nspp-messages-more{position:relative!important;isolation:isolate!important;min-height:40px!important;height:40px!important;padding:0 12px!important;border:0!important;background:transparent!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages .nspp-messages-more{position:relative!important;isolation:isolate!important;min-height:32px!important;height:32px!important;padding:0 12px!important;border:0!important;background:transparent!important}
 html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions button::before,
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages .nspp-messages-more::before{content:""!important;position:absolute!important;inset:6px 0!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important}
-@media (max-width:500px){
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nsmax-message-tabs{flex:1 0 100%!important;min-width:0!important;margin-bottom:0!important;border-bottom:1px solid var(--line-soft)!important;overflow-x:auto!important;scrollbar-width:none!important}
-html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions{margin-top:2px!important;padding:0 0 2px!important}
-}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages .nspp-messages-more::before{content:""!important;position:absolute!important;inset:2px 0!important;z-index:-1!important;border:1px solid var(--line)!important;border-radius:var(--r-pill)!important;background:var(--panel)!important}
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages-top>.nspp-messages-top-actions button::after,
+html[data-nsmax-theme][data-nsmax-touch] .nspp-messages .nspp-messages-more::after{content:""!important;position:absolute!important;inset:-6px 0!important}
 html[data-nsmax-theme][data-nsmax-touch] .head-container{padding:16px 12px!important}
 /* 个人主页资料卡（手机，2026-11-08 用户截图「整个排列特别奇怪」重排）：
    以前头像右边一竖条塞名字、小标、UID、加入时间、介绍，头像对着这一大坨竖直居中，两个黑底「私信 TG」大按钮浮在右边，
