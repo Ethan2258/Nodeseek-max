@@ -2424,6 +2424,17 @@
 			card._nsmaxLoading = false;
 			card._nsmaxLoaded = done ? "done" : "open";
 			nsmaxRenderLottery(card);
+			// 偶尔一次没取到（刚装好脚本、站点抽风、drand 慢）：过 15 秒、45 秒、2 分钟各自己再取一次，不用刷新也不用点「重试」
+			const failed = done ? card._nsmaxResult === "failed" : !card._nsmaxStats;
+			const tries = card._nsmaxTries || 0;
+			if (failed && tries < 3) {
+				card._nsmaxTries = tries + 1;
+				setTimeout(() => {
+					if (!card.isConnected || card._nsmaxLoading) return;
+					const still = Date.now() > rule.time ? card._nsmaxResult === "failed" : !card._nsmaxStats;
+					if (still) nsmaxLoadLottery(card, { force: true });
+				}, [15e3, 45e3, 12e4][tries]);
+			} else if (!failed) card._nsmaxTries = 0;
 		});
 	}
 	// 看卡片的人是谁：未登录 / 发起人 / 已参与（哪几楼）/ 帖子锁了 / 抽奖在别的帖子
