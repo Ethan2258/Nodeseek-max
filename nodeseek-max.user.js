@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.87
+// @version      1.9.88
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -916,7 +916,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.87";
+	var NSMAX_VERSION = "1.9.88";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -5378,6 +5378,16 @@ var nsmaxRedirecting = false;
 		document.head.append(el);
 		return () => el.remove();
 	}
+	// 等浏览器画完下一帧再接着跑（分批干活时用）：requestAnimationFrame 回调之后紧跟着就是画这一帧，再排一个 setTimeout 就落在画完以后。
+	// 标签页在后台时不画、requestAnimationFrame 不来，50ms 后照样接着跑
+	function nsmaxNextPaint() {
+		return new Promise((resolve) => {
+			let finished = false;
+			const finish = () => { if (finished) return; finished = true; clearTimeout(fallback); resolve(); };
+			const fallback = setTimeout(finish, 50);
+			requestAnimationFrame(() => setTimeout(finish, 0));
+		});
+	}
 	function infinite(ctx) {
 		const comments = /^\/post-/.test(location.pathname);
 		// 评论下面「加载下一页」那一行第一帧就由 nsmaxReserveMoreRow 放好了（data-nsmax-early）：这里接着用它；这次不用的话收掉
@@ -5417,9 +5427,10 @@ var nsmaxRedirecting = false;
 		};
 		const visited = new Set([location.href.split("#")[0]]);
 		const components = [];
-		const attachActions = (item, data, url) => {
+		// 原站评论菜单的 Vue 实例：每接一页找一次（以前每接一层楼都把整页的菜单翻一遍）
+		const findNativeMenu = () => Array.from(document.querySelectorAll(".comment-menu")).map(menu => menu.__vue__).find(instance => typeof instance?.setIndex === "function");
+		const attachActions = (item, data, url, native) => {
 			const config = unsafeWindow$1.__config__;
-			const native = Array.from(document.querySelectorAll(".comment-menu")).map(menu => menu.__vue__).find(instance => typeof instance?.setIndex === "function");
 			const record = data?.comments?.find(row => String(row.floorIndex) === item.id);
 			if (native && record && Array.isArray(config?.postData?.comments)) {
 				let index = config.postData.comments.findIndex(row => row.commentId === record.commentId);
@@ -5538,13 +5549,24 @@ var nsmaxRedirecting = false;
 						el.removeAttribute(attr.name);
 					}
 				});
+				// 已经在列表上的帖子先记成一张表（以前每接一行都把整个列表的标题链接翻一遍）
+				const listed = comments ? null : new Set(Array.from(list.querySelectorAll(".post-title a"), (a) => postPath(a.href, location.href)));
+				const fresh = [];
 				for (const child of Array.from(source.children)) {
 					const id = child.id;
 					if (id && document.getElementById(id)) continue;
 					if (!comments) {
 						const href = child.querySelector(".post-title a")?.getAttribute("href");
-						if (href && Array.from(list.querySelectorAll(".post-title a")).some((a) => postPath(a.href, location.href) === postPath(href, url.href))) continue;
+						if (href) {
+							const key = postPath(href, url.href);
+							if (listed.has(key)) continue;
+							listed.add(key);
+						}
 					}
+					fresh.push(child);
+				}
+				const native = comments ? findNativeMenu() : null;
+				const appendOne = (child) => {
 					const imported = document.importNode(child, true);
 					for (const image of imported.querySelectorAll("img")) { image.loading = "lazy"; image.decoding = "async"; }
 					imported.setAttribute("data-nsmax-append-in", "");
@@ -5559,25 +5581,38 @@ var nsmaxRedirecting = false;
 					imported.addEventListener("animationend", onAppendEnd);
 					setTimeout(clearAppend, 280);
 					list.append(imported);
-					if (comments) attachActions(imported, data, url);
-				}
-				// 接上来的这一页当场按主题整理（楼中楼、楼层作者栏、操作胶囊、图片、代码块；列表页补打置顶 / 等级锁标记）：
+					if (comments) attachActions(imported, data, url, native);
+				};
+				// 接上来的楼层当场按主题整理（楼中楼、楼层作者栏、操作胶囊、图片、代码块；列表页补打置顶 / 等级锁标记）：
 				// 否则会先平铺画出来，等页面变化监听 100ms 后再收进楼中楼或整理徽章，看起来就是一跳
-				if (comments) {
-					try {
-						nsmaxGroupFloorActions();
-						nsmaxGroupNestedReplies();
-						nsmaxDecorateFloorBoxes();
-						nsmaxMarkPinnedReplies();
-						nsmaxBuildAuthorColumns();
-						nsmaxClassifyPostImages();
-						nsmaxWrapCodeBlocks();
-					} catch {}
-				} else {
-					try {
-						nsmaxTagStructure();
-						nsmaxOnListAppended?.();
-					} catch {}
+				const tidy = () => {
+					if (comments) {
+						try {
+							nsmaxGroupFloorActions();
+							nsmaxGroupNestedReplies();
+							nsmaxDecorateFloorBoxes();
+							nsmaxMarkPinnedReplies();
+							nsmaxBuildAuthorColumns();
+							nsmaxClassifyPostImages();
+							nsmaxWrapCodeBlocks();
+						} catch {}
+					} else {
+						try {
+							nsmaxTagStructure();
+							nsmaxOnListAppended?.();
+						} catch {}
+					}
+				};
+				// 分几帧接（2026-11-26）：一页楼层一口气接上、整理完，真站那一帧要 60–85ms（大多是挂原站的评论按钮和整理作者栏），
+				// 正往下滚时就是一顿。现在每帧最多接约 8ms 的楼层，接完的这几层当场整理好再画，画完一帧再接下一批：
+				// 每一批画出来时都已经是整理好的样子，不会先平铺再一跳。楼层是接在屏幕下方一屏多远的地方，分几帧接完看不出来
+				for (let index = 0; index < fresh.length;) {
+					await nsmaxNextPaint();
+					if (ctx.signal.aborted) return;
+					const started = performance.now();
+					do appendOne(fresh[index++]);
+					while (index < fresh.length && performance.now() - started < 8);
+					tidy();
 				}
 				visited.add(url.href);
 				if (!manual) autoLoads++;
@@ -5625,13 +5660,16 @@ var nsmaxRedirecting = false;
 			}
 		});
 		ctx.signal.addEventListener("abort", () => cancelAnimationFrame(initScrollFrame), { once: true });
+		// 按钮离底部够不够近，直接用下面这个观察器记下的状态（2026-11-26）：以前滚动时每帧量一次按钮位置，
+		// 刚接上楼层、样式还没算完的那一帧要当场把整页排一遍（真站约 10ms，测试页 4 倍降速 13ms）
+		let inRange = false;
 		const nearBottom = () => {
-			if (!engaged || busy || failed || paused || replying() || document.hidden || autoLoads >= autoLimit) return;
-			const box = button.getBoundingClientRect();
-			if (box.top <= innerHeight + PREFETCH_MARGIN && box.bottom >= 0) void load();
+			if (!engaged || !inRange || busy || failed || paused || replying() || document.hidden || autoLoads >= autoLimit) return;
+			void load();
 		};
 		const observer = new IntersectionObserver(entries => {
-			if (entries.some(entry => entry.isIntersecting)) nearBottom();
+			inRange = entries[entries.length - 1].isIntersecting;
+			if (inRange) nearBottom();
 		}, { rootMargin: `0px 0px ${PREFETCH_MARGIN}px 0px` });
 		let scrollFrame;
 		// 滚动事件里不读 scrollY（2026-11-10）：Chrome 读滚动位置前要先把样式和排版算完，滚动时鼠标下面的行刚换了悬停样式，
