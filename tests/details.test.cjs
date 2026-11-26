@@ -453,4 +453,176 @@ for(const engine of engines){
    }finally{await nf.context.close();}
   }
  });
+ test(`${engine} v1.9.87 个人主页切标签与底部分页防抖：标签条零脱节、介绍到达即放开不卡 1.5s、底部分页零上跳、手机端同样稳定`,async()=>{
+  const items=(prefix,count,base)=>Array.from({length:count},(_,i)=>`<div class="discussion-item" data-v-18f8c01b><a href="/post-${base+i}-1" data-v-18f8c01b><span data-v-18f8c01b>${prefix} ${i+1} — 测试标题</span><span style="color:rgb(255,152,152)" data-v-18f8c01b><svg class="iconpark-icon"><use href="#lock"></use></svg> 1</span></a><span></span></div>`).join("");
+  const mkHtml=(opts={})=>P.spaceTopicsPage(opts).replace(
+   /<div class="discussion-wrapper"[\s\S]*?<\/div><\/div><\/div><\/div>/,
+   `<div class="discussion-wrapper" data-v-18f8c01b>${items("主题帖",15,4000)}</div></div><div><div class="nsk-pager"><span class="pager-pos pager-cur">1</span><a class="pager-pos" href="#/discussions/2">2</a><a class="pager-next" href="#/discussions/2">下一页</a></div></div></div></div>`
+  );
+  const infoApi={"/api/account/getInfo/10":[{status:200,body:{success:true,detail:{member_id:10,member_name:"Steve",rank:3,coin:1257,stardust:50,nPost:100,nComment:873,follows:12,fans:34,collectionCount:8,created_at:"2024-01-01T00:00:00Z",readme:"大家好，这是我的个人介绍。"}}}]};
+  // 1. 桌面端：主题 → 介绍（异步填充 .readme）+ 底部「下一页」翻页 + Vue 原地复用节点翻页
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{viewport:{width:1440,height:900},seed,html:mkHtml(),api:infoApi});
+   try{
+    await ready(page);
+    await page.waitForSelector('.selector > a.select-item[data-nsmax-tab="general"]:not([hidden])');
+    await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),rightSide=box.querySelector(".selector-right-side");
+     const mountGeneral=()=>{
+      rightSide?.remove();
+      box.querySelector(":scope > .discussion-wrapper")?.remove();
+      box.querySelector(":scope > div[data-nsmax-pagerbox]")?.remove();
+      box.querySelector(":scope > .readme")?.remove();
+      const r=document.createElement("div");r.className="readme post-content";
+      const inner=document.createElement("div");r.append(inner);box.append(r);
+      setTimeout(()=>{inner.innerHTML="<p>大家好，这是我的个人介绍。</p>";},180);
+     };
+     const mountTopics=()=>{
+      box.querySelector(":scope > .readme")?.remove();
+      box.querySelector(":scope > .discussion-wrapper")?.remove();
+      box.querySelector(":scope > div[data-nsmax-pagerbox]")?.remove();
+      const w=document.createElement("div");w.className="discussion-wrapper";box.append(w);
+      setTimeout(()=>{
+       w.innerHTML=Array.from({length:15},(_,i)=>`<div class="discussion-item"><a href="/post-${6000+i}-1"><span>新主题 ${i+1}</span></a><span></span></div>`).join("");
+       const pb=document.createElement("div");pb.innerHTML='<div class="nsk-pager"><span class="pager-pos pager-cur">1</span><a class="pager-pos" href="#/discussions/2">2</a><a class="pager-next" href="#/discussions/2">下一页</a></div>';
+       box.append(pb);
+      },180);
+     };
+     for(const tab of box.querySelectorAll(":scope > a.select-item")){
+      tab.addEventListener("click",(e)=>{
+       e.preventDefault();
+       const h=tab.getAttribute("href");
+       history.pushState(null,"",h);
+       window.dispatchEvent(new HashChangeEvent("hashchange"));
+       if(h==="#/general"||h==="#/info")mountGeneral();else mountTopics();
+      });
+     }
+    });
+    const t0=Date.now();
+    await page.locator('.selector > a.select-item[data-nsmax-tab="general"]').click();
+    await page.waitForTimeout(60);
+    const midGeneral=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),br=box.getBoundingClientRect(),rm=box.querySelector(".readme");
+     return {
+      ac:getComputedStyle(box).alignContent,
+      switching:document.documentElement.hasAttribute("data-nsmax-space-switching"),
+      tabTops:[...box.querySelectorAll(":scope > a.select-item")].filter(t=>t.offsetWidth>0).map(t=>Math.round(t.getBoundingClientRect().top-br.top)),
+      rmDisplay:rm?getComputedStyle(rm).display:"",
+      rmTop:rm?Math.round(rm.getBoundingClientRect().top-br.top):-1,
+      rmH:rm?Math.round(rm.getBoundingClientRect().height):0
+     };
+    });
+    assert.match(midGeneral.ac,/^(?:flex|flow)-start$|^start$/,JSON.stringify(midGeneral));
+    assert.equal(midGeneral.switching,true,JSON.stringify(midGeneral));
+    assert.ok(midGeneral.tabTops.every(y=>Math.abs(y)<=1),`切介绍中标签条不脱节：${JSON.stringify(midGeneral)}`);
+    assert.equal(midGeneral.rmDisplay,"block",JSON.stringify(midGeneral));
+    assert.ok(Math.abs(midGeneral.rmTop-49)<=2&&midGeneral.rmH>=400,`加载中的介绍卡片紧贴标签条并保住高度：${JSON.stringify(midGeneral)}`);
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:900});
+    const elapsed=Date.now()-t0;
+    assert.ok(elapsed<900,`介绍到达后应立刻放开，不卡满 1.5s：${elapsed}ms`);
+    const postGeneral=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),br=box.getBoundingClientRect(),rm=box.querySelector(".readme");
+     return {
+      minH:box.style.minHeight,
+      tabTops:[...box.querySelectorAll(":scope > a.select-item")].filter(t=>t.offsetWidth>0).map(t=>Math.round(t.getBoundingClientRect().top-br.top)),
+      rmTop:Math.round(rm.getBoundingClientRect().top-br.top),
+      rmH:Math.round(rm.getBoundingClientRect().height),
+      rmText:rm.textContent.trim()
+     };
+    });
+    assert.equal(postGeneral.minH,"");
+    assert.ok(postGeneral.tabTops.every(y=>Math.abs(y)<=1),JSON.stringify(postGeneral));
+    assert.ok(Math.abs(postGeneral.rmTop-49)<=2&&postGeneral.rmH>40&&postGeneral.rmText.includes("个人介绍"),JSON.stringify(postGeneral));
+
+    // 切回「主题」，再测底部「下一页」按钮：清空列表期间底部页码位置不动、卡片不塌缩
+    await page.locator('.selector > a.select-item[data-nsmax-tab="discussions"]').click();
+    await page.waitForFunction(()=>document.querySelectorAll(".selector .discussion-wrapper > .discussion-item").length===15&&!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:1200});
+    const beforePager=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),br=box.getBoundingClientRect(),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector("[data-nsmax-pagerbox]");
+     box.querySelector(".nsk-pager a.pager-next").addEventListener("click",(e)=>{
+      e.preventDefault();
+      list.replaceChildren();
+      setTimeout(()=>{
+       list.innerHTML=Array.from({length:15},(_,i)=>`<div class="discussion-item"><a href="/post-${7000+i}-1"><span>第2页 主题 ${i+1}</span></a><span></span></div>`).join("");
+      },220);
+     });
+     return {listH:Math.round(list.getBoundingClientRect().height),pagerTop:Math.round(pg.getBoundingClientRect().top-br.top)};
+    });
+    await page.locator(".selector .nsk-pager a.pager-next").click();
+    await page.waitForTimeout(60);
+    const midPager=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),br=box.getBoundingClientRect(),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector("[data-nsmax-pagerbox]");
+     return {
+      switching:document.documentElement.hasAttribute("data-nsmax-space-switching"),
+      tabTops:[...box.querySelectorAll(":scope > a.select-item")].filter(t=>t.offsetWidth>0).map(t=>Math.round(t.getBoundingClientRect().top-br.top)),
+      listTop:Math.round(list.getBoundingClientRect().top-br.top),
+      listH:Math.round(list.getBoundingClientRect().height),
+      pagerTop:Math.round(pg.getBoundingClientRect().top-br.top),
+      after:getComputedStyle(list,"::after").content
+     };
+    });
+    assert.equal(midPager.switching,true,JSON.stringify(midPager));
+    assert.ok(midPager.tabTops.every(y=>Math.abs(y)<=1),`点下一页时标签条不脱节：${JSON.stringify(midPager)}`);
+    assert.ok(Math.abs(midPager.listH-beforePager.listH)<=2,`点下一页时列表卡片不塌缩：${JSON.stringify({beforePager,midPager})}`);
+    assert.ok(Math.abs(midPager.pagerTop-beforePager.pagerTop)<=2,`点底部下一页时页码不往上跳：${JSON.stringify({beforePager,midPager})}`);
+    assert.ok(!/还没有|暂无/.test(midPager.after),JSON.stringify(midPager));
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:1000});
+
+    // Vue 原地复用 DOM 节点（不删节点、只改 href 和文字）翻页也能在 900ms 内立刻放开
+    await page.evaluate(()=>{
+     const box=document.querySelector(".selector");
+     box.querySelector(".nsk-pager a.pager-pos").addEventListener("click",(e)=>{
+      e.preventDefault();
+      setTimeout(()=>{
+       const firstLink=box.querySelector(".discussion-wrapper .discussion-item a");
+       firstLink.setAttribute("href","/post-8888-1");
+       firstLink.querySelector("span").textContent="第3页 原地复用主题";
+      },120);
+     });
+    });
+    const tInPlace=Date.now();
+    await page.locator(".selector .nsk-pager a.pager-pos").first().click();
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:900});
+    assert.ok(Date.now()-tInPlace<900,"Vue 原地复用节点翻页也应立刻放开");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 2. 手机端 390px：主题 → 介绍零脱节、快速放开、无横向溢出
+  {
+   const mobileDev={...devices["iPhone 13"],viewport:{width:390,height:844}};
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{viewport:{width:390,height:844},device:mobileDev,seed,html:mkHtml({mobile:true}),api:infoApi});
+   try{
+    await ready(page);
+    await page.waitForSelector('.selector > a.select-item[data-nsmax-tab="general"]:not([hidden])');
+    await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),rightSide=box.querySelector(".selector-right-side");
+     box.querySelector(':scope > a.select-item[data-nsmax-tab="general"]').addEventListener("click",(e)=>{
+      e.preventDefault();
+      history.pushState(null,"","#/general");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+      rightSide?.remove();
+      box.querySelector(":scope > div[data-nsmax-pagerbox]")?.remove();
+      const r=document.createElement("div");r.className="readme post-content";
+      const inner=document.createElement("div");r.append(inner);box.append(r);
+      setTimeout(()=>{inner.innerHTML="<p>手机端个人介绍正文。</p>";},160);
+     });
+    });
+    await page.locator('.selector > a.select-item[data-nsmax-tab="general"]').tap();
+    await page.waitForTimeout(50);
+    const mid=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),br=box.getBoundingClientRect(),rm=box.querySelector(".readme");
+     return {
+      tabTops:[...box.querySelectorAll(":scope > a.select-item")].filter(t=>t.offsetWidth>0).map(t=>Math.round(t.getBoundingClientRect().top-br.top)),
+      rmTop:Math.round(rm.getBoundingClientRect().top-br.top)
+     };
+    });
+    assert.ok(mid.tabTops.every(y=>Math.abs(y)<=1)&&Math.abs(mid.rmTop-49)<=2,JSON.stringify(mid));
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:900});
+    const end=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,rmH:Math.round(document.querySelector(".selector > .readme").getBoundingClientRect().height)}));
+    assert.equal(end.overflow,false,JSON.stringify(end));
+    assert.ok(end.rmH>40,JSON.stringify(end));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }

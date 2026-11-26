@@ -101,11 +101,20 @@
 	function nsmaxShowEl(el) {
 		if (el && el.style.getPropertyValue("display")) el.style.removeProperty("display");
 	}
-	// 个人空间：这个人有没有写个人介绍（uid → true / false；接口没回来时没有这一项）
+	// 个人空间：这个人有没有写个人介绍（uid → true / false；接口没回来时没有这一项）；已经给某个 uid 露过「介绍」标签时记住，避免切到「主题」时标签先闪没再弹出
 	const nsmaxSpaceIntro = new Map();
+	const nsmaxSpaceIntroShown = new Set();
 	// 个人空间资料卡的九格统计（uid → 接口读到的数字，见 nsmaxPrepareSpace）；已经在等接口的 uid
 	const nsmaxSpaceStats = new Map();
 	const nsmaxSpaceStatsWaiting = new Set();
+	function nsmaxSpaceReadmeState(readme, hasIntro) {
+		const text = (readme.textContent || "").trim();
+		const hasWatermark = !!readme.querySelector("img[src*='logo'], img[src*='nodeseek'], svg");
+		const hasMedia = !!readme.querySelector("img:not([src*='logo']):not([src*='nodeseek']), video, iframe, table, pre, hr");
+		const placeholder = /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)/i.test(text);
+		const hasContent = !placeholder && (hasMedia || text.length > 0 && !(hasIntro !== true && hasWatermark && text.length < 20));
+		return { text, placeholder, hasContent, hasMedia };
+	}
 	// 是不是自己的个人空间（没登录、或者站点配置还没出来时按「别人的」处理）
 	function nsmaxIsOwnSpace() {
 		const id = location.pathname.match(/^\/space\/(\d+)/)?.[1];
@@ -191,37 +200,163 @@
 			visit(el);
 		}
 	}
+	// 个人空间标签区局部整理（切换「介绍 / 主题 / 回帖 / 收藏」或翻页时只扫 .selector，不重跑整页 30 多个模块与资料卡头部）
+	function nsmaxSyncSpaceSelector(selectorNav, targetHash) {
+		if (!selectorNav) return;
+		const uid = location.pathname.match(/\/space\/(\d+)/)?.[1] || "";
+		const hasIntro = nsmaxSpaceIntro.get(uid);
+		const switching = document.documentElement.hasAttribute("data-nsmax-space-switching");
+		for (const readme of selectorNav.querySelectorAll(".readme")) {
+			const { text, placeholder, hasContent, hasMedia } = nsmaxSpaceReadmeState(readme, hasIntro);
+			// 明确写过介绍或正在切换标签加载介绍时，不把刚挂上的空 .readme 隐藏成 display:none，免得标签条底边敞口、内容到达后还要等下一轮才露出来
+			const loadingEmpty = !hasContent && !placeholder && (hasIntro === true || switching);
+			const isEmpty = !hasContent && !loadingEmpty;
+			if (readme.hasAttribute("data-nsmax-empty-readme") !== isEmpty) readme.toggleAttribute("data-nsmax-empty-readme", isEmpty);
+			if (isEmpty) nsmaxHideEl(readme);
+			else nsmaxShowEl(readme);
+			// 站点画出来的介绍就能说明写没写（写着「没有找到readme」= 没写；有正文或图片 = 写了），不用等接口：「介绍」标签第一帧就对
+			if (uid && hasIntro === undefined && (placeholder || hasContent && (text.length >= 4 || hasMedia))) nsmaxSpaceIntro.set(uid, !placeholder);
+		}
+		for (const extraCard of selectorNav.querySelectorAll(".card-block")) nsmaxHideEl(extraCard);
+
+		const hash = typeof targetHash === "string" ? targetHash : location.hash;
+		const emptyLabel = /^#\/?comments/.test(hash) ? "还没有回帖" : /^#\/?collection/.test(hash) ? "还没有收藏" : "还没有发过主题";
+		for (const list of selectorNav.querySelectorAll(".discussion-wrapper, .comments-list")) {
+			if (list.getAttribute("data-nsmax-empty-label") !== emptyLabel) list.setAttribute("data-nsmax-empty-label", emptyLabel);
+		}
+
+		const settingBtn = selectorNav.querySelector(".nsmax-space-setting-btn");
+		if (settingBtn) settingBtn.remove();
+
+		const onGeneral = !hash || hash === "#" || /^#\/(?:general|info|profile)/.test(hash);
+		const intro = nsmaxSpaceIntro.get(uid);
+		// 写了介绍：显示；接口还没回来时在概况页（或这一页已经露过「介绍」标签）先留着，防止点「主题」瞬间把「介绍」闪掉导致标签左移；确定没写：不显示
+		const showIntro = intro === true || intro === undefined && (onGeneral || !!uid && nsmaxSpaceIntroShown.has(uid));
+		if (showIntro && uid) nsmaxSpaceIntroShown.add(uid);
+		if (intro === false && uid) nsmaxSpaceIntroShown.delete(uid);
+
+		const tabDefs = [
+			{ key: "general", text: "介绍", href: "#/general", match: /概况|资料|介绍|general|info|profile/i, hidden: !showIntro },
+			{ key: "discussions", text: "主题", href: "#/discussions", match: /主题|讨论|帖子|discussions/i },
+			{ key: "comments", text: "回帖", href: "#/comments", match: /评论|回帖|回复|comments/i },
+			// 收藏只有自己看得到：看别人的主页不放这个标签（点进去也是空的）
+			{ key: "collections", text: "收藏", href: "#/collections", match: /收藏|collections|fav/i, hidden: !nsmaxIsOwnSpace() }
+		];
+
+		const existingTabs = Array.from(selectorNav.querySelectorAll(":scope > a.select-item"));
+		const orderedTabs = [];
+		for (const def of tabDefs) {
+			let tab = existingTabs.find(t =>
+				t.getAttribute("data-nsmax-tab") === def.key ||
+				def.match.test(t.textContent.trim()) ||
+				(t.getAttribute("href") || "").includes(def.key)
+			);
+			if (!tab) {
+				if (def.hidden) continue;
+				tab = document.createElement("a");
+				tab.className = "select-item";
+				selectorNav.append(tab);
+				existingTabs.push(tab);
+			}
+			nsmaxSetText(tab, def.text);
+			// 概况标签保留站点原来的地址（真站是 #/general，个别页面是 #/info）
+			if (def.key !== "general" || !/^#\/(?:general|info|profile)/.test(tab.getAttribute("href") || "")) nsmaxSetAttr(tab, "href", def.href);
+			nsmaxSetAttr(tab, "data-nsmax-tab", def.key);
+			if (def.hidden) {
+				nsmaxHideEl(tab);
+				nsmaxSetAttr(tab, "hidden");
+				for (const name of ["active", "router-link-active", "router-link-exact-active"]) if (tab.classList.contains(name)) tab.classList.remove(name);
+				continue;
+			}
+			nsmaxDropAttr(tab, "hidden");
+			nsmaxShowEl(tab);
+			orderedTabs.push(tab);
+		}
+
+		// 将可见 Tab 固定排在 selector 最前部，绝不混入列表项之中（顺序已经对了就不动，移动节点也算 DOM 变动）
+		const firstNonTab = Array.from(selectorNav.children).find(c => !c.matches("a.select-item"));
+		const inOrder = orderedTabs.every((tab, i) => tab.parentElement === selectorNav && (i === 0 || orderedTabs[i - 1].nextElementSibling === tab))
+			&& (!firstNonTab || !orderedTabs.length || orderedTabs[orderedTabs.length - 1].nextElementSibling === firstNonTab || !!(orderedTabs[orderedTabs.length - 1].compareDocumentPosition(firstNonTab) & Node.DOCUMENT_POSITION_FOLLOWING));
+		if (!inOrder) for (const tab of orderedTabs) {
+			if (firstNonTab) selectorNav.insertBefore(tab, firstNonTab);
+			else selectorNav.append(tab);
+		}
+
+		const syncActiveTabs = (activeHash) => {
+			const h = typeof activeHash === "string" ? activeHash : location.hash;
+			const general = !h || h === "#" || /^#\/(?:general|info|profile)/.test(h);
+			const introShown = orderedTabs.some((tab) => tab.getAttribute("data-nsmax-tab") === "general");
+			for (const tab of orderedTabs) {
+				const key = tab.getAttribute("data-nsmax-tab");
+				let isActive = false;
+				if (key === "general" && general) isActive = true;
+				else if (key === "discussions" && (/discussions|posts/.test(h) || general && !introShown)) isActive = true;
+				else if (key === "comments" && /comments/.test(h)) isActive = true;
+				else if (key === "collections" && /collections|fav/.test(h)) isActive = true;
+				if (tab.classList.contains("active") !== isActive) tab.classList.toggle("active", isActive);
+				if (tab.classList.contains("router-link-active") !== isActive) tab.classList.toggle("router-link-active", isActive);
+			}
+		};
+
+		for (const tab of orderedTabs) {
+			if (!tab.hasAttribute("data-nsmax-bound")) {
+				tab.setAttribute("data-nsmax-bound", "true");
+				tab.addEventListener("click", (event) => {
+					const h = tab.getAttribute("href");
+					if (!h || !h.startsWith("#")) return;
+					// 不强改 location.hash 也不在 click 里同步重跑整页整理：原生 <a> 和 Vue Router 自己切路由，这里只立刻更新高亮态（<1ms）
+					if (!event.defaultPrevented) syncActiveTabs(h);
+				});
+			}
+		}
+
+		// 停在概况页、但确定这个人没写介绍：换到「主题」（替换当前历史记录，返回键不会又回到空的概况页）
+		if (onGeneral && intro === false) location.replace("#/discussions");
+		syncActiveTabs(hash);
+
+		// 只更新 .selector 里的等级锁、回帖摘要标记和页码，不扫整页（页头、侧栏、页脚、编辑器等都不碰）
+		for (const use of selectorNav.querySelectorAll('.discussion-wrapper .discussion-item span > svg > use[href="#lock"]')) {
+			const span = use.parentElement?.parentElement, link = span?.parentElement;
+			if (!link || link.tagName !== "A" || span.className) continue;
+			nsmaxFlag(span, "data-nsmax-lock", true);
+			const level = (span.textContent || "").trim();
+			if (level && span.getAttribute("data-nsmax-lock-level") !== level) {
+				span.setAttribute("data-nsmax-lock-level", level);
+				span.title = /^\d+$/.test(level) ? `等级 Lv${level} 及以上才能看` : level;
+			}
+			if (link.firstElementChild !== span) link.prepend(span);
+		}
+		for (const a of selectorNav.querySelectorAll(".discussion-wrapper > a")) nsmaxFlag(a, "data-nsmax-excerpt", !!a.querySelector(":scope > p"));
+		for (const item of selectorNav.querySelectorAll(".discussion-wrapper .discussion-item")) {
+			const next = item.nextElementSibling;
+			nsmaxFlag(item, "data-nsmax-has-excerpt", !!next && next.matches("a") && !!next.querySelector(":scope > p"));
+		}
+		for (const pager of selectorNav.querySelectorAll(".nsk-pager")) {
+			const box = pager.parentElement;
+			if (box && !box.matches("body, #nsk-body, #nsk-body-left, .post-list-controler, .comment-container, .selector, .nsk-post-wrapper, .credit-table > div")) {
+				nsmaxFlag(box, "data-nsmax-pagerbox", true, pager.matches(".pager-top, .post-top-pager") ? "top" : "bottom");
+			}
+		}
+		for (const box of selectorNav.querySelectorAll("[data-nsmax-pagerbox]")) if (!box.querySelector(":scope > .nsk-pager")) nsmaxDropAttr(box, "data-nsmax-pagerbox");
+		nsmaxTidyPagers(selectorNav);
+	}
 	function nsmaxPrepareSpace() {
 		if (!/^\/space\/\d+/.test(location.pathname)) return;
 		nsmaxSpaceSkeleton();
 		// 资料卡里那一组统计由下面的 renderStatsAndProgress 管，这里只标记原站其余位置的过时统计
-		for (const item of document.querySelectorAll(".card-block > .card-item")) {
-			if (item.closest(".head-container")) continue;
-			item.toggleAttribute("data-nsmax-obsolete-stat", !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent));
-		}
-		const spaceId = location.pathname.match(/\/space\/(\d+)/)?.[1];
-		const hasIntro = nsmaxSpaceIntro.get(spaceId);
-		for (const readme of document.querySelectorAll(".readme")) {
-			const text = readme.textContent.trim();
-			const hasWatermark = !!readme.querySelector("img[src*='logo'], img[src*='nodeseek'], svg");
-			// 接口说写了介绍就照常显示（介绍可能只有一张图）；站点写着「没有找到readme」或还没渲染出来时不显示
-			const placeholder = /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)/i.test(text);
-			const isEmpty = !text && !readme.querySelector("img") || placeholder || hasIntro !== true && hasWatermark && text.length < 20;
-			readme.toggleAttribute("data-nsmax-empty-readme", isEmpty);
-			if (isEmpty) nsmaxHideEl(readme);
-			else nsmaxShowEl(readme);
-			// 站点画出来的介绍就能说明写没写（写着「没有找到readme」= 没写；有正文 = 写了），不用等接口：「介绍」标签第一帧就对
-			// （2026-10-23：以前等接口回来才知道，站点先画好的话「介绍」标签过一会儿才藏起来，标签栏和下面的内容跳一下）
-			if (spaceId && hasIntro === undefined && (placeholder || !isEmpty && text.length >= 20)) nsmaxSpaceIntro.set(spaceId, !placeholder);
-		}
-		// 列表是空的时候：站点在卡片下面再画一个 200px 的「空」箱子插图（img[src$="/static/image/empty.svg"]，CSS 里藏掉），
-		// 卡片里只留一句，按当前标签说清楚是什么空了（2026-11-08 Yiheng 截图：「暂无内容」+ 大箱子两个空状态）
-		const emptyLabel = /^#\/?comments/.test(location.hash) ? "还没有回帖" : /^#\/?collection/.test(location.hash) ? "还没有收藏" : "还没有发过主题";
-		for (const list of document.querySelectorAll(".selector .discussion-wrapper, .comments-list")) {
-			if (list.getAttribute("data-nsmax-empty-label") !== emptyLabel) list.setAttribute("data-nsmax-empty-label", emptyLabel);
+		if (document.getElementsByClassName("card-item").length) {
+			for (const item of document.querySelectorAll(".card-block > .card-item")) {
+				if (item.closest(".head-container")) continue;
+				const obsolete = !item.textContent.trim() || /加入天数|注册天数|信用分|信任分/.test(item.textContent);
+				if (item.hasAttribute("data-nsmax-obsolete-stat") !== obsolete) item.toggleAttribute("data-nsmax-obsolete-stat", obsolete);
+			}
 		}
 		const head = document.querySelector(".head-container"), stats = document.querySelector(".card-block");
-		if (!head) return;
+		if (!head) {
+			const selectorNav = document.querySelector(".selector");
+			if (selectorNav) nsmaxSyncSpaceSelector(selectorNav);
+			return;
+		}
 
 		// 彻底清除任何在线或最后在线状态元素
 		for (const bad of head.querySelectorAll(".nsmax-space-online, .nsmax-space-last, .nsmax-online-dot")) bad.remove();
@@ -309,14 +444,14 @@
 		const self = nsmaxIsOwnSpace();
 		const renderStatsAndProgress = (info) => {
 			if (!headStats) return;
-			nsmaxDropAttr(headStats, "style");
 			const levelVal = info.rank !== undefined && Number.isFinite(Number(info.rank)) ? Number(info.rank) : 1;
 			const value = (v) => v === undefined || v === null || v === "" || !Number.isFinite(Number(v)) ? "—" : String(Number(v));
 			const created = Date.parse(info.created_at || "");
 			const days = info.days ?? (Number.isFinite(created) ? Math.max(0, Math.floor((Date.now() - created) / 864e5)) : undefined);
+			const activityOn = nsmaxActivityOn();
 			// 主题、回帖下面一行小字写日均（按注册天数折算，不满 1 天按 1 天），功能关了不写
 			const span = Number.isFinite(Number(days)) ? Math.max(1, Number(days)) : NaN;
-			const daily = (total, unit) => nsmaxActivityOn() && Number.isFinite(span) && value(total) !== "—" ? `日均 ${nsmaxRateText(Number(total) / span)} ${unit}` : "";
+			const daily = (total, unit) => activityOn && Number.isFinite(span) && value(total) !== "—" ? `日均 ${nsmaxRateText(Number(total) / span)} ${unit}` : "";
 			const cells = [
 				["关注", value(info.follows), self ? "/fans?type=follow" : ""],
 				["粉丝", value(info.fans), self ? "/fans?type=fans" : ""],
@@ -329,6 +464,10 @@
 				["注册天数", value(days), ""]
 			];
 			const signature = cells.map((cell) => cell.join("|")).join("\n");
+			const headSig = `${signature}\n#${levelVal}|${info.coin ?? ""}|${days ?? ""}|${activityOn ? 1 : 0}`;
+			if (head.dataset.nsmaxHeadSig === headSig && head.querySelector(":scope > .nsmax-space-progress")) return;
+			head.dataset.nsmaxHeadSig = headSig;
+			nsmaxDropAttr(headStats, "style");
 			nsmaxSetAttr(headStats, "data-nsmax-user-stats");
 			if (headStats.getAttribute("data-nsmax-sig") !== signature) {
 				headStats.setAttribute("data-nsmax-sig", signature);
@@ -484,110 +623,9 @@
 			});
 		}
 
-		// 空间页标签（sb.sb .profile-toolbar）：【介绍】【主题】【回帖】【收藏】，置于列表卡片顶部。
-		// 「介绍」就是原站的「概况」（站点只在这一页渲染 .readme，也就是用户写的个人介绍）：写了介绍才显示这个标签，
-		// 并且和原站一样进来先看介绍；没写（接口返回的 readme 为空）就不显示，落到「主题」
+		// 空间页标签（sb.sb .profile-toolbar）：【介绍】【主题】【回帖】【收藏】，置于列表卡片顶部
 		const selectorNav = document.querySelector(".selector");
-		if (selectorNav) {
-			const settingBtn = selectorNav.querySelector(".nsmax-space-setting-btn");
-			if (settingBtn) settingBtn.remove();
-
-			const hash = location.hash;
-			const onGeneral = !hash || hash === "#" || /^#\/(?:general|info|profile)/.test(hash);
-			const intro = nsmaxSpaceIntro.get(uid);
-			// 写了介绍：显示；不知道（接口还没回来）时只在停在概况页时先显示；确定没写：不显示
-			const showIntro = intro === true || intro === undefined && onGeneral;
-			const tabDefs = [
-				{ key: "general", text: "介绍", href: "#/general", match: /概况|资料|介绍|general|info|profile/i, hidden: !showIntro },
-				{ key: "discussions", text: "主题", href: "#/discussions", match: /主题|讨论|帖子|discussions/i },
-				{ key: "comments", text: "回帖", href: "#/comments", match: /评论|回帖|回复|comments/i },
-				// 收藏只有自己看得到：看别人的主页不放这个标签（点进去也是空的）
-				{ key: "collections", text: "收藏", href: "#/collections", match: /收藏|collections|fav/i, hidden: !nsmaxIsOwnSpace() }
-			];
-
-			const orderedTabs = [];
-			for (const def of tabDefs) {
-				let tab = Array.from(selectorNav.querySelectorAll("a.select-item")).find(t =>
-					t.getAttribute("data-nsmax-tab") === def.key ||
-					def.match.test(t.textContent.trim()) ||
-					(t.getAttribute("href") || "").includes(def.key)
-				);
-				if (!tab) {
-					if (def.hidden) continue;
-					tab = document.createElement("a");
-					tab.className = "select-item";
-					selectorNav.append(tab);
-				}
-				nsmaxSetText(tab, def.text);
-				// 概况标签保留站点原来的地址（真站是 #/general，个别页面是 #/info）
-				if (def.key !== "general" || !/^#\/(?:general|info|profile)/.test(tab.getAttribute("href") || "")) nsmaxSetAttr(tab, "href", def.href);
-				nsmaxSetAttr(tab, "data-nsmax-tab", def.key);
-				if (def.hidden) {
-					nsmaxHideEl(tab);
-					nsmaxSetAttr(tab, "hidden");
-					for (const name of ["active", "router-link-active", "router-link-exact-active"]) if (tab.classList.contains(name)) tab.classList.remove(name);
-					continue;
-				}
-				nsmaxDropAttr(tab, "hidden");
-				nsmaxShowEl(tab);
-				orderedTabs.push(tab);
-			}
-
-			// 将 3 个 Tab 固定排在 selector 最前部，绝不混入列表项之中（顺序已经对了就不动，移动节点也算 DOM 变动）
-			const firstNonTab = Array.from(selectorNav.children).find(c => !c.matches("a.select-item"));
-			const inOrder = orderedTabs.every((tab, i) => tab.parentElement === selectorNav && (i === 0 || orderedTabs[i - 1].nextElementSibling === tab))
-				&& (!firstNonTab || orderedTabs[orderedTabs.length - 1].nextElementSibling === firstNonTab || !!(orderedTabs[orderedTabs.length - 1].compareDocumentPosition(firstNonTab) & Node.DOCUMENT_POSITION_FOLLOWING));
-			if (!inOrder) for (const tab of orderedTabs) {
-				if (firstNonTab) selectorNav.insertBefore(tab, firstNonTab);
-				else selectorNav.append(tab);
-			}
-
-			const syncActiveTabs = () => {
-				const hash = location.hash;
-				const general = !hash || hash === "#" || /^#\/(?:general|info|profile)/.test(hash);
-				const introShown = orderedTabs.some((tab) => tab.getAttribute("data-nsmax-tab") === "general");
-				for (const tab of orderedTabs) {
-					const key = tab.getAttribute("data-nsmax-tab");
-					let isActive = false;
-					if (key === "general" && general) {
-						isActive = true;
-					} else if (key === "discussions" && (/discussions|posts/.test(hash) || general && !introShown)) {
-						isActive = true;
-					} else if (key === "comments" && /comments/.test(hash)) {
-						isActive = true;
-					} else if (key === "collections" && /collections|fav/.test(hash)) {
-						isActive = true;
-					}
-					tab.classList.toggle("active", isActive);
-					tab.classList.toggle("router-link-active", isActive);
-				}
-			};
-
-			for (const tab of orderedTabs) {
-				if (!tab.hasAttribute("data-nsmax-bound")) {
-					tab.setAttribute("data-nsmax-bound", "true");
-					tab.addEventListener("click", () => {
-						const h = tab.getAttribute("href");
-						if (h && h.startsWith("#")) {
-							if (location.hash !== h) location.hash = h;
-							syncActiveTabs();
-							nsmaxPrepareSpace();
-						}
-					});
-				}
-			}
-
-			// 停在概况页、但确定这个人没写介绍：换到「主题」（替换当前历史记录，返回键不会又回到空的概况页）
-			if (onGeneral && intro === false) location.replace("#/discussions");
-			syncActiveTabs();
-		}
-
-		if (!window.__nsmax_space_hash_bound) {
-			window.__nsmax_space_hash_bound = true;
-			window.addEventListener("hashchange", () => {
-				nsmaxPrepareSpace();
-			});
-		}
+		if (selectorNav) nsmaxSyncSpaceSelector(selectorNav);
 	}
 	// 整理过、内容（按钮和上面的数字）没变的菜单不再动（2026-10-25）：以前解析阶段每一步、之后每轮整理都把每一层的每个按钮
 	// 重写一遍属性和行内样式，写的值一样也算一次改动，浏览器每次都要重算这些按钮的样式。点赞数变了文字跟着变，照样会重新整理
@@ -3267,9 +3305,9 @@
 	}
 	// 分页：只留首页、末页和当前页前后，中间用省略号；「上一页 / 下一页」写成文字。
 	var nsmaxTidiedPagers = new WeakMap();
-	function nsmaxTidyPagers() {
+	function nsmaxTidyPagers(scope = document) {
 		const pagerSig = (pager, current) => `${current}|${pager.childElementCount}|${pager.textContent}|${pager.getAttribute("data-nsmax-last-page") || ""}|${pager.querySelector("a.pager-next[href]") ? 1 : 0}`;
-		for (const pager of document.querySelectorAll(".nsk-pager")) {
+		for (const pager of scope.querySelectorAll(".nsk-pager")) {
 			const current = Number(pager.querySelector(".pager-cur,[aria-current=page]:not(a)")?.textContent) || 1;
 			if (nsmaxTidiedPagers.get(pager) === pagerSig(pager, current)) continue;
 			const pages = Array.from(pager.querySelectorAll(".pager-pos"));
@@ -6918,17 +6956,37 @@ function nsmaxTagStructure() {
 			setTimeout(() => root.removeAttribute("data-nsmax-space-pending"), 4e3);
 		}
 		const relevant = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container, .card-block, .readme, .selector, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager") || !!node.querySelector(".head-container, .card-block, .readme, .discussion-wrapper, .discussion-item, .comments-list, .nsk-pager"));
+		const needsFull = (node) => node instanceof Element && (node.matches(".nsk-container, .head-container") || !!node.querySelector(".head-container"));
+		const inSelectorContent = (record) => {
+			const el = record.target instanceof Element ? record.target : record.target?.parentElement;
+			return !!el?.closest(".selector .readme, .selector .discussion-wrapper, .selector .comments-list, .selector .nsk-pager");
+		};
 		const observer = new MutationObserver((records) => {
 			if (records.some((record) => record.target.id === "nsk-frame")) {
 				try { nsmaxSpaceHold(); } catch {}
 				observer.takeRecords();
 			}
-			if (!records.some((record) => Array.from(record.addedNodes).some(relevant))) return;
+			let hit = false, full = !document.querySelector(".head-container > .nsmax-space-top");
+			for (const record of records) {
+				if (inSelectorContent(record)) hit = true;
+				for (const node of record.addedNodes) {
+					if (relevant(node)) {
+						hit = true;
+						if (needsFull(node)) full = true;
+					}
+				}
+			}
+			if (!hit) return;
 			try {
-				nsmaxPrepareSpace();
-				nsmaxTagStructure();
-				nsmaxMarkLevels();
-				nsmaxTidyPagers();
+				if (full) {
+					nsmaxPrepareSpace();
+					nsmaxTagStructure();
+					nsmaxMarkLevels();
+					nsmaxTidyPagers();
+				} else {
+					const sel = document.querySelector(".selector");
+					if (sel) nsmaxSyncSpaceSelector(sel);
+				}
 			} catch {}
 			if (drawn()) root.removeAttribute("data-nsmax-space-pending");
 			observer.takeRecords();
@@ -6936,41 +6994,97 @@ function nsmaxTagStructure() {
 		observer.observe(document.body, { childList: true, subtree: true });
 		ctx.signal.addEventListener("abort", () => { observer.disconnect(); nsmaxSpaceWatching = false; }, { once: true });
 		try { nsmaxPrepareSpace(); } catch {}
-		// 切换「主题 / 回帖 / 收藏」标签（2026-11-09 在用户 Chrome 里实测）：站点先把旧列表清空、再去拿新的，中间 0.3–0.4 秒
-		// 列表是空的——卡片里先闪一下「还没有发过主题」，整块从 800px 缩到 100px 左右再长回去，页脚和右栏跟着上下跳。
-		// 点标签或页码的那一刻记下卡片高度、先撑住，新内容到了（或者站点画出真正的空状态插图）再放开；这段时间不写「还没有……」
+		// 切换「介绍 / 主题 / 回帖 / 收藏」标签或点底部页码（2026-11-09 & 2026-11-26）：站点先把旧列表清空再去拿新内容，
+		// 中间 0.3–0.4 秒卡片塌缩、先闪「还没有……」且页码往上跳。点标签 / 页码 / 顶部统计快捷入口的那一刻同时撑住
+		// .selector 整块和内容卡片高度（--nsmax-space-card-min-h），新列表、页码原地刷新、空状态插图或 .readme 正文到达立即放开
 		let release = null;
+		const cardSelector = ":scope > .discussion-wrapper, :scope > .readme:not([data-nsmax-empty-readme]), :scope > .selector-right-side > .discussion-wrapper, :scope > .selector-right-side > .comments-list, :scope > .selector-right-side > .readme:not([data-nsmax-empty-readme]), :scope > div > div > .discussion-wrapper, .comments-list";
+		const listSigOf = (box) => {
+			const items = box.querySelectorAll(".discussion-wrapper > *, .comments-list > *");
+			if (!items.length) return "";
+			let sig = String(items.length);
+			for (let i = 0; i < Math.min(items.length, 5); i++) {
+				const el = items[i];
+				const a = el.tagName === "A" ? el : el.querySelector("a[href]");
+				sig += "|" + (a?.getAttribute("href") || "") + ":" + (el.textContent || "").trim().slice(0, 32);
+			}
+			return sig;
+		};
 		document.addEventListener("click", (event) => {
 			const target = event.target instanceof Element ? event.target : null;
 			const tab = target?.closest(".selector > a.select-item");
-			const pagerLink = !tab && target?.closest(".selector .nsk-pager a.pager-pos");
-			const trigger = tab || pagerLink;
+			const pagerLink = !tab && target?.closest(".selector .nsk-pager a:is(.pager-pos, .pager-next, .pager-prev)");
+			const statLink = !tab && !pagerLink && target?.closest('.head-container > .card-block > a.nsmax-user-stat[href^="#/"]');
+			const trigger = tab || pagerLink || statLink;
 			if (!trigger) return;
-			if (tab && (tab.classList.contains("active") || tab.classList.contains("router-link-exact-active"))) return;
-			if (pagerLink && (pagerLink.classList.contains("pager-cur") || pagerLink.hasAttribute("data-nsmax-pg-cur") || pagerLink.classList.contains("active") || pagerLink.classList.contains("current"))) return;
-			const box = trigger.closest(".selector");
+			const curHash = location.hash || "#/general";
+			if (tab) {
+				const href = tab.getAttribute("href") || "";
+				const isCurrentTab = tab.classList.contains("active") || tab.classList.contains("router-link-exact-active");
+				if (isCurrentTab && (!href || curHash === href || tab.getAttribute("data-nsmax-tab") === "general" && /^#\/?(?:general|info|profile)?$/.test(curHash))) return;
+			}
+			if (pagerLink && (pagerLink.getAttribute("aria-disabled") === "true" || pagerLink.hasAttribute("data-nsmax-pg-off") || pagerLink.classList.contains("pager-cur") || pagerLink.hasAttribute("data-nsmax-pg-cur") || pagerLink.classList.contains("active") || pagerLink.classList.contains("current"))) return;
+			if (statLink && statLink.getAttribute("href") === curHash) return;
+			const box = trigger.closest(".selector") || document.querySelector("#nsk-frame > .nsk-container > .selector");
 			if (!box) return;
-			release?.();
-			box.style.setProperty("min-height", box.offsetHeight + "px", "important");
+			// 连续快切标签时先记住当前已撑住的高度，不撤掉再量（免得空档里量成塌缩高度）
+			const boxH = box.offsetHeight;
+			const card = box.querySelector(cardSelector);
+			const cardH = card ? Math.round(card.getBoundingClientRect().height) : parseFloat(box.style.getPropertyValue("--nsmax-space-card-min-h")) || 0;
+			release?.(true);
+			box.style.setProperty("min-height", boxH + "px", "important");
+			if (cardH > 0) box.style.setProperty("--nsmax-space-card-min-h", cardH + "px");
 			root.setAttribute("data-nsmax-space-switching", "");
-			let watch = null, timer = 0;
-			const done = () => {
-				if (release !== done) return;
+			let watch = null, timer = 0, released = false;
+			const done = (handover = false) => {
+				if (released || release !== done) return;
+				released = true;
 				release = null;
 				watch?.disconnect();
 				clearTimeout(timer);
+				if (handover) return;
 				box.style.removeProperty("min-height");
+				box.style.removeProperty("--nsmax-space-card-min-h");
 				root.removeAttribute("data-nsmax-space-switching");
+				// 如果介绍仍为空（例如切过去才发现确实没写），撤掉 switching 后再收起占位
+				const emptyLoadingReadme = box.querySelector(".readme:not([data-nsmax-empty-readme])");
+				if (emptyLoadingReadme && !nsmaxSpaceReadmeState(emptyLoadingReadme, nsmaxSpaceIntro.get(uid)).hasContent) {
+					try { nsmaxSyncSpaceSelector(box); } catch {}
+				}
 			};
 			release = done;
-			// 点下去的时候已经在的行记下来；之后出现了不在这里面的行（或者站点画出空状态插图）才算新内容到了
+			// 点下去的时候已经在的行、签名、以及当前已可见的 .readme 记下来；
+			// 新行插入 / Vue 原地复用节点改了链接或文字 / 空状态插图 / .readme 出现正文或确认无介绍，任一满足就立刻放开
 			const old = new WeakSet();
 			const fresh = '.discussion-wrapper > *, .comments-list > *, img[src*="/static/image/empty.svg"]';
 			for (const row of box.querySelectorAll(fresh)) old.add(row);
-			const arrived = () => [...box.querySelectorAll(fresh)].some((row) => !old.has(row));
-			watch = new MutationObserver(() => { if (arrived()) requestAnimationFrame(done); });
-			watch.observe(box, { childList: true, subtree: true });
-			timer = setTimeout(done, 1500);
+			const oldSig = listSigOf(box);
+			const oldReadmes = new Map();
+			for (const rm of box.querySelectorAll(".readme")) {
+				oldReadmes.set(rm, { visible: rm.offsetHeight > 0 && !rm.hasAttribute("data-nsmax-empty-readme"), text: (rm.textContent || "").trim() });
+			}
+			const arrived = () => {
+				if ([...box.querySelectorAll(fresh)].some((row) => !old.has(row))) return true;
+				const curSig = listSigOf(box);
+				if (curSig && curSig !== oldSig) return true;
+				const intro = nsmaxSpaceIntro.get(uid);
+				for (const rm of box.querySelectorAll(".readme")) {
+					const state = nsmaxSpaceReadmeState(rm, intro);
+					const prev = oldReadmes.get(rm);
+					if (state.hasContent && (!prev || !prev.visible || prev.text !== state.text)) return true;
+					if (state.placeholder && (!prev || prev.text !== state.text)) return true;
+				}
+				return false;
+			};
+			watch = new MutationObserver(() => {
+				if (arrived()) {
+					// 同步确保新到的 .readme 在释放前已经显示出来，避免下一帧才取消 display:none
+					try { nsmaxSyncSpaceSelector(box); } catch {}
+					requestAnimationFrame(() => done(false));
+				}
+			});
+			watch.observe(box, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["href", "style", "class"] });
+			timer = setTimeout(() => done(false), 1500);
 		}, { capture: true, signal: ctx.signal });
 	}
 	// Userscripts 的 content world 不能直接读页面 expando。桥只访问论坛配置和编辑器；不暴露任何 GM API 或存储。
@@ -8021,20 +8135,51 @@ function nsmaxTagStructure() {
 			nsmaxHandleReplyArrival();
 		};
 		const stop = ctx.watch(scan);
-		window.addEventListener("popstate", scan, { signal: ctx.signal });
-		window.addEventListener("hashchange", scan, { signal: ctx.signal });
+		let lastRoutePath = location.pathname;
+		let lastRouteHref = location.href;
+		let routeScanQueued = false;
+		const runRouteScan = () => {
+			routeScanQueued = false;
+			if (ctx.signal.aborted) return;
+			const path = location.pathname;
+			const samePath = path === lastRoutePath;
+			lastRoutePath = path;
+			lastRouteHref = location.href;
+			// 同路径下仅 hash 变化（个人主页切介绍 / 主题 / 回帖 / 翻页、设置页切分类等）：
+			// 只做本页局部整理，不再把整页 30+ 函数的 scan() 同步重跑两三遍（pushState + hashchange 也会合并成一次）
+			if (samePath && /^\/space\/\d+/.test(path)) {
+				const sel = document.querySelector(".selector");
+				if (sel && document.querySelector(".head-container > .nsmax-space-top")) {
+					try { nsmaxSyncSpaceSelector(sel); } catch {}
+					return;
+				}
+			}
+			if (samePath && /^\/setting(?:\/|$)/.test(path)) {
+				try { nsmaxPrepareSetting(); } catch {}
+				return;
+			}
+			try { scan(); } catch {}
+		};
+		const onRouteChange = () => {
+			if (location.href === lastRouteHref && location.pathname === lastRoutePath) return;
+			if (routeScanQueued) return;
+			routeScanQueued = true;
+			queueMicrotask(runRouteScan);
+		};
+		window.addEventListener("popstate", onRouteChange, { signal: ctx.signal });
+		window.addEventListener("hashchange", onRouteChange, { signal: ctx.signal });
 		let origPush, origReplace;
 		if (typeof history !== "undefined") {
 			origPush = history.pushState;
 			origReplace = history.replaceState;
 			history.pushState = function() {
 				const res = origPush.apply(this, arguments);
-				try { scan(); } catch(e) {}
+				onRouteChange();
 				return res;
 			};
 			history.replaceState = function() {
 				const res = origReplace.apply(this, arguments);
-				try { scan(); } catch(e) {}
+				onRouteChange();
 				return res;
 			};
 		}
