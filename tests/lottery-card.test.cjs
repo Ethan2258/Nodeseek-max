@@ -106,6 +106,35 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 		} finally { await context.close(); }
 	});
 
+	test(`${engine} 一次没取到不放弃：楼层名单 / 随机数第一次失败，过一会儿自己再取，不用刷新`, async () => {
+		// 把重试的等待（15 秒起）缩短，测试里不用真等
+		const init = "(() => { const st = window.setTimeout; window.setTimeout = (fn, ms, ...rest) => st(fn, ms >= 15e3 && ms <= 12e4 ? 200 : ms, ...rest); })();";
+		const failOnce = (data) => ({ "/api/content/floor-data": [{ status: 500, body: {} }, ...Array.from({ length: 5 }, () => ({ status: 200, body: { success: true, data } }))] });
+		{
+			const html = withLink(P.postPage(), `<p><a href="${link(Date.now() + 864e5)}">开奖</a></p>`);
+			const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, init, viewport: { width: 1440, height: 900 }, api: failOnce(floors({ me: 37 })) });
+			try {
+				await page.waitForFunction(() => document.querySelector(".nsk-post .nsmax-lottery-people")?.textContent === "51 人", null, { timeout: 8e3 });
+				assert.equal(await page.locator(".nsk-post [data-nsmax-fact=people]").isVisible(), true);
+				assert.match(await page.locator(".nsk-post .nsmax-lottery-me").textContent(), /你已参与/);
+				assert.equal(calls["/api/content/floor-data"], 2);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+		{
+			let drand = 0;
+			const html = withLink(P.postPage(), `<p><a href="${link(Date.now() - 36e5)}">开奖</a></p>`);
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, init, viewport: { width: 1440, height: 900 }, api: floorApi(floors({ me: 7 })), external: { "api.drand.sh": () => (++drand === 1 ? undefined : { round: 1, randomness: RAND }) } });
+			try {
+				await page.waitForSelector(".nsk-post .nsmax-lottery-winner", { timeout: 8e3 });
+				assert.deepEqual(await page.locator(".nsk-post .nsmax-lottery-winner .nsmax-lottery-floor").allTextContents(), ["#2", "#7", "#25"]);
+				assert.equal(await page.locator(".nsk-post .nsmax-lottery").getAttribute("data-nsmax-result"), "ok");
+				assert.equal(drand, 2);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+	});
+
 	test(`${engine} 链接细节：没写 duplicate 就是可以重复中奖；「奖品：」只取那一行；一键抽奖那种带名目的列表项整行收起、卡片放在列表后面；不足一小时不写「时」`, async () => {
 		const html = withLink(P.postPage(), `<p>奖品：一台小鸡<br>开奖时间：今晚</p><ul><li><strong>中奖人数</strong>：1 人</li><li><strong>开奖链接</strong>：<a href="${link(Date.now() + 30 * 6e4, { count: 1, duplicate: null })}">查看开奖</a></li></ul>`);
 		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1440, height: 900 } });

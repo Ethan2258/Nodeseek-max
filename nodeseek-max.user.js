@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.88
+// @version      1.9.89
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -916,7 +916,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.88";
+	var NSMAX_VERSION = "1.9.89";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -27040,6 +27040,17 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			card._nsmaxLoading = false;
 			card._nsmaxLoaded = done ? "done" : "open";
 			nsmaxRenderLottery(card);
+			// 偶尔一次没取到（刚装好脚本、站点抽风、drand 慢）：过 15 秒、45 秒、2 分钟各自己再取一次，不用刷新也不用点「重试」
+			const failed = done ? card._nsmaxResult === "failed" : !card._nsmaxStats;
+			const tries = card._nsmaxTries || 0;
+			if (failed && tries < 3) {
+				card._nsmaxTries = tries + 1;
+				setTimeout(() => {
+					if (!card.isConnected || card._nsmaxLoading) return;
+					const still = Date.now() > rule.time ? card._nsmaxResult === "failed" : !card._nsmaxStats;
+					if (still) nsmaxLoadLottery(card, { force: true });
+				}, [15e3, 45e3, 12e4][tries]);
+			} else if (!failed) card._nsmaxTries = 0;
 		});
 	}
 	// 看卡片的人是谁：未登录 / 发起人 / 已参与（哪几楼）/ 帖子锁了 / 抽奖在别的帖子
