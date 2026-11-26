@@ -3992,6 +3992,7 @@ html[data-nsmax-theme][data-nsmax-page="space"] #nsk-frame > .nsk-container > .s
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
+  align-content: flex-start !important;
   gap: 0 !important;
   box-sizing: border-box !important;
   height: auto !important;
@@ -4190,9 +4191,9 @@ html[data-nsmax-theme][data-nsmax-page="space"] .discussion-wrapper > a:not(.dis
   font-size: 13.5px !important;
   line-height: 1.65 !important;
 }
-/* 「主题 / 回帖」列表有时包在 .selector-right-side 里（.selector > .selector-right-side > .discussion-wrapper），
+/* 「主题 / 回帖」列表有时包在 .selector-right-side 里（.selector > .selector-right-side > .discussion-wrapper / .comments-list），
    上面那条规则管不到：列表没有边框和下圆角，和上面的标签条断开，像飘在页面上的一串字。补上同样的卡片边框 */
-html[data-nsmax-theme][data-nsmax-page="space"] .selector > .selector-right-side > .discussion-wrapper:is(#nsmax-lv, *) {
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .selector-right-side > :is(.discussion-wrapper, .comments-list):is(#nsmax-lv, *) {
   box-sizing: border-box !important;
   margin: 0 !important;
   border: 1px solid var(--line) !important;
@@ -8516,10 +8517,17 @@ html[data-nsmax-theme] .msc-confirm .msc-action > button:is(#nsmax-lv, *):is(#ns
   box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--brand-border) !important;
 }
 /* 个人介绍：原站概况页的 .readme（用户自己写的 Markdown），照帖子正文排——15px / 1.8，图片最宽占满、表格可横向滚动 */
-html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme:not([data-nsmax-empty-readme]):is(#nsmax-lv, *):is(#nsmax-b, *) {
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme:not([data-nsmax-empty-readme]):is(#nsmax-lv, *):is(#nsmax-b, *),
+html[data-nsmax-theme][data-nsmax-page="space"] .selector > .selector-right-side > .readme:not([data-nsmax-empty-readme]):is(#nsmax-lv, *):is(#nsmax-b, *) {
   display: block !important;
   box-sizing: border-box !important;
   padding: 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 0 var(--r) var(--r) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
   overflow-wrap: anywhere !important;
 }
 html[data-nsmax-theme][data-nsmax-page="space"] .selector > .readme :is(img, video):is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -17790,9 +17798,14 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > #editor:is(#nsmax-lv, 
     padding-inline: 18px !important;
   }
 }
-/* 切换个人主页标签、新列表还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：不写「还没有……」 */
+/* 切换个人主页标签 / 翻页、新内容还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：
+   不写「还没有……」；同时给内容卡片（列表 / 回帖 / 加载中的介绍）保住切换前的高度（--nsmax-space-card-min-h），
+   避免底下的页码往上闪跳、卡片底边塌成空缺（2026-11-26） */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;
+}
+html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] .selector :is(.discussion-wrapper, .comments-list, .readme:not([data-nsmax-empty-readme])):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  min-height: var(--nsmax-space-card-min-h, 140px) !important;
 }
 /* ---------- 电脑端细调第十轮（2026-11-20 Yiheng：「再优化个地方……各个」） ----------
    1. 页面右边的滚动条有的页有、有的页没有（消息中心「私信」、站点设置这种短页面没有），整页内容和顶栏就跟着左右挪 15px：
