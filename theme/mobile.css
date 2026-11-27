@@ -411,7 +411,8 @@ html[data-nsmax-theme][data-nsmax-touch] body>footer .contain>.col>.group-head-l
 html[data-nsmax-theme][data-nsmax-touch] body>footer .contain>.col>ul{display:flex!important;flex-wrap:wrap!important;gap:0 14px!important;min-width:0!important;margin:0!important;padding:0!important}
 html[data-nsmax-theme][data-nsmax-touch] body>footer .contain>.col a{display:inline-flex!important;align-items:center!important;min-height:32px!important;max-width:100%!important}
 html[data-nsmax-theme][data-nsmax-touch] body>footer .foot{margin:6px 0 0!important;padding:12px 0 0!important;font-size:12px!important}
-html[data-nsmax-theme][data-nsmax-touch][data-nsmax-cv] body>footer{contain-intrinsic-size:auto 430px!important}
+/* 预留值只是内容高度（2026-11-27）：触屏页脚上下还有 33px 内边距和边框，以前按整块 432px 写成内容高度，画出来时每次缩 30px */
+html[data-nsmax-theme][data-nsmax-touch][data-nsmax-cv] body>footer{contain-intrinsic-size:auto 399.5px!important}
 /* 设置页、关注 / 粉丝页：外层容器又套了一圈 12px 内边距，卡片比其他页面窄、离顶栏也远一截；和列表页一样贴齐两边 12px */
 html[data-nsmax-theme][data-nsmax-touch] #user-setting-panel.nsk-container{padding:0 0 24px!important}
 html[data-nsmax-theme][data-nsmax-touch] .member-list.nsk-container{padding:0 0 24px!important}

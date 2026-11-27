@@ -139,6 +139,30 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ // 2026-11-27：第 9 层以后的楼层先按预留高度占位（content-visibility:auto），空闲时、滚到附近才真排。预留的要和一句话的楼层排出来一样高：
+ // 以前经典宽屏每层差 3px、1000px 以下（一列卡片）差 50px 上下、简洁差 43.5px（内边距没算）、手机差 38px，手机页脚差 30px；
+ // 屏幕上方没画过的楼层一排好，正在看的内容（回复框、点楼号跳到的那一层）就跟着往上跳
+ test(`${engine} 帖子页楼层和页脚的预留高度等于一句话的楼层、页脚实际排出来的高度（经典 / 简洁，宽屏 / 1000px 以下 / 800px 以下 / 手机）`,async()=>{
+  const long=(mobile)=>{const html=P.postPage({mobile}),one=html.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0];return html.replace(one,one+Array.from({length:21},(_,i)=>one.replace('id="3"',`id="${i+4}"`).replace(/#3\b/g,"#"+(i+4))).join(""));};
+  const slack=engine==="webkit"?4:2,failures=[];
+  for(const layout of ["classic","simple"])for(const [label,options] of [["1440",{viewport:{width:1440,height:900},seed}],["900",{viewport:{width:900,height:900},seed}],["760",{viewport:{width:760,height:900},seed}],["手机",phone()]]){
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{...options,html:long(!!options.device),init:layout==="simple"?"try{localStorage.setItem('nsmax:post-layout','simple')}catch{}":""});
+   try{
+    await ready(page);
+    const s=await page.evaluate(()=>{
+     const measure=e=>{const cv=getComputedStyle(e).contentVisibility,reserved=e.getBoundingClientRect().height;e.style.setProperty("content-visibility","visible","important");const real=e.getBoundingClientRect().height;e.style.removeProperty("content-visibility");return{cv,reserved,real};};
+     return{layout:document.documentElement.dataset.nsmaxPostLayout,floor:measure([...document.querySelectorAll("#nsk-body-left ul.comments>li.content-item")].pop()),footer:measure(document.querySelector("body>footer"))};
+    });
+    assert.equal(s.layout,layout);
+    for(const k of ["floor","footer"]){
+     assert.equal(s[k].cv,"auto",`${layout} ${label} ${k}`);
+     if(Math.abs(s[k].reserved-s[k].real)>slack)failures.push(`${layout} ${label} ${k} 预留 ${s[k].reserved} 实际 ${s[k].real}`);
+    }
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  assert.deepEqual(failures,[]);
+ });
  test(`${engine} v1.9.83 帖子详情页等级限制标签与首页一致：移至标题前方渲染为 18px 浅红「Lv4」胶囊并对齐标题中线`,async()=>{
   const lock=` <span style="margin-left:5px;color: rgb(255 152 152);"><svg class="iconpark-icon" style="width: 14px;height: 14px;vertical-align: baseline;"><use href="#lock"></use></svg> <span style="font-size: 14px;font-family: sans-serif;">\n                            4\n                        </span></span>`;
   for(const options of [{viewport:{width:1440,height:900},seed},{...phone(),mobile:true}]){

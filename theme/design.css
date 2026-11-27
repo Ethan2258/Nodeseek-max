@@ -12458,10 +12458,11 @@ html[data-nsmax-theme] .nsmax-person-pop .nsmax-person-actions > .nsmax-person-b
    预留值只是内容高度，行自己的上下内边距（桌面 11px×2，手机 10px×2）另外加（2026-10-30：以前把整行高度当成内容高度，
    每行多留 22px，手机多留 43px，50 行的列表先多出一千多像素，滚到附近画出来时滚动条往回缩，首屏的行也先按 95px 排一帧再缩回 71px）
    只在正常打开页面时用（data-nsmax-cv，见 applyThemeAttributes）：刷新、前进后退时浏览器按原来的滚动位置恢复，
-   上面没画过的行按预留高度算，标题折行的行多了会停错位置 */
+   上面没画过的行按预留高度算，标题折行的行多了会停错位置
+   2026-11-27：桌面行底下还有 1px 分隔线，也不算在预留值里（以前 51px，排出来 72.3px，每行多留 1.7px）；手机的行高跟着标题折行变，不改 */
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
   content-visibility: auto !important;
-  contain-intrinsic-size: auto 51px !important;
+  contain-intrinsic-size: auto 49.3px !important;
 }
 @media (max-width: 700px) {
   html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:is(#nsmax-lv, *):is(#nsmax-b, *) {
@@ -15496,16 +15497,47 @@ html[data-nsmax-theme][data-nsmax-post-layout="simple"] #nsk-body-left :is(.nsk-
 }
 /* 帖子页楼层「只画看得见的」（content-visibility）再收一收（2026-10-24，用户：进页面底下伸缩一下）：
    以前第 4 层起先按 260px 占位，第一帧之后首屏附近的几层真排出来只有 240px（简洁模式才 90 多 px），页面底部跟着往上缩一截。
-   现在从第 9 层起才这样（首屏和首屏下面一点的楼层第一帧就排好），占位按排法估：经典 240px、简洁 100px */
+   现在从第 9 层起才这样（首屏和首屏下面一点的楼层第一帧就排好），占位按排法估：经典 240px、简洁 100px
+   2026-11-27 按一句话的楼层量准（和第 53 节一样，预留值只是内容高度，楼层自己的边框、内边距另外加）：以前经典按整层高度 240px 写，
+   排出来 238px（边框 1px + 作者栏 237px），简洁 100px 外面还有 31px 内边距（排出来 87.5px，每层多留 43.5px）；1000px 以下经典是一列卡片
+   （193 / 800px 以下 189px）、手机触屏 204px（400px 以上时间和楼层操作并成一行，166px），都还按两栏的 240px 留。
+   空闲时排好屏幕上方没画过的楼层（见 nsmaxPrerenderRows）、点楼号跳到下面某一层时，每层差多少，正在看的内容就跟着往上跳多少
+   （经典宽屏每层 3px，1000px 以下每层 50px 上下，简洁每层 43.5px；Safari 没有滚动锚定，Chromium 的锚定这里也不一定接得住） */
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.comments > li.content-item:nth-child(-n+8):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: visible !important;
   contain-intrinsic-size: none !important;
 }
 html[data-nsmax-theme][data-nsmax-cv] #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  contain-intrinsic-size: auto 240px !important;
+  contain-intrinsic-size: auto 237px !important;
+}
+@media (max-width: 1000px) {
+  html[data-nsmax-theme][data-nsmax-cv]:not([data-nsmax-post-layout="simple"]) #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 190.9px !important;
+  }
+}
+@media (max-width: 800px) {
+  html[data-nsmax-theme][data-nsmax-cv]:not([data-nsmax-post-layout="simple"]) #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 186.9px !important;
+  }
+}
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-touch]:not([data-nsmax-post-layout="simple"]) #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  contain-intrinsic-size: auto 164px !important;
+}
+@media (max-width: 400px) {
+  html[data-nsmax-theme][data-nsmax-cv][data-nsmax-touch]:not([data-nsmax-post-layout="simple"]) #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 202px !important;
+  }
 }
 html[data-nsmax-theme][data-nsmax-cv][data-nsmax-post-layout="simple"] #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-  contain-intrinsic-size: auto 100px !important;
+  contain-intrinsic-size: auto 56.5px !important;
+}
+@media (max-width: 700px) {
+  html[data-nsmax-theme][data-nsmax-cv][data-nsmax-post-layout="simple"] #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+    contain-intrinsic-size: auto 90px !important;
+  }
+}
+html[data-nsmax-theme][data-nsmax-cv][data-nsmax-touch][data-nsmax-post-layout="simple"] #nsk-body-left ul.comments > li.content-item:nth-child(n+9):not([data-nsmax-replying]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+  contain-intrinsic-size: auto 106px !important;
 }
 /* 等级进度（/progress）照 sb.sb「我的烧饼」（/points/：.form-panel.points-summary）：一张卡片（18px 内边距），标题 17px/600；
    两个大数字（12.5px 弱化字小标题、24px 等宽 600 数字，间距 28px）；升级进度条 12px 高（次底色、内阴影，填充 --brand 到青色渐变），
@@ -16082,24 +16114,21 @@ html[data-nsmax-theme][data-nsmax-page="auth"] #nsk-frame [data-nsmax-auth-app] 
   padding-right: 12px !important;
 }
 /* 页脚在屏幕外时也不算（约 75 个元素），滚到附近再画。预留高度要等于画出来的高度（2026-11-01 按现在的页脚重量：
-   宽屏 318px、1000px 以下分两行 462px、760px 以下 732px、手机 432px）：以前还是旧页脚的 287 / 699px，滚到页脚附近时整页突然变长或变短一截 */
+   宽屏 318px、1000px 以下分两行 462px、760px 以下 732px、手机 432px）：以前还是旧页脚的 287 / 699px，滚到页脚附近时整页突然变长或变短一截。
+   预留值只是内容高度（2026-11-27）：页脚顶上 1px 边框另外加，以前每档都多留 1px；手机（触屏）的预留在 mobile.css。
+   以前 700px 以下还有一档 432px（手机的高度），可窄窗口的电脑上页脚照样是 732px 那一排，每次多缩 300px，去掉 */
 html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   content-visibility: auto !important;
-  contain-intrinsic-size: auto 318px !important;
+  contain-intrinsic-size: auto 317.3px !important;
 }
 @media (max-width: 1000px) {
   html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-    contain-intrinsic-size: auto 462px !important;
+    contain-intrinsic-size: auto 460.6px !important;
   }
 }
 @media (max-width: 760px) {
   html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-    contain-intrinsic-size: auto 732px !important;
-  }
-}
-@media (max-width: 700px) {
-  html[data-nsmax-theme][data-nsmax-cv] body > footer:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
-    contain-intrinsic-size: auto 432px !important;
+    contain-intrinsic-size: auto 731px !important;
   }
 }
 /* 站点的图标雪碧图（body 开头一个 172 个图标、560 多个元素的 svg）：只被 <use> 引用，自己不显示。以前站点脚本把它插进来时整段都要算一遍样式，
