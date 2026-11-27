@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.89
+// @version      1.9.90
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -916,7 +916,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.89";
+	var NSMAX_VERSION = "1.9.90";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -7290,6 +7290,8 @@ var nsmaxRedirecting = false;
 				document.body.append(menu);
 				let mention = null;
 				const closeMention = () => {
+					// 没在 @ 人时每按一个键都会走到这里：已经收着就不再写（以前每键都给提示框写一次 hidden）
+					if (!mention && menu.hidden && !menu.firstChild) return;
 					mention = null;
 					menu.hidden = true;
 					menu.replaceChildren();
@@ -19581,7 +19583,9 @@ var nsmaxRedirecting = false;
 		const updateSend = () => {
 			const busy = !!active && sending.has(active);
 			send.disabled = !active || busy || !input.value.trim() || uncertain.has(active) || editor.busy(active);
-			send.textContent = busy ? "发送中…" : "发送";
+			// 每按一个键都会跑到这里：字没变就不写（以前每键都把按钮里的文字节点换掉一次）
+			const label = busy ? "发送中…" : "发送";
+			if (send.textContent !== label) send.textContent = label;
 			if (busy) send.setAttribute("aria-busy", "true");
 			else send.removeAttribute("aria-busy");
 			input.disabled = busy;
@@ -24619,6 +24623,17 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	// 悬停闪烁、点击落空（个人空间「主题 / 回帖 / 收藏」切不动就是这样来的）。
 	function nsmaxSetText(el, text) {
 		if (el && el.textContent !== text) el.textContent = text;
+	}
+	// 脚本自己建的、只装一段字的元素（状态字、计数）换字：只改那个文字节点（characterData），不替换子节点。
+	// textContent 赋值会删掉旧文字节点、插一个新的，页面观察器（只看增删节点）当成页面变了，100ms 后整页整理一轮；
+	// 回复框标题栏的「已写 N 字」每按一个键换一次，打 60 个字要整页整理二十多轮（2026-11-27）。
+	// 只给脚本自己的元素用：站点（Vue）管着的文字节点被这样改了，站点下次更新会直接写回去
+	function nsmaxSetOwnText(el, text) {
+		if (!el || el.textContent === text) return;
+		const node = el.firstChild;
+		// 换成空字时照旧清空子节点：留一个空文字节点的话 :empty 就不成立了
+		if (text && node && node === el.lastChild && node.nodeType === 3) node.data = text;
+		else el.textContent = text;
 	}
 	function nsmaxReducedMotion() {
 		return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
@@ -32645,7 +32660,7 @@ function nsmaxTagStructure() {
 				let sendTimer = 0;
 				const setStatus = (text) => {
 					clearTimeout(sendTimer);
-					nsmaxSetText(status, text);
+					nsmaxSetOwnText(status, text);
 					if (text === "提交中") sendTimer = setTimeout(() => setStatus("说两句"), 15e3);
 				};
 				if (isPost && submitBtn) {
@@ -32728,15 +32743,29 @@ function nsmaxTagStructure() {
 					submitBtn.before(luckyBtn);
 				}
 				// 纯文本框（没有 CodeMirror）时：内容超过默认高度就跟着长高（最多 800px），删短了再缩回；用户手动拖过就不再自动改
+				// 字只多不少时不用先缩回 150px 再量（2026-11-27）：以前每按一个键都先写一次高度再读 scrollHeight，
+				// 回复框连同下面的整块当场重算样式、重排两遍。框里还放得下就什么都不做，放不下直接按内容长高；删了字才缩回去重量
+				let measuredLength = 0;
 				const adjustInputHeight = () => {
 					if (!input || cm || editor.hasAttribute("data-nsmax-resized")) return;
-					if (!input.value) {
+					const length = input.value.length;
+					const shorter = length < measuredLength;
+					measuredLength = length;
+					if (!length) {
 						if (editor.style.getPropertyValue("--nsmax-editor-height") && editor.style.getPropertyValue("--nsmax-editor-height") !== "150px") {
 							editor.style.setProperty("--nsmax-editor-height", "150px");
 						}
 						return;
 					}
 					const box = heightBox();
+					const current = editor.style.getPropertyValue("--nsmax-editor-height");
+					if (current && !shorter) {
+						if (input.scrollHeight <= input.clientHeight) return;
+						const needed = input.scrollHeight + (box.offsetHeight - input.clientHeight);
+						const target = Math.round(Math.min(800, needed));
+						if (needed > 150 && current !== target + "px") setHeight(target, false);
+						return;
+					}
 					editor.style.setProperty("--nsmax-editor-height", "150px");
 					const needed = input.scrollHeight + (box.offsetHeight - input.clientHeight);
 					if (needed > 150) setHeight(Math.min(800, needed), false);
