@@ -69,6 +69,10 @@ for(const engine of engines){
     assert.ok(more.fits,`${label}：${JSON.stringify(more)}`);
     // 长到顶（800px）以后在最后一行接着打字：页面停在原处（以前每按一个键框先缩回 150px 再长回来，页面跟着上下跳几十像素）
     await input.evaluate(t=>{t.value=Array.from({length:40},(_,i)=>`第 ${i+1} 行：这是一段比较长的回复内容，用来看回复框长到顶以后每按一个键的样子`).join("\n")+"\n";t.dispatchEvent(new Event("input",{bubbles:true}));t.selectionStart=t.selectionEnd=t.value.length;});
+    // 一下长高好几百像素：光标所在的最后一行当场跟着留在窗口里、框里也滚到了最后一行。
+    // 以前框底（光标）被推出窗口，下一键 Safari 把光标滚到窗口正中，页面一下跳 936px（Chromium 只滚一点，量不出来）
+    const follow=await input.evaluate(t=>({bottom:Math.round(t.getBoundingClientRect().bottom),view:innerHeight,rest:Math.round(t.scrollHeight-t.clientHeight-t.scrollTop)}));
+    assert.ok(follow.bottom<=follow.view+1&&follow.rest<=1,`${label}：长高以后光标被推出窗口 ${JSON.stringify(follow)}`);
     await page.keyboard.type("继");
     await page.waitForTimeout(200);
     assert.equal((await editorState(page)).height,"800px",label);
