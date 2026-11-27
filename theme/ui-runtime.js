@@ -2143,7 +2143,8 @@
 		const key = post + ":" + time;
 		const hit = nsmaxLotteryFloorCache.get(key);
 		if (hit && (hit.final || Date.now() <= time && Date.now() - hit.at < 6e4)) return hit.promise;
-		if (nsmaxBackgroundPaused()) return Promise.resolve(null);
+		// 不看「后台暂停」（2026-11-27）：这是正在看的这张卡片自己要的数据（一次请求），不是后台扫描；
+		// 以前首页后台扫描被站点限流一次，接下来 10 分钟所有帖子的卡片都不取，「参与」一直空着、「重新核对」也点不动
 		const promise = nsmaxFetch(`/api/content/floor-data?postId=${encodeURIComponent(post)}&time=${encodeURIComponent(time)}`, { credentials: "same-origin" }).then((response) => {
 			if (response.status === 429) nsmaxPauseBackground();
 			return response.ok ? response.json() : null;
@@ -2493,7 +2494,7 @@
 			}
 		}
 		const people = card.querySelector(".nsmax-lottery-people");
-		nsmaxSetText(people, stats ? (effPeople ? `${effPeople} 人` + (rule.duplicate && effFloors > effPeople ? ` · ${effFloors} 楼` : "") : "还没有人参与") : "统计中…");
+		nsmaxSetText(people, stats ? (effPeople ? `${effPeople} 人参与` + (rule.duplicate && effFloors > effPeople ? `，共 ${effFloors} 楼` : "") : "还没有人参与") : "参与人数统计中…");
 		if (people) {
 			const odds = stats && effPeople > 0 ? nsmaxLotteryOdds(rule.count, effPeople, effFloors, rule.duplicate, viewer.mine.length) : "";
 			if (odds) nsmaxSetAttr(people, "data-nsmax-odds", odds);
@@ -2862,6 +2863,7 @@
 		// 今年的开奖不写年份
 		card.dataset.nsmaxWhen = valid ? nsmaxLotteryFormatWhen(time) : "—";
 		if (preview) card.setAttribute("data-nsmax-preview", "");
+		// 票根（.nsmax-lottery-top）：倒计时、开奖时刻、开奖页链接；顶上一行小字（图标、「抽奖」、状态）单独一块，和奖品排在左边
 		const top = make("div", "nsmax-lottery-top");
 		const head = make("div", "nsmax-lottery-head");
 		const state = make("span", "nsmax-lottery-state");
@@ -2876,7 +2878,7 @@
 		}
 		// 右边写开奖的具体时间（没开奖时；开奖后左边那句「已于 … 开奖」已经写了）
 		countdown.append(make("span", "nsmax-lottery-label", "距开奖"), clock, make("span", "nsmax-lottery-when", `${card.dataset.nsmaxWhen} 开奖`));
-		top.append(head, countdown);
+		top.append(countdown);
 		// 奖品 / 名额 / 参与 / 中奖：左边名目、右边内容
 		const facts = make("dl", "nsmax-lottery-facts");
 		const fact = (name, label, value) => {
@@ -2890,10 +2892,10 @@
 		prizeCell.title = prizeCell.textContent;
 		fact("prize", "奖品", prizeCell);
 		const rules = make("dd", "nsmax-lottery-rules");
-		rules.append(make("span", "nsmax-lottery-count", `${count} 个`), make("span", "", start > 1 ? `从第 ${start} 楼起` : "从 1 楼起"), make("span", "", duplicate ? "可以重复中奖" : "每人限中一次"));
+		rules.append(make("span", "nsmax-lottery-count", `${count} 个名额`), make("span", "", start > 1 ? `从第 ${start} 楼起` : "从 1 楼起"), make("span", "", duplicate ? "可以重复中奖" : "每人限中一次"));
 		fact("rules", "名额", rules);
 		if (!preview) {
-			fact("people", "参与", make("dd", "nsmax-lottery-people", "统计中…"));
+			fact("people", "参与", make("dd", "nsmax-lottery-people", "参与人数统计中…"));
 			fact("winners", "中奖", make("dd", "nsmax-lottery-winners")).hidden = true;
 		}
 		const foot = make("div", "nsmax-lottery-foot");
@@ -2938,9 +2940,10 @@
 			view.target = "_blank";
 			view.rel = "noopener";
 		}
-		links.append(retryBtn, copyBtn, view);
+		links.append(retryBtn, copyBtn);
+		top.append(view);
 		foot.append(actions, me, verify, links);
-		card.append(top, facts, foot);
+		card.append(head, facts, foot, top);
 		return { card, join, view };
 	}
 	function nsmaxCleanBadgesAndNotifications() {
@@ -4439,15 +4442,20 @@ function nsmaxLookupTelegram(uid) {
 	if (!/^\d+$/.test(uid) || !unsafeWindow$1.__config__?.user) return Promise.resolve([]);
 	const pending = nsmaxTelegramLookups.get(uid);
 	if (pending) return pending;
-	const json = (url) => nsmaxFetch(url, { credentials: "same-origin", priority: "low" }).then((response) => response.ok ? response.json() : null);
+	// 请求没成功（限流 429、断网、站点出错）就当没查成，不记下「这个人没有 Telegram」（2026-11-27：以前记成没有，三天里都不再查）
+	const ok = (response) => {
+		if (!response.ok) throw new Error(`HTTP ${response.status}`);
+		return response;
+	};
+	const json = (url) => nsmaxFetch(url, { credentials: "same-origin", priority: "low" }).then(ok).then((response) => response.json());
 	const ownerOf = (root) => root?.querySelector(".nsk-content-meta-info .author-info a[href*='/space/']")?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1];
 	const promise = (async () => {
 		let contacts = [];
 		const discussions = await json(`/api/content/list-discussions?uid=${uid}&page=1`);
 		const postId = discussions?.discussions?.[0]?.post_id;
 		if (postId) {
-			const response = await nsmaxFetch(`/post-${postId}-1`, { credentials: "same-origin", priority: "low" });
-			const html = response.ok && response.body ? await readUntil(response, "comment-menu-mount") : "";
+			const response = ok(await nsmaxFetch(`/post-${postId}-1`, { credentials: "same-origin", priority: "low" }));
+			const html = response.body ? await readUntil(response, "comment-menu-mount") : "";
 			const doc = new DOMParser().parseFromString(html, "text/html");
 			nsmaxLearnSpecialFromPreview(`/post-${postId}-1`, doc);
 			const op = doc.querySelector(".nsk-post > .content-item");
@@ -4457,8 +4465,8 @@ function nsmaxLookupTelegram(uid) {
 			const floor = Number(comment?.floor_id);
 			if (comment?.post_id && floor > 0) {
 				const perPage = Number(unsafeWindow$1.__config__?.commmentPerPage) || 10;
-				const response = await nsmaxFetch(`/post-${comment.post_id}-${Math.floor((floor - 1) / perPage) + 1}`, { credentials: "same-origin", priority: "low" });
-				const item = new DOMParser().parseFromString(response.ok ? await response.text() : "", "text/html").querySelector(`ul.comments > li.content-item[id="${floor}"]`);
+				const response = ok(await nsmaxFetch(`/post-${comment.post_id}-${Math.floor((floor - 1) / perPage) + 1}`, { credentials: "same-origin", priority: "low" }));
+				const item = new DOMParser().parseFromString(await response.text(), "text/html").querySelector(`ul.comments > li.content-item[id="${floor}"]`);
 				if (item && ownerOf(item) === uid) contacts = nsmaxTelegramContacts(item.querySelector(".signature") || "");
 			}
 		}
@@ -5658,7 +5666,8 @@ function nsmaxTagStructure() {
 		}
 		const cached = nsmaxReplyCounts().get(id);
 		const failures = nsmaxReplyFetchFailures.get(id) || 0;
-		if ((!cached || Date.now() - cached[1] > 10 * 60e3) && !nsmaxReplyFetching.has(id) && failures < 3 && pages > 1 && !nsmaxBackgroundPaused()) {
+		// 不看「后台暂停」（2026-11-27）：这是正在看的帖子自己的回复数（只取一页），后台扫描被限流时也照取，没取到按上面的间隔再试
+		if ((!cached || Date.now() - cached[1] > 10 * 60e3) && !nsmaxReplyFetching.has(id) && failures < 3 && pages > 1) {
 			nsmaxReplyFetching.add(id);
 			let ok = false;
 			// 等页面自己加载完再取（2026-10-24：不和正文图片抢网速）

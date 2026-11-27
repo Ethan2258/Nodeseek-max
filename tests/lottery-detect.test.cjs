@@ -24,7 +24,7 @@ test("纯文字网址、不带 www 的开奖链接也算抽奖帖，主帖里照
 		assert.equal(state.kinds, "lottery");
 		assert.equal(state.cards, 1);
 		assert.match(state.view, /^https:\/\/www\.nodeseek\.com\/lucky\?post=1000&time=\d+&count=2/, "换成当前域名");
-		assert.equal(state.count, "2 个");
+		assert.equal(state.count, "2 个名额");
 		assert.equal(state.badge, true);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
@@ -166,7 +166,7 @@ test("v1.9.82 楼主自己在评论区（.is-poster）贴出的纯文本开奖�
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
 	try {
 		await page.waitForSelector("ul.comments > li[id='1'] .nsmax-lottery", { timeout: 5e3 });
-		assert.equal(await page.locator("ul.comments > li[id='1'] .nsmax-lottery-count").textContent(), "2 个");
+		assert.equal(await page.locator("ul.comments > li[id='1'] .nsmax-lottery-count").textContent(), "2 个名额");
 		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}")["1000"]), "lottery");
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
