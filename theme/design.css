@@ -2032,6 +2032,11 @@ html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-co
   display: none !important;
 }
 html[data-nsmax-theme] :is(#nsk-body-left article.post-content, .nspp-preview-content, .nsmax-editor-preview) pre code {
+  /* 一开始就按上完色的样子排（2026-11-27）：站点的 pre code.hljs 是 display: block + overflow-x: auto，代码高亮是空闲时才上色，
+     上色那一刻代码从行内变成块、横向滚动从 pre 换到 code，每个代码块矮 1px，手机上下面整页跟着往上挪几像素。
+     现在没上色的代码也是块、横向滚动只在 pre 上，上色只换颜色 */
+  display: block !important;
+  overflow: visible !important;
   padding: 0 !important;
   height: auto !important;
   min-height: 0 !important;
