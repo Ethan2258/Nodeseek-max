@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import vm from "node:vm";
 import postcss from "postcss";
 import selectorParser from "postcss-selector-parser";
+import { pruneOverridden } from "./prune-css.mjs";
 
 const root = new URL("../", import.meta.url);
 const scriptPath = new URL("nodeseek-max.user.js", root);
@@ -508,12 +509,19 @@ const wideChunkOf = (selector) => {
 	}
 	return hits.has("body") ? "body" : hits.has("side") ? "side" : "base";
 };
+// 一条规则里每个选择器进哪一段
+const selectorChunks = (rule) => {
+	const chunk = chunkOfRule(rule);
+	const chunks = new Map();
+	for (const selector of rule.selectors) chunks.set(selector, chunk === "base" ? wideChunkOf(selector) : (hasTouchMarker(selector) ? `${chunk}+touch` : chunk));
+	return chunks;
+};
 // 一条规则放进哪些段：[[段, 规则文本], …]
 const piecesOfRule = (rule) => {
-	const chunk = chunkOfRule(rule);
+	const chunks = selectorChunks(rule);
 	const groups = new Map();
 	for (const selector of rule.selectors) {
-		const target = chunk === "base" ? wideChunkOf(selector) : (hasTouchMarker(selector) ? `${chunk}+touch` : chunk);
+		const target = chunks.get(selector);
 		if (!groups.has(target)) groups.set(target, []);
 		groups.get(target).push(selector);
 	}
@@ -531,6 +539,10 @@ const pushSegment = (chunk, text) => {
 	else segments.push([chunk, text]);
 };
 const segmentRoot = postcss.parse(shipped);
+// 去掉永远轮不到的声明（判定见 scripts/prune-css.mjs）：段的划分只看选择器，删声明不改变任何选择器进哪一段
+const pruned = pruneOverridden(segmentRoot, selectorChunks, process.env.NSMAX_PRUNE_MODE === "strict" ? null : (selector) => optimize.nsmaxSpecificity(selector));
+if (process.env.NSMAX_PRUNE_REPORT) console.log(`prune: ${JSON.stringify(pruned)}`);
+shipped = segmentRoot.toString();
 const emitAtRule = (node, emit) => {
 	let run = null;
 	let children = 0;

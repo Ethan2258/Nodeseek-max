@@ -194,6 +194,24 @@ for(const engine of engines) {
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true,count:30})});
   try {await ready(page);await tapVisible(page,page.locator("#toggle-left-panel a"));await page.waitForFunction(()=>document.body.style.position==="fixed");await page.evaluate(()=>document.getElementById("left-slide-panel").remove());await page.waitForFunction(()=>document.body.style.position!=="fixed");assert.equal(await page.locator(".global-mask").isVisible(),false);assert.deepEqual(errors,[]);}finally{await context.close();}
  });
+ test(`${engine} iPhone：没弹键盘时打开 ≡ 菜单不往根元素写视口变量（不整页重算样式），窗口变矮再写、恢复再去掉`,async()=>{
+  // 根元素上的自定义属性全页继承：以前第一次打开菜单写四个视口变量，整页约 2200 个元素当场重算样式（2026-11-27）
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true,count:30})});
+  const vars=()=>page.evaluate(()=>["height","top","bottom","tools"].map(name=>document.documentElement.style.getPropertyValue("--nsmax-overlay-"+name)));
+  try {await ready(page);
+   await tapVisible(page,page.locator("#toggle-left-panel a"));await page.waitForFunction(()=>document.body.style.position==="fixed");
+   assert.deepEqual(await vars(),["","","",""],"整个窗口都看得见：不写，用样式里的默认值");
+   const panel=await page.locator("#left-slide-panel").boundingBox();
+   assert.ok(panel&&panel.y<=1&&Math.abs(panel.y+panel.height-844)<=2,`菜单照旧占满窗口高度 ${JSON.stringify(panel)}`);
+   await page.setViewportSize({width:390,height:430});
+   await page.waitForFunction(()=>document.documentElement.style.getPropertyValue("--nsmax-overlay-height")==="430px");
+   assert.deepEqual(await vars(),["430px","0px","0px","none"],"窗口很矮：照旧写，菜单跟着变矮、底部工具条收起");
+   await page.setViewportSize({width:390,height:844});
+   await page.waitForFunction(()=>!document.documentElement.style.getPropertyValue("--nsmax-overlay-height"));
+   assert.deepEqual(await vars(),["","","",""],"恢复以后去掉");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
  test(`${engine} iPhone：进入帖子再返回列表，恢复阅读滚动位置`,async()=>{
   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{...mobile(),html:P.listPage({mobile:true,count:30}),pages:{"/post-1000-1":P.postPage({mobile:true})}}); try {await ready(page);for(const y of [600,1200]){await page.keyboard.press("Shift");await scrollTo(page,y);await page.goto("https://www.nodeseek.com/post-1000-1");await ready(page);await page.goBack({waitUntil:"domcontentloaded"});await page.waitForLoadState("load");await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await ready(page);await page.waitForFunction(y=>Math.abs(scrollY-y)<4,y);assert.equal(await page.evaluate(()=>document.body.style.position),"");}assert.deepEqual(errors,[]);}finally{await context.close();}
  });

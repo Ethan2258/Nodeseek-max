@@ -4,6 +4,17 @@
 	function nsmaxSetText(el, text) {
 		if (el && el.textContent !== text) el.textContent = text;
 	}
+	// 脚本自己建的、只装一段字的元素（状态字、计数）换字：只改那个文字节点（characterData），不替换子节点。
+	// textContent 赋值会删掉旧文字节点、插一个新的，页面观察器（只看增删节点）当成页面变了，100ms 后整页整理一轮；
+	// 回复框标题栏的「已写 N 字」每按一个键换一次，打 60 个字要整页整理二十多轮（2026-11-27）。
+	// 只给脚本自己的元素用：站点（Vue）管着的文字节点被这样改了，站点下次更新会直接写回去
+	function nsmaxSetOwnText(el, text) {
+		if (!el || el.textContent === text) return;
+		const node = el.firstChild;
+		// 换成空字时照旧清空子节点：留一个空文字节点的话 :empty 就不成立了
+		if (text && node && node === el.lastChild && node.nodeType === 3) node.data = text;
+		else el.textContent = text;
+	}
 	function nsmaxReducedMotion() {
 		return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 	}
@@ -8029,7 +8040,7 @@ function nsmaxTagStructure() {
 				let sendTimer = 0;
 				const setStatus = (text) => {
 					clearTimeout(sendTimer);
-					nsmaxSetText(status, text);
+					nsmaxSetOwnText(status, text);
 					if (text === "提交中") sendTimer = setTimeout(() => setStatus("说两句"), 15e3);
 				};
 				if (isPost && submitBtn) {
@@ -8112,18 +8123,47 @@ function nsmaxTagStructure() {
 					submitBtn.before(luckyBtn);
 				}
 				// 纯文本框（没有 CodeMirror）时：内容超过默认高度就跟着长高（最多 800px），删短了再缩回；用户手动拖过就不再自动改
+				// 字只多不少时不用先缩回 150px 再量（2026-11-27）：以前每按一个键都先写一次高度再读 scrollHeight，
+				// 回复框连同下面的整块当场重算样式、重排两遍。框里还放得下就什么都不做，放不下直接按内容长高；删了字才缩回去重量
+				let measuredLength = 0;
+				// 长高时跟住光标（2026-11-27）：框往下长，光标所在的最后一行跟着被推出窗口底边（一次贴进一大段时能推出去好几百像素）。
+				// Chromium 下一键只滚一点把光标露出来；Safari（WebKit）光标整个看不见时把它滚到窗口正中，页面一下跳近一屏（CI 量到 936px）。
+				// 长高的同时就把框里滚到最后一行、页面滚上去长出来的那一截（最多滚到框底贴窗口底），轮到浏览器跟光标时已经看得见，不用再滚
+				const followCaret = (from, to) => {
+					if (to <= from || document.activeElement !== input || input.value.indexOf("\n", input.selectionEnd) >= 0) return;
+					if (input.scrollHeight > input.clientHeight) input.scrollTop = input.scrollHeight;
+					const view = window.visualViewport, bottom = view ? view.offsetTop + view.height : innerHeight;
+					const overflow = input.getBoundingClientRect().bottom - bottom;
+					// 一步到位：html 上有 scroll-behavior: smooth
+					if (overflow > 0) window.scrollBy({ top: Math.min(overflow, to - from), behavior: "instant" });
+				};
+				const grow = (from, to) => {
+					setHeight(to, false);
+					followCaret(from, Math.round(to));
+				};
 				const adjustInputHeight = () => {
 					if (!input || cm || editor.hasAttribute("data-nsmax-resized")) return;
-					if (!input.value) {
+					const length = input.value.length;
+					const shorter = length < measuredLength;
+					measuredLength = length;
+					if (!length) {
 						if (editor.style.getPropertyValue("--nsmax-editor-height") && editor.style.getPropertyValue("--nsmax-editor-height") !== "150px") {
 							editor.style.setProperty("--nsmax-editor-height", "150px");
 						}
 						return;
 					}
 					const box = heightBox();
+					const current = editor.style.getPropertyValue("--nsmax-editor-height");
+					if (current && !shorter) {
+						if (input.scrollHeight <= input.clientHeight) return;
+						const needed = input.scrollHeight + (box.offsetHeight - input.clientHeight);
+						const target = Math.round(Math.min(800, needed));
+						if (needed > 150 && current !== target + "px") grow(parseFloat(current) || 150, target);
+						return;
+					}
 					editor.style.setProperty("--nsmax-editor-height", "150px");
 					const needed = input.scrollHeight + (box.offsetHeight - input.clientHeight);
-					if (needed > 150) setHeight(Math.min(800, needed), false);
+					if (needed > 150) grow(parseFloat(current) || 150, Math.min(800, needed));
 				};
 				// 只在没有内容时回到顶部（有内容时点进去还跳回第一行会很烦）
 				input?.addEventListener("focus", () => { if (input && !input.value) input.scrollTop = 0; }, { signal: ctx.signal });
