@@ -27,7 +27,7 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 				await settle(page);
 				const card = page.locator(".nsk-post .nsmax-lottery");
 				// 1~52 楼 52 层、62552 回复了三次：51 人
-				assert.equal(await card.locator(".nsmax-lottery-people").textContent(), "51 人");
+				assert.equal(await card.locator(".nsmax-lottery-people").textContent(), "51 人参与");
 				if (me) {
 					await page.waitForSelector('.nsmax-lottery-me[data-tone="joined"]');
 					assert.match(await card.locator(".nsmax-lottery-me").textContent(), /^你已参与 · 第 37 楼$/);
@@ -114,7 +114,7 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 			const html = withLink(P.postPage(), `<p><a href="${link(Date.now() + 864e5)}">开奖</a></p>`);
 			const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, init, viewport: { width: 1440, height: 900 }, api: failOnce(floors({ me: 37 })) });
 			try {
-				await page.waitForFunction(() => document.querySelector(".nsk-post .nsmax-lottery-people")?.textContent === "51 人", null, { timeout: 8e3 });
+				await page.waitForFunction(() => document.querySelector(".nsk-post .nsmax-lottery-people")?.textContent === "51 人参与", null, { timeout: 8e3 });
 				assert.equal(await page.locator(".nsk-post [data-nsmax-fact=people]").isVisible(), true);
 				assert.match(await page.locator(".nsk-post .nsmax-lottery-me").textContent(), /你已参与/);
 				assert.equal(calls["/api/content/floor-data"], 2);
@@ -130,6 +130,84 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 				assert.deepEqual(await page.locator(".nsk-post .nsmax-lottery-winner .nsmax-lottery-floor").allTextContents(), ["#2", "#7", "#25"]);
 				assert.equal(await page.locator(".nsk-post .nsmax-lottery").getAttribute("data-nsmax-result"), "ok");
 				assert.equal(drand, 2);
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+	});
+
+	test(`${engine} 首页后台扫描被站点限流（后台暂停 10 分钟）时，帖子里的抽奖卡片照样取自己的楼层名单，「参与」不空着`, async () => {
+		const init = "try { localStorage.setItem('nsmax:bg-pause-until', String(Date.now() + 6e5)); } catch {}";
+		const html = withLink(P.postPage(), `<p><a href="${link(Date.now() + 864e5)}">开奖</a></p>`);
+		const { context, page, errors, calls } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, init, viewport: { width: 1440, height: 900 }, api: floorApi(floors({ me: 37 })) });
+		try {
+			await page.waitForFunction(() => document.querySelector(".nsk-post .nsmax-lottery-people")?.textContent === "51 人参与", null, { timeout: 8e3 });
+			assert.match(await page.locator(".nsk-post .nsmax-lottery-me").textContent(), /你已参与 · 第 37 楼/);
+			assert.equal(calls["/api/content/floor-data"], 1);
+			assert.ok(Number(await page.evaluate(() => localStorage.getItem("nsmax:bg-pause-until"))) > Date.now(), "后台暂停本身不动");
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	});
+
+	test(`${engine} 2026-11-27 排版：宽屏倒计时在右边票根里（虚线隔开、宽度固定），窄窗口和手机上下排；已开奖收成右上角一行`, async () => {
+		const measure = (page) => page.evaluate(() => {
+			const card = document.querySelector(".nsk-post .nsmax-lottery");
+			const top = card.querySelector(".nsmax-lottery-top");
+			const prize = card.querySelector(".nsmax-lottery-prize");
+			const people = card.querySelector("[data-nsmax-fact=people]");
+			const rules = card.querySelector("[data-nsmax-fact=rules]") || card.querySelector(".nsmax-lottery-rules");
+			const r = (el) => el.getBoundingClientRect();
+			const cs = getComputedStyle(top);
+			return {
+				border: cs.borderLeftStyle,
+				topW: Math.round(r(top).width),
+				topRightOfPrize: r(top).left >= r(prize).right - 1,
+				topAbovePrize: r(top).bottom <= r(prize).top + 1,
+				topH: Math.round(r(top).height),
+				cardRight: Math.round(r(card).right), topRight: Math.round(r(top).right),
+				peopleOwnLine: people && rules ? r(people).top >= r(rules).bottom - 1 : null,
+				peopleDot: people ? getComputedStyle(people, "::before").content : null,
+				overflow: card.scrollWidth > card.clientWidth + 1
+			};
+		});
+		const html = (t) => withLink(P.postPage(), `<p>奖品：3 个 euk 2C2G50G 独立高防 IPv4 半价优惠码（15r/月）</p><p><a href="${link(t)}">开奖</a></p>`);
+		{
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: html(Date.now() + 864e5 + 36e5), viewport: { width: 1440, height: 900 }, api: floorApi(floors()) });
+			try {
+				await settle(page);
+				const wide = await measure(page);
+				assert.equal(wide.border, "dashed", JSON.stringify(wide));
+				assert.ok(wide.topRightOfPrize && wide.topW >= 220 && Math.abs(wide.topRight - wide.cardRight) <= 1, "票根贴着卡片右边：" + JSON.stringify(wide));
+				assert.equal(wide.overflow, false);
+				// 少了「天」那一段，票根宽度不变
+				await page.evaluate(() => { const d = document.querySelector(".nsk-post .nsmax-lottery-seg"); if (d) d.hidden = true; });
+				assert.equal((await measure(page)).topW, wide.topW, "倒计时变短票根不变窄");
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+		for (const [label, opts] of [["窄窗口 760", { viewport: { width: 760, height: 900 } }], ["手机 390", { viewport: { width: 390, height: 844 }, device: { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } }]]) {
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: html(Date.now() + 864e5 + 36e5), ...opts, api: floorApi(floors()) });
+			try {
+				await settle(page);
+				const narrow = await measure(page);
+				assert.notEqual(narrow.border, "dashed", label + JSON.stringify(narrow));
+				assert.ok(narrow.topAbovePrize, label + " 倒计时在奖品上面：" + JSON.stringify(narrow));
+				assert.equal(narrow.overflow, false, label);
+				if (label.startsWith("手机")) {
+					assert.equal(narrow.peopleOwnLine, true, "手机上参与人数另起一行：" + JSON.stringify(narrow));
+					assert.ok(/none|normal/.test(narrow.peopleDot), "另起一行时行首不落「·」：" + narrow.peopleDot);
+					assert.ok(narrow.topH <= 56, "倒计时最多两行（数字一行，开奖时刻和链接一行）：" + JSON.stringify(narrow));
+				}
+				assert.deepEqual(errors, []);
+			} finally { await context.close(); }
+		}
+		{
+			const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html: html(Date.now() - 36e5), viewport: { width: 1440, height: 900 }, api: floorApi(floors({ me: 7 })), external: { "api.drand.sh": () => ({ round: 1, randomness: RAND }) } });
+			try {
+				await page.waitForSelector(".nsk-post .nsmax-lottery-winner", { timeout: 8e3 });
+				const done = await measure(page);
+				assert.notEqual(done.border, "dashed", "已开奖不要票根：" + JSON.stringify(done));
+				assert.ok(done.topAbovePrize && done.topH <= 26, "收成右上角一行：" + JSON.stringify(done));
+				assert.match(await page.locator(".nsk-post .nsmax-lottery-top").textContent(), /已于 .* 开奖.*查看开奖/);
 				assert.deepEqual(errors, []);
 			} finally { await context.close(); }
 		}
@@ -206,7 +284,7 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 			});
 			assert.equal(state.footMode, "verify");
 			assert.ok(state.topH <= 28, "已开奖顶部合并为单行：" + JSON.stringify(state));
-			assert.ok(state.footH <= 24, "无按钮底栏紧凑不撑死高：" + JSON.stringify(state));
+			assert.ok(state.footH <= 40, "无按钮底栏一行（上面一道细线隔开中奖名单），不撑死高：" + JSON.stringify(state));
 			assert.ok(state.cardH <= 235, "整张卡片紧凑无底部大片留白：" + JSON.stringify(state));
 			assert.equal(state.verifyVisible, true);
 			assert.match(state.verifyTitle, /drand 第 \d+ 轮/);
@@ -417,7 +495,7 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
 				assert.ok(Math.abs(after.cardH - before.cardH) <= 1, `${label} 卡片高度不变：before=${JSON.stringify(before)} after=${JSON.stringify(after)}`);
 				assert.ok(Math.abs(after.ccTop - before.ccTop) <= 1, `${label} 评论区位置不变：before=${before.ccTop} after=${after.ccTop}`);
 				if (checkCompact) {
-					assert.ok(after.topH <= 28 && after.footH <= 24 && after.cardH <= 235, `${label} 仍保持紧凑高度：${JSON.stringify(after)}`);
+					assert.ok(after.topH <= 28 && after.footH <= 40 && after.cardH <= 235, `${label} 仍保持紧凑高度：${JSON.stringify(after)}`);
 				}
 				assert.deepEqual(errors, []);
 			} finally { await context.close(); }

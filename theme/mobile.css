@@ -607,7 +607,6 @@ html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-bod
 }
 html[data-nsmax-theme][data-nsmax-touch][data-nsmax-post-layout=simple] #nsk-body-left .nsk-post>.content-item>.comment-menu.topic-actions{margin:14px 0 0!important}
 /* 2026-11-25 手机端抽奖卡片、独立开奖页、楼中楼与投票选项点按优化 */
-html[data-nsmax-theme][data-nsmax-touch] :is(#nsk-body-left article.post-content,.nsmax-lucky-side) .nsmax-lottery:is(#nsmax-lv,*){padding:12px 14px!important}
 html[data-nsmax-theme][data-nsmax-touch] :is(#nsk-body-left article.post-content,.nsmax-lucky-side) .nsmax-lottery-actions>:is(a,button):is(#nsmax-lv,*):is(#nsmax-b,*){height:40px!important;min-height:40px!important;line-height:38px!important}
 html[data-nsmax-theme][data-nsmax-touch] :is(#nsk-body-left article.post-content,.nsmax-lucky-side) .nsmax-lottery:not([data-state="done"]) .nsmax-lottery-foot:is(#nsmax-lv,*){min-height:40px!important}
 html[data-nsmax-theme][data-nsmax-touch] :is(#nsk-body-left article.post-content,.nsmax-lucky-side) :is(button.nsmax-lottery-copy,a.nsmax-lottery-view,button.nsmax-lottery-retry-card,button.nsmax-lottery-winners-toggle):is(#nsmax-lv,*):is(#nsmax-b,*){position:relative!important}
