@@ -1454,6 +1454,9 @@ html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content)
 }
 
 html[data-nsmax-theme] :is(.post-content, .markdown-body, article, .nsk-content) pre code {
+  /* 和 design.css 同一条：没上色的代码也按 code.hljs 的块排，空闲上色时代码块不再变高变矮（2026-11-27） */
+  display: block !important;
+  overflow: visible !important;
   padding: 0 !important;
   background: transparent !important;
   border: 0 !important;

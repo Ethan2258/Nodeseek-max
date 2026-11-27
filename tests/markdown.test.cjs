@@ -37,6 +37,8 @@ test("正文：代码块顶上是标题栏（语言名 + 常显的「复制」�
 					copyAbovePre: r(copy).bottom <= r(pre).top + 0.5 && r(copy).top >= r(bash).top,
 					// 一行代码：外框高 = 1 + 36 标题栏 + 12 + 一行 + 12 + 1，不再是 38px 空条再加一行
 					oneLine: Math.round(r(bash).height - r(code).height),
+					// 没上色的代码（没写语言、不高亮）和上了色的同样高：高亮只换颜色，空闲上色那一刻代码块不变高变矮（2026-11-27）
+					plain: [getComputedStyle(plain.querySelector("pre > code")).display, Math.round(r(plain).height) - Math.round(r(bash).height)],
 					sizes: ["h1", "h2", "h3", "h4"].map(size),
 					quote: [quote.borderLeftWidth, quote.backgroundColor !== "rgba(0, 0, 0, 0)"],
 					table: r(art.querySelector("table")).width < r(art).width / 2
@@ -49,6 +51,7 @@ test("正文：代码块顶上是标题栏（语言名 + 常显的「复制」�
 			assert.equal(s.copyOpacity, "1", "「复制」常显");
 			assert.ok(s.copyAbovePre, "「复制」在标题栏里，不压代码");
 			assert.ok(s.oneLine <= 64, `一行代码的外框只多出标题栏和上下留白：${s.oneLine}`);
+			assert.deepEqual(s.plain, ["block", 0], "没上色的代码也按块排，和上了色的一样高");
 			assert.ok(s.sizes[0] > s.sizes[1] && s.sizes[1] > s.sizes[2] && s.sizes[2] > s.sizes[3], `标题一级比一级小：${s.sizes}`);
 			assert.deepEqual(s.quote, ["3px", true]);
 			assert.ok(s.table, "两列小表格按内容宽");
