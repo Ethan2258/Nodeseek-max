@@ -4427,8 +4427,8 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 				firstCv: getComputedStyle(rows[0]).contentVisibility,
 				cv: getComputedStyle(later).contentVisibility,
 				size: getComputedStyle(later).containIntrinsicHeight,
-				// 预留的是内容高度，整行还要加上下内边距
-				reserved: parseFloat(getComputedStyle(later).containIntrinsicHeight.split(" ").pop()) + parseFloat(getComputedStyle(later).paddingTop) + parseFloat(getComputedStyle(later).paddingBottom),
+				// 预留的是内容高度，整行还要加上下内边距和底下 1px 分隔线
+				reserved: Math.round((parseFloat(getComputedStyle(later).containIntrinsicHeight.split(" ").pop()) + parseFloat(getComputedStyle(later).paddingTop) + parseFloat(getComputedStyle(later).paddingBottom) + parseFloat(getComputedStyle(later).borderTopWidth) + parseFloat(getComputedStyle(later).borderBottomWidth)) * 10) / 10,
 				first: drawn(rows[0]),
 				last: drawn(rows[rows.length - 1]),
 				heights: rows.map((li) => Math.round(li.getBoundingClientRect().height))
@@ -4437,8 +4437,8 @@ test("打开更快（2026-10-18）：长列表只画看得见的行——屏幕�
 		const before = await rowsState();
 		assert.equal(before.firstCv, "visible");
 		assert.equal(before.cv, "auto");
-		assert.equal(before.size, "auto 51px");
-		assert.equal(before.reserved, 73, "内容 51px + 上下内边距 22px = 整行 73px");
+		assert.equal(before.size, "auto 49.3px");
+		assert.equal(before.reserved, 72.3, "内容 49.3px + 上下内边距 22px + 分隔线 1px = 整行 72.3px");
 		assert.equal(before.first, true, "屏幕上的行照常画");
 		assert.equal(before.last, false, "最下面的行先不画");
 		// 2026-10-25：页面整理完以后在浏览器空闲时一批批排好（不用滚过去），往下滚的时候不用在那一帧里现排
