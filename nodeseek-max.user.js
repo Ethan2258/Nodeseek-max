@@ -25538,10 +25538,11 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		return urls;
 	}
 	// 主帖正文里有什么：投票、开奖链接
-	function nsmaxSpecialKindsOf(op) {
+	function nsmaxSpecialKindsOf(op, id = "") {
 		const kinds = [];
 		if (op.querySelector('.vote-panel, a[data-href^="nsapp://vote"], a[href^="nsapp://vote"]') || /nsapp:\/\/vote\?id=\d+/.test(op.textContent || "")) kinds.push("poll");
-		if (nsmaxLuckyUrlsIn(op).length) kinds.push("lottery");
+		// 只有别的帖子的开奖链接（引用、推荐别人的抽奖）不算；没写 post 的照算
+		if (nsmaxLuckyUrlsIn(op).some((url) => { const post = url.searchParams.get("post"); return !id || !post || post === String(id); })) kinds.push("lottery");
 		return kinds;
 	}
 	// 评论里指向这一篇的开奖链接（/lucky?post=这一篇&…）：有的楼主把开奖链接贴在评论里，标题里也不写「抽奖」（2026-10-23）。
@@ -25761,7 +25762,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			return;
 		}
 		let comments = null;
-		if (!opOnly && !nsmaxSpecialKindsOf(op).includes("lottery")) {
+		if (!opOnly && !nsmaxSpecialKindsOf(op, id).includes("lottery")) {
 			if (doc.querySelector("ul.comments, .comment-container, .md-editor, footer") || NSMAX_POST_TAIL_RE.test(html)) {
 				comments = nsmaxCommentLuckyParams(doc, id);
 			} else {
@@ -25782,7 +25783,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	}
 	// 读到一篇帖子第一页的主帖以后记下它是不是抽奖帖（后台查帖、悬停预览都走这里）。comments：评论里指向这一篇的开奖链接
 	function nsmaxLearnSpecialPost(id, op, title, comments = null, row = null, doc = null) {
-		const kinds = nsmaxSpecialKindsOf(op);
+		const kinds = nsmaxSpecialKindsOf(op, id);
 		let time = nsmaxLotteryTimeOf(op, id);
 		if (!kinds.includes("lottery") && comments) {
 			kinds.push("lottery");
@@ -25805,7 +25806,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const id = String(href).match(/\/post-(\d+)-1(?:[?#]|$)/)?.[1];
 		const op = id && doc.querySelector(".nsk-post article.post-content, .nsk-post .post-content");
 		if (!op) return;
-		const kinds = nsmaxSpecialKindsOf(op);
+		const kinds = nsmaxSpecialKindsOf(op, id);
 		const hasCommentsDom = !!doc.querySelector("ul.comments, .comment-container");
 		const comments = !kinds.includes("lottery") && hasCommentsDom ? nsmaxCommentLuckyParams(doc, id) : null;
 		if (kinds.includes("lottery") || comments) {
@@ -26324,6 +26325,8 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		}
 		if (!titleText) return;
 		const prev = nsmaxLotteryRows().get(key) || {};
+		// 列表上记过的行（回复数、最后回复时间来自列表）不拿帖子页这一页的楼层数、发帖时间覆盖
+		if (prev.th) return;
 		const uid = (el) => el?.getAttribute("href")?.match(/\/space\/(\d+)/)?.[1] || "";
 		const author = post.querySelector(".nsk-content-meta-info .author-info a.author-name, .author-info a[href*='/space/'], a[href*='/space/']");
 		const stamp = post.querySelector(".date-created time, .nsk-content-meta-info time");
@@ -26442,10 +26445,10 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const postId = location.pathname.match(/^\/post-(\d+)/)?.[1];
 		const op = postId && document.querySelector(".nsk-post article.post-content");
 		if (op && (!parsed || parsed(op))) {
-			const kinds = nsmaxSpecialKindsOf(op);
+			const kinds = nsmaxSpecialKindsOf(op, postId);
 			if (!kinds.includes("poll") && document.querySelector("#nsk-body-left .vote-panel[data-nsmax-detached]")) kinds.push("poll");
 			let time = nsmaxLotteryTimeOf(op, postId);
-			// 引用其他帖的链接也会得到抽奖类型，但时间必须来自本帖；完整评论每页只读一次。
+			// 主帖里只引用、推荐别的帖子的开奖链接不算本帖是抽奖帖（那张卡片照样画，写「见原帖」）；时间也只认本帖的；完整评论每页只读一次。
 			const comments = document.querySelector(".comment-container");
 			const commentsReady = !parsed || document.readyState !== "loading" || !!(comments && parsed(comments));
 			if (!time && commentsReady && nsmaxCommentLuckyPage !== location.pathname) {
@@ -27399,7 +27402,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		return card;
 	}
 	function nsmaxPrepareLottery(parsed) {
-		for (const link of document.querySelectorAll("article.post-content a[href]:not([data-nsmax-lottery])")) {
+		for (const link of document.querySelectorAll('article.post-content a[href*="lucky" i]:not([data-nsmax-lottery])')) {
 			// 卡片自己的「查看开奖」也是开奖链接：不跳过的话下一轮扫描又按它生成一张卡片，一层套一层
 			if (link.closest(".nsmax-lottery")) continue;
 			const article = link.closest("article.post-content");
@@ -27427,10 +27430,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		// 主帖或楼主自己评论里开奖链接是纯文字网址（没被渲染成链接）时也画一张卡片（2026-11-24 首帧前按节点解析状态就绪即画）
 		const op = document.querySelector(".nsk-post article.post-content");
 		const containers = op ? [op] : [];
-		for (const item of document.querySelectorAll("ul.comments > li.content-item")) {
-			if (!item.querySelector(":scope > .nsk-content-meta-info .author-info > .is-poster")) continue;
-			const body = item.querySelector(":scope > article.post-content");
-			if (body) containers.push(body);
+		for (const badge of document.querySelectorAll("ul.comments > li.content-item > .nsk-content-meta-info .author-info > .is-poster")) {
+			const body = badge.closest("li.content-item")?.querySelector(":scope > article.post-content");
+			if (body && !containers.includes(body)) containers.push(body);
 		}
 		const postId = nsmaxMyRepliesPost();
 		for (const container of containers) {
