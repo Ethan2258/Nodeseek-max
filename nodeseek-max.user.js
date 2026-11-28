@@ -1972,8 +1972,15 @@ var nsmaxRedirecting = false;
 		});
 		// 只在第一帧画出来以后（后台模块那一段）这样等：之前浏览器还挡着不画（nsmaxHoldFirstPaint），等不到下一帧
 		const pause = () => deferred && !document.hidden && performance.now() - frameAt > 24 ? yieldToFrame() : yieldToMain();
-		const runBatch = async () => {
-			if (flushing || stopped || document.hidden) return;
+		// 正在跑的那一轮（中途会让出主线程）：已经有一轮在跑时不另起一轮，返回这一轮，调用方要等它跑完可以 await（见挂载结束前的那次补扫）
+		let batchRun = null;
+		const runBatch = () => {
+			if (flushing) return batchRun;
+			if (stopped || document.hidden) return null;
+			batchRun = runBatchNow();
+			return batchRun;
+		};
+		const runBatchNow = async () => {
 			flushing = true;
 			dirty = false;
 			// 每轮整理打一个标记（排查「哪些变动引起了整页整理」用，测试也靠它数轮次）
@@ -2148,13 +2155,15 @@ var nsmaxRedirecting = false;
 				}
 			}
 			// 挂载期间页面脚本或站点水合若已改动 DOM，在撤掉 data-nsmax-mounting 前立即完成这一轮扫描，避免延迟 100ms 后才更新。
-			if (!stopped && !document.hidden) {
+			// 空闲时起的那一轮可能正停在让出主线程的地方、后面的模块还没轮到：先等它跑完，再看还有没有没整理的变动（最多补三轮）
+			for (let round = 0; round < 3 && !stopped && !document.hidden; round++) {
+				if (flushing) await batchRun;
+				if (stopped || document.hidden) break;
 				if (hasMeaningfulRecords(observer.takeRecords())) dirty = true;
-				if (dirty) {
-					if (timer) { clearTimeout(timer); timer = void 0; }
-					if (idleHandle !== void 0) { cancelIdle(idleHandle); idleHandle = void 0; }
-					await runBatch();
-				}
+				if (!dirty) break;
+				if (timer) { clearTimeout(timer); timer = void 0; }
+				if (idleHandle !== void 0) { cancelIdle(idleHandle); idleHandle = void 0; }
+				await runBatch();
 			}
 		})().finally(() => {
 			document.documentElement.removeAttribute("data-nsmax-mounting");
@@ -29193,8 +29202,9 @@ function nsmaxTagStructure() {
 				if (!box || box.matches("body, #nsk-body, #nsk-body-left, .post-list-controler, .comment-container, .selector, .nsk-post-wrapper, .credit-table > div")) continue;
 				nsmaxFlag(box, "data-nsmax-pagerbox", true, pager.matches(".pager-top, .post-top-pager") ? "top" : "bottom");
 			}
-			for (const box of document.querySelectorAll("[data-nsmax-pagerbox]")) if (!box.querySelector(":scope > .nsk-pager")) nsmaxDropAttr(box, "data-nsmax-pagerbox");
 		}
+		// 页码没了、外层还在（整页最后一个页码条被站点拿掉）时也要撤掉标记：放在上面的判断外面，不然整页一个页码都没有时旧标记一直留着
+		for (const box of document.querySelectorAll("[data-nsmax-pagerbox]")) if (!box.querySelector(":scope > .nsk-pager")) nsmaxDropAttr(box, "data-nsmax-pagerbox");
 		for (const container of document.querySelectorAll(".comment-container")) {
 			nsmaxFlag(container, "data-nsmax-empty", !container.querySelector(":scope > ul.comments > li.content-item"));
 			nsmaxFlag(container, "data-nsmax-bottom-pager", !!container.querySelector(":scope > div > .post-bottom-pager, :scope > .post-bottom-pager"));
