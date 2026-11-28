@@ -649,4 +649,139 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 个人主页切换防抖补漏：介绍排在列表上面时翻页 / 切标签卡片不撑高、页码不往下推；返回键切回上一页不塌不闪「还没有……」；以「NodeSeek」开头的介绍照常显示`,async()=>{
+  const intro="很长的个人介绍。".repeat(120);
+  const infoApi=(readme,delay=0)=>({"/api/account/getInfo/10":[{status:200,delay,body:{success:true,detail:{member_id:10,member_name:"Steve",rank:3,coin:1257,stardust:50,nPost:3,nComment:873,follows:12,fans:34,collectionCount:8,created_at:"2024-01-01T00:00:00Z",readme}}}]});
+  const rows=(prefix,count,base)=>Array.from({length:count},(_,i)=>`<div class="discussion-item" data-v-18f8c01b><a href="/post-${base+i}-1" data-v-18f8c01b><span data-v-18f8c01b>${prefix} ${i+1}</span></a><span></span></div>`).join("");
+  const pager='<div><div class="nsk-pager"><span class="pager-pos pager-cur">1</span><a class="pager-pos" href="#/discussions/2">2</a><a class="pager-next" href="#/discussions/2">下一页</a></div></div>';
+  const desk={viewport:{width:1440,height:900},seed};
+  // 1. .selector-right-side 结构（站点真实结构）里写了长介绍的人：介绍排在 3 条主题上面。点「下一页」时清空的列表只撑住自己原来的高度
+  //    （以前量到的是介绍的高度，套给列表，列表反而从 147px 撑到 442px，页码往下推 300px）
+  {
+   const html=P.spaceTopicsPage().replace('<div class="readme">没有找到readme 🙄</div>',`<div class="readme post-content"><div><p>${intro}</p></div></div>`)
+    .replace(/(<div class="discussion-wrapper" data-v-18f8c01b>)[\s\S]*?<\/div><\/div><\/div><\/div>/,`$1${rows("主题",3,4000)}</div>${pager}</div></div>`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{...desk,html,api:infoApi(intro)});
+   try{
+    await ready(page);
+    await page.waitForFunction(()=>{const rm=document.querySelector(".selector .readme");return rm&&rm.offsetHeight>200&&!rm.hasAttribute("data-nsmax-empty-readme");});
+    const before=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");
+     pg.querySelector("a.pager-next").addEventListener("click",(e)=>{
+      e.preventDefault();
+      history.pushState(null,"","#/discussions/2");
+      Promise.resolve().then(()=>list.replaceChildren());
+      setTimeout(()=>{list.innerHTML='<div class="discussion-item"><a href="/post-5000-1"><span>第2页 主题</span></a><span></span></div>';},300);
+     });
+     return {listH:Math.round(list.getBoundingClientRect().height),pagerTop:Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top)};
+    });
+    await page.locator(".selector .nsk-pager a.pager-next").click();
+    await page.waitForTimeout(100);
+    const mid=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");
+     return {switching:document.documentElement.hasAttribute("data-nsmax-space-switching"),empty:!list.childElementCount,listH:Math.round(list.getBoundingClientRect().height),pagerTop:Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top)};
+    });
+    assert.equal(mid.switching,true,JSON.stringify(mid));
+    assert.equal(mid.empty,true,JSON.stringify(mid));
+    assert.ok(Math.abs(mid.listH-before.listH)<=2,`清空的列表只撑住自己原来的高度：${JSON.stringify({before,mid})}`);
+    assert.ok(Math.abs(mid.pagerTop-before.pagerTop)<=2,`点下一页时页码不往下推：${JSON.stringify({before,mid})}`);
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:1200});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 2. 同样的结构在「概况」：介绍（长）和最近回帖（短）同时在，点「主题」时整块不变高（以前回帖卡片被撑成介绍那么高，整块长出 200 多 px）
+  {
+   const html=P.nativeSpacePage().replace('<div class="readme">没有找到readme 🙄</div>',`<div class="readme post-content"><div><p>${intro}</p></div></div>`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/info",{...desk,html,api:infoApi(intro)});
+   try{
+    await ready(page);
+    await page.waitForFunction(()=>{const rm=document.querySelector(".selector .readme");return rm&&rm.offsetHeight>200&&!rm.hasAttribute("data-nsmax-empty-readme")&&document.querySelector('.selector > a.select-item[data-nsmax-tab="discussions"]');});
+    const before=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),list=box.querySelector(".comments-list");
+     box.querySelector(':scope > a.select-item[data-nsmax-tab="discussions"]').addEventListener("click",(e)=>{
+      e.preventDefault();
+      history.pushState(null,"","#/discussions");
+      Promise.resolve().then(()=>list.replaceChildren());
+      setTimeout(()=>{list.innerHTML='<div><a href="/post-4100-1">新主题</a><p>摘要</p></div>';},300);
+     });
+     return {boxH:Math.round(box.getBoundingClientRect().height),listH:Math.round(list.getBoundingClientRect().height)};
+    });
+    await page.locator('.selector > a.select-item[data-nsmax-tab="discussions"]').click();
+    await page.waitForTimeout(100);
+    const mid=await page.evaluate(()=>{const box=document.querySelector(".selector"),list=box.querySelector(".comments-list");return {switching:document.documentElement.hasAttribute("data-nsmax-space-switching"),boxH:Math.round(box.getBoundingClientRect().height),listH:Math.round(list.getBoundingClientRect().height)};});
+    assert.equal(mid.switching,true,JSON.stringify(mid));
+    assert.ok(Math.abs(mid.boxH-before.boxH)<=2,`切标签时整块不变高：${JSON.stringify({before,mid})}`);
+    assert.ok(Math.abs(mid.listH-before.listH)<=2,`回帖卡片只撑住自己的高度：${JSON.stringify({before,mid})}`);
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:1200});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 3. 返回键：从第 2 页按返回回到第 1 页，站点（Vue）在 popstate 之后清空列表、0.3 秒后再放新的。没有点击也要撑住：列表不塌、页码不往上跳、不闪「还没有……」
+  {
+   const html=P.spaceTopicsPage().replace(/(<div class="discussion-wrapper" data-v-18f8c01b>)[\s\S]*?<\/div><\/div><\/div><\/div>/,`$1${rows("主题帖",15,4000)}</div></div>${pager}</div>`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{...desk,html,api:infoApi("")});
+   try{
+    await ready(page);
+    await page.evaluate(()=>{
+     const box=document.querySelector(".selector");
+     window.addEventListener("popstate",()=>{
+      const list=box.querySelector(".discussion-wrapper");
+      Promise.resolve().then(()=>list.replaceChildren());
+      setTimeout(()=>{list.innerHTML=Array.from({length:15},(_,i)=>`<div class="discussion-item"><a href="/post-${9000+i}-1"><span>返回后 ${i+1}</span></a><span></span></div>`).join("");},300);
+     });
+     history.pushState(null,"","#/discussions/2");
+    });
+    await page.waitForTimeout(200);
+    const before=await page.evaluate(()=>{const box=document.querySelector(".selector"),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");return {listH:Math.round(list.getBoundingClientRect().height),pagerTop:Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top)};});
+    const sampled=page.evaluate(()=>new Promise((resolve)=>{
+     const box=document.querySelector(".selector"),out={listH:[],pagerTop:[],labels:new Set(),emptySeen:false},t0=performance.now();
+     const tick=()=>{
+      const list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");
+      out.listH.push(Math.round(list.getBoundingClientRect().height));
+      out.pagerTop.push(Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top));
+      if(!list.childElementCount)out.emptySeen=true;
+      out.labels.add(getComputedStyle(list,"::after").content);
+      if(performance.now()-t0<450)requestAnimationFrame(tick);
+      else resolve({listH:[Math.min(...out.listH),Math.max(...out.listH)],pagerTop:[Math.min(...out.pagerTop),Math.max(...out.pagerTop)],labels:[...out.labels],emptySeen:out.emptySeen});
+     };
+     requestAnimationFrame(tick);
+    }));
+    await page.evaluate(()=>history.back());
+    const s=await sampled;
+    assert.equal(s.emptySeen,true,JSON.stringify(s));
+    assert.ok(s.listH[0]>=before.listH-2,`按返回键时列表不塌：${JSON.stringify({before,s})}`);
+    assert.ok(Math.abs(s.pagerTop[0]-before.pagerTop)<=2&&Math.abs(s.pagerTop[1]-before.pagerTop)<=2,`按返回键时页码不跳：${JSON.stringify({before,s})}`);
+    assert.ok(s.labels.every(l=>!/还没有|暂无/.test(l)),`按返回键时不闪「还没有……」：${JSON.stringify(s)}`);
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching")&&!document.querySelector(".selector").style.minHeight,null,{timeout:1200});
+    assert.equal(await page.evaluate(()=>location.hash),"#/discussions");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 4. 介绍以「NodeSeek」开头（「NodeSeek 老用户……」）是真写了：照常显示、停在「介绍」（以前当成站点占位，介绍藏掉、跳到「主题」）。
+  //    接口晚回来时第一帧就要对；只有一个「NodeSeek」字样的水印仍按没写处理
+  {
+   const text="NodeSeek 老用户，喜欢折腾 VPS 和各种小鸡，欢迎私信交流。";
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/general",{...desk,html:P.spaceGeneralPage(`<p>${text}</p>`),api:infoApi(text,600)});
+   try{
+    await ready(page);
+    const state=()=>page.evaluate(()=>{const rm=document.querySelector(".selector .readme"),tab=document.querySelector('.selector > a.select-item[data-nsmax-tab="general"]');return {hash:location.hash,rmDisplay:getComputedStyle(rm).display,empty:rm.hasAttribute("data-nsmax-empty-readme"),tab:!!tab&&tab.offsetWidth>0&&!tab.hidden,active:!!tab&&tab.classList.contains("active")};});
+    const early=await state();
+    assert.deepEqual(early,{hash:"#/general",rmDisplay:"block",empty:false,tab:true,active:true},`接口回来前：${JSON.stringify(early)}`);
+    await page.waitForTimeout(900);
+    const late=await state();
+    assert.deepEqual(late,{hash:"#/general",rmDisplay:"block",empty:false,tab:true,active:true},`接口回来后：${JSON.stringify(late)}`);
+    assert.ok((await page.locator(".selector .readme").innerText()).includes("NodeSeek 老用户"));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/general",{...desk,html:P.spaceGeneralPage("NodeSeek"),api:infoApi("",3000)});
+   try{
+    await ready(page);
+    await page.waitForFunction(()=>location.hash==="#/discussions",null,{timeout:1500});
+    const s=await page.evaluate(()=>{const rm=document.querySelector(".selector .readme"),tab=document.querySelector('.selector > a.select-item[data-nsmax-tab="general"]');return {rmDisplay:getComputedStyle(rm).display,empty:rm.hasAttribute("data-nsmax-empty-readme"),tab:!!tab&&tab.offsetWidth>0};});
+    assert.deepEqual(s,{rmDisplay:"none",empty:true,tab:false},JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
 }

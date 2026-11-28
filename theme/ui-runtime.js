@@ -122,7 +122,9 @@
 		const text = (readme.textContent || "").trim();
 		const hasWatermark = !!readme.querySelector("img[src*='logo'], img[src*='nodeseek'], svg");
 		const hasMedia = !!readme.querySelector("img:not([src*='logo']):not([src*='nodeseek']), video, iframe, table, pre, hr");
-		const placeholder = /^(没有找到readme|暂无简介|暂无介绍|NodeSeek)/i.test(text);
+		// 站点没写介绍时的占位：「没有找到readme」这类开头；只剩一个「NodeSeek」字样（水印）也算，但必须是整段——
+		// 「NodeSeek 老用户……」是真写了介绍；接口已经说写了介绍时也不当占位（2026-11-28：以前这种介绍整个藏掉、跳到「主题」）
+		const placeholder = /^(没有找到readme|暂无简介|暂无介绍)/i.test(text) || hasIntro !== true && /^NodeSeek$/i.test(text);
 		const hasContent = !placeholder && (hasMedia || text.length > 0 && !(hasIntro !== true && hasWatermark && text.length < 20));
 		return { text, placeholder, hasContent, hasMedia };
 	}
@@ -223,6 +225,8 @@
 			const loadingEmpty = !hasContent && !placeholder && (hasIntro === true || switching);
 			const isEmpty = !hasContent && !loadingEmpty;
 			if (readme.hasAttribute("data-nsmax-empty-readme") !== isEmpty) readme.toggleAttribute("data-nsmax-empty-readme", isEmpty);
+			// 加载中（还没有正文）的介绍：切换时只给这种卡片和清空的列表撑高度（见 design.css data-nsmax-space-switching）
+			if (readme.hasAttribute("data-nsmax-readme-loading") !== loadingEmpty) readme.toggleAttribute("data-nsmax-readme-loading", loadingEmpty);
 			if (isEmpty) nsmaxHideEl(readme);
 			else nsmaxShowEl(readme);
 			// 站点画出来的介绍就能说明写没写（写着「没有找到readme」= 没写；有正文或图片 = 写了），不用等接口：「介绍」标签第一帧就对
@@ -7028,8 +7032,12 @@ function nsmaxTagStructure() {
 		// 切换「介绍 / 主题 / 回帖 / 收藏」标签或点底部页码（2026-11-09 & 2026-11-26）：站点先把旧列表清空再去拿新内容，
 		// 中间 0.3–0.4 秒卡片塌缩、先闪「还没有……」且页码往上跳。点标签 / 页码 / 顶部统计快捷入口的那一刻同时撑住
 		// .selector 整块和内容卡片高度（--nsmax-space-card-min-h），新列表、页码原地刷新、空状态插图或 .readme 正文到达立即放开
+		// 返回 / 前进键在标签、页码之间来回时站点也一样先清空再取（2026-11-28），popstate 时同样撑住（见下面）。
+		// 撑住的只是清空了的列表和加载中的介绍（design.css），高度先量列表卡片、没有列表才量介绍：「.selector-right-side」结构里
+		// 介绍排在列表上面，以前量到的是介绍的高度、又给每张卡片都撑上，列表反而长高、页码往下推（2026-11-28）
 		let release = null;
-		const cardSelector = ":scope > .discussion-wrapper, :scope > .readme:not([data-nsmax-empty-readme]), :scope > .selector-right-side > .discussion-wrapper, :scope > .selector-right-side > .comments-list, :scope > .selector-right-side > .readme:not([data-nsmax-empty-readme]), :scope > div > div > .discussion-wrapper, .comments-list";
+		const listCardSelector = ":scope > .discussion-wrapper, :scope > .selector-right-side > .discussion-wrapper, :scope > .selector-right-side > .comments-list, :scope > div > div > .discussion-wrapper, .comments-list";
+		const readmeCardSelector = ":scope > .readme:not([data-nsmax-empty-readme]), :scope > .selector-right-side > .readme:not([data-nsmax-empty-readme])";
 		const listSigOf = (box) => {
 			const items = box.querySelectorAll(".discussion-wrapper > *, .comments-list > *");
 			if (!items.length) return "";
@@ -7041,26 +7049,10 @@ function nsmaxTagStructure() {
 			}
 			return sig;
 		};
-		document.addEventListener("click", (event) => {
-			const target = event.target instanceof Element ? event.target : null;
-			const tab = target?.closest(".selector > a.select-item");
-			const pagerLink = !tab && target?.closest(".selector .nsk-pager a:is(.pager-pos, .pager-next, .pager-prev)");
-			const statLink = !tab && !pagerLink && target?.closest('.head-container > .card-block > a.nsmax-user-stat[href^="#/"]');
-			const trigger = tab || pagerLink || statLink;
-			if (!trigger) return;
-			const curHash = location.hash || "#/general";
-			if (tab) {
-				const href = tab.getAttribute("href") || "";
-				const isCurrentTab = tab.classList.contains("active") || tab.classList.contains("router-link-exact-active");
-				if (isCurrentTab && (!href || curHash === href || tab.getAttribute("data-nsmax-tab") === "general" && /^#\/?(?:general|info|profile)?$/.test(curHash))) return;
-			}
-			if (pagerLink && (pagerLink.getAttribute("aria-disabled") === "true" || pagerLink.hasAttribute("data-nsmax-pg-off") || pagerLink.classList.contains("pager-cur") || pagerLink.hasAttribute("data-nsmax-pg-cur") || pagerLink.classList.contains("active") || pagerLink.classList.contains("current"))) return;
-			if (statLink && statLink.getAttribute("href") === curHash) return;
-			const box = trigger.closest(".selector") || document.querySelector("#nsk-frame > .nsk-container > .selector");
-			if (!box) return;
+		const hold = (box) => {
 			// 连续快切标签时先记住当前已撑住的高度，不撤掉再量（免得空档里量成塌缩高度）
 			const boxH = box.offsetHeight;
-			const card = box.querySelector(cardSelector);
+			const card = box.querySelector(listCardSelector) || box.querySelector(readmeCardSelector);
 			const cardH = card ? Math.round(card.getBoundingClientRect().height) : parseFloat(box.style.getPropertyValue("--nsmax-space-card-min-h")) || 0;
 			release?.(true);
 			box.style.setProperty("min-height", boxH + "px", "important");
@@ -7116,7 +7108,31 @@ function nsmaxTagStructure() {
 			});
 			watch.observe(box, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["href", "style", "class"] });
 			timer = setTimeout(() => done(false), 1500);
+		};
+		document.addEventListener("click", (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			const tab = target?.closest(".selector > a.select-item");
+			const pagerLink = !tab && target?.closest(".selector .nsk-pager a:is(.pager-pos, .pager-next, .pager-prev)");
+			const statLink = !tab && !pagerLink && target?.closest('.head-container > .card-block > a.nsmax-user-stat[href^="#/"]');
+			const trigger = tab || pagerLink || statLink;
+			if (!trigger) return;
+			const curHash = location.hash || "#/general";
+			if (tab) {
+				const href = tab.getAttribute("href") || "";
+				const isCurrentTab = tab.classList.contains("active") || tab.classList.contains("router-link-exact-active");
+				if (isCurrentTab && (!href || curHash === href || tab.getAttribute("data-nsmax-tab") === "general" && /^#\/?(?:general|info|profile)?$/.test(curHash))) return;
+			}
+			if (pagerLink && (pagerLink.getAttribute("aria-disabled") === "true" || pagerLink.hasAttribute("data-nsmax-pg-off") || pagerLink.classList.contains("pager-cur") || pagerLink.hasAttribute("data-nsmax-pg-cur") || pagerLink.classList.contains("active") || pagerLink.classList.contains("current"))) return;
+			if (statLink && statLink.getAttribute("href") === curHash) return;
+			const box = trigger.closest(".selector") || document.querySelector("#nsk-frame > .nsk-container > .selector");
+			if (box) hold(box);
 		}, { capture: true, signal: ctx.signal });
+		// 返回 / 前进键：没有点击，站点（Vue）在 popstate 之后才清空列表，这时量到的还是切换前的高度
+		window.addEventListener("popstate", () => {
+			if (!/^\/space\/\d+/.test(location.pathname)) return;
+			const box = document.querySelector("#nsk-frame > .nsk-container > .selector") || document.querySelector(".selector");
+			if (box) hold(box);
+		}, { signal: ctx.signal });
 	}
 	// Userscripts 的 content world 不能直接读页面 expando。桥只访问论坛配置和编辑器；不暴露任何 GM API 或存储。
 	function nsmaxCreateUserscriptsBridge() {

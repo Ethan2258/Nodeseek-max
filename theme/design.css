@@ -18000,11 +18000,14 @@ html[data-nsmax-theme] #nsk-body-left .nsk-post-wrapper > #editor:is(#nsmax-lv, 
 }
 /* 切换个人主页标签 / 翻页、新内容还没到的这一下（data-nsmax-space-switching，见 nsmaxWatchSpace）：
    不写「还没有……」；同时给内容卡片（列表 / 回帖 / 加载中的介绍）保住切换前的高度（--nsmax-space-card-min-h），
-   避免底下的页码往上闪跳、卡片底边塌成空缺（2026-11-26） */
+   避免底下的页码往上闪跳、卡片底边塌成空缺（2026-11-26）。
+   只撑真的塌了的卡片：清空了的列表、还没有正文的介绍（data-nsmax-readme-loading）。有内容的卡片不动——
+   「.selector-right-side」里介绍和列表同时在，以前每张卡片都撑成量到的高度，短列表被撑高、页码往下推（2026-11-28） */
 html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *)::after {
   content: "" !important;
 }
-html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] .selector :is(.discussion-wrapper, .comments-list, .readme:not([data-nsmax-empty-readme])):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
+html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] .selector :is(.discussion-wrapper, .comments-list):empty:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *),
+html[data-nsmax-theme][data-nsmax-page="space"][data-nsmax-space-switching] .selector .readme[data-nsmax-readme-loading]:not([data-nsmax-empty-readme]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
   min-height: var(--nsmax-space-card-min-h, 140px) !important;
 }
 /* ---------- 电脑端细调第十轮（2026-11-20 Yiheng：「再优化个地方……各个」） ----------
