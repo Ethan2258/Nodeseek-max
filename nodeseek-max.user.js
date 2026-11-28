@@ -26484,7 +26484,10 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			if (document.readyState !== "loading") {
 				nsmaxMarkSpecialChecked(postId);
 				// 只纠正与正文外帖链接时间吻合的旧污染。第一页未见链接不能证明缓存无效，链接可能在后续评论页。
-				if (!time && nsmaxCommentLuckyPage === location.pathname && /^\/post-\d+(?:-1)?$/.test(location.pathname)) nsmaxForgetForeignLotteryTime(postId, op);
+				if (!time && nsmaxCommentLuckyPage === location.pathname && /^\/post-\d+(?:-1)?$/.test(location.pathname)) {
+					nsmaxForgetForeignLotteryTime(postId, op);
+					if (!kinds.includes("lottery")) nsmaxForgetForeignLottery(postId, op);
+				}
 				if (kinds.includes("lottery")) {
 					nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title a[href*='/post-']")?.textContent || "") || nsmaxLotteryEndedIn(op));
 					const row = nsmaxListRowOf(postId);
@@ -26693,6 +26696,25 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		})) return;
 		map.delete(id);
 		try { localStorage.setItem(NSMAX_LOTTERY_TIMES_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
+	// 以前（v1.9.82–1.9.93）主帖里只引用了别的帖子的开奖链接也记成抽奖帖，记下就不会再撤（标签一直挂着、「只看进行中」里一直在）。
+	// 打开第一页、本页评论里也没有本帖的开奖链接、主帖里确实只有外帖链接时，把这条旧记录撤掉（2026-11-28）
+	function nsmaxForgetForeignLottery(id, op) {
+		if (!nsmaxLuckyUrlsIn(op).some(url => {
+			const post = url.searchParams.get("post");
+			return post && post !== String(id);
+		})) return;
+		const map = nsmaxSpecialPostMap();
+		const kinds = (map.get(id) || "").split(",").filter(Boolean);
+		if (kinds.includes("lottery")) {
+			const rest = kinds.filter(kind => kind !== "lottery");
+			if (rest.length) map.set(id, rest.join(","));
+			else map.delete(id);
+			try { localStorage.setItem(NSMAX_SPECIAL_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+		}
+		const rows = nsmaxLotteryRows();
+		if (rows.delete(id)) try { localStorage.setItem(NSMAX_LOTTERY_ROWS_KEY, JSON.stringify(Object.fromEntries(rows))); } catch {}
+		nsmaxRememberLotteryEnded(id, false);
 	}
 	// 开奖链接（/lucky?post=…&time=开奖时间&count=中奖人数&start=起始楼层&duplicate=可否重复中奖）的参数；只认本站的 /lucky
 	function nsmaxLuckyParams(href) {
