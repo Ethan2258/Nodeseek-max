@@ -2294,7 +2294,8 @@ var nsmaxRedirecting = false;
 		// 没弹键盘、没放大（看得见的区域就是整个窗口）时，这四个值和样式里的默认值（100dvh / 0px / 0px / flex）一样：不往根元素上写（2026-11-27）。
 		// 根元素上的自定义属性全页每个元素都继承，写一次（或者值变了）整页每个元素都要重算样式——手机首页约 2200 个元素，4 倍降速约 90ms，
 		// 以前每次打开页面后第一次点 ≡ 菜单、搜索、脚本设置、弹提示都要卡这一下。弹了键盘、放大了、窗口很矮时照旧写
-		const neutral = top === 0 && bottom === 0 && Math.abs(height - innerHeight) <= 1 && height >= 480;
+		// 双指放大了也照旧写：iOS 上 innerHeight 可能跟着看得见的区域一起变，光比高度认不出来，再看一下缩放比例
+		const neutral = (!viewport || Math.abs((viewport.scale || 1) - 1) < 0.01) && top === 0 && bottom === 0 && Math.abs(height - innerHeight) <= 1 && height >= 480;
 		for (const [name, value] of [["--nsmax-overlay-height", height + "px"], ["--nsmax-overlay-top", top + "px"], ["--nsmax-overlay-bottom", bottom + "px"], ["--nsmax-overlay-tools", height < 480 ? "none" : "flex"]]) {
 			if (neutral) { if (root.style.getPropertyValue(name)) root.style.removeProperty(name); }
 			else if (root.style.getPropertyValue(name) !== value) root.style.setProperty(name, value);

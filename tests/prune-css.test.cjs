@@ -68,3 +68,35 @@ test("分段：它在的时候盖住它的那段一定注入了，靠先后定�
 	assert.equal((await run(".a{color:red}.a{color:blue}", { chunks: ["post+touch", "post"] })).css, ".a{color:blue}");
 	assert.equal((await run(".a{color:red}.a{color:blue}", { chunks: ["post", "post+touch"] })).stats.declarations, 0);
 });
+
+test("某个浏览器里 D 不在：D 所在规则里有别的拿不准的选择器、值是新写法或写错的单位、不带名字的 @layer、特异度算不准的伪类，前面那条都留着", async () => {
+	for (const css of [
+		// 顶层选择器列表有一条不认识，整条规则作废（Chrome 不认 -moz-、Safari 15.4 以前不认 :focus-visible、::picker() 只有新 Chrome 认）
+		".a{color:red}.a,.b::-moz-selection{color:blue}",
+		".a{color:red}.a,.b:focus-visible{color:blue}",
+		"select{appearance:auto}select,select::picker(select){appearance:none}",
+		// 不带名字的 @layer 每块单独一层，带 !important 时前面那层赢
+		"@layer{.a{color:red!important}}@layer{.a{color:blue!important}}",
+		// 新写法、不认识的单位
+		".a{width:10px}.a{width:10pxx}",
+		".a{width:50vw}.a{width:50vi}",
+		".a{overflow-wrap:break-word}.a{overflow-wrap:anywhere}",
+		".a{display:inline-flex}.a{display:inline flex}",
+		".a::before{content:'x'}.a::before{content:'y' / ''}",
+		".a{color:red}.a{color:revert-layer}",
+		".a{white-space:nowrap}.a{white-space:collapse}",
+		".a{background:linear-gradient(red,blue)}.a{background:linear-gradient(in oklab,red,blue)}",
+		".a{background:linear-gradient(red,blue)}.a{background:linear-gradient(in hsl longer hue,red,blue)}",
+		".a{font-size:12px}.a{font-size:math}",
+		".a{--x:1px}.a{--x:}",
+		// :nth-child(… of S) 浏览器还要加上 S 的特异度：前面那条 (1,2,0) 比后面 (0,2,0) 高，前面赢
+		":nth-child(2 of .a:is(#x, *)){color:red}:nth-child(2 of .a){color:blue}",
+		// :-webkit-any() 浏览器只算一个伪类：两条一样高，后面那条赢，也不能删
+		":-webkit-any(.a:is(#x, *)){color:red}:-webkit-any(.a){color:blue}",
+	]) assert.equal((await run(css)).css, css);
+	// 和 s 一样的那条选择器拿不准不要紧（s 自己也一起作废）；带名字的 @layer 是同一层；一模一样的特殊伪类照常比
+	assert.equal((await run(".a::placeholder{color:red}.a:is(#x, *)::placeholder{color:blue}")).css, ".a:is(#x, *)::placeholder{color:blue}");
+	assert.equal((await run(".a:focus-visible{color:red}.a:focus-visible{color:blue}")).css, ".a:focus-visible{color:blue}");
+	assert.equal((await run("@layer a{.a{color:red!important}}@layer a{.a{color:blue!important}}")).stats.declarations, 1);
+	assert.equal((await run(":nth-child(2 of .a){color:red}:nth-child(2 of .a){color:blue}")).css, ":nth-child(2 of .a){color:blue}");
+});
