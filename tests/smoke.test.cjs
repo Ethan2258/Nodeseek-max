@@ -3794,7 +3794,7 @@ test("列表工具条「精华」「抽奖」（2026-10-18，照 sb.sb 的 精�
 			const pager = document.querySelector("#nsk-body-left .nsk-pager.pager-bottom");
 			return { text: status.textContent, hidden: status.hidden, retry: !!status.querySelector("button.nsmax-lottery-retry"), pending: document.documentElement.hasAttribute("data-nsmax-lottery-pending"), pager: getComputedStyle(pager).display !== "none", pages: Array.from(pager.querySelectorAll(".pager-pos, .nsmax-pager-ellipsis")).filter((el) => getComputedStyle(el).display !== "none").map((el) => el.textContent.trim()) };
 		});
-		assert.deepEqual(done, { text: "有 1 篇没能识别（网络或站点限流）重试", hidden: false, retry: true, pending: false, pager: true, pages: ["1", "2", "3"] });
+		assert.deepEqual(done, { text: "有 1 篇没能识别（网络出错）重试", hidden: false, retry: true, pending: false, pager: true, pages: ["1", "2", "3"] });
 		const asked = [];
 		view.page.on("request", (request) => { if (new URL(request.url()).pathname === "/post-1005-1") asked.push(request.url()); });
 		await view.page.click(".nsmax-lottery-retry");
@@ -7350,14 +7350,15 @@ test("2026-11-24 普通页面按内容检查列表每一篇是否含开奖链接
 	} finally { await context.close(); }
 });
 
-test("2026-10-24 站点限流（429 / 503）时后台的活马上停下：不重试，本机所有页面停 10 分钟；「抽奖」分类页说「站点限流」、给「重试」，点了接着查", async () => {
+test("2026-10-24 站点限流（429 / 503）时后台的活马上停下：不重试；2026-11-28 起先停 30 秒、半小时里接连碰到就翻倍；「抽奖」分类页说多久以后接着查、给「重试」，点了接着查", async () => {
 	const lucky = (id) => postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=${id}&amp;time=1893456000000&amp;count=1">开奖</a></p></article>`);
 	const pages = {};
 	for (let i = 0; i < 4; i++) pages[`/post-${1000 + i}-1`] = i === 2 ? lucky(1002) : postPage();
 	let hits = 0, limited = true;
+	// 半小时里已经碰到过两次：这次停 2 分钟（30 秒 × 2 × 2）
 	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
 		html: searchPage({ count: 4 }), viewport: { width: 1280, height: 900 }, pages,
-		init: `if (window.top === window) localStorage.setItem("nsmax:lottery-index-at", String(Date.now()));`,
+		init: `if (window.top === window) { localStorage.setItem("nsmax:lottery-index-at", String(Date.now())); localStorage.setItem("nsmax:bg-strikes", JSON.stringify({ n: 2, at: Date.now() - 6e4 })); }`,
 		beforeNavigate: (p) => p.route(/\/post-10\d\d-1$/, (route) => {
 			hits++;
 			if (limited) return route.fulfill({ status: 429, contentType: "text/plain", body: "slow down" });
@@ -7369,7 +7370,9 @@ test("2026-10-24 站点限流（429 / 503）时后台的活马上停下：不重
 		await page.waitForTimeout(2500);
 		assert.equal(hits, 1, "第一篇被限流以后不再接着取：" + hits);
 		const left = await page.evaluate(() => Number(localStorage.getItem("nsmax:bg-pause-until")) - Date.now());
-		assert.ok(left > 9 * 60e3 && left <= 10 * 60e3, "后台停 10 分钟：" + left);
+		assert.ok(left > 110e3 && left <= 120e3, "第三次碰到停 2 分钟：" + left);
+		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:bg-strikes")).n), 3);
+		assert.match(await page.locator(".nsmax-lottery-status").textContent(), /站点限流，约 2 分钟后自动接着识别/);
 		// 「重试」：马上接着查（站点的冷却过了以后）
 		limited = false;
 		await page.evaluate(() => localStorage.removeItem("nspp:request-cooldown:www.nodeseek.com"));
@@ -7378,6 +7381,33 @@ test("2026-10-24 站点限流（429 / 503）时后台的活马上停下：不重
 		const visible = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.querySelector(".post-title a").getAttribute("href")));
 		assert.deepEqual(visible, ["/post-1002-1"]);
 		assert.equal(await page.evaluate(() => localStorage.getItem("nsmax:bg-pause-until")), null, "「重试」解除了后台暂停");
+		assert.deepEqual(errors.filter((error) => !/429|Too Many Requests|Failed to load resource/i.test(error)), []);
+	} finally { await context.close(); }
+});
+
+test("2026-11-28 「抽奖」分类页被限流以后不用点：先停 30 秒，到点自己接着识别；被限流的那篇不算「没能识别」", async () => {
+	const lucky = (id) => postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=${id}&amp;time=1893456000000&amp;count=1">开奖</a></p></article>`);
+	const pages = {};
+	for (let i = 0; i < 4; i++) pages[`/post-${1000 + i}-1`] = i === 0 ? lucky(1000) : postPage();
+	let hits = 0;
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
+		html: searchPage({ count: 4 }), viewport: { width: 1280, height: 900 }, pages,
+		init: `if (window.top === window) localStorage.setItem("nsmax:lottery-index-at", String(Date.now()));`,
+		beforeNavigate: (p) => p.route(/\/post-10\d\d-1$/, (route) => {
+			hits++;
+			if (hits === 1) return route.fulfill({ status: 429, contentType: "text/plain", body: "slow down" });
+			return route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: pages[new URL(route.request().url()).pathname] });
+		})
+	});
+	try {
+		await page.waitForFunction(() => /站点限流，约 30 秒后自动接着识别/.test(document.querySelector(".nsmax-lottery-status")?.textContent || ""), null, { timeout: 10e3 });
+		const left = await page.evaluate(() => Number(localStorage.getItem("nsmax:bg-pause-until")) - Date.now());
+		assert.ok(left > 20e3 && left <= 30e3, "第一次碰到只停 30 秒：" + left);
+		assert.equal(await page.evaluate(() => document.querySelector("ul.post-list > li.post-list-item")?.getAttribute("data-nsmax-lottery")), "wait", "被限流的那篇还在等，不当成「不是」藏掉");
+		await page.waitForFunction(() => document.querySelector(".nsmax-lottery-status")?.hidden === true, null, { timeout: 45e3 });
+		const visible = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.querySelector(".post-title a").getAttribute("href")));
+		assert.deepEqual(visible, ["/post-1000-1"]);
+		assert.equal(hits, 5, "停完四篇各取一次：" + hits);
 		assert.deepEqual(errors.filter((error) => !/429|Too Many Requests|Failed to load resource/i.test(error)), []);
 	} finally { await context.close(); }
 });
