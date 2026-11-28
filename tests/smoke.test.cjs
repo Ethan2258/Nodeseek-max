@@ -7403,6 +7403,7 @@ test("2026-11-28 「抽奖」分类页被限流以后不用点：先停 30 秒�
 		await page.waitForFunction(() => /站点限流，约 30 秒后自动接着识别/.test(document.querySelector(".nsmax-lottery-status")?.textContent || ""), null, { timeout: 10e3 });
 		const left = await page.evaluate(() => Number(localStorage.getItem("nsmax:bg-pause-until")) - Date.now());
 		assert.ok(left > 20e3 && left <= 30e3, "第一次碰到只停 30 秒：" + left);
+		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:bg-rate")).n), 12, "被限流一次：每 10 秒少放 3 篇（15 → 12）");
 		assert.equal(await page.evaluate(() => document.querySelector("ul.post-list > li.post-list-item")?.getAttribute("data-nsmax-lottery")), "wait", "被限流的那篇还在等，不当成「不是」藏掉");
 		await page.waitForFunction(() => document.querySelector(".nsmax-lottery-status")?.hidden === true, null, { timeout: 45e3 });
 		const visible = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item")).filter((li) => getComputedStyle(li).display !== "none").map((li) => li.querySelector(".post-title a").getAttribute("href")));

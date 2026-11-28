@@ -186,9 +186,9 @@ const listWithTitles = (titles) => P.listPage({ count: titles.length }).replace(
 const NO_PREVIEW = { "nspp:settings:www.nodeseek.com": { "post-preview": { enabled: false } } };
 const json = (page, key, fallback) => page.evaluate(([key, fallback]) => { try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; } }, [key, fallback]);
 // 依次直接打开 cases 里的帖子（同一个浏览器上下文，本机记录累积），每篇等「查过」以后读出识别结果
-async function visitPosts(cases, viewport = { width: 1280, height: 900 }) {
+async function visitPosts(cases, viewport = { width: 1280, height: 900 }, init = "") {
 	const pages = Object.fromEntries(cases.map((c) => [`/post-${c.id}-1`, c.html]));
-	const { context, page, errors } = await open(browser, `https://www.nodeseek.com/post-${cases[0].id}-1`, { html: cases[0].html, viewport, pages });
+	const { context, page, errors } = await open(browser, `https://www.nodeseek.com/post-${cases[0].id}-1`, { html: cases[0].html, viewport, pages, ...(init ? { init } : {}) });
 	const results = {};
 	try {
 		for (const [index, c] of cases.entries()) {
@@ -258,7 +258,12 @@ test("v1.9.94 已结束怎么认：标题「抽奖结束时间周五」「活动
 		{ id: 2108, html: postOf(2108, { extra: `<p>名额已抽完会补抽</p>${link(2108)}` }), ended: false },
 		{ id: 2109, html: postOf(2109, { extra: `<p>已开奖，恭喜 @abc 中奖</p>${link(2109)}` }), ended: true },
 		// 过了开奖时间：标题前就是「已结束」（正文、标题都没写）
-		{ id: 2110, html: postOf(2110, { extra: link(2110, past) }), ended: "time" }
+		{ id: 2110, html: postOf(2110, { extra: link(2110, past) }), ended: "time" },
+		// 复查补的边角：上一期那一句里带逗号、句号后面才说本期；「开奖结束后」「报名已截止」「如果已结束」；「提前一波已开奖」是这一期
+		{ id: 2111, html: postOf(2111, { extra: `<p>周五开奖。上期已开奖，恭喜@abc中奖。</p>${link(2111)}` }), ended: false },
+		{ id: 2112, html: postOf(2112, { extra: `<p>上期中奖名单见 xx,本期已开奖,恭喜 @a 中奖</p>${link(2112)}` }), ended: true },
+		{ id: 2113, html: postOf(2113, { title: "报名已截止，周五开奖", extra: `<p>开奖结束后统一发码，如果已结束请私信</p>${link(2113)}` }), ended: false },
+		{ id: 2114, html: postOf(2114, { extra: `<p>提前一波已开奖</p>${link(2114)}` }), ended: true }
 	];
 	const { results, errors } = await visitPosts(cases);
 	for (const c of cases) {
@@ -288,12 +293,22 @@ test("v1.9.94 没有开奖链接、只在帖子里写怎么抽的抽奖帖也算
 		// 标题像、正文没写怎么抽
 		{ id: 2209, html: postOf(2209, { title: "抽奖送 3 个鸡腿" }), lottery: false },
 		// 规则只在引用里
-		{ id: 2210, html: postOf(2210, { title: "抽奖送 3 个鸡腿", extra: "<blockquote><p>回复参与，周五开奖</p></blockquote>" }), lottery: false }
+		{ id: 2210, html: postOf(2210, { title: "抽奖送 3 个鸡腿", extra: "<blockquote><p>回复参与，周五开奖</p></blockquote>" }), lottery: false },
+		// 复查找出来的误挂：买卖里的附赠、合租、问句、「抽个时间」、标题只是「送 N 台」而正文只有一样对得上
+		{ id: 2211, html: postOf(2211, { title: "出 HK 小鸡 送一个月", extra: "<p>有意回复即可，名额只有一个</p>" }), lottery: false },
+		{ id: 2212, html: postOf(2212, { title: "转让 Racknerd 送 1U", extra: "<p>按楼层顺序发货</p>" }), lottery: false },
+		{ id: 2213, html: postOf(2213, { title: "抽 1 个月 Netflix 合租", extra: "<p>名额 4 个</p>" }), lottery: false },
+		{ id: 2214, html: postOf(2214, { title: "今天开奖了吗", extra: "<p>等开奖，看看谁中奖</p>" }), lottery: false },
+		{ id: 2215, html: postOf(2215, { title: "抽个时间聊聊", extra: "<p>中奖率这种事</p>" }), lottery: false },
+		{ id: 2216, html: postOf(2216, { title: "新用户注册送 5 元余额", extra: "<p>名额有限</p>" }), lottery: false },
+		// 标题只是「送 N 台」：正文对上两样（回复参与 + 开奖）就算；「第 N 楼」按楼层送也算
+		{ id: 2217, html: postOf(2217, { title: "送 3 台年付小鸡", extra: "<p>回复参与，周五开奖</p>" }), lottery: true }
 	];
 	const { results, errors } = await visitPosts(cases);
 	for (const c of cases) {
 		const got = results[c.id];
-		assert.equal(got.kind, c.lottery ? "lottery" : null, `帖子 ${c.id}：${JSON.stringify(got)}`);
+		// 按文字认的记成 "lottery,text"（以后规则改了、再查不对时能撤掉）
+		assert.equal(got.kind, c.lottery ? "lottery,text" : null, `帖子 ${c.id}：${JSON.stringify(got)}`);
 		assert.equal(got.badge, c.lottery, `帖子 ${c.id} 标题前的「抽奖」：${JSON.stringify(got)}`);
 		assert.equal(got.time, null, `帖子 ${c.id} 没有开奖时间`);
 		assert.equal(got.cards, 0, `帖子 ${c.id} 不画倒计时卡片`);
@@ -314,7 +329,7 @@ test("v1.9.94 列表后台查帖也认没有开奖链接的文字抽奖帖（只
 		await page.waitForFunction(() => { try { const c = JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}"); return ["1000", "1001", "1002", "1003"].every((id) => id in c); } catch { return false; } }, null, { timeout: 20e3 });
 		await wait(page, 300);
 		const posts = await json(page, "nsmax:special-posts", {});
-		assert.deepEqual({ a: posts["1000"], b: posts["1001"] ?? null, c: posts["1002"], d: posts["1003"] ?? null }, { a: "lottery", b: null, c: "lottery", d: null });
+		assert.deepEqual({ a: posts["1000"], b: posts["1001"] ?? null, c: posts["1002"], d: posts["1003"] ?? null }, { a: "lottery,text", b: null, c: "lottery,text", d: null });
 		const times = await json(page, "nsmax:lottery-times", {});
 		assert.equal("1000" in times || "1002" in times, false, "文字抽奖没有开奖时间");
 		assert.equal((await json(page, "nsmax:lottery-rows", {}))["1000"]?.t, "抽奖送 3 个鸡腿", "记下列表行，「抽奖」分类里能并进来");
@@ -335,7 +350,7 @@ test("v1.9.94 悬停预览读到的文字抽奖帖（没有开奖链接）：列
 		await page.locator(".post-list-item .post-title a").first().hover();
 		await page.waitForSelector("dialog.nspp-post-preview article");
 		await page.waitForSelector(".post-list-item:first-child .nsmax-prize-badge", { timeout: 3e3 });
-		assert.equal((await json(page, "nsmax:special-posts", {}))["1000"], "lottery");
+		assert.equal((await json(page, "nsmax:special-posts", {}))["1000"], "lottery,text");
 		assert.equal((await json(page, "nsmax:lottery-times", {}))["1000"], undefined);
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
@@ -446,23 +461,55 @@ test("v1.9.94 「抽奖」分类并入本机记下的抽奖帖：第一页并不
 	} finally { await two.context.close(); }
 });
 
-test("v1.9.94 后台取帖子页共用一个配额（标准每 1.1 秒一次、先可以连着取 10 次）：「抽奖」分类一页 16 篇没查过的，前面一口气取，后面每篇隔开 1 秒以上", async () => {
-	const starts = [];
+test("v1.9.94 后台取帖子页贴着限流走、各标签页共用一个配额（标准每 10 秒 15 篇起、均匀发、最多先连着 3 篇；每 10 秒的篇数记在本机，没被限流慢慢往上调，最多 18）", async () => {
 	const pages = Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`/post-${1000 + i}-1`, postOf(1000 + i)]));
-	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
-		html: P.searchPage({ count: 16 }), seed: NO_PREVIEW, viewport: { width: 1280, height: 900 }, pages,
-		init: `if (window.top === window) localStorage.setItem("nsmax:lottery-index-at", String(Date.now()));`,
-		beforeNavigate: (p) => p.on("request", (request) => { if (/^\/post-\d+-1$/.test(new URL(request.url()).pathname)) starts.push(Date.now()); })
-	});
-	try {
-		await page.waitForFunction(() => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= 16; } catch { return false; } }, null, { timeout: 60e3 });
-		assert.equal(starts.length, 16, "每篇取一次");
-		const gaps = starts.slice(1).map((at, i) => at - starts[i]);
-		// 配额用完以后（第 12 篇起；连着取的那一秒多里配额又回来一点，第 11 篇隔得短些）每篇隔开 1.1 秒左右
-		for (const gap of gaps.slice(10)) assert.ok(gap >= 950, "配额用完以后每篇隔开 1 秒以上：" + gaps.join());
-		// 打开页面本身记一次账，剩下 9 次可以连着用：前 9 篇只隔着扫描通道自己的 150ms，不等 1.1 秒
-		assert.ok(starts[8] - starts[0] < 2500, "前 9 篇一口气取（不按 1.1 秒一篇排）：" + gaps.join());
-		assert.ok(await page.evaluate(() => Number(localStorage.getItem("nsmax:bg-tat")) > Date.now()), "配额记在 localStorage nsmax:bg-tat（各标签页共用）");
-		assert.deepEqual(errors, []);
-	} finally { await context.close(); }
+	const run = async (seedRate) => {
+		const starts = [];
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
+			html: P.searchPage({ count: 16 }), seed: NO_PREVIEW, viewport: { width: 1280, height: 900 }, pages,
+			init: `if (window.top === window) { localStorage.setItem("nsmax:lottery-index-at", String(Date.now())); ${seedRate ? `localStorage.setItem("nsmax:bg-rate", JSON.stringify({ n: ${seedRate}, at: Date.now() }));` : ""} }`,
+			beforeNavigate: (p) => p.on("request", (request) => { if (/^\/post-\d+-1$/.test(new URL(request.url()).pathname)) starts.push(Date.now()); })
+		});
+		try {
+			await page.waitForFunction(() => { try { return Object.keys(JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}")).length >= 16; } catch { return false; } }, null, { timeout: 60e3 });
+			assert.equal(starts.length, 16, "每篇取一次");
+			const rate = await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:bg-rate") || "null"));
+			assert.ok(await page.evaluate(() => Number(localStorage.getItem("nsmax:bg-tat")) > Date.now() - 2e3), "配额记在 localStorage nsmax:bg-tat（各标签页共用）");
+			assert.deepEqual(errors, []);
+			return { gaps: starts.slice(1).map((at, i) => at - starts[i]), total: starts[15] - starts[0], rate };
+		} finally { await context.close(); }
+	};
+	// 没记过：每 10 秒 15 篇 → 每篇约 667ms；前 3 篇只隔着扫描通道自己的 150ms
+	const first = await run(0);
+	assert.equal(first.rate?.n, 15, "起步每 10 秒 15 篇，记在本机：" + JSON.stringify(first.rate));
+	for (const gap of first.gaps.slice(3)) assert.ok(gap >= 600, "连着的 3 篇以后均匀隔开约 667ms：" + first.gaps.join());
+	assert.ok(first.gaps[0] < 500 && first.gaps[1] < 500, "前 3 篇连着取：" + first.gaps.join());
+	assert.ok(first.total < 12e3, "16 篇十来秒取完（以前每 1.1 秒一篇要 15 秒以上）：" + first.total);
+	// 没被限流、已经调到最多的每 10 秒 18 篇：每篇约 556ms（记下的数比上限大也按 18 算）
+	const fast = await run(25);
+	for (const gap of fast.gaps.slice(3)) assert.ok(gap >= 500 && gap < 640, "每 10 秒 18 篇时每篇约 556ms：" + fast.gaps.join());
+});
+
+test("v1.9.94 按文字认的抽奖帖记成 \"lottery,text\"：再打开时规则已经不认了就撤掉（按开奖链接认的不动）；开奖时间写成日期（time=2026-11-28）的不当成 1970 年", async () => {
+	const init = `if (window.top === window) localStorage.setItem("nsmax:special-posts", JSON.stringify({ "2301": "lottery,text", "2302": "lottery", "2303": "lottery,text" }));`;
+	const cases = [
+		// 以前按文字认成抽奖的「出鸡送一个月」：这次再看不算了 → 撤掉
+		{ id: 2301, html: postOf(2301, { title: "出 HK 小鸡 送一个月", extra: "<p>有意回复即可，名额只有一个</p>" }) },
+		// 按开奖链接认的：不动
+		{ id: 2302, html: postOf(2302, { extra: '<p><a href="https://www.nodeseek.com/lucky?post=2302&amp;count=1">开奖页</a></p>' }) },
+		// 后来补上了开奖链接：去掉 text，留下 lottery
+		{ id: 2303, html: postOf(2303, { title: "抽奖送 3 个鸡腿", extra: `<p><a href="https://www.nodeseek.com/lucky?post=2303&amp;time=${Date.now() + 864e5}&amp;count=1">开奖页</a></p>` }) },
+		{ id: 2304, html: postOf(2304, { extra: '<p><a href="https://www.nodeseek.com/lucky?post=2304&amp;time=2026-11-28%2020:00&amp;count=1">开奖页</a></p>' }) }
+	];
+	const { results, errors } = await visitPosts(cases, undefined, init);
+	assert.equal(results[2301].kind, null, JSON.stringify(results[2301]));
+	assert.equal(results[2301].badge, false);
+	assert.equal(results[2302].kind, "lottery");
+	assert.equal(results[2303].kind, "lottery");
+	assert.ok(results[2303].time > Date.now());
+	assert.equal(results[2304].kind, "lottery", "参数不全也算抽奖帖");
+	assert.equal(results[2304].time, null, "日期写法不当成毫秒时间戳");
+	assert.equal(results[2304].ended, false);
+	assert.equal(results[2304].badgeEnded, false, "不显示成已结束");
+	assert.deepEqual(errors, []);
 });
