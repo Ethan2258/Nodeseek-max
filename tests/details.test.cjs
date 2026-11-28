@@ -784,4 +784,99 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 动效补丁（2026-11-28）：跨页淡入淡出整页两张时长相同且 plus-lighter 叠加（前后一样的地方不暗一下）；「展开其余 N 条」露出来的几条真的播放显现、播完摘标记、减弱动态时不播；箭头只过渡 transform；消息中心按钮过渡和轻按生效`,async()=>{
+  // 1. 跨页过渡：自己写 animation 简写会把浏览器默认带的 plus-lighter 换掉，两张截图按普通透明度叠，时长不同时中途合起来不到 100%
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{viewport:{width:1440,height:900},seed,html:P.listPage({count:6})});
+   try{
+    await ready(page);
+    const css=await page.evaluate(()=>[...document.querySelectorAll("style")].map(n=>n.textContent).join("\n"));
+    const rule=name=>css.match(new RegExp("html::view-transition-"+name+"\\(root\\)\\{([^}]*)\\}"))?.[1]||"";
+    const oldRule=rule("old"),newRule=rule("new"),ms=r=>Number(r.match(/(\d+)ms/)?.[1]);
+    assert.ok(oldRule.includes("mix-blend-mode:plus-lighter")&&newRule.includes("mix-blend-mode:plus-lighter"),JSON.stringify({oldRule,newRule}));
+    assert.ok(ms(oldRule)>0&&ms(oldRule)===ms(newRule),JSON.stringify({oldRule,newRule}));
+    // 支持同页视图过渡的浏览器里再按计算值核对一遍：两张的时长、曲线一样，叠加方式是 plus-lighter
+    const live=await page.evaluate(async()=>{
+     if(typeof document.startViewTransition!=="function")return null;
+     const vt=document.startViewTransition(()=>{document.body.dataset.nsmaxVtProbe="1";});
+     await vt.ready;
+     const pick=name=>document.getAnimations().find(a=>a.effect?.pseudoElement===`::view-transition-${name}(root)`);
+     const timing=a=>a&&{duration:a.effect.getComputedTiming().duration,easing:a.effect.getComputedTiming().easing};
+     const out={old:timing(pick("old")),new:timing(pick("new")),blend:[getComputedStyle(document.documentElement,"::view-transition-old(root)").mixBlendMode,getComputedStyle(document.documentElement,"::view-transition-new(root)").mixBlendMode]};
+     vt.skipTransition();
+     await vt.finished.catch(()=>{});
+     return out;
+    });
+    if(engine==="chromium")assert.ok(live,"Chromium 应支持 document.startViewTransition");
+    if(live){
+     assert.ok(live.old&&live.new&&live.old.duration>0,JSON.stringify(live));
+     assert.deepEqual(live.old,live.new,JSON.stringify(live));
+     assert.deepEqual(live.blend,["plus-lighter","plus-lighter"],JSON.stringify(live));
+    }
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}}
+  // 2. 楼中楼「展开其余 N 条」：刚露出来的几条播放 nsmax-fold-in，播完摘掉临时标记；箭头只过渡 transform，展开后下移 2.5px
+  const floorHtml=(()=>{
+   const base=P.postPage()
+    .replace("<p>价格不错，帮顶</p>",`<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 价格不错，帮顶</p>`)
+    .replace("<p>线路怎么样？晚高峰丢包吗？</p>",`<p><a href="/member?t=passerby">@passerby</a> <a href="/post-1000-1#2" target="_self">#2</a> 线路怎么样？晚高峰丢包吗？</p>`);
+   const li3=base.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0];
+   const floor=n=>li3.replace('id="3"',`id="${n}"`).replace('href="#3" class="floor-link">#3<',`href="#${n}" class="floor-link">#${n}<`)
+    .replace(/<p><a href="\/member\?t=passerby">@passerby<\/a> <a href="\/post-1000-1#2" target="_self">#2<\/a>[\s\S]*?<\/article>/,`<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 第 ${n} 层</p></article>`);
+   return base.replace(/(<li class="content-item" id="3">[\s\S]*?<\/li>)/,all=>all+[4,5,6,7].map(floor).join(""));
+  })();
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{viewport:{width:1440,height:900},seed,html:floorHtml});
+   try{
+    await ready(page);
+    await page.waitForSelector("li[id='1'] > .nsmax-floor-box li[id='7']",{state:"attached"});
+    await page.waitForFunction(()=>document.querySelector("li[id='1'] > .nsmax-floor-box .nsmax-fb-more")?.textContent==="展开其余 3 条");
+    const more=page.locator("li[id='1'] > .nsmax-floor-box .nsmax-fb-more");
+    const arrow=()=>more.evaluate(el=>{const cs=getComputedStyle(el,"::after");return {transition:cs.transitionProperty,marginTop:cs.marginTop,transform:cs.transform};});
+    const closed=await arrow();
+    await page.evaluate(()=>{window.__folds=[];document.addEventListener("animationstart",e=>{if(e.animationName==="nsmax-fold-in")window.__folds.push(e.target.id);},true);});
+    await more.click();
+    const marked=await page.evaluate(()=>[...document.querySelectorAll("li[id='1'] > .nsmax-floor-box > .nsmax-nested-replies > li[data-nsmax-fb-reveal]")].map(r=>r.id));
+    await page.waitForTimeout(500);
+    const after=await page.evaluate(()=>({folds:window.__folds.slice().sort(),left:document.querySelectorAll("[data-nsmax-fb-reveal]").length}));
+    const open_=await arrow();
+    assert.deepEqual(marked,["5","6","7"],JSON.stringify(marked));
+    assert.deepEqual(after,{folds:["5","6","7"],left:0},JSON.stringify(after));
+    assert.equal(closed.transition,"transform",JSON.stringify(closed));
+    assert.equal(open_.marginTop,closed.marginTop,JSON.stringify({closed,open_}));
+    assert.match(open_.transform,/^matrix\(-0\.7071\d*, -0\.7071\d*, 0\.7071\d*, -0\.7071\d*, 0, 2\.5\)$/,JSON.stringify(open_));
+    // 减弱动态效果：收起再展开，不打标记、不播放
+    await page.emulateMedia({reducedMotion:"reduce"});
+    await more.click();
+    await page.evaluate(()=>{window.__folds=[];});
+    await more.click();
+    const reduced=await page.evaluate(()=>({marked:document.querySelectorAll("[data-nsmax-fb-reveal]").length,folds:window.__folds.length}));
+    assert.deepEqual(reduced,{marked:0,folds:0},JSON.stringify(reduced));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}}
+  // 3. 消息中心按钮（#nsk-body-left 里）：v1.9.84 写的 140ms 过渡、轻按下沉 1px 压过 sb-adapter.css 的全站规则；减弱动态时都不动
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification#/atMe",{viewport:{width:1440,height:900},seed,html:P.notificationPage({})});
+   try{
+    await ready(page);
+    const sel="#nsk-body-left .nspp-messages button:not(:disabled):not([hidden])";
+    await page.waitForSelector(sel);
+    const btn=page.locator(sel).first();
+    const look=async()=>{
+     const box=await btn.boundingBox();
+     await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+     await page.evaluate(()=>document.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();},{capture:true,once:true}));
+     await page.mouse.down();
+     await page.waitForTimeout(160);
+     const s=await btn.evaluate(el=>{const cs=getComputedStyle(el);return {prop:cs.transitionProperty,dur:cs.transitionDuration,active:el.matches(":active"),transform:cs.transform};});
+     await page.mouse.up();
+     await page.mouse.move(2,2);
+     return s;
+    };
+    const normal=await look();
+    assert.ok(normal.active&&normal.prop.includes("transform")&&normal.dur.includes("0.14s"),JSON.stringify(normal));
+    assert.equal(normal.transform,"matrix(1, 0, 0, 1, 0, 1)",JSON.stringify(normal));
+    await page.emulateMedia({reducedMotion:"reduce"});
+    const reduced=await look();
+    assert.ok(reduced.active&&reduced.transform==="none"&&reduced.dur.split(",").every(d=>parseFloat(d)===0),JSON.stringify(reduced));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}}
+ });
 }

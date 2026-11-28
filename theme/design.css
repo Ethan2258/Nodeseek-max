@@ -18233,11 +18233,13 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
     border: solid currentColor !important;
     border-width: 0 1.5px 1.5px 0 !important;
     transform: rotate(45deg) !important;
-    transition: transform 160ms var(--ease-out), margin-top 160ms var(--ease-out) !important;
+    transition: transform 160ms var(--ease-out) !important;
   }
+  /* 展开后箭头朝上、往下挪一点：以前改 margin-top（-3px → 2px）并且过渡它，是布局属性，每帧重排这个按钮。
+     箭头在 28px 高的 inline-flex 里竖直居中，margin-top 多 5px 实际只往下挪 2.5px，换成同样多的 translateY：几何位置一样、只动合成层
+     （以前按布局走会被取整到整像素，1x 屏上落在 +2px、2x 屏上落在 +3px，现在两种屏都是 +2.5px，差不到半个像素）（2026-11-28） */
   html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more[aria-expanded="true"]:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *)::after {
-    margin-top: 2px !important;
-    transform: rotate(-135deg) !important;
+    transform: translateY(2.5px) rotate(-135deg) !important;
   }
   html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):is(:hover, :focus-visible) {
     background: var(--panel-hover) !important;
@@ -18246,7 +18248,8 @@ html[data-nsmax-theme] #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax
   html[data-nsmax-theme]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box > .nsmax-fb-foot > .nsmax-fb-more:not([hidden]):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *):active {
     transform: translateY(1px) !important;
   }
-  html[data-nsmax-theme][data-nsmax-motion]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box:not([data-nsmax-fb-collapsed]) > .nsmax-nested-replies > li[data-nsmax-fb-fold]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
+  /* 点「展开其余 N 条」刚露出来的那几条：data-nsmax-fb-reveal 是点的那一下临时打的（见 nsmaxCreateFloorBox），播完就摘 */
+  html[data-nsmax-theme][data-nsmax-motion]:not([data-nsmax-touch]) #nsk-body-left .nsmax-floor-box:not([data-nsmax-fb-collapsed]) > .nsmax-nested-replies > li[data-nsmax-fb-reveal]:is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *):is(#nsmax-d, *) {
     animation: nsmax-fold-in 150ms var(--ease-out) both !important;
   }
   /* 收起的几条（第 4 条起，见 nsmaxFoldFloorBox）；只看楼主时不收，按钮也不显示 */

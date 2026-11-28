@@ -90,6 +90,12 @@ html[data-nsmax-theme] .nspp-messages button {
   white-space: nowrap !important;
   flex: none !important;
   min-width: max-content !important;
+}
+
+/* 过渡和下面的轻按下沉要比 sb-adapter.css 的全站动效规则重：那边 [data-nsmax-motion] :is(#nsk-head, #nsk-body-left, …) 里的
+   :is(button, a…) 统一写了 120ms 过渡、button:active 统一 transform: none（构建后带一个 ID 的分量），消息中心就挂在 #nsk-body-left 里，
+   v1.9.84 写在这里的过渡和轻按一直没生效（2026-11-28）。:is(#nsmax-lv, *) 什么都能匹配，只加分量；减弱动态那条再重一级 */
+html[data-nsmax-theme] .nspp-messages button:is(#nsmax-lv, *):is(#nsmax-b, *) {
   transition: background-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), border-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), transform 100ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) !important;
 }
 
@@ -99,7 +105,7 @@ html[data-nsmax-theme] .nspp-messages button:hover {
   border-color: var(--line, rgba(255, 255, 255, 0.15)) !important;
 }
 
-html[data-nsmax-theme] .nspp-messages button:not(:disabled):active {
+html[data-nsmax-theme] .nspp-messages button:not(:disabled):active:is(#nsmax-lv, *):is(#nsmax-b, *) {
   transform: translateY(1px) !important;
 }
 
@@ -649,12 +655,13 @@ html[data-nsmax-theme]:root:root:root .nspp-messages-send:hover {
   background: var(--brand-hover, #2563eb) !important;
 }
 
-html[data-nsmax-theme]:root:root:root .nspp-messages-send:not(:disabled):active {
+html[data-nsmax-theme]:root:root:root .nspp-messages-send:not(:disabled):active:is(#nsmax-lv, *):is(#nsmax-b, *) {
   transform: translateY(1px) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-nsmax-theme]:root:root:root :is(.nsmax-message-tabs a, .nspp-messages button, .nsmax-notice-nav-item, .nspp-messages-peer, .nspp-messages-composer textarea, .nspp-messages-send) {
+  /* 比上面加了分量的过渡、轻按两条再重一级 */
+  html[data-nsmax-theme]:root:root:root :is(.nsmax-message-tabs a, .nspp-messages button, .nsmax-notice-nav-item, .nspp-messages-peer, .nspp-messages-composer textarea, .nspp-messages-send):is(#nsmax-lv, *):is(#nsmax-b, *):is(#nsmax-c, *) {
     transition: none !important;
     transform: none !important;
   }

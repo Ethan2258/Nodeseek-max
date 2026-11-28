@@ -3849,8 +3849,27 @@
 		more.addEventListener("click", () => {
 			const open = !box.hasAttribute("data-nsmax-fb-open");
 			const before = foot.getBoundingClientRect().top;
+			// 展开时刚露出来的几条轻轻显现一下（design.css nsmax-fold-in）：nsmaxFoldFloorBox 展开时当场就把这几条的 data-nsmax-fb-fold 去掉了，
+			// 样式认不出是哪几条（v1.9.84 那条规则从来没生效过），这里先记下来，另打一个一次性的标记，播完或 400ms 后去掉（2026-11-28）
+			const revealed = open && !nsmaxReducedMotion() ? Array.from(replies.querySelectorAll(":scope > li[data-nsmax-fb-fold]")) : [];
 			box.toggleAttribute("data-nsmax-fb-open", open);
 			nsmaxFoldFloorBox(box);
+			for (const row of revealed) {
+				if (row.hasAttribute("data-nsmax-fb-fold") || row.hidden) continue;
+				// 上一次的还没收（收起又马上展开）：先收掉，免得它的定时器把这一次的标记提前摘了
+				row._nsmaxFbReveal?.();
+				const clear = () => {
+					clearTimeout(timer);
+					row.removeEventListener("animationend", onEnd);
+					row.removeAttribute("data-nsmax-fb-reveal");
+					if (row._nsmaxFbReveal === clear) row._nsmaxFbReveal = null;
+				};
+				row._nsmaxFbReveal = clear;
+				const onEnd = (event) => { if (event.target === row) clear(); };
+				const timer = setTimeout(clear, 400);
+				row.addEventListener("animationend", onEnd);
+				row.setAttribute("data-nsmax-fb-reveal", "");
+			}
 			// 收起时框底留在鼠标下面（框上面的几条收掉了，页面跟着往回滚同样的距离），不会一下跳到别的楼层
 			const shift = foot.getBoundingClientRect().top - before;
 			if (!open && shift) window.scrollBy({ top: shift, behavior: "instant" });
