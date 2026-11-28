@@ -649,4 +649,234 @@ for(const engine of engines){
    }finally{await context.close();}
   }
  });
+ test(`${engine} 个人主页切换防抖补漏：介绍排在列表上面时翻页 / 切标签卡片不撑高、页码不往下推；返回键切回上一页不塌不闪「还没有……」；以「NodeSeek」开头的介绍照常显示`,async()=>{
+  const intro="很长的个人介绍。".repeat(120);
+  const infoApi=(readme,delay=0)=>({"/api/account/getInfo/10":[{status:200,delay,body:{success:true,detail:{member_id:10,member_name:"Steve",rank:3,coin:1257,stardust:50,nPost:3,nComment:873,follows:12,fans:34,collectionCount:8,created_at:"2024-01-01T00:00:00Z",readme}}}]});
+  const rows=(prefix,count,base)=>Array.from({length:count},(_,i)=>`<div class="discussion-item" data-v-18f8c01b><a href="/post-${base+i}-1" data-v-18f8c01b><span data-v-18f8c01b>${prefix} ${i+1}</span></a><span></span></div>`).join("");
+  const pager='<div><div class="nsk-pager"><span class="pager-pos pager-cur">1</span><a class="pager-pos" href="#/discussions/2">2</a><a class="pager-next" href="#/discussions/2">下一页</a></div></div>';
+  const desk={viewport:{width:1440,height:900},seed};
+  // 1. .selector-right-side 结构（站点真实结构）里写了长介绍的人：介绍排在 3 条主题上面。点「下一页」时清空的列表只撑住自己原来的高度
+  //    （以前量到的是介绍的高度，套给列表，列表反而从 147px 撑到 442px，页码往下推 300px）
+  {
+   const html=P.spaceTopicsPage().replace('<div class="readme">没有找到readme 🙄</div>',`<div class="readme post-content"><div><p>${intro}</p></div></div>`)
+    .replace(/(<div class="discussion-wrapper" data-v-18f8c01b>)[\s\S]*?<\/div><\/div><\/div><\/div>/,`$1${rows("主题",3,4000)}</div>${pager}</div></div>`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{...desk,html,api:infoApi(intro)});
+   try{
+    await ready(page);
+    await page.waitForFunction(()=>{const rm=document.querySelector(".selector .readme");return rm&&rm.offsetHeight>200&&!rm.hasAttribute("data-nsmax-empty-readme");});
+    const before=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");
+     pg.querySelector("a.pager-next").addEventListener("click",(e)=>{
+      e.preventDefault();
+      history.pushState(null,"","#/discussions/2");
+      Promise.resolve().then(()=>list.replaceChildren());
+      setTimeout(()=>{list.innerHTML='<div class="discussion-item"><a href="/post-5000-1"><span>第2页 主题</span></a><span></span></div>';},300);
+     });
+     return {listH:Math.round(list.getBoundingClientRect().height),pagerTop:Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top)};
+    });
+    await page.locator(".selector .nsk-pager a.pager-next").click();
+    await page.waitForTimeout(100);
+    const mid=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");
+     return {switching:document.documentElement.hasAttribute("data-nsmax-space-switching"),empty:!list.childElementCount,listH:Math.round(list.getBoundingClientRect().height),pagerTop:Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top)};
+    });
+    assert.equal(mid.switching,true,JSON.stringify(mid));
+    assert.equal(mid.empty,true,JSON.stringify(mid));
+    assert.ok(Math.abs(mid.listH-before.listH)<=2,`清空的列表只撑住自己原来的高度：${JSON.stringify({before,mid})}`);
+    assert.ok(Math.abs(mid.pagerTop-before.pagerTop)<=2,`点下一页时页码不往下推：${JSON.stringify({before,mid})}`);
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:1200});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 2. 同样的结构在「概况」：介绍（长）和最近回帖（短）同时在，点「主题」时整块不变高（以前回帖卡片被撑成介绍那么高，整块长出 200 多 px）
+  {
+   const html=P.nativeSpacePage().replace('<div class="readme">没有找到readme 🙄</div>',`<div class="readme post-content"><div><p>${intro}</p></div></div>`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/info",{...desk,html,api:infoApi(intro)});
+   try{
+    await ready(page);
+    await page.waitForFunction(()=>{const rm=document.querySelector(".selector .readme");return rm&&rm.offsetHeight>200&&!rm.hasAttribute("data-nsmax-empty-readme")&&document.querySelector('.selector > a.select-item[data-nsmax-tab="discussions"]');});
+    const before=await page.evaluate(()=>{
+     const box=document.querySelector(".selector"),list=box.querySelector(".comments-list");
+     box.querySelector(':scope > a.select-item[data-nsmax-tab="discussions"]').addEventListener("click",(e)=>{
+      e.preventDefault();
+      history.pushState(null,"","#/discussions");
+      Promise.resolve().then(()=>list.replaceChildren());
+      setTimeout(()=>{list.innerHTML='<div><a href="/post-4100-1">新主题</a><p>摘要</p></div>';},300);
+     });
+     return {boxH:Math.round(box.getBoundingClientRect().height),listH:Math.round(list.getBoundingClientRect().height)};
+    });
+    await page.locator('.selector > a.select-item[data-nsmax-tab="discussions"]').click();
+    await page.waitForTimeout(100);
+    const mid=await page.evaluate(()=>{const box=document.querySelector(".selector"),list=box.querySelector(".comments-list");return {switching:document.documentElement.hasAttribute("data-nsmax-space-switching"),boxH:Math.round(box.getBoundingClientRect().height),listH:Math.round(list.getBoundingClientRect().height)};});
+    assert.equal(mid.switching,true,JSON.stringify(mid));
+    assert.ok(Math.abs(mid.boxH-before.boxH)<=2,`切标签时整块不变高：${JSON.stringify({before,mid})}`);
+    assert.ok(Math.abs(mid.listH-before.listH)<=2,`回帖卡片只撑住自己的高度：${JSON.stringify({before,mid})}`);
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching"),null,{timeout:1200});
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 3. 返回键：从第 2 页按返回回到第 1 页，站点（Vue）在 popstate 之后清空列表、0.3 秒后再放新的。没有点击也要撑住：列表不塌、页码不往上跳、不闪「还没有……」
+  {
+   const html=P.spaceTopicsPage().replace(/(<div class="discussion-wrapper" data-v-18f8c01b>)[\s\S]*?<\/div><\/div><\/div><\/div>/,`$1${rows("主题帖",15,4000)}</div></div>${pager}</div>`);
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/discussions",{...desk,html,api:infoApi("")});
+   try{
+    await ready(page);
+    await page.evaluate(()=>{
+     const box=document.querySelector(".selector");
+     window.addEventListener("popstate",()=>{
+      const list=box.querySelector(".discussion-wrapper");
+      Promise.resolve().then(()=>list.replaceChildren());
+      setTimeout(()=>{list.innerHTML=Array.from({length:15},(_,i)=>`<div class="discussion-item"><a href="/post-${9000+i}-1"><span>返回后 ${i+1}</span></a><span></span></div>`).join("");},300);
+     });
+     history.pushState(null,"","#/discussions/2");
+    });
+    await page.waitForTimeout(200);
+    const before=await page.evaluate(()=>{const box=document.querySelector(".selector"),list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");return {listH:Math.round(list.getBoundingClientRect().height),pagerTop:Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top)};});
+    const sampled=page.evaluate(()=>new Promise((resolve)=>{
+     const box=document.querySelector(".selector"),out={listH:[],pagerTop:[],labels:new Set(),emptySeen:false},t0=performance.now();
+     const tick=()=>{
+      const list=box.querySelector(".discussion-wrapper"),pg=box.querySelector(".nsk-pager");
+      out.listH.push(Math.round(list.getBoundingClientRect().height));
+      out.pagerTop.push(Math.round(pg.getBoundingClientRect().top-box.getBoundingClientRect().top));
+      if(!list.childElementCount)out.emptySeen=true;
+      out.labels.add(getComputedStyle(list,"::after").content);
+      if(performance.now()-t0<450)requestAnimationFrame(tick);
+      else resolve({listH:[Math.min(...out.listH),Math.max(...out.listH)],pagerTop:[Math.min(...out.pagerTop),Math.max(...out.pagerTop)],labels:[...out.labels],emptySeen:out.emptySeen});
+     };
+     requestAnimationFrame(tick);
+    }));
+    await page.evaluate(()=>history.back());
+    const s=await sampled;
+    assert.equal(s.emptySeen,true,JSON.stringify(s));
+    assert.ok(s.listH[0]>=before.listH-2,`按返回键时列表不塌：${JSON.stringify({before,s})}`);
+    assert.ok(Math.abs(s.pagerTop[0]-before.pagerTop)<=2&&Math.abs(s.pagerTop[1]-before.pagerTop)<=2,`按返回键时页码不跳：${JSON.stringify({before,s})}`);
+    assert.ok(s.labels.every(l=>!/还没有|暂无/.test(l)),`按返回键时不闪「还没有……」：${JSON.stringify(s)}`);
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute("data-nsmax-space-switching")&&!document.querySelector(".selector").style.minHeight,null,{timeout:1200});
+    assert.equal(await page.evaluate(()=>location.hash),"#/discussions");
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  // 4. 介绍以「NodeSeek」开头（「NodeSeek 老用户……」）是真写了：照常显示、停在「介绍」（以前当成站点占位，介绍藏掉、跳到「主题」）。
+  //    接口晚回来时第一帧就要对；只有一个「NodeSeek」字样的水印仍按没写处理
+  {
+   const text="NodeSeek 老用户，喜欢折腾 VPS 和各种小鸡，欢迎私信交流。";
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/general",{...desk,html:P.spaceGeneralPage(`<p>${text}</p>`),api:infoApi(text,600)});
+   try{
+    await ready(page);
+    const state=()=>page.evaluate(()=>{const rm=document.querySelector(".selector .readme"),tab=document.querySelector('.selector > a.select-item[data-nsmax-tab="general"]');return {hash:location.hash,rmDisplay:getComputedStyle(rm).display,empty:rm.hasAttribute("data-nsmax-empty-readme"),tab:!!tab&&tab.offsetWidth>0&&!tab.hidden,active:!!tab&&tab.classList.contains("active")};});
+    const early=await state();
+    assert.deepEqual(early,{hash:"#/general",rmDisplay:"block",empty:false,tab:true,active:true},`接口回来前：${JSON.stringify(early)}`);
+    await page.waitForTimeout(900);
+    const late=await state();
+    assert.deepEqual(late,{hash:"#/general",rmDisplay:"block",empty:false,tab:true,active:true},`接口回来后：${JSON.stringify(late)}`);
+    assert.ok((await page.locator(".selector .readme").innerText()).includes("NodeSeek 老用户"));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+  {
+   const {context,page,errors}=await open(browser,"https://www.nodeseek.com/space/10#/general",{...desk,html:P.spaceGeneralPage("NodeSeek"),api:infoApi("",3000)});
+   try{
+    await ready(page);
+    await page.waitForFunction(()=>location.hash==="#/discussions",null,{timeout:1500});
+    const s=await page.evaluate(()=>{const rm=document.querySelector(".selector .readme"),tab=document.querySelector('.selector > a.select-item[data-nsmax-tab="general"]');return {rmDisplay:getComputedStyle(rm).display,empty:rm.hasAttribute("data-nsmax-empty-readme"),tab:!!tab&&tab.offsetWidth>0};});
+    assert.deepEqual(s,{rmDisplay:"none",empty:true,tab:false},JSON.stringify(s));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}
+  }
+ });
+ test(`${engine} 动效补丁（2026-11-28）：跨页淡入淡出整页两张时长相同且 plus-lighter 叠加（前后一样的地方不暗一下）；「展开其余 N 条」露出来的几条真的播放显现、播完摘标记、减弱动态时不播；箭头只过渡 transform；消息中心按钮过渡和轻按生效`,async()=>{
+  // 1. 跨页过渡：自己写 animation 简写会把浏览器默认带的 plus-lighter 换掉，两张截图按普通透明度叠，时长不同时中途合起来不到 100%
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{viewport:{width:1440,height:900},seed,html:P.listPage({count:6})});
+   try{
+    await ready(page);
+    const css=await page.evaluate(()=>[...document.querySelectorAll("style")].map(n=>n.textContent).join("\n"));
+    const rule=name=>css.match(new RegExp("html::view-transition-"+name+"\\(root\\)\\{([^}]*)\\}"))?.[1]||"";
+    const oldRule=rule("old"),newRule=rule("new"),ms=r=>Number(r.match(/(\d+)ms/)?.[1]);
+    assert.ok(oldRule.includes("mix-blend-mode:plus-lighter")&&newRule.includes("mix-blend-mode:plus-lighter"),JSON.stringify({oldRule,newRule}));
+    assert.ok(ms(oldRule)>0&&ms(oldRule)===ms(newRule),JSON.stringify({oldRule,newRule}));
+    // 支持同页视图过渡的浏览器里再按计算值核对一遍：两张的时长、曲线一样，叠加方式是 plus-lighter
+    const live=await page.evaluate(async()=>{
+     if(typeof document.startViewTransition!=="function")return null;
+     const vt=document.startViewTransition(()=>{document.body.dataset.nsmaxVtProbe="1";});
+     await vt.ready;
+     const pick=name=>document.getAnimations().find(a=>a.effect?.pseudoElement===`::view-transition-${name}(root)`);
+     const timing=a=>a&&{duration:a.effect.getComputedTiming().duration,easing:a.effect.getComputedTiming().easing};
+     const out={old:timing(pick("old")),new:timing(pick("new")),blend:[getComputedStyle(document.documentElement,"::view-transition-old(root)").mixBlendMode,getComputedStyle(document.documentElement,"::view-transition-new(root)").mixBlendMode]};
+     vt.skipTransition();
+     await vt.finished.catch(()=>{});
+     return out;
+    });
+    if(engine==="chromium")assert.ok(live,"Chromium 应支持 document.startViewTransition");
+    if(live){
+     assert.ok(live.old&&live.new&&live.old.duration>0,JSON.stringify(live));
+     assert.deepEqual(live.old,live.new,JSON.stringify(live));
+     assert.deepEqual(live.blend,["plus-lighter","plus-lighter"],JSON.stringify(live));
+    }
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}}
+  // 2. 楼中楼「展开其余 N 条」：刚露出来的几条播放 nsmax-fold-in，播完摘掉临时标记；箭头只过渡 transform，展开后下移 2.5px
+  const floorHtml=(()=>{
+   const base=P.postPage()
+    .replace("<p>价格不错，帮顶</p>",`<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 价格不错，帮顶</p>`)
+    .replace("<p>线路怎么样？晚高峰丢包吗？</p>",`<p><a href="/member?t=passerby">@passerby</a> <a href="/post-1000-1#2" target="_self">#2</a> 线路怎么样？晚高峰丢包吗？</p>`);
+   const li3=base.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0];
+   const floor=n=>li3.replace('id="3"',`id="${n}"`).replace('href="#3" class="floor-link">#3<',`href="#${n}" class="floor-link">#${n}<`)
+    .replace(/<p><a href="\/member\?t=passerby">@passerby<\/a> <a href="\/post-1000-1#2" target="_self">#2<\/a>[\s\S]*?<\/article>/,`<p><a href="/member?t=buyer">@buyer</a> <a href="/post-1000-1#1" target="_self">#1</a> 第 ${n} 层</p></article>`);
+   return base.replace(/(<li class="content-item" id="3">[\s\S]*?<\/li>)/,all=>all+[4,5,6,7].map(floor).join(""));
+  })();
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{viewport:{width:1440,height:900},seed,html:floorHtml});
+   try{
+    await ready(page);
+    await page.waitForSelector("li[id='1'] > .nsmax-floor-box li[id='7']",{state:"attached"});
+    await page.waitForFunction(()=>document.querySelector("li[id='1'] > .nsmax-floor-box .nsmax-fb-more")?.textContent==="展开其余 3 条");
+    const more=page.locator("li[id='1'] > .nsmax-floor-box .nsmax-fb-more");
+    const arrow=()=>more.evaluate(el=>{const cs=getComputedStyle(el,"::after");return {transition:cs.transitionProperty,marginTop:cs.marginTop,transform:cs.transform};});
+    const closed=await arrow();
+    await page.evaluate(()=>{window.__folds=[];document.addEventListener("animationstart",e=>{if(e.animationName==="nsmax-fold-in")window.__folds.push(e.target.id);},true);});
+    await more.click();
+    const marked=await page.evaluate(()=>[...document.querySelectorAll("li[id='1'] > .nsmax-floor-box > .nsmax-nested-replies > li[data-nsmax-fb-reveal]")].map(r=>r.id));
+    await page.waitForTimeout(500);
+    const after=await page.evaluate(()=>({folds:window.__folds.slice().sort(),left:document.querySelectorAll("[data-nsmax-fb-reveal]").length}));
+    const open_=await arrow();
+    assert.deepEqual(marked,["5","6","7"],JSON.stringify(marked));
+    assert.deepEqual(after,{folds:["5","6","7"],left:0},JSON.stringify(after));
+    assert.equal(closed.transition,"transform",JSON.stringify(closed));
+    assert.equal(open_.marginTop,closed.marginTop,JSON.stringify({closed,open_}));
+    assert.match(open_.transform,/^matrix\(-0\.7071\d*, -0\.7071\d*, 0\.7071\d*, -0\.7071\d*, 0, 2\.5\)$/,JSON.stringify(open_));
+    // 减弱动态效果：收起再展开，不打标记、不播放
+    await page.emulateMedia({reducedMotion:"reduce"});
+    await more.click();
+    await page.evaluate(()=>{window.__folds=[];});
+    await more.click();
+    const reduced=await page.evaluate(()=>({marked:document.querySelectorAll("[data-nsmax-fb-reveal]").length,folds:window.__folds.length}));
+    assert.deepEqual(reduced,{marked:0,folds:0},JSON.stringify(reduced));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}}
+  // 3. 消息中心按钮（#nsk-body-left 里）：v1.9.84 写的 140ms 过渡、轻按下沉 1px 压过 sb-adapter.css 的全站规则；减弱动态时都不动
+  {const {context,page,errors}=await open(browser,"https://www.nodeseek.com/notification#/atMe",{viewport:{width:1440,height:900},seed,html:P.notificationPage({})});
+   try{
+    await ready(page);
+    const sel="#nsk-body-left .nspp-messages button:not(:disabled):not([hidden])";
+    await page.waitForSelector(sel);
+    const btn=page.locator(sel).first();
+    const look=async()=>{
+     const box=await btn.boundingBox();
+     await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+     await page.evaluate(()=>document.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();},{capture:true,once:true}));
+     await page.mouse.down();
+     await page.waitForTimeout(160);
+     const s=await btn.evaluate(el=>{const cs=getComputedStyle(el);return {prop:cs.transitionProperty,dur:cs.transitionDuration,active:el.matches(":active"),transform:cs.transform};});
+     await page.mouse.up();
+     await page.mouse.move(2,2);
+     return s;
+    };
+    const normal=await look();
+    assert.ok(normal.active&&normal.prop.includes("transform")&&normal.dur.includes("0.14s"),JSON.stringify(normal));
+    assert.equal(normal.transform,"matrix(1, 0, 0, 1, 0, 1)",JSON.stringify(normal));
+    await page.emulateMedia({reducedMotion:"reduce"});
+    const reduced=await look();
+    assert.ok(reduced.active&&reduced.transform==="none"&&reduced.dur.split(",").every(d=>parseFloat(d)===0),JSON.stringify(reduced));
+    assert.deepEqual(errors,[]);
+   }finally{await context.close();}}
+ });
 }

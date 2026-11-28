@@ -174,6 +174,34 @@ for(const engine of engines){
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+ // 挂载期间（后台模块开始挂载前）站点新加的楼层：撤掉 data-nsmax-mounting 的那一刻必须已经整理好，不能等之后那一轮 100ms + 空闲的整理。
+ // 空闲回调压到 3 秒后，确保这一刻之前没有别的整理轮次替它做掉
+ test(`${engine} 挂载期间站点新加的楼层：撤掉 data-nsmax-mounting 的那一刻已经整理好`,async()=>{
+  const html=P.postPage();
+  const raw=html.match(/<li class="content-item" id="3">[\s\S]*?<\/li>/)[0].replace('id="3"','id="9"').replaceAll("#3","#9").replaceAll("curious","latecomer");
+  const init=`(()=>{window.requestIdleCallback=fn=>setTimeout(()=>fn({didTimeout:true,timeRemaining:()=>0}),3000);window.cancelIdleCallback=clearTimeout;
+   let seen=false;window.__atUnmount=null;
+   new MutationObserver(()=>{if(document.documentElement.hasAttribute("data-nsmax-mounting")){seen=true;return;}if(!seen||window.__atUnmount)return;const late=document.getElementById("9");window.__atUnmount={late:!!late,actions:!!late?.querySelector(":scope > .nsmax-floor-actions > .comment-menu"),menu:!!late?.querySelector(":scope > .comment-menu")};}).observe(document,{attributes:true,subtree:true,attributeFilter:["data-nsmax-mounting"]});
+   const mark=performance.mark.bind(performance);
+   performance.mark=(name,...args)=>{if(name==="nsmax:primary-ready"&&!window.__appended){window.__appended=true;document.querySelector("ul.comments").insertAdjacentHTML("beforeend",${JSON.stringify(raw)});}return mark(name,...args);};})();`;
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/post-1000-1",{html,seed,viewport:{width:1440,height:900},init});
+  try{
+   await ready(page);
+   assert.equal(await page.evaluate(()=>window.__appended),true);
+   assert.deepEqual(await page.evaluate(()=>window.__atUnmount),{late:true,actions:true,menu:false},"撤掉挂载标记时新楼层的操作区已经收好");
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
+ test(`${engine} 整页最后一个页码条被拿掉时，外层的页码标记跟着撤掉`,async()=>{
+  const {context,page,errors}=await open(browser,"https://www.nodeseek.com/",{html:P.listPage(),seed,viewport:{width:1440,height:900}});
+  try{
+   await ready(page);
+   assert.equal(await page.locator("#nsk-body-left > div[data-nsmax-pagerbox]").count(),1,"底部页码外层有标记");
+   await page.evaluate(()=>{for(const pager of document.querySelectorAll(".nsk-pager"))pager.remove();});
+   await page.waitForFunction(()=>!document.querySelector(".nsk-pager")&&!document.querySelector("[data-nsmax-pagerbox]"),null,{timeout:3000});
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ });
 }
 // 分段只比 Chromium：每种页面跑两遍，WebKit 上时间太长，样式分段本身和引擎无关
 test("主题分段：手机、深色下也和整份注入逐元素一致，手机上遇到带右栏的网页时把右栏段补上",async()=>{

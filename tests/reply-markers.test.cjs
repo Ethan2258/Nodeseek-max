@@ -177,20 +177,24 @@ for (const engine of (process.env.NSMAX_MOBILE_ENGINES || "chromium,webkit").spl
     } finally { await context.close(); }
   });
 
+  // 2026-11-28：主帖里只有别的帖子的开奖链接（引用、推荐别人的抽奖）不再算本帖是抽奖帖，标题前不挂「抽奖」
   test(`${engine} 引用外帖的过期开奖不污染本帖状态，旧的错误结束缓存可恢复`, async () => {
     const past = Date.now() - 864e5, future = Date.now() + 864e5;
     for (const links of [[9999], [9999, 1000], [1000, 9999]]) {
       const html = P.postPage().replace("<h2>配置说明</h2>", links.map(post => ruleLink(post, post === 1000 ? future : past)).join("") + "<h2>配置说明</h2>");
       const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", {
-        html, seed: seed(state({})), init: `localStorage.setItem("nsmax:lottery-times", JSON.stringify({1000:${past}}));localStorage.setItem("nsmax:lottery-ended",JSON.stringify(["1000"]));`
+        html, seed: seed(state({})), init: `localStorage.setItem("nsmax:lottery-times", JSON.stringify({1000:${past}}));localStorage.setItem("nsmax:lottery-ended",JSON.stringify(["1000"]));localStorage.setItem("nsmax:special-posts",JSON.stringify({1000:"lottery"}));localStorage.setItem("nsmax:lottery-rows",JSON.stringify({1000:{t:"旧记录"}}));`
       });
       try {
         await ready(page);
-        assert.equal(await page.locator(".nsk-post .post-title .nsmax-prize-badge").count(), 1);
+        assert.equal(await page.locator(".nsk-post .post-title .nsmax-prize-badge").count(), links.includes(1000) ? 1 : 0, JSON.stringify(links));
         assert.equal(await page.locator(".nsk-post .post-title .nsmax-ended-badge").count(), 0, JSON.stringify(links));
         const cached = await page.evaluate(() => ({ times: JSON.parse(localStorage.getItem("nsmax:lottery-times")), ended: JSON.parse(localStorage.getItem("nsmax:lottery-ended")) }));
         assert.equal(cached.times[1000], links.includes(1000) ? future : undefined);
         assert.deepEqual(cached.ended, []);
+        // 以前版本按外帖链接记下的「抽奖帖」和「抽奖」分类行，打开第一页就撤掉；主帖有本帖链接的照留
+        const marks = await page.evaluate(() => ({ kinds: JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}")[1000] || "", row: !!JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")[1000] }));
+        assert.deepEqual(marks, links.includes(1000) ? { kinds: "lottery", row: true } : { kinds: "", row: false }, JSON.stringify(links));
         assert.deepEqual(errors, []);
       } finally { await context.close(); }
     }

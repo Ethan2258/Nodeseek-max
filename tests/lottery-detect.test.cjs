@@ -172,6 +172,64 @@ test("v1.9.82 楼主自己在评论区（.is-poster）贴出的纯文本开奖�
 	} finally { await context.close(); }
 });
 
+test("主帖里只链接 / 引用别的帖子的开奖链接不算抽奖帖（卡片照画、写「见原帖」，不进「抽奖」分类）；本帖的、没写 post 的照算", async () => {
+	const future = Date.now() + 2 * 864e5;
+	const other = `https://www.nodeseek.com/lucky?post=42&amp;time=${future}&amp;count=1`;
+	const cases = [
+		["链接别帖开奖", P.postPage().replace("</article>", `<p>推荐一个正在进行的抽奖：<a href="${other}">别人的开奖页</a></p></article>`), false],
+		["引用别帖开奖（纯文字）", P.postPage().replace("</article>", `<blockquote><p>楼上那位说：${other}</p></blockquote></article>`), false],
+		["本帖开奖链接", P.postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=${future}&amp;count=1">开奖</a></p></article>`), true],
+		["没写 post 的开奖链接", P.postPage().replace("</article>", `<p><a href="/lucky?time=${future}&amp;count=1">开奖</a></p></article>`), true]
+	];
+	for (const [name, html, lottery] of cases) {
+		const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 } });
+		try {
+			await page.waitForFunction(() => "1000" in JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}"), null, { timeout: 8e3 });
+			await wait(page, 300);
+			const state = await page.evaluate(() => ({
+				kind: JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}")["1000"] ?? null,
+				row: "1000" in JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}"),
+				badge: !!document.querySelector(".nsk-post .post-title .nsmax-prize-badge"),
+				prize: document.querySelector(".nsk-post .nsmax-lottery-prize")?.textContent || null
+			}));
+			if (lottery) {
+				assert.equal(state.kind, "lottery", name + JSON.stringify(state));
+				assert.equal(state.row, true, name + " 记入抽奖分类：" + JSON.stringify(state));
+				assert.equal(state.badge, true, name);
+			} else {
+				assert.equal(state.kind, null, name + JSON.stringify(state));
+				assert.equal(state.row, false, name + " 不进抽奖分类：" + JSON.stringify(state));
+				assert.equal(state.badge, false, name);
+				assert.equal(state.prize, "见原帖", name + " 别帖的卡片照画");
+			}
+			assert.deepEqual(errors, []);
+		} finally { await context.close(); }
+	}
+	// 普通列表页后台按内容查：主帖只推荐别人抽奖的普通标题帖子不挂「抽奖」，主帖有本帖开奖链接的照挂
+	const titles = ["今天天气真不错", "随手记一下日常", "又一篇普通帖"];
+	const list = P.listPage({ count: 3 }).replace(/(<div role="heading" aria-level="3" class="post-title"><a href="\/post-(\d+)-1"[^>]*>)[^<]*/g, (m, head, id) => head + titles[Number(id) - 1000]);
+	const pages = {
+		"/post-1000-1": P.postPage().replace("</article>", `<p>看到个抽奖分享给大家 <a href="${other}">开奖页</a></p></article>`),
+		"/post-1001-1": P.postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=1001&amp;time=${future}&amp;count=1">开奖</a></p></article>`),
+		"/post-1002-1": P.postPage()
+	};
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", { html: list, viewport: { width: 1280, height: 900 }, pages });
+	try {
+		await page.waitForFunction(() => { try { const c = JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}"); return "1000" in c && "1001" in c && "1002" in c; } catch { return false; } }, null, { timeout: 25e3 });
+		await wait(page, 300);
+		const state = await page.evaluate(() => ({
+			badges: Array.from(document.querySelectorAll("ul.post-list > li.post-list-item .post-title"), (t) => !!t.querySelector(".nsmax-prize-badge")),
+			posts: JSON.parse(localStorage.getItem("nsmax:special-posts") || "{}"),
+			rows: Object.keys(JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")).sort()
+		}));
+		assert.deepEqual(state.badges, [false, true, false], JSON.stringify(state));
+		assert.equal(state.posts["1000"], undefined);
+		assert.equal(state.posts["1001"], "lottery");
+		assert.deepEqual(state.rows, ["1001"]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
 // ===== v1.9.94 抽奖帖识别（2026-11-28） =====
 // 帖子页：换编号、标题、主帖正文（body 给了就整段换掉），extra 接在主帖正文最后
 const postOf = (id, { title, body, extra = "" } = {}) => {
@@ -335,6 +393,24 @@ test("v1.9.94 列表后台查帖也认没有开奖链接的文字抽奖帖（只
 		assert.equal((await json(page, "nsmax:lottery-rows", {}))["1000"]?.t, "抽奖送 3 个鸡腿", "记下列表行，「抽奖」分类里能并进来");
 		const badges = await page.evaluate(() => Array.from(document.querySelectorAll("ul.post-list > li.post-list-item .post-title"), (t) => !!t.querySelector(".nsmax-prize-badge")));
 		assert.deepEqual(badges, [true, false, true, false]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("点开抽奖帖不拿帖子页这一页的楼层数、发帖时间覆盖列表上记下的那一行（回复数、最后回复时间不变）", async () => {
+	const future = Date.now() + 2 * 864e5;
+	const listRow = { t: "回馈坛友随便写两句", u: "10", n: "seller", v: "5000", r: "300", lu: "77", ln: "lastguy", th: "/post-1000-30#300", td: "2026-11-26T04:00:00.000Z", tt: "2026-11-26 12:00:00", c: "/categories/trade", cn: "交易" };
+	const init = `if (window.top === window && !sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1"); localStorage.setItem("nsmax:lottery-rows", ${JSON.stringify(JSON.stringify({ "1000": listRow }))}); localStorage.setItem("nsmax:special-posts", JSON.stringify({ "1000": "lottery" })); }`;
+	const html = P.postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=1000&amp;time=${future}&amp;count=2">开奖</a></p></article>`);
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/post-1000-1", { html, viewport: { width: 1280, height: 900 }, init });
+	try {
+		await page.waitForSelector(".nsk-post .nsmax-lottery");
+		await page.waitForFunction(() => "1000" in JSON.parse(localStorage.getItem("nsmax:special-checked") || "{}"), null, { timeout: 8e3 });
+		await wait(page, 800);
+		const row = await page.evaluate(() => JSON.parse(localStorage.getItem("nsmax:lottery-rows") || "{}")["1000"]);
+		assert.equal(row?.r, "300", JSON.stringify(row));
+		assert.equal(row?.td, "2026-11-26T04:00:00.000Z", JSON.stringify(row));
+		assert.equal(row?.tt, "2026-11-26 12:00:00", JSON.stringify(row));
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });

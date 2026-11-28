@@ -43,6 +43,15 @@ jobs:
             echo "v$version 已发布，跳过构建与发布。" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
+            # 已经有更新的版本发布过（比如补跑了一次被取消的旧提交 CI）：照常发这个版本，但不标成 Latest，
+            # 免得 releases/latest 下载地址（@updateURL / @downloadURL）退回旧版本
+            newest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+            latest=true
+            if [ -n "$newest" ] && [ "$(printf '%s\n%s\n' "$newest" "v$version" | sort -V | tail -n 1)" = "$newest" ]; then
+              latest=false
+              echo "已有更新的 $newest，v$version 发布后不标为 Latest。" >> "$GITHUB_STEP_SUMMARY"
+            fi
+            echo "latest=$latest" >> "$GITHUB_OUTPUT"
           fi
 
       # 手动运行也必须对应 main 上已通过的 push CI，不能绕过浏览器测试。
@@ -83,6 +92,8 @@ jobs:
 
       - name: Publish release
         if: steps.version.outputs.exists == 'false'
+        env:
+          LATEST: ${{ steps.version.outputs.latest }}
         run: |
           version='${{ steps.version.outputs.version }}'
           node scripts/release-notes.mjs > release-notes.md
@@ -91,4 +102,4 @@ jobs:
             --target "$SHA" \
             --title "NodeSeek Max v$version" \
             --notes-file release-notes.md \
-            --latest
+            --latest="$LATEST"
