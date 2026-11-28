@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NodeSeek Max
 // @namespace    https://github.com/Ethan2258/Nodeseek-max
-// @version      1.9.93
+// @version      1.9.94
 // @description  NodeSeek 全能增强：融合 NodeSeek++、外链自动跳转、黑名单通知屏蔽与侧栏热榜，并提供可配置的现代化界面主题。
 // @author       Ethan
 // @license      GPL-3.0-only
@@ -916,7 +916,7 @@ var nsmaxRedirecting = false;
 		if (!/^text\/plain/i.test(document.contentType || "")) return;
 		nsmaxPlainErrorPage = true;
 	}
-	var NSMAX_VERSION = "1.9.93";
+	var NSMAX_VERSION = "1.9.94";
 	// 合并几个中止信号 / 定时中止（2026-11-07）：AbortSignal.any 要 Safari 17.4、Chrome 116、Firefox 124 起才有，
 	// 更老的 iPhone 上每个请求都直接报错（热榜、预览、私信全取不到）。有原生的就用原生的，没有就自己接一下
 	var nsmaxSignalAny = typeof AbortSignal.any === "function" ? (signals) => AbortSignal.any(signals) : (signals) => {
@@ -1523,8 +1523,74 @@ var nsmaxRedirecting = false;
 	// 后台与前景扫描请求的节奏（2026-11-25 升级为探针慢启动 + 自适应降速）：
 	// - "scan"（前景「抽奖」分类页识别与新帖发现）：首篇先单独探针确认未限流，成功后再按「请求节奏」档位放开到有界并发（标准 3/150ms、舒缓 2/280ms、慢速 1/600ms）；
 	// - "low"（普通列表页静默识别、翻页预取）：同样首篇单独探针，通过后再按档位放开（标准 2/220ms、舒缓 1/380ms、慢速 1/600ms）；
-	// - 单篇响应超过 1.5 秒自动退回单并发、间隔加倍 15 秒；一旦遇 429 / 503 / 验证页，立刻清零探针、不重试，本机后台停 10 分钟。
+	// - 单篇响应（等到站点开始回话为止，不算下载正文的时间）超过 1.5 秒自动退回单并发、间隔加倍 15 秒；
+	// - 一旦遇 429 / 503 / 验证页，立刻清零探针、不重试，后台先停 30 秒，半小时内又碰到就翻倍（1、2、4、8 分钟，最多 10 分钟）。
+	// 2026-11-27 在真站上量的限流：同一个人连着取帖子页，每秒约 1.9 篇时取到第 32 篇开始 429、二十秒左右恢复；每秒 1 篇连取 50 篇没事，
+	// 响应里也不带 Retry-After。以前一碰到就整机停 10 分钟，「抽奖」页一停就是十分钟一行不动。
+	// 所以后台和扫描请求在所有标签页之间共用一个配额（GCRA：存一个「理论上下一次的时间」在 localStorage），贴着限流走
+	// （2026-11-28 用户：「你要尽可能的贴着限流的限制来设计速度」）：按「每 10 秒 N 篇」均匀发（最多先连着 3 篇），N 也记在本机、各标签页共用——
+	// 起步 15（上面实测折合每 10 秒约 15 篇）；每 30 分钟没被限流加 1、最多 18（每秒 1.8 篇，实测每秒 1.9 篇就会被限流）；被限流一次减 3、最少 6。
+	// 「舒缓」「慢速」档按 2/3、1/3 取。localStorage 写不进去（隐私模式、满了）时退回只记在这个页面里，暂停和配额照样管用
+	// 预览卡、翻页这些前台取页面不排这个队，但记一次账（站点那边一样算数），后台就跟着让一让；页面本身打开也记一次。
 	var NSMAX_BG_PAUSE_KEY = "nsmax:bg-pause-until";
+	var NSMAX_BG_STRIKE_KEY = "nsmax:bg-strikes";
+	var NSMAX_BG_TAT_KEY = "nsmax:bg-tat";
+	var NSMAX_BG_RATE_KEY = "nsmax:bg-rate";
+	var NSMAX_BG_RATE_START = 15;
+	var NSMAX_BG_RATE_MAX = 18;
+	var NSMAX_BG_RATE_MIN = 6;
+	var NSMAX_BG_RATE_STEP_MS = 30 * 60e3;
+	var NSMAX_BG_PACE_SHARES = {
+		standard: [1, 3],
+		gentle: [2 / 3, 2],
+		slow: [1 / 3, 1]
+	};
+	// 现在每 10 秒放几篇：{ n, at }（at：上次调整的时间，过一个 30 分钟没被限流就加 1）
+	function nsmaxBgRateState(now = Date.now()) {
+		let n = NSMAX_BG_RATE_START, at = now, saved = null;
+		try { saved = JSON.parse(localStorage.getItem(NSMAX_BG_RATE_KEY) || "null"); } catch {}
+		if (saved && Number.isFinite(saved.n) && Number.isFinite(saved.at)) {
+			n = Math.min(NSMAX_BG_RATE_MAX, Math.max(NSMAX_BG_RATE_MIN, Math.round(saved.n)));
+			at = Math.min(saved.at, now);
+		}
+		const steps = Math.floor((now - at) / NSMAX_BG_RATE_STEP_MS);
+		if (!saved || steps > 0 && n < NSMAX_BG_RATE_MAX) {
+			n = Math.min(NSMAX_BG_RATE_MAX, n + Math.max(0, steps));
+			at += Math.max(0, steps) * NSMAX_BG_RATE_STEP_MS;
+			try { localStorage.setItem(NSMAX_BG_RATE_KEY, JSON.stringify({ n, at })); } catch {}
+		}
+		return { n, at };
+	}
+	// [每篇间隔毫秒, 最多先连着几篇]
+	function nsmaxBgRate(pace) {
+		const [share, burst] = NSMAX_BG_PACE_SHARES[pace] || NSMAX_BG_PACE_SHARES.standard;
+		return [1e4 / Math.max(1, nsmaxBgRateState().n * share), burst];
+	}
+	var nsmaxBgMemory = { tat: 0, pause: 0 };
+	function nsmaxBgTat() {
+		let tat = 0;
+		try { tat = Number(localStorage.getItem(NSMAX_BG_TAT_KEY)) || 0; } catch {}
+		return Math.max(tat, nsmaxBgMemory.tat);
+	}
+	function nsmaxSetBgTat(value) {
+		try {
+			localStorage.setItem(NSMAX_BG_TAT_KEY, String(value));
+			nsmaxBgMemory.tat = 0;
+		} catch {
+			nsmaxBgMemory.tat = value;
+		}
+	}
+	// 取一个配额：返回还要等几毫秒（0 = 已经记上账，可以发）。charge：前台请求只记账、不等（最多记到一分钟以后；
+	// 暂停时排到暂停结束以后的不往回拉）
+	function nsmaxBgSlot(pace, charge = false) {
+		const [step, burst] = nsmaxBgRate(pace);
+		const now = Date.now();
+		const tat = Math.max(nsmaxBgTat(), now);
+		const wait = tat - now - step * (burst - 1);
+		if (wait > 0 && !charge) return wait;
+		nsmaxSetBgTat(tat > now + 6e4 ? tat : Math.min(tat + step, now + 6e4));
+		return 0;
+	}
 	var NSMAX_BG_SPACING = 600;
 	var NSMAX_SCAN_PACES = {
 		standard: [3, 150],
@@ -1536,19 +1602,58 @@ var nsmaxRedirecting = false;
 		gentle: [1, 380],
 		slow: [1, 600]
 	};
+	function nsmaxBackgroundPauseUntil() {
+		let until = 0;
+		try { until = Number(localStorage.getItem(NSMAX_BG_PAUSE_KEY)) || 0; } catch {}
+		return Math.max(until, nsmaxBgMemory.pause);
+	}
 	function nsmaxBackgroundPaused() {
-		try {
-			return Number(localStorage.getItem(NSMAX_BG_PAUSE_KEY)) > Date.now();
-		} catch {
-			return false;
+		return nsmaxBackgroundPauseUntil() > Date.now();
+	}
+	// 被限流一次：后台停一会儿。ms 不给就按最近半小时碰到几次来（30 秒起、每次翻倍、最多 10 分钟）；
+	// 几路请求同时撞上只算一次（已经在停就不再加码）。retryAfter：站点给了 Retry-After 时至少停这么久
+	function nsmaxPauseBackground(ms, retryAfter = 0) {
+		const now = Date.now();
+		const current = nsmaxBackgroundPauseUntil();
+		let pause = ms;
+		if (!pause) {
+			if (current > now) return;
+			let strikes = 0;
+			try {
+				const saved = JSON.parse(localStorage.getItem(NSMAX_BG_STRIKE_KEY) || "null");
+				if (saved && now - saved.at < 30 * 60e3) strikes = Math.max(0, Number(saved.n) || 0);
+			} catch {}
+			strikes = Math.min(strikes + 1, 6);
+			try { localStorage.setItem(NSMAX_BG_STRIKE_KEY, JSON.stringify({ n: strikes, at: now })); } catch {}
+			pause = Math.min(10 * 60e3, 30e3 * 2 ** (strikes - 1));
+			// 每 10 秒少放 3 篇，从现在起重新算 30 分钟
+			try { localStorage.setItem(NSMAX_BG_RATE_KEY, JSON.stringify({ n: Math.max(NSMAX_BG_RATE_MIN, nsmaxBgRateState(now).n - 3), at: now })); } catch {}
 		}
-	}
-	function nsmaxPauseBackground(ms = 10 * 60e3) {
-		try { localStorage.setItem(NSMAX_BG_PAUSE_KEY, String(Date.now() + ms)); } catch {}
+		if (retryAfter > pause) pause = Math.min(30 * 60e3, retryAfter);
+		const until = now + pause;
+		if (until <= current) return;
+		try {
+			localStorage.setItem(NSMAX_BG_PAUSE_KEY, String(until));
+			nsmaxBgMemory.pause = 0;
+		} catch {
+			nsmaxBgMemory.pause = until;
+		}
+		// 停完以后从稳定的速度重新开始，不一下子把攒着的配额全用掉
+		const [step, burst] = nsmaxBgRate(requestSettings()?.pace);
+		nsmaxSetBgTat(until + step * (burst - 1));
 		enqueue?.resetBg?.();
+		enqueue?.dropBg?.();
 	}
+	// 「重试」：马上接着来，从稳定的速度开始（停的时候把配额排到了暂停结束以后，这里拉回到现在）
 	function nsmaxResumeBackground() {
 		try { localStorage.removeItem(NSMAX_BG_PAUSE_KEY); } catch {}
+		nsmaxBgMemory.pause = 0;
+		const [step, burst] = nsmaxBgRate(requestSettings()?.pace);
+		const floor = Date.now() + step * (burst - 1);
+		if (nsmaxBgTat() > floor) {
+			nsmaxBgMemory.tat = 0;
+			nsmaxSetBgTat(floor);
+		}
 		enqueue?.resetBg?.();
 	}
 	function nsmaxPageLoaded() {
@@ -1619,7 +1724,10 @@ var nsmaxRedirecting = false;
 					const gap = slowed ? Math.min(1200, baseGap * 2) : baseGap;
 					if (isScan ? activeScan >= maxLane : (activeLow >= maxLane || activeScan > 0)) return;
 					const lastLane = isScan ? lastScan : lastLow;
-					const wait = lastLane + gap - now;
+					// 取站点页面的才排共用配额（资料接口这些不算，见 NSMAX_BG_TAT_KEY）
+					// 本通道的间隔还没到就先不去领（领了又不发，白白用掉一份，别的标签页也跟着少）
+					const laneWait = lastLane + gap - now;
+					const wait = laneWait > 0 ? laneWait : head.paced ? nsmaxBgSlot(pace) : 0;
 					if (wait > 0) {
 						timer = setTimeout(drain, wait);
 						return;
@@ -1636,12 +1744,10 @@ var nsmaxRedirecting = false;
 				lastStarted = Date.now();
 				const item = pending.shift();
 				item.started = true;
-				const startedAt = performance.now();
 				item.run().then((ok) => {
 					if (ok && (isScan || isLow)) {
 						if (isScan) scanProbed = true;
 						else lowProbed = true;
-						if (performance.now() - startedAt > 1500) slowBackoffUntil = Date.now() + 15e3;
 					}
 				}).finally(() => {
 					active--;
@@ -1653,10 +1759,12 @@ var nsmaxRedirecting = false;
 		};
 		// handle：给了就挂上 promote()——还在排队的后台请求（滚动停下时预取的帖子、后台查抽奖）
 		// 被鼠标停上去的预览卡等着时提到最前面，不再排在后台请求的间隔后面（2026-11-01）
-		const push = (task, priority = 0, handle) => new Promise((resolve, reject) => {
+		const push = (task, priority = 0, handle, paced = false) => new Promise((resolve, reject) => {
 			const item = {
 				priority,
+				paced,
 				started: false,
+				fail: reject,
 				run: async () => {
 					try {
 						resolve(await task());
@@ -1686,6 +1794,19 @@ var nsmaxRedirecting = false;
 			lowProbed = false;
 			slowBackoffUntil = 0;
 		};
+		// 后台开始暂停（被限流）：还排着、没发出去的后台请求马上作废，等着它们的识别不用干等到暂停结束才知道
+		push.dropBg = () => {
+			for (let i = pending.length - 1; i >= 0; i--) {
+				if (pending[i].priority < 0.5 || pending[i].started) continue;
+				const [item] = pending.splice(i, 1);
+				item.fail(nsmaxRateLimitedError());
+			}
+			drain();
+		};
+		// 后台请求等站点回话等了 1.5 秒以上（见 request）：接下来 15 秒退回单并发、间隔加倍
+		push.slow = () => {
+			slowBackoffUntil = Date.now() + 15e3;
+		};
 		return push;
 	}
 	// 默认「标准」：并发 8、间隔 40ms（资料接口单次常要 1～2 秒，4 个 / 200ms 时一页 50 个用户的信任分、注册天数要二三十秒才出齐）。
@@ -1701,6 +1822,12 @@ var nsmaxRedirecting = false;
 		return value;
 	};
 	var enqueue = createRequestQueue(() => requestConcurrency(requestSettings()?.maxConcurrent), () => requestInterval(requestSettings()?.requestInterval), () => requestSettings()?.pace || "standard");
+	// 不走请求队列、直接取站点页面的地方（回复数、Telegram 联系方式）记一次账；打开这一页本身站点也算一次（见 NSMAX_BG_TAT_KEY）：
+	// 在别的标签页里来回点帖子时，后台识别相应慢一点
+	function nsmaxChargePage() {
+		nsmaxBgSlot(requestSettings()?.pace, true);
+	}
+	nsmaxChargePage();
 	// 只读到 marker 出现为止，后面的不再下载（支持字符串、正则、两阶段判定函数；滑窗匹配避免整段重复扫描）
 	async function readUntil(response, marker) {
 		const reader = response.body.getReader();
@@ -1751,17 +1878,22 @@ var nsmaxRedirecting = false;
 		const execute = async (attempt = 0) => {
 			init.signal?.throwIfAborted();
 			const timeout = nsmaxSignalTimeout(2e4);
+			// 前台取页面（预览卡、翻页）：不排后台的配额，但记一次账（见 NSMAX_BG_TAT_KEY）
+			if (sameOrigin && !background && !target.pathname.startsWith("/api/")) nsmaxBgSlot(requestSettings()?.pace, true);
+			const askedAt = performance.now();
 			const response = await nsmaxFetch(target, {
 				...init,
 				credentials: sameOrigin ? "same-origin" : "omit",
 				signal: init.signal ? nsmaxSignalAny([init.signal, timeout]) : timeout
 			});
+			if (background && performance.now() - askedAt > 1500) enqueue.slow?.();
 			if (sameOrigin && isRateLimited(response)) {
 				const challenge = response.status === 403;
-				nsmaxLocalSet(COOLDOWN_KEY(), Date.now() + retryDelay(response.headers.get("Retry-After")));
-				// 后台/批量扫描请求被限流：不重试，后台的活全停 10 分钟（见 NSMAX_BG_PAUSE_KEY）
+				const retryAfter = response.headers.get("Retry-After");
+				nsmaxLocalSet(COOLDOWN_KEY(), Date.now() + retryDelay(retryAfter));
+				// 后台/批量扫描请求被限流：不重试，后台的活先停一会儿（30 秒起，见 nsmaxPauseBackground）
 				if (background) {
-					nsmaxPauseBackground();
+					nsmaxPauseBackground(0, retryAfter ? retryDelay(retryAfter) : 0);
 					throw nsmaxRateLimitedError();
 				}
 				// 被限流的读取请求等冷却结束后自动重试一次；验证页需要用户在页面上完成验证，不自动重试。
@@ -1786,11 +1918,19 @@ var nsmaxRedirecting = false;
 		return enqueue(async () => {
 			init.signal?.throwIfAborted();
 			if (background && nsmaxBackgroundPaused()) throw nsmaxRateLimitedError();
+			// 站点冷却还要很久（前台请求被限流、站点给了长的 Retry-After）：后台跟着停到冷却结束，算「被限流」不算「没查成」，到点接着查
+			if (background) {
+				const remaining = nsmaxLocalGet(COOLDOWN_KEY(), 0) - Date.now();
+				if (remaining > COOLDOWN_WAIT_LIMIT) {
+					nsmaxPauseBackground(remaining);
+					throw nsmaxRateLimitedError();
+				}
+			}
 			const cooldown = waitCooldown(init.signal);
 			// 没有冷却时直接发起：无意义的 await 会把首个 fetch 推迟到整轮 UI 初始化之后，缩短实际请求间隔。
 			if (cooldown) await cooldown;
 			return execute();
-		}, lane === "low" ? 1 : lane === "scan" ? 0.5 : (profile || isPreview) ? -1 : 0, queue);
+		}, lane === "low" ? 1 : lane === "scan" ? 0.5 : (profile || isPreview) ? -1 : 0, queue, !target.pathname.startsWith("/api/"));
 	}
 	var validObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 	function normalizeSettings(features, value) {
@@ -25326,7 +25466,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	}
 	// 投票 / 抽奖帖（2026-10-17，照 sb.sb .topic-badge.poll-badge / .lottery-badge、.poll-widget、.lottery-widget）。
 	// 站点列表里不标哪些帖子有投票、抽奖：按标题里的字认；打开过的帖子里确认有投票（.vote-panel）或开奖链接（/lucky?post=…）的
-	// 记在本机（最多 400 篇），列表里也带上小标
+	// 记在本机（最多 2000 篇；2026-11-28 以前 400 篇、和投票共用，挤掉的抽奖帖在「抽奖」页里就成了「不是」），列表里也带上小标
 	var NSMAX_SPECIAL_KEY = "nsmax:special-posts";
 	var nsmaxSpecialPosts;
 	function nsmaxSpecialPostMap() {
@@ -25344,8 +25484,30 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		if (map.get(id) === value) return;
 		map.delete(id);
 		map.set(id, value);
-		while (map.size > 400) map.delete(map.keys().next().value);
+		nsmaxTrimSpecialPosts(map);
 		try { localStorage.setItem(NSMAX_SPECIAL_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
+	// 按文字认的抽奖帖（"lottery,text"，见 nsmaxIsTextLottery）这次再看已经不算了：撤掉。keepLottery：这次是按开奖链接认的，只去掉 "text"
+	function nsmaxDropTextLottery(id, keepLottery = false) {
+		const map = nsmaxSpecialPostMap();
+		const kinds = (map.get(id) || "").split(",").filter(Boolean);
+		if (!kinds.includes("text")) return;
+		const value = kinds.filter((kind) => kind !== "text" && (keepLottery || kind !== "lottery")).join(",");
+		if (value) map.set(id, value);
+		else map.delete(id);
+		try { localStorage.setItem(NSMAX_SPECIAL_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
+	// 超过上限时先挤掉只有投票的，再挤掉已经结束的抽奖，最后才是还在进行的抽奖（各自从最早记下的开始）
+	function nsmaxTrimSpecialPosts(map, limit = 2000) {
+		if (map.size <= limit) return;
+		const ended = nsmaxLotteryEnded(), times = nsmaxLotteryTimes(), now = Date.now();
+		const rank = (id, kinds) => !kinds.split(",").includes("lottery") ? 0 : ended.has(id) || (times.get(id) || Infinity) <= now ? 1 : 2;
+		for (const level of [0, 1, 2]) {
+			for (const [id, kinds] of map) {
+				if (map.size <= limit) return;
+				if (rank(id, kinds) === level) map.delete(id);
+			}
+		}
 	}
 	function nsmaxTopicBadge(title, link, className, text, on) {
 		// 标题下面只有几个子元素，直接翻一遍（列表一页 95 个标题、每次扫描都要找，以前每个都走一遍选择器）
@@ -25362,13 +25524,23 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	// 抽奖帖怎么认（只要帖子主帖或指向本帖的评论里有 /lucky?… 开奖链接，就是抽奖帖，不看标题是否含「抽奖」）：
 	// 1. 打开过的帖子 / 悬停预览：主帖或本帖评论里有开奖链接（/lucky?…，含纯文字与 /jump 包装）就算；
 	// 2. 普通列表页：页面加载完、不滚动时在后台低优先级依次检查未查过的帖子（标题带抽奖/送东西特征的优先），单次请求同时读取主帖与首屏评论；
-	//    查过的记在本机（nsmax:special-checked，是、不是都记）。被限流（429/503）时整机停 10 分钟；
+	//    查过的记在本机（nsmax:special-checked，是、不是都记）。被限流（429/503）时后台先停 30 秒（接连碰到再加长），停完接着查；
 	// 3. 已结束：到了开奖时间，或者楼主自己标了结束——标题里写了「已结束 / 已开奖 / 【结束】」这类，或者主帖正文里写了
-	//    「已结束 / 已开奖 / 恭喜……中奖」这类（查帖、打开帖子时看；还没结束的抽奖帖过 30 分钟以上再查一次，楼主后来改的也能跟上）
+	//    「已结束 / 已开奖 / 恭喜……中奖」这类（查帖、打开帖子时看；还没结束的抽奖帖过 30 分钟以上再查一次，楼主后来改的也能跟上）。
+	//    楼主提前开了奖、正文里写了的，不用等到开奖时间；正文里说的是上一期（「上期已开奖，本期继续」）、
+	//    「名额已抽完会补抽」、标题里的「抽奖结束时间周五」这类不算（2026-11-28）
 	var NSMAX_SPECIAL_CHECKED_KEY = "nsmax:special-checked";
-	var NSMAX_LOTTERY_ENDED_TITLE = /已结束|已开奖|已抽奖|已抽完|已截止|已完结|开奖结束|抽奖结束|活动结束|[【\[（(]\s*(?:结束|完结|已结|结)\s*[】\]）)]/;
+	// 「抽奖结束时间周五」「活动结束后统一发货」是在说规则，不算
+	// 「报名已截止，周五开奖」也不算
+	var NSMAX_LOTTERY_ENDED_TITLE = /已结束|已开奖|已抽奖|已抽完|(?:^|[^名])已截止|已完结|已兑奖|已发奖|(?:开奖|抽奖|活动)结束(?!时间|后|前|日期|于|在|再|为止|[:：])|[【\[（(]\s*(?:结束|完结|已结|结)\s*[】\]）)]/;
 	// 「恭喜……中奖」中间要有人（恭喜 @a @b 中奖）；开奖前写在规则里的「恭喜中奖的朋友请私信」「恭喜你中奖」不算
-	var NSMAX_LOTTERY_ENDED_TEXT = /已结束|已开奖|已抽奖|已抽完|已截止|恭喜(?![你您]?中奖)[^。！？!?；;]{1,30}?中奖(?![的者])/;
+	var NSMAX_LOTTERY_ENDED_TEXT = /(?:^|[^果若])已结束|已开奖|已抽奖|已抽完(?![^，。！？!?；;]{0,6}补)|(?:^|[^名])已截止|已兑奖|已发奖|恭喜(?![你您]?中奖)[^。！？!?；;]{1,30}?中奖(?![的者])/;
+	// 说的是上一期、上一轮的（「上期已开奖，恭喜 @abc 中奖。本期……」「恭喜上一期 @abc 中奖，本期继续」）：这一句去掉再看——
+	// 到句号、或者说到「本期 / 这期 / 本次」为止。「提前一波」「当前一批」「目前」「之前」里的「前」不算（不用后行断言：前一个字一起匹配进第 1 组，替换时放回去）
+	var NSMAX_LOTTERY_PAST_ROUND = /(^|[^提当目之眼])(?:上|前)(?:一|几|两)?(?:期|轮|次|波|弹|批|场)[^。！？!?；;\n]{0,40}?(?=本期|这期|这一期|本轮|这轮|这次|本次|[。！？!?；;\n]|$)/g;
+	function nsmaxLotteryTitleEnded(title) {
+		return NSMAX_LOTTERY_ENDED_TITLE.test(String(title || "").replace(NSMAX_LOTTERY_PAST_ROUND, "$1"));
+	}
 	var NSMAX_LOTTERY_ENDED_KEY = "nsmax:lottery-ended";
 	var nsmaxLotteryEndedMap;
 	function nsmaxLotteryEnded() {
@@ -25382,9 +25554,11 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	function nsmaxRememberLotteryEnded(id, ended) {
 		const set = nsmaxLotteryEnded();
 		if (!id || set.has(id) === ended) return;
+		// 先并上别的标签页刚写进去的（整份同步，不并的话两边同时写会互相盖掉）
+		try { for (const other of JSON.parse(localStorage.getItem(NSMAX_LOTTERY_ENDED_KEY) || "[]")) if (typeof other === "string" && other !== id) set.add(other); } catch {}
 		if (ended) set.add(id);
 		else set.delete(id);
-		while (set.size > 400) set.delete(set.values().next().value);
+		while (set.size > 2000) set.delete(set.values().next().value);
 		try { localStorage.setItem(NSMAX_LOTTERY_ENDED_KEY, JSON.stringify([...set])); } catch {}
 	}
 	// 主帖正文里楼主写的结束（不算脚本自己画的抽奖卡片里的「进行中 / 已结束」）
@@ -25392,12 +25566,45 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		let text = "";
 		const walker = document.createTreeWalker(op, NodeFilter.SHOW_TEXT, { acceptNode: (node) => node.parentElement?.closest(".nsmax-lottery") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
 		while (walker.nextNode()) text += walker.currentNode.data;
-		return NSMAX_LOTTERY_ENDED_TEXT.test(text.replace(/\s+/g, ""));
+		return NSMAX_LOTTERY_ENDED_TEXT.test(text.replace(/\s+/g, "").replace(NSMAX_LOTTERY_PAST_ROUND, "$1"));
+	}
+	// 记下一篇抽奖帖结束了没有（标题或主帖正文里楼主写了结束）
+	function nsmaxNoteLotteryEnded(id, title, op) {
+		nsmaxRememberLotteryEnded(id, nsmaxLotteryTitleEnded(title) || nsmaxLotteryEndedIn(op));
 	}
 	// 仅用于后台检查排队优先级：标题像抽奖 / T楼 / 送福利的先查，其余帖子随后逐篇检查，绝不用标题排除非「抽奖」标题的帖子
-	var NSMAX_LOTTERY_HINT = /抽奖|开奖|中奖|[Tt]\s*楼|踩楼|\broll\b|福利|回馈|白送|免费送|(?:抽|送|送出)\s*[一二两三四五六七八九十百千万\d]+\s*(?:个|份|位|名|台|只|张|人|枚|鸡腿|码|刀|[Uu]|元)|lucky\s*draw|giveaway/i;
+	var NSMAX_LOTTERY_HINT = /抽奖|抽獎|开奖|中奖|速抽|闪抽|抽送|抽个|[Tt]\s*楼|踩楼|\broll\b|福利|回馈|白送|免费送|(?:抽|送|送出)\s*[一二两三四五六七八九十百千万\d]+\s*(?:个|份|位|名|台|只|张|人|枚|鸡腿|码|刀|[Uu]|元)|lucky\s*draw|giveaway/i;
 	// 主帖写得像在送东西、抽东西
-	var NSMAX_GIVEAWAY_HINT = /抽奖|开奖|中奖|(?:抽|送|送出)\s*[一二两三四五六七八九十\d]+\s*(?:个|份|位|名|台|只|张|人|枚|块|月|年)|随机(?:抽|送)|幸运(?:儿|观众|楼|用户)|按楼层|楼层抽|抽楼|白送|免费送|giveaway|lucky\s*draw/i;
+	var NSMAX_GIVEAWAY_HINT = /抽奖|抽獎|开奖|中奖|速抽|闪抽|(?:抽|送|送出)\s*[一二两三四五六七八九十\d]+\s*(?:个|份|位|名|台|只|张|人|枚|块|月|年)|随机(?:抽|送)|幸运(?:儿|观众|楼|用户)|按楼层|楼层抽|抽楼|白送|免费送|giveaway|lucky\s*draw/i;
+	// 没用站内开奖链接、只在帖子里写怎么抽的抽奖帖（2026-11-28 用户选了「也算」）：标题明说在抽 / 送，又不是在聊抽奖、做买卖
+	// （问问题、汇总、抽奖器、晒中奖、兑奖、出 / 收 / 转让……），主帖里写了开奖、中奖、参与方式、口令、按楼层这类；标题写着抽奖、正文只有图片的也算。
+	// 标题只是「送 3 台」「抽个」「开奖」这种不够明确的，正文要对上两样。记成 "lottery,text"：以后规则改了、再查不对时能撤掉。
+	// 这类没有开奖时间，不画倒计时卡片，结束不结束只看楼主写的字
+	var NSMAX_TEXT_LOTTERY_TITLE = /抽奖|抽獎|速抽|闪抽|抽送|(?:^|[^A-Za-z])[Tt]\s*楼/;
+	// 「送一个月」「送 2 个月」「抽 1 个月合租」是买卖里的附赠、合租，不算
+	var NSMAX_TEXT_LOTTERY_WEAK_TITLE = /开奖|(?:抽|送)\s*[一二两三四五六七八九十百\d]+\s*(?:个(?![月年季天周]|小时)|份|位|名|台|只|张|枚|刀|元|[Uu]|鸡腿)|抽个|抽一(?:个|份|台|波)/;
+	var NSMAX_LOTTERY_META_TITLE = /[？?]|[吗呢么嘛]\s*$|汇总|合集|整理|中了|中奖了|抽中|抽到|抽来|没中|教程|攻略|代码|脚本|源码|插件|机器人|\bbot\b|抽奖\s*(?:器|机|程序|系统|网站|平台|功能|工具|助手|页面|页)|有没有|求助|求推荐|推荐一下|请教|反馈|吐槽|骗|假抽|\bbug\b|怎么|如何|为什么|谁能|参与了|(?:^|[^已])兑奖|领奖|晒(?:单|一下|奖品|中奖)|结果公示|开奖结果|^\s*[【\[（(]?\s*(?:出|收|转|售|卖)|合租|拼车|转让|出售|收购|求购/i;
+	var NSMAX_TEXT_LOTTERY_SIGNS = [/开奖/, /中奖/, /参与(?:方式|规则|条件|要求)|(?:怎么|如何)参与/, /(?:回复|留言|评论).{0,8}(?:参与|抽)/, /口令/, /按楼|楼层抽|抽楼|楼层号|随机楼层|第\s*[\d一二三四五六七八九十百千]+\s*楼|(?:^|[^A-Za-z])[Tt]\s*楼/, /随机抽|抽取|抽出|抽选/, /名额/, /截止|截至/, /奖品/];
+	function nsmaxTextLotteryTitle(title) {
+		const text = String(title || "").replace(/\s+/g, " ").trim();
+		return (NSMAX_TEXT_LOTTERY_TITLE.test(text) || NSMAX_TEXT_LOTTERY_WEAK_TITLE.test(text)) && !NSMAX_LOTTERY_META_TITLE.test(text);
+	}
+	var nsmaxTextLotteryCache = new WeakMap();
+	function nsmaxIsTextLottery(title, op) {
+		if (!op || !nsmaxTextLotteryTitle(title)) return false;
+		const key = String(title);
+		const hit = nsmaxTextLotteryCache.get(op);
+		if (hit && hit.key === key && hit.size === op.childElementCount) return hit.value;
+		let text = "";
+		const walker = (op.ownerDocument || document).createTreeWalker(op, NodeFilter.SHOW_TEXT, { acceptNode: (node) => node.parentElement?.closest(".nsmax-lottery, blockquote") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+		while (walker.nextNode()) text += walker.currentNode.data + " ";
+		text = text.replace(/\s+/g, " ").trim();
+		const signs = NSMAX_TEXT_LOTTERY_SIGNS.reduce((count, re) => count + (re.test(text) ? 1 : 0), 0);
+		const strong = NSMAX_TEXT_LOTTERY_TITLE.test(key.replace(/\s+/g, " "));
+		const value = signs >= (strong ? 1 : 2) || strong && /抽奖|抽獎/.test(key) && text.replace(/\s+/g, "").length < 20 && !!op.querySelector("img:not(.sticker)");
+		nsmaxTextLotteryCache.set(op, { key, size: op.childElementCount, value });
+		return value;
+	}
 	var nsmaxSpecialCheckedMap;
 	var nsmaxSpecialCheckedDirty = new Map();
 	var nsmaxSpecialCheckedTimer = 0;
@@ -25440,11 +25647,12 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		map.set(id, now);
 		while (map.size > 5000) map.delete(map.keys().next().value);
 		nsmaxSpecialCheckedDirty.set(id, now);
-		if (now - nsmaxLastCheckedFlushAt >= 250 && !nsmaxSpecialCheckedTimer) {
+		// 整张表有一两百 KB：查得快时攒一秒写一次（切走、关页面时马上写，见 nsmaxBindSpecialStorageSync）
+		if (now - nsmaxLastCheckedFlushAt >= 2000 && !nsmaxSpecialCheckedTimer) {
 			nsmaxFlushSpecialChecked();
 			return;
 		}
-		if (!nsmaxSpecialCheckedTimer) nsmaxSpecialCheckedTimer = setTimeout(nsmaxFlushSpecialChecked, 120);
+		if (!nsmaxSpecialCheckedTimer) nsmaxSpecialCheckedTimer = setTimeout(nsmaxFlushSpecialChecked, 1000);
 	}
 	// 跨标签页同步：在另一个标签页点开或扫出的抽奖帖、已查记录、开奖结果实时并入当前页，避免重复请求并立刻挂标
 	function nsmaxBindSpecialStorageSync() {
@@ -25476,7 +25684,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 					for (const [id, time] of Object.entries(JSON.parse(event.newValue))) if (Number.isFinite(time)) map.set(id, time);
 					nsmaxLotteryRefresh();
 				} else if (event.key === NSMAX_LOTTERY_ENDED_KEY) {
+					// 整份照抄（别的标签页改回「没结束」的也跟上，以前只加不减）
 					const set = nsmaxLotteryEnded();
+					set.clear();
 					for (const id of JSON.parse(event.newValue)) if (typeof id === "string") set.add(id);
 					nsmaxLotteryRefresh();
 				} else if (event.key === NSMAX_LOTTERY_RESULTS_KEY) {
@@ -25488,25 +25698,31 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			} catch {}
 		});
 	}
-	// 开奖链接怎么认（只要里面有开奖链接，就判定为抽奖帖子）：本站的 /lucky?…（含 /lucky/?…、/jump?to= 跳转包装）——
-	// 站点渲染出来的链接、写成 nodeseek.com / www.nodeseek.com 完整网址的、没被渲染成链接的纯文字网址都算；
-	// 参数不全（没写开奖时间）的也算抽奖帖，只是画不出倒计时卡片
+	// 开奖链接怎么认（只要里面有开奖链接，就判定为抽奖帖子）：本站的 /lucky?…（含 /lucky/?…、/Lucky?…、/jump?to= 跳转包装）——
+	// 站点渲染出来的链接、写成 nodeseek.com / www.nodeseek.com 完整网址的（带不带 https:// 都行）、没被渲染成链接的纯文字网址都算；
+	// 纯文字网址读到中文标点为止（「time=123，」以前把逗号也算进开奖时间）；参数不全（没写开奖时间）的也算抽奖帖，只是画不出倒计时卡片
 	// 不用后行断言 (?<!…)：Safari 16.4 以前不认，整个脚本会因为这一行解析失败、什么都不运行（2026-11-07）。
 	// 改成把前面那个字符一起匹配进第 1 组，用的时候切掉
-	var NSMAX_LUCKY_TEXT = /(?:https?:\/\/(?:www\.)?(?:nodeseek|deepflood)\.com|(^|[^\w.:\/-]))\/lucky\/?\?[^\s<>"'`）)\]]+/gi;
+	// 网址前面那个字符也要看（第 1、2 组）：「notnodeseek.com/lucky?…」「evil-nodeseek.com/…」不算本站
+	var NSMAX_LUCKY_TEXT = /(?:(^|[^\w.-])(?:https?:\/\/)?(?:www\.)?(?:nodeseek|deepflood)\.com|(^|[^\w.:\/-]))\/lucky\/?\?[^\s<>"'`）)\]\u0080-\uffff]+/gi;
+	var NSMAX_LUCKY_BARE_HOST = /^(?:www\.)?(?:nodeseek|deepflood)\.com\//i;
+	function nsmaxLuckySameSite(url) {
+		if (url.origin === location.origin) return true;
+		const family = location.hostname.replace(/^www\./, "");
+		return /^(?:nodeseek|deepflood)\.com$/.test(family) && /^https?:$/.test(url.protocol) && url.hostname.replace(/^www\./, "") === family;
+	}
 	function nsmaxLuckyUrl(href) {
 		let url;
-		try { url = new URL(href, location.href); } catch { return null; }
-		if (url.origin === location.origin && url.pathname === "/jump") {
+		const raw = String(href || "");
+		try { url = new URL(NSMAX_LUCKY_BARE_HOST.test(raw) ? "https://" + raw : raw, location.href); } catch { return null; }
+		if (url.pathname.toLowerCase() === "/jump" && nsmaxLuckySameSite(url)) {
 			const to = url.searchParams.get("to");
 			if (!to) return null;
-			try { url = new URL(to, location.href); } catch { return null; }
+			try { url = new URL(NSMAX_LUCKY_BARE_HOST.test(to) ? "https://" + to : to, location.href); } catch { return null; }
 		}
 		if (!/^https?:$/.test(url.protocol)) return null;
-		if (url.pathname.replace(/\/+$/, "") !== "/lucky" || !url.search) return null;
-		if (url.origin === location.origin && url.pathname === "/lucky") return url;
-		const family = location.hostname.replace(/^www\./, "");
-		if (!/^(?:nodeseek|deepflood)\.com$/.test(family) || url.hostname.replace(/^www\./, "") !== family) return null;
+		if (url.pathname.replace(/\/+$/, "").toLowerCase() !== "/lucky" || !url.search) return null;
+		if (!nsmaxLuckySameSite(url)) return null;
 		return new URL("/lucky" + url.search + url.hash, location.origin);
 	}
 	// 一段内容里所有开奖链接（链接 + 纯文字网址，含 /jump?to= 包装），卡片自己的「查看开奖」不算
@@ -25527,7 +25743,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				acceptNode: node => node.parentElement?.closest(noQuote ? ".nsmax-lottery, blockquote, a[href]" : ".nsmax-lottery, a[href]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
 			});
 			while (walker.nextNode()) for (const match of walker.currentNode.data.matchAll(NSMAX_LUCKY_TEXT)) {
-				const url = nsmaxLuckyUrl(match[1] ? match[0].slice(match[1].length) : match[0]);
+				const url = nsmaxLuckyUrl(match[0].slice((match[1] || match[2] || "").length));
 				if (url) urls.push(url);
 			}
 		}
@@ -25576,7 +25792,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	var NSMAX_POST_TAIL_RE = /class="[^"]*\b(?:comments|comment-container|md-editor|post-bottom-pager)\b|id="(?:editor|nsk-right-panel-container)"|<\/section>|<footer\b/;
 	function nsmaxHasSelfLuckyHtml(slice, id) {
 		if (!NSMAX_LUCKY_HTML_HINT.test(slice)) return false;
-		const re = /(?:href=["']([^"']*lucky[^"']*)["']|(\/lucky\/?\?[^\s<>"'`）)\]]+))/gi;
+		const re = /(?:href=["']([^"']*lucky[^"']*)["']|(\/lucky\/?\?[^\s<>"'`）)\]\u0080-\uffff]+))/gi;
 		for (const m of slice.matchAll(re)) {
 			const raw = (m[1] || m[2] || "").replace(/&amp;/gi, "&");
 			const url = nsmaxLuckyUrl(raw);
@@ -25586,16 +25802,65 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		}
 		return false;
 	}
+	// 刚发出来就查过「不是」的帖子（发帖不到一天）：楼主常常先发帖、过一会儿才编辑补上开奖链接，过 10 分钟、1 小时、6 小时各再查一次
+	// （2026-11-28；以前只有标题像抽奖的才会再查）。记在本机 nsmax:special-young：帖子编号 → [发帖时间, 已经再查了几次]
+	var NSMAX_SPECIAL_YOUNG_KEY = "nsmax:special-young";
+	var NSMAX_YOUNG_RECHECKS = [10 * 60e3, 60 * 60e3, 6 * 36e5];
+	var NSMAX_POST_CREATED_RE = /class="date-created"[^>]*>\s*<time\b[^>]*\bdatetime="([^"]+)"/;
+	var nsmaxSpecialYoungMap;
+	function nsmaxSpecialYoung() {
+		if (nsmaxSpecialYoungMap) return nsmaxSpecialYoungMap;
+		nsmaxSpecialYoungMap = new Map();
+		try {
+			for (const [id, entry] of Object.entries(JSON.parse(localStorage.getItem(NSMAX_SPECIAL_YOUNG_KEY) || "{}"))) if (Array.isArray(entry) && Number.isFinite(entry[0]) && Number.isFinite(entry[1])) nsmaxSpecialYoungMap.set(id, entry);
+		} catch {}
+		return nsmaxSpecialYoungMap;
+	}
+	function nsmaxNoteYoungPost(id, html) {
+		const map = nsmaxSpecialYoung();
+		const prev = map.get(id);
+		const postAt = prev?.[0] || Date.parse(String(html || "").match(NSMAX_POST_CREATED_RE)?.[1] || "");
+		const n = prev ? prev[1] + 1 : 0;
+		if (!Number.isFinite(postAt) || Date.now() - postAt > 864e5 || n >= NSMAX_YOUNG_RECHECKS.length) {
+			if (!prev) return;
+			map.delete(id);
+		} else {
+			map.delete(id);
+			map.set(id, [postAt, n]);
+			while (map.size > 600) map.delete(map.keys().next().value);
+		}
+		try { localStorage.setItem(NSMAX_SPECIAL_YOUNG_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
+	}
+	function nsmaxYoungRecheckDue(id, checkedAt) {
+		const entry = nsmaxSpecialYoung().get(id);
+		return !!entry && Date.now() - entry[0] < 864e5 + NSMAX_YOUNG_RECHECKS[NSMAX_YOUNG_RECHECKS.length - 1] && Date.now() - checkedAt >= NSMAX_YOUNG_RECHECKS[entry[1]];
+	}
+	// 站点限流、后台停着的时候：到点了接着做（同一件事只排一个定时器；别的标签页又延长了暂停就再等）
+	var nsmaxBgResumeTimers = new Map();
+	function nsmaxAfterBackgroundPause(key, ctx, fn) {
+		const until = nsmaxBackgroundPauseUntil();
+		if (until <= Date.now() || ctx?.signal?.aborted) return false;
+		clearTimeout(nsmaxBgResumeTimers.get(key));
+		nsmaxBgResumeTimers.set(key, setTimeout(() => {
+			nsmaxBgResumeTimers.delete(key);
+			if (ctx?.signal?.aborted) return;
+			if (nsmaxBackgroundPaused()) nsmaxAfterBackgroundPause(key, ctx, fn);
+			else fn();
+		}, until - Date.now() + 500));
+		return true;
+	}
 	var nsmaxSpecialQueue = [];
 	var nsmaxSpecialBusy = false;
 	var nsmaxSpecialCtx = null;
 	var nsmaxSpecialVisible = new Set();
 	var nsmaxSpecialIo = null;
 	// 2026-11-25：普通列表页每页最多查 50 篇（自动翻页加载新页时自动补充预算）；疑似抽奖标题优先、同优先级内当前视口可见行优先；
-	// 走探针慢启动的后台队列（首篇探针确认未限流后再按档位并行），滚动或切后台暂停，429/503 立刻停 10 分钟。
+	// 走探针慢启动的后台队列（首篇探针确认未限流后再按档位并行，所有标签页共用一个贴着限流的配额），滚动或切后台暂停，
+	// 429/503 先停 30 秒（接连碰到再加长），停完自己接着查。
 	var nsmaxSpecialBudget = 50;
 	var nsmaxSpecialRecheckBudget = 4;
 	var nsmaxSpecialStaleBudget = 4;
+	var nsmaxSpecialYoungBudget = 6;
 	var nsmaxSpecialQueued = new Set();
 	function nsmaxOnListAppended() {
 		nsmaxSpecialBudget = Math.max(nsmaxSpecialBudget, 50);
@@ -25633,8 +25898,12 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	function nsmaxVerifySpecialPosts(ctx) {
 		nsmaxBindSpecialStorageSync();
 		nsmaxSpecialCtx = ctx;
-		// 「抽奖」分类页有自己的识别（见 nsmaxLotteryView），这里不再重复查；站点限流过、后台暂停中也不查
-		if (nsmaxIsLotteryView() || nsmaxBackgroundPaused()) return;
+		// 「抽奖」分类页有自己的识别（见 nsmaxLotteryView），这里不再重复查；站点限流过、后台暂停中先不查，停完接着来
+		if (nsmaxIsLotteryView()) return;
+		if (nsmaxBackgroundPaused()) {
+			nsmaxAfterBackgroundPause("special-verify", ctx, () => nsmaxVerifySpecialPosts(ctx));
+			return;
+		}
 		// 触屏普通列表先服务阅读和图片；点进帖子或主动打开「抽奖」分类时再按内容识别。
 		if (matchMedia("(hover: none) and (pointer: coarse)").matches) return;
 		const links = document.querySelectorAll(".post-list-item .post-title > a[href*='/post-']");
@@ -25651,18 +25920,24 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				if (!rows.has(id)) nsmaxRememberLotteryRow(link.closest("li.post-list-item"));
 				// 认出来、还没结束、标题里也没写结束的抽奖帖：30 分钟以上没查过就再查一次（楼主可能在正文里改成了已结束）
 				const time = times.get(id) || 0;
-				const over = ended.has(id) || (time && time <= Date.now()) || NSMAX_LOTTERY_ENDED_TITLE.test(titleText);
+				const over = ended.has(id) || (time && time <= Date.now()) || nsmaxLotteryTitleEnded(titleText);
 				if (over || nsmaxSpecialRecheckBudget <= 0 || Date.now() - (checked.get(id) || 0) < 30 * 60e3) continue;
 				nsmaxSpecialRecheckBudget--;
 				recheckActive.push({ id, tier: 1, recheck: true });
 			} else {
-				// 这次打开页面已经查过没查成的（删帖、要登录、站点限流……）不再反复查，下次打开页面再说
-				if (known.has(id) || nsmaxSpecialFailed.has(id)) continue;
+				// 这次打开页面已经查过没查成的（网络出错……）不再反复查，下次打开页面再说；只知道有投票的（悬停预览记下的）照样查一次
+				if (known.has(id) && checked.has(id) || nsmaxSpecialFailed.has(id)) continue;
 				const hint = NSMAX_LOTTERY_HINT.test(titleText) || NSMAX_GIVEAWAY_HINT.test(titleText);
 				if (checked.has(id)) {
-					// 查过不是、但标题像抽奖/福利的：30 分钟以上没查过就再查一次（楼主常先发帖、过几分钟再编辑补上开奖链接）。一页最多 4 篇
-					if (!hint || nsmaxSpecialStaleBudget <= 0 || Date.now() - checked.get(id) < 30 * 60e3) continue;
-					nsmaxSpecialStaleBudget--;
+					// 查过不是、但标题像抽奖/福利的：30 分钟以上没查过就再查一次（楼主常先发帖、过几分钟再编辑补上开奖链接）。一页最多 4 篇；
+					// 标题不像的、刚发出来就查过的：过 10 分钟、1 小时、6 小时各再查一次（见 nsmaxYoungRecheckDue），一页最多 6 篇
+					if (hint) {
+						if (nsmaxSpecialStaleBudget <= 0 || Date.now() - checked.get(id) < 30 * 60e3) continue;
+						nsmaxSpecialStaleBudget--;
+					} else {
+						if (nsmaxSpecialYoungBudget <= 0 || !nsmaxYoungRecheckDue(id, checked.get(id))) continue;
+						nsmaxSpecialYoungBudget--;
+					}
 					recheckStale.push({ id, tier: 2, recheck: true });
 				} else if (hint) {
 					if (nsmaxSpecialBudget <= 0) continue;
@@ -25685,7 +25960,8 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		}
 		nsmaxRunSpecialQueue(ctx);
 	}
-	// 查一篇：打开它的第一页。打不开（删帖、要登录、站点验证、网络出错）：这次当作不是，不记下来，下次再查。
+	// 查一篇：打开它的第一页。打不开（站点验证、网络出错）：这次当作不是，不记下来，下次再查；站点限流（后台先停一会儿）：
+	// 不算没查成，返回 "limited"，停完接着查；站点正常回了页面、但没有主帖（删帖、没权限看）：记成查过，不再每次都查。
 	// 两阶段流式截断：0 回复帖或主帖已出现本帖 /lucky? 链接时读到 </article> 立刻停流；否则读到评论区末尾（翻页/编辑器/右栏）即停；
 	// 正文和评论完全不含开奖/投票关键词的有效帖子零 DOMParser 直接记为已查，需解析时只切 #nsk-body-left 之后的 HTML。
 	var nsmaxSpecialFailed = new Set();
@@ -25731,8 +26007,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 					}
 				}
 			}
-		} catch {
-			nsmaxSpecialFailed.add(id);
+		} catch (error) {
+			if (error?.rateLimited) return "limited";
+			if (!ctx.signal.aborted) nsmaxSpecialFailed.add(id);
 			return;
 		}
 		if (!html) {
@@ -25740,10 +26017,12 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			return;
 		}
 		const known = nsmaxSpecialPostMap();
-		// 零 DOMParser 快速阴性通道：未登记为特殊帖且 HTML 完全不含 /lucky?、vote-panel、nsapp://vote
+		// 零 DOMParser 快速阴性通道：未登记为特殊帖、HTML 完全不含 /lucky?、vote-panel、nsapp://vote，标题也不像在抽奖（见 nsmaxIsTextLottery）
 		if (!known.has(id) && !NSMAX_SPECIAL_HTML_HINT.test(html)) {
-			if (NSMAX_POST_VALID_RE.test(html) && (opOnly || NSMAX_POST_TAIL_RE.test(html))) {
+			const titleGuess = listRow?.querySelector(".post-title a")?.textContent || html.match(/<title>([^<]*)<\/title>/)?.[1] || "";
+			if (NSMAX_POST_VALID_RE.test(html) && (opOnly || NSMAX_POST_TAIL_RE.test(html)) && !nsmaxTextLotteryTitle(titleGuess)) {
 				nsmaxMarkSpecialChecked(id);
+				nsmaxNoteYoungPost(id, html);
 				return;
 			}
 		}
@@ -25753,7 +26032,8 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const op = doc.querySelector(".nsk-post article.post-content, .nsk-post .post-content");
 		const title = doc.querySelector(".nsk-post .post-title")?.textContent || "";
 		if (!op) {
-			nsmaxSpecialFailed.add(id);
+			if (bodyIdx > 0 && !doc.querySelector(".nsk-post")) nsmaxMarkSpecialChecked(id);
+			else nsmaxSpecialFailed.add(id);
 			return;
 		}
 		let comments = null;
@@ -25768,13 +26048,14 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 					const page = new DOMParser().parseFromString(fullCut > 0 ? fullHtml.slice(fullCut) : fullHtml, "text/html");
 					doc = page;
 					comments = nsmaxCommentLuckyParams(page, id);
-				} catch {
-					nsmaxSpecialFailed.add(id);
+				} catch (error) {
+					if (error?.rateLimited) return "limited";
+					if (!ctx.signal.aborted) nsmaxSpecialFailed.add(id);
 					return;
 				}
 			}
 		}
-		nsmaxLearnSpecialPost(id, op, title, comments, listRow, doc);
+		if (!nsmaxLearnSpecialPost(id, op, title, comments, listRow, doc)) nsmaxNoteYoungPost(id, html);
 	}
 	// 读到一篇帖子第一页的主帖以后记下它是不是抽奖帖（后台查帖、悬停预览都走这里）。comments：评论里指向这一篇的开奖链接
 	function nsmaxLearnSpecialPost(id, op, title, comments = null, row = null, doc = null) {
@@ -25784,10 +26065,14 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			kinds.push("lottery");
 			time = comments.time;
 		}
+		const linked = kinds.includes("lottery");
+		const text = !linked && nsmaxIsTextLottery(title, op);
+		if (text) kinds.push("lottery", "text");
 		nsmaxRememberSpecialPost(id, kinds);
+		if (!text) nsmaxDropTextLottery(id, linked);
 		nsmaxRememberLotteryTime(id, time);
 		if (kinds.includes("lottery")) {
-			nsmaxRememberLotteryEnded(id, NSMAX_LOTTERY_ENDED_TITLE.test(title) || nsmaxLotteryEndedIn(op));
+			nsmaxNoteLotteryEnded(id, title, op);
 			const listRow = row || nsmaxListRowOf(id);
 			if (listRow) nsmaxRememberLotteryRow(listRow);
 			else if (doc) nsmaxRememberLotteryFromPost(id, doc);
@@ -25804,8 +26089,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const kinds = nsmaxSpecialKindsOf(op);
 		const hasCommentsDom = !!doc.querySelector("ul.comments, .comment-container");
 		const comments = !kinds.includes("lottery") && hasCommentsDom ? nsmaxCommentLuckyParams(doc, id) : null;
-		if (kinds.includes("lottery") || comments) {
-			nsmaxLearnSpecialPost(id, op, doc.querySelector(".nsk-post .post-title")?.textContent || "", comments, null, doc);
+		const title = doc.querySelector(".nsk-post .post-title")?.textContent || "";
+		if (kinds.includes("lottery") || comments || nsmaxIsTextLottery(title, op)) {
+			nsmaxLearnSpecialPost(id, op, title, comments, null, doc);
 			nsmaxLotteryRefresh();
 			return;
 		}
@@ -25860,6 +26146,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			await new Promise((resolve) => setTimeout(resolve, timedOut ? 200 : 1200));
 			if (ctx.signal.aborted || nsmaxBackgroundPaused()) {
 				nsmaxSpecialBusy = false;
+				nsmaxAfterBackgroundPause("special-run", ctx, () => nsmaxRunSpecialQueue(ctx));
 				return;
 			}
 			nsmaxObserveSpecialVisible(ctx);
@@ -25879,7 +26166,11 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 					if (!next) break;
 					// 别的标签页刚查完且非复核任务：直接跳过
 					if (!next.recheck && nsmaxSpecialChecked().has(next.id)) continue;
-					await nsmaxCheckSpecialPost(ctx, next.id, null, "low");
+					// 被限流：放回队里，停完接着查
+					if (await nsmaxCheckSpecialPost(ctx, next.id, null, "low") === "limited") {
+						nsmaxSpecialQueue.push(next);
+						break;
+					}
 					nsmaxLotteryRefresh();
 				}
 			};
@@ -25887,6 +26178,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		} finally {
 			nsmaxSpecialBusy = false;
 			nsmaxFlushSpecialChecked();
+			if (nsmaxSpecialQueue.length) nsmaxAfterBackgroundPause("special-run", ctx, () => nsmaxRunSpecialQueue(ctx));
 		}
 	}
 	// 列表工具条「精华」「抽奖」（照 sb.sb 首页工具条的 精华 / 抽奖 标签，2026-10-18：「投票」去掉，顶栏的「精华」挪到这里）。
@@ -26021,12 +26313,14 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				status.setAttribute("role", "status");
 				list.after(status);
 			}
-			// 没查成的（网络出错、站点限流）：说一声，给一个「重试」，不再一声不响地当成「不是」。
-			// 站点限流过（后台暂停 10 分钟，见 NSMAX_BG_PAUSE_KEY）：还没查的先停着，「重试」马上接着查
-			const paused = (pending > 0 || failed.length > 0) && nsmaxBackgroundPaused();
+			// 没查成的（网络出错）：说一声，给一个「重试」，不再一声不响地当成「不是」。
+			// 站点限流过（后台先停 30 秒起，见 nsmaxPauseBackground）：还没查的先停着，说一声大概多久以后自己接着查，「重试」马上接着查
+			const pauseLeft = nsmaxBackgroundPauseUntil() - Date.now();
+			const paused = (pending > 0 || failed.length > 0) && pauseLeft > 0;
 			const crawling = nsmaxLotteryCrawling && !paused && !pending && !failed.length && !shown;
 			const filteredEmpty = activeOnly && !pending && !failed.length && shown > 0 && visibleActive === 0;
-			const text = paused ? "站点限流，识别先停一会儿" : pending ? `正在识别抽奖帖 ${total - pending} / ${total}` : failed.length ? `有 ${failed.length} 篇没能识别（网络或站点限流）` : crawling ? "正在从最新帖子中识别抽奖帖…" : filteredEmpty ? "这一页没有进行中的抽奖帖" : shown ? "" : "这一页没有抽奖帖";
+			const pauseText = pauseLeft >= 6e4 ? `约 ${Math.ceil(pauseLeft / 6e4)} 分钟` : `约 ${Math.max(10, Math.ceil(pauseLeft / 1e4) * 10)} 秒`;
+			const text = paused ? `站点限流，${pauseText}后自动接着识别` : pending ? `正在识别抽奖帖 ${total - pending} / ${total}` : failed.length ? `有 ${failed.length} 篇没能识别（网络出错）` : crawling ? "正在从最新帖子中识别抽奖帖…" : filteredEmpty ? "这一页没有进行中的抽奖帖" : shown ? "" : "这一页没有抽奖帖";
 			if (status.dataset.nsmaxText !== text) {
 				status.dataset.nsmaxText = text;
 				const parts = [text];
@@ -26082,6 +26376,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		});
 	}
 	var nsmaxLotteryViewBusy = false;
+	var nsmaxLotteryViewAgain = false;
 	async function nsmaxLotteryView(ctx) {
 		if (!nsmaxIsLotteryView()) return;
 		nsmaxBindSpecialStorageSync();
@@ -26096,29 +26391,40 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		if (nsmaxMergeLotteryRows()) nsmaxPrizeBadges();
 		nsmaxMarkLotteryPager();
 		const pending = nsmaxFilterLotteryRows();
-		if (nsmaxLotteryViewBusy) return;
+		// 正在查：新冒出来的行（并进来的、自动翻页接上的）等这一轮查完接着查（以前会一直停在「正在识别」）
+		if (nsmaxLotteryViewBusy) {
+			nsmaxLotteryViewAgain = true;
+			return;
+		}
+		if (nsmaxBackgroundPaused() && nsmaxAfterBackgroundPause("lottery-view", ctx, () => nsmaxLotteryView(ctx))) return;
 		if (!pending) {
 			nsmaxLotteryRecheckStale(ctx);
 			nsmaxLotteryCrawlLater(ctx);
 			return;
 		}
 		nsmaxLotteryViewBusy = true;
+		nsmaxLotteryViewAgain = false;
 		try {
 			const checked = nsmaxSpecialChecked();
-			const ids = Array.from(document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item[data-nsmax-lottery='wait'] .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]).filter((id, index, all) => id && !checked.has(id) && !nsmaxSpecialFailed.has(id) && all.indexOf(id) === index);
+			const tried = new Set();
+			const collect = () => Array.from(document.querySelectorAll("#nsk-body-left ul.post-list > li.post-list-item[data-nsmax-lottery='wait'] .post-title a[href*='/post-']"), (link) => link.getAttribute("href").match(/\/post-(\d+)/)?.[1]).filter((id, index, all) => id && !tried.has(id) && !checked.has(id) && !nsmaxSpecialFailed.has(id) && all.indexOf(id) === index);
+			const ids = collect();
 			// 前景「抽奖」分类走独立 scan 通道：首篇先单独探针确认未限流，通过后自动提速到最多 3 路有界并发（标准 3/150ms），
-			// 慢响应自动退回单并发，遇 429/503 立刻停 10 分钟并给「重试」
+			// 所有标签页共用一个贴着限流的配额（每 10 秒 15 篇起，均匀发，见 nsmaxBgRate）；遇 429/503 先停 30 秒，停完自己接着查，也可以点「重试」
 			let resolved = 0;
 			let crawlKicked = false;
 			const worker = async () => {
-				while (ids.length && !ctx.signal.aborted && !nsmaxBackgroundPaused()) {
+				while (!ctx.signal.aborted && !nsmaxBackgroundPaused()) {
 					if (document.hidden) {
 						await new Promise((resolve) => document.addEventListener("visibilitychange", resolve, { once: true }));
 						continue;
 					}
+					if (!ids.length) ids.push(...collect());
 					const id = ids.shift();
-					if (!id || nsmaxSpecialChecked().has(id)) continue;
-					await nsmaxCheckSpecialPost(ctx, id, null, "scan");
+					if (!id) break;
+					if (tried.has(id) || nsmaxSpecialChecked().has(id)) continue;
+					tried.add(id);
+					if (await nsmaxCheckSpecialPost(ctx, id, null, "scan") === "limited") break;
 					resolved++;
 					nsmaxLotteryRefresh();
 					// 首屏 ~10 篇有结论后即可并行发现标题不含「抽奖」的新帖，不必干等整页 50 篇扫完
@@ -26128,7 +26434,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 					}
 				}
 			};
-			await Promise.all(Array.from({ length: Math.min(3, ids.length) }, () => worker()));
+			await Promise.all(Array.from({ length: Math.min(3, Math.max(1, ids.length)) }, () => worker()));
 		} finally {
 			nsmaxLotteryViewBusy = false;
 			nsmaxFlushSpecialChecked();
@@ -26136,6 +26442,17 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			nsmaxLotteryRefreshQueued = 0;
 			nsmaxPrizeBadges();
 			nsmaxFilterLotteryRows();
+		}
+		if (ctx.signal.aborted) return;
+		// 被限流停下了：停完接着查；这一轮里又有新行冒出来：再来一轮
+		if (nsmaxAfterBackgroundPause("lottery-view", ctx, () => nsmaxLotteryView(ctx))) return;
+		if (nsmaxLotteryViewAgain) {
+			nsmaxLotteryViewAgain = false;
+			// 只有真冒出了新的待查行才再来一轮；否则接着往下（预取下一页、复查、读新帖子）
+			if (nsmaxFilterLotteryRows() > 0) {
+				nsmaxLotteryView(ctx);
+				return;
+			}
 		}
 		// 这一页查完了：下一页在后台先查掉，点「下一页」时直接显示
 		const next = document.querySelector("#nsk-body-left .nsk-pager a.pager-next[href]");
@@ -26155,7 +26472,11 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		if (!ids.length) return;
 		await nsmaxPageReady(1500);
 		while (ids.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) {
-			await nsmaxCheckSpecialPost(ctx, ids.shift(), null, "low");
+			if (await nsmaxCheckSpecialPost(ctx, ids.shift(), null, "low") === "limited") {
+				// 被限流：这一页下次（停完以后重新进来时）再复查
+				nsmaxLotteryStaleAt = "";
+				break;
+			}
 			nsmaxLotteryRefresh();
 		}
 		nsmaxFlushSpecialChecked();
@@ -26173,6 +26494,12 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		} catch {
 			return false;
 		}
+	}
+	function nsmaxLotteryIndexReset(value) {
+		try {
+			if (value) localStorage.setItem(NSMAX_LOTTERY_INDEX_KEY, String(value));
+			else localStorage.removeItem(NSMAX_LOTTERY_INDEX_KEY);
+		} catch {}
 	}
 	function nsmaxLotteryCrawlLater(ctx) {
 		if (document.readyState === "loading" || nsmaxLotteryCrawling || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
@@ -26210,39 +26537,76 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	}
 	// 2026-11-24：站内搜索只搜标题，标题不含「抽奖」但含 /lucky?… 开奖链接的抽奖帖搜不到。
 	// 停留在「抽奖」分类第一页时（每 10 分钟最多一次），读一眼「新帖子」列表，走 scan 通道快速核对未查过的帖子并实时并入「抽奖」分类。
+	// 2026-11-28：「新帖子」一直往后翻到上次读过的地方（最多 3 页，第一次只读第 1 页）；再搜一下标题里写「开奖」的
+	// （「速抽」「黑五第三弹：开奖…」这类标题没有「抽奖」两个字），只要不比这一页最旧的还旧的。一次最多核对 40 篇，标题像抽奖的先查；
+	// 列表一页都没读到（被限流、断网）就不算读过，停完或者下次打开马上再来
+	var NSMAX_LOTTERY_CRAWL_KEY = "nsmax:lottery-crawl-upto";
+	var NSMAX_LOTTERY_EXTRA_QUERIES = ["开奖"];
 	async function nsmaxCrawlNewPosts(ctx) {
 		if (nsmaxLotteryCrawling || !nsmaxIsLotteryView() || ctx.signal.aborted || document.hidden || nsmaxBackgroundPaused()) return;
 		if (navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || "")) return;
 		const current = document.querySelector("#nsk-body-left .nsk-pager :is(.pager-cur, [data-nsmax-pg-cur])");
 		if (current && current.textContent.trim() !== "1") return;
+		let previousGate = 0;
+		try { previousGate = Number(localStorage.getItem(NSMAX_LOTTERY_INDEX_KEY)) || 0; } catch {}
 		if (!nsmaxLotteryIndexReady(true)) return;
 		nsmaxLotteryCrawling = true;
 		nsmaxFilterLotteryRows();
+		let fetched = false, finished = false;
 		try {
-			let html = "";
-			try {
-				html = await ctx.request("/?sortBy=postTime", { responseType: "text", signal: ctx.signal, priority: "scan" });
-			} catch {
-				return;
-			}
-			const doc = new DOMParser().parseFromString(html, "text/html");
 			const checked = nsmaxSpecialChecked(), known = nsmaxSpecialPostMap(), rows = nsmaxLotteryRows();
-			const priority = [], rest = [];
+			const priority = [], rest = [], seen = new Set();
+			const idOf = (item) => item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1];
+			const pinned = (item) => !!item.querySelector(".post-title :is(svg.pined, use[href='#pin'])");
 			let remembered = 0;
-			for (const item of doc.querySelectorAll("ul.post-list > li.post-list-item")) {
-				const link = item.querySelector(".post-title a[href*='/post-']");
-				const id = link?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1];
-				if (!id) continue;
-				if ((known.get(id) || "").split(",").includes("lottery")) {
-					if (!rows.has(id)) {
-						nsmaxRememberLotteryRow(item);
-						remembered++;
+			const take = (doc, floor = 0) => {
+				for (const item of doc.querySelectorAll("ul.post-list > li.post-list-item")) {
+					const id = idOf(item);
+					if (!id || seen.has(id)) continue;
+					seen.add(id);
+					if (floor && Number(id) < floor) continue;
+					if ((known.get(id) || "").split(",").includes("lottery")) {
+						if (!rows.has(id)) {
+							nsmaxRememberLotteryRow(item);
+							remembered++;
+						}
+					} else if (!checked.has(id) && !nsmaxSpecialFailed.has(id)) {
+						const titleText = item.querySelector(".post-title a[href*='/post-']")?.textContent || "";
+						if (NSMAX_LOTTERY_HINT.test(titleText) || NSMAX_GIVEAWAY_HINT.test(titleText)) priority.push([id, item]);
+						else rest.push([id, item]);
 					}
-				} else if (!checked.has(id) && !known.has(id) && !nsmaxSpecialFailed.has(id)) {
-					const titleText = link.textContent || "";
-					if (NSMAX_LOTTERY_HINT.test(titleText) || NSMAX_GIVEAWAY_HINT.test(titleText)) priority.push([id, item]);
-					else rest.push([id, item]);
 				}
+			};
+			const read = async (url) => {
+				try {
+					const html = await ctx.request(url, { responseType: "text", signal: ctx.signal, priority: "scan" });
+					fetched = true;
+					return new DOMParser().parseFromString(html, "text/html");
+				} catch {
+					return null;
+				}
+			};
+			// 1. 「新帖子」：从第 1 页往后翻，翻到上次读过的最新那篇为止
+			let upto = 0;
+			try { upto = Number(localStorage.getItem(NSMAX_LOTTERY_CRAWL_KEY)) || 0; } catch {}
+			let url = "/?sortBy=postTime", newest = 0, reached = false;
+			for (let page = 0; page < 3 && url && !reached && !ctx.signal.aborted && !nsmaxBackgroundPaused(); page++) {
+				const doc = await read(url);
+				if (!doc) break;
+				const ids = Array.from(doc.querySelectorAll("ul.post-list > li.post-list-item"), (item) => pinned(item) ? 0 : Number(idOf(item)) || 0).filter(Boolean);
+				if (!ids.length) break;
+				if (!page) newest = Math.max(...ids);
+				take(doc);
+				reached = !upto || Math.min(...ids) <= upto;
+				url = doc.querySelector(".nsk-pager a.pager-next[href]")?.getAttribute("href") || "";
+			}
+			// 2. 标题里写「开奖」的：只要这一页时间范围里的（更早的属于后面几页）
+			const pageIds = Array.from(document.querySelectorAll("#nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item:not([data-nsmax-lottery-merged])"), (item) => pinned(item) ? 0 : Number(idOf(item)) || 0).filter(Boolean);
+			const floor = pageIds.length ? Math.min(...pageIds) : 0;
+			for (const query of NSMAX_LOTTERY_EXTRA_QUERIES) {
+				if (ctx.signal.aborted || nsmaxBackgroundPaused()) break;
+				const doc = await read("/search?q=" + encodeURIComponent(query));
+				if (doc) take(doc, floor);
 			}
 			const applyMerged = () => {
 				if (!nsmaxIsLotteryView() || !nsmaxMergeLotteryRows()) return;
@@ -26254,23 +26618,38 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				nsmaxFilterLotteryRows();
 			};
 			if (remembered) applyMerged();
-			const todo = [...priority, ...rest].slice(0, 15);
+			const all = [...priority, ...rest];
+			const todo = all.slice(0, 40);
+			let limited = false;
 			const worker = async () => {
 				while (todo.length && !ctx.signal.aborted && !document.hidden && !nsmaxBackgroundPaused()) {
 					const [id, item] = todo.shift();
 					if (nsmaxSpecialChecked().has(id)) continue;
-					await nsmaxCheckSpecialPost(ctx, id, item, "scan");
+					if (await nsmaxCheckSpecialPost(ctx, id, item, "scan") === "limited") {
+						limited = true;
+						break;
+					}
 					applyMerged();
 				}
 			};
 			await Promise.all(Array.from({ length: Math.min(2, todo.length) }, () => worker()));
+			finished = fetched && !limited && !todo.length && !ctx.signal.aborted;
+			// 这一轮都查完了就记下读到了哪儿，下次从这里往后翻（隔得太久、3 页没翻到上次的地方，中间那段就不补了）
+			if (finished && newest) {
+				try { localStorage.setItem(NSMAX_LOTTERY_CRAWL_KEY, String(newest)); } catch {}
+			}
 		} finally {
 			nsmaxLotteryCrawling = false;
+			// 被限流打断：不算读过，停完自己接着来；一页列表都没读到（断网、站点出错）：2 分钟后再试，不是每次整理页面都读一遍
+			if (!finished && nsmaxBackgroundPaused()) {
+				nsmaxLotteryIndexReset(previousGate);
+				nsmaxAfterBackgroundPause("lottery-view", ctx, () => nsmaxLotteryView(ctx));
+			} else if (!fetched) nsmaxLotteryIndexReset(Date.now() - 8 * 60e3);
 			nsmaxFlushSpecialChecked();
 			if (nsmaxIsLotteryView()) nsmaxFilterLotteryRows();
 		}
 	}
-	// 认出来的抽奖帖在列表上的样子（标题、作者、版块、浏览 / 回复数、最后回复、时间），记在本机，最多 200 篇（编号最大的那些）
+	// 认出来的抽奖帖在列表上的样子（标题、作者、版块、浏览 / 回复数、最后回复、时间），记在本机，最多 400 篇（编号最大的那些）
 	var NSMAX_LOTTERY_ROWS_KEY = "nsmax:lottery-rows";
 	var nsmaxLotteryRowsMap;
 	function nsmaxLotteryRows() {
@@ -26303,7 +26682,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const map = nsmaxLotteryRows();
 		if (JSON.stringify(map.get(id)) === JSON.stringify(row)) return;
 		map.set(id, row);
-		if (map.size > 200) map.delete([...map.keys()].reduce((a, b) => Number(a) < Number(b) ? a : b));
+		if (map.size > 400) map.delete([...map.keys()].reduce((a, b) => Number(a) < Number(b) ? a : b));
 		try { localStorage.setItem(NSMAX_LOTTERY_ROWS_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
 	// 直接点开帖子或悬停预览时，若列表尚未记录过该帖，则从帖子详情页补记列表行，确保无「抽奖」标题的帖子也能并入「抽奖」分类
@@ -26344,7 +26723,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const map = nsmaxLotteryRows();
 		if (JSON.stringify(map.get(key)) === JSON.stringify(row)) return;
 		map.set(key, row);
-		if (map.size > 200) map.delete([...map.keys()].reduce((a, b) => Number(a) < Number(b) ? a : b));
+		if (map.size > 400) map.delete([...map.keys()].reduce((a, b) => Number(a) < Number(b) ? a : b));
 		try { localStorage.setItem(NSMAX_LOTTERY_ROWS_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
 	// 按记下的样子拼一行站点原样的列表行（和站点输出的结构一样，之后换图标、排顺序、中文时间都照常）
@@ -26368,21 +26747,39 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		item.append(make("div", { class: "post-list-content" }, make("div", { role: "heading", "aria-level": "3", class: "post-title" }, make("a", { href: `/post-${id}-1` }, row.t)), info));
 		return item;
 	}
-	// 「抽奖」分类第一页：本机认出来、但站内搜索「抽奖」没搜到的抽奖帖（标题里没写「抽奖」的）按编号插进列表（不比这一页最旧的
-	// 那篇还旧的才插，更旧的属于后面几页）。插进来的行和别的行一样按顺序显示
+	// 「抽奖」分类：本机认出来、但站内搜索「抽奖」没搜到的抽奖帖（标题里没写「抽奖」的）按编号插进列表——
+	// 第一页插不比这一页最旧的那篇还旧的，外加还没到开奖时间的（不管多早发的，2026-11-28）；
+	// 后面几页插编号落在这一页范围里的（上界是前一页最旧的那篇，翻过来时记下的；直接打开的就用这一页最新的那篇）。插进来的行和别的行一样按顺序显示
 	function nsmaxMergeLotteryRows(parsed) {
 		const list = document.querySelector("#nsk-body-left ul.post-list:not(.topic-carousel-panel)");
 		if (!list || (parsed ? !parsed(list) : document.readyState === "loading")) return 0;
 		const current = document.querySelector("#nsk-body-left .nsk-pager :is(.pager-cur, [data-nsmax-pg-cur])");
-		if (current && current.textContent.trim() !== "1") return 0;
+		const page = Number(current?.textContent.trim()) || 1;
 		const idOf = (item) => Number(item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1] || 0);
-		// 置顶帖（编号小，不按时间排在最前面）不参与比较
+		// 置顶帖（编号小，不按时间排在最前面）、自己并进来的行不参与比较
 		const pinned = (item) => !!item.querySelector(".post-title :is(svg.pined, use[href='#pin'])");
 		const items = Array.from(list.querySelectorAll(":scope > li.post-list-item"));
 		const present = new Set(items.map(idOf));
-		const oldest = items.reduce((min, item) => pinned(item) ? min : Math.min(min, idOf(item) || Infinity), Infinity);
-		const known = nsmaxSpecialPostMap();
-		const adding = [...nsmaxLotteryRows()].filter(([id]) => !present.has(Number(id)) && (known.get(id) || "").split(",").includes("lottery") && !(oldest !== Infinity && Number(id) < oldest)).sort((a, b) => Number(b[0]) - Number(a[0]));
+		const own = items.filter((item) => !pinned(item) && !item.hasAttribute("data-nsmax-lottery-merged")).map(idOf).filter(Boolean);
+		if (page > 1 && !own.length) return 0;
+		const oldest = own.length ? Math.min(...own) : Infinity;
+		let floors = {};
+		try { floors = JSON.parse(sessionStorage.getItem("nsmax:lottery-page-floors") || "{}") || {}; } catch {}
+		if (own.length && floors[page] !== oldest) {
+			floors[page] = oldest;
+			try { sessionStorage.setItem("nsmax:lottery-page-floors", JSON.stringify(floors)); } catch {}
+		}
+		const upper = page === 1 ? Infinity : Number(floors[page - 1]) || Math.max(...own) + 1;
+		const known = nsmaxSpecialPostMap(), times = nsmaxLotteryTimes(), now = Date.now();
+		const ended = nsmaxLotteryEnded();
+		const active = (id, row) => (times.get(id) || 0) > now && !ended.has(id) && !nsmaxLotteryTitleEnded(row.t);
+		const adding = [...nsmaxLotteryRows()].filter(([id, row]) => {
+			const n = Number(id);
+			if (present.has(n) || !(known.get(id) || "").split(",").includes("lottery")) return false;
+			// 第一页已经放了的「还在进行」就不在后面几页再放一次
+			if (page === 1) return oldest === Infinity || n >= oldest || active(id, row);
+			return n >= oldest && n < upper && !active(id, row);
+		}).sort((a, b) => Number(b[0]) - Number(a[0]));
 		if (!adding.length) return 0;
 		// 插在屏幕上方会把正在看的内容往下推：记下屏幕里第一行的位置，插完把页面滚回去（Safari 没有浏览器自带的滚动锚定；顶部首帧不量尺寸以免提前排版）
 		const anchor = scrollY > 0 ? items.find((item) => item.getBoundingClientRect().bottom > 0) : null;
@@ -26458,7 +26855,12 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				if (!kinds.includes("lottery")) kinds.push("lottery");
 				time ||= nsmaxCommentLuckyTime;
 			}
+			const opTitle = document.querySelector(".nsk-post .post-title a[href*='/post-']")?.textContent || "";
+			const linked = kinds.includes("lottery");
+			const text = !linked && nsmaxIsTextLottery(opTitle, op);
+			if (text) kinds.push("lottery", "text");
 			nsmaxRememberSpecialPost(postId, kinds);
+			if (!text && document.readyState !== "loading") nsmaxDropTextLottery(postId, linked);
 			nsmaxRememberLotteryTime(postId, time);
 			// 整页解析完才算「查过」：解析到一半时正文还不全，记成「不是」以后就不会再认
 			if (document.readyState !== "loading") {
@@ -26466,7 +26868,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				// 只纠正与正文外帖链接时间吻合的旧污染。第一页未见链接不能证明缓存无效，链接可能在后续评论页。
 				if (!time && nsmaxCommentLuckyPage === location.pathname && /^\/post-\d+(?:-1)?$/.test(location.pathname)) nsmaxForgetForeignLotteryTime(postId, op);
 				if (kinds.includes("lottery")) {
-					nsmaxRememberLotteryEnded(postId, NSMAX_LOTTERY_ENDED_TITLE.test(document.querySelector(".nsk-post .post-title a[href*='/post-']")?.textContent || "") || nsmaxLotteryEndedIn(op));
+					nsmaxNoteLotteryEnded(postId, opTitle, op);
 					const row = nsmaxListRowOf(postId);
 					if (row) nsmaxRememberLotteryRow(row);
 					else nsmaxRememberLotteryFromPost(postId, document);
@@ -26484,7 +26886,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			nsmaxTopicBadge(title, link, "nsmax-poll-badge", "投票", false);
 			// 到了开奖时间（sb.sb .lottery-badge-done + .special-ended）：「抽奖」变成细线框灰字，后面多一个「已结束」
 			const time = lottery ? nsmaxLotteryTimes().get(id) : 0;
-			const ended = lottery && ((!!time && time <= Date.now()) || nsmaxLotteryEnded().has(id) || NSMAX_LOTTERY_ENDED_TITLE.test(link.textContent || ""));
+			const ended = lottery && ((!!time && time <= Date.now()) || nsmaxLotteryEnded().has(id) || nsmaxLotteryTitleEnded(link.textContent));
 			const rowItem = title.closest("li.post-list-item");
 			if (rowItem) nsmaxFlag(rowItem, "data-nsmax-lottery-ended", ended);
 			const badge = nsmaxTopicBadge(title, link, "nsmax-prize-badge", "抽奖", lottery);
@@ -26661,7 +27063,7 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		if (map.get(id) === time) return;
 		map.delete(id);
 		map.set(id, time);
-		while (map.size > 400) map.delete(map.keys().next().value);
+		while (map.size > 2000) map.delete(map.keys().next().value);
 		try { localStorage.setItem(NSMAX_LOTTERY_TIMES_KEY, JSON.stringify(Object.fromEntries(map))); } catch {}
 	}
 	function nsmaxForgetForeignLotteryTime(id, op) {
@@ -26677,13 +27079,16 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	// 开奖链接（/lucky?post=…&time=开奖时间&count=中奖人数&start=起始楼层&duplicate=可否重复中奖）的参数；只认本站的 /lucky
 	function nsmaxLuckyParams(href) {
 		const url = nsmaxLuckyUrl(href);
-		const time = Number(url?.searchParams.get("time"));
+		// 只取开头的数字：链接里粘上了后面的中文标点（「time=123，」被渲染成链接时就是这样）也照样认
+		const num = (key) => Number(String(url?.searchParams.get(key) ?? "").trim().match(/^\d+/)?.[0] ?? NaN);
+		// 开奖时间是毫秒时间戳（13 位）：写成「2026-11-28 20:00」这种的不认成 2026 毫秒
+		const time = Number(String(url?.searchParams.get("time") ?? "").trim().match(/^\d{10,}/)?.[0] ?? NaN);
 		if (!url || !Number.isFinite(time) || time <= 0) return null;
 		return {
 			url,
 			time,
-			count: Math.max(1, Number(url.searchParams.get("count")) || 1),
-			start: Math.max(1, Number(url.searchParams.get("start")) || 1),
+			count: Math.max(1, num("count") || 1),
+			start: Math.max(1, num("start") || 1),
 			// 站点抽奖页：只有 duplicate=false 才「楼层去重」，没写 duplicate 就是可以重复中奖
 			duplicate: url.searchParams.get("duplicate") !== "false"
 		};
@@ -27389,7 +27794,16 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		const key = nsmaxLotteryKeyOf(targetPost, params);
 		for (const card of document.querySelectorAll(".nsmax-lottery[data-nsmax-key]")) if (card.dataset.nsmaxKey === key) return null;
 		const isCurrent = targetPost === postId;
-		if (isCurrent && article.closest(".nsk-post")) nsmaxRememberLotteryTime(String(postId), params.time);
+		if (isCurrent) {
+			// 楼主在评论里贴的开奖链接（含自动加载出来的后面几页）：这篇也记成抽奖帖，列表里挂上「抽奖」、并进「抽奖」分类
+			const id = String(postId);
+			if (article.closest(".nsk-post") || !nsmaxLotteryTimes().has(id)) nsmaxRememberLotteryTime(id, params.time);
+			if (!(nsmaxSpecialPostMap().get(id) || "").split(",").includes("lottery")) {
+				nsmaxRememberSpecialPost(id, ["lottery"]);
+				nsmaxRememberLotteryFromPost(id, document);
+				nsmaxLotteryRefresh();
+			}
+		}
 		const { card, join } = nsmaxBuildLotteryCard({ ...params, prize: isCurrent ? nsmaxLotteryPrize(article) : "见原帖", href: params.url.href });
 		join.addEventListener("click", () => nsmaxLotteryJoin());
 		return card;
@@ -29095,6 +29509,7 @@ function nsmaxLookupTelegram(uid) {
 		const discussions = await json(`/api/content/list-discussions?uid=${uid}&page=1`);
 		const postId = discussions?.discussions?.[0]?.post_id;
 		if (postId) {
+			nsmaxChargePage();
 			const response = ok(await nsmaxFetch(`/post-${postId}-1`, { credentials: "same-origin", priority: "low" }));
 			const html = response.body ? await readUntil(response, "comment-menu-mount") : "";
 			const doc = new DOMParser().parseFromString(html, "text/html");
@@ -29106,6 +29521,7 @@ function nsmaxLookupTelegram(uid) {
 			const floor = Number(comment?.floor_id);
 			if (comment?.post_id && floor > 0) {
 				const perPage = Number(unsafeWindow$1.__config__?.commmentPerPage) || 10;
+				nsmaxChargePage();
 				const response = ok(await nsmaxFetch(`/post-${comment.post_id}-${Math.floor((floor - 1) / perPage) + 1}`, { credentials: "same-origin", priority: "low" }));
 				const item = new DOMParser().parseFromString(await response.text(), "text/html").querySelector(`ul.comments > li.content-item[id="${floor}"]`);
 				if (item && ownerOf(item) === uid) contacts = nsmaxTelegramContacts(item.querySelector(".signature") || "");
@@ -30312,7 +30728,10 @@ function nsmaxTagStructure() {
 			nsmaxReplyFetching.add(id);
 			let ok = false;
 			// 等页面自己加载完再取（2026-10-24：不和正文图片抢网速）
-			nsmaxPageLoaded().then(() => nsmaxFetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" })).then((response) => response.ok ? response.text() : "").then((html) => {
+			nsmaxPageLoaded().then(() => {
+				nsmaxChargePage();
+				return nsmaxFetch(`/post-${id}-${pages}`, { credentials: "same-origin", priority: "low" });
+			}).then((response) => response.ok ? response.text() : "").then((html) => {
 				if (!html) return;
 				const doc = new DOMParser().parseFromString(html, "text/html");
 				const last = Array.from(doc.querySelectorAll("ul.comments li.content-item[id]"), (li) => Number(li.id)).filter(Number.isFinite);
