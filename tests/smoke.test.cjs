@@ -8059,3 +8059,72 @@ test("回复框被站点整块换掉以后（2026-11-22）：点「回复」只�
 		assert.deepEqual(errors, []);
 	} finally { await context.close(); }
 });
+
+// 2026-11-28 回头看 v1.9.86（#128）时找出的两处：慢图时提前开始查、「抽奖」分类在顶部时缓存行被顶动
+const rateTrack = (p, all, posts = []) => p.on("request", (request) => {
+	const url = new URL(request.url());
+	if (url.hostname !== "www.nodeseek.com" || !["document", "fetch", "xhr"].includes(request.resourceType())) return;
+	all.push(Date.now());
+	if (/^\/post-\d+-1$/.test(url.pathname)) posts.push([url.pathname, Date.now()]);
+});
+const rateSlowPosts = (p, status = () => 200) => p.route(/\/post-\d+-1$/, async (route) => {
+	const code = status(route.request());
+	await new Promise((resolve) => setTimeout(resolve, 300));
+	try { await route.fulfill({ status: code, headers: code === 429 ? { "retry-after": "1" } : {}, contentType: "text/html; charset=utf-8", body: code === 200 ? postPage() : "too many" }); } catch {}
+});
+const RATE_INIT = `if (window.top === window) localStorage.setItem("nsmax:lottery-index-at", String(Date.now()));`;
+
+
+test("2026-11-28 普通列表页查抽奖帖：页面上的图片迟迟下不完时也先等满 1.5 + 1.2 秒，不和图片抢网速（以前没等到 load 时只留 0.2 秒）", async () => {
+	const html = listPage({ count: 20 }).replace("</ul>", `</ul><img src="https://www.nodeseek.com/slow-img/a.png" width="10" height="10">`);
+	const posts = [];
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/", {
+		html, seed: NO_PREVIEW, viewport: { width: 1280, height: 900 },
+		beforeNavigate: async (p) => {
+			rateTrack(p, [], posts);
+			await p.route(/\/slow-img\//, async (route) => {
+				await new Promise((resolve) => setTimeout(resolve, 6e3));
+				try { await route.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'/>" }); } catch {}
+			});
+			await rateSlowPosts(p);
+		}
+	});
+	try {
+		const deadline = Date.now() + 8e3;
+		while (!posts.length && Date.now() < deadline) await wait(page, 100);
+		assert.ok(posts.length, "过一会儿照样开始查");
+		const ready = await page.evaluate(() => performance.timeOrigin + performance.getEntriesByType("navigation")[0].domContentLoadedEventEnd);
+		assert.ok(posts[0][1] - ready >= 2500, `图片没下完：DOMContentLoaded 后至少 1.5 + 1.2 秒才开始查：${Math.round(posts[0][1] - ready)}ms`);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});
+
+test("2026-11-28 「抽奖」分类在页面最顶上时，上面新查出来的抽奖行不把已经显示的缓存行往下顶（锚住屏幕里的行、页面跟着往下挪）", async () => {
+	const lucky = (id) => postPage().replace("</article>", `<p><a href="https://www.nodeseek.com/lucky?post=${id}&amp;time=1893456000000&amp;count=1">开奖</a></p></article>`);
+	const known = Object.fromEntries(Array.from({ length: 45 }, (_, i) => [String(1005 + i), "lottery"]));
+	const { context, page, errors } = await open(browser, "https://www.nodeseek.com/search?q=%E6%8A%BD%E5%A5%96", {
+		html: searchPage({ count: 50 }), seed: NO_PREVIEW, viewport: { width: 1280, height: 900 },
+		init: `${RATE_INIT} if (window.top === window) localStorage.setItem("nsmax:special-posts", ${JSON.stringify(JSON.stringify(known))});`,
+		beforeNavigate: (p) => p.route(/\/post-1\d\d\d-1$/, async (route) => {
+			await new Promise((resolve) => setTimeout(resolve, 250));
+			try { await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: lucky(new URL(route.request().url()).pathname.match(/\d+/)[0]) }); } catch {}
+		})
+	});
+	try {
+		await page.waitForSelector('li.post-list-item[data-nsmax-lottery="yes"]');
+		const samples = [];
+		const deadline = Date.now() + 15e3;
+		while (Date.now() < deadline) {
+			const sample = await page.evaluate(() => [document.querySelector('a[href="/post-1005-1"]').closest("li").getBoundingClientRect().top, scrollY, document.querySelectorAll('li.post-list-item[data-nsmax-lottery="yes"]').length]);
+			samples.push(sample);
+			if (sample[2] === 50) break;
+			await wait(page, 120);
+		}
+		assert.equal(samples[0][1], 0, "开始时在页面最顶上");
+		assert.equal(samples.at(-1)[2], 50, "上面 5 篇都查出来、显示了");
+		const tops = samples.map(([top]) => top);
+		assert.ok(Math.max(...tops) - Math.min(...tops) <= 2, "缓存的第 6 行一直停在原处：" + tops.map(Math.round).join());
+		assert.ok(samples.at(-1)[1] > 250, "新行插在上面、页面跟着往下挪：" + samples.at(-1)[1]);
+		assert.deepEqual(errors, []);
+	} finally { await context.close(); }
+});

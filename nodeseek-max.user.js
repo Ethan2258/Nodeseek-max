@@ -25976,6 +25976,8 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			nsmaxSpecialQueued.add(entry.id);
 			nsmaxSpecialQueue.push(entry);
 		}
+		// 队列已经在跑（视口观察已建好）时，自动翻页新接上来的行也挂上观察，照样屏幕里的先查
+		if (queued.length && nsmaxSpecialIo) nsmaxObserveSpecialVisible(ctx);
 		nsmaxRunSpecialQueue(ctx);
 	}
 	// 查一篇：打开它的第一页。打不开（站点验证、网络出错）：这次当作不是，不记下来，下次再查；站点限流（后台先停一会儿）：
@@ -26159,9 +26161,10 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		nsmaxSpecialBusy = true;
 		const quiet = !nsmaxIsLotteryView();
 		if (quiet) {
-			// 等页面加载完（外链图床慢时最多 1.5 秒放行）再留 1.2 秒静默窗口让首屏头像和图片先下，不拖慢阅读体验
-			const timedOut = await nsmaxPageReady(1500);
-			await new Promise((resolve) => setTimeout(resolve, timedOut ? 200 : 1200));
+			// 等页面加载完（外链图床慢时最多 1.5 秒放行）再留 1.2 秒静默窗口让首屏头像和图片先下，不拖慢阅读体验。
+			// 没等到 load（图片还在下）时同样留满 1.2 秒（2026-11-28：以前这时只留 0.2 秒，图越慢反而越早开始查、和图片抢网速）
+			await nsmaxPageReady(1500);
+			await new Promise((resolve) => setTimeout(resolve, 1200));
 			if (ctx.signal.aborted || nsmaxBackgroundPaused()) {
 				nsmaxSpecialBusy = false;
 				nsmaxAfterBackgroundPause("special-run", ctx, () => nsmaxRunSpecialQueue(ctx));
@@ -26287,6 +26290,8 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 	var nsmaxLotteryCrawling = false;
 	var nsmaxLotteryInitialHref = "";
 	var nsmaxLotteryInitialKnown = new Set();
+	// 上一轮锚住的行和它该在的位置：连着几轮锚同一行时按这个位置算，滚动位置取整的零头不一轮轮攒成往下爬
+	var nsmaxLotteryAnchorPin = null;
 	function nsmaxFilterLotteryRows() {
 		const known = nsmaxSpecialPostMap(), checked = nsmaxSpecialChecked(), activeOnly = nsmaxLotteryActiveOnly();
 		if (nsmaxLotteryInitialHref !== location.href) {
@@ -26295,11 +26300,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			for (const [id, kinds] of known) if (kinds.split(",").includes("lottery")) nsmaxLotteryInitialKnown.add(id);
 		}
 		const items = Array.from(document.querySelectorAll("#nsk-body-left ul.post-list:not(.topic-carousel-panel) > li.post-list-item"));
-		// 已向下滚动时锚定屏幕里第一条已显示的抽奖帖，避免上面新查出的行把正在看的位置往下顶
-		const anchor = scrollY > 0 ? items.find((item) => item.getAttribute("data-nsmax-lottery") === "yes" && item.getBoundingClientRect().bottom > 0) : null;
-		const anchorTop = anchor?.getBoundingClientRect().top;
 		let blocked = false, shown = 0, visibleActive = 0, pending = 0, total = 0;
 		const failed = [];
+		const plan = [];
 		for (const item of items) {
 			total++;
 			const id = item.querySelector(".post-title a[href*='/post-']")?.getAttribute("href")?.match(/\/post-(\d+)/)?.[1];
@@ -26309,15 +26312,39 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 			// 进入前本机已缓存或并入的抽奖帖 0ms 立刻展示，不被顶部新帖队头阻塞；冷启动新扫描行仍按从上到下顺序依次露出
 			const preKnown = !!id && (nsmaxLotteryInitialKnown.has(id) || item.hasAttribute("data-nsmax-lottery-merged"));
 			const show = state === "yes" && (!blocked || preKnown);
-			nsmaxSetAttr(item, "data-nsmax-lottery", show ? "yes" : state === "no" ? "no" : "wait");
+			plan.push(show ? "yes" : state === "no" ? "no" : "wait");
 			if (show) {
 				shown++;
 				if (!item.hasAttribute("data-nsmax-lottery-ended")) visibleActive++;
 			}
 		}
-		if (anchor && anchorTop !== undefined && scrollY > 0) {
+		// 屏幕里已经显示的行不让上面新冒出来（或藏起来）的行顶动：先量住屏幕里第一条一直显示着的行，改完把页面挪回去。
+		// 页面在最顶上（scrollY = 0）也照样锚定（2026-11-28）：缓存的抽奖行先露出来以后，上面新查出的行一条条插进来，
+		// 以前在顶部时不锚定，正在看的行被一路往下顶（Chrome 自带的滚动锚定在顶部不起作用，Safari 没有）。
+		// 只有这一轮真的要在某条已显示行的上面改动时才量尺寸，平常（行接在下面、首帧还没有已显示的行）不提前排版
+		let anchor = null, anchorTop = 0, firstChange = -1;
+		for (let i = 0; i < items.length; i++) {
+			if ((items[i].getAttribute("data-nsmax-lottery") === "yes") !== (plan[i] === "yes")) { firstChange = i; break; }
+		}
+		if (firstChange >= 0) {
+			// 锚住改动位置下面、屏幕里第一条一直显示着的行（新露出来的行总是接在已查完的那一截末尾、缓存行的上面：
+			// 让缓存行停在原处，刚露出来的那几行往上让）
+			for (let i = firstChange + 1; i < items.length; i++) {
+				if (plan[i] !== "yes" || items[i].getAttribute("data-nsmax-lottery") !== "yes") continue;
+				const rect = items[i].getBoundingClientRect();
+				if (rect.bottom <= 0) continue;
+				if (rect.top < innerHeight) {
+					anchor = items[i];
+					anchorTop = nsmaxLotteryAnchorPin?.el === anchor && Math.abs(nsmaxLotteryAnchorPin.top - rect.top) < 3 ? nsmaxLotteryAnchorPin.top : rect.top;
+				}
+				break;
+			}
+		}
+		for (let i = 0; i < items.length; i++) nsmaxSetAttr(items[i], "data-nsmax-lottery", plan[i]);
+		if (anchor) {
 			const moved = anchor.getBoundingClientRect().top - anchorTop;
-			if (moved) window.scrollBy({ top: moved, behavior: "instant" });
+			if (Math.abs(moved) >= 0.5) window.scrollBy({ top: moved, behavior: "instant" });
+			nsmaxLotteryAnchorPin = { el: anchor, top: anchorTop };
 		}
 		nsmaxLotteryFailedIds = failed;
 		// 识别中先不显示页码：不夹在一行行冒出来的帖子中间跟着往下跳（见 design.css）
@@ -27261,15 +27288,34 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		} catch {}
 		return [best, ...NSMAX_DRAND_URLS.map((_, i) => i).filter((i) => i !== best)];
 	}
-	// 错峰对冲读取 drand：优先节点 t=0 发出，若 450ms 未回或直接失败再对冲其余官方镜像，先回者胜出并中止慢节点，同时记住本会话最快节点
+	// 错峰对冲读取 drand：优先节点 t=0 发出，若 450ms 未回或直接失败再对冲其余官方镜像，先回者胜出并中止慢节点，同时记住本会话最快节点。
+	// 同一轮的结果各张卡片共用一份（nsmaxDrandCache）；signal 只管这一位调用者自己不再等（2026-11-28：以前共用的那份请求挂在第一位调用者的
+	// signal 上，一张卡片楼层为空、取消等待时，同一轮开奖的别的卡片也跟着拿到空结果，要等 15 秒后自动重试才算出名单）
 	function nsmaxLotteryRandomness(time, { signal } = {}) {
 		const round = nsmaxLotteryRound(time);
-		if (!Number.isFinite(round) || round <= 0) return Promise.resolve(null);
-		const cached = nsmaxDrandCache.get(round);
-		if (cached) return cached;
+		if (!Number.isFinite(round) || round <= 0 || signal?.aborted) return Promise.resolve(null);
+		let shared = nsmaxDrandCache.get(round);
+		if (!shared) {
+			shared = nsmaxDrandFetchRound(round);
+			nsmaxDrandCache.set(round, shared);
+			const entry = shared;
+			entry.then((val) => {
+				if (!val && nsmaxDrandCache.get(round) === entry) nsmaxDrandCache.delete(round);
+			});
+		}
+		if (!signal) return shared;
+		return new Promise((resolve) => {
+			const onAbort = () => resolve(null);
+			signal.addEventListener("abort", onAbort, { once: true });
+			shared.then((val) => {
+				signal.removeEventListener("abort", onAbort);
+				resolve(val);
+			});
+		});
+	}
+	function nsmaxDrandFetchRound(round) {
 		const order = nsmaxDrandOrdered();
-		const promise = new Promise((resolve) => {
-			if (signal?.aborted) { resolve(null); return; }
+		return new Promise((resolve) => {
 			const ctrl = new AbortController();
 			let settled = false;
 			let started = 0;
@@ -27279,12 +27325,9 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				if (settled) return;
 				settled = true;
 				clearTimeout(hedgeTimer);
-				signal?.removeEventListener("abort", onAbort);
 				ctrl.abort();
 				resolve(val);
 			};
-			const onAbort = () => done(null);
-			signal?.addEventListener("abort", onAbort, { once: true });
 			const launch = (pos) => {
 				if (settled || pos >= order.length) return;
 				const idx = order[pos];
@@ -27323,11 +27366,6 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 				}, 450);
 			}
 		});
-		nsmaxDrandCache.set(round, promise);
-		promise.then((val) => {
-			if (!val && nsmaxDrandCache.get(round) === promise) nsmaxDrandCache.delete(round);
-		});
-		return promise;
 	}
 	// 站点的洗牌：cyrb128 把字符串变成 4 个 32 位种子，sfc32 依次给出 n 个 0~1 的数，按数从小到大排出楼层下标的顺序
 	function nsmaxLotteryOrder(seed, n) {
@@ -27475,7 +27513,8 @@ html[data-nsmax-theme] :is(#nsk-body,#nsk-frame,#nsk-left-panel-container) a[dat
 		}
 		if (card._nsmaxLoaded === (done ? "done" : "open")) return;
 		card._nsmaxLoading = true;
-		// 已开奖时楼层名单与 drand 随机数并行发起（原本串联等完 floor-data 才去问 drand）；楼层为空时立即中止 drand
+		// 已开奖时楼层名单与 drand 随机数并行发起（原本串联等完 floor-data 才去问 drand）；楼层为空时这张卡片不再等 drand
+		// （共用的那份请求照常回来，留给同一轮开奖的别的卡片，见 nsmaxLotteryRandomness）
 		const drandAbort = done ? new AbortController() : null;
 		const drandPromise = done ? nsmaxLotteryRandomness(rule.time, { signal: drandAbort.signal }).catch(() => null) : null;
 		nsmaxLotteryFloors(rule.post, rule.time).then(async (rows) => {
